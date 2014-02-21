@@ -47,18 +47,18 @@ namespace viennacl{
 			std::size_t lmem_used(std::size_t scalartype_size) const {
 				std::size_t lmem_used = 0;
 				if(use_lhs_shared_)
-				lmem_used += (ml_ + 1) * (cache_width_ + 1) * scalartype_size;
+          lmem_used += KL_ * (ML_+1) * scalartype_size;
 				if(use_rhs_shared_)
-				lmem_used += (cache_width_ + 1) * (nl_ + 1) * scalartype_size;
-				return lmem_used;
+          lmem_used += NL_ * (KL_ + 1) * scalartype_size;
+        return lmem_used;
 			}
 
 			virtual void print(std::ostream & s) const{
 				s << "{vector_type, local_size1, cache_width, local_size2, ms, ks, ns, use_lhs_shared, use_rhs_shared} = {"
 				<< simd_width_ << ","
-				<< local_size1_ << ", "
-				<< cache_width_ << ", "
-				<< local_size2_ << ", "
+        << ls0_ << ", "
+        << KL_ << ", "
+        << ls1_ << ", "
 				<< ms_ << ", "
 				<< ks_ << ", "
 				<< ns_ << ", "
@@ -68,8 +68,14 @@ namespace viennacl{
 
 			bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
 				static const unsigned int alignment = 128;
-				return alignment % ml_ > 0
-				|| alignment % nl_ > 0
+        return
+           ML_ % ls0_ > 0
+        || NL_ % ls1_ > 0
+        || KL_ % ls1_ > 0
+        || KL_ % ls0_ > 0
+        || alignment % ML_ > 0
+        || alignment % KL_ > 0
+        || alignment % NL_ > 0
 				|| (ms_ % simd_width_) > 0
 				|| (ns_ % simd_width_) > 0;
 			}
@@ -80,11 +86,11 @@ namespace viennacl{
 			, std::size_t local_size1, std::size_t cache_width, std::size_t local_size2
 			, unsigned int ms, unsigned int ks, unsigned int ns
 			, bool use_lhs_shared, bool use_rhs_shared) : profile_base(vectorization,local_size1, local_size2,1){
-				local_size1_ = local_size1;
-				local_size2_ = local_size2;
-				cache_width_=cache_width;
-				ml_= ms*local_size1;
-				nl_=ns*local_size2;
+        ls0_ = local_size1;
+        ls1_ = local_size2;
+        KL_=cache_width;
+        ML_= ms*local_size1;
+        NL_=ns*local_size2;
 				ms_ = ms;
 				ks_=ks;
 				ns_=ns;
@@ -99,9 +105,9 @@ namespace viennacl{
 			std::string csv_representation() const{
 				std::ostringstream oss;
 				oss << simd_width_
-				<< "," << local_size1_
-				<< "," << cache_width_
-				<< "," << local_size2_
+        << "," << ls0_
+        << "," << KL_
+        << "," << ls1_
 				<< "," << ms_
 				<< "," << ks_
 				<< "," << ns_
@@ -247,9 +253,9 @@ namespace viennacl{
 				stream << "{" << std::endl;
 				stream << mat.simd_scalartype() << " val;" << std::endl;
 				//Can unroll
-				if(bound2%local_size2_==0 && bound1%local_size1_==0){
-					for(unsigned int j = 0 ; j < bound2 ; j+=local_size2_){
-						for(unsigned int i = 0 ; i < bound1 ; i+=local_size1_){
+        if(bound2%ls1_==0 && bound1%ls0_==0){
+          for(unsigned int j = 0 ; j < bound2 ; j+=ls1_){
+            for(unsigned int i = 0 ; i < bound1 ; i+=ls0_){
 							std::string indi = "(get_local_id(0) + " + utils::to_string(i)+")";
 							std::string indj = "(get_local_id(1) + " + utils::to_string(j)+")";
 							fetch_element_to_local_mem(stream,lmem_name,lmem_size2,global_ptr,mat,indi,indj);
@@ -257,9 +263,9 @@ namespace viennacl{
 					}
 				}
 				else{
-					stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= " << local_size2_ << "){" << std::endl;
+          stream << "for(unsigned int j = get_local_id(1)" << " ; j < " << bound2 << "; j+= " << ls1_ << "){" << std::endl;
 					stream.inc_tab();
-					stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= " << local_size1_ << "){" << std::endl;
+          stream << "for(unsigned int i = get_local_id(0)" << " ; i < " << bound1 << "; i+= " << ls0_ << "){" << std::endl;
 					stream.inc_tab();
 					fetch_element_to_local_mem(stream,lmem_name,lmem_size2,global_ptr,mat,"i","j");
 					stream.dec_tab();
@@ -275,11 +281,9 @@ namespace viennacl{
 
 			void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
 
-				if(use_lhs_shared_ || use_rhs_shared_)
-					throw std::string("Not implemented");
-				
+
 				bool strided = true;
-				
+
 				//////////////////
 				/// INIT
 				/// //////////////
@@ -317,8 +321,8 @@ namespace viennacl{
 
 
 				unsigned int ms_res = ms_, ns_res = ns_;
-				unsigned int ml_lhs = ml_, cache_width_lhs = cache_width_, ms_lhs = ms_, ks_lhs = ks_;
-				unsigned int cache_width_rhs = cache_width_, nl_rhs = nl_, ks_rhs = ks_, ns_rhs = ns_;
+        unsigned int ml_lhs = ML_, cache_width_lhs = KL_, ms_lhs = ms_, ks_lhs = ks_;
+        unsigned int cache_width_rhs = KL_, nl_rhs = NL_, ks_rhs = ks_, ns_rhs = ns_;
 
 				transform_block(*lhs,use_lhs_shared_,ml_lhs,cache_width_lhs,ms_lhs,ks_lhs);
 				transform_block(*rhs,use_rhs_shared_,cache_width_rhs,nl_rhs,ks_rhs,ns_rhs);
@@ -326,14 +330,6 @@ namespace viennacl{
 				//////////////////
 				/// DECLARATIONS
 				/// //////////////
-
-
-				std::size_t local_lhs_size1 = ml_ ;
-				std::size_t local_lhs_size2 = cache_width_ + 1;
-
-				std::size_t local_rhs_size1 = cache_width_;
-				std::size_t local_rhs_size2 = nl_ + 1;
-
 				
 
 				///Result Values
@@ -341,51 +337,81 @@ namespace viennacl{
 				stream << lhs->simd_scalartype() << " " << "rA[" << ms_lhs << "];" << std::endl;
 				stream << rhs->simd_scalartype() << " " << "rB[" << ns_rhs <<"];" << std::endl;
 
+        stream << std::endl;
 
-				{
+        if(use_lhs_shared_)
+          stream << "__local " << lhs->scalartype() << " lA[" << KL_ << "][" << ML_ + 1 << "];" << std::endl;
+        if(use_rhs_shared_)
+          stream << "__local " << rhs->scalartype() << " lB[" << NL_ << "][" << KL_ + 1 << "];" << std::endl;
+        stream << std::endl;
+
 				std::string offset_i;
 				std::string offset_j;
-				
 				if(strided){
-					offset_i = "get_group_id(0)*"+utils::to_string(ml_) + "+ get_local_id(0)*"+utils::to_string(simd_width_);
-					offset_j = "get_group_id(1)*"+utils::to_string(nl_) + "+ get_local_id(1)*"+utils::to_string(simd_width_);
+          offset_i = "get_group_id(0)*"+utils::to_string(ML_) + "+ get_local_id(0)*"+utils::to_string(simd_width_);
+          offset_j = "get_group_id(1)*"+utils::to_string(NL_) + "+ get_local_id(1)*"+utils::to_string(simd_width_);
 				}
-				stream << "uint2 offset = (uint2)(" << offset_i << "," << offset_j << ");" << std::endl;
-				}
+        stream << "uint2 offset = (uint2)(" << offset_i << "," << offset_j << ");" << std::endl;
+
 				
-				
-				stream << lhs->name() << " +=  offset.x/" << simd_width_  << ";" << std::endl;
+
+        stream << lhs->name() << " +=  offset.x/" << simd_width_  << ";" << std::endl;
+        if(use_lhs_shared_)
+          stream << lhs->name() << " +=  get_local_id(1)*" << lhs->ld()  << ";" << std::endl;
+
 				stream << rhs->name() << " +=  offset.y/" << simd_width_  << ";" << std::endl;
+        if(use_rhs_shared_)
+          stream << rhs->name() << " +=  get_local_id(0)*" << rhs->ld()  << ";" << std::endl;
 
 
-				if(cache_width_>1)
-				{
-					stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << cache_width_ << "){" << std::endl;
-					stream.inc_tab();
-					stream << "#pragma unroll " << cache_width_ << std::endl;
-					stream << "for(unsigned int k = 0 ; k < " << cache_width_ << "; ++k){" << std::endl;
-					stream.inc_tab();
-				}
-				else
-				{
-					stream << "for(unsigned int k=0 ; k< K ; ++k){" << std::endl;
-					stream.inc_tab();
-				}
+
+        stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << KL_ << "){" << std::endl;
+        stream.inc_tab();
+
+        ///Fetch LHS to Local Memory
+        if(use_lhs_shared_)
+        {
+          for(unsigned int k = 0 ; k < KL_ ; k += ls1_){
+            for(unsigned int m = 0 ; m < ML_ ; m += ls0_){
+              stream << "lA[get_local_id(1) + " << k << "][get_local_id(0) + " << m << "] = "
+                     << lhs->name() << "[" << m <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
+            }
+          }
+        }
+
+        ///Fetch RHS to Local Memory
+        if(use_rhs_shared_)
+        {
+          for(unsigned int k = 0 ; k < KL_ ; k += ls0_){
+            for(unsigned int n = 0 ; n < NL_ ; n += ls1_){
+              stream << "lB[get_local_id(1) + " << n << "][get_local_id(0) + " << k << "] = "
+                     << rhs->name() << "[" << n <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
+            }
+          }
+        }
+
+        if(use_lhs_shared_ || use_rhs_shared_)
+          stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+
+        stream << "#pragma unroll" << std::endl;
+        stream << "for(unsigned int k = 0 ; k < " << KL_ << "; ++k){" << std::endl;
+        stream.inc_tab();
+
 				///Fetch LHS to registers
 				for(unsigned int m=0 ; m < ms_lhs ; ++m){
-					if(strided)
-						stream << "rA[" << m << "] = " << lhs->name() << "[" << m*local_size_1_ << "];" << std::endl;
-					else
-						stream << "rA[" << m << "] = " << lhs->name() << "[" << m << "];" << std::endl;
+          if(use_lhs_shared_)
+            stream << "rA[" << m << "] = lA[k][get_local_id(0) + " << m*local_size_1_ << "];" << std::endl;
+          else
+            stream << "rA[" << m << "] = " << lhs->name() << "[" << m*local_size_1_ << "];" << std::endl;
 				}
 
 				///Fetch RHS to registers
 				for(unsigned int n=0 ; n < ns_rhs ; ++n){
-					if(strided)
-						stream << "rB[" << n << "] = " << rhs->name() << "[" << n*local_size_2_ << "];" << std::endl;
-					else
-						stream << "rB[" << n << "] = " << rhs->name() << "[" << n << "];" << std::endl;
-				}
+          if(use_rhs_shared_)
+            stream << "rB[" << n << "] = lB[get_local_id(1) + " << n*ls1_ << "][k];" << std::endl;
+          else
+            stream << "rB[" << n << "] = " << rhs->name() << "[" << n*local_size_2_ << "];" << std::endl;
+        }
 					
 				for(unsigned int m=0 ; m < ms_ ; ++m){
 					for(unsigned int n=0 ; n < ns_ ; ++n){
@@ -399,46 +425,41 @@ namespace viennacl{
 							rhs_str = "rB["+utils::to_string(n/simd_width_)+"]";
 							if(simd_width_>1) rhs_str += ".s"+utils::to_string(n%simd_width_);
 						}
-						stream << res_str << "=" << "mad(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
+            stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
 					}
 				}
 
-				if(!lhs->interpret_as_transposed())
-					stream << lhs->name() << " = " << lhs->name() << " + " << lhs->ld() << ";" << std::endl;
+        if(!use_lhs_shared_ && !lhs->interpret_as_transposed())
+          stream << lhs->name() << " += " << lhs->ld() << ";" << std::endl;
 
-				if(rhs->interpret_as_transposed())
-					stream << rhs->name() << " = " << rhs->name() << " + " << rhs->ld() << ";" << std::endl;
+        if(!use_rhs_shared_ && rhs->interpret_as_transposed())
+          stream << rhs->name() << " += " << rhs->ld() << ";" << std::endl;
 
-				if(cache_width_>1)
-				{
-					stream.dec_tab();
-					stream << "}" << std::endl;
-					stream.dec_tab();
-					stream << "}" << std::endl;
-				}
-				else
-				{
-					stream.dec_tab();
-					stream << "}" << std::endl;
-				}
 
-				for(unsigned int m=0 ; m < ms_res ; ++m){
+        stream.dec_tab();
+        stream << "}" << std::endl;
+        if(use_lhs_shared_)
+          stream << lhs->name() << " += " << KL_ << "*" << lhs->ld() << ";" << std::endl;
+        if(use_rhs_shared_)
+          stream << rhs->name() << " += " << KL_ << "*" << rhs->ld() << ";" << std::endl;
+
+        if(use_lhs_shared_ || use_rhs_shared_)
+          stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+
+        stream.dec_tab();
+        stream << "}" << std::endl;
+
+
+        for(unsigned int m=0 ; m < ms_res ; ++m){
 					for(unsigned int n=0 ; n < ns_res ; ++n){
-						std::string i,j;
-						if(strided){
-							i = "offset.x +" + utils::to_string((m/simd_width_)*(local_size_1_*simd_width_) + m%simd_width_);
-							j = "offset.y +" + utils::to_string((n/simd_width_)*(local_size_2_*simd_width_) + n%simd_width_);
-						}
-						else{
-							i = "get_global_id(0)*" + utils::to_string(ms_res) + "+" + utils::to_string(m);
-							j = "get_global_id(1)*" + utils::to_string(ns_res) + "+" + utils::to_string(n);
-						}
+            std::string i = "offset.x +" + utils::to_string((m/simd_width_)*(local_size_1_*simd_width_) + m%simd_width_);
+            std::string j = "offset.y +" + utils::to_string((n/simd_width_)*(local_size_2_*simd_width_) + n%simd_width_);
 						if(assigned->interpret_as_transposed())
-						std::swap(i,j);
-						prod->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
-						std::string str;
-						tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
-						stream << str << ";" << std::endl;
+            std::swap(i,j);
+            prod->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
+            std::string str;
+            tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
+            stream << str << ";" << std::endl;
 					}
 				}
 
@@ -446,12 +467,12 @@ namespace viennacl{
 			}
 
 		private:
-			std::size_t local_size1_;
-			std::size_t local_size2_;
-			std::size_t cache_width_;
+      std::size_t ls0_;
+      std::size_t ls1_;
+      std::size_t KL_;
 
-			std::size_t ml_;
-			std::size_t nl_;
+      std::size_t ML_;
+      std::size_t NL_;
 
 			std::size_t ms_;
 			std::size_t ks_;

@@ -231,7 +231,7 @@ void run_autotune(autotuner_options options){
     std::ofstream stream(options.output_name.c_str());
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(2048,50));
+    rounds_config.push_back(std::make_pair(1024,50));
 
     std::vector<unsigned int> tmp;
     tmp = get_values_in_commas(options.local_size_1_interval); std::vector<int> local_size_1; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_1.push_back(i);

@@ -179,7 +179,7 @@ int test_prod(Epsilon const& epsilon,
 		  retval = EXIT_FAILURE;
 		}
 		else std::cout << "Test C = A*trans(B) passed!" << std::endl;
-	}
+  }
 
 	// std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
 	// {
