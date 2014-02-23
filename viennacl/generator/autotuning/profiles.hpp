@@ -266,7 +266,7 @@ namespace viennacl{
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,1,256,1024));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,64,4,64));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,64,64,8,4,2,1,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,16,16,16,4,1,4,1,1));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,8,16,16,8,1,4,1,1));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,32,32,8,4,2,1,0));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,32,16,8,4,8,4,1,0));
 

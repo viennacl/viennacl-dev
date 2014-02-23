@@ -68,13 +68,12 @@ class matrix_product : public profile_base{
 
     bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
         static const unsigned int alignment = 128;
-		bool res = false;
-		if(use_lhs_shared_)
-			res = res || (ML_ % ls0_ > 0) || (KL_ % ls1_ > 0);
-		if(use_rhs_shared_)
-			res = res || (NL_ % ls1_ > 0) || (KL_ % ls0_ > 0);
-        return	res 
-				||alignment % ML_ > 0
+        return
+                ML_ % ls0_ > 0
+                || NL_ % ls1_ > 0
+                || KL_ % ls1_ > 0
+                || KL_ % ls0_ > 0
+                || alignment % ML_ > 0
                 || alignment % KL_ > 0
                 || alignment % NL_ > 0
                 || (ms_ % simd_width_) > 0
@@ -276,11 +275,13 @@ private:
 
         ///Result Values
         stream << C_scalartype << " " << "rC[" << ms_ << "][" << ns_ <<"]  = {(" << assigned->scalartype() << ")0};" << std::endl;
-        stream << A_scalartype << " " << "rA[" << KL_ << "][" << ms_lhs << "];" << std::endl;
-        stream << B_scalartype << " " << "rB[" << KL_ << "][" << ns_rhs <<"];" << std::endl;
+        stream << A_scalartype << " " << "rA[" << ms_lhs << "];" << std::endl;
+        stream << B_scalartype << " " << "rB[" << ns_rhs <<"];" << std::endl;
+
         if(simd_width_>1 && (use_lhs_shared_ || use_rhs_shared_))
             stream << lhs->simd_scalartype() << " tmpreg;" << std::endl;
         stream << std::endl;
+
 
         if(use_lhs_shared_)
             stream << "__local " << lhs->scalartype() << " lA[" << KL_ << "][" << ML_ + 1 << "];" << std::endl;
@@ -288,20 +289,41 @@ private:
             stream << "__local " << rhs->scalartype() << " lB[" << NL_ << "][" << KL_ + 1 << "];" << std::endl;
         stream << std::endl;
 
-        std::string offset_i;
-        std::string offset_j;
-        if(strided){
-            offset_i = "get_group_id(0)*"+utils::to_string(ML_) + "+ get_local_id(0)*"+utils::to_string(simd_width_);
-            offset_j = "get_group_id(1)*"+utils::to_string(NL_) + "+ get_local_id(1)*"+utils::to_string(simd_width_);
-        }
-        stream << "uint2 offset = (uint2)(" << offset_i << "," << offset_j << ");" << std::endl;
-        stream << lhs->name() << " +=  offset.x/" << simd_width_  << ";" << std::endl;
-        if(use_lhs_shared_)
-            stream << lhs->name() << " +=  get_local_id(1)*" << lhs->ld()  << ";" << std::endl;
+        unsigned int DIM_XA = ls0_;
+        unsigned int DIM_YA = ls1_;
 
-        stream << rhs->name() << " +=  offset.y/" << simd_width_  << ";" << std::endl;
+        unsigned int DIM_XB = ls0_;
+        unsigned int DIM_YB = ls1_;
+
+        stream << "uint gidx = get_group_id(0);" << std::endl;
+        stream << "uint gidy = get_group_id(1);" << std::endl;
+        stream << "uint idx = get_local_id(0);" << std::endl;
+        stream << "uint idy = get_local_id(1);" << std::endl;
+        if(use_lhs_shared_ || use_rhs_shared_){
+          stream << std::endl;
+          stream << "uint idt = " << ls0_ << "*idy + idx;" << std::endl;
+          stream << "uint idxA = idt % " << DIM_XA << ";" << std::endl;
+          stream << "uint idyA = idt / " << DIM_XA << ";" << std::endl;
+          stream << "uint idxB = idt % " << DIM_XB << ";" << std::endl;
+          stream << "uint idyB = idt / " << DIM_XB << ";" << std::endl;
+        }
+        stream << std::endl;
+
+        stream << "uint offset_x = gidx*" << ML_ << "+ idx*" << simd_width_ << ";" << std::endl;
+        stream << "uint offset_y = gidy*" << NL_ << "+ idy*" << simd_width_ << ";" << std::endl;
+
+        stream << std::endl;
+
+        if(use_lhs_shared_)
+            stream << lhs->name() << " +=  gidx*" << ML_ << "+ idx*" << simd_width_ << "+ idy*" << lhs->ld()  << ";" << std::endl;
+        else
+            stream << lhs->name() << " +=  offset_x/" << simd_width_  << ";" << std::endl;
+
         if(use_rhs_shared_)
-            stream << rhs->name() << " +=  get_local_id(0)*" << rhs->ld()  << ";" << std::endl;
+          stream << rhs->name() << " +=  gidy*" << NL_ << "+ idx*" << simd_width_ << "+ idy*" << rhs->ld()  << ";" << std::endl;
+        else
+          stream << rhs->name() << " +=  offset_y/" << simd_width_  << ";" << std::endl;
+
         stream << std::endl;
 
 
@@ -316,11 +338,10 @@ private:
                     if(simd_width_>1){
                         stream << "tmpreg = " << lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
                         for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-                            stream << "lA[get_local_id(1) + " << k << "][" << simd_width_ << "*get_local_id(0) + " << m + s << "] = tmpreg.s" << s << ";" << std::endl;
+                            stream << "lA[idy + " << k << "][" << simd_width_ << "*idx + " << m + s << "] = tmpreg.s" << s << ";" << std::endl;
                     }
                     else{
-                        stream << "lA[get_local_id(1) + " << k << "][get_local_id(0) + " << m << "] = "
-                               << lhs->name() << "[" << m <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
+                        stream << "lA[idy + " << k << "][idx + " << m << "] = " << lhs->name() << "[" << m <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
                     }
                 }
             }
@@ -329,16 +350,15 @@ private:
         ///Fetch RHS to Local Memory
         if(use_rhs_shared_)
         {
-            for(unsigned int k = 0 ; k < KL_ ; k += ls0_){
-                for(unsigned int n = 0 ; n < NL_ ; n += ls1_*simd_width_){
+            for(unsigned int k = 0 ; k < KL_ ; k += ls1_){
+                for(unsigned int n = 0 ; n < NL_ ; n += ls0_*simd_width_){
                     if(simd_width_>1){
                         stream << "tmpreg = " << rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
                         for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-                            stream << "lB[" << simd_width_ << "*get_local_id(1) + " << n + s << "][get_local_id(0) + " << k << "] = tmpreg.s" << s << ";" << std::endl;
+                            stream << "lB[" << simd_width_ << "*idx + " << n + s << "][idy + " << k << "] = tmpreg.s" << s << ";" << std::endl;
                     }
                     else{
-                        stream << "lB[get_local_id(1) + " << n << "][get_local_id(0) + " << k << "] = "
-                               << rhs->name() << "[" << n <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
+                        stream << "lB[idx + " << n << "][idy + " << k << "] = " << rhs->name() << "[" << n <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
                     }
                 }
             }
@@ -347,82 +367,54 @@ private:
         if(use_lhs_shared_ || use_rhs_shared_)
             stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
-         stream << "#pragma unroll " << KL_ << std::endl;
-         stream << "for(unsigned int k = 0 ; k < " << KL_ << "; ++k){" << std::endl;
-         stream.inc_tab();
-        ///Fetch LHS to registers
-         for(unsigned int m = 0 ; m < ms_/simd_width_ ; ++m){
-             if(use_lhs_shared_)
-                 for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-                     stream << "rA[k][" << m*simd_width_ + s << "] = lA[k][" << simd_width_ << "*get_local_id(0) + " << m*ls0_*simd_width_ + s << "];" << std::endl;
-             else
-                 stream << "rA[k][" << m << "] = " << lhs->name() << "[" << m*ls0_ << "];" << std::endl;
-         }
-
-        //Fetch RHS to registers
-         for(unsigned int n=0 ; n < ns_/simd_width_ ; ++n){
-             if(use_rhs_shared_)
-                 for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-                     stream << "rB[k][" << n*simd_width_ + s << "] = lB[" << simd_width_ << "*get_local_id(1) + " << n*ls1_*simd_width_ + s << "][k];" << std::endl;
-             else
-                 stream << "rB[k][" << n << "] = " << rhs->name() << "[" << n*ls1_ << "];" << std::endl;
-         }
-		
-          if(!use_lhs_shared_ && !lhs->interpret_as_transposed())
-             stream << lhs->name() << " += " << lhs->ld() << ";" << std::endl;
-         if(!use_rhs_shared_ && rhs->interpret_as_transposed())
-             stream << rhs->name() << " += " << rhs->ld() << ";" << std::endl;
-			
-         stream.dec_tab();
-         stream << "}" << std::endl;
-		
-//        for(unsigned int k = 0 ; k < KL_ ; ++k){
-//			//Fetch LHS to registers
-//			for(unsigned int m = 0 ; m < ms_/simd_width_ ; ++m){
-//				if(use_lhs_shared_)
-//					for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-//						stream << "rA[" << m*simd_width_ + s << "][" << k << "] = lA[" << k << "][" << simd_width_ << "*get_local_id(0) + " << m*ls0_*simd_width_ + s << "];" << std::endl;
-//				else
-//					stream << "rA[" << m << "][" << k << "] = " << lhs->name() << "[" << m*ls0_ << "];" << std::endl;
-//			}
-
-//			//Fetch RHS to registers
-//			for(unsigned int n=0 ; n < ns_/simd_width_ ; ++n){
-//				if(use_rhs_shared_)
-//					for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-//						stream << "rB[" << k << "][" << n*simd_width_ + s << "] = lB[" << simd_width_ << "*get_local_id(1) + " << n*ls1_*simd_width_ + s << "][k];" << std::endl;
-//				else
-//					stream << "rB[" << k << "][" << n << "] = " << rhs->name() << "[" << n*ls1_ << "];" << std::endl;
-//			}
-			
-//			 if(!use_lhs_shared_ && !lhs->interpret_as_transposed())
-//				stream << lhs->name() << " += " << lhs->ld() << ";" << std::endl;
-//			if(!use_rhs_shared_ && rhs->interpret_as_transposed())
-//				stream << rhs->name() << " += " << rhs->ld() << ";" << std::endl;
-//		}
-
-		stream << "#pragma unroll " << KL_ << std::endl;
+        stream << "#pragma unroll" << std::endl;
         stream << "for(unsigned int k = 0 ; k < " << KL_ << "; ++k){" << std::endl;
-		stream.inc_tab();
+        stream.inc_tab();
+
+        ///Fetch LHS to registers
+        for(unsigned int m = 0 ; m < ms_/simd_width_ ; ++m){
+            if(use_lhs_shared_)
+                for(unsigned int s = 0 ; s < simd_width_ ; ++s)
+                    stream << "rA[" << m*simd_width_ + s << "] = lA[k][" << simd_width_ << "*idx + " << m*ls0_*simd_width_ + s << "];" << std::endl;
+            else
+                stream << "rA[" << m << "] = " << lhs->name() << "[" << m*ls0_ << "];" << std::endl;
+        }
+
+
+        ///Fetch RHS to registers
+        for(unsigned int n=0 ; n < ns_/simd_width_ ; ++n){
+            if(use_rhs_shared_)
+                for(unsigned int s = 0 ; s < simd_width_ ; ++s)
+                    stream << "rB[" << n*simd_width_ + s << "] = lB[" << simd_width_ << "*idy + " << n*ls1_*simd_width_ + s << "][k];" << std::endl;
+            else
+                stream << "rB[" << n << "] = " << rhs->name() << "[" << n*ls1_ << "];" << std::endl;
+        }
+
         for(unsigned int m=0 ; m < ms_ ; ++m){
             for(unsigned int n=0 ; n < ns_ ; ++n){
                 std::string res_str, lhs_str, rhs_str;
                 res_str = "rC[" + utils::to_string(m) + "][" + utils::to_string(n) + "]";
                 if(!lhs->interpret_as_transposed()){
                     if(use_lhs_shared_ || simd_width_==1)
-                        lhs_str = "rA[k][" + utils::to_string(m) + "]";
+                        lhs_str = "rA[" + utils::to_string(m) + "]";
                     else
-                        lhs_str = "rA[k][" + utils::to_string(m/simd_width_) + "].s" + utils::to_string(m%simd_width_);
+                        lhs_str = "rA[" + utils::to_string(m/simd_width_) + "].s" + utils::to_string(m%simd_width_);
                 }
                 if(rhs->interpret_as_transposed()){
                     if(use_rhs_shared_ || simd_width_==1)
-                        rhs_str = "rB[k]["+utils::to_string(n)+"]";
+                        rhs_str = "rB["+utils::to_string(n)+"]";
                     else
-                        rhs_str = "rB[k]["+utils::to_string(n/simd_width_)+"].s"+utils::to_string(n%simd_width_);
+                        rhs_str = "rB["+utils::to_string(n/simd_width_)+"].s"+utils::to_string(n%simd_width_);
                 }
-                stream << res_str << "=" << "mad(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
+                stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
             }
         }
+
+        if(!use_lhs_shared_ && !lhs->interpret_as_transposed())
+            stream << lhs->name() << " += " << lhs->ld() << ";" << std::endl;
+
+        if(!use_rhs_shared_ && rhs->interpret_as_transposed())
+            stream << rhs->name() << " += " << rhs->ld() << ";" << std::endl;
 
 
         stream.dec_tab();
@@ -441,8 +433,8 @@ private:
 
         for(unsigned int m=0 ; m < ms_res ; ++m){
             for(unsigned int n=0 ; n < ns_res ; ++n){
-                std::string i = "offset.x +" + utils::to_string((m/simd_width_)*(ls0_*simd_width_) + m%simd_width_);
-                std::string j = "offset.y +" + utils::to_string((n/simd_width_)*(ls1_*simd_width_) + n%simd_width_);
+                std::string i = "offset_x +" + utils::to_string((m/simd_width_)*(ls0_*simd_width_) + m%simd_width_);
+                std::string j = "offset_y +" + utils::to_string((n/simd_width_)*(ls1_*simd_width_) + n%simd_width_);
                 if(assigned->interpret_as_transposed())
                     std::swap(i,j);
                 prod->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
