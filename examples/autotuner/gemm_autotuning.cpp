@@ -216,11 +216,11 @@ unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalarty
     viennacl::backend::finish();
     viennacl::tools::timer timer;
     timer.start();
-    static const unsigned int n_runs = 5;
-    for(unsigned int r = 0 ; r < n_runs; ++r)
+    for(unsigned int r = 0 ; r < n_runs ; ++r){
       viennacl::generator::enqueue(gen);
+    }
     viennacl::backend::finish();
-    double time = timer.get()/n_runs;
+    double time = timer.get()/(double)n_runs;
     return static_cast<unsigned int>(2*pow(size/static_cast<double>(1000.0),3)/time);
 }
 
