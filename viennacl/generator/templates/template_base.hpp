@@ -52,7 +52,6 @@ namespace viennacl{
         friend std::ostream & operator<<(std::ostream &, profile_base const &);
 
         virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const { return false; }
-        virtual bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
         virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
 
@@ -118,7 +117,7 @@ namespace viennacl{
               warp_size = 64;
             res = static_cast<bool>(((local_size_1_*local_size_2_)%warp_size)>0);
           }
-          return res || is_slow_impl(dev);
+          return res;
         }
 
         /** @brief returns whether or not the profile leads to undefined behavior on particular device

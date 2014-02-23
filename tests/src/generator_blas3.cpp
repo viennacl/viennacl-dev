@@ -369,25 +369,25 @@ int main(int argc, char* argv[])
 
             srand(time(NULL));
 
-            // std::cout << std::endl;
-            // std::cout << "----------------------------------------------" << std::endl;
-            // std::cout << std::endl;
-            // {
-               // typedef float NumericT;
-               // NumericT epsilon = NumericT(1.0E-3);
-               // std::cout << "# Testing setup:" << std::endl;
+             std::cout << std::endl;
+             std::cout << "----------------------------------------------" << std::endl;
+             std::cout << std::endl;
+             {
+                typedef float NumericT;
+                NumericT epsilon = NumericT(1.0E-3);
+                std::cout << "# Testing setup:" << std::endl;
 
-               // std::cout << viennacl::ocl::current_device().info() << std::endl;
+                std::cout << viennacl::ocl::current_device().info() << std::endl;
 
-               // std::cout << "  eps:     " << epsilon << std::endl;
-               // std::cout << "  numeric: float" << std::endl;
-               // retval = test<NumericT>(epsilon);
-               // if( retval == EXIT_SUCCESS )
-                 // std::cout << "# Test passed" << std::endl;
-               // else
-                 // return retval;
-            // }
-            // std::cout << std::endl;
+                std::cout << "  eps:     " << epsilon << std::endl;
+                std::cout << "  numeric: float" << std::endl;
+                retval = test<NumericT>(epsilon);
+                if( retval == EXIT_SUCCESS )
+                  std::cout << "# Test passed" << std::endl;
+                else
+                  return retval;
+             }
+             std::cout << std::endl;
 			
             std::cout << "----------------------------------------------" << std::endl;
             std::cout << std::endl;

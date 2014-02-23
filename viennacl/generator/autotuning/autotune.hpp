@@ -174,6 +174,7 @@ namespace viennacl{
         viennacl::ocl::device const & dev = viennacl::ocl::current_device();
         unsigned int n_conf = 0;
         while(config.has_next()){
+             //std::cout << n_conf << std::endl;
           config.update();
           typename ConfigType::profile_type const & profile = config.get_current();
           if(config.is_invalid(dev) || profile.is_slow(dev))

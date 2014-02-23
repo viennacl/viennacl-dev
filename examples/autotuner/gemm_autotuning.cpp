@@ -50,14 +50,17 @@ struct autotuner_options{
     std::string ks_interval;
     std::string ns_interval;
 
-    std::string local_size_1_interval;
-    std::string cache_width_interval;
-    std::string local_size_2_interval;
+    std::string ls0_interval;
+    std::string kl_interval;
+    std::string ls1_interval;
 
     std::string vector_interval;
 
-    std::string lhs_fetch_method;
-    std::string rhs_fetch_method;
+    std::string A_fetch_method;
+    std::string B_fetch_method;
+
+    std::string local_fetch0_interval;
+    std::string local_fetch1_interval;
 
 };
 
@@ -93,15 +96,16 @@ autotuner_options get_options(int argc, char* argv[]){
         TCLAP::ValueArg<unsigned int> requested_device_arg("d","device","ID of the device to use for the autotuning procedure",false,0,"unsigned int",cmd);
 
         //Small blocks
-        TCLAP::ValueArg<std::string> ms_interval_arg("","ms","Number of row in each block processed by each work-item. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> ks_interval_arg("","ks","Increment size for each small block calculation. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> ns_interval_arg("","ns","Number of column in each block processed by each work-item. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ms_interval_arg("","ms","Number of row in each block processed by each work-item. Specify min,max both power of two.",false,"2,8",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ks_interval_arg("","ks","Increment size for each small block calculation. Specify min,max both power of two.",false,"2,8",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ns_interval_arg("","ns","Number of column in each block processed by each work-item. Specify min,max both power of two.",false,"2,8",&pow_2_interval_cstrt,cmd);
 
 
         //Large blocks
-        TCLAP::ValueArg<std::string> local_size_1_interval_arg("","local-size-1","Number of work-item rows in each work-group. Specify min,max both power of two.",false,"2,64",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> cache_width_interval_arg("","cache-width","Increment size for each Large block calculation. Specify min,max both power of two.",false,"16,128",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> local_size_2_interval_arg("","local-size-2","Number of work-item columns in each work-group. Specify min,max both power of two.",false,"2,64",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ls0_interval_arg("","ls-0","Number of work-item rows in each work-group. Specify min,max both power of two.",false,"8,16",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> kl_interval_arg("","kl","Increment size for each Large block calculation. Specify min,max both power of two.",false,"8,32",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ls1_interval_arg("","ls-1","Number of work-item columns in each work-group. Specify min,max both power of two.",false,"8,16",&pow_2_interval_cstrt,cmd);
+
 
 
         //Vector
@@ -113,9 +117,12 @@ autotuner_options get_options(int argc, char* argv[]){
         allowed_fetch_method.push_back("global");
         allowed_fetch_method.push_back("all");
         TCLAP::ValuesConstraint<std::string> allowed_fetch_method_constraint(allowed_fetch_method);
-        TCLAP::ValueArg<std::string> lhs_fetch_method_arg("","lhs-fetch","Method to fetch the LHS.",false,"all",&allowed_fetch_method_constraint,cmd);
-        TCLAP::ValueArg<std::string> rhs_fetch_method_arg("","rhs-fetch","Method to fetch the RHS.",false,"all",&allowed_fetch_method_constraint,cmd);
 
+        TCLAP::ValueArg<std::string> A_fetch_method_arg("","A-fetch","Method to fetch A.",false,"all",&allowed_fetch_method_constraint,cmd);
+        TCLAP::ValueArg<std::string> B_fetch_method_arg("","B-fetch","Method to fetch B.",false,"all",&allowed_fetch_method_constraint,cmd);
+
+        TCLAP::ValueArg<std::string> local_fetch0_interval("","local-fetch0","Internal size0 for fetching A to local memory",false,"4,32",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> local_fetch1_interval("","local-fetch1","Internal size1 for fetching A to local memory",false,"4,32",&pow_2_interval_cstrt,cmd);
 
         cmd.parse(argc,argv);
         options.layout = layout_arg.getValue();
@@ -125,12 +132,14 @@ autotuner_options get_options(int argc, char* argv[]){
         options.ms_interval = ms_interval_arg.getValue();
         options.ks_interval = ks_interval_arg.getValue();
         options.ns_interval = ns_interval_arg.getValue();
-        options.local_size_1_interval = local_size_1_interval_arg.getValue();
-        options.cache_width_interval = cache_width_interval_arg.getValue();
-        options.local_size_2_interval = local_size_2_interval_arg.getValue();
+        options.ls0_interval = ls0_interval_arg.getValue();
+        options.kl_interval = kl_interval_arg.getValue();
+        options.ls1_interval = ls1_interval_arg.getValue();
         options.vector_interval = vector_interval_arg.getValue();
-        options.lhs_fetch_method = lhs_fetch_method_arg.getValue();
-        options.rhs_fetch_method = rhs_fetch_method_arg.getValue();
+        options.A_fetch_method = A_fetch_method_arg.getValue();
+        options.local_fetch0_interval = local_fetch0_interval.getValue();
+        options.local_fetch1_interval = local_fetch1_interval.getValue();
+        options.B_fetch_method = B_fetch_method_arg.getValue();
 
         return options;
     }
@@ -143,16 +152,23 @@ autotuner_options get_options(int argc, char* argv[]){
 template<class ScalarType>
 struct config{
     typedef matrix_product profile_type;
-    static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-       profile_type res(  viennacl::generator::at(params, std::string("vector")).current()
-                        , viennacl::generator::at(params, std::string("local_size1")).current()
-                        , viennacl::generator::at(params, std::string("cache_width")).current()
-                        , viennacl::generator::at(params, std::string("local_size2")).current()
-                        , viennacl::generator::at(params, std::string("ms")).current()
-                        , viennacl::generator::at(params, std::string("ks")).current()
-                        , viennacl::generator::at(params, std::string("ns")).current()
-                        , static_cast<bool>(viennacl::generator::at(params, std::string("lhs_storage")).current() > 0)
-                        , static_cast<bool>(viennacl::generator::at(params, std::string("rhs_storage")).current() > 0));
+
+    static matrix_product create_profile(std::map<std::string, autotune::tuning_param> const & params){
+       int vector = viennacl::generator::at(params, std::string("vector")).current();
+       int ls0 = viennacl::generator::at(params, std::string("local_size1")).current();
+       int ls1 = viennacl::generator::at(params, std::string("local_size2")).current();
+       int kl = viennacl::generator::at(params, std::string("kl")).current();
+       int ms = viennacl::generator::at(params, std::string("ms")).current();
+       int ns = viennacl::generator::at(params, std::string("ns")).current();
+
+       bool A_local = (viennacl::generator::at(params, std::string("A_storage")).current()==1);
+       bool B_local = (viennacl::generator::at(params, std::string("B_storage")).current()==1);
+
+       int local_fetch0 = viennacl::generator::at(params, std::string("local_fetch0")).current();
+       int local_fetch1 = viennacl::generator::at(params, std::string("local_fetch1")).current();
+
+       matrix_product res(vector,ls0,kl,ls1,ms,1,ns,shared_memory_config(A_local,local_fetch0,local_fetch1), shared_memory_config(B_local,local_fetch0,local_fetch1));
+
        return res;
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
@@ -231,55 +247,74 @@ void run_autotune(autotuner_options options){
     std::ofstream stream(options.output_name.c_str());
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(2048,50));
+    rounds_config.push_back(std::make_pair(1024,50));
 
     std::vector<unsigned int> tmp;
-    tmp = get_values_in_commas(options.local_size_1_interval); std::vector<int> local_size_1; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_1.push_back(i);
-    tmp = get_values_in_commas(options.cache_width_interval); std::vector<int> cache_width; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) cache_width.push_back(i);
-    tmp = get_values_in_commas(options.local_size_2_interval); std::vector<int> local_size_2; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_size_2.push_back(i);
+    tmp = get_values_in_commas(options.ls0_interval); std::vector<int> ls0; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls0.push_back(i);
+    tmp = get_values_in_commas(options.kl_interval); std::vector<int> kl; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) kl.push_back(i);
+    tmp = get_values_in_commas(options.ls1_interval); std::vector<int> ls1; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls1.push_back(i);
     tmp = get_values_in_commas(options.ms_interval); std::vector<int> ms; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ms.push_back(i);
     tmp = get_values_in_commas(options.ks_interval); std::vector<int> ks; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ks.push_back(i);
     tmp = get_values_in_commas(options.ns_interval); std::vector<int> ns; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ns.push_back(i);
     tmp = get_values_in_commas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
     
-    std::vector<int> lhs_storage;
-    if(options.lhs_fetch_method=="global")
-        lhs_storage.push_back(0);
-    else if(options.lhs_fetch_method=="local")
-        lhs_storage.push_back(1);
+
+
+    std::vector<int> A_storage;
+    if(options.A_fetch_method=="global")
+        A_storage.push_back(0);
+    else if(options.A_fetch_method=="local")
+        A_storage.push_back(1);
     else{
-        lhs_storage.push_back(0);
-        lhs_storage.push_back(1);
+        A_storage.push_back(0);
+        A_storage.push_back(1);
     }
-    std::vector<int> rhs_storage;
-    if(options.rhs_fetch_method=="global")
-        rhs_storage.push_back(0);
-    else if(options.rhs_fetch_method=="local")
-        rhs_storage.push_back(1);
+    std::vector<int> B_storage;
+    if(options.B_fetch_method=="global")
+        B_storage.push_back(0);
+    else if(options.B_fetch_method=="local")
+        B_storage.push_back(1);
     else{
-        rhs_storage.push_back(0);
-        rhs_storage.push_back(1);
+        B_storage.push_back(0);
+        B_storage.push_back(1);
     }
+
+    std::vector<int> local_fetch0, local_fetch1;
+    if(std::find(A_storage.begin(), A_storage.end(), 1)!=A_storage.end() || std::find(B_storage.begin(), B_storage.end(), 1)!=B_storage.end()){
+      tmp = get_values_in_commas(options.local_fetch0_interval); for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_fetch0.push_back(i);
+      tmp = get_values_in_commas(options.local_fetch1_interval); for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) local_fetch1.push_back(i);
+    }
+    else{
+      local_fetch0.push_back(0);
+      local_fetch1.push_back(0);
+    }
+
     
     std::cout << "-------------------" << std::endl;
-    print_parameters("local size 1", local_size_1.begin(), local_size_1.end());
-    print_parameters("local size 2", local_size_2.begin(), local_size_2.end());
-    print_parameters("cache_width", cache_width.begin(), cache_width.end());
+    print_parameters("local size 1", ls0.begin(), ls0.end());
+    print_parameters("local size 2", ls1.begin(), ls1.end());
+    print_parameters("kl", kl.begin(), kl.end());
     print_parameters("ms", ms.begin(), ms.end());
     print_parameters("ns", ns.begin(), ns.end());
-    print_parameters("lhs fetch method", lhs_storage.begin(), lhs_storage.end());
-    print_parameters("rhs fetch method", rhs_storage.begin(), rhs_storage.end());
+    print_parameters("A fetch method", A_storage.begin(), A_storage.end());
+    print_parameters("B fetch method", B_storage.begin(), B_storage.end());
+
+    print_parameters("local fetch0", local_fetch0.begin(), local_fetch0.end());
+    print_parameters("local fetch1", local_fetch1.begin(), local_fetch1.end());
     std::cout << "-------------------" << std::endl;
 
-    conf.add_tuning_param("local_size1",local_size_1);
-    conf.add_tuning_param("cache_width",cache_width);
-    conf.add_tuning_param("local_size2",local_size_2);
+    conf.add_tuning_param("local_size1",ls0);
+    conf.add_tuning_param("kl",kl);
+    conf.add_tuning_param("local_size2",ls1);
     conf.add_tuning_param("ms",ms);
     conf.add_tuning_param("ks",ks);
     conf.add_tuning_param("ns",ns);
     conf.add_tuning_param("vector",vector);
-    conf.add_tuning_param("lhs_storage",lhs_storage);
-    conf.add_tuning_param("rhs_storage",rhs_storage);
+    conf.add_tuning_param("A_storage",A_storage);
+    conf.add_tuning_param("B_storage",B_storage);
+
+    conf.add_tuning_param("local_fetch0",local_fetch0);
+    conf.add_tuning_param("local_fetch1",local_fetch1);
 
 
     stream << "# ---- GEMM ----" << std::endl;
