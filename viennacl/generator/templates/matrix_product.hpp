@@ -68,11 +68,14 @@ class matrix_product : public profile_base{
 
     bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
         static const unsigned int alignment = 128;
-        return
-                ML_ % ls0_ > 0
-                || NL_ % ls1_ > 0
-                || KL_ % ls1_ > 0
-                || KL_ % ls0_ > 0
+        return  DIM_XA_*DIM_YA_ != (ls0_*ls1_)
+                || DIM_XB_*DIM_YB_ != (ls0_*ls1_)
+                || ML_ % DIM_XA_ > 0
+                || KL_ % DIM_YA_> 0
+
+                || KL_ % DIM_YB_ > 0
+                || NL_ % DIM_XB_ > 0
+
                 || alignment % ML_ > 0
                 || alignment % KL_ > 0
                 || alignment % NL_ > 0
@@ -96,6 +99,10 @@ public:
         ns_=ns;
         use_lhs_shared_ = use_lhs_shared;
         use_rhs_shared_ = use_rhs_shared;
+        DIM_XA_ = 32;
+        DIM_YA_ = 4;
+        DIM_XB_ = 32;
+        DIM_YB_ = 4;
     }
 
     static std::string csv_format() {
@@ -289,11 +296,6 @@ private:
             stream << "__local " << rhs->scalartype() << " lB[" << NL_ << "][" << KL_ + 1 << "];" << std::endl;
         stream << std::endl;
 
-        unsigned int DIM_XA = ls0_;
-        unsigned int DIM_YA = ls1_;
-
-        unsigned int DIM_XB = ls0_;
-        unsigned int DIM_YB = ls1_;
 
         stream << "uint gidx = get_group_id(0);" << std::endl;
         stream << "uint gidy = get_group_id(1);" << std::endl;
@@ -302,10 +304,10 @@ private:
         if(use_lhs_shared_ || use_rhs_shared_){
           stream << std::endl;
           stream << "uint idt = " << ls0_ << "*idy + idx;" << std::endl;
-          stream << "uint idxA = idt % " << DIM_XA << ";" << std::endl;
-          stream << "uint idyA = idt / " << DIM_XA << ";" << std::endl;
-          stream << "uint idxB = idt % " << DIM_XB << ";" << std::endl;
-          stream << "uint idyB = idt / " << DIM_XB << ";" << std::endl;
+          stream << "uint idxA = idt % " << DIM_XA_ << ";" << std::endl;
+          stream << "uint idyA = idt / " << DIM_XA_ << ";" << std::endl;
+          stream << "uint idxB = idt % " << DIM_XB_ << ";" << std::endl;
+          stream << "uint idyB = idt / " << DIM_XB_ << ";" << std::endl;
         }
         stream << std::endl;
 
@@ -315,12 +317,12 @@ private:
         stream << std::endl;
 
         if(use_lhs_shared_)
-            stream << lhs->name() << " +=  gidx*" << ML_ << "+ idx*" << simd_width_ << "+ idy*" << lhs->ld()  << ";" << std::endl;
+            stream << lhs->name() << " +=  gidx*" << ML_ << "+ idxA*" << simd_width_ << "+ idyA*" << lhs->ld()  << ";" << std::endl;
         else
             stream << lhs->name() << " +=  offset_x/" << simd_width_  << ";" << std::endl;
 
         if(use_rhs_shared_)
-          stream << rhs->name() << " +=  gidy*" << NL_ << "+ idx*" << simd_width_ << "+ idy*" << rhs->ld()  << ";" << std::endl;
+          stream << rhs->name() << " +=  gidy*" << NL_ << "+ idxB*" << simd_width_ << "+ idyB*" << rhs->ld()  << ";" << std::endl;
         else
           stream << rhs->name() << " +=  offset_y/" << simd_width_  << ";" << std::endl;
 
@@ -330,18 +332,21 @@ private:
         stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << KL_ << "){" << std::endl;
         stream.inc_tab();
 
+        if(use_lhs_shared_ || use_rhs_shared_)
+            stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+
         ///Fetch LHS to Local Memory
         if(use_lhs_shared_)
         {
-            for(unsigned int k = 0 ; k < KL_ ; k += ls1_){
-                for(unsigned int m = 0 ; m < ML_ ; m += ls0_*simd_width_){
+            for(unsigned int k = 0 ; k < KL_ ; k += DIM_YA_){
+                for(unsigned int m = 0 ; m < ML_ ; m += DIM_XA_*simd_width_){
                     if(simd_width_>1){
                         stream << "tmpreg = " << lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
                         for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-                            stream << "lA[idy + " << k << "][" << simd_width_ << "*idx + " << m + s << "] = tmpreg.s" << s << ";" << std::endl;
+                            stream << "lA[idyA + " << k << "][" << simd_width_ << "*idxA + " << m + s << "] = tmpreg.s" << s << ";" << std::endl;
                     }
                     else{
-                        stream << "lA[idy + " << k << "][idx + " << m << "] = " << lhs->name() << "[" << m <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
+                        stream << "lA[idyA + " << k << "][idxA + " << m << "] = " << lhs->name() << "[" << m <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
                     }
                 }
             }
@@ -350,15 +355,15 @@ private:
         ///Fetch RHS to Local Memory
         if(use_rhs_shared_)
         {
-            for(unsigned int k = 0 ; k < KL_ ; k += ls1_){
-                for(unsigned int n = 0 ; n < NL_ ; n += ls0_*simd_width_){
+            for(unsigned int k = 0 ; k < KL_ ; k += DIM_YB_){
+                for(unsigned int n = 0 ; n < NL_ ; n += DIM_XB_*simd_width_){
                     if(simd_width_>1){
                         stream << "tmpreg = " << rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
                         for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-                            stream << "lB[" << simd_width_ << "*idx + " << n + s << "][idy + " << k << "] = tmpreg.s" << s << ";" << std::endl;
+                            stream << "lB[" << simd_width_ << "*idxB + " << n + s << "][idyB + " << k << "] = tmpreg.s" << s << ";" << std::endl;
                     }
                     else{
-                        stream << "lB[idx + " << n << "][idy + " << k << "] = " << rhs->name() << "[" << n <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
+                        stream << "lB[idxB + " << n << "][idyB + " << k << "] = " << rhs->name() << "[" << n <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
                     }
                 }
             }
@@ -424,9 +429,6 @@ private:
         if(use_rhs_shared_)
             stream << rhs->name() << " += " << KL_ << "*" << rhs->ld() << ";" << std::endl;
 
-        if(use_lhs_shared_ || use_rhs_shared_)
-            stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-
         stream.dec_tab();
         stream << "}" << std::endl;
 
@@ -458,6 +460,12 @@ private:
     std::size_t ms_;
     std::size_t ks_;
     std::size_t ns_;
+
+    std::size_t DIM_XA_;
+    std::size_t DIM_YA_;
+
+    std::size_t DIM_XB_;
+    std::size_t DIM_YB_;
 
     bool use_lhs_shared_;
     bool use_rhs_shared_;
