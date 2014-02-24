@@ -40,64 +40,60 @@ namespace viennacl{
 
 namespace generator{
 
-struct shared_memory_config{
-    shared_memory_config(bool _use_shared, std::size_t _fetch_size0, std::size_t _fetch_size1) : use_shared(_use_shared), fetch_size0_(_fetch_size0), fetch_size1_(_fetch_size1){ }
-    bool use_shared;
-    std::size_t fetch_size0_;
-    std::size_t fetch_size1_;
-};
-
 class matrix_product : public profile_base{
 
 
     std::size_t lmem_used(std::size_t scalartype_size) const {
         std::size_t lmem_used = 0;
-        if(shared_a_.use_shared)
+        if(use_a_local_)
             lmem_used += KL_ * (ML_+1) * scalartype_size;
-        if(shared_b_.use_shared)
+        if(use_b_local_)
             lmem_used += NL_ * (KL_ + 1) * scalartype_size;
         return lmem_used;
     }
 
     virtual void print(std::ostream & s) const{
-        s << "{vector_type, local_size1, cache_width, local_size2, ms, ks, ns, use_lhs_shared, use_rhs_shared} = {"
+        s << "{simd_width,local_size1,kl,local_size2,ms,ks,ns,use_a_local,use_b_local,local_fetch0,local_fetch1} = {"
           << simd_width_ << ","
-          << ls0_ << ", "
-          << KL_ << ", "
-          << ls1_ << ", "
-          << ms_ << ", "
-          << ks_ << ", "
-          << ns_ << ", "
-          << "(" << shared_a_.use_shared << ", " << shared_a_.fetch_size0_ << "," << shared_a_.fetch_size1_ << "),"
-          << "(" << shared_b_.use_shared << ", " << shared_b_.fetch_size0_ << "," << shared_b_.fetch_size1_ << ")" << "}" ;
+          << ls0_ << ","
+          << KL_ << ","
+          << ls1_ << ","
+          << ms_ << ","
+          << ks_ << ","
+          << ns_ << ","
+          << use_a_local_ << ","
+          << use_b_local_ << ","
+          << local_fetch0_ << ","
+          << local_fetch1_ << "}" ;
     }
 
 
     bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
         static const unsigned int alignment = 128;
-        return  shared_a_.fetch_size0_ != shared_b_.fetch_size0_
-                || shared_a_.fetch_size1_ != shared_b_.fetch_size1_
-                || shared_a_.fetch_size0_*shared_a_.fetch_size1_ != (ls0_*ls1_)
-                || shared_b_.fetch_size0_*shared_b_.fetch_size1_ != (ls0_*ls1_)
-                || ML_ % (shared_a_.fetch_size0_*simd_width_) > 0
-                || KL_ % shared_a_.fetch_size1_> 0
-
-                || KL_ % shared_b_.fetch_size1_ > 0
-                || NL_ % (shared_b_.fetch_size0_*simd_width_) > 0
-
-                || alignment % ML_ > 0
-                || alignment % KL_ > 0
-                || alignment % NL_ > 0
-                || (ms_ % simd_width_) > 0
-                || (ns_ % simd_width_) > 0;
+        bool res = false;
+        res |= alignment % ML_ > 0;
+        res |= alignment % KL_ > 0;
+        res |= alignment % NL_ > 0;
+        res |= (ms_ % simd_width_) > 0;
+        res |= (ns_ % simd_width_) > 0;
+        if(use_a_local_)
+            res |= (ML_ % local_fetch0_*simd_width_) > 0;
+        if(use_b_local_)
+            res |= (NL_ % local_fetch0_*simd_width_) > 0;
+        if(use_a_local_ || use_b_local_){
+            res |= (KL_ % local_fetch1_)> 0;
+            res |= ((local_fetch0_*local_fetch1_) !=(ls0_*ls1_));
+        }
+        return res;
     }
 
 public:
     /** @brief The user constructor */
-    matrix_product(unsigned int vectorization
+    matrix_product(unsigned int simd_width
                    , std::size_t ls0, std::size_t KL, std::size_t ls1
                    , unsigned int ms, unsigned int ks, unsigned int ns
-                   , shared_memory_config const & shared_a, shared_memory_config const & shared_b) : profile_base(vectorization,ls0, ls1,1), shared_a_(shared_a), shared_b_(shared_b){
+                   , bool use_a_local, bool use_b_local
+                   , std::size_t local_fetch0, std::size_t local_fetch1) : profile_base(simd_width,ls0, ls1,1){
         ls0_ = ls0;
         ls1_ = ls1;
         KL_=KL;
@@ -106,23 +102,28 @@ public:
         ms_ = ms;
         ks_=ks;
         ns_=ns;
+        use_a_local_ = use_a_local;
+        use_b_local_ = use_b_local;
+        local_fetch0_ = local_fetch0;
+        local_fetch1_ = local_fetch1;
     }
 
     static std::string csv_format() {
-      return "vector,ls0,kl,ls1,ms,ks,ns,(use_A_local, A_local_fetch0, A_local_fetch1),(use_B_local, _local_fetch0, B_local_fetch1)";
+      return "simd_width, local_size1, kl, local_size2, ms, ks, ns, use_a_local, use_b_local, local_fetch0, local_fetch1";
     }
 
     std::string csv_representation() const{
         std::ostringstream oss;
         oss << simd_width_ << ","
-        << ls0_ << ", "
-        << KL_ << ", "
-        << ls1_ << ", "
-        << ms_ << ", "
-        << ks_ << ", "
-        << ns_ << ", "
-        << "(" << shared_a_.use_shared << ", " << shared_a_.fetch_size0_ << "," << shared_a_.fetch_size1_ << "),"
-        << "(" << shared_b_.use_shared << ", " << shared_b_.fetch_size0_ << "," << shared_b_.fetch_size1_ << ")";
+        << ls0_ << ","
+        << KL_ << ","
+        << ls1_ << ","
+        << ms_ << ","
+        << ks_ << ","
+        << ns_ << ","
+        << use_a_local_ << ","
+        << local_fetch0_ << ","
+        << local_fetch1_;
         return oss.str();
     }
 
@@ -271,12 +272,12 @@ private:
         unsigned int ml_lhs = ML_, cache_width_lhs = KL_, ms_lhs = ms_, ks_lhs = ks_;
         unsigned int cache_width_rhs = KL_, nl_rhs = NL_, ks_rhs = ks_, ns_rhs = ns_;
 
-        transform_block(*lhs,shared_a_.use_shared,ml_lhs,cache_width_lhs,ms_lhs,ks_lhs);
-        transform_block(*rhs,shared_b_.use_shared,cache_width_rhs,nl_rhs,ks_rhs,ns_rhs);
+        transform_block(*lhs,use_a_local_,ml_lhs,cache_width_lhs,ms_lhs,ks_lhs);
+        transform_block(*rhs,use_b_local_,cache_width_rhs,nl_rhs,ks_rhs,ns_rhs);
 
         std::string C_scalartype = assigned->scalartype();
-        std::string A_scalartype = shared_a_.use_shared?lhs->scalartype():lhs->simd_scalartype();
-        std::string B_scalartype = shared_b_.use_shared?rhs->scalartype():rhs->simd_scalartype();
+        std::string A_scalartype = use_a_local_?lhs->scalartype():lhs->simd_scalartype();
+        std::string B_scalartype = use_b_local_?rhs->scalartype():rhs->simd_scalartype();
 
         //////////////////
         /// DECLARATIONS
@@ -288,14 +289,14 @@ private:
         stream << A_scalartype << " " << "rA[" << ms_lhs << "];" << std::endl;
         stream << B_scalartype << " " << "rB[" << ns_rhs <<"];" << std::endl;
 
-        if(simd_width_>1 && (shared_a_.use_shared || shared_b_.use_shared))
+        if(simd_width_>1 && (use_a_local_ || use_b_local_))
             stream << lhs->simd_scalartype() << " tmpreg;" << std::endl;
         stream << std::endl;
 
 
-        if(shared_a_.use_shared)
+        if(use_a_local_)
             stream << "__local " << lhs->scalartype() << " lA[" << KL_ << "][" << ML_ + 1 << "];" << std::endl;
-        if(shared_b_.use_shared)
+        if(use_b_local_)
             stream << "__local " << rhs->scalartype() << " lB[" << NL_ << "][" << KL_ + 1 << "];" << std::endl;
         stream << std::endl;
 
@@ -304,13 +305,13 @@ private:
         stream << "uint gidy = get_group_id(1);" << std::endl;
         stream << "uint idx = get_local_id(0);" << std::endl;
         stream << "uint idy = get_local_id(1);" << std::endl;
-        if(shared_a_.use_shared || shared_b_.use_shared){
+        if(use_a_local_ || use_b_local_){
           stream << std::endl;
           stream << "uint idt = " << ls0_ << "*idy + idx;" << std::endl;
-          stream << "uint idxA = idt % " << shared_a_.fetch_size0_ << ";" << std::endl;
-          stream << "uint idyA = idt / " << shared_a_.fetch_size0_ << ";" << std::endl;
-          stream << "uint idxB = idt % " << shared_b_.fetch_size0_ << ";" << std::endl;
-          stream << "uint idyB = idt / " << shared_b_.fetch_size0_ << ";" << std::endl;
+          stream << "uint idxA = idt % " << local_fetch0_ << ";" << std::endl;
+          stream << "uint idyA = idt / " << local_fetch0_ << ";" << std::endl;
+          stream << "uint idxB = idt % " << local_fetch0_ << ";" << std::endl;
+          stream << "uint idyB = idt / " << local_fetch0_ << ";" << std::endl;
         }
         stream << std::endl;
 
@@ -319,12 +320,12 @@ private:
 
         stream << std::endl;
 
-        if(shared_a_.use_shared)
+        if(use_a_local_)
             stream << lhs->name() << " +=  gidx*" << ML_/simd_width_ << "+ idxA + idyA*" << lhs->ld()  << ";" << std::endl;
         else
             stream << lhs->name() << " +=  offset_x/" << simd_width_  << ";" << std::endl;
 
-        if(shared_b_.use_shared)
+        if(use_b_local_)
           stream << rhs->name() << " +=  gidy*" << NL_/simd_width_ << "+ idxB + idyB*" << rhs->ld()  << ";" << std::endl;
         else
           stream << rhs->name() << " +=  offset_y/" << simd_width_  << ";" << std::endl;
@@ -335,14 +336,14 @@ private:
         stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << KL_ << "){" << std::endl;
         stream.inc_tab();
 
-        if(shared_a_.use_shared || shared_b_.use_shared)
+        if(use_a_local_ || use_b_local_)
             stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
         ///Fetch LHS to Local Memory
-        if(shared_a_.use_shared)
+        if(use_a_local_)
         {
-            for(unsigned int k = 0 ; k < KL_ ; k += shared_a_.fetch_size1_){
-                for(unsigned int m = 0 ; m < ML_ ; m += shared_a_.fetch_size0_*simd_width_){
+            for(unsigned int k = 0 ; k < KL_ ; k += local_fetch1_){
+                for(unsigned int m = 0 ; m < ML_ ; m += local_fetch0_*simd_width_){
                     if(simd_width_>1){
                         stream << "tmpreg = " << lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
                         for(unsigned int s = 0 ; s < simd_width_ ; ++s)
@@ -356,10 +357,10 @@ private:
         }
 
         ///Fetch RHS to Local Memory
-        if(shared_b_.use_shared)
+        if(use_b_local_)
         {
-            for(unsigned int k = 0 ; k < KL_ ; k += shared_b_.fetch_size1_){
-                for(unsigned int n = 0 ; n < NL_ ; n += shared_b_.fetch_size0_*simd_width_){
+            for(unsigned int k = 0 ; k < KL_ ; k += local_fetch1_){
+                for(unsigned int n = 0 ; n < NL_ ; n += local_fetch0_*simd_width_){
                     if(simd_width_>1){
                         stream << "tmpreg = " << rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
                         for(unsigned int s = 0 ; s < simd_width_ ; ++s)
@@ -372,7 +373,7 @@ private:
             }
         }
 
-        if(shared_a_.use_shared || shared_b_.use_shared)
+        if(use_a_local_ || use_b_local_)
             stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
         stream << "#pragma unroll" << std::endl;
@@ -381,7 +382,7 @@ private:
 
         ///Fetch LHS to registers
         for(unsigned int m = 0 ; m < ms_/simd_width_ ; ++m){
-            if(shared_a_.use_shared)
+            if(use_a_local_)
                 for(unsigned int s = 0 ; s < simd_width_ ; ++s)
                     stream << "rA[" << m*simd_width_ + s << "] = lA[k][" << simd_width_ << "*idx + " << m*ls0_*simd_width_ + s << "];" << std::endl;
             else
@@ -391,7 +392,7 @@ private:
 
         ///Fetch RHS to registers
         for(unsigned int n=0 ; n < ns_/simd_width_ ; ++n){
-            if(shared_b_.use_shared)
+            if(use_b_local_)
                 for(unsigned int s = 0 ; s < simd_width_ ; ++s)
                     stream << "rB[" << n*simd_width_ + s << "] = lB[" << simd_width_ << "*idy + " << n*ls1_*simd_width_ + s << "][k];" << std::endl;
             else
@@ -403,13 +404,13 @@ private:
                 std::string res_str, lhs_str, rhs_str;
                 res_str = "rC[" + utils::to_string(m) + "][" + utils::to_string(n) + "]";
                 if(!lhs->interpret_as_transposed()){
-                    if(shared_a_.use_shared || simd_width_==1)
+                    if(use_a_local_ || simd_width_==1)
                         lhs_str = "rA[" + utils::to_string(m) + "]";
                     else
                         lhs_str = "rA[" + utils::to_string(m/simd_width_) + "].s" + utils::to_string(m%simd_width_);
                 }
                 if(rhs->interpret_as_transposed()){
-                    if(shared_b_.use_shared || simd_width_==1)
+                    if(use_b_local_ || simd_width_==1)
                         rhs_str = "rB["+utils::to_string(n)+"]";
                     else
                         rhs_str = "rB["+utils::to_string(n/simd_width_)+"].s"+utils::to_string(n%simd_width_);
@@ -418,18 +419,18 @@ private:
             }
         }
 
-        if(!shared_a_.use_shared && !lhs->interpret_as_transposed())
+        if(!use_a_local_ && !lhs->interpret_as_transposed())
             stream << lhs->name() << " += " << lhs->ld() << ";" << std::endl;
 
-        if(!shared_b_.use_shared && rhs->interpret_as_transposed())
+        if(!use_b_local_ && rhs->interpret_as_transposed())
             stream << rhs->name() << " += " << rhs->ld() << ";" << std::endl;
 
 
         stream.dec_tab();
         stream << "}" << std::endl;
-        if(shared_a_.use_shared)
+        if(use_a_local_)
             stream << lhs->name() << " += " << KL_ << "*" << lhs->ld() << ";" << std::endl;
-        if(shared_b_.use_shared)
+        if(use_b_local_)
             stream << rhs->name() << " += " << KL_ << "*" << rhs->ld() << ";" << std::endl;
 
         stream.dec_tab();
@@ -481,8 +482,11 @@ private:
     std::size_t ks_;
     std::size_t ns_;
 
-    shared_memory_config shared_a_;
-    shared_memory_config shared_b_;
+    bool use_a_local_;
+    bool use_b_local_;
+
+    std::size_t local_fetch0_;
+    std::size_t local_fetch1_;
 };
 
 }

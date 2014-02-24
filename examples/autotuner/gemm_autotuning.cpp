@@ -167,7 +167,7 @@ struct config{
        int local_fetch0 = viennacl::generator::at(params, std::string("local_fetch0")).current();
        int local_fetch1 = viennacl::generator::at(params, std::string("local_fetch1")).current();
 
-       matrix_product res(vector,ls0,kl,ls1,ms,1,ns,shared_memory_config(A_local,local_fetch0,local_fetch1), shared_memory_config(B_local,local_fetch0,local_fetch1));
+       matrix_product res(vector,ls0,kl,ls1,ms,1,ns,A_local,B_local,local_fetch0,local_fetch1);
 
        return res;
     }
@@ -247,7 +247,7 @@ void run_autotune(autotuner_options options){
     std::ofstream stream(options.output_name.c_str());
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(1024,50));
+    rounds_config.push_back(std::make_pair(1536,50));
 
     std::vector<unsigned int> tmp;
     tmp = get_values_in_commas(options.ls0_interval); std::vector<int> ls0; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls0.push_back(i);
