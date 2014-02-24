@@ -79,11 +79,11 @@ class matrix_product : public profile_base{
                 || shared_a_.fetch_size1_ != shared_b_.fetch_size1_
                 || shared_a_.fetch_size0_*shared_a_.fetch_size1_ != (ls0_*ls1_)
                 || shared_b_.fetch_size0_*shared_b_.fetch_size1_ != (ls0_*ls1_)
-                || ML_ % shared_a_.fetch_size0_ > 0
+                || ML_ % (shared_a_.fetch_size0_*simd_width_) > 0
                 || KL_ % shared_a_.fetch_size1_> 0
 
                 || KL_ % shared_b_.fetch_size1_ > 0
-                || NL_ % shared_b_.fetch_size0_ > 0
+                || NL_ % (shared_b_.fetch_size0_*simd_width_) > 0
 
                 || alignment % ML_ > 0
                 || alignment % KL_ > 0
@@ -320,12 +320,12 @@ private:
         stream << std::endl;
 
         if(shared_a_.use_shared)
-            stream << lhs->name() << " +=  gidx*" << ML_ << "+ idxA*" << simd_width_ << "+ idyA*" << lhs->ld()  << ";" << std::endl;
+            stream << lhs->name() << " +=  gidx*" << ML_/simd_width_ << "+ idxA + idyA*" << lhs->ld()  << ";" << std::endl;
         else
             stream << lhs->name() << " +=  offset_x/" << simd_width_  << ";" << std::endl;
 
         if(shared_b_.use_shared)
-          stream << rhs->name() << " +=  gidy*" << NL_ << "+ idxB*" << simd_width_ << "+ idyB*" << rhs->ld()  << ";" << std::endl;
+          stream << rhs->name() << " +=  gidy*" << NL_/simd_width_ << "+ idxB + idyB*" << rhs->ld()  << ";" << std::endl;
         else
           stream << rhs->name() << " +=  offset_y/" << simd_width_  << ";" << std::endl;
 
@@ -436,34 +436,35 @@ private:
         stream << "}" << std::endl;
 
 
-        stream << "#pragma unroll"<< std::endl;
-        stream << "for(unsigned int m = 0 ; m < " << ms_ << " ; ++m){" << std::endl;
-        stream.inc_tab();
-        stream << "#pragma unroll"<< std::endl;
-        stream << "for(unsigned int n = 0 ; n < " << ns_ << " ; ++n){" << std::endl;
-        stream.inc_tab();
-        prod->access_name("rC[m][n]");
-        std::string i = "offset_x + m*" + utils::to_string(ls0_);
-        std::string j = "offset_y + n*" + utils::to_string(ls1_);
-         std::string str;
-         tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
-         stream << str << ";" << std::endl;
-        stream.dec_tab();
-        stream << "}" << std::endl;
-        stream.dec_tab();
-        stream << "}" << std::endl;
-//        for(unsigned int m=0 ; m < ms_res ; ++m){
-//            for(unsigned int n=0 ; n < ns_res ; ++n){
-//                std::string i = "offset_x +" + utils::to_string((m/simd_width_)*(ls0_*simd_width_) + m%simd_width_);
-//                std::string j = "offset_y +" + utils::to_string((n/simd_width_)*(ls1_*simd_width_) + n%simd_width_);
-//                if(assigned->interpret_as_transposed())
-//                    std::swap(i,j);
-//                prod->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
-//                std::string str;
-//                tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
-//                stream << str << ";" << std::endl;
-//            }
-//        }
+//        stream << "#pragma unroll"<< std::endl;
+//        stream << "for(unsigned int m = 0 ; m < " << ms_ << " ; ++m){" << std::endl;
+//        stream.inc_tab();
+//        stream << "#pragma unroll"<< std::endl;
+//        stream << "for(unsigned int n = 0 ; n < " << ns_ << " ; ++n){" << std::endl;
+//        stream.inc_tab();
+//        prod->access_name("rC[m][n]");
+//        std::string i = "offset_x + m*" + utils::to_string(ls0_);
+//        std::string j = "offset_y + n*" + utils::to_string(ls1_);
+//         std::string str;
+//         tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
+//         stream << str << ";" << std::endl;
+//        stream.dec_tab();
+//        stream << "}" << std::endl;
+//        stream.dec_tab();
+//        stream << "}" << std::endl;
+
+        for(unsigned int m=0 ; m < ms_res ; ++m){
+            for(unsigned int n=0 ; n < ns_res ; ++n){
+                std::string i = "offset_x +" + utils::to_string((m/simd_width_)*(ls0_*simd_width_) + m%simd_width_);
+                std::string j = "offset_y +" + utils::to_string((n/simd_width_)*(ls1_*simd_width_) + n%simd_width_);
+                if(assigned->interpret_as_transposed())
+                    std::swap(i,j);
+                prod->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
+                std::string str;
+                tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
+                stream << str << ";" << std::endl;
+            }
+        }
 
 
     }
