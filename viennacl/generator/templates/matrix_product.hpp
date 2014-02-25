@@ -122,6 +122,7 @@ public:
         << ks_ << ","
         << ns_ << ","
         << use_a_local_ << ","
+		<< use_b_local_ << ","
         << local_fetch0_ << ","
         << local_fetch1_;
         return oss.str();
@@ -288,9 +289,6 @@ private:
         stream << C_scalartype << " " << "rC[" << ms_ << "][" << ns_ <<"]  = {(" << assigned->scalartype() << ")0};" << std::endl;
         stream << A_scalartype << " " << "rA[" << ms_lhs << "];" << std::endl;
         stream << B_scalartype << " " << "rB[" << ns_rhs <<"];" << std::endl;
-
-        if(simd_width_>1 && (use_a_local_ || use_b_local_))
-            stream << lhs->simd_scalartype() << " tmpreg;" << std::endl;
         stream << std::endl;
 
 
@@ -344,14 +342,10 @@ private:
         {
             for(unsigned int k = 0 ; k < KL_ ; k += local_fetch1_){
                 for(unsigned int m = 0 ; m < ML_ ; m += local_fetch0_*simd_width_){
-                    if(simd_width_>1){
-                        stream << "tmpreg = " << lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
-                        for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-                            stream << "lA[idyA + " << k << "][" << simd_width_ << "*idxA + " << m + s << "] = tmpreg.s" << s << ";" << std::endl;
-                    }
-                    else{
-                        stream << "lA[idyA + " << k << "][idxA + " << m << "] = " << lhs->name() << "[" << m <<  "+"  << k << "*" << lhs->ld() << "];" << std::endl;
-                    }
+			stream << "vstore" ;
+			if(simd_width_>1)
+				stream << simd_width_;
+			stream << "(" <<  lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "],0," << "&lA[idyA + " << k << "][" << simd_width_ << "*idxA + " << m << "]);" << std::endl;
                 }
             }
         }
@@ -361,14 +355,10 @@ private:
         {
             for(unsigned int k = 0 ; k < KL_ ; k += local_fetch1_){
                 for(unsigned int n = 0 ; n < NL_ ; n += local_fetch0_*simd_width_){
-                    if(simd_width_>1){
-                        stream << "tmpreg = " << rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
-                        for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-                            stream << "lB[" << simd_width_ << "*idxB + " << n + s << "][idyB + " << k << "] = tmpreg.s" << s << ";" << std::endl;
-                    }
-                    else{
-                        stream << "lB[idxB + " << n << "][idyB + " << k << "] = " << rhs->name() << "[" << n <<  "+"  << k << "*" << rhs->ld() << "];" << std::endl;
-                    }
+					stream << "vstore" ;
+					if(simd_width_>1)
+						stream << simd_width_;
+					stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "&lB[" << simd_width_ << "*idxB + " << n << "][idyB + " << k << "]);" << std::endl;
                 }
             }
         }
@@ -415,7 +405,7 @@ private:
                     else
                         rhs_str = "rB["+utils::to_string(n/simd_width_)+"].s"+utils::to_string(n%simd_width_);
                 }
-                stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
+                stream << res_str << "=" << "mad(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
             }
         }
 

@@ -36,7 +36,7 @@
 
 using namespace viennacl::generator;
 
-static const unsigned int n_runs = 2;
+static const unsigned int n_runs = 10;
 
 struct autotuner_options{
 
@@ -247,7 +247,7 @@ void run_autotune(autotuner_options options){
     std::ofstream stream(options.output_name.c_str());
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(1536,50));
+    rounds_config.push_back(std::make_pair(2048,50));
 
     std::vector<unsigned int> tmp;
     tmp = get_values_in_commas(options.ls0_interval); std::vector<int> ls0; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls0.push_back(i);
@@ -348,7 +348,7 @@ void run_autotune(autotuner_options options){
             std::cout << '\r' << "Determining best profile for size " << size << "..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
             double exec_time = autotune::benchmark_impl(statement,key,*it,n_runs);
             timings.insert(std::make_pair(exec_time, *it));
-            stream << std::setprecision(3) << std::scientific << exec_time << "," << it->csv_representation() << std::endl;
+            stream <<  std::scientific << exec_time << "," << it->csv_representation() << std::endl;
           }
           std::cout << std::endl;
         }
