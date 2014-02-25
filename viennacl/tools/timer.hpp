@@ -56,21 +56,22 @@ namespace viennacl{
 
       double get() const
       {
-        LARGE_INTEGER  end_time;
+        LARGE_INTEGER  elapsed;
         QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
-        return (static_cast<double>(end_time.QuadPart) - static_cast<double>(start_time.QuadPart)) / static_cast<double>(freq.QuadPart);
-      }
+		elapsed.QuadPart = end_time.QuadPart - start_time.QuadPart;
+        return elapsed.QuadPart / static_cast<double>(freq.QuadPart);
+      } 
 
 
     private:
       LARGE_INTEGER freq;
       LARGE_INTEGER start_time;
+	  LARGE_INTERGET end_time;
     };
 
   }
 
 }
-
 
 #else
 
