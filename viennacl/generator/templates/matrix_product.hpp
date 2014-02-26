@@ -77,9 +77,9 @@ namespace viennacl{
         res |= (ms_ % simd_width_) > 0;
         res |= (ns_ % simd_width_) > 0;
         if(use_a_local_)
-          res |= (ML_ % local_fetch0_*simd_width_) > 0;
+          res |= (ML_ % (local_fetch0_*simd_width_)) > 0;
         if(use_b_local_)
-          res |= (NL_ % local_fetch0_*simd_width_) > 0;
+          res |= (NL_ % (local_fetch0_*simd_width_)) > 0;
         if(use_a_local_ || use_b_local_){
           res |= (KL_ % local_fetch1_)> 0;
           res |= ((local_fetch0_*local_fetch1_) !=(ls0_*ls1_));
