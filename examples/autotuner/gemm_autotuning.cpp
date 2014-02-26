@@ -159,6 +159,7 @@ struct config{
        int ls1 = viennacl::generator::at(params, std::string("local_size2")).current();
        int kl = viennacl::generator::at(params, std::string("kl")).current();
        int ms = viennacl::generator::at(params, std::string("ms")).current();
+       int ks = viennacl::generator::at(params, std::string("ks")).current();
        int ns = viennacl::generator::at(params, std::string("ns")).current();
 
        bool A_local = (viennacl::generator::at(params, std::string("A_storage")).current()==1);
@@ -167,7 +168,7 @@ struct config{
        int local_fetch0 = viennacl::generator::at(params, std::string("local_fetch0")).current();
        int local_fetch1 = viennacl::generator::at(params, std::string("local_fetch1")).current();
 
-       matrix_product res(vector,ls0,kl,ls1,ms,1,ns,A_local,B_local,local_fetch0,local_fetch1);
+       matrix_product res(vector,ls0,kl,ls1,ms,ks,ns,A_local,B_local,local_fetch0,local_fetch1);
 
        return res;
     }
@@ -295,6 +296,7 @@ void run_autotune(autotuner_options options){
     print_parameters("local size 2", ls1.begin(), ls1.end());
     print_parameters("kl", kl.begin(), kl.end());
     print_parameters("ms", ms.begin(), ms.end());
+    print_parameters("ks", ks.begin(), ks.end());
     print_parameters("ns", ns.begin(), ns.end());
     print_parameters("A fetch method", A_storage.begin(), A_storage.end());
     print_parameters("B fetch method", B_storage.begin(), B_storage.end());
