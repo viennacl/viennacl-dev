@@ -371,62 +371,55 @@ namespace viennacl{
         stream.inc_tab();
 
         ///Fetch LHS to registers
-        stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int ks = 0 ; ks <" << ks_ << " ; ++ks){" << std::endl;
-        stream.inc_tab();
-        for(unsigned int m = 0 ; m < ms_/simd_width_ ; ++m){
-          if(use_a_local_)
-            for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-              stream << "rA[ks][" << m*simd_width_ + s << "] = lA[k+ks][" << simd_width_ << "*idx + " << m*ls0_*simd_width_ + s << "];" << std::endl;
-          else
-            stream << "rA[ks][" << m << "] = " << lhs->name() << "[" << m*ls0_ << "];" << std::endl;
+        for(unsigned int kk = 0 ; kk < ks_ ; ++kk){
+          for(unsigned int mm = 0 ; mm < ms_/simd_width_ ; ++mm){
+            if(use_a_local_)
+              for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
+                stream << "rA[" << kk << "][" << mm*simd_width_ + ss << "] = lA[k+" << kk << "][" << simd_width_ << "*idx + " << mm*ls0_*simd_width_ + ss << "];" << std::endl;
+            else
+              stream << "rA[" << kk << "][" << mm << "] = " << lhs->name() << "[" << mm*ls0_ << "];" << std::endl;
+          }
+
+
+          ///Fetch RHS to registers
+          for(unsigned int nn=0 ; nn < ns_/simd_width_ ; ++nn){
+            if(use_b_local_)
+              for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
+                stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[" << simd_width_ << "*idy + " << nn*ls1_*simd_width_ + ss << "][k+" << kk << "];" << std::endl;
+            else
+              stream << "rB[" << kk << "][" << nn << "] = " << rhs->name() << "[" << nn*ls1_ << "];" << std::endl;
+          }
+
+          ///Increment pointers
+          if(!use_a_local_ && !lhs->interpret_as_transposed())
+            stream << lhs->name() << " += " << lhs->ld() << ";" << std::endl;
+
+          if(!use_b_local_ && rhs->interpret_as_transposed())
+            stream << rhs->name() << " += " << rhs->ld() << ";" << std::endl;
         }
 
 
-        ///Fetch RHS to registers
-        for(unsigned int n=0 ; n < ns_/simd_width_ ; ++n){
-          if(use_b_local_)
-            for(unsigned int s = 0 ; s < simd_width_ ; ++s)
-              stream << "rB[ks][" << n*simd_width_ + s << "] = lB[" << simd_width_ << "*idy + " << n*ls1_*simd_width_ + s << "][k+ks];" << std::endl;
-          else
-            stream << "rB[ks][" << n << "] = " << rhs->name() << "[" << n*ls1_ << "];" << std::endl;
-        }
-
-        ///Increment pointers
-        if(!use_a_local_ && !lhs->interpret_as_transposed())
-          stream << lhs->name() << " += " << lhs->ld() << ";" << std::endl;
-
-        if(!use_b_local_ && rhs->interpret_as_transposed())
-          stream << rhs->name() << " += " << rhs->ld() << ";" << std::endl;
-
-        stream.dec_tab();
-        stream << "}" << std::endl;
-
-
-        stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int ks = 0 ; ks <" << ks_ << " ; ++ks){" << std::endl;
-        stream.inc_tab();
-        for(unsigned int m=0 ; m < ms_ ; ++m){
-          for(unsigned int n=0 ; n < ns_ ; ++n){
-            std::string res_str, lhs_str, rhs_str;
-            res_str = "rC[" + utils::to_string(m) + "][" + utils::to_string(n) + "]";
-            if(!lhs->interpret_as_transposed()){
-              if(use_a_local_ || simd_width_==1)
-                lhs_str = "rA[ks][" + utils::to_string(m) + "]";
-              else
-                lhs_str = "rA[ks][" + utils::to_string(m/simd_width_) + "].s" + utils::to_string(m%simd_width_);
+        for(unsigned int kk = 0 ; kk < ks_ ; ++kk){
+          for(unsigned int mm=0 ; mm < ms_ ; ++mm){
+            for(unsigned int nn=0 ; nn < ns_ ; ++nn){
+              std::string res_str, lhs_str, rhs_str;
+              res_str = "rC[" + utils::to_string(mm) + "][" + utils::to_string(nn) + "]";
+              if(!lhs->interpret_as_transposed()){
+                if(use_a_local_ || simd_width_==1)
+                  lhs_str = "rA[" + utils::to_string(kk) + "][" + utils::to_string(mm) + "]";
+                else
+                  lhs_str = "rA[" + utils::to_string(kk) + "][" + utils::to_string(mm/simd_width_) + "].s" + utils::to_string(mm%simd_width_);
+              }
+              if(rhs->interpret_as_transposed()){
+                if(use_b_local_ || simd_width_==1)
+                  rhs_str = "rB[" + utils::to_string(kk) + "]["+utils::to_string(nn)+"]";
+                else
+                  rhs_str = "rB[" + utils::to_string(kk) + "]["+utils::to_string(nn/simd_width_)+"].s"+utils::to_string(nn%simd_width_);
+              }
+              stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
             }
-            if(rhs->interpret_as_transposed()){
-              if(use_b_local_ || simd_width_==1)
-                rhs_str = "rB[ks]["+utils::to_string(n)+"]";
-              else
-                rhs_str = "rB[ks]["+utils::to_string(n/simd_width_)+"].s"+utils::to_string(n%simd_width_);
-            }
-            stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
           }
         }
-        stream.dec_tab();
-        stream << "}" << std::endl;
 
 
 
