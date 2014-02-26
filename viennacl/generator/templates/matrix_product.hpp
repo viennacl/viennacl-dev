@@ -295,7 +295,7 @@ namespace viennacl{
         if(use_a_local_)
           stream << "__local " << lhs->scalartype() << " lA[" << KL_ << "][" << ML_ + 1 << "];" << std::endl;
         if(use_b_local_)
-          stream << "__local " << rhs->scalartype() << " lB[" << NL_ << "][" << KL_ + 1 << "];" << std::endl;
+          stream << "__local " << rhs->scalartype() << " lB[" << KL_ << "][" << NL_ + 1 << "];" << std::endl;
         stream << std::endl;
 
 
@@ -358,7 +358,7 @@ namespace viennacl{
               stream << "vstore" ;
               if(simd_width_>1)
                 stream << simd_width_;
-              stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "&lB[" << simd_width_ << "*idxB + " << n << "][idyB + " << k << "]);" << std::endl;
+              stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "&lB[idyB + " << k << "][" << simd_width_ << "*idxB + " << n << "]);" << std::endl;
             }
           }
         }
@@ -385,7 +385,7 @@ namespace viennacl{
           for(unsigned int nn=0 ; nn < ns_/simd_width_ ; ++nn){
             if(use_b_local_)
               for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[" << simd_width_ << "*idy + " << nn*ls1_*simd_width_ + ss << "][k+" << kk << "];" << std::endl;
+                stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[k+" << kk << "][" << simd_width_ << "*idy + " << nn*ls1_*simd_width_ + ss << "];" << std::endl;
             else
               stream << "rB[" << kk << "][" << nn << "] = " << rhs->name() << "[" << nn*ls1_ << "];" << std::endl;
           }
