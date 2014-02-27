@@ -345,7 +345,7 @@ namespace viennacl{
               stream << "vstore" ;
               if(simd_width_>1)
                 stream << simd_width_;
-              stream << "(" <<  lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "],0," << "plA + " << m << ");" << std::endl;
+              stream << "(" <<  lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "]," << m << ",plA);" << std::endl;
             }
             if((k+local_fetch1_)<KL_)
                 stream << "plA += " << local_fetch1_*(ML_+1) << ";" << std::endl;
@@ -360,7 +360,7 @@ namespace viennacl{
               stream << "vstore" ;
               if(simd_width_>1)
                 stream << simd_width_;
-              stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "plB + " << n << ");" << std::endl;
+              stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "]," << n << ",plB);" << std::endl;
             }
             if((k+local_fetch1_)<KL_)
                 stream << "plB += " << local_fetch1_*(NL_+1) << ";" << std::endl;
