@@ -324,14 +324,15 @@ namespace viennacl{
 
         stream << std::endl;
 
+        stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << KL_ << "){" << std::endl;
+        stream.inc_tab();
+
         if(use_a_local_)
             stream << "__local " << lhs->scalartype() << "* plA = lA + idyT*" << ML_+1 << "+" << simd_width_ << "*idxT;" << std::endl;
-        
+
         if(use_b_local_)
             stream << "__local " << rhs->scalartype() << "* plB = lB + idyT*" << NL_+1 << "+" << simd_width_ << "*idxT;" << std::endl;
 
-        stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << KL_ << "){" << std::endl;
-        stream.inc_tab();
 
         if(use_a_local_ || use_b_local_)
             stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
@@ -347,7 +348,7 @@ namespace viennacl{
               stream << "(" <<  lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "],0," << "plA + " << m << ");" << std::endl;
             }
             if((k+local_fetch1_)<KL_)
-                stream << "plA += " << ML_+1 << ";" << std::endl;
+                stream << "plA += " << local_fetch1_*(ML_+1) << ";" << std::endl;
           }
         }
 
@@ -362,7 +363,7 @@ namespace viennacl{
               stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "plB + " << n << ");" << std::endl;
             }
             if((k+local_fetch1_)<KL_)
-                stream << "plB += " << NL_+1 << ";" << std::endl;
+                stream << "plB += " << local_fetch1_*(NL_+1) << ";" << std::endl;
           }
         }
 
