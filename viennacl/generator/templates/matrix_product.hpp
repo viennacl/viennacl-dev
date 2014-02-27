@@ -306,27 +306,21 @@ namespace viennacl{
         if(use_a_local_ || use_b_local_){
           stream << std::endl;
           stream << "uint idt = " << ls0_ << "*idy + idx;" << std::endl;
-          stream << "uint idxA = idt % " << local_fetch0_ << ";" << std::endl;
-          stream << "uint idyA = idt / " << local_fetch0_ << ";" << std::endl;
-          stream << "uint idxB = idt % " << local_fetch0_ << ";" << std::endl;
-          stream << "uint idyB = idt / " << local_fetch0_ << ";" << std::endl;
+          stream << "uint idxT = idt % " << local_fetch0_ << ";" << std::endl;
+          stream << "uint idyT = idt / " << local_fetch0_ << ";" << std::endl;
         }
         stream << std::endl;
 
-        stream << "uint offset_x = gidx*" << ML_ << "+ idx*" << simd_width_ << ";" << std::endl;
-        stream << "uint offset_y = gidy*" << NL_ << "+ idy*" << simd_width_ << ";" << std::endl;
-
-        stream << std::endl;
 
         if(use_a_local_)
-          stream << lhs->name() << " +=  gidx*" << ML_/simd_width_ << "+ idxA + idyA*" << lhs->ld()  << ";" << std::endl;
+          stream << lhs->name() << " +=  gidx*" << ML_/simd_width_ << "+ idxT + idyT*" << lhs->ld()  << ";" << std::endl;
         else
-          stream << lhs->name() << " +=  offset_x/" << simd_width_  << ";" << std::endl;
+          stream << lhs->name() << " += gidx*" << ML_/simd_width_ << "+ idx" << ";" << std::endl;
 
         if(use_b_local_)
-          stream << rhs->name() << " +=  gidy*" << NL_/simd_width_ << "+ idxB + idyB*" << rhs->ld()  << ";" << std::endl;
+          stream << rhs->name() << " +=  gidy*" << NL_/simd_width_ << "+ idxT + idyT*" << rhs->ld()  << ";" << std::endl;
         else
-          stream << rhs->name() << " +=  offset_y/" << simd_width_  << ";" << std::endl;
+          stream << rhs->name() << " +=  gidy*" << NL_/simd_width_ << "+ idy;" << std::endl;
 
         stream << std::endl;
 
@@ -345,7 +339,7 @@ namespace viennacl{
               stream << "vstore" ;
               if(simd_width_>1)
                 stream << simd_width_;
-              stream << "(" <<  lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "],0," << "&lA[idyA + " << k << "][" << simd_width_ << "*idxA + " << m << "]);" << std::endl;
+              stream << "(" <<  lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "],0," << "&lA[idyT + " << k << "][" << simd_width_ << "*idxT + " << m << "]);" << std::endl;
             }
           }
         }
@@ -358,7 +352,7 @@ namespace viennacl{
               stream << "vstore" ;
               if(simd_width_>1)
                 stream << simd_width_;
-              stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "&lB[idyB + " << k << "][" << simd_width_ << "*idxB + " << n << "]);" << std::endl;
+              stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "&lB[idyT + " << k << "][" << simd_width_ << "*idxT + " << n << "]);" << std::endl;
             }
           }
         }
@@ -366,7 +360,7 @@ namespace viennacl{
         if(use_a_local_ || use_b_local_)
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
-        stream << "#pragma unroll" << std::endl;
+        //stream << "#pragma unroll" << std::endl;
         stream << "for(unsigned int k = 0 ; k < " << KL_ << "; k+=" << ks_ << "){" << std::endl;
         stream.inc_tab();
 
@@ -452,6 +446,8 @@ namespace viennacl{
         //        stream.dec_tab();
         //        stream << "}" << std::endl;
 
+		stream << "uint offset_x = gidx*" << ML_ << "+ idx*" << simd_width_ << ";" << std::endl;
+        stream << "uint offset_y = gidy*" << NL_ << "+ idy*" << simd_width_ << ";" << std::endl;
         for(unsigned int m=0 ; m < ms_res ; ++m){
           for(unsigned int n=0 ; n < ns_res ; ++n){
             std::string i = "offset_x +" + utils::to_string((m/simd_width_)*(ls0_*simd_width_) + m%simd_width_);
