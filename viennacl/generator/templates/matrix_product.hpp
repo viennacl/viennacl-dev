@@ -370,6 +370,9 @@ namespace viennacl{
         if(use_a_local_ || use_b_local_)
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
+        stream << "uint offA = " << simd_width_ << "*idx;" << std::endl;
+        stream << "uint offB = " << simd_width_ << "*idy;" << std::endl;
+
         //stream << "#pragma unroll" << std::endl;
         stream << "for(unsigned int k = 0 ; k < " << KL_ << "; k+=" << ks_ << "){" << std::endl;
         stream.inc_tab();
@@ -379,7 +382,7 @@ namespace viennacl{
           for(unsigned int mm = 0 ; mm < ms_/simd_width_ ; ++mm){
             if(use_a_local_)
               for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                  stream << "rA[" << kk << "][" << mm*simd_width_ + ss << "] = lA[(k+" << kk << ")*" << (ML_+1) << "+" << simd_width_ << "*idx + " << mm*ls0_*simd_width_ + ss << "];" << std::endl;
+                  stream << "rA[" << kk << "][" << mm*simd_width_ + ss << "] = lA[offA + " << mm*ls0_*simd_width_ + ss << "];" << std::endl;
             else
               stream << "rA[" << kk << "][" << mm << "] = " << lhs->name() << "[" << mm*ls0_ << "];" << std::endl;
           }
@@ -389,7 +392,7 @@ namespace viennacl{
           for(unsigned int nn=0 ; nn < ns_/simd_width_ ; ++nn){
             if(use_b_local_)
               for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                  stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[(k+" << kk << ")*" << (NL_+1) << "+" << simd_width_ << "*idy + " << nn*ls1_*simd_width_ + ss << "];" << std::endl;
+                  stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[offB + " << nn*ls1_*simd_width_ + ss << "];" << std::endl;
             else
               stream << "rB[" << kk << "][" << nn << "] = " << rhs->name() << "[" << nn*ls1_ << "];" << std::endl;
           }
@@ -397,9 +400,13 @@ namespace viennacl{
           ///Increment pointers
           if(!use_a_local_ && !lhs->interpret_as_transposed())
             stream << lhs->name() << " += " << lhs->ld() << ";" << std::endl;
+          else
+            stream << "offA += " << ML_+1 << ";" << std::endl;
 
           if(!use_b_local_ && rhs->interpret_as_transposed())
             stream << rhs->name() << " += " << rhs->ld() << ";" << std::endl;
+          else
+            stream << "offB += " << NL_+1 << ";" << std::endl;
         }
 
 
