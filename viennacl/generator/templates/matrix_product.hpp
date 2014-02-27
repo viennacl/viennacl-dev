@@ -293,9 +293,9 @@ namespace viennacl{
 
 
         if(use_a_local_)
-          stream << "__local " << lhs->scalartype() << " lA[" << KL_ << "][" << ML_ + 1 << "];" << std::endl;
+          stream << "__local " << lhs->scalartype() << " lA[" << KL_ * (ML_ + 1) << "];" << std::endl;
         if(use_b_local_)
-          stream << "__local " << rhs->scalartype() << " lB[" << KL_ << "][" << NL_ + 1 << "];" << std::endl;
+          stream << "__local " << rhs->scalartype() << " lB[" << KL_ * (NL_ + 1) << "];" << std::endl;
         stream << std::endl;
 
 
@@ -339,7 +339,7 @@ namespace viennacl{
               stream << "vstore" ;
               if(simd_width_>1)
                 stream << simd_width_;
-              stream << "(" <<  lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "],0," << "&lA[idyT + " << k << "][" << simd_width_ << "*idxT + " << m << "]);" << std::endl;
+              stream << "(" <<  lhs->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << lhs->ld() << "],0," << "&lA[(idyT + " << k << ")*" << (ML_+1) << "+" << simd_width_ << "*idxT + " << m << "]);" << std::endl;
             }
           }
         }
@@ -352,7 +352,7 @@ namespace viennacl{
               stream << "vstore" ;
               if(simd_width_>1)
                 stream << simd_width_;
-              stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "&lB[idyT + " << k << "][" << simd_width_ << "*idxT + " << n << "]);" << std::endl;
+              stream << "(" <<  rhs->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << rhs->ld() << "],0," << "&lB[(idyT + " << k << ")*" << (NL_+1) << "+" << simd_width_ << "*idxT + " << n << "]);" << std::endl;
             }
           }
         }
@@ -369,7 +369,7 @@ namespace viennacl{
           for(unsigned int mm = 0 ; mm < ms_/simd_width_ ; ++mm){
             if(use_a_local_)
               for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                stream << "rA[" << kk << "][" << mm*simd_width_ + ss << "] = lA[k+" << kk << "][" << simd_width_ << "*idx + " << mm*ls0_*simd_width_ + ss << "];" << std::endl;
+                  stream << "rA[" << kk << "][" << mm*simd_width_ + ss << "] = lA[(k+" << kk << ")*" << (ML_+1) << "+" << simd_width_ << "*idx + " << mm*ls0_*simd_width_ + ss << "];" << std::endl;
             else
               stream << "rA[" << kk << "][" << mm << "] = " << lhs->name() << "[" << mm*ls0_ << "];" << std::endl;
           }
@@ -379,7 +379,7 @@ namespace viennacl{
           for(unsigned int nn=0 ; nn < ns_/simd_width_ ; ++nn){
             if(use_b_local_)
               for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[k+" << kk << "][" << simd_width_ << "*idy + " << nn*ls1_*simd_width_ + ss << "];" << std::endl;
+                  stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[(k+" << kk << ")*" << (NL_+1) << "+" << simd_width_ << "*idy + " << nn*ls1_*simd_width_ + ss << "];" << std::endl;
             else
               stream << "rB[" << kk << "][" << nn << "] = " << rhs->name() << "[" << nn*ls1_ << "];" << std::endl;
           }
@@ -429,25 +429,27 @@ namespace viennacl{
         stream << "}" << std::endl;
 
 
-        //        stream << "#pragma unroll"<< std::endl;
-        //        stream << "for(unsigned int m = 0 ; m < " << ms_ << " ; ++m){" << std::endl;
-        //        stream.inc_tab();
-        //        stream << "#pragma unroll"<< std::endl;
-        //        stream << "for(unsigned int n = 0 ; n < " << ns_ << " ; ++n){" << std::endl;
-        //        stream.inc_tab();
-        //        prod->access_name("rC[m][n]");
-        //        std::string i = "offset_x + m*" + utils::to_string(ls0_);
-        //        std::string j = "offset_y + n*" + utils::to_string(ls1_);
-        //         std::string str;
-        //         tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
-        //         stream << str << ";" << std::endl;
-        //        stream.dec_tab();
-        //        stream << "}" << std::endl;
-        //        stream.dec_tab();
-        //        stream << "}" << std::endl;
-
-		stream << "uint offset_x = gidx*" << ML_ << "+ idx*" << simd_width_ << ";" << std::endl;
+        stream << "uint offset_x = gidx*" << ML_ << "+ idx*" << simd_width_ << ";" << std::endl;
         stream << "uint offset_y = gidy*" << NL_ << "+ idy*" << simd_width_ << ";" << std::endl;
+
+//        stream << "#pragma unroll"<< std::endl;
+//        stream << "for(unsigned int m = 0 ; m < " << ms_ << " ; ++m){" << std::endl;
+//        stream.inc_tab();
+//        stream << "#pragma unroll"<< std::endl;
+//        stream << "for(unsigned int n = 0 ; n < " << ns_ << " ; ++n){" << std::endl;
+//        stream.inc_tab();
+//        prod->access_name("rC[m][n]");
+//        std::string i = "offset_x + m*" + utils::to_string(ls0_);
+//        std::string j = "offset_y + n*" + utils::to_string(ls1_);
+//        std::string str;
+//        tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
+//        stream << str << ";" << std::endl;
+//        stream.dec_tab();
+//        stream << "}" << std::endl;
+//        stream.dec_tab();
+//        stream << "}" << std::endl;
+
+
         for(unsigned int m=0 ; m < ms_res ; ++m){
           for(unsigned int n=0 ; n < ns_res ; ++n){
             std::string i = "offset_x +" + utils::to_string((m/simd_width_)*(ls0_*simd_width_) + m%simd_width_);
