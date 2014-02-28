@@ -411,25 +411,25 @@ namespace viennacl{
 
 
         for(unsigned int kk = 0 ; kk < ks_ ; ++kk){
-          for(unsigned int mm=0 ; mm < ms_ ; ++mm){
             for(unsigned int nn=0 ; nn < ns_ ; ++nn){
-              std::string res_str, lhs_str, rhs_str;
-              res_str = "rC[" + utils::to_string(mm) + "][" + utils::to_string(nn) + "]";
-              if(!lhs->interpret_as_transposed()){
-                if(use_a_local_ || simd_width_==1)
-                  lhs_str = "rA[" + utils::to_string(kk) + "][" + utils::to_string(mm) + "]";
-                else
-                  lhs_str = "rA[" + utils::to_string(kk) + "][" + utils::to_string(mm/simd_width_) + "].s" + utils::to_string(mm%simd_width_);
-              }
-              if(rhs->interpret_as_transposed()){
-                if(use_b_local_ || simd_width_==1)
-                  rhs_str = "rB[" + utils::to_string(kk) + "]["+utils::to_string(nn)+"]";
-                else
-                  rhs_str = "rB[" + utils::to_string(kk) + "]["+utils::to_string(nn/simd_width_)+"].s"+utils::to_string(nn%simd_width_);
-              }
-              stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
+                for(unsigned int mm=0 ; mm < ms_ ; ++mm){
+                    std::string res_str, lhs_str, rhs_str;
+                    res_str = "rC[" + utils::to_string(mm) + "][" + utils::to_string(nn) + "]";
+                    if(!lhs->interpret_as_transposed()){
+                        if(use_a_local_ || simd_width_==1)
+                            lhs_str = "rA[" + utils::to_string(kk) + "][" + utils::to_string(mm) + "]";
+                        else
+                            lhs_str = "rA[" + utils::to_string(kk) + "][" + utils::to_string(mm/simd_width_) + "].s" + utils::to_string(mm%simd_width_);
+                    }
+                    if(rhs->interpret_as_transposed()){
+                        if(use_b_local_ || simd_width_==1)
+                            rhs_str = "rB[" + utils::to_string(kk) + "]["+utils::to_string(nn)+"]";
+                        else
+                            rhs_str = "rB[" + utils::to_string(kk) + "]["+utils::to_string(nn/simd_width_)+"].s"+utils::to_string(nn%simd_width_);
+                    }
+                    stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
+                }
             }
-          }
         }
 
 
