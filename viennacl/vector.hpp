@@ -251,7 +251,7 @@ namespace viennacl
           result = const_entry_proxy<SCALARTYPE>(start_ + index_ * stride_, elements_);
           return result;
       }
-      self_type operator++(void) { index_ += stride_; return *this; }
+      self_type operator++(void) { ++index_; return *this; }
       self_type operator++(int) { self_type tmp = *this; ++(*this); return tmp; }
 
       bool operator==(self_type const & other) const { return index_ == other.index_; }
@@ -269,7 +269,7 @@ namespace viennacl
         assert( (other.start_ == start_) && (other.stride_ == stride_) && bool("Iterators are not from the same vector (proxy)!"));
         return static_cast<difference_type>(index_) - static_cast<difference_type>(other.index_);
       }
-      self_type operator+(difference_type diff) const { return self_type(elements_, index_ + diff * stride_, start_, stride_); }
+      self_type operator+(difference_type diff) const { return self_type(elements_, index_ + diff, start_, stride_); }
 
       //vcl_size_t index() const { return index_; }
       /** @brief Offset of the current element index with respect to the beginning of the buffer */
@@ -333,15 +333,13 @@ namespace viennacl
                       vcl_ptrdiff_t stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {}
       //vector_iterator(base_type const & b) : base_type(b) {}
 
-      typename base_type::value_type operator*(void)
+      entry_proxy<SCALARTYPE> operator*(void)
       {
-          typename base_type::value_type result;
-          result = entry_proxy<SCALARTYPE>(base_type::start_ + base_type::index_ * base_type::stride_, elements_);
-          return result;
+        return entry_proxy<SCALARTYPE>(base_type::start_ + base_type::index_ * base_type::stride_, elements_);
       }
 
       difference_type operator-(self_type const & other) const { difference_type result = base_type::index_; return (result - static_cast<difference_type>(other.index_)); }
-      self_type operator+(difference_type diff) const { return self_type(elements_, base_type::index_ + diff * base_type::stride_, base_type::start_, base_type::stride_); }
+      self_type operator+(difference_type diff) const { return self_type(elements_, base_type::index_ + diff, base_type::start_, base_type::stride_); }
 
       handle_type       & handle()       { return elements_; }
       handle_type const & handle() const { return base_type::elements_; }

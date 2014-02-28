@@ -315,6 +315,22 @@ int test(Epsilon const& epsilon,
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  std::cout << "Testing assignments via iterators..." << std::endl;
+
+  ublas_v1[2] = static_cast<NumericT>(1.9);
+    vcl_v1[2] = static_cast<NumericT>(1.9);
+
+  typename     UblasVectorType::iterator ublas_v1_it = ublas_v1.begin();
+  ++ublas_v1_it;
+  ++ublas_v1_it;
+  *ublas_v1_it = static_cast<NumericT>(1.5);
+  typename ViennaCLVectorType1::iterator vcl_v1_it = vcl_v1.begin();
+  ++vcl_v1_it;
+  ++vcl_v1_it;
+  *vcl_v1_it = static_cast<NumericT>(1.5);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
   //
   // multiplication and division of vectors by scalars
