@@ -44,27 +44,25 @@ namespace viennacl{
 
   namespace generator{
 
+    template<char A_TRANS>
     class vector_reduction : public profile_base{
-
+      private:
         std::size_t lmem_used(std::size_t scalartype_size) const {
           return m_*(k_+1)*scalartype_size;
         }
 
       public:
         /** @brief The user constructor */
-        vector_reduction(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups) : profile_base(vectorization, m, k, 1), m_(m), k_(k), num_groups_(num_groups){ }
+        vector_reduction(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups)
+          : profile_base(vectorization, m, k, 1), m_(m), k_(k), num_groups_(num_groups){ }
 
-
-        static std::string csv_format() {
-          return "Vec,M,K,NumGroups";
+        std::string csv_format() const {
+          return "simd_width,n,k,num_groups";
         }
 
         std::string csv_representation() const{
           std::ostringstream oss;
-          oss << simd_width_
-                 << "," << m_
-                 << "," << k_
-                 << "," << num_groups_;
+          oss << simd_width_  << "," << m_ << "," << k_  << "," << num_groups_;
           return oss.str();
         }
 
@@ -74,14 +72,14 @@ namespace viennacl{
 
         unsigned int num_groups() const { return num_groups_; }
 
-        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
+        void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
 
           configure_local_sizes(kernel, kernel_id);
           kernel.global_work_size(0,m_*num_groups_);
           kernel.global_work_size(1,k_);
 
 
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
             scheduler::statement::container_type exprs = it->first.array();
             for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
               if(is_vector_reduction(*iit)){
@@ -118,7 +116,7 @@ namespace viennacl{
           }
         }
 
-        void add_kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
+        void add_kernel_arguments(std::string & arguments_string) const{
           arguments_string += generate_value_kernel_argument("unsigned int", "M");
           arguments_string += generate_value_kernel_argument("unsigned int", "N");
         }
@@ -135,7 +133,7 @@ namespace viennacl{
         }
 
 
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
           std::vector<mapped_vector_reduction*> exprs;
           for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it){
             for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit){
@@ -196,7 +194,7 @@ namespace viennacl{
               {
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
                 viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
-                if(descriptor.type==VECTOR_REDUCE_Tx_TYPE)
+                if(A_TRANS=='T')
                   tree_parsing::fetch_all_lhs(fetched,statement,root_node, std::make_pair("c", "r"),stream,exprs[k]->mapping());
                 else
                   tree_parsing::fetch_all_lhs(fetched,statement,root_node, std::make_pair("r", "c"),stream,exprs[k]->mapping());
@@ -252,7 +250,7 @@ namespace viennacl{
               exprs[k]->access_name(local_buffers_names[k] + "[lid0*"+utils::to_string(lsize2)+"]");
 
             std::size_t i = 0;
-            for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+            for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
               std::string str;
               tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("r","0"), -1, str, mapping[i++]), false);
               stream << str << ";" << std::endl;
@@ -271,6 +269,7 @@ namespace viennacl{
         unsigned int k_;
         unsigned int num_groups_;
     };
+
   }
 }
 

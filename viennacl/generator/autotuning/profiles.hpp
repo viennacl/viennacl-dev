@@ -103,23 +103,23 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,128,128,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(1, 128, 128, true));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0,8,8));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0,8,8));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0,8,8));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction<'T'>(1, 1, 256, 32));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction<'N'>(1, 1, 256, 32));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(1,8,32,8,4,4,4,1,0,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(1,8,32,8,4,4,4,1,0,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(1,8,32,8,4,4,4,1,0,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(1,8,32,8,4,4,4,1,0,8,8));
 
 
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(1,128,128,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(1, 128, 128, true));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1, 1, 256, 32));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0,8,8));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0,8,8));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0,8,8));
-        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(1,8,32,8,4,4,4,1,0,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction<'T'>(1, 1, 256, 32));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction<'N'>(1, 1, 256, 32));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(1,8,32,8,4,4,4,1,0,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(1,8,32,8,4,4,4,1,0,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(1,8,32,8,4,4,4,1,0,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(1,8,32,8,4,4,4,1,0,8,8));
 
         /*---------------------------*/
         /*     CPU Defaults          */
@@ -127,23 +127,23 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(8,16,256,true));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,8,512,true));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,2,1,8));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,16,8,8));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,1,4,4,128,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,1,4,4,128,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,1,4,4,128,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,1,4,4,128,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction<'T'>(1,2,1,8));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction<'N'>(1,16,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(4,16,64,1,4,4,128,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(4,16,64,1,4,4,128,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(4,16,64,1,4,4,128,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(4,16,64,1,4,4,128,0,0,0,0));
 
 
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(8,16,32,true));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(8,8,512,true));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,1,8));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,8,16,16));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,64,1,8,4,64,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,64,1,8,4,64,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,64,1,8,4,64,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,64,1,8,4,64,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction<'T'>(1,1,1,8));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction<'N'>(1,8,16,16));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(2,16,64,1,8,4,64,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(2,16,64,1,8,4,64,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(2,16,64,1,8,4,64,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(2,16,64,1,8,4,64,0,0,0,0));
 
 
         /*---------------------------*/
@@ -153,23 +153,23 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(8,16,256,true));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,8,512,true));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,2,1,8));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,16,8,8));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,1,4,4,128,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product(1,16,64,1,16,4,32,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(1,16,64,1,16,4,32,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(1,16,64,1,16,4,32,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction<'T'>(1,2,1,8));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction<'N'>(1,16,8,8));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(4,16,64,1,4,4,128,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(1,16,64,1,16,4,32,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(1,16,64,1,16,4,32,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(1,16,64,1,16,4,32,0,0,0,0));
 
 
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(8,16,32,true));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
         map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(8,8,512,true));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,1,8));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,8,16,16));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,64,1,8,4,64,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product(1,16,128,2,8,4,16,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(1,16,64,1,16,4,32,0,0,0,0));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(1,16,64,1,16,4,32,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction<'T'>(1,1,1,8));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction<'N'>(1,8,16,16));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(2,16,64,1,8,4,64,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(1,16,128,2,8,4,16,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(1,16,64,1,16,4,32,0,0,0,0));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(1,16,64,1,16,4,32,0,0,0,0));
 
 
 
@@ -183,22 +183,22 @@ namespace viennacl{
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,4,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,128,128,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,32,8,256));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product(4,4,64,16,4,4,8,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product(2,8,32,8,4,1,4,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(4,8,64,16,4,4,8,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(4,8,128,8,8,4,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction<'N'>(1,32,8,256));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(4,4,64,16,4,4,8,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(2,8,32,8,4,1,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(4,8,64,16,4,4,8,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(4,8,128,8,8,4,4,0,0,0,0));
 
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(2,1,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(2,256,64,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,64,4,256));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,32,16,2,2,8,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product(2,8,32,8,4,1,4,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(4,2,64,32,8,8,4,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,64,8,2,2,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction<'N'>(1,64,4,256));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(2,16,32,16,2,2,8,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(2,8,32,8,4,1,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(4,2,64,32,8,8,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen]["Cypress"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(2,16,64,8,2,2,4,0,0,0,0));
 
             //Default
             set_all_generation_default_to(map,amd_id,Evergreen,"Cypress");
@@ -208,22 +208,22 @@ namespace viennacl{
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,4,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,128,128,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,32,8,256));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product(4,8,128,32,4,4,4,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product(2,8,32,8,4,2,4,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,16,4,4,8,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,16,4,4,8,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction<'N'>(1,32,8,256));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(4,8,128,32,4,4,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(2,8,32,8,4,2,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(4,16,64,16,4,4,8,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(4,16,64,16,4,4,8,0,0,0,0));
 
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(2,1,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(2,256,64,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,64,4,256));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product(2,4,128,64,4,2,2,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product(2,8,32,8,4,2,4,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(2,8,128,32,2,2,2,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(2,8,128,32,2,2,2,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction<'N'>(1,64,4,256));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(2,4,128,64,4,2,2,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(2,8,32,8,4,2,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(2,8,128,32,2,2,2,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands]["Tahiti"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(2,8,128,32,2,2,2,0,0,0,0));
 
 
             //Default
@@ -233,23 +233,23 @@ namespace viennacl{
 		map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,4,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,128,128,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction(1,32,8,256));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product(4,8,128,32,4,4,4,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product(4,4,8,16,8,1,4,1,1,8,8));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,16,4,4,8,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product(4,16,64,16,4,4,8,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction<'N'>(1,32,8,256));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(4,8,128,32,4,4,4,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(4,4,8,16,8,1,4,1,1,8,8));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(4,16,64,16,4,4,8,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(4,16,64,16,4,4,8,0,0,0,0));
 
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(2,1,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(2,256,64,true));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,1,256,1024));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction(1,64,4,256));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product(2,4,128,64,4,2,2,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product(2,8,8,8,4,1,8,1,1,8,8));
-//             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product(2,16,32,8,4,1,8,0,0,0,0));
-		    map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product(2,8,128,32,2,2,2,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product(2,8,128,32,2,2,2,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction<'N'>(1,64,4,256));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(2,4,128,64,4,2,2,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(2,8,8,8,4,1,8,1,1,8,8));
+//             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(2,16,32,8,4,1,8,0,0,0,0));
+        map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(2,8,128,32,2,2,2,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(2,8,128,32,2,2,2,0,0,0,0));
             set_all_generation_default_to(map,amd_id,VolcanicIslands,"Hawaii");
 
 
@@ -263,22 +263,22 @@ namespace viennacl{
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_SAXPY_TYPE,4)]      =    profile_base_ptr(new vector_saxpy(1,1,256,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_SAXPY_TYPE,4)]      =    profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(SCALAR_REDUCE_TYPE,4)]     =    profile_base_ptr(new scalar_reduction(4,64,512,true));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,1,256,1024));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,64,4,64));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,64,64,8,4,2,0,0,0,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,8,16,16,8,2,4,1,1,32,4));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,32,32,8,4,2,0,0,0,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,32,16,8,4,8,4,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)]  =    profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)]  =    profile_base_ptr(new vector_reduction<'N'>(1,64,4,64));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(1,2,64,64,8,4,2,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(1,8,16,16,8,2,4,1,1,32,4));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(1,2,32,32,8,4,2,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(1,32,16,8,4,8,4,0,0,0,0));
 
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_SAXPY_TYPE,8)]      =    profile_base_ptr(new vector_saxpy(2,1,64,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_SAXPY_TYPE,8)]      =    profile_base_ptr(new matrix_saxpy(2,16,16,16,16,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(SCALAR_REDUCE_TYPE,8)]     =    profile_base_ptr(new scalar_reduction(2,64,512,true));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,1,128,1024));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,16,32,1024));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] =    profile_base_ptr(new matrix_product(1,8,64,32,2,2,8,0,0,0,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] =    profile_base_ptr(new matrix_product(1,8,16,16,8,1,4,1,1,32,4));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] =    profile_base_ptr(new matrix_product(1,4,128,32,4,8,4,0,0,0,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] =    profile_base_ptr(new matrix_product(1,4,32,16,8,4,8,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)]  =    profile_base_ptr(new vector_reduction<'T'>(1,1,128,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)]  =    profile_base_ptr(new vector_reduction<'N'>(1,16,32,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(1,8,64,32,2,2,8,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(1,8,16,16,8,1,4,1,1,32,4));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(1,4,128,32,4,8,4,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi]["GeForce GTX 470"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(1,4,32,16,8,4,8,0,0,0,0));
 
           //default
           set_all_generation_default_to(map,nvidia_id,Fermi,"GeForce GTX 470");
@@ -289,22 +289,22 @@ namespace viennacl{
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_SAXPY_TYPE,4)]      =    profile_base_ptr(new vector_saxpy(1,1,256,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_SAXPY_TYPE,4)]      =    profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(SCALAR_REDUCE_TYPE,4)]     =    profile_base_ptr(new scalar_reduction(4,64,512,true));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,1,256,1024));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)]  =    profile_base_ptr(new vector_reduction(1,64,4,64));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,64,64,8,4,2,0,0,0,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] =    profile_base_ptr(new matrix_product(1,8,16,16,8,1,4,1,1,32,4));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,2,32,32,8,4,2,0,0,0,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] =    profile_base_ptr(new matrix_product(1,32,16,8,4,8,4,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)]  =    profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)]  =    profile_base_ptr(new vector_reduction<'N'>(1,64,4,64));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(1,2,64,64,8,4,2,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(1,8,16,16,8,1,4,1,1,32,4));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(1,2,32,32,8,4,2,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(1,32,16,8,4,8,4,0,0,0,0));
 
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_SAXPY_TYPE,8)]      =    profile_base_ptr(new vector_saxpy(2,1,64,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_SAXPY_TYPE,8)]      =    profile_base_ptr(new matrix_saxpy(2,16,16,16,16,true));
           map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(SCALAR_REDUCE_TYPE,8)]     =    profile_base_ptr(new scalar_reduction(2,64,512,true));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,1,128,1024));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)]  =    profile_base_ptr(new vector_reduction(1,16,32,1024));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] =    profile_base_ptr(new matrix_product(1,8,64,32,2,2,8,0,0,0,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] =    profile_base_ptr(new matrix_product(1,8,16,16,8,1,4,1,1,32,4));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] =    profile_base_ptr(new matrix_product(1,4,128,32,4,8,4,0,0,0,0));
-          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] =    profile_base_ptr(new matrix_product(1,4,32,16,8,4,8,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)]  =    profile_base_ptr(new vector_reduction<'T'>(1,1,128,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)]  =    profile_base_ptr(new vector_reduction<'N'>(1,16,32,1024));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(1,8,64,32,2,2,8,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(1,8,16,16,8,1,4,1,1,32,4));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(1,4,128,32,4,8,4,0,0,0,0));
+          map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler]["GeForce GTX 680"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(1,4,32,16,8,4,8,0,0,0,0));
 
           //default
           set_all_generation_default_to(map,nvidia_id,Kepler,"GeForce GTX 680");

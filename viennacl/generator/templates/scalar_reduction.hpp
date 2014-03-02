@@ -46,9 +46,9 @@ namespace viennacl{
       private:
         typedef std::vector<std::pair<const char *, viennacl::ocl::handle<cl_mem> > > temporaries_type;
 
-        static void fill_scalartypes(statements_type statements, std::vector<const char *> & res){
-          res.reserve(statements.size());
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+        void fill_scalartypes(std::vector<const char *> & res) const {
+          res.reserve(statements_->size());
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
             if (it->second.lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
             {
               switch(it->second.lhs.numeric_type){
@@ -76,10 +76,10 @@ namespace viennacl{
           return local_size_1_*scalartype_size;
         }
 
-        void init_temporaries(statements_type const & statements) const {
+        void init_temporaries() const {
           if(temporaries_.empty()){
             //set temporary buffer argument
-            for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+            for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
               scheduler::statement::container_type const & array = it->first.array();
               std::size_t size_of_scalartype;
               const char * scalartype_name;
@@ -135,7 +135,7 @@ namespace viennacl{
         scalar_reduction(unsigned int vectorization, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : profile_base(vectorization, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
 
 
-        static std::string csv_format() {
+        std::string csv_format() const {
           return "Vec,LSize,NumGroups,GlobalDecomposition";
         }
 
@@ -154,10 +154,10 @@ namespace viennacl{
         unsigned int decomposition() const { return decomposition_; }
 
 
-        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+        void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
 
           //create temporaries
-          init_temporaries(statements);
+          init_temporaries();
 
           //configure ND range
           if(kernel_id==0){
@@ -175,14 +175,14 @@ namespace viennacl{
           }
 
           //set arguments
-          set_size_argument(statements.front().first, statements.front().second, n_arg, k);
+          set_size_argument(statements_->front().first, statements_->front().second, n_arg, k);
           for(temporaries_type::iterator it = temporaries_.begin() ; it != temporaries_.end() ; ++it){
             k.arg(n_arg++, it->second);
           }
         }
 
-        void add_kernel_arguments(statements_type  const & statements, std::string & arguments_string) const{
-          init_temporaries(statements);
+        void add_kernel_arguments(std::string & arguments_string) const{
+          init_temporaries();
           arguments_string += generate_value_kernel_argument("unsigned int", "N");
           for(temporaries_type::iterator it = temporaries_.begin() ; it != temporaries_.end() ; ++it){
             arguments_string += generate_pointer_kernel_argument("__global", it->first, "temp" + utils::to_string(std::distance(temporaries_.begin(), it)));
@@ -191,7 +191,7 @@ namespace viennacl{
 
       private:
 
-        void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> const & scalartypes, statements_type const & /*statements*/, std::vector<mapping_type> const & /*mapping*/) const {
+        void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> const & scalartypes, std::vector<mapping_type> const & /*mapping*/) const {
           std::size_t N = exprs.size();
 
           std::vector<scheduler::op_element> rops(N);
@@ -297,7 +297,7 @@ namespace viennacl{
         }
 
 
-        void core_1(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> scalartypes, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
+        void core_1(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> scalartypes, std::vector<mapping_type> const & mapping) const {
           std::size_t N = exprs.size();
           std::vector<scheduler::op_element> rops(N);
           std::vector<std::string> accs(N);
@@ -346,7 +346,7 @@ namespace viennacl{
           stream << "if(lid==0){" << std::endl;
           stream.inc_tab();
           std::size_t i = 0;
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
             std::string str;
             tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("0", "0"), -1, str, mapping[i++]), false);
             stream << str << ";" << std::endl;
@@ -355,7 +355,7 @@ namespace viennacl{
           stream << "}" << std::endl;
         }
 
-        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
+        void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
           std::vector<mapped_scalar_reduction*> exprs;
           for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
             for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit)
@@ -363,13 +363,13 @@ namespace viennacl{
                 exprs.push_back(p);
 
           std::vector<const char *> scalartypes;
-          fill_scalartypes(statements, scalartypes);
+          fill_scalartypes(scalartypes);
 
           if(kernel_id==0){
-            core_0(stream,exprs,scalartypes,statements,mapping);
+            core_0(stream,exprs,scalartypes,mapping);
           }
           else{
-            core_1(stream,exprs,scalartypes,statements,mapping);
+            core_1(stream,exprs,scalartypes,mapping);
           }
         }
 

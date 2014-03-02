@@ -361,7 +361,7 @@ void run_autotune(autotuner_options options){
             if(n>n_keep) break;
             fastest_firsts.push_back(itt->second);
         }
-        stream << "# " << " Size : " << size << " | Best : " << 2*std::pow((double)size/1000,3)/timings.begin()->first << " GFlops : " << timings.begin()->second << std::endl;
+        stream << "# " << " Size : " << size << " | Best : " << 2*std::pow((double)size/1000,3)/timings.begin()->first << " GFlops : " << timings.begin()->second.csv_representation() << std::endl;
 
         //Recompiles for the best profile
         profile_type best_profile = timings.begin()->second;
@@ -372,7 +372,7 @@ void run_autotune(autotuner_options options){
         viennacl::backend::finish();
     }
 
-    stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
+    stream << "#Benchmarking " << timings.begin()->second.csv_representation() << "..." << std::endl;
     stream << "##Size\tGFLOP/s" << std::endl;
     for(unsigned int size = 128 ; size <= 3072 ; size += 128){
         double percent = (double)size/3072*100;

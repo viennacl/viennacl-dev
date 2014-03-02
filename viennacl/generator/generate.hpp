@@ -51,8 +51,7 @@ namespace viennacl{
         /** @brief typedef of the key used in the forced profiles. Contains the expression type and the size of the scalartype */
         typedef std::pair<expression_type, std::size_t> forced_profile_key_type;
       private:
-        typedef std::pair<expression_descriptor, generator::profile_base::statements_type> representation_node_type;
-        typedef std::vector<representation_node_type> statements_type;
+        typedef std::list< std::pair<scheduler::statement, scheduler::statement_node> > statements_type;
         typedef std::map<forced_profile_key_type, tools::shared_ptr<profile_base> > forced_profiles_type;
 
         /** @brief Fills the expression descriptor for an operation of the type scalar = RHS */
@@ -96,24 +95,26 @@ namespace viennacl{
 
 
         /** @brief Fills the expression descriptor for a statement */
-        void fill_descriptor(scheduler::statement const & statement, scheduler::statement_node const & root_node, expression_descriptor & descriptor){
+        expression_descriptor fill_descriptor(scheduler::statement const & statement, scheduler::statement_node const & root_node){
+          expression_descriptor res;
           scheduler::statement_node_type_family lhs_family = root_node.lhs.type_family;
-          descriptor.scalartype_size = utils::call_on_element(root_node.lhs, utils::scalartype_size_fun());
+          res.scalartype_size = utils::call_on_element(root_node.lhs, utils::scalartype_size_fun());
           if(lhs_family==scheduler::VECTOR_TYPE_FAMILY){
-            descriptor.type_family = VECTOR_SAXPY_FAMILY;
-            descriptor.type = VECTOR_SAXPY_TYPE;
-            fill_descriptor_impl(statement,root_node,descriptor);
+            res.type_family = VECTOR_SAXPY_FAMILY;
+            res.type = VECTOR_SAXPY_TYPE;
+            fill_descriptor_impl(statement,root_node,res);
           }
           else if(lhs_family==scheduler::MATRIX_TYPE_FAMILY){
-            descriptor.type_family = MATRIX_SAXPY_FAMILY;
-            descriptor.type = MATRIX_SAXPY_TYPE;
-            fill_descriptor_impl(statement,root_node,descriptor);
+            res.type_family = MATRIX_SAXPY_FAMILY;
+            res.type = MATRIX_SAXPY_TYPE;
+            fill_descriptor_impl(statement,root_node,res);
           }
           else if(lhs_family==scheduler::SCALAR_TYPE_FAMILY){
-            descriptor.type_family = SCALAR_SAXPY_FAMILY;
-            descriptor.type = SCALAR_SAXPY_TYPE;
-            fill_descriptor_impl(statement,root_node,descriptor);
+            res.type_family = SCALAR_SAXPY_FAMILY;
+            res.type = SCALAR_SAXPY_TYPE;
+            fill_descriptor_impl(statement,root_node,res);
           }
+          return res;
         }
 
         /** @brief Sets the kernel arguments and enqueue the kernels associated with a list of statements.
@@ -121,8 +122,9 @@ namespace viennacl{
         *   The kernels are named 'kernel_'index of device in context'_'index of kernel in program'
         */
         template<class StatementsType>
-        void set_expression_arguments(profile_base const & profile, unsigned int device_offset, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
-          for(std::size_t i = 0 ; i < profile.num_kernels() ; ++i){
+        void set_expression_arguments(profile_base const * profile, unsigned int device_offset, StatementsType const & statements, unsigned int & kernel_id, viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const
+        {
+          for(std::size_t i = 0 ; i < profile->num_kernels() ; ++i){
             //add kernel name
             char str[32];
             std::sprintf(str,"kernel_%d_%d",device_offset,kernel_id);
@@ -130,7 +132,7 @@ namespace viennacl{
             kernels.push_back(&kernel);
             unsigned int current_arg = 0;
             //Configure ND Range and enqueue arguments
-            profile.configure_range_enqueue_arguments(i, statements, kernel, current_arg);
+            profile->configure_range_enqueue_arguments(i, kernel, current_arg);
             std::set<void *> memory;
             for(typename StatementsType::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
               tree_parsing::traverse(it->first, it->second, tree_parsing::set_arguments_functor(memory,current_arg,kernel));
@@ -140,66 +142,77 @@ namespace viennacl{
         }
 
         /** @brief Gets the profile associated with a device and an expression descriptor */
-        profile_base const & get_profile(viennacl::ocl::device const & device, expression_descriptor const & descriptor) const {
+        profile_base * get_profile(viennacl::ocl::device const & device, expression_descriptor const & descriptor)
+        {
           forced_profiles_type::const_iterator it = forced_profiles_.find(std::make_pair(descriptor.type, descriptor.scalartype_size));
           if(it != forced_profiles_.end())
-            return *it->second;
-          return *profiles::get(device,descriptor);
+            return &(*it->second);
+          return profiles::get(device,descriptor);
         }
 
       public:
 
         /** @brief The constructor */
         code_generator(viennacl::ocl::context const & ctx = viennacl::ocl::current_context()) : ctx_(ctx){
-          statements_.reserve(16);
+            descriptor_.type_family=INVALID_EXPRESSION_FAMILY;
+            descriptor_.type=INVALID_EXPRESSION_TYPE;
         }
 
         /** @brief Force the generator to use a specific profile for an operation */
         template<class T>
-        void force_profile(forced_profile_key_type key, T const & t){
+        void force_profile(forced_profile_key_type key, T const & t)
+        {
           forced_profiles_.insert(std::pair<forced_profile_key_type, tools::shared_ptr<profile_base> >(key, tools::shared_ptr<profile_base>(new T(t))));
         }
 
         /** @brief Add a statement and the root node to the expression list
         *   @return Whether or not the operation could be handled by the generator
         */
-        bool add(scheduler::statement const & statement, scheduler::statement_node const & root_node) {
-          expression_descriptor descriptor;
-          fill_descriptor(statement, root_node, descriptor);
+        bool add(scheduler::statement const & statement, scheduler::statement_node const & root_node)
+        {
+          expression_descriptor descriptor = fill_descriptor(statement, root_node);
+
+          //Abort if the statement passed is not handled
           if(descriptor.type_family==INVALID_EXPRESSION_FAMILY)
             return false;
-          if(statements_.empty())
-            statements_.push_back(std::make_pair(descriptor,profile_base::statements_type(1,std::make_pair(statement, root_node))));
-          else
-            if(statements_.back().first == descriptor)
-              statements_.back().second.push_back(std::make_pair(statement, root_node));
-            else
-              statements_.push_back(std::make_pair(descriptor,profile_base::statements_type(1,std::make_pair(statement, root_node))));
+
+          //Init if not already done
+          if(descriptor_.type_family==INVALID_EXPRESSION_FAMILY){
+              descriptor_ = descriptor;
+              for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
+                  profiles_.insert(std::make_pair(it->id(), get_profile(*it, descriptor_)));
+              for(std::map<cl_device_id, profile_base*>::iterator it = profiles_.begin() ; it != profiles_.end() ; ++it)
+                  it->second->bind_statements(&statements_);
+          }
+          //Abort if the current statement is incompatible with the current one
+          else if(descriptor.type!=descriptor_.type)
+              return false;
+
+          statements_.push_back(std::make_pair(statement, root_node));
           return true;
         }
 
         /** @brief Set the arguments for a program previously generated by the generator and fills the kernels */
-        void configure_program(viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels) const {
+        void configure_program(viennacl::ocl::program & p, std::list<viennacl::ocl::kernel *> & kernels)
+        {
           unsigned int kernel_id = 0;
           std::vector<viennacl::ocl::device>::const_iterator found = std::find(ctx_.devices().begin(),ctx_.devices().end(),ctx_.current_device());
-          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
-            set_expression_arguments(get_profile(ctx_.current_device(), it->first), std::distance(ctx_.devices().begin(), found), it->second, kernel_id, p, kernels);
+          set_expression_arguments(profiles_.at(ctx_.current_device().id()), std::distance(ctx_.devices().begin(), found), statements_, kernel_id, p, kernels);
         }
 
         /** @brief Creates an identifier string for the set of expressions in the object */
-        void make_program_name(char * program_name) const {
+        void make_program_name(char * program_name) const
+        {
           unsigned int current_arg = 0;
           void* memory[64] = {NULL};
-          for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it){
-            for(profile_base::statements_type::const_iterator iit = it->second.begin() ; iit != it->second.end() ; ++iit){
-              tree_parsing::traverse(iit->first, iit->second, tree_parsing::statement_representation_functor(memory, current_arg, program_name),true);
-            }
-          }
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
+              tree_parsing::traverse(it->first, it->second, tree_parsing::statement_representation_functor(memory, current_arg, program_name),true);
           *program_name='\0';
         }
 
         /** @brief Creates the OpenCL program string from the set of expressions in the object */
-        std::string make_opencl_program_string() const {
+        std::string make_opencl_program_string()
+        {
           utils::kernel_generation_stream stream;
 
           //Headers generation
@@ -212,8 +225,7 @@ namespace viennacl{
 
           std::size_t device_offset =0;
           for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
-            for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
-              get_profile(*it,iit->first)(stream,device_offset++,iit->first,iit->second);
+            (*profiles_.at(it->id()))(stream,device_offset++);
 
           return stream.str();
         }
@@ -222,13 +234,13 @@ namespace viennacl{
         *
         *   Performs just a direct translation...
         */
-        std::string make_cuda_program_string() const {
+        std::string make_cuda_program_string()
+        {
           //Creates OpenCL string with #ifdef and attributes
           utils::kernel_generation_stream stream;
           std::size_t device_offset =0;
           for(std::vector<viennacl::ocl::device>::const_iterator it = ctx_.devices().begin() ; it != ctx_.devices().end() ; ++it)
-            for(statements_type::const_iterator iit = statements_.begin() ; iit != statements_.end() ; ++iit)
-              get_profile(*it,iit->first)(stream,device_offset++,iit->first,iit->second);
+            (*profiles_.at(it->id()))(stream,device_offset++);
           std::string res = stream.str();
 
           viennacl::tools::find_and_replace(res,"__attribute__","//__attribute__");
@@ -272,7 +284,9 @@ namespace viennacl{
 
       private:
         statements_type statements_;
+        std::map<cl_device_id, profile_base *> profiles_;
         viennacl::ocl::context const & ctx_;
+        expression_descriptor descriptor_;
         forced_profiles_type forced_profiles_;
     };
 
@@ -282,7 +296,7 @@ namespace viennacl{
     *   @param kernels this list will be filled with the kernels associated with the generator
     *   @param force_recompilation if true, the program will be recompiled
     */
-    inline viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator const & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
+    inline viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
       std::vector<char> program_name_vector(256);
       char* program_name = program_name_vector.data();
       generator.make_program_name(program_name);
@@ -302,7 +316,7 @@ namespace viennacl{
     }
 
     /** @brief Set the arguments and enqueue a generator object */
-    inline void enqueue(viennacl::generator::code_generator const & generator, bool force_recompilation = false){
+    inline void enqueue(viennacl::generator::code_generator & generator, bool force_recompilation = false){
       std::list<viennacl::ocl::kernel*> kernels;
       get_configured_program(generator, kernels, force_recompilation);
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it){

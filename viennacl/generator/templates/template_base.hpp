@@ -45,12 +45,7 @@ namespace viennacl{
 
     /** @brief Base class for an operation profile */
     class profile_base{
-      public:
-        typedef std::list< std::pair<scheduler::statement, scheduler::statement_node> > statements_type;
-
       protected:
-        friend std::ostream & operator<<(std::ostream &, profile_base const &);
-
         virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const { return false; }
 
         virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
@@ -60,19 +55,15 @@ namespace viennacl{
           k.local_work_size(1,local_size_2_);
         }
 
-        virtual void print(std::ostream & s) const{
-          s << csv_representation();
-        }
-
-        virtual void initialize_mapping(statements_type const & statements, std::vector<mapping_type> & mapping) const{
+        virtual void initialize_mapping(std::vector<mapping_type> & mapping) const{
             std::map<void *, std::size_t> memory;
             unsigned int current_arg = 0;
             std::size_t i = 0;
-            for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
+            for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it)
               tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
         }
 
-        virtual void set_simd_width(statements_type::value_type const & statement_pair, mapping_type & mapping) const{
+        virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const & statement_pair, mapping_type & mapping) {
             for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
               if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
                 p->set_simd_width(simd_width_);
@@ -85,40 +76,27 @@ namespace viennacl{
          *  @param statements the statements for which the code should be generated
          *  @param mapping    the mapping of the statement_nodes to the mapped_objects
          */
-        virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const = 0;
+        virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const = 0;
 
       public:
         /** @brief The constructor */
         profile_base(unsigned int vectorization, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : simd_width_(vectorization), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
 
+        void bind_statements(std::list< std::pair<scheduler::statement, scheduler::statement_node> > const * statements) { statements_ = statements; }
+
         /** @brief The destructor */
         virtual ~profile_base(){ }
 
         /** @brief Configures the range and enqueues the arguments associated with the profile */
-        virtual void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
-
-        virtual void add_kernel_arguments(statements_type  const & statements, std::string & arguments_string) const = 0;
+        virtual void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
+        virtual void add_kernel_arguments(std::string & arguments_string) const = 0;
 
         /** @brief Get the vector size of the kernel */
-        unsigned int vector_size() const { return simd_width_; }
+        unsigned int simd_width() const { return simd_width_; }
 
         /** @brief csv representation of an operation
-         *
          *  Useful when writing to a file */
         virtual std::string csv_representation() const = 0;
-
-        /** @brief returns whether or not the profile is likely to be slow on a particular device
-         *  @param dev the given device*/
-        bool is_slow(viennacl::ocl::device const & dev) const{
-          bool res = false;
-          if(dev.type()==CL_DEVICE_TYPE_GPU){
-            std::size_t warp_size = 32;
-            if(dev.vendor_id()==4098)
-              warp_size = 64;
-            res = static_cast<bool>(((local_size_1_*local_size_2_)%warp_size)>0);
-          }
-          return res;
-        }
 
         /** @brief returns whether or not the profile leads to undefined behavior on particular device
          *  @param dev               the given device
@@ -134,9 +112,18 @@ namespace viennacl{
               || local_size_1_ > max_work_item_sizes[0]
               || local_size_2_ > max_work_item_sizes[1]; // uses too much resources
 		  
+          bool not_warp_multiple = false;
+          if(dev.type()==CL_DEVICE_TYPE_GPU){
+            std::size_t warp_size = 32;
+            if(dev.vendor_id()==4098)
+              warp_size = 64;
+            not_warp_multiple = static_cast<bool>(((local_size_1_*local_size_2_)%warp_size)>0);
+          }
+
           return  invalid_work_group_sizes
               || lmem_used(scalartype_size)>lmem_available
-              || invalid_impl(dev, scalartype_size);
+              || invalid_impl(dev, scalartype_size)
+              || not_warp_multiple;
         }
 
         /** @brief Returns the number of kernels needed by this operation */
@@ -147,19 +134,19 @@ namespace viennacl{
          *
          *  @param stream Stream onto which the code should be generated
          *  @param device_offset the index of the device in the context (used for the kernel name)
-         *  @param statements the statements associated with this profile */
-        virtual void operator()(utils::kernel_generation_stream & stream, std::size_t device_offset, expression_descriptor descriptor, statements_type const & statements) const {
-          std::vector<mapping_type> mapping(statements.size());
+         */
+        virtual void operator()(utils::kernel_generation_stream & stream, std::size_t device_offset){
+          std::vector<mapping_type> mapping(statements_->size());
 
           ///Get Prototype, initialize mapping
           std::string prototype;
           std::set<std::string> already_generated;
-          add_kernel_arguments(statements, prototype);
-          initialize_mapping(statements,mapping);
+          add_kernel_arguments(prototype);
+          initialize_mapping(mapping);
 
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-            mapping_type & mapping_ref = mapping[std::distance(statements.begin(), it)];
-            set_simd_width(*it, mapping_ref);
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+            mapping_type & mapping_ref = mapping[std::distance(statements_->begin(), it)];
+            init(*it, mapping_ref);
             tree_parsing::traverse(it->first, it->second, tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping_ref));
           }
 
@@ -176,7 +163,7 @@ namespace viennacl{
             //core:
             stream << "{" << std::endl;
             stream.inc_tab();
-            core(n, stream, descriptor, statements, mapping);
+            core(n, stream, mapping);
             stream.dec_tab();
             stream << "}" << std::endl;
           }
@@ -186,14 +173,11 @@ namespace viennacl{
         unsigned int simd_width_;
         std::size_t local_size_1_;
         std::size_t local_size_2_;
+
         std::size_t num_kernels_;
+
+        std::list< std::pair<scheduler::statement, scheduler::statement_node> > const * statements_;
     };
-
-
-    inline std::ostream & operator<<(std::ostream & os, profile_base const & profile){
-      profile.print(os);
-      return os;
-    }
 
   }
 

@@ -43,7 +43,7 @@ namespace viennacl{
 
     class vector_saxpy : public profile_base{
       public:
-        static std::string csv_format() {
+        std::string csv_format() const {
           return "Vec,LSize1,NumGroups1,GlobalDecomposition";
         }
 
@@ -58,23 +58,23 @@ namespace viennacl{
 
         vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, unsigned int d) : profile_base(v, gs, 1, 1), num_groups_(ng), decomposition_(d){ }
 
-        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+        void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
           configure_local_sizes(k, kernel_id);
 
           k.global_work_size(0,local_size_1_*num_groups_);
           k.global_work_size(1,1);
 
-          scheduler::statement_node const & first_node = statements.front().second;
+          scheduler::statement_node const & first_node = statements_->front().second;
           viennacl::vcl_size_t N = utils::call_on_vector(first_node.lhs, utils::internal_size_fun());
           k.arg(n_arg++, cl_uint(N/simd_width_));
         }
-        void add_kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
+        void add_kernel_arguments(std::string & arguments_string) const{
           arguments_string += generate_value_kernel_argument("unsigned int", "N");
         }
 
       private:
 
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
@@ -89,16 +89,16 @@ namespace viennacl{
 
           //Generates all the expression, in order
           std::size_t i = 0;
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
             std::string str;
             tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("i","0"), -1, str, mapping[i++]));
             stream << str << ";" << std::endl;
           }
 
           //Writes back
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it)
              //Gets the mapped object at the LHS of each expression
-            if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements.begin(),it)).at(std::make_pair(&it->second, tree_parsing::LHS_NODE_TYPE)).get()))
+            if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements_->begin(),it)).at(std::make_pair(&it->second, tree_parsing::LHS_NODE_TYPE)).get()))
               p->write_back( std::make_pair("i", "0"), fetched, stream);
 
           stream.dec_tab();
@@ -136,24 +136,24 @@ namespace viennacl{
           return oss.str();
         }
 
-        void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+        void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
           configure_local_sizes(k, kernel_id);
 
           k.global_work_size(0,local_size_1_*num_groups_row_);
           k.global_work_size(1,local_size_2_*num_groups_col_);
 
-          scheduler::statement_node const & first_node = statements.front().second;
+          scheduler::statement_node const & first_node = statements_->front().second;
           k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun())));
           k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun())));
         }
 
-        void add_kernel_arguments(statements_type  const & /*statements*/, std::string & arguments_string) const{
+        void add_kernel_arguments(std::string & arguments_string) const{
           arguments_string += generate_value_kernel_argument("unsigned int", "M");
           arguments_string += generate_value_kernel_argument("unsigned int", "N");
         }
 
       private:
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < M ; i += get_global_size(0))" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
@@ -170,15 +170,15 @@ namespace viennacl{
 
 
           std::size_t i = 0;
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
             std::string str;
             tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("i", "j"), -1, str, mapping[i++]));
             stream << str << ";" << std::endl;
           }
 
           //Writes back
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-            if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements.begin(),it)).at(std::make_pair(&it->second,tree_parsing::LHS_NODE_TYPE)).get()))
+          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+            if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements_->begin(),it)).at(std::make_pair(&it->second,tree_parsing::LHS_NODE_TYPE)).get()))
               p->write_back(std::make_pair("i", "j"), fetched, stream);
           }
 
