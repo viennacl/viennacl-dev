@@ -118,8 +118,7 @@ namespace viennacl
 
           if (num > 0)
           {
-            if (bytes_buffer_)
-              delete[] bytes_buffer_;
+            delete[] bytes_buffer_;
 
             bytes_buffer_ = new char[buffer_size_];
           }
@@ -211,8 +210,7 @@ namespace viennacl
 
           if (num > 0)
           {
-            if (bytes_buffer_)
-              delete[] bytes_buffer_;
+            delete[] bytes_buffer_;
 
             bytes_buffer_ = new char[buffer_size_];
           }
