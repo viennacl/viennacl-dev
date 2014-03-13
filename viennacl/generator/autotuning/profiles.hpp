@@ -230,26 +230,25 @@ namespace viennacl{
             set_all_generation_default_to(map,amd_id,SouthernIslands,"Tahiti");
 			
 			
-		map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,4,64,true));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_SAXPY_TYPE,4)] = profile_base_ptr(new vector_saxpy(1,4,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_SAXPY_TYPE,4)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(SCALAR_REDUCE_TYPE,4)] = profile_base_ptr(new scalar_reduction(8,128,128,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,4)] = profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,4)] = profile_base_ptr(new vector_reduction<'N'>(1,32,8,256));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(4,8,128,32,4,4,4,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(4,4,8,16,8,1,4,1,1,8,8));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(4,16,64,16,4,4,8,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(4,16,64,16,4,4,8,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,4)] = profile_base_ptr(new matrix_product<'T','T'>(1,16,16,8,4,1,8,1,1,16,8));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,4)] = profile_base_ptr(new matrix_product<'N','T'>(1,16,16,8,4,1,8,1,1,32,4));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,4)] = profile_base_ptr(new matrix_product<'T','N'>(1,16,16,16,8,1,4,1,1,16,16));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,4)] = profile_base_ptr(new matrix_product<'N','N'>(1,16,16,8,4,1,8,1,1,16,8));
 
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_SAXPY_TYPE,8)] = profile_base_ptr(new vector_saxpy(2,1,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_SAXPY_TYPE,8)] = profile_base_ptr(new matrix_saxpy(1,16,16,16,16,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(SCALAR_REDUCE_TYPE,8)] = profile_base_ptr(new scalar_reduction(2,256,64,true));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Tx_TYPE,8)] = profile_base_ptr(new vector_reduction<'T'>(1,1,256,1024));
             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(VECTOR_REDUCE_Nx_TYPE,8)] = profile_base_ptr(new vector_reduction<'N'>(1,64,4,256));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(2,4,128,64,4,2,2,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(2,8,8,8,8,1,4,1,1,8,8));
-//             map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(2,16,32,8,4,1,8,0,0,0,0));
-        map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(2,8,128,32,2,2,2,0,0,0,0));
-            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(2,8,128,32,2,2,2,0,0,0,0));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TT_TYPE,8)] = profile_base_ptr(new matrix_product<'T','T'>(1,16,16,16,4,1,8,1,1,16,16));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NT_TYPE,8)] = profile_base_ptr(new matrix_product<'N','T'>(1,16,16,16,4,1,4,1,1,32,8));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_TN_TYPE,8)] = profile_base_ptr(new matrix_product<'T','N'>(1,16,16,16,4,1,4,1,1,16,16));
+            map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands]["Hawaii"][std::make_pair(MATRIX_PRODUCT_NN_TYPE,8)] = profile_base_ptr(new matrix_product<'N','N'>(1,16,16,16,4,1,4,1,1,16,16));
             set_all_generation_default_to(map,amd_id,VolcanicIslands,"Hawaii");
 
 

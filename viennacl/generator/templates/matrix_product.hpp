@@ -289,9 +289,10 @@ private:
             for(unsigned int k = 0 ; k < bound1 ; k += local_fetch1_){
                 for(unsigned int m = 0 ; m < bound0 ; m += local_fetch0_*simd_width_){
                     std::size_t offset = (A_TRANS=='N')?(k*(ML_+1)+m):(m*(ML_+1)+k);
-                    stream << "vstore" ;
-                    if(simd_width_>1) stream << simd_width_;
-                    stream << "(" <<  A_->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << A_->ld() << "],0,plA+" << offset << ");" << std::endl;
+                    if(simd_width_==1)
+                        stream << "plA[" << offset << "] = " << A_->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << A_->ld() << "];" << std::endl;
+                    else
+                        stream << "vstore" << simd_width_ << "(" <<  A_->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << A_->ld() << "],0,plA+" << offset << ");" << std::endl;
                 }
             }
         }
@@ -304,9 +305,10 @@ private:
             for(unsigned int k = 0 ; k < bound1 ; k += local_fetch1_){
                 for(unsigned int n = 0 ; n < bound0 ; n += local_fetch0_*simd_width_){
                     std::size_t offset = (B_TRANS=='T')?k*(NL_+1) + n:n*(NL_+1) + k;
-                    stream << "vstore" ;
-                    if(simd_width_>1) stream << simd_width_;
-                    stream << "(" <<  B_->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << B_->ld() << "],0,plB+" << offset << ");" << std::endl;
+                    if(simd_width_==1)
+                        stream << "plB[" << offset << "] = " << B_->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << B_->ld() << "];" << std::endl;
+                    else
+                        stream << "vstore"  << simd_width_ << "(" <<  B_->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << B_->ld() << "],0,plB+" << offset << ");" << std::endl;
                 }
             }
         }

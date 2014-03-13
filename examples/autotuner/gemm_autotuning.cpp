@@ -248,7 +248,7 @@ void run_autotune(autotuner_options options){
     std::ofstream stream(options.output_name.c_str());
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(1280,50));
+    rounds_config.push_back(std::make_pair(2176,50));
 
     std::vector<unsigned int> tmp;
     tmp = get_values_in_commas(options.ls0_interval); std::vector<int> ls0; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls0.push_back(i);
@@ -372,14 +372,14 @@ void run_autotune(autotuner_options options){
         viennacl::backend::finish();
     }
 
-    stream << "#Benchmarking " << timings.begin()->second.csv_representation() << "..." << std::endl;
-    stream << "##Size\tGFLOP/s" << std::endl;
-    for(unsigned int size = 128 ; size <= 3072 ; size += 128){
-        double percent = (double)size/3072*100;
-        std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-        stream << "#" << size << "\t" << run_benchmark<ScalarType, TransA, TransB>(size,options.layout,sizeof(ScalarType),timings.begin()->second) << std::endl;
-    }
-    std::cout << '\r' << "Benchmarking...[100.00%]" << std::endl;
+//    stream << "#Benchmarking " << timings.begin()->second.csv_representation() << "..." << std::endl;
+//    stream << "##Size\tGFLOP/s" << std::endl;
+//    for(unsigned int size = 128 ; size <= 3072 ; size += 128){
+//        double percent = (double)size/3072*100;
+//        std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
+//        stream << "#" << size << "\t" << run_benchmark<ScalarType, TransA, TransB>(size,options.layout,sizeof(ScalarType),timings.begin()->second) << std::endl;
+//    }
+//    std::cout << '\r' << "Benchmarking...[100.00%]" << std::endl;
 }
 
 

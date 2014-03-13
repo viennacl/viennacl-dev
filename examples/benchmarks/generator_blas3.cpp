@@ -29,7 +29,7 @@
 //
 // ViennaCL includes
 //
-#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_BUILD
 
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
@@ -47,35 +47,33 @@
 
 #include "benchmark-utils.hpp"
 
-#define N_RUNS 1
+#define N_RUNS 5
 
-static const std::size_t size_min = 1024;
-static const std::size_t size_max = 2944;
+static const std::size_t size_min = 128;
+static const std::size_t size_max = 5120;
 static const std::size_t size_inc = 128;
 
 template<class MatA, class MatB, class MatC>
-viennacl::scheduler::statement * allocate_statement(bool is_lhs_trans, bool is_rhs_trans, MatA const & A, MatB const & B, MatC const & C){
-    if(is_lhs_trans)
-      if(is_rhs_trans)
-          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),trans(B)));
-      else
-          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),B));
-    else
-      if(is_rhs_trans)
-          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,trans(B)));
-      else
-          return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,B));
+viennacl::scheduler::statement * allocate_statement(char ATrans, char BTrans, MatA const & A, MatB const & B, MatC const & C){
+    if(ATrans=='N' && BTrans=='N')
+        return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,B));
+    else if(ATrans=='N' && BTrans=='T')
+        return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,trans(B)));
+    else if(ATrans=='T' && BTrans=='N')
+        return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),B));
+    else if(ATrans=='T' && BTrans=='T')
+        return new viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(trans(A),trans(B)));
 
 }
 
 template<typename ScalarType>
-unsigned int run_benchmark(size_t size, bool is_lhs_trans, bool is_rhs_trans)
+unsigned int run_benchmark(size_t size, char ATrans, char BTrans)
 {    //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
     viennacl::matrix<ScalarType, viennacl::column_major> A(size, size);
     viennacl::matrix<ScalarType, viennacl::column_major> B(size, size);
     viennacl::matrix<ScalarType, viennacl::column_major> C(size, size);
-    viennacl::scheduler::statement * statement = allocate_statement(is_lhs_trans, is_rhs_trans,A,B,C);
+    viennacl::scheduler::statement * statement = allocate_statement(ATrans, BTrans,A,B,C);
     viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
     viennacl::backend::finish();
     Timer timer;
@@ -114,16 +112,21 @@ int main(){
                 std::cout << "----------------------------------------------" << std::endl;
 
                 std::cout << "float : " << std::endl;
-                std::cout << "#Size\tNT\tTT" << std::endl;
+                std::cout << "#Size\tNN\tNT\tTN\tTT" << std::endl;
                 for(unsigned int size = size_min ; size <= size_max ; size += size_inc){
-                  std::cout << size << "\t" << run_benchmark<float>(size,false,true)
-                                    << "\t" << run_benchmark<float>(size,true,true) << std::endl;
+                    std::cout << size << "\t" << run_benchmark<float>(size,'N','N')
+                              << "\t" << run_benchmark<float>(size,'N','T')
+                              << "\t" << run_benchmark<float>(size,'T','N')
+                              << "\t" << run_benchmark<float>(size,'T','T') << std::endl;
                 }
 
                 std::cout << "double : " << std::endl;
-                std::cout << "#Size\tAT" << std::endl;
+                std::cout << "#Size\tNN\tNT\tTN\tTT" << std::endl;
                 for(unsigned int size = size_min ; size <= size_max ; size += size_inc){
-                    std::cout << size << "\t" << run_benchmark<double>(size,false,true)  << std::endl;
+                    std::cout << size << "\t" << run_benchmark<double>(size,'N','N')
+                              << "\t" << run_benchmark<double>(size,'N','T')
+                              << "\t" << run_benchmark<double>(size,'T','N')
+                              << "\t" << run_benchmark<double>(size,'T','T') << std::endl;
                 }
           }
         }

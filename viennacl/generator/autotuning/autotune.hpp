@@ -192,7 +192,7 @@ namespace viennacl{
           double exec_time = benchmark_impl(op,key,profile,n_runs);
           timings->insert(std::make_pair(exec_time, profile));
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]"
-                    << " | Best : " << timings->begin()->first << " <= "<< std::setprecision(3) << std::scientific << timings->begin()->second.csv_representation() << std::flush;
+                    << " | Best : " << std::scientific << timings->begin()->first << " <= "<< timings->begin()->second.csv_representation() << std::flush;
           if(out)
             *out << std::setprecision(3) << std::scientific << exec_time << "," << profile.csv_representation() << std::endl ;
         }
