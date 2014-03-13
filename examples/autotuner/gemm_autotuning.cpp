@@ -149,11 +149,11 @@ autotuner_options get_options(int argc, char* argv[]){
     }
 }
 
-template<class ScalarType>
+template<class ScalarType, char TransA, char TransB>
 struct config{
-    typedef matrix_product profile_type;
+    typedef matrix_product<TransA, TransB> profile_type;
 
-    static matrix_product create_profile(std::map<std::string, autotune::tuning_param> const & params){
+    static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
        int vector = viennacl::generator::at(params, std::string("vector")).current();
        int ls0 = viennacl::generator::at(params, std::string("local_size1")).current();
        int ls1 = viennacl::generator::at(params, std::string("local_size2")).current();
@@ -168,7 +168,7 @@ struct config{
        int local_fetch0 = viennacl::generator::at(params, std::string("local_fetch0")).current();
        int local_fetch1 = viennacl::generator::at(params, std::string("local_fetch1")).current();
 
-       matrix_product res(vector,ls0,kl,ls1,ms,ks,ns,A_local,B_local,local_fetch0,local_fetch1);
+       profile_type res(vector,ls0,kl,ls1,ms,ks,ns,A_local,B_local,local_fetch0,local_fetch1);
 
        return res;
     }
@@ -201,8 +201,8 @@ viennacl::scheduler::statement make_statement(std::string const & layout, MatA c
        return  viennacl::scheduler::statement(C, viennacl::op_assign(), viennacl::linalg::prod(A,B));
 }
 
-template<typename ScalarType>
-unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename config<ScalarType>::profile_type const & profile)
+template<typename ScalarType, char TransA, char TransB>
+unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalartype_size, typename config<ScalarType, TransA, TransB>::profile_type const & profile)
 {
     //viennacl::ocl::current_context().build_options("-cl-mad-enable -cl-fast-relaxed-math");   //uncomment for additional optimizations
     //viennacl::ocl::current_context().build_options("-cl-opt-disable");                        //uncomment to get poor performance
@@ -233,22 +233,22 @@ void print_parameters(std::string const & name, ItType begin, ItType end){
     std::cout << "]" << std::endl;
 }
 
-template<class ScalarType>
+template<class ScalarType, char TransA, char TransB>
 void run_autotune(autotuner_options options){
-    typedef std::map<double, matrix_product> timings_t;
+    typedef std::map<double, matrix_product<TransA, TransB> > timings_t;
     typedef viennacl::matrix<ScalarType, viennacl::column_major> MatrixT;
-    typedef config<ScalarType> config_type;
+    typedef config<ScalarType, TransA, TransB> config_type;
     typedef typename config_type::profile_type profile_type;
 
     viennacl::ocl::device const &  device = viennacl::ocl::current_device();
 
     autotune::tuning_config<config_type> conf;
     timings_t timings;
-    std::list<matrix_product> fastest_firsts;
+    std::list<matrix_product<TransA, TransB> > fastest_firsts;
     std::ofstream stream(options.output_name.c_str());
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(2048,50));
+    rounds_config.push_back(std::make_pair(1280,50));
 
     std::vector<unsigned int> tmp;
     tmp = get_values_in_commas(options.ls0_interval); std::vector<int> ls0; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls0.push_back(i);
@@ -356,7 +356,7 @@ void run_autotune(autotuner_options options){
         }
         fastest_firsts.clear();
         viennacl::backend::finish();
-        for(timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
+        for(typename timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
             unsigned int n = static_cast<unsigned int>(std::distance(timings.begin(),itt));
             if(n>n_keep) break;
             fastest_firsts.push_back(itt->second);
@@ -377,7 +377,7 @@ void run_autotune(autotuner_options options){
     for(unsigned int size = 128 ; size <= 3072 ; size += 128){
         double percent = (double)size/3072*100;
         std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-        stream << "#" << size << "\t" << run_benchmark<ScalarType>(size,options.layout,sizeof(ScalarType),timings.begin()->second) << std::endl;
+        stream << "#" << size << "\t" << run_benchmark<ScalarType, TransA, TransB>(size,options.layout,sizeof(ScalarType),timings.begin()->second) << std::endl;
     }
     std::cout << '\r' << "Benchmarking...[100.00%]" << std::endl;
 }
@@ -411,10 +411,18 @@ int main(int argc, char* argv[]){
         std::cout << "layout : " << options.layout << std::endl;
         std::cout << "scalartype : " << options.scalartype << std::endl;
         std::cout << "-------------------" << std::endl;
-        if(options.scalartype=="float")
-            run_autotune<float>(options);
-        else if(options.scalartype=="double")
-            run_autotune<double>(options);
+        if(options.scalartype=="float"){
+            if(options.layout=="NN") run_autotune<float,'N','N'>(options);
+            else if(options.layout=="NT") run_autotune<float,'N','T'>(options);
+            else if(options.layout=="TN") run_autotune<float,'T','N'>(options);
+            else if(options.layout=="TT") run_autotune<float,'T','T'>(options);
+        }
+        else if(options.scalartype=="double"){
+            if(options.layout=="NN") run_autotune<double,'N','N'>(options);
+            else if(options.layout=="NT") run_autotune<double,'N','T'>(options);
+            else if(options.layout=="TN") run_autotune<double,'T','N'>(options);
+            else if(options.layout=="TT") run_autotune<double,'T','T'>(options);
+        }
       }
     }
   }

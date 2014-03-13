@@ -114,9 +114,10 @@ int main(){
                 std::cout << "----------------------------------------------" << std::endl;
 
                 std::cout << "float : " << std::endl;
-                std::cout << "#Size\tAT" << std::endl;
+                std::cout << "#Size\tNT\tTT" << std::endl;
                 for(unsigned int size = size_min ; size <= size_max ; size += size_inc){
-                  std::cout << size << "\t" << run_benchmark<float>(size,false,true) << std::endl;
+                  std::cout << size << "\t" << run_benchmark<float>(size,false,true)
+                                    << "\t" << run_benchmark<float>(size,true,true) << std::endl;
                 }
 
                 std::cout << "double : " << std::endl;

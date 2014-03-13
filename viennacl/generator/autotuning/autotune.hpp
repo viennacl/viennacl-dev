@@ -176,7 +176,7 @@ namespace viennacl{
         while(config.has_next()){
           config.update();
           typename ConfigType::profile_type const & profile = config.get_current();
-          if(config.is_invalid(dev) || profile.is_slow(dev))
+          if(config.is_invalid(dev))
               continue;
           ++n_conf;
         }
@@ -186,13 +186,13 @@ namespace viennacl{
         while(config.has_next()){
           config.update();
           typename ConfigType::profile_type const & profile = config.get_current();
-          if(config.is_invalid(dev) || profile.is_slow(dev))
+          if(config.is_invalid(dev))
               continue;
           double percent = (double)n++*100/n_conf;
           double exec_time = benchmark_impl(op,key,profile,n_runs);
           timings->insert(std::make_pair(exec_time, profile));
           std::cout << '\r' << "Autotuning..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]"
-                    << " | Best : " << timings->begin()->first << " <= " << std::scientific << std::right << std::setprecision(2) << timings->begin()->second.csv_representation() << std::flush;
+                    << " | Best : " << timings->begin()->first << " <= "<< std::setprecision(3) << std::scientific << timings->begin()->second.csv_representation() << std::flush;
           if(out)
             *out << std::setprecision(3) << std::scientific << exec_time << "," << profile.csv_representation() << std::endl ;
         }
