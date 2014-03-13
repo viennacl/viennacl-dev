@@ -62,14 +62,24 @@ class matrix_product : public profile_base{
         res |= alignment % NL_ > 0;
         res |= (ms_ % simd_width_) > 0;
         res |= (ns_ % simd_width_) > 0;
-        if(use_a_local_)
-            res |= (ML_ % (local_fetch0_*simd_width_)) > 0;
-        if(use_b_local_)
-            res |= (NL_ % (local_fetch0_*simd_width_)) > 0;
-        if(use_a_local_ || use_b_local_){
-            res |= (KL_ % local_fetch1_)> 0;
-            res |= ((local_fetch0_*local_fetch1_) !=(ls0_*ls1_));
+        res |= (!(A_TRANS=='N' && B_TRANS=='T') && simd_width_>1);
+        if(use_a_local_){
+            std::size_t bound1 = (A_TRANS=='N')?KL_:ML_;
+            std::size_t bound0 = (A_TRANS=='N')?ML_:KL_;
+
+            res |= (bound1 % local_fetch1_)> 0;
+            res |= (bound0 % (local_fetch0_*simd_width_)) > 0;
         }
+        if(use_b_local_){
+            std::size_t bound1 = (B_TRANS=='T')?KL_:NL_;
+            std::size_t bound0 = (B_TRANS=='T')?NL_:KL_;
+
+            res |= (bound1 % local_fetch1_)> 0;
+            res |= (bound0 % (local_fetch0_*simd_width_)) > 0;
+        }
+
+        if(use_a_local_ || use_b_local_)
+            res |= ((local_fetch0_*local_fetch1_) !=(ls0_*ls1_));
         return res;
     }
 
@@ -227,13 +237,24 @@ private:
                 stream << A_->name() << " +=  gidx*" << ML_/simd_width_ << "*" << A_->ld() << "+ idxT + idyT*" << A_->ld()  << ";" << std::endl;
         }
         else{
-            stream << A_->name() << " += gidx*" << ML_/simd_width_ << "+ idx" << ";" << std::endl;
+            if(A_TRANS=='N')
+                stream << A_->name() << " += gidx*" << ML_/simd_width_ << "+ idx" << ";" << std::endl;
+            else
+                stream << A_->name() << " += (gidx*" << ML_/simd_width_ << "+ idx)*" << A_->ld() << ";" << std::endl;
         }
 
-        if(use_b_local_)
-            stream << B_->name() << " +=  gidy*" << NL_/simd_width_ << "+ idxT + idyT*" << B_->ld()  << ";" << std::endl;
-        else
-            stream << B_->name() << " +=  gidy*" << NL_/simd_width_ << "+ idy;" << std::endl;
+        if(use_b_local_){
+            if(B_TRANS=='T')
+                stream << B_->name() << " +=  gidy*" << NL_/simd_width_ << "+ idxT + idyT*" << B_->ld()  << ";" << std::endl;
+            else
+                stream << B_->name() << " +=  gidy*" << NL_/simd_width_ << "*" << B_->ld() << "+ idxT + idyT*" << B_->ld()  << ";" << std::endl;
+        }
+        else{
+            if(B_TRANS=='T')
+                stream << B_->name() << " +=  gidy*" << NL_/simd_width_ << "+ idy;" << std::endl;
+            else
+                stream << B_->name() << " += (gidy*" << NL_/simd_width_ << "+ idy)*" << B_->ld() << ";" << std::endl;
+        }
 
         stream << std::endl;
 
@@ -244,12 +265,17 @@ private:
             if(A_TRANS=='N')
                 stream << "__local " << A_->scalartype() << "* plA = lA + idyT*" << ML_+1 << "+" << simd_width_ << "*idxT;" << std::endl;
             else
-                stream << "__local " << A_->scalartype() << "* plA = lA + idyT +" << simd_width_*(ML_+1) << "*idxT;" << std::endl;
+                stream << "__local " << A_->scalartype() << "* plA = lA + idxT*" << ML_+1 << "+ idyT;" << std::endl;
         }
 
 
-        if(use_b_local_)
-            stream << "__local " << B_->scalartype() << "* plB = lB + idyT*" << NL_+1 << "+" << simd_width_ << "*idxT;" << std::endl;
+        if(use_b_local_){
+            if(B_TRANS=='T')
+                stream << "__local " << B_->scalartype() << "* plB = lB + idyT*" << NL_+1 << "+" << simd_width_ << "*idxT;" << std::endl;
+            else
+                stream << "__local " << B_->scalartype() << "* plB = lB + idxT*" << NL_+1 << "+ idyT;" << std::endl;
+
+        }
 
 
         if(use_a_local_ || use_b_local_)
@@ -273,11 +299,14 @@ private:
         ///Fetch RHS to Local Memory
         if(use_b_local_)
         {
-            for(unsigned int k = 0 ; k < KL_ ; k += local_fetch1_){
-                for(unsigned int n = 0 ; n < NL_ ; n += local_fetch0_*simd_width_){
+            std::size_t bound1 = (B_TRANS=='T')?KL_:NL_;
+            std::size_t bound0 = (B_TRANS=='T')?NL_:KL_;
+            for(unsigned int k = 0 ; k < bound1 ; k += local_fetch1_){
+                for(unsigned int n = 0 ; n < bound0 ; n += local_fetch0_*simd_width_){
+                    std::size_t offset = (B_TRANS=='T')?k*(NL_+1) + n:n*(NL_+1) + k;
                     stream << "vstore" ;
                     if(simd_width_>1) stream << simd_width_;
-                    stream << "(" <<  B_->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << B_->ld() << "],0,plB+" << k*(NL_+1) + n << ");" << std::endl;
+                    stream << "(" <<  B_->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << B_->ld() << "],0,plB+" << offset << ");" << std::endl;
                 }
             }
         }
@@ -297,32 +326,47 @@ private:
             for(unsigned int mm = 0 ; mm < ms_/simd_width_ ; ++mm){
                 if(use_a_local_)
                     for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                        stream << "rA[" << kk << "][" << mm*simd_width_ + ss << "] = lA[offA + " << mm*ls0_*simd_width_ + ss << "];" << std::endl;
+                        stream << "rA[" << kk << "][" << mm*simd_width_ + ss << "] = lA[offA + " << mm*ls0_*simd_width_ + ss + kk*(ML_+1) << "];" << std::endl;
                 else
-                    stream << "rA[" << kk << "][" << mm << "] = " << A_->name() << "[" << mm*ls0_ << "];" << std::endl;
+                    if(A_TRANS=='N')
+                        stream << "rA[" << kk << "][" << mm << "] = " << A_->name() << "[" << mm*ls0_ << "+" << kk << "*" << A_->ld() << "];" << std::endl;
+                    else
+                        stream << "rA[" << kk << "][" << mm << "] = " << A_->name() << "[" << kk << "+" << mm*ls0_ << "*" << A_->ld() << "];" << std::endl;
             }
+        }
 
 
             ///Fetch RHS to registers
+        for(unsigned int kk = 0 ; kk < ks_ ; ++kk){
             for(unsigned int nn=0 ; nn < ns_/simd_width_ ; ++nn){
                 if(use_b_local_)
                     for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                        stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[offB + " << nn*ls1_*simd_width_ + ss << "];" << std::endl;
+                        stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[offB + " << nn*ls1_*simd_width_ + ss + kk*(NL_+1) << "];" << std::endl;
                 else
-                    stream << "rB[" << kk << "][" << nn << "] = " << B_->name() << "[" << nn*ls1_ << "];" << std::endl;
+                    if(B_TRANS=='T')
+                        stream << "rB[" << kk << "][" << nn << "] = " << B_->name() << "[" << nn*ls1_ << " + " << kk << "*" << B_->ld() << "];" << std::endl;
+                    else
+                        stream << "rB[" << kk << "][" << nn << "] = " << B_->name() << "[" << kk << "+" << nn*ls1_ << "*" << B_->ld() << "];" << std::endl;
+
             }
-
-            ///Increment pointers
-            if(use_a_local_)
-                stream << "offA += " << ML_+1 << ";" << std::endl;
-            else
-                stream << A_->name() << " += " << A_->ld() << ";" << std::endl;
-
-            if(use_b_local_)
-                stream << "offB += " << NL_+1 << ";" << std::endl;
-            else
-                stream << B_->name() << " += " << B_->ld() << ";" << std::endl;
         }
+
+        ///Increment pointers
+        if(use_a_local_)
+            stream << "offA += " << ks_*(ML_+1) << ";" << std::endl;
+        else
+            if(A_TRANS=='N')
+                stream << A_->name() << " += " << ks_ << "*" << A_->ld() << ";" << std::endl;
+            else
+                stream << A_->name() << " += " << ks_ << ";" << std::endl;
+
+        if(use_b_local_)
+            stream << "offB += " << ks_*(NL_+1) << ";" << std::endl;
+        else
+            if(B_TRANS=='T')
+                stream << B_->name() << " += " << ks_ << "*" << B_->ld() << ";" << std::endl;
+            else
+                stream << B_->name() << " += " << ks_ << ";" << std::endl;
 
 
         for(unsigned int kk = 0 ; kk < ks_ ; ++kk){
@@ -350,10 +394,16 @@ private:
         stream << "}" << std::endl;
 
         if(use_a_local_)
-            stream << A_->name() << " += " << KL_ << "*" << A_->ld() << ";" << std::endl;
+            if(A_TRANS=='N')
+                stream << A_->name() << " += " << KL_ << "*" << A_->ld() << ";" << std::endl;
+            else
+                stream << A_->name() << " += " << KL_ << ";" << std::endl;
 
         if(use_b_local_)
-            stream << B_->name() << " += " << KL_ << "*" << B_->ld() << ";" << std::endl;
+            if(B_TRANS=='T')
+                stream << B_->name() << " += " << KL_ << "*" << B_->ld() << ";" << std::endl;
+            else
+                stream << B_->name() << " += " << KL_ << ";" << std::endl;
 
         stream.dec_tab();
         stream << "}" << std::endl;

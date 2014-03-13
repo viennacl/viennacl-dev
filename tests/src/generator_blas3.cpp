@@ -93,6 +93,8 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
       for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
       {
          act = fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( fabs(mat2_cpu(i, j)), fabs(mat1(i,j)) );
+         if( (isnan(mat2_cpu(i,j)) && !isnan(mat1(i,j))) || (isnan(mat1(i,j)) && !isnan(mat2_cpu(i,j))))
+           return INFINITY;
          if (act > ret)
            ret = act;
       }
@@ -130,40 +132,40 @@ int test_prod(Epsilon const& epsilon,
    NumericT alpha = 3.14;
    NumericT beta = 4.51;
 
-	// std::cout << "Testing C = alpha*A*B + beta*C ..." << std::endl;
-	// {
-		// C     = alpha*viennacl::linalg::prod(A,B) + beta*C;
+     std::cout << "Testing C = alpha*A*B + beta*C ..." << std::endl;
+     {
+         C     = alpha*viennacl::linalg::prod(A,B) + beta*C;
 
-		// viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
-		// viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-		// viennacl::backend::finish();
-		// act_diff = fabs(diff(C, vcl_C));
-		// if( act_diff > epsilon )
-		// {
-		  // std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-		  // std::cout << "  diff: " << act_diff << std::endl;
-		  // retval = EXIT_FAILURE;
-		// }
-		// else
-		  // std::cout << "Test C = A*B passed!" << std::endl;
-	// }
+         viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
+         viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+         viennacl::backend::finish();
+         act_diff = fabs(diff(C, vcl_C));
+         if( act_diff > epsilon )
+         {
+           std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+           std::cout << "  diff: " << act_diff << std::endl;
+           retval = EXIT_FAILURE;
+         }
+         else
+           std::cout << "Test C = A*B passed!" << std::endl;
+     }
 
 
-   // std::cout << "Testing C = alpha*trans(A)*B + beta*C ..." << std::endl;
-   // {
-       // C     = alpha*boost::numeric::ublas::prod(trans(A_trans), B) + beta*C;
-       // viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(vcl_A_trans),vcl_B) + beta*vcl_C);
-       // viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
-       // viennacl::backend::finish();
-       // act_diff = fabs(diff(C, vcl_C));
-       // if( act_diff > epsilon )
-       // {
-         // std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-         // std::cout << "  diff: " << act_diff << std::endl;
-         // retval = EXIT_FAILURE;
-       // }
-       // else std::cout << "Test C = trans(A)*B passed!" << std::endl;
-   // }
+    std::cout << "Testing C = alpha*trans(A)*B + beta*C ..." << std::endl;
+    {
+        C     = alpha*boost::numeric::ublas::prod(trans(A_trans), B) + beta*C;
+        viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(vcl_A_trans),vcl_B) + beta*vcl_C);
+        viennacl::generator::generate_enqueue_statement(statement, statement.array()[0]);
+        viennacl::backend::finish();
+        act_diff = fabs(diff(C, vcl_C));
+        if( act_diff > epsilon )
+        {
+          std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+          std::cout << "  diff: " << act_diff << std::endl;
+          retval = EXIT_FAILURE;
+        }
+        else std::cout << "Test C = trans(A)*B passed!" << std::endl;
+    }
 
     std::cout << "Testing C = alpha*A*trans(B) + beta*C ..." << std::endl;
     {
@@ -207,8 +209,8 @@ int test_prod(Epsilon const& epsilon)
   int ret;
 
   long matrix_size1 = 2*max_large_block_size;
-  long matrix_size2 = 3*max_large_block_size;
-  long matrix_size3 = 4*max_large_block_size;
+  long matrix_size2 = 2*max_large_block_size;
+  long matrix_size3 = 2*max_large_block_size;
 
   // --------------------------------------------------------------------------
 
