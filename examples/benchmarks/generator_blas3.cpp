@@ -47,11 +47,11 @@
 
 #include "benchmark-utils.hpp"
 
-#define N_RUNS 5
+#define N_RUNS 1
 
-static const std::size_t size_min = 128;
-static const std::size_t size_max = 5120;
-static const std::size_t size_inc = 128;
+static const std::size_t size_min = 960;
+static const std::size_t size_max = 4800;
+static const std::size_t size_inc = 96;
 
 template<class MatA, class MatB, class MatC>
 viennacl::scheduler::statement * allocate_statement(char ATrans, char BTrans, MatA const & A, MatB const & B, MatC const & C){

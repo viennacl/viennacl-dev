@@ -54,7 +54,7 @@ struct autotuner_options{
     std::string kl_interval;
     std::string ls1_interval;
 
-    std::string vector_interval;
+    std::string simd_width_interval;
 
     std::string A_fetch_method;
     std::string B_fetch_method;
@@ -135,7 +135,7 @@ autotuner_options get_options(int argc, char* argv[]){
         options.ls0_interval = ls0_interval_arg.getValue();
         options.kl_interval = kl_interval_arg.getValue();
         options.ls1_interval = ls1_interval_arg.getValue();
-        options.vector_interval = vector_interval_arg.getValue();
+        options.simd_width_interval = vector_interval_arg.getValue();
         options.A_fetch_method = A_fetch_method_arg.getValue();
         options.local_fetch0_interval = local_fetch0_interval.getValue();
         options.local_fetch1_interval = local_fetch1_interval.getValue();
@@ -248,7 +248,7 @@ void run_autotune(autotuner_options options){
     std::ofstream stream(options.output_name.c_str());
 
     std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(2176,50));
+    rounds_config.push_back(std::make_pair(2400,50));
 
     std::vector<unsigned int> tmp;
     tmp = get_values_in_commas(options.ls0_interval); std::vector<int> ls0; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls0.push_back(i);
@@ -257,8 +257,10 @@ void run_autotune(autotuner_options options){
     tmp = get_values_in_commas(options.ms_interval); std::vector<int> ms; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ms.push_back(i);
     tmp = get_values_in_commas(options.ks_interval); std::vector<int> ks; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ks.push_back(i);
     tmp = get_values_in_commas(options.ns_interval); std::vector<int> ns; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ns.push_back(i);
-    tmp = get_values_in_commas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
+    tmp = get_values_in_commas(options.simd_width_interval); std::vector<int> simd_width; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) simd_width.push_back(i);
     
+    ms.push_back(6);
+    ns.push_back(6);
 
 
     std::vector<int> A_storage;
@@ -298,6 +300,7 @@ void run_autotune(autotuner_options options){
     print_parameters("ms", ms.begin(), ms.end());
     print_parameters("ks", ks.begin(), ks.end());
     print_parameters("ns", ns.begin(), ns.end());
+    print_parameters("SIMD width", simd_width.begin(), simd_width.end());
     print_parameters("A fetch method", A_storage.begin(), A_storage.end());
     print_parameters("B fetch method", B_storage.begin(), B_storage.end());
 
@@ -311,7 +314,7 @@ void run_autotune(autotuner_options options){
     conf.add_tuning_param("ms",ms);
     conf.add_tuning_param("ks",ks);
     conf.add_tuning_param("ns",ns);
-    conf.add_tuning_param("vector",vector);
+    conf.add_tuning_param("vector",simd_width);
     conf.add_tuning_param("A_storage",A_storage);
     conf.add_tuning_param("B_storage",B_storage);
 

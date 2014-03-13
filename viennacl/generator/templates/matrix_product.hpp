@@ -55,7 +55,7 @@ class matrix_product : public profile_base{
     }
 
     bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{
-        static const unsigned int alignment = 128;
+        static const unsigned int alignment = 96;
         bool res = false;
         res |= alignment % ML_ > 0;
         res |= alignment % KL_ > 0;

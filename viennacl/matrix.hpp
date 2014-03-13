@@ -246,7 +246,7 @@ namespace viennacl
       typedef DistanceType                                                        difference_type;
       typedef viennacl::backend::mem_handle                                       handle_type;
 
-      static const size_type alignment = 128;
+      static const size_type alignment = 96;
 
       /** @brief The default constructor. Does not allocate any memory. */
       explicit matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(false), row_major_(true) {}

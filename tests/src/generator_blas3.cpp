@@ -58,15 +58,6 @@ using namespace boost::numeric;
 //
 // -------------------------------------------------------------
 //
-static const unsigned int min_large_block_size = 32;
-static const unsigned int max_large_block_size = 128;
-static const unsigned int n_large_blocks = std::log(max_large_block_size/min_large_block_size)/std::log(2)+1;
-
-static const unsigned int min_alignment = 1;
-static const unsigned int max_alignment = 8;
-
-static const unsigned int max_small_block_size = max_alignment;
-
 //
 // -------------------------------------------------------------
 
@@ -208,9 +199,10 @@ int test_prod(Epsilon const& epsilon)
 {
   int ret;
 
-  long matrix_size1 = 2*max_large_block_size;
-  long matrix_size2 = 2*max_large_block_size;
-  long matrix_size3 = 2*max_large_block_size;
+  unsigned int alignment = viennacl::matrix<ScalarType>::alignment;
+  long matrix_size1 = 2*alignment;
+  long matrix_size2 = 2*alignment;
+  long matrix_size3 = 2*alignment;
 
   // --------------------------------------------------------------------------
 
