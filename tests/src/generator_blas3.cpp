@@ -199,7 +199,7 @@ int test_prod(Epsilon const& epsilon)
 {
   int ret;
 
-  unsigned int alignment = viennacl::matrix<ScalarType>::alignment;
+  unsigned int alignment = viennacl::matrix<NumericT>::alignment;
   long matrix_size1 = 2*alignment;
   long matrix_size2 = 2*alignment;
   long matrix_size3 = 2*alignment;
