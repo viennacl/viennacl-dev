@@ -411,18 +411,42 @@ private:
         stream << "}" << std::endl;
 
 
-        stream << "uint offset_x = gidx*" << ML_ << "+ idx*" << simd_width_ << ";" << std::endl;
-        stream << "uint offset_y = gidy*" << NL_ << "+ idy*" << simd_width_ << ";" << std::endl;
-        for(unsigned int m=0 ; m < ms_ ; ++m){
+        if(C_->interpret_as_transposed()==false){
+            stream << C_->name() << "+= gidx*" << ML_ << ";" << std::endl;
+            stream << C_->name() << "+= idx*" << simd_width_ << ";" << std::endl;
+            stream << C_->name() << "+= gidy*" << NL_ << "*" << C_->ld() << ";" << std::endl;
+            stream << C_->name() << "+= idy*" << simd_width_ << "*" << C_->ld() << ";" << std::endl;
+            for(unsigned int m=0 ; m < ms_ ; ++m){
+                for(unsigned int n=0 ; n < ns_ ; ++n){
+                    std::string j = utils::to_string((n/simd_width_)*(ls1_*simd_width_) + n%simd_width_);
+                    prod_->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
+                    std::string str;
+                    tree_parsing::traverse(statements_->front().first, statements_->front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
+                    stream << str << ";" << std::endl;
+                }
+                if((m+1)%simd_width_>0)
+                    stream << C_->name() << "+=1;" << std::endl;
+                else
+                    stream << C_->name() << "+=" << (ls0_*simd_width_) - (simd_width_-1) << ";" << std::endl;
+            }
+        }
+        else{
+            stream << C_->name() << "+= gidx*" << ML_ << "*" << C_->ld() << ";" << std::endl;
+            stream << C_->name() << "+= idx*" << simd_width_ << "*" << C_->ld() << ";" << std::endl;
+            stream << C_->name() << "+= gidy*" << NL_ << ";" << std::endl;
+            stream << C_->name() << "+= idy*" << simd_width_ << ";" << std::endl;
             for(unsigned int n=0 ; n < ns_ ; ++n){
-                std::string i = "offset_x +" + utils::to_string((m/simd_width_)*(ls0_*simd_width_) + m%simd_width_);
-                std::string j = "offset_y +" + utils::to_string((n/simd_width_)*(ls1_*simd_width_) + n%simd_width_);
-                if(C_->interpret_as_transposed())
-                    std::swap(i,j);
-                prod_->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
-                std::string str;
-                tree_parsing::traverse(statements_->front().first, statements_->front().second, tree_parsing::expression_generation_traversal(std::make_pair(i, j), -1, str, mapping[0]), false);
-                stream << str << ";" << std::endl;
+                for(unsigned int m=0 ; m < ms_ ; ++m){
+                    std::string j = utils::to_string((m/simd_width_)*(ls0_*simd_width_) + m%simd_width_);
+                    prod_->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
+                    std::string str;
+                    tree_parsing::traverse(statements_->front().first, statements_->front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
+                    stream << str << ";" << std::endl;
+                }
+                if((n+1)%simd_width_>0)
+                    stream << C_->name() << "+=1;" << std::endl;
+                else
+                    stream << C_->name() << "+=" << (ls1_*simd_width_) - (simd_width_-1) << ";" << std::endl;
             }
         }
 
