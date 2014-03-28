@@ -159,7 +159,7 @@ namespace viennacl{
 
     static std::string generate(std::pair<std::string, std::string> const & index, int vector_index, mapped_object const & s);
     static void fetch(std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_object & s);
-    static const char * generate(scheduler::operation_node_type arg);
+    //static const char * generate(scheduler::operation_node_type arg);
     static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, mapped_object const & s);
 
     namespace tree_parsing{

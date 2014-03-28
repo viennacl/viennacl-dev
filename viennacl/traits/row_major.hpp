@@ -34,7 +34,7 @@ namespace viennacl
   namespace traits
   {
     template <typename T>
-    bool row_major(T const & t) { return true; } //default implementation: If there is no underlying matrix type, we take the result to be row-major
+    bool row_major(T const &) { return true; } //default implementation: If there is no underlying matrix type, we take the result to be row-major
 
     template <typename NumericT>
     bool row_major(matrix_base<NumericT> const & A) { return A.row_major(); }

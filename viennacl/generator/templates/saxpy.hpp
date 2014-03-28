@@ -74,7 +74,7 @@ namespace viennacl{
 
       private:
 
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, expression_descriptor /*descriptor*/, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
@@ -153,7 +153,7 @@ namespace viennacl{
         }
 
       private:
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
+        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, expression_descriptor /*descriptor*/, statements_type const & statements, std::vector<mapping_type> const & mapping) const {
           stream << "for(unsigned int i = get_global_id(0) ; i < M ; i += get_global_size(0))" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();

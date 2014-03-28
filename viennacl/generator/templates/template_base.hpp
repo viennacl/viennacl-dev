@@ -73,7 +73,7 @@ namespace viennacl{
               tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
         }
 
-        virtual void set_simd_width(statements_type::value_type const & statement_pair, mapping_type & mapping) const{
+        virtual void set_simd_width(statements_type::value_type const & /*statement_pair*/, mapping_type & mapping) const{
             for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
               if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
                 p->set_simd_width(simd_width_);
