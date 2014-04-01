@@ -799,7 +799,7 @@ namespace viennacl
   /** @brief A dense matrix class
   *
   * @tparam SCALARTYPE   The underlying scalar type (either float or double)
-  * @tparam F            Storage layout: Either row_major or column_major (at present only row_major is supported)
+  * @tparam F            Storage layout: Either row_major or column_major
   * @tparam ALIGNMENT   The internal memory size is given by (size()/ALIGNMENT + 1) * ALIGNMENT. ALIGNMENT must be a power of two. Best values or usually 4, 8 or 16, higher values are usually a waste of memory.
   */
   template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
