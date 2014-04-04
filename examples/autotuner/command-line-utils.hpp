@@ -52,4 +52,13 @@ public:
     std::string description() const { return "Must contain minimum value, maximum value and increment"; }
 };
 
+class MNK_constraint : public TCLAP::Constraint<std::string>{
+public:
+    bool check(std::string const & s) const{
+        std::vector<unsigned int> vals = get_values_in_commas(s);
+        return vals.size()==3;
+    }
+    std::string shortID() const { return "M,N,K"; }
+    std::string description() const { return "Must contain three values M,N,K"; }
+};
 #endif

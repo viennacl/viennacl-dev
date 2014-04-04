@@ -54,7 +54,7 @@ struct autotuner_options{
     std::string kl_interval;
     std::string ls1_interval;
 
-    std::string vector_interval;
+    std::string simd_width_interval;
 
     std::string A_fetch_method;
     std::string B_fetch_method;
@@ -62,16 +62,18 @@ struct autotuner_options{
     std::string local_fetch0_interval;
     std::string local_fetch1_interval;
 
+    std::string MNK;
 };
 
 autotuner_options get_options(int argc, char* argv[]){
     try{
         autotuner_options options;
 
-        TCLAP::CmdLine cmd("GEMM Autotuner", ' ', "0.1");
+        TCLAP::CmdLine cmd("GEMM Autotuner", ' ', "0.2");
 
 
         pow_2_interval_constraint pow_2_interval_cstrt;
+        MNK_constraint mnk_cstrt;
 
         //Layouts
         std::vector<std::string> allowed_layouts;
@@ -80,7 +82,7 @@ autotuner_options get_options(int argc, char* argv[]){
         allowed_layouts.push_back("NT");
         allowed_layouts.push_back("TT");
         TCLAP::ValuesConstraint<std::string> allowed_layouts_constraint( allowed_layouts);
-        TCLAP::ValueArg<std::string> layout_arg("l","layout","Layout to tune the hardware for",true,"NN",&allowed_layouts_constraint,cmd);
+        TCLAP::ValueArg<std::string> layout_arg("l","layout","Layout to tune the hardware for",true,"NT",&allowed_layouts_constraint,cmd);
 
         //Scalartype
         std::vector<std::string> allowed_scalartypes;
@@ -96,15 +98,17 @@ autotuner_options get_options(int argc, char* argv[]){
         TCLAP::ValueArg<unsigned int> requested_device_arg("d","device","ID of the device to use for the autotuning procedure",false,0,"unsigned int",cmd);
 
         //Small blocks
-        TCLAP::ValueArg<std::string> ms_interval_arg("","ms","Number of row in each block processed by each work-item. Specify min,max both power of two.",false,"2,8",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> ks_interval_arg("","ks","Increment size for each small block calculation. Specify min,max both power of two.",false,"2,8",&pow_2_interval_cstrt,cmd);
-        TCLAP::ValueArg<std::string> ns_interval_arg("","ns","Number of column in each block processed by each work-item. Specify min,max both power of two.",false,"2,8",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ms_interval_arg("","ms","Number of row in each block processed by each work-item. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ks_interval_arg("","ks","Increment size for each small block calculation. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
+        TCLAP::ValueArg<std::string> ns_interval_arg("","ns","Number of column in each block processed by each work-item. Specify min,max both power of two.",false,"1,8",&pow_2_interval_cstrt,cmd);
 
 
         //Large blocks
         TCLAP::ValueArg<std::string> ls0_interval_arg("","ls-0","Number of work-item rows in each work-group. Specify min,max both power of two.",false,"8,16",&pow_2_interval_cstrt,cmd);
         TCLAP::ValueArg<std::string> kl_interval_arg("","kl","Increment size for each Large block calculation. Specify min,max both power of two.",false,"8,32",&pow_2_interval_cstrt,cmd);
         TCLAP::ValueArg<std::string> ls1_interval_arg("","ls-1","Number of work-item columns in each work-group. Specify min,max both power of two.",false,"8,16",&pow_2_interval_cstrt,cmd);
+
+        TCLAP::ValueArg<std::string> MNK_arg("","MNK","Characteristics of the matrix products",false,"1920,1920,1920",&mnk_cstrt,cmd);
 
 
 
@@ -135,11 +139,12 @@ autotuner_options get_options(int argc, char* argv[]){
         options.ls0_interval = ls0_interval_arg.getValue();
         options.kl_interval = kl_interval_arg.getValue();
         options.ls1_interval = ls1_interval_arg.getValue();
-        options.vector_interval = vector_interval_arg.getValue();
+        options.simd_width_interval = vector_interval_arg.getValue();
         options.A_fetch_method = A_fetch_method_arg.getValue();
         options.local_fetch0_interval = local_fetch0_interval.getValue();
         options.local_fetch1_interval = local_fetch1_interval.getValue();
         options.B_fetch_method = B_fetch_method_arg.getValue();
+        options.MNK = MNK_arg.getValue();
 
         return options;
     }
@@ -243,21 +248,21 @@ void run_autotune(autotuner_options options){
     viennacl::ocl::device const &  device = viennacl::ocl::current_device();
 
     autotune::tuning_config<config_type> conf;
-    timings_t timings;
-    std::list<matrix_product<TransA, TransB> > fastest_firsts;
     std::ofstream stream(options.output_name.c_str());
 
-    std::list<std::pair<unsigned int, unsigned int> > rounds_config;
-    rounds_config.push_back(std::make_pair(2176,50));
-
     std::vector<unsigned int> tmp;
+    tmp = get_values_in_commas(options.MNK);
+    std::size_t M = tmp[0];
+    std::size_t N = tmp[1];
+    std::size_t K = tmp[2];
+
     tmp = get_values_in_commas(options.ls0_interval); std::vector<int> ls0; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls0.push_back(i);
     tmp = get_values_in_commas(options.kl_interval); std::vector<int> kl; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) kl.push_back(i);
     tmp = get_values_in_commas(options.ls1_interval); std::vector<int> ls1; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ls1.push_back(i);
     tmp = get_values_in_commas(options.ms_interval); std::vector<int> ms; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ms.push_back(i);
     tmp = get_values_in_commas(options.ks_interval); std::vector<int> ks; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ks.push_back(i);
     tmp = get_values_in_commas(options.ns_interval); std::vector<int> ns; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) ns.push_back(i);
-    tmp = get_values_in_commas(options.vector_interval); std::vector<int> vector; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) vector.push_back(i);
+    tmp = get_values_in_commas(options.simd_width_interval); std::vector<int> simd_width; for(unsigned int i=tmp[0] ; i<=tmp[1]; i*=2) simd_width.push_back(i);
     
 
 
@@ -290,20 +295,22 @@ void run_autotune(autotuner_options options){
       local_fetch1.push_back(0);
     }
 
-    
-    std::cout << "-------------------" << std::endl;
-    print_parameters("local size 1", ls0.begin(), ls0.end());
-    print_parameters("local size 2", ls1.begin(), ls1.end());
-    print_parameters("kl", kl.begin(), kl.end());
-    print_parameters("ms", ms.begin(), ms.end());
-    print_parameters("ks", ks.begin(), ks.end());
-    print_parameters("ns", ns.begin(), ns.end());
-    print_parameters("A fetch method", A_storage.begin(), A_storage.end());
-    print_parameters("B fetch method", B_storage.begin(), B_storage.end());
 
-    print_parameters("local fetch0", local_fetch0.begin(), local_fetch0.end());
-    print_parameters("local fetch1", local_fetch1.begin(), local_fetch1.end());
-    std::cout << "-------------------" << std::endl;
+//    std::cout << "-------------------" << std::endl;
+//    print_parameters("local size 1", ls0.begin(), ls0.end());
+//    print_parameters("local size 2", ls1.begin(), ls1.end());
+//    print_parameters("kl", kl.begin(), kl.end());
+//    print_parameters("ms", ms.begin(), ms.end());
+//    print_parameters("ks", ks.begin(), ks.end());
+//    print_parameters("ns", ns.begin(), ns.end());
+//    print_parameters("SIMD width", simd_width.begin(), simd_width.end());
+//    print_parameters("A fetch method", A_storage.begin(), A_storage.end());
+//    print_parameters("B fetch method", B_storage.begin(), B_storage.end());
+
+//    print_parameters("local fetch0", local_fetch0.begin(), local_fetch0.end());
+//    print_parameters("local fetch1", local_fetch1.begin(), local_fetch1.end());
+//    std::cout << "Tuning for (M,N,K) : (" << M << "," << N << "," << K << ");" << std::endl;
+//    std::cout << "-------------------" << std::endl;
 
     conf.add_tuning_param("local_size1",ls0);
     conf.add_tuning_param("kl",kl);
@@ -311,13 +318,12 @@ void run_autotune(autotuner_options options){
     conf.add_tuning_param("ms",ms);
     conf.add_tuning_param("ks",ks);
     conf.add_tuning_param("ns",ns);
-    conf.add_tuning_param("vector",vector);
+    conf.add_tuning_param("vector",simd_width);
     conf.add_tuning_param("A_storage",A_storage);
     conf.add_tuning_param("B_storage",B_storage);
 
     conf.add_tuning_param("local_fetch0",local_fetch0);
     conf.add_tuning_param("local_fetch1",local_fetch1);
-
 
     stream << "# ---- GEMM ----" << std::endl;
     stream << "#" << options.layout << " | Scalartype : " << options.scalartype << std::endl;
@@ -326,60 +332,36 @@ void run_autotune(autotuner_options options){
     stream << "#----------------------" << std::endl;
     stream << device.full_info(1,'#');
     stream << "#----------------------" << std::endl;
-    stream << "#tuning for size : " << rounds_config.front().first << std::endl;
+    stream << "#Tuning for (M,N,K) : (" << M << "," << N << "," << K << ");" << std::endl;
 
+    std::size_t Asize1 = M;
+    std::size_t Asize2 = K;
+    if(options.layout.at(0)=='T')
+        std::swap(Asize1,Asize2);
+
+    std::size_t Bsize1 = K;
+    std::size_t Bsize2 = N;
+    if(options.layout.at(1)=='T')
+        std::swap(Bsize1,Bsize2);
+
+    MatrixT A(Asize1,Asize2);
+    MatrixT B(Bsize1,Bsize2);
+    MatrixT C(M,N);
+    viennacl::backend::finish();
+    viennacl::scheduler::statement statement = make_statement(options.layout,A,B,C);
     code_generator::forced_profile_key_type key = make_key(options.layout,sizeof(ScalarType));
-    for(std::list<std::pair<unsigned int, unsigned int> >::iterator it = rounds_config.begin() ; it!= rounds_config.end(); ++it){
-        timings.clear();
-        unsigned int k = static_cast<unsigned int>(std::distance(rounds_config.begin(),it));
-        unsigned int size=it->first;
-        unsigned int n_keep=it->second;
-        MatrixT A(size,size);
-        MatrixT B(size,size);
-        MatrixT C(size,size);
-        viennacl::backend::finish();
-        viennacl::scheduler::statement statement = make_statement(options.layout,A,B,C);
-        stream << "#time" << "," << profile_type::csv_format() << std::endl;
-        if(k==0){
-          autotune::benchmark(&timings,statement,key,conf,n_runs,&stream);
-        }
-        else{
-          unsigned int n=0;
-          for(typename std::list<profile_type>::const_iterator it = fastest_firsts.begin(); it!=fastest_firsts.end(); ++it){
-            double percent = (double)n++*100/fastest_firsts.size();
-            std::cout << '\r' << "Determining best profile for size " << size << "..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-            double exec_time = autotune::benchmark_impl(statement,key,*it,n_runs);
-            timings.insert(std::make_pair(exec_time, *it));
-            stream <<  std::scientific << exec_time << "," << it->csv_representation() << std::endl;
-          }
-          std::cout << std::endl;
-        }
-        fastest_firsts.clear();
-        viennacl::backend::finish();
-        for(typename timings_t::iterator itt = timings.begin(); itt!=timings.end() ; ++itt){
-            unsigned int n = static_cast<unsigned int>(std::distance(timings.begin(),itt));
-            if(n>n_keep) break;
-            fastest_firsts.push_back(itt->second);
-        }
-        stream << "# " << " Size : " << size << " | Best : " << 2*std::pow((double)size/1000,3)/timings.begin()->first << " GFlops : " << timings.begin()->second.csv_representation() << std::endl;
+    stream << "#time" << "," << profile_type::csv_format() << std::endl;
+    timings_t timings;
+    autotune::benchmark(&timings,statement,key,conf,n_runs,&stream);
 
-        //Recompiles for the best profile
-        profile_type best_profile = timings.begin()->second;
-        viennacl::generator::code_generator dummy;
-        dummy.add(statement,statement.array()[0]);
-        dummy.force_profile(key, best_profile);
-        viennacl::generator::enqueue(dummy,true);
-        viennacl::backend::finish();
+    typename timings_t::iterator it = timings.begin();
+    for(std::size_t i = 0 ; i < 10 ; ++i){
+        unsigned int Gflops = (unsigned int)((double)2*1e-9*M*N*K/it->first);
+        std::string profile = it->second.csv_representation();
+        stream << "#Best n° " << i << " : " << profile << " | " << Gflops << " GFLOP/S" << std::endl;
+        if(++it==timings.end())
+            break;
     }
-
-//    stream << "#Benchmarking " << timings.begin()->second.csv_representation() << "..." << std::endl;
-//    stream << "##Size\tGFLOP/s" << std::endl;
-//    for(unsigned int size = 128 ; size <= 3072 ; size += 128){
-//        double percent = (double)size/3072*100;
-//        std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-//        stream << "#" << size << "\t" << run_benchmark<ScalarType, TransA, TransB>(size,options.layout,sizeof(ScalarType),timings.begin()->second) << std::endl;
-//    }
-//    std::cout << '\r' << "Benchmarking...[100.00%]" << std::endl;
 }
 
 
