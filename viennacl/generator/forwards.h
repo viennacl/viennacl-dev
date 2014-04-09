@@ -173,7 +173,7 @@ namespace viennacl{
                                 , std::string & str
                                 , mapping_type const & mapping);
 
-      struct map_functor;
+      class map_functor;
 
     }
 
