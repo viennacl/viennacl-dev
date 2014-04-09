@@ -55,7 +55,7 @@ namespace viennacl
         typedef vcl_size_t   size_type;
 
         const_sparse_matrix_adapted_iterator(std::vector<std::map<SizeType, SCALARTYPE> > const & mat, int i, int j)
-         : mat_(mat), i_(i), j_(j)
+         : mat_(mat), i_(static_cast<size_type>(i)), j_(static_cast<size_type>(j))
         {
           if (i < 0) //reverse iterator end
           {
@@ -237,7 +237,7 @@ namespace viennacl
         typedef vcl_size_t   size_type;
 
         sparse_matrix_adapted_iterator(std::vector<std::map<SizeType, SCALARTYPE> > & mat, int i, int j)
-         : mat_(mat), i_(i), j_(j)
+         : mat_(mat), i_(static_cast<size_type>(i)), j_(static_cast<size_type>(j))
         {
           if (i < 0) //reverse iterator end
           {

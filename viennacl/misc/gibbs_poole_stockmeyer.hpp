@@ -70,19 +70,19 @@ namespace viennacl
         std::vector<int> ind(2);
         std::vector<int> tmp;
         int c;
-        std::vector<bool> inr(n, true);
+        std::vector<bool> inr(static_cast<vcl_size_t>(n), true);
         std::deque<int> q;
 
         for (vcl_size_t i = 0; i < rg.size(); i++)
         {
-            inr[rg[i]] = false;
+            inr[static_cast<vcl_size_t>(rg[i])] = false;
         }
 
         do
         {
             for (int i = 0; i < n; i++)
             {
-                if (!inr[i])
+                if (!inr[static_cast<vcl_size_t>(i)])
                 {
                     q.push_front(i);
                     break;
@@ -99,15 +99,15 @@ namespace viennacl
                 c = q.front();
                 q.pop_front();
 
-                if (!inr[c])
+                if (!inr[static_cast<vcl_size_t>(c)])
                 {
                     tmp.push_back(c);
-                    inr[c] = true;
+                    inr[static_cast<vcl_size_t>(c)] = true;
 
-                    for (typename MatrixType::value_type::const_iterator it = matrix[c].begin(); it != matrix[c].end(); it++)
+                    for (typename MatrixType::value_type::const_iterator it = matrix[static_cast<vcl_size_t>(c)].begin(); it != matrix[static_cast<vcl_size_t>(c)].end(); it++)
                     {
                         if (it->first == c) continue;
-                        if (inr[it->first]) continue;
+                        if (inr[static_cast<vcl_size_t>(it->first)]) continue;
 
                         q.push_back(it->first);
                     }
@@ -125,7 +125,7 @@ namespace viennacl
         std::sort(sort_ind.begin(), sort_ind.end(), detail::cuthill_mckee_comp_func);
         for (vcl_size_t i = 0; i < rgc.size(); i++)
         {
-            rgc_sorted.push_back(rgc[sort_ind[rgc.size()-1-i][0]]);
+            rgc_sorted.push_back(rgc[static_cast<vcl_size_t>(sort_ind[rgc.size()-1-i][0])]);
         }
 
         return rgc_sorted;
@@ -216,7 +216,7 @@ namespace viennacl
           for (vcl_size_t i = 0; i < lg.back().size(); i++)
           {
               tmp[0] = lg.back()[i];
-              tmp[1] = static_cast<int>(matrix[lg.back()[i]].size() - 1);
+              tmp[1] = static_cast<int>(matrix[static_cast<vcl_size_t>(lg.back()[i])].size() - 1);
               nodes.push_back(tmp);
           }
           std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
@@ -275,7 +275,7 @@ namespace viennacl
         {
             if ((it->second)[0] == (it->second)[1])
             {
-                ls[(it->second)[0]].push_back(it->first);
+                ls[static_cast<vcl_size_t>((it->second)[0])].push_back(it->first);
             }
             else
             {
@@ -301,8 +301,8 @@ namespace viennacl
             }
             for (vcl_size_t j = 0; j < rgc[i].size(); j++)
             {
-                (wvsg[lap[rgc[i][j]][0]])++;
-                (wvsh[lap[rgc[i][j]][1]])++;
+                (wvsg[static_cast<vcl_size_t>(lap[rgc[i][j]][0])])++;
+                (wvsh[static_cast<vcl_size_t>(lap[rgc[i][j]][1])])++;
             }
             k3 = 0;
             k4 = 0;
@@ -321,14 +321,14 @@ namespace viennacl
             {
                 for (vcl_size_t j = 0; j < rgc[i].size(); j++)
                 {
-                    ls[lap[rgc[i][j]][0]].push_back(rgc[i][j]);
+                    ls[static_cast<vcl_size_t>(lap[rgc[i][j]][0])].push_back(rgc[i][j]);
                 }
             }
             else
             {
                 for (vcl_size_t j = 0; j < rgc[i].size(); j++)
                 {
-                    ls[lap[rgc[i][j]][1]].push_back(rgc[i][j]);
+                    ls[static_cast<vcl_size_t>(lap[rgc[i][j]][1])].push_back(rgc[i][j]);
                 }
             }
         }
@@ -351,28 +351,28 @@ namespace viennacl
                 for (vcl_size_t i = 0; i < rl[l-1].size(); i++)
                 {
                     isn.assign(n, false);
-                    for (std::map<int, double>::const_iterator it = matrix[rl[l-1][i]].begin();
-                                                               it != matrix[rl[l-1][i]].end();
+                    for (std::map<int, double>::const_iterator it  = matrix[static_cast<vcl_size_t>(rl[l-1][i])].begin();
+                                                               it != matrix[static_cast<vcl_size_t>(rl[l-1][i])].end();
                                                                it++)
                     {
                         if (it->first == rl[l-1][i]) continue;
-                        isn[it->first] = true;
+                        isn[static_cast<vcl_size_t>(it->first)] = true;
                     }
                     nodes.resize(0);
                     for (vcl_size_t j = 0; j < ls[l].size(); j++)
                     {
-                        if (inr[ls[l][j]]) continue;
-                        if (!isn[ls[l][j]]) continue;
+                        if (inr[static_cast<vcl_size_t>(ls[l][j])]) continue;
+                        if (!isn[static_cast<vcl_size_t>(ls[l][j])]) continue;
                         tmp[0] = ls[l][j];
-                        tmp[1] = static_cast<int>(matrix[ls[l][j]].size() - 1);
+                        tmp[1] = static_cast<int>(matrix[static_cast<vcl_size_t>(ls[l][j])].size() - 1);
                         nodes.push_back(tmp);
                     }
                     std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
                     for (vcl_size_t j = 0; j < nodes.size(); j++)
                     {
                         rl[l].push_back(nodes[j][0]);
-                        r[nodes[j][0]] = current_dof++;
-                        inr[nodes[j][0]] = true;
+                        r[static_cast<vcl_size_t>(nodes[j][0])] = current_dof++;
+                        inr[static_cast<vcl_size_t>(nodes[j][0])] = true;
                     }
                 }
 
@@ -380,28 +380,28 @@ namespace viennacl
                 for (vcl_size_t i = 0; i < rl[l].size(); i++)
                 {
                     isn.assign(n, false);
-                    for (std::map<int, double>::const_iterator it = matrix[rl[l][i]].begin();
-                                                               it != matrix[rl[l][i]].end();
+                    for (std::map<int, double>::const_iterator it = matrix[static_cast<vcl_size_t>(rl[l][i])].begin();
+                                                               it != matrix[static_cast<vcl_size_t>(rl[l][i])].end();
                                                                it++)
                     {
                         if (it->first == rl[l][i]) continue;
-                        isn[it->first] = true;
+                        isn[static_cast<vcl_size_t>(it->first)] = true;
                     }
                     nodes.resize(0);
                     for (vcl_size_t j = 0; j < ls[l].size(); j++)
                     {
-                        if (inr[ls[l][j]]) continue;
-                        if (!isn[ls[l][j]]) continue;
+                        if (inr[static_cast<vcl_size_t>(ls[l][j])]) continue;
+                        if (!isn[static_cast<vcl_size_t>(ls[l][j])]) continue;
                         tmp[0] = ls[l][j];
-                        tmp[1] = static_cast<int>(matrix[ls[l][j]].size() - 1);
+                        tmp[1] = static_cast<int>(matrix[static_cast<vcl_size_t>(ls[l][j])].size() - 1);
                         nodes.push_back(tmp);
                     }
                     std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
                     for (vcl_size_t j = 0; j < nodes.size(); j++)
                     {
                         rl[l].push_back(nodes[j][0]);
-                        r[nodes[j][0]] = current_dof++;
-                        inr[nodes[j][0]] = true;
+                        r[static_cast<vcl_size_t>(nodes[j][0])] = current_dof++;
+                        inr[static_cast<vcl_size_t>(nodes[j][0])] = true;
                     }
                 }
 
@@ -411,8 +411,8 @@ namespace viennacl
                     deg_min = -1;
                     for (vcl_size_t j = 0; j < ls[l].size(); j++)
                     {
-                        if (inr[ls[l][j]]) continue;
-                        deg = static_cast<int>(matrix[ls[l][j]].size() - 1);
+                        if (inr[static_cast<vcl_size_t>(ls[l][j])]) continue;
+                        deg = static_cast<int>(matrix[static_cast<vcl_size_t>(ls[l][j])].size() - 1);
                         if (deg_min < 0 || deg < deg_min)
                         {
                             ind_min = ls[l][j];
@@ -420,8 +420,8 @@ namespace viennacl
                         }
                     }
                     rl[l].push_back(ind_min);
-                    r[ind_min] = current_dof++;
-                    inr[ind_min] = true;
+                    r[static_cast<vcl_size_t>(ind_min)] = current_dof++;
+                    inr[static_cast<vcl_size_t>(ind_min)] = true;
                     state = 3;
                     break;
                 }

@@ -60,13 +60,14 @@ namespace viennacl
         IndexT max_index = 0;
         for (typename std::map<IndexT, ValueT>::const_iterator it = matrix[i].begin(); it != matrix[i].end(); it++)
         {
-          if (!dof_assigned_to_node[it->first])
+          vcl_size_t col_index = static_cast<vcl_size_t>(it->first);
+          if (!dof_assigned_to_node[col_index])
             continue;
 
-          if (permutation[it->first] > max_index)
-            max_index = permutation[it->first];
-          if (permutation[it->first] < min_index)
-            min_index = permutation[it->first];
+          if (permutation[col_index] > max_index)
+            max_index = permutation[col_index];
+          if (permutation[col_index] < min_index)
+            min_index = permutation[col_index];
         }
         if (max_index > min_index)
           bw = std::max(bw, max_index - min_index);
@@ -88,10 +89,10 @@ namespace viennacl
     template <typename IndexT>
     bool comb_inc(std::vector<IndexT> & comb, vcl_size_t n)
     {
-      IndexT m;
-      IndexT k;
+      vcl_size_t m;
+      vcl_size_t k;
 
-      m = static_cast<IndexT>(comb.size());
+      m = static_cast<vcl_size_t>(comb.size());
       // calculate k as highest possible index such that (*comb)[k-1] can be incremented
       k = m;
       while ( (k > 0) && ( ((k == m) && (comb[k-1] == static_cast<IndexT>(n)-1)) ||
@@ -107,8 +108,8 @@ namespace viennacl
 
       // and all higher index positions of comb are calculated just as directly following integer values
       // Example (1, 4, 7) -> (1, 5, 6) -> (1, 5, 7) -> (1, 6, 7) -> done   for n=7
-      for (IndexT i = k; i < m; i++)
-        comb[i] = comb[k-1] + (i - k);
+      for (vcl_size_t i = k; i < m; i++)
+        comb[i] = comb[k-1] + IndexT(i - k);
       return true;
     }
 
@@ -177,7 +178,7 @@ namespace viennacl
       std::vector<int> nlist;
 
       nlist.push_back(s);
-      inr[s] = true;
+      inr[static_cast<vcl_size_t>(s)] = true;
       l.push_back(nlist);
 
       for (;;)
@@ -187,15 +188,15 @@ namespace viennacl
                                           it != l.back().end();
                                           it++)
           {
-              for (typename MatrixType::value_type::const_iterator it2  = matrix[*it].begin();
-                                                         it2 != matrix[*it].end();
-                                                         it2++)
+              for (typename MatrixType::value_type::const_iterator it2  = matrix[static_cast<vcl_size_t>(*it)].begin();
+                                                                   it2 != matrix[static_cast<vcl_size_t>(*it)].end();
+                                                                   it2++)
               {
                   if (it2->first == *it) continue;
-                  if (inr[it2->first]) continue;
+                  if (inr[static_cast<vcl_size_t>(it2->first)]) continue;
 
                   nlist.push_back(it2->first);
-                  inr[it2->first] = true;
+                  inr[static_cast<vcl_size_t>(it2->first)] = true;
               }
           }
 
@@ -234,23 +235,23 @@ namespace viennacl
       //
       while (!node_queue.empty())
       {
-        IndexT node_id = node_queue.front();
+        vcl_size_t node_id = static_cast<vcl_size_t>(node_queue.front());
         node_queue.pop_front();
 
         if (!node_visited_already[node_id])
         {
-          node_list.push_back(node_id);
+          node_list.push_back(IndexT(node_id));
           node_visited_already[node_id] = true;
 
           for (typename MatrixT::value_type::const_iterator it  = matrix[node_id].begin();
                                                             it != matrix[node_id].end();
                                                             it++)
           {
-            IndexT neighbor_node_id = it->first;
+            vcl_size_t neighbor_node_id = static_cast<vcl_size_t>(it->first);
             if (neighbor_node_id == node_id) continue;
             if (node_visited_already[neighbor_node_id]) continue;
 
-            node_queue.push_back(neighbor_node_id);
+            node_queue.push_back(IndexT(neighbor_node_id));
           }
         }
       }
@@ -297,7 +298,7 @@ namespace viennacl
       while (!node_assignment_queue.empty())
       {
         // Grab first node from queue
-        vcl_size_t node_id = node_assignment_queue.front();
+        vcl_size_t node_id = static_cast<vcl_size_t>(node_assignment_queue.front());
         node_assignment_queue.pop_front();
 
         // Assign dof if a new dof hasn't been assigned yet
@@ -315,15 +316,18 @@ namespace viennacl
                                                                  neighbor_it != matrix[node_id].end();
                                                                ++neighbor_it)
           {
-            if (!dof_assigned_to_node[neighbor_it->first])
+            vcl_size_t neighbor_node_index = static_cast<vcl_size_t>(neighbor_it->first);
+            if (!dof_assigned_to_node[neighbor_node_index])
             {
-              local_neighbor_nodes[num_neighbors] = NodeIdDegreePair(neighbor_it->first, static_cast<IndexT>(matrix[neighbor_it->first].size()));
+              local_neighbor_nodes[num_neighbors] = NodeIdDegreePair(neighbor_it->first, static_cast<IndexT>(matrix[neighbor_node_index].size()));
               ++num_neighbors;
             }
           }
 
           // Sort neighbors by increasing node degree
-          std::sort(local_neighbor_nodes.begin(), local_neighbor_nodes.begin() + num_neighbors, detail::cuthill_mckee_comp_func_pair<IndexT>);
+          std::sort(local_neighbor_nodes.begin(),
+                    local_neighbor_nodes.begin() + static_cast<typename std::vector< NodeIdDegreePair >::difference_type>(num_neighbors),
+                    detail::cuthill_mckee_comp_func_pair<IndexT>);
 
           // Push neighbors to queue
           for (vcl_size_t i=0; i<num_neighbors; ++i)
@@ -511,7 +515,7 @@ namespace viennacl
                                                   it != nodes_in_strongly_connected_component.end();
                                                   it++)
       {
-        deg = matrix[*it].size();
+        deg = matrix[static_cast<vcl_size_t>(*it)].size();
         if (deg_min == 0 || deg < deg_min)
           deg_min = deg;
         if (deg_max == 0 || deg > deg_max)
@@ -525,7 +529,7 @@ namespace viennacl
                                                   it != nodes_in_strongly_connected_component.end();
                                                   it++)
       {
-        if (matrix[*it].size() <= deg_a)
+        if (matrix[static_cast<vcl_size_t>(*it)].size() <= deg_a)
           parent_nodes.push_back(*it);
       }
 
@@ -560,7 +564,7 @@ namespace viennacl
 
         // add the selected root nodes according to actual combination comb to q
         for (typename std::vector<IndexT>::iterator it = comb.begin(); it != comb.end(); it++)
-          node_queue.push_back(parent_nodes[*it]);
+          node_queue.push_back(parent_nodes[static_cast<vcl_size_t>(*it)]);
 
         current_dof = detail::cuthill_mckee_on_strongly_connected_component(matrix, node_queue, dof_assigned_to_node, permutation, current_dof);
 

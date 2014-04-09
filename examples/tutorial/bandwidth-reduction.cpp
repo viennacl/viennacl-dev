@@ -38,19 +38,19 @@
 
 // Reorders a matrix according to a previously generated node
 // number permutation vector r
-std::vector< std::map<int, double> > reorder_matrix(std::vector< std::map<int, double> > const & matrix, std::vector<int> const & r)
+inline std::vector< std::map<int, double> > reorder_matrix(std::vector< std::map<int, double> > const & matrix, std::vector<int> const & r)
 {
     std::vector< std::map<int, double> > matrix2(r.size());
 
     for (std::size_t i = 0; i < r.size(); i++)
       for (std::map<int, double>::const_iterator it = matrix[i].begin();  it != matrix[i].end(); it++)
-        matrix2[r[i]][r[it->first]] = it->second;
+        matrix2[static_cast<std::size_t>(r[i])][r[static_cast<std::size_t>(it->first)]] = it->second;
 
     return matrix2;
 }
 
 // Calculates the bandwidth of a matrix
-int calc_bw(std::vector< std::map<int, double> > const & matrix)
+inline int calc_bw(std::vector< std::map<int, double> > const & matrix)
 {
     int bw = 0;
 
@@ -86,10 +86,11 @@ int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std:
       int max_index = 0;
       for (std::map<int, double>::const_iterator it = matrix[i].begin();  it != matrix[i].end(); it++)
       {
-        if (r[it->first] > max_index)
-          max_index = r[it->first];
-        if (r[it->first] < min_index)
-          min_index = r[it->first];
+        std::size_t col_idx = static_cast<std::size_t>(it->first);
+        if (r[col_idx] > max_index)
+          max_index = r[col_idx];
+        if (r[col_idx] < min_index)
+          min_index = r[col_idx];
       }
       if (max_index > min_index)
         bw = std::max(bw, max_index - min_index);
@@ -102,18 +103,17 @@ int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std:
 // Generates a random permutation by Knuth shuffle algorithm
 // reference: http://en.wikipedia.org/wiki/Knuth_shuffle
 //  (URL taken on July 2nd, 2011)
-std::vector<int> generate_random_reordering(int n)
+inline std::vector<int> generate_random_reordering(std::size_t n)
 {
     std::vector<int> r(n);
     int tmp;
-    int j;
 
-    for (int i = 0; i < n; i++)
-        r[i] = i;
+    for (std::size_t i = 0; i < n; i++)
+        r[i] = static_cast<int>(i);
 
-    for (int i = 0; i < n - 1; i++)
+    for (std::size_t i = 0; i < n - 1; i++)
     {
-        j = i + static_cast<int>((static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) * (n - 1 - i));
+        std::size_t j = i + static_cast<std::size_t>((static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) * (n - 1 - i));
         if (j != i)
         {
             tmp = r[i];
@@ -132,43 +132,42 @@ std::vector<int> generate_random_reordering(int n)
 //  n:  z dimension
 //  tri: true for tetrahedral mesh, false for cubic mesh
 //  return value: matrix of size l * m * n
-std::vector< std::map<int, double> > gen_3d_mesh_matrix(int l, int m, int n, bool tri)
+inline std::vector< std::map<int, double> > gen_3d_mesh_matrix(std::size_t l, std::size_t m, std::size_t n, bool tri)
 {
     std::vector< std::map<int, double> > matrix;
-    int s;
-    int ind;
-    int ind1;
-    int ind2;
+    std::size_t s = l * m * n;
+    std::size_t ind;
+    std::size_t ind1;
+    std::size_t ind2;
 
-    s = l * m * n;
     matrix.resize(s);
-    for (int i = 0; i < l; i++)
+    for (std::size_t i = 0; i < l; i++)
     {
-        for (int j = 0; j < m; j++)
+        for (std::size_t j = 0; j < m; j++)
         {
-            for (int k = 0; k < n; k++)
+            for (std::size_t k = 0; k < n; k++)
             {
                 ind = i + l * j + l * m * k;
 
-                matrix[ind][ind] = 1.0;
+                matrix[ind][static_cast<int>(ind)] = 1.0;
 
                 if (i > 0)
                 {
                     ind2 = ind - 1;
-                    matrix[ind][ind2] = 1.0;
-                    matrix[ind2][ind] = 1.0;
+                    matrix[ind][static_cast<int>(ind2)] = 1.0;
+                    matrix[ind2][static_cast<int>(ind)] = 1.0;
                 }
                 if (j > 0)
                 {
                     ind2 = ind - l;
-                    matrix[ind][ind2] = 1.0;
-                    matrix[ind2][ind] = 1.0;
+                    matrix[ind][static_cast<int>(ind2)] = 1.0;
+                    matrix[ind2][static_cast<int>(ind)] = 1.0;
                 }
                 if (k > 0)
                 {
                     ind2 = ind - l * m;
-                    matrix[ind][ind2] = 1.0;
-                    matrix[ind2][ind] = 1.0;
+                    matrix[ind][static_cast<int>(ind2)] = 1.0;
+                    matrix[ind2][static_cast<int>(ind)] = 1.0;
                 }
 
                 if (tri)
@@ -185,8 +184,8 @@ std::vector< std::map<int, double> > gen_3d_mesh_matrix(int l, int m, int n, boo
                             ind1 = ind + 1;
                             ind2 = ind + l;
                         }
-                        matrix[ind1][ind2] = 1.0;
-                        matrix[ind2][ind1] = 1.0;
+                        matrix[ind1][static_cast<int>(ind2)] = 1.0;
+                        matrix[ind2][static_cast<int>(ind1)] = 1.0;
                     }
                     if (i < l - 1 && k < n - 1)
                     {
@@ -200,8 +199,8 @@ std::vector< std::map<int, double> > gen_3d_mesh_matrix(int l, int m, int n, boo
                             ind1 = ind + 1;
                             ind2 = ind + l * m;
                         }
-                        matrix[ind1][ind2] = 1.0;
-                        matrix[ind2][ind1] = 1.0;
+                        matrix[ind1][static_cast<int>(ind2)] = 1.0;
+                        matrix[ind2][static_cast<int>(ind1)] = 1.0;
                     }
                     if (j < m - 1 && k < n - 1)
                     {
@@ -215,8 +214,8 @@ std::vector< std::map<int, double> > gen_3d_mesh_matrix(int l, int m, int n, boo
                             ind1 = ind + l;
                             ind2 = ind + l * m;
                         }
-                        matrix[ind1][ind2] = 1.0;
-                        matrix[ind2][ind1] = 1.0;
+                        matrix[ind1][static_cast<int>(ind2)] = 1.0;
+                        matrix[ind2][static_cast<int>(ind1)] = 1.0;
                     }
                 }
             }
@@ -237,8 +236,8 @@ int main(int, char **)
 {
   srand(42);
   std::cout << "-- Generating matrix --" << std::endl;
-  int dof_per_dim = 64;   //number of grid points per coordinate direction
-  int n = dof_per_dim * dof_per_dim * dof_per_dim; //total number of unknowns
+  std::size_t dof_per_dim = 64;   //number of grid points per coordinate direction
+  std::size_t n = dof_per_dim * dof_per_dim * dof_per_dim; //total number of unknowns
   std::vector< std::map<int, double> > matrix = gen_3d_mesh_matrix(dof_per_dim, dof_per_dim, dof_per_dim, false);  //If last parameter is 'true', a tetrahedral grid instead of a hexahedral grid is used.
 
   //

@@ -297,7 +297,7 @@ namespace viennacl
       int row_depth = std::min(A_size1, A_size1 + k);
       int col_depth = std::min(A_size2, A_size2 - k);
 
-      return std::min(row_depth, col_depth);
+      return vcl_size_t(std::min(row_depth, col_depth));
     }
 
     template <typename LHS>
