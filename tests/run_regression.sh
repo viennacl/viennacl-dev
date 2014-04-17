@@ -5,7 +5,7 @@ BUILDFOLDER=../build
 
 # extract number of cores on the system
 CORES=`grep -c ^processor /proc/cpuinfo`
-echo "building with " $CORES "cores " 
+echo "building with " $CORES "cores "
 
 #./clean.sh
 if [ "$INPUT" != "" ]; then
@@ -25,10 +25,10 @@ if [ "$INPUT" != "" ]; then
       echo ""
       echo "regression result is available here:"
       echo "---------------------------------------------------------------------"
-      echo "http://jwein2.iue.tuwien.ac.at:50000/CDash/index.php?project=ViennaCL"
+      echo "http://frudo.iue.tuwien.ac.at:50080/CDash/index.php?project=ViennaCL"
       echo "-------------------------------------------------------------------- "
       echo ""
-   else 
+   else
       echo ""
       echo "# Error - wrong option: \""$INPUT"\""
       echo ""
