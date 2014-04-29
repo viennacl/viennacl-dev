@@ -29,8 +29,10 @@
 #endif
 
 #include <algorithm>
+#include <fstream>
 #include <vector>
 #include <map>
+#include <cstdlib>
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/kernel.hpp"
@@ -38,6 +40,7 @@
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/command_queue.hpp"
+#include "viennacl/tools/sha1.hpp"
 
 namespace viennacl
 {
@@ -355,11 +358,36 @@ namespace viennacl
           std::cout << "ViennaCL: Adding program '" << prog_name << "' to context " << h_ << std::endl;
           #endif
 
+          cl_program temp = 0;
+
+          char * _cache_path = std::getenv("VIENNACL_CACHE_PATH");
           //
-          // Build program
+          // Retrieves the program in the cache
           //
-          cl_program temp = clCreateProgramWithSource(h_.get(), 1, (const char **)&source_text, &source_size, &err);
-          VIENNACL_ERR_CHECK(err);
+          if(_cache_path){
+            std::string cache_path = _cache_path;
+            std::string sha1 =  tools::sha1(source);
+            std::ifstream cached((cache_path+sha1).c_str(),std::ios::binary);
+            if(cached){
+              size_t len;
+              std::vector<unsigned char> buffer;
+
+              cached.read((char*)&len, sizeof(std::size_t));
+              buffer.resize(len);
+              cached.read((char*)buffer.data(), len);
+
+              cl_int status;
+              cl_device_id devid = devices_[0].id();
+              const unsigned char * bufdata = buffer.data();
+              temp = clCreateProgramWithBinary(h_.get(),1,&devid,&len, &bufdata,&status,&err);
+              VIENNACL_ERR_CHECK(err);
+            }
+          }
+
+          if(!temp){
+            temp = clCreateProgramWithSource(h_.get(), 1, (const char **)&source_text, &source_size, &err);
+            VIENNACL_ERR_CHECK(err);
+          }
 
           const char * options = build_options_.c_str();
           err = clBuildProgram(temp, 0, NULL, options, NULL, NULL);
@@ -376,6 +404,34 @@ namespace viennacl
             std::cout << "Sources: " << source << std::endl;
           }
           VIENNACL_ERR_CHECK(err);
+
+          if(_cache_path){
+            std::size_t len;
+
+            std::vector<std::size_t> sizes(devices_.size());
+            clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,0,NULL,&len);
+            clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,len,(void*)sizes.data(),NULL);
+
+            std::vector<unsigned char*> binaries;
+            for(std::size_t i = 0 ; i < devices_.size() ; ++i)
+              binaries.push_back(new unsigned char[sizes[i]]);
+
+            clGetProgramInfo(temp,CL_PROGRAM_BINARIES,0,NULL,&len);
+            clGetProgramInfo(temp,CL_PROGRAM_BINARIES,len,binaries.data(),NULL);
+
+            std::string cache_path = _cache_path;
+            std::string sha1 =  tools::sha1(source);
+            std::ofstream cached((cache_path+sha1).c_str(),std::ios::binary);
+
+            cached.write((char*)&sizes[0], sizeof(size_t));
+            cached.write((char*)binaries[0], sizes[0]);
+
+            for(std::size_t i = 0 ; i < devices_.size() ; ++i)
+              delete[] binaries[i];
+
+            VIENNACL_ERR_CHECK(err);
+          }
+
 
           programs_.push_back(viennacl::ocl::program(temp, *this, prog_name));
 
