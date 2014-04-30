@@ -294,10 +294,10 @@ namespace viennacl
                           index_vector_type const & block_boundaries
                          ) : tag_(tag),
                              block_indices_(block_boundaries),
-                             gpu_block_indices(viennacl::traits::context(mat)),
+                             gpu_block_indices(),
                              gpu_L_trans(0,0,viennacl::traits::context(mat)),
                              gpu_U_trans(0,0,viennacl::traits::context(mat)),
-                             gpu_D(0,viennacl::traits::context(mat)),
+                             gpu_D(mat.size1(),viennacl::traits::context(mat)),
                              LU_blocks(block_boundaries.size())
         {
           //initialize preconditioner:
