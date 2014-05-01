@@ -38,7 +38,7 @@
 
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/reduce.hpp"
-#include "viennacl/generator/generate.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
 #include "viennacl/scheduler/io.hpp"
 
 #define CHECK_RESULT(cpu,gpu, op) \
@@ -152,7 +152,7 @@ int test( Epsilon const& epsilon) {
         cy     =  ublas::prod(cA,cx);
         viennacl::scheduler::statement statement(y, viennacl::op_assign(), viennacl::linalg::prod(A,x));
         //std::cout << statement << std::endl;
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cy,y,y=A*x)
     }
@@ -161,7 +161,7 @@ int test( Epsilon const& epsilon) {
         std::cout << "x = trans(A)*y..." << std::endl;
         cx     =  ublas::prod(trans(cA),cy);
         viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::linalg::prod(trans(A),y));
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cx,x,x=trans(A)*y)
     }
@@ -178,7 +178,7 @@ int test( Epsilon const& epsilon) {
         viennacl::scheduler::statement statement(y, viennacl::op_assign(), viennacl::linalg::reduce_rows<viennacl::op_add>(A));
         //std::cout << statement << std::endl;
 
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cy,y,y = reduce_rows<max>(A))
     }
@@ -193,7 +193,7 @@ int test( Epsilon const& epsilon) {
             cx(j) = acc;
         }
         viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::linalg::reduce_columns<viennacl::op_add>(A));
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cx,x,x = reduce_columns<max>(A))
     }

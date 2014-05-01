@@ -40,7 +40,7 @@
 #include "viennacl/linalg/norm_1.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
-#include "viennacl/generator/generate.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
 #include "viennacl/scheduler/io.hpp"
 
 
@@ -138,7 +138,7 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "w = x + y ..." << std::endl;
         cw = cx + cy;
         viennacl::scheduler::statement statement(w, viennacl::op_assign(), x + y);
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x + y);
     }
@@ -147,7 +147,7 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "y = w + x ..." << std::endl;
         cy = cw + cx;
         viennacl::scheduler::statement statement(y, viennacl::op_assign(), w + x);
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cy, y, y = w + x);
     }
@@ -156,7 +156,7 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "x = y + w ..." << std::endl;
         cx = cy + cw;
         viennacl::scheduler::statement statement(x, viennacl::op_assign(), y + w);
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cx, x, x = y + w);
     }
@@ -165,7 +165,7 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "w = alpha*x + beta*y ..." << std::endl;
         cw = alpha*cx + beta*cy;
         viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = alpha*x + beta*y);
     }
@@ -253,7 +253,7 @@ int test_vector ( Epsilon const& epsilon) {
         s = 0;
         for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
         viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y));
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(s, gs, s = inner_prod(x,y));
     }
@@ -263,7 +263,7 @@ int test_vector ( Epsilon const& epsilon) {
         s = 0;
         for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i];
         viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_add>(x));
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(s, gs, s = reduce<add>(x));
     }
@@ -273,7 +273,7 @@ int test_vector ( Epsilon const& epsilon) {
         s = cx[0];
         for(unsigned int i=1 ; i<size ; ++i)  s=std::max(s,cx[i]);
         viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_element_binary<viennacl::op_fmax> >(x));
-        generator::generate_enqueue_statement(statement, statement.array()[0]);
+        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
         viennacl::backend::finish();
         CHECK_RESULT(s, gs, s = reduce<mult>(x));
     }
@@ -342,7 +342,7 @@ int test_matrix ( Epsilon const& epsilon) {
       std::cout << "C = A + B ..." << std::endl;
       cC     = ( cA + cB );
       viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
-      generator::generate_enqueue_statement(statement, statement.array()[0]);
+      device_specific::generate_enqueue_statement(statement, statement.array()[0]);
       viennacl::backend::finish();
       CHECK_RESULT(cC, C, C=A+B)
     }

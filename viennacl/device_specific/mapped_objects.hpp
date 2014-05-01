@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_MAPPED_TYPE_HPP
-#define VIENNACL_GENERATOR_MAPPED_TYPE_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_MAPPED_TYPE_HPP
+#define VIENNACL_DEVICE_SPECIFIC_MAPPED_TYPE_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -26,12 +26,12 @@
 #include <string>
 
 #include "viennacl/scheduler/forwards.h"
-#include "viennacl/generator/forwards.h"
-#include "viennacl/generator/utils.hpp"
+#include "viennacl/device_specific/forwards.h"
+#include "viennacl/device_specific/utils.hpp"
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
       /** @brief Base class for mapping viennacl datastructure to generator-friendly structures
        */

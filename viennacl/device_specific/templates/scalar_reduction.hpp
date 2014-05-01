@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_TEMPLATES_SCALAR_REDUCTION_HPP
-#define VIENNACL_GENERATOR_TEMPLATES_SCALAR_REDUCTION_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_SCALAR_REDUCTION_HPP
+#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_SCALAR_REDUCTION_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -29,18 +29,18 @@
 #include "viennacl/backend/opencl.hpp"
 
 #include "viennacl/scheduler/forwards.h"
-#include "viennacl/generator/tree_parsing/fetch.hpp"
-#include "viennacl/generator/tree_parsing/elementwise_expression.hpp"
-#include "viennacl/generator/utils.hpp"
+#include "viennacl/device_specific/tree_parsing/fetch.hpp"
+#include "viennacl/device_specific/tree_parsing/elementwise_expression.hpp"
+#include "viennacl/device_specific/utils.hpp"
 
-#include "viennacl/generator/templates/template_base.hpp"
-#include "viennacl/generator/templates/reduction_utils.hpp"
+#include "viennacl/device_specific/templates/template_base.hpp"
+#include "viennacl/device_specific/templates/reduction_utils.hpp"
 
 #include "viennacl/tools/tools.hpp"
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
     class scalar_reduction : public profile_base{
       private:

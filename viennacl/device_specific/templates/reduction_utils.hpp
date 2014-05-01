@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_TEMPLATES_REDUCTION_UTILS_HPP
-#define VIENNACL_GENERATOR_TEMPLATES_REDUCTION_UTILS_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_REDUCTION_UTILS_HPP
+#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_REDUCTION_UTILS_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -27,12 +27,12 @@
 #include <vector>
 
 #include "viennacl/scheduler/forwards.h"
-#include "viennacl/generator/utils.hpp"
+#include "viennacl/device_specific/utils.hpp"
 
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
     inline void compute_reduction(utils::kernel_generation_stream & os, std::string const & acc, std::string const & val, scheduler::op_element const & op){
         os << acc << "=";

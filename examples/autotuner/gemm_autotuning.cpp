@@ -27,14 +27,14 @@
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 
-#include "viennacl/generator/generate.hpp"
-#include "viennacl/generator/autotuning/autotune.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
+#include "viennacl/device_specific/autotuning/autotune.hpp"
 
 #include "viennacl/tools/timer.hpp"
 
 #include "command-line-utils.hpp"
 
-using namespace viennacl::generator;
+using namespace viennacl::device_specific;
 
 static const unsigned int n_runs = 1;
 
@@ -144,15 +144,15 @@ template<class ScalarType>
 struct config{
     typedef matrix_product profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-       profile_type res(  viennacl::generator::at(params, std::string("vector")).current()
-                        , viennacl::generator::at(params, std::string("local_size1")).current()
-                        , viennacl::generator::at(params, std::string("cache_width")).current()
-                        , viennacl::generator::at(params, std::string("local_size2")).current()
-                        , viennacl::generator::at(params, std::string("ms")).current()
-                        , viennacl::generator::at(params, std::string("ks")).current()
-                        , viennacl::generator::at(params, std::string("ns")).current()
-                        , static_cast<bool>(viennacl::generator::at(params, std::string("lhs_storage")).current() > 0)
-                        , static_cast<bool>(viennacl::generator::at(params, std::string("rhs_storage")).current() > 0));
+       profile_type res(  viennacl::device_specific::at(params, std::string("vector")).current()
+                        , viennacl::device_specific::at(params, std::string("local_size1")).current()
+                        , viennacl::device_specific::at(params, std::string("cache_width")).current()
+                        , viennacl::device_specific::at(params, std::string("local_size2")).current()
+                        , viennacl::device_specific::at(params, std::string("ms")).current()
+                        , viennacl::device_specific::at(params, std::string("ks")).current()
+                        , viennacl::device_specific::at(params, std::string("ns")).current()
+                        , static_cast<bool>(viennacl::device_specific::at(params, std::string("lhs_storage")).current() > 0)
+                        , static_cast<bool>(viennacl::device_specific::at(params, std::string("rhs_storage")).current() > 0));
        return res;
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
@@ -161,7 +161,7 @@ struct config{
     }
 };
 
-viennacl::generator::code_generator::forced_profile_key_type make_key(std::string const & layout, std::size_t scalartype_size){
+viennacl::device_specific::code_generator::forced_profile_key_type make_key(std::string const & layout, std::size_t scalartype_size){
     if(layout=="TT")
         return code_generator::forced_profile_key_type(MATRIX_PRODUCT_TT_TYPE, scalartype_size);
     else if(layout=="TN")
@@ -193,17 +193,17 @@ unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalarty
     viennacl::matrix<ScalarType> B(size, size);
     viennacl::matrix<ScalarType> C(size, size);
     viennacl::scheduler::statement statement = make_statement(layout,A,B,C);
-    viennacl::generator::code_generator gen;
+    viennacl::device_specific::code_generator gen;
     gen.add(statement,statement.array()[0]);
     gen.force_profile(make_key(layout,scalartype_size), profile);
-    viennacl::generator::enqueue(gen);
-    viennacl::generator::enqueue(gen);
+    viennacl::device_specific::enqueue(gen);
+    viennacl::device_specific::enqueue(gen);
     viennacl::backend::finish();
     viennacl::tools::timer timer;
     timer.start();
     static const unsigned int n_runs = 1;
     for(unsigned int r = 0 ; r < n_runs; ++r)
-      viennacl::generator::enqueue(gen);
+      viennacl::device_specific::enqueue(gen);
     viennacl::backend::finish();
     double time = timer.get()/n_runs;
     return static_cast<unsigned int>(2*pow(size/static_cast<double>(1000.0),3)/time);
@@ -315,10 +315,10 @@ void run_autotune(autotuner_options options){
 
         //Recompiles for the best profile
         profile_type best_profile = timings.begin()->second;
-        viennacl::generator::code_generator dummy;
+        viennacl::device_specific::code_generator dummy;
         dummy.add(statement,statement.array()[0]);
         dummy.force_profile(key, best_profile);
-        viennacl::generator::enqueue(dummy,true);
+        viennacl::device_specific::enqueue(dummy,true);
         viennacl::backend::finish();
     }
 

@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_AUTOTUNE_HPP
-#define VIENNACL_GENERATOR_AUTOTUNE_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_AUTOTUNE_HPP
+#define VIENNACL_DEVICE_SPECIFIC_AUTOTUNE_HPP
 
 
 /* =========================================================================
@@ -34,13 +34,13 @@
 #include "viennacl/ocl/infos.hpp"
 
 #include "viennacl/scheduler/forwards.h"
-#include "viennacl/generator/generate.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
 
 #include "viennacl/tools/timer.hpp"
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
     namespace autotune{
 
@@ -89,7 +89,7 @@ namespace viennacl{
       class tuning_config{
         private:
           /** @brief Storage type of the parameters */
-          typedef std::map<std::string, viennacl::generator::autotune::tuning_param> params_t;
+          typedef std::map<std::string, viennacl::device_specific::autotune::tuning_param> params_t;
 
         public:
           typedef ConfigType config_type;
@@ -144,16 +144,16 @@ namespace viennacl{
 
         tools::timer t;
         std::list<viennacl::ocl::kernel *> kernels;
-        viennacl::generator::code_generator gen;
+        viennacl::device_specific::code_generator gen;
         gen.force_profile(key, prof);
         gen.add(statement, statement.array()[0]);
-        viennacl::generator::get_configured_program(gen, kernels, true);
-        viennacl::generator::enqueue(gen);
+        viennacl::device_specific::get_configured_program(gen, kernels, true);
+        viennacl::device_specific::enqueue(gen);
         viennacl::backend::finish();
         t.start();
 
         for(unsigned int i = 0 ; i < n_runs ; ++i)
-            viennacl::generator::enqueue(gen);
+            viennacl::device_specific::enqueue(gen);
         viennacl::backend::finish();
         return (double)t.get()/n_runs;
       }

@@ -18,8 +18,8 @@
 #include <fstream>
 
 #include "viennacl/matrix.hpp"
-#include "viennacl/generator/utils.hpp"
-#include "viennacl/generator/generate.hpp"
+#include "viennacl/device_specific/utils.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
@@ -31,7 +31,7 @@ void dump_string_to_file(std::string const & filename, std::string const & str){
 template<typename ScalarType>
 void dump_gemm_kernel(std::string const & device_name)
 {
-    std::string scalartype_name = viennacl::generator::utils::type_to_string<ScalarType>::value();
+    std::string scalartype_name = viennacl::device_specific::utils::type_to_string<ScalarType>::value();
     viennacl::matrix<ScalarType> A;
     viennacl::matrix<ScalarType> B;
     viennacl::matrix<ScalarType> C;
@@ -44,13 +44,13 @@ void dump_gemm_kernel(std::string const & device_name)
     viennacl::scheduler::statement stt(C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(A),trans(B)) + beta*C);
 
     //OpenCL
-    dump_string_to_file("gemm_aa_" + scalartype_name + "_" + device_name + ".cl", viennacl::generator::get_opencl_program_string(saa));
+    dump_string_to_file("gemm_aa_" + scalartype_name + "_" + device_name + ".cl", viennacl::device_specific::get_opencl_program_string(saa));
 //    dump_string_to_file("gemm_ta_" + scalartype_name + "_" + device_name + ".cl", viennacl::generator::get_opencl_program_string(sta));
 //    dump_string_to_file("gemm_at_" + scalartype_name + "_" + device_name + ".cl", viennacl::generator::get_opencl_program_string(sat));
 //    dump_string_to_file("gemm_tt_" + scalartype_name + "_" + device_name + ".cl", viennacl::generator::get_opencl_program_string(stt));
 
     //CUDA
-    dump_string_to_file("gemm_aa_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_device_code(saa));
+    dump_string_to_file("gemm_aa_" + scalartype_name + "_" + device_name + ".cu", viennacl::device_specific::get_cuda_device_code(saa));
 //    dump_string_to_file("gemm_ta_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_program_string(sta));
 //    dump_string_to_file("gemm_at_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_program_string(sat));
 //    dump_string_to_file("gemm_tt_" + scalartype_name + "_" + device_name + ".cu", viennacl::generator::get_cuda_program_string(stt));

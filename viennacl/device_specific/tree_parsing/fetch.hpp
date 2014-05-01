@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_TREE_PARSING_FETCH_HPP
-#define VIENNACL_GENERATOR_TREE_PARSING_FETCH_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_TREE_PARSING_FETCH_HPP
+#define VIENNACL_DEVICE_SPECIFIC_TREE_PARSING_FETCH_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -30,13 +30,13 @@
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/generator/utils.hpp"
-#include "viennacl/generator/forwards.h"
-#include "viennacl/generator/tree_parsing/traverse.hpp"
+#include "viennacl/device_specific/utils.hpp"
+#include "viennacl/device_specific/forwards.h"
+#include "viennacl/device_specific/tree_parsing/traverse.hpp"
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
     namespace tree_parsing{
 

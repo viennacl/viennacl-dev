@@ -43,7 +43,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
-#include "viennacl/generator/generate.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
 
 // Some helper functions for this tutorial:
 #include "../tutorial/Random.hpp"
@@ -71,13 +71,13 @@ double run_benchmark(size_t size, bool is_trans)
     else
       statement = new viennacl::scheduler::statement(y, viennacl::op_assign(), viennacl::linalg::prod(A,x));
 
-    viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
+    viennacl::device_specific::generate_enqueue_statement(*statement, statement->array()[0]);
     viennacl::backend::finish();
 
     Timer timer;
     timer.start();
     for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-      viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
+      viennacl::device_specific::generate_enqueue_statement(*statement, statement->array()[0]);
     }
     viennacl::backend::finish();
 

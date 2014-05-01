@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_PROFILES_HPP
-#define VIENNACL_GENERATOR_PROFILES_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_PROFILES_HPP
+#define VIENNACL_DEVICE_SPECIFIC_PROFILES_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -28,19 +28,19 @@
 
 #include "viennacl/ocl/device.hpp"
 
-#include "viennacl/generator/forwards.h"
+#include "viennacl/device_specific/forwards.h"
 
 #include "viennacl/tools/shared_ptr.hpp"
 
-#include "viennacl/generator/templates/template_base.hpp"
-#include "viennacl/generator/templates/saxpy.hpp"
-#include "viennacl/generator/templates/scalar_reduction.hpp"
-#include "viennacl/generator/templates/vector_reduction.hpp"
-#include "viennacl/generator/templates/matrix_product.hpp"
+#include "viennacl/device_specific/templates/template_base.hpp"
+#include "viennacl/device_specific/templates/saxpy.hpp"
+#include "viennacl/device_specific/templates/scalar_reduction.hpp"
+#include "viennacl/device_specific/templates/vector_reduction.hpp"
+#include "viennacl/device_specific/templates/matrix_product.hpp"
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
     namespace profiles{
 
