@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_FORWARDS_H
-#define VIENNACL_GENERATOR_FORWARDS_H
+#ifndef VIENNACL_DEVICE_SPECIFIC_FORWARDS_H
+#define VIENNACL_DEVICE_SPECIFIC_FORWARDS_H
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -33,7 +33,7 @@
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
     static void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node);
     static void generate_enqueue_statement(viennacl::scheduler::statement const & s);

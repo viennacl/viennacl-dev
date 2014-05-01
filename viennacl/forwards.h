@@ -789,7 +789,7 @@ namespace viennacl
 
 
   /** @brief Provides an OpenCL kernel generator. */
-  namespace generator
+  namespace device_specific
   {
     /** @brief Provides the implementation for tuning the kernels for a particular device. */
     namespace autotune {}

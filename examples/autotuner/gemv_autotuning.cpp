@@ -24,12 +24,12 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 
-#include "viennacl/generator/generate.hpp"
-#include "viennacl/generator/autotuning/autotune.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
+#include "viennacl/device_specific/autotuning/autotune.hpp"
 #include "viennacl/tools/timer.hpp"
 #include "command-line-utils.hpp"
 
-using namespace viennacl::generator;
+using namespace viennacl::device_specific;
 
 typedef std::vector< viennacl::ocl::platform > platforms_type;
 typedef std::vector<viennacl::ocl::device> devices_type;
@@ -117,10 +117,10 @@ template<class ScalarType>
 struct config{
     typedef vector_reduction profile_type;
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-      return profile_type(viennacl::generator::at(params, std::string("vector")).current(),
-                          viennacl::generator::at(params, std::string("local_size1")).current(),
-                          viennacl::generator::at(params, std::string("local_size2")).current(),
-                          viennacl::generator::at(params, std::string("num_groups")).current());
+      return profile_type(viennacl::device_specific::at(params, std::string("vector")).current(),
+                          viennacl::device_specific::at(params, std::string("local_size1")).current(),
+                          viennacl::device_specific::at(params, std::string("local_size2")).current(),
+                          viennacl::device_specific::at(params, std::string("num_groups")).current());
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
         profile_type prof = create_profile(params);
@@ -149,17 +149,17 @@ double run_benchmark(size_t size, autotuner_options options, typename config<Sca
     viennacl::vector<ScalarType> y(size);
     viennacl::vector<ScalarType> x(size);
     viennacl::scheduler::statement statement = make_statement(options,y,A,x);
-    viennacl::generator::code_generator gen;
+    viennacl::device_specific::code_generator gen;
     gen.add(statement,statement.array()[0]);
     gen.force_profile(make_key<ScalarType>(options), profile);
-    viennacl::generator::enqueue(gen);
-    viennacl::generator::enqueue(gen);
+    viennacl::device_specific::enqueue(gen);
+    viennacl::device_specific::enqueue(gen);
     viennacl::backend::finish();
     viennacl::tools::timer timer;
     timer.start();
     static const unsigned int n_runs = 1;
     for(unsigned int r = 0 ; r < n_runs; ++r)
-      viennacl::generator::enqueue(gen);
+      viennacl::device_specific::enqueue(gen);
     viennacl::backend::finish();
     double time = timer.get()/(double)n_runs;
     return time;
@@ -201,26 +201,6 @@ void run_autotune(autotuner_options const & options){
     stream << "#tuning for size : " << options.tuning_size << std::endl;
 
     autotune::benchmark(&timings,statement,key,conf,n_runs,&stream);
-
-    //Recompiles for the best profile
-    profile_type best_profile = timings.begin()->second;
-    viennacl::generator::code_generator dummy;
-    dummy.add(statement,statement.array()[0]);
-    dummy.force_profile(key, best_profile);
-    viennacl::generator::enqueue(dummy,true);
-    viennacl::backend::finish();
-
-    stream << "#Benchmarking " << timings.begin()->second << "..." << std::endl;
-    stream << "##Size\tBandwidth(GB/s)\tThroughput(GFLOP/s)" << std::endl;
-    for(unsigned int size = 128 ; size <= 3072 ; size += 128){
-        double percent = (double)size/3072*100;
-        unsigned int n_bytes_transfered = (size*size+2*size)*sizeof(ScalarType);
-        unsigned int n_flops = size*(2*size-1);
-        std::cout << '\r' << "Benchmarking..." << "[" << std::setprecision(2) << std::setfill (' ') << std::setw(6) << std::fixed  << percent << "%" << "]" << std::flush;
-        double time = run_benchmark<ScalarType>(size,options,best_profile);
-        stream << "#" << size << "\t" <<  static_cast<unsigned int>(1e-9*n_bytes_transfered/time) << "\t" << static_cast<unsigned int>(1e-9*n_flops/time) << std::endl;
-    }
-    std::cout << '\r' << "Benchmarking...[100.00%]" << std::endl;
 }
 
 

@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_GENERATE_HPP
-#define VIENNACL_GENERATOR_GENERATE_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_CODE_GENERATOR_HPP
+#define VIENNACL_DEVICE_SPECIFIC_CODE_GENERATOR_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -28,19 +28,19 @@
 #include <typeinfo>
 
 #include "viennacl/scheduler/forwards.h"
-#include "viennacl/generator/forwards.h"
+#include "viennacl/device_specific/forwards.h"
 
-#include "viennacl/generator/autotuning/profiles.hpp"
+#include "viennacl/device_specific/autotuning/profiles.hpp"
 
-#include "viennacl/generator/tree_parsing/statement_representation.hpp"
-#include "viennacl/generator/tree_parsing/set_arguments.hpp"
-#include "viennacl/generator/tree_parsing/map.hpp"
+#include "viennacl/device_specific/tree_parsing/statement_representation.hpp"
+#include "viennacl/device_specific/tree_parsing/set_arguments.hpp"
+#include "viennacl/device_specific/tree_parsing/map.hpp"
 
 #include "viennacl/tools/tools.hpp"
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
 
     /** @brief Class for handling code generation
@@ -296,7 +296,7 @@ namespace viennacl{
     *   @param kernels this list will be filled with the kernels associated with the generator
     *   @param force_recompilation if true, the program will be recompiled
     */
-    inline viennacl::ocl::program & get_configured_program(viennacl::generator::code_generator & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
+    inline viennacl::ocl::program & get_configured_program(viennacl::device_specific::code_generator & generator, std::list<viennacl::ocl::kernel*> & kernels, bool force_recompilation = false){
       std::vector<char> program_name_vector(256);
       char* program_name = program_name_vector.data();
       generator.make_program_name(program_name);
@@ -316,7 +316,7 @@ namespace viennacl{
     }
 
     /** @brief Set the arguments and enqueue a generator object */
-    inline void enqueue(viennacl::generator::code_generator & generator, bool force_recompilation = false){
+    inline void enqueue(viennacl::device_specific::code_generator & generator, bool force_recompilation = false){
       std::list<viennacl::ocl::kernel*> kernels;
       get_configured_program(generator, kernels, force_recompilation);
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it){
@@ -326,23 +326,23 @@ namespace viennacl{
 
     /** @brief Convenience function to get the OpenCL program string for a single statement */
     inline std::string get_opencl_program_string(viennacl::scheduler::statement const & s){
-      generator::code_generator gen;
+      device_specific::code_generator gen;
       gen.add(s,s.array()[0]);
       return gen.make_opencl_program_string();
     }
 
     /** @brief Convenience function to get the CUDA device code for a single statement */
     inline std::string get_cuda_device_code(viennacl::scheduler::statement const & s){
-      generator::code_generator gen;
+      device_specific::code_generator gen;
       gen.add(s, s.array()[0]);
       return gen.make_cuda_program_string();
     }
 
     /** @brief Generate and enqueue a statement+root_node into the current queue */
     inline void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node){
-      generator::code_generator gen;
+      device_specific::code_generator gen;
       gen.add(s,root_node);
-      viennacl::generator::enqueue(gen);
+      viennacl::device_specific::enqueue(gen);
     }
 
     /** @brief Generate and enqueue a statement into the current queue, assumes the root_node is the first node of the statement */

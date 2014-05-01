@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_UTILS_HPP
-#define VIENNACL_GENERATOR_UTILS_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_UTILS_HPP
+#define VIENNACL_DEVICE_SPECIFIC_UTILS_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -25,7 +25,7 @@
 
 #include <sstream>
 
-#include "viennacl/generator/forwards.h"
+#include "viennacl/device_specific/forwards.h"
 #include "viennacl/ocl/forwards.h"
 
 #include "viennacl/scheduler/forwards.h"
@@ -35,7 +35,7 @@
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
     namespace utils{
 

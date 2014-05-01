@@ -41,7 +41,7 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
 
-#include "viennacl/generator/generate.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
 
 // Some helper functions for this tutorial:
 #include "../tutorial/Random.hpp"
@@ -79,13 +79,13 @@ ScalarType run_benchmark(size_t size, operation_type type)
     else //if(type==assign)
       statement = new viennacl::scheduler::statement(vcl_A, viennacl::op_assign(), vcl_B);
 
-    viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
+    viennacl::device_specific::generate_enqueue_statement(*statement, statement->array()[0]);
     viennacl::backend::finish();
 
     Timer timer;
     timer.start();
     for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-      viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
+      viennacl::device_specific::generate_enqueue_statement(*statement, statement->array()[0]);
     }
     viennacl::backend::finish();
 

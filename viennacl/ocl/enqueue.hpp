@@ -35,9 +35,9 @@
 
 namespace viennacl
 {
-  namespace generator{
+  namespace device_specific{
       class custom_operation;
-      void enqueue_custom_op(viennacl::generator::custom_operation & op, viennacl::ocl::command_queue const & queue);
+      void enqueue_custom_op(viennacl::device_specific::custom_operation & op, viennacl::ocl::command_queue const & queue);
   }
 
   namespace ocl
@@ -114,12 +114,12 @@ namespace viennacl
       enqueue(k, k.context().get_queue());
     }
 
-    inline void enqueue(viennacl::generator::custom_operation & op, viennacl::ocl::command_queue const & queue)
+    inline void enqueue(viennacl::device_specific::custom_operation & op, viennacl::ocl::command_queue const & queue)
     {
-      generator::enqueue_custom_op(op,queue);
+      device_specific::enqueue_custom_op(op,queue);
     }
 
-    inline void enqueue(viennacl::generator::custom_operation & op)
+    inline void enqueue(viennacl::device_specific::custom_operation & op)
     {
       enqueue(op, viennacl::ocl::current_context().get_queue());
     }

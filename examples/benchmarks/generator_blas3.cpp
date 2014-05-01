@@ -38,7 +38,7 @@
 #include "viennacl/matrix_proxy.hpp"
 #include "viennacl/linalg/lu.hpp"
 
-#include "viennacl/generator/generate.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
 #include "viennacl/scheduler/forwards.h"
 
 // Some helper functions for this tutorial:
@@ -74,12 +74,12 @@ unsigned int run_benchmark(size_t size, char ATrans, char BTrans)
     viennacl::matrix<ScalarType, viennacl::column_major> B(size, size);
     viennacl::matrix<ScalarType, viennacl::column_major> C(size, size);
     viennacl::scheduler::statement * statement = allocate_statement(ATrans, BTrans,A,B,C);
-    viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
+    viennacl::device_specific::generate_enqueue_statement(*statement, statement->array()[0]);
     viennacl::backend::finish();
     Timer timer;
     timer.start();
     for(unsigned int r = 0 ; r < N_RUNS ; ++r){
-      viennacl::generator::generate_enqueue_statement(*statement, statement->array()[0]);
+      viennacl::device_specific::generate_enqueue_statement(*statement, statement->array()[0]);
     }
     viennacl::backend::finish();
     double time = timer.get()/(double)N_RUNS;

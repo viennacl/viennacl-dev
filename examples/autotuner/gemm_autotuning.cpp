@@ -27,14 +27,14 @@
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 
-#include "viennacl/generator/generate.hpp"
-#include "viennacl/generator/autotuning/autotune.hpp"
+#include "viennacl/device_specific/code_generator.hpp"
+#include "viennacl/device_specific/autotuning/autotune.hpp"
 
 #include "viennacl/tools/timer.hpp"
 
 #include "command-line-utils.hpp"
 
-using namespace viennacl::generator;
+using namespace viennacl::device_specific;
 
 static const unsigned int n_runs = 10;
 
@@ -159,22 +159,21 @@ struct config{
     typedef matrix_product<TransA, TransB> profile_type;
 
     static profile_type create_profile(std::map<std::string, autotune::tuning_param> const & params){
-       int vector = viennacl::generator::at(params, std::string("vector")).current();
-       int ls0 = viennacl::generator::at(params, std::string("local_size1")).current();
-       int ls1 = viennacl::generator::at(params, std::string("local_size2")).current();
-       int kl = viennacl::generator::at(params, std::string("kl")).current();
-       int ms = viennacl::generator::at(params, std::string("ms")).current();
-       int ks = viennacl::generator::at(params, std::string("ks")).current();
-       int ns = viennacl::generator::at(params, std::string("ns")).current();
+       int vector = viennacl::device_specific::at(params, std::string("vector")).current();
+       int ls0 = viennacl::device_specific::at(params, std::string("local_size1")).current();
+       int ls1 = viennacl::device_specific::at(params, std::string("local_size2")).current();
+       int kl = viennacl::device_specific::at(params, std::string("kl")).current();
+       int ms = viennacl::device_specific::at(params, std::string("ms")).current();
+       int ks = viennacl::device_specific::at(params, std::string("ks")).current();
+       int ns = viennacl::device_specific::at(params, std::string("ns")).current();
 
-       bool A_local = (viennacl::generator::at(params, std::string("A_storage")).current()==1);
-       bool B_local = (viennacl::generator::at(params, std::string("B_storage")).current()==1);
+       bool A_local = (viennacl::device_specific::at(params, std::string("A_storage")).current()==1);
+       bool B_local = (viennacl::device_specific::at(params, std::string("B_storage")).current()==1);
 
-       int local_fetch0 = viennacl::generator::at(params, std::string("local_fetch0")).current();
-       int local_fetch1 = viennacl::generator::at(params, std::string("local_fetch1")).current();
+       int local_fetch0 = viennacl::device_specific::at(params, std::string("local_fetch0")).current();
+       int local_fetch1 = viennacl::device_specific::at(params, std::string("local_fetch1")).current();
 
        profile_type res(vector,ls0,kl,ls1,ms,ks,ns,A_local,B_local,local_fetch0,local_fetch1);
-
        return res;
     }
     static bool is_invalid(viennacl::ocl::device const & dev, std::map<std::string, autotune::tuning_param> const & params){
@@ -183,7 +182,7 @@ struct config{
     }
 };
 
-viennacl::generator::code_generator::forced_profile_key_type make_key(std::string const & layout, std::size_t scalartype_size){
+viennacl::device_specific::code_generator::forced_profile_key_type make_key(std::string const & layout, std::size_t scalartype_size){
     if(layout=="TT")
         return code_generator::forced_profile_key_type(MATRIX_PRODUCT_TT_TYPE, scalartype_size);
     else if(layout=="TN")
@@ -215,15 +214,15 @@ unsigned int run_benchmark(size_t size, std::string layout, std::size_t scalarty
     viennacl::matrix<ScalarType, viennacl::column_major> B(size, size);
     viennacl::matrix<ScalarType, viennacl::column_major> C(size, size);
     viennacl::scheduler::statement statement = make_statement(layout,A,B,C);
-    viennacl::generator::code_generator gen;
+    viennacl::device_specific::code_generator gen;
     gen.add(statement,statement.array()[0]);
     gen.force_profile(make_key(layout,scalartype_size), profile);
-    viennacl::generator::enqueue(gen);
+    viennacl::device_specific::enqueue(gen);
     viennacl::backend::finish();
     viennacl::tools::timer timer;
     timer.start();
     for(unsigned int r = 0 ; r < n_runs ; ++r){
-      viennacl::generator::enqueue(gen);
+      viennacl::device_specific::enqueue(gen);
     }
     viennacl::backend::finish();
     double time = timer.get()/(double)n_runs;

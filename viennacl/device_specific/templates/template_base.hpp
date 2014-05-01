@@ -1,5 +1,5 @@
-#ifndef VIENNACL_GENERATOR_TEMPLATES_TEMPLATE_BASE_BASE
-#define VIENNACL_GENERATOR_TEMPLATES_TEMPLATE_BASE_BASE
+#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_TEMPLATE_BASE_BASE
+#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_TEMPLATE_BASE_BASE
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -34,13 +34,13 @@
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/generator/tree_parsing/traverse.hpp"
-#include "viennacl/generator/tree_parsing/map.hpp"
-#include "viennacl/generator/tree_parsing/prototype_generation.hpp"
+#include "viennacl/device_specific/tree_parsing/traverse.hpp"
+#include "viennacl/device_specific/tree_parsing/map.hpp"
+#include "viennacl/device_specific/tree_parsing/prototype_generation.hpp"
 
 namespace viennacl{
 
-  namespace generator{
+  namespace device_specific{
 
 
     /** @brief Base class for an operation profile */
