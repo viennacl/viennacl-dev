@@ -56,7 +56,7 @@ namespace viennacl{
           return oss.str();
         }
 
-        vector_saxpy(unsigned int v, std::size_t gs, std::size_t ng, unsigned int d) : profile_base(v, gs, 1, 1), num_groups_(ng), decomposition_(d){ }
+        vector_saxpy(const char * scalartype, unsigned int simd_width, std::size_t gs, std::size_t ng, unsigned int d) : profile_base(scalartype, simd_width, gs, 1, 1), num_groups_(ng), decomposition_(d){ }
 
         void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
           configure_local_sizes(k, kernel_id);
@@ -119,7 +119,7 @@ namespace viennacl{
         bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
 
       public:
-        matrix_saxpy(unsigned int v, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, unsigned int d) : profile_base(v, gs1, gs2, 1), num_groups_row_(ng1), num_groups_col_(ng2), decomposition_(d){ }
+        matrix_saxpy(const char * scalartype, unsigned int simd_width, std::size_t gs1, std::size_t gs2, std::size_t ng1, std::size_t ng2, unsigned int d) : profile_base(scalartype, simd_width, gs1, gs2, 1), num_groups_row_(ng1), num_groups_col_(ng2), decomposition_(d){ }
 
         static std::string csv_format() {
           return "Vec,LSize1,LSize2,NumGroups1,NumGroups2,GlobalDecomposition";

@@ -63,7 +63,7 @@ namespace viennacl{
               tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
         }
 
-        virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const & statement_pair, mapping_type & mapping) {
+        virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const &, mapping_type & mapping) const {
             for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
               if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
                 p->set_simd_width(simd_width_);
@@ -80,7 +80,7 @@ namespace viennacl{
 
       public:
         /** @brief The constructor */
-        profile_base(unsigned int vectorization, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : simd_width_(vectorization), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
+        profile_base(const char * scalartype, unsigned int simd_width, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : scalartype_(scalartype), simd_width_(simd_width), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
 
         void bind_statements(std::list< std::pair<scheduler::statement, scheduler::statement_node> > const * statements) { statements_ = statements; }
 
@@ -102,7 +102,7 @@ namespace viennacl{
          *  @param dev               the given device
          *  @param scalartype_size   Local memory required to execute the kernel
          */
-        bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const{
+        bool is_invalid(viennacl::ocl::device const & dev) const{
           //Query device informations
           size_t lmem_available = static_cast<size_t>(dev.local_mem_size());
           size_t max_workgroup_size = dev.max_work_group_size();
@@ -120,6 +120,12 @@ namespace viennacl{
             not_warp_multiple = static_cast<bool>(((local_size_1_*local_size_2_)%warp_size)>0);
           }
 
+          std::size_t scalartype_size;
+          if(scalartype_=="float")
+            scalartype_size = 4;
+          else
+            scalartype_size = 8;
+
           return  invalid_work_group_sizes
               || lmem_used(scalartype_size)>lmem_available
               || invalid_impl(dev, scalartype_size)
@@ -133,9 +139,8 @@ namespace viennacl{
          *  Redirects to the virtual core() method
          *
          *  @param stream Stream onto which the code should be generated
-         *  @param device_offset the index of the device in the context (used for the kernel name)
          */
-        virtual void operator()(utils::kernel_generation_stream & stream, std::size_t device_offset){
+        virtual void operator()(utils::kernel_generation_stream & stream) const {
           std::vector<mapping_type> mapping(statements_->size());
 
           ///Get Prototype, initialize mapping
@@ -156,7 +161,7 @@ namespace viennacl{
           for(std::size_t n = 0 ; n < num_kernels() ; ++n){
             //stream << "__attribute__((vec_type_hint()))" << std::endl;
             stream << " __attribute__((reqd_work_group_size(" << local_size_1_ << "," << local_size_2_ << "," << 1 << ")))" << std::endl;
-            stream << "__kernel " << "void " << "kernel_" << device_offset << "_" << n << "(" << std::endl;
+            stream << "__kernel " << "void " << "kernel_" << n << "(" << std::endl;
             stream << prototype << std::endl;
             stream << ")" << std::endl;
 
@@ -170,6 +175,7 @@ namespace viennacl{
         }
 
       protected:
+        std::string scalartype_;
         unsigned int simd_width_;
         std::size_t local_size_1_;
         std::size_t local_size_2_;

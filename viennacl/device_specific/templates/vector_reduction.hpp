@@ -44,7 +44,6 @@ namespace viennacl{
 
   namespace device_specific{
 
-    template<char A_TRANS>
     class vector_reduction : public profile_base{
       private:
         std::size_t lmem_used(std::size_t scalartype_size) const {
@@ -53,8 +52,7 @@ namespace viennacl{
 
       public:
         /** @brief The user constructor */
-        vector_reduction(unsigned int vectorization, unsigned int m, unsigned int k, unsigned int num_groups)
-          : profile_base(vectorization, m, k, 1), m_(m), k_(k), num_groups_(num_groups){ }
+        vector_reduction(const char * scalartype, char A_trans, unsigned int simd_width, unsigned int ls0, unsigned int ls1, unsigned int num_groups) : profile_base(scalartype, simd_width, ls0, ls1, 1), A_trans_(A_trans), m_(ls0), k_(ls1), num_groups_(num_groups){ }
 
         std::string csv_format() const {
           return "simd_width,n,k,num_groups";
@@ -194,7 +192,7 @@ namespace viennacl{
               {
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
                 viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
-                if(A_TRANS=='T')
+                if(A_trans_=='T')
                   tree_parsing::fetch_all_lhs(fetched,statement,root_node, std::make_pair("c", "r"),stream,exprs[k]->mapping());
                 else
                   tree_parsing::fetch_all_lhs(fetched,statement,root_node, std::make_pair("r", "c"),stream,exprs[k]->mapping());
@@ -265,6 +263,8 @@ namespace viennacl{
         }
 
       private:
+        char A_trans_;
+
         unsigned int m_;
         unsigned int k_;
         unsigned int num_groups_;

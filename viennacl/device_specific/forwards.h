@@ -35,19 +35,6 @@ namespace viennacl{
 
   namespace device_specific{
 
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node);
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s);
-
-    enum expression_type_family{
-      SCALAR_SAXPY_FAMILY,
-      VECTOR_SAXPY_FAMILY,
-      MATRIX_SAXPY_FAMILY,
-      SCALAR_REDUCE_FAMILY,
-      VECTOR_REDUCE_FAMILY,
-      MATRIX_PRODUCT_FAMILY,
-      INVALID_EXPRESSION_FAMILY
-    };
-
     inline bool is_scalar_reduction(scheduler::statement_node const & node){
       return node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE || node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY;
     }
@@ -71,6 +58,18 @@ namespace viennacl{
       MATRIX_PRODUCT_TT_TYPE,
       INVALID_EXPRESSION_TYPE
     };
+
+    enum expression_numeric_type{
+      FLOAT_TYPE,
+      DOUBLE_TYPE
+    };
+
+    namespace result_of{
+      template<class T> struct numeric_type_id{ };
+
+      template <> struct numeric_type_id<float>          { static const expression_numeric_type value = FLOAT_TYPE; };
+      template <> struct numeric_type_id<double>         { static const expression_numeric_type value = DOUBLE_TYPE; };
+    }
 
     inline const char * expression_type_to_string(expression_type type){
       switch(type){
@@ -109,18 +108,7 @@ namespace viennacl{
       throw std::out_of_range("Generator: Key not found in map");
     }
 
-    typedef std::pair<expression_type, std::size_t> expression_key_type;
-
-    struct expression_descriptor{
-        expression_key_type make_key() const { return expression_key_type(type,scalartype_size); }
-        bool operator==(expression_descriptor const & other) const
-        {
-          return type_family == other.type_family && type == other.type && scalartype_size==other.scalartype_size;
-        }
-        expression_type_family type_family;
-        expression_type type;
-        std::size_t scalartype_size;
-    };
+    typedef std::pair<expression_type, expression_numeric_type> expression_key_type;
 
     /** @brief Exception for the case the generator is unable to deal with the operation */
     class generator_not_supported_exception : public std::exception

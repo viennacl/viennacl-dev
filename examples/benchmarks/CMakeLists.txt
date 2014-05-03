@@ -16,7 +16,7 @@ endif (ENABLE_UBLAS)
 if (ENABLE_OPENCL)
 
   foreach(bench blas3 copy
-          generator_blas1 generator_blas2 generator_blas3
+          #generator_blas1 generator_blas2 generator_blas3
           opencl vector)
     add_executable(${bench}bench-opencl ${bench}.cpp)
     target_link_libraries(${bench}bench-opencl ${OPENCL_LIBRARIES})

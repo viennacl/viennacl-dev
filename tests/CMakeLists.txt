@@ -19,7 +19,7 @@ endforeach(PROG)
 # tests with OpenCL backend
 if (ENABLE_OPENCL)
   foreach(PROG blas3_prod_float blas3_prod_double blas3_solve fft iterators
-               generator_blas1 generator_blas2 generator_blas3 #generator_segmentation
+               #generator_blas1 generator_blas2 generator_blas3 generator_segmentation
                global_variables
                matrix_vector matrix_vector_int
                matrix_row_float matrix_row_double matrix_row_int

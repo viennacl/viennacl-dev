@@ -71,6 +71,26 @@ namespace viennacl{
         }
 
       public:
+        /** @brief The user constructor */
+        scalar_reduction(const char * scalartype, unsigned int simd_width, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : profile_base(scalartype, simd_width, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
+
+        std::string csv_format() const {
+          return "Vec,LSize,NumGroups,GlobalDecomposition";
+        }
+
+        std::string csv_representation() const{
+          std::ostringstream oss;
+          oss << simd_width_
+                 << "," << local_size_1_
+                 << "," << num_groups_
+                 << "," << decomposition_;
+          return oss.str();
+        }
+
+        unsigned int num_groups() const { return num_groups_; }
+
+
+        unsigned int decomposition() const { return decomposition_; }
 
         std::size_t lmem_used(std::size_t scalartype_size) const {
           return local_size_1_*scalartype_size;
@@ -129,30 +149,6 @@ namespace viennacl{
             }
           }
         }
-
-      public:
-        /** @brief The user constructor */
-        scalar_reduction(unsigned int vectorization, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : profile_base(vectorization, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
-
-
-        std::string csv_format() const {
-          return "Vec,LSize,NumGroups,GlobalDecomposition";
-        }
-
-        std::string csv_representation() const{
-          std::ostringstream oss;
-          oss << simd_width_
-                 << "," << local_size_1_
-                 << "," << num_groups_
-                 << "," << decomposition_;
-          return oss.str();
-        }
-
-        unsigned int num_groups() const { return num_groups_; }
-
-
-        unsigned int decomposition() const { return decomposition_; }
-
 
         void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
 
