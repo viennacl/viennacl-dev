@@ -790,21 +790,21 @@ namespace viennacl
           if (!trans_A && !trans_B)
           {
             typedef matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_mat_mat_prod> ProdType;
-            viennacl::device_specific::generate_enqueue_statement(device_specific::MATRIX_PRODUCT_NN_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value
+            viennacl::device_specific::execute(device_specific::MATRIX_PRODUCT_NN_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value
                                                                   ,viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
           }
           else if (!trans_A && trans_B)
           {
             typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> RhsType;
             typedef matrix_expression<const matrix_base<NumericT>, RhsType, op_mat_mat_prod> ProdType;
-            viennacl::device_specific::generate_enqueue_statement(device_specific::MATRIX_PRODUCT_NT_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value
+            viennacl::device_specific::execute(device_specific::MATRIX_PRODUCT_NT_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value
                                                                   ,viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,RhsType(B,B))+beta*C));
           }
           else if (trans_A && !trans_B)
           {
             typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> LhsType;
             typedef matrix_expression<LhsType, const matrix_base<NumericT>, op_mat_mat_prod> ProdType;
-            viennacl::device_specific::generate_enqueue_statement(device_specific::MATRIX_PRODUCT_TN_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value
+            viennacl::device_specific::execute(device_specific::MATRIX_PRODUCT_TN_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value
                                                                   ,viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(LhsType(A,A),B)+beta*C));
           }
           else if (trans_A && trans_B)
@@ -812,7 +812,7 @@ namespace viennacl
             typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> LhsType;
             typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> RhsType;
             typedef matrix_expression<LhsType, RhsType, op_mat_mat_prod> ProdType;
-            viennacl::device_specific::generate_enqueue_statement(device_specific::MATRIX_PRODUCT_TT_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value
+            viennacl::device_specific::execute(device_specific::MATRIX_PRODUCT_TT_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value
                                                                   ,viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(LhsType(A,A),RhsType(B,B))+beta*C));
           }
         }

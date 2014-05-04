@@ -314,15 +314,17 @@ namespace viennacl{
       static database_type database = init_database();
 
       /** @brief If the fallback is too harsh, use a very conservative profile */
-      static profile_base * handle_failure(viennacl::ocl::device const & device, expression_key_type const & key, tools::shared_ptr<profile_base> const & profile){
+      static profile_base & handle_failure(viennacl::ocl::device const & device, expression_key_type const & key, tools::shared_ptr<profile_base> const & profile){
         //Returns default if the profile is invalid
         if(profile->is_invalid(device))
-          return database.map.at(unknown_id).map.at(device.type()).map.at(UNKNOWN).map.at("").map.at(key).get();
-        return profile.get();
+          return *database.map.at(unknown_id).map.at(device.type()).map.at(UNKNOWN).map.at("").map.at(key).get();
+        return *profile.get();
       }
 
       /** @brief Get the profile for a device and a descriptor */
-      static profile_base * get(viennacl::ocl::device const & device, expression_type expression, expression_numeric_type numeric_type){
+      static profile_base & get(expression_type expression, expression_numeric_type numeric_type){
+        viennacl::ocl::device const & device = viennacl::ocl::current_device();
+
         device_type dev_type = device.type();
         vendor_id_type vendor_id = device.vendor_id();
         device_architecture_family device_architecture = device.architecture_family();

@@ -100,6 +100,8 @@ ScalarType diff(ScalarType s, viennacl::scalar<ScalarType> & gs){
 
 template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
+    using namespace viennacl::device_specific;
+    device_specific::expression_numeric_type NUMERIC_TYPE = device_specific::result_of::numeric_type_id<NumericT>::value;
     int retval = EXIT_SUCCESS;
 
     unsigned int size = 1024*32;
@@ -140,37 +142,37 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "w = x + y ..." << std::endl;
         cw = cx + cy;
         viennacl::scheduler::statement statement(w, viennacl::op_assign(), x + y);
-        device_specific::generate_enqueue_statement(device_specific::VECTOR_SAXPY_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
+        device_specific::execute(profiles::get(VECTOR_SAXPY_TYPE, NUMERIC_TYPE), statement);
         viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x + y);
     }
 
-    {
-        std::cout << "y = w + x ..." << std::endl;
-        cy = cw + cx;
-        viennacl::scheduler::statement statement(y, viennacl::op_assign(), w + x);
-        device_specific::generate_enqueue_statement(device_specific::VECTOR_SAXPY_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cy, y, y = w + x);
-    }
+//    {
+//        std::cout << "y = w + x ..." << std::endl;
+//        cy = cw + cx;
+//        viennacl::scheduler::statement statement(y, viennacl::op_assign(), w + x);
+//        device_specific::execute(device_specific::VECTOR_SAXPY_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cy, y, y = w + x);
+//    }
 
-    {
-        std::cout << "x = y + w ..." << std::endl;
-        cx = cy + cw;
-        viennacl::scheduler::statement statement(x, viennacl::op_assign(), y + w);
-        device_specific::generate_enqueue_statement(device_specific::VECTOR_SAXPY_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cx, x, x = y + w);
-    }
+//    {
+//        std::cout << "x = y + w ..." << std::endl;
+//        cx = cy + cw;
+//        viennacl::scheduler::statement statement(x, viennacl::op_assign(), y + w);
+//        device_specific::execute(device_specific::VECTOR_SAXPY_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cx, x, x = y + w);
+//    }
 
-    {
-        std::cout << "w = alpha*x + beta*y ..." << std::endl;
-        cw = alpha*cx + beta*cy;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
-        device_specific::generate_enqueue_statement(device_specific::VECTOR_SAXPY_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
-    }
+//    {
+//        std::cout << "w = alpha*x + beta*y ..." << std::endl;
+//        cw = alpha*cx + beta*cy;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
+//        device_specific::execute(device_specific::VECTOR_SAXPY_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
 
 //    {
 //        std::cout << "w = x == x" << std::endl;
@@ -178,7 +180,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = (cx(i) == cx(i));
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_eq(x,x));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = (x == x))
 //    }
@@ -189,7 +191,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) != cx(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_neq(x,x));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x != x)
 //    }
@@ -200,7 +202,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) > cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_greater(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x > y)
 //    }
@@ -211,7 +213,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) >= cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_geq(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x > y)
 //    }
@@ -222,7 +224,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) < cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_less(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x > y)
 //    }
@@ -233,7 +235,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) <= cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_leq(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x > y)
 //    }
@@ -245,7 +247,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = std::pow(cx(i),cy(i));
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_pow(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x.^y)
 //    }
@@ -255,7 +257,7 @@ int test_vector ( Epsilon const& epsilon) {
 //        s = 0;
 //        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
 //        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y));
-//        device_specific::generate_enqueue_statement(device_specific::SCALAR_REDUCE_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
+//        device_specific::execute(device_specific::SCALAR_REDUCE_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(s, gs, s = inner_prod(x,y));
 //    }
@@ -265,7 +267,7 @@ int test_vector ( Epsilon const& epsilon) {
 //        s = 0;
 //        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i];
 //        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_add>(x));
-//        device_specific::generate_enqueue_statement(device_specific::SCALAR_REDUCE_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
+//        device_specific::execute(device_specific::SCALAR_REDUCE_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(s, gs, s = reduce<add>(x));
 //    }
@@ -275,7 +277,7 @@ int test_vector ( Epsilon const& epsilon) {
 //        s = cx[0];
 //        for(unsigned int i=1 ; i<size ; ++i)  s=std::max(s,cx[i]);
 //        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_element_binary<viennacl::op_fmax> >(x));
-//        device_specific::generate_enqueue_statement(device_specific::SCALAR_REDUCE_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
+//        device_specific::execute(device_specific::SCALAR_REDUCE_TYPE, device_specific::result_of::numeric_type_id<NumericT>::value, statement);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(s, gs, s = reduce<mult>(x));
 //    }
@@ -344,7 +346,7 @@ int test_matrix ( Epsilon const& epsilon) {
 //      std::cout << "C = A + B ..." << std::endl;
 //      cC     = ( cA + cB );
 //      viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
-//      device_specific::generate_enqueue_statement(statement, statement.array()[0]);
+//      device_specific::execute(statement, statement.array()[0]);
 //      viennacl::backend::finish();
 //      CHECK_RESULT(cC, C, C=A+B)
 //    }
