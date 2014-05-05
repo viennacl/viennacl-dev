@@ -44,8 +44,8 @@ namespace viennacl{
       /** @brief functor for generating the prototype of a statement */
       class prototype_generation_traversal : public traversal_functor{
         private:
-          std::string & str_;
           std::set<std::string> & already_generated_;
+          std::string & str_;
           mapping_type const & mapping_;
         public:
           prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping) : already_generated_(already_generated), str_(str),  mapping_(mapping){ }

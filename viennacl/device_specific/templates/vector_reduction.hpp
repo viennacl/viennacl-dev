@@ -45,81 +45,63 @@ namespace viennacl{
   namespace device_specific{
 
     class vector_reduction : public profile_base{
-      private:
-        std::size_t lmem_used(std::size_t scalartype_size) const {
-          return m_*(k_+1)*scalartype_size;
-        }
+    public:
+      /** @brief The user constructor */
+      vector_reduction(const char * scalartype, char A_trans, unsigned int simd_width, unsigned int ls0, unsigned int ls1, unsigned int num_groups) : profile_base(scalartype, simd_width, ls0, ls1, 1), A_trans_(A_trans), m_(ls0), k_(ls1), num_groups_(num_groups){ }
 
-      public:
-        /** @brief The user constructor */
-        vector_reduction(const char * scalartype, char A_trans, unsigned int simd_width, unsigned int ls0, unsigned int ls1, unsigned int num_groups) : profile_base(scalartype, simd_width, ls0, ls1, 1), A_trans_(A_trans), m_(ls0), k_(ls1), num_groups_(num_groups){ }
-
-        std::string csv_format() const {
-          return "simd_width,n,k,num_groups";
-        }
-
-        std::string csv_representation() const{
-          std::ostringstream oss;
-          oss << simd_width_  << "," << m_ << "," << k_  << "," << num_groups_;
-          return oss.str();
-        }
-
-        unsigned int m() const { return m_; }
-
-        unsigned int k() const { return k_; }
-
-        unsigned int num_groups() const { return num_groups_; }
-
-        void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
-
-          configure_local_sizes(kernel, kernel_id);
-          kernel.global_work_size(0,m_*num_groups_);
-          kernel.global_work_size(1,k_);
+      void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
+        configure_local_sizes(kernel, kernel_id);
+        kernel.global_work_size(0,m_*num_groups_);
+        kernel.global_work_size(1,k_);
 
 
-          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
-            scheduler::statement::container_type exprs = it->first.array();
-            for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
-              if(is_vector_reduction(*iit)){
-                scheduler::statement_node const * current_node = &(*iit);
-                //The LHS of the prod is a matrix
+        for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+          scheduler::statement::container_type exprs = it->first.array();
+          for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
+            if(is_vector_reduction(*iit)){
+              scheduler::statement_node const * current_node = &(*iit);
+              //The LHS of the prod is a matrix
+              if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
+              {
+                kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
+                kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
+                return;
+              }
+              else{
+                //The LHS of the prod is a matrix expression
+                current_node = &exprs[current_node->lhs.node_index];
                 if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
                 {
                   kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
                   kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
                   return;
                 }
-                else{
-                  //The LHS of the prod is a matrix expression
-                  current_node = &exprs[current_node->lhs.node_index];
-                  if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
-                  {
-                    kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
-                    kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
-                    return;
-                  }
-                  else if(current_node->rhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
-                  {
-                    kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
-                    kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
-                    return;
-                  }
-                  else{
-                    assert(false && bool("unexpected expression tree"));
-                  }
+                else if(current_node->rhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
+                {
+                  kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
+                  kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
+                  return;
                 }
-                return;
+                else{
+                  assert(false && bool("unexpected expression tree"));
+                }
               }
+              return;
             }
           }
         }
+      }
 
-        void add_kernel_arguments(std::string & arguments_string) const{
-          arguments_string += generate_value_kernel_argument("unsigned int", "M");
-          arguments_string += generate_value_kernel_argument("unsigned int", "N");
-        }
+      void add_kernel_arguments(std::string & arguments_string) const{
+        arguments_string += generate_value_kernel_argument("unsigned int", "M");
+        arguments_string += generate_value_kernel_argument("unsigned int", "N");
+      }
 
       private:
+        std::size_t lmem_used(std::size_t scalartype_size) const {
+          return m_*(k_+1)*scalartype_size;
+        }
+
         static void reduction_computation(utils::kernel_generation_stream & os, std::string const & acc, std::string const & val, scheduler::op_element const & op){
             os << acc << "=";
             if(op.type_subfamily==scheduler::OPERATION_ELEMENTWISE_FUNCTION_TYPE_SUBFAMILY)

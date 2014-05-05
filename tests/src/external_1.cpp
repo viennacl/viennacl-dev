@@ -61,7 +61,7 @@
   #include "viennacl/linalg/spai.hpp"
   #include "viennacl/linalg/svd.hpp"
   #include "viennacl/fft.hpp"
-  #include "viennacl/device_specific/code_generator.hpp"
+  #include "viennacl/device_specific/execute.hpp"
 #endif
 
 #include "viennacl/io/matrix_market.hpp"

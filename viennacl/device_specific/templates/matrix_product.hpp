@@ -45,6 +45,90 @@ namespace device_specific{
 
 class matrix_product : public profile_base{
 
+public:
+    /** @brief The user constructor */
+    matrix_product(const char * scalartype, char A_trans, char B_trans
+                   ,unsigned int simd_width
+                   , std::size_t ls0, std::size_t KL, std::size_t ls1
+                   , unsigned int ms, unsigned int ks, unsigned int ns
+                   , bool use_a_local, bool use_b_local
+                   , std::size_t local_fetch0, std::size_t local_fetch1) : profile_base(scalartype, simd_width,ls0, ls1,1)
+    , A_trans_(A_trans), B_trans_(B_trans), ls0_(ls0), ls1_(ls1), KL_(KL), ms_(ms), ks_(ks), ns_(ns)
+    , use_a_local_(use_a_local), use_b_local_(use_b_local), local_fetch0_(local_fetch0), local_fetch1_(local_fetch1)
+    , ML_(ms*ls0), NL_(ns*ls1){ }
+
+    void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+    {
+        //set M, N
+        scheduler::statement_node const & first_node = statements_->front().second;
+        unsigned int M = utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun());
+        unsigned int N = utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun());
+
+        //set ND range
+        configure_local_sizes(k, kernel_id);
+        k.global_work_size(0, M/ms_);
+        k.global_work_size(1, N/ns_);
+
+        //set arguments
+        //M,N
+        k.arg(n_arg++, cl_uint(M));
+        k.arg(n_arg++, cl_uint(N));
+
+        //K
+        scheduler::statement::container_type const & exprs = statements_->back().first.array();
+
+        scheduler::statement_node const * prod_node = NULL;
+        for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+            if(it->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                prod_node = &(*it);
+
+        if(prod_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
+            k.arg(n_arg++, cl_uint(utils::call_on_matrix(prod_node->lhs, utils::internal_size2_fun())));
+        else if(prod_node->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY
+
+                &&exprs[prod_node->lhs.node_index].op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
+            k.arg(n_arg++, cl_uint(utils::call_on_matrix(exprs[prod_node->lhs.node_index].lhs, utils::internal_size1_fun())));
+        else
+            assert(false && bool("unexpected expression tree"));
+    }
+
+    void add_kernel_arguments(std::string & arguments_string) const
+    {
+        arguments_string += generate_value_kernel_argument("unsigned int", "M");
+        arguments_string += generate_value_kernel_argument("unsigned int", "N");
+        arguments_string += generate_value_kernel_argument("unsigned int", "K");
+    }
+private:
+    virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const & statement_pair, mapping_type & mapping)
+    {
+        scheduler::statement const & statement = statement_pair.first;
+        scheduler::statement_node const & root_node = statement_pair.second;
+        scheduler::statement::container_type const & exprs = statement.array();
+        scheduler::statement_node const * prod_node = NULL;
+        for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+            if(it->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                prod_node = &(*it);
+
+
+        C_ = (mapped_matrix*)(mapping.at(std::make_pair(&root_node,tree_parsing::LHS_NODE_TYPE)).get());
+        if(prod_node->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY)
+            A_ = (mapped_matrix *)mapping.at(std::make_pair(&exprs[prod_node->lhs.node_index],tree_parsing::LHS_NODE_TYPE)).get();
+        else
+            A_ = (mapped_matrix *)mapping.at(std::make_pair(prod_node, tree_parsing::LHS_NODE_TYPE)).get();
+
+        if(prod_node->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY)
+            B_ = (mapped_matrix *)mapping.at(std::make_pair(&exprs[prod_node->rhs.node_index], tree_parsing::LHS_NODE_TYPE)).get();
+        else
+            B_ = (mapped_matrix *)mapping.at(std::make_pair(prod_node,tree_parsing::RHS_NODE_TYPE)).get();
+
+
+        prod_ = (mapped_matrix_product *)mapping.at(std::make_pair(prod_node, tree_parsing::PARENT_NODE_TYPE)).get();
+
+        C_->set_simd_width(1);
+        A_->set_simd_width(simd_width_);
+        B_->set_simd_width(simd_width_);
+    }
+
     std::size_t lmem_used(std::size_t scalartype_size) const
     {
         std::size_t lmem_used = 0;
@@ -84,104 +168,6 @@ class matrix_product : public profile_base{
             res |= ((local_fetch0_*local_fetch1_) !=(ls0_*ls1_));
         return res;
     }
-
-public:
-    /** @brief The user constructor */
-    matrix_product(const char * scalartype, char A_trans, char B_trans
-                   ,unsigned int simd_width
-                   , std::size_t ls0, std::size_t KL, std::size_t ls1
-                   , unsigned int ms, unsigned int ks, unsigned int ns
-                   , bool use_a_local, bool use_b_local
-                   , std::size_t local_fetch0, std::size_t local_fetch1) : profile_base(scalartype, simd_width,ls0, ls1,1)
-    , A_trans_(A_trans), B_trans_(B_trans), ls0_(ls0), ls1_(ls1), KL_(KL), ms_(ms), ks_(ks), ns_(ns)
-    , use_a_local_(use_a_local), use_b_local_(use_b_local), local_fetch0_(local_fetch0), local_fetch1_(local_fetch1)
-    , ML_(ms*ls0), NL_(ns*ls1){ }
-
-    static std::string csv_format()
-    {
-        return "simd_width,local_size1,kl,local_size2,ms,ks,ns,use_a_local,use_b_local,local_fetch0,local_fetch1";
-    }
-
-    std::string csv_representation() const
-    {
-        std::ostringstream oss;
-        oss << simd_width_ << "," << ls0_ << "," << KL_ << "," << ls1_ << "," << ms_ << "," << ks_ << ","
-            << ns_ << "," << use_a_local_ << "," << use_b_local_ << "," << local_fetch0_ << "," << local_fetch1_;
-        return oss.str();
-    }
-
-    virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const & statement_pair, mapping_type & mapping)
-    {
-        scheduler::statement const & statement = statement_pair.first;
-        scheduler::statement_node const & root_node = statement_pair.second;
-        scheduler::statement::container_type const & exprs = statement.array();
-        scheduler::statement_node const * prod_node = NULL;
-        for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
-            if(it->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                prod_node = &(*it);
-
-
-        C_ = (mapped_matrix*)(mapping.at(std::make_pair(&root_node,tree_parsing::LHS_NODE_TYPE)).get());
-        if(prod_node->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY)
-            A_ = (mapped_matrix *)mapping.at(std::make_pair(&exprs[prod_node->lhs.node_index],tree_parsing::LHS_NODE_TYPE)).get();
-        else
-            A_ = (mapped_matrix *)mapping.at(std::make_pair(prod_node, tree_parsing::LHS_NODE_TYPE)).get();
-
-        if(prod_node->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY)
-            B_ = (mapped_matrix *)mapping.at(std::make_pair(&exprs[prod_node->rhs.node_index], tree_parsing::LHS_NODE_TYPE)).get();
-        else
-            B_ = (mapped_matrix *)mapping.at(std::make_pair(prod_node,tree_parsing::RHS_NODE_TYPE)).get();
-
-
-        prod_ = (mapped_matrix_product *)mapping.at(std::make_pair(prod_node, tree_parsing::PARENT_NODE_TYPE)).get();
-
-        C_->set_simd_width(1);
-        A_->set_simd_width(simd_width_);
-        B_->set_simd_width(simd_width_);
-    }
-
-    void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
-    {
-        //set M, N
-        scheduler::statement_node const & first_node = statements_->front().second;
-        unsigned int M = utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun());
-        unsigned int N = utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun());
-
-        //set ND range
-        configure_local_sizes(k, kernel_id);
-        k.global_work_size(0, M/ms_);
-        k.global_work_size(1, N/ns_);
-
-        //set arguments
-        //M,N
-        k.arg(n_arg++, cl_uint(M));
-        k.arg(n_arg++, cl_uint(N));
-
-        //K
-        scheduler::statement::container_type const & exprs = statements_->back().first.array();
-
-        scheduler::statement_node const * prod_node = NULL;
-        for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
-            if(it->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                prod_node = &(*it);
-
-        if(prod_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
-            k.arg(n_arg++, cl_uint(utils::call_on_matrix(prod_node->lhs, utils::internal_size2_fun())));
-        else if(prod_node->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY
-                &&exprs[prod_node->lhs.node_index].op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
-            k.arg(n_arg++, cl_uint(utils::call_on_matrix(exprs[prod_node->lhs.node_index].lhs, utils::internal_size1_fun())));
-        else
-            assert(false && bool("unexpected expression tree"));
-    }
-
-    void add_kernel_arguments(std::string & arguments_string) const
-    {
-        arguments_string += generate_value_kernel_argument("unsigned int", "M");
-        arguments_string += generate_value_kernel_argument("unsigned int", "N");
-        arguments_string += generate_value_kernel_argument("unsigned int", "K");
-    }
-
-private:
 
     void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const
     {
@@ -394,17 +380,19 @@ private:
         stream.dec_tab();
         stream << "}" << std::endl;
 
-        if(use_a_local_)
+        if(use_a_local_){
             if(A_trans_=='N')
                 stream << A_->name() << " += " << KL_ << "*" << A_->ld() << ";" << std::endl;
             else
                 stream << A_->name() << " += " << KL_ << ";" << std::endl;
+        }
 
-        if(use_b_local_)
+        if(use_b_local_){
             if(B_trans_=='T')
                 stream << B_->name() << " += " << KL_ << "*" << B_->ld() << ";" << std::endl;
             else
                 stream << B_->name() << " += " << KL_ << ";" << std::endl;
+        }
 
         stream.dec_tab();
         stream << "}" << std::endl;

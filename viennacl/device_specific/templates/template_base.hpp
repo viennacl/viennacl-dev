@@ -84,6 +84,7 @@ namespace viennacl{
 
         void bind_statements(std::list< std::pair<scheduler::statement, scheduler::statement_node> > const * statements) { statements_ = statements; }
 
+        unsigned int num_kernels() const { return num_kernels_; }
         /** @brief The destructor */
         virtual ~profile_base(){ }
 
@@ -91,12 +92,6 @@ namespace viennacl{
         virtual void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
         virtual void add_kernel_arguments(std::string & arguments_string) const = 0;
 
-        /** @brief Get the vector size of the kernel */
-        unsigned int simd_width() const { return simd_width_; }
-
-        /** @brief csv representation of an operation
-         *  Useful when writing to a file */
-        virtual std::string csv_representation() const = 0;
 
         /** @brief returns whether or not the profile leads to undefined behavior on particular device
          *  @param dev               the given device
@@ -132,9 +127,6 @@ namespace viennacl{
               || not_warp_multiple;
         }
 
-        /** @brief Returns the number of kernels needed by this operation */
-        std::size_t num_kernels() const{ return num_kernels_; }
-
         /** @brief Generates the code associated with this profile onto the provided stream
          *  Redirects to the virtual core() method
          *
@@ -158,7 +150,7 @@ namespace viennacl{
           prototype.erase(prototype.size()-1); //Last comma pruned
 
           //Generate
-          for(std::size_t n = 0 ; n < num_kernels() ; ++n){
+          for(std::size_t n = 0 ; n < num_kernels_ ; ++n){
             //stream << "__attribute__((vec_type_hint()))" << std::endl;
             stream << " __attribute__((reqd_work_group_size(" << local_size_1_ << "," << local_size_2_ << "," << 1 << ")))" << std::endl;
             stream << "__kernel " << "void " << "kernel_" << n << "(" << std::endl;
@@ -177,10 +169,10 @@ namespace viennacl{
       protected:
         std::string scalartype_;
         unsigned int simd_width_;
-        std::size_t local_size_1_;
-        std::size_t local_size_2_;
+        unsigned int local_size_1_;
+        unsigned int local_size_2_;
 
-        std::size_t num_kernels_;
+        unsigned int num_kernels_;
 
         std::list< std::pair<scheduler::statement, scheduler::statement_node> > const * statements_;
     };

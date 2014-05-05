@@ -42,7 +42,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/device_specific/autotuning/profiles.hpp"
-#include "viennacl/device_specific/code_generator.hpp"
+#include "viennacl/device_specific/execute.hpp"
 #include "viennacl/scheduler/io.hpp"
 
 
