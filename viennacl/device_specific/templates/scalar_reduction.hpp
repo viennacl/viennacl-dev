@@ -122,7 +122,7 @@ namespace viennacl{
                   vector_size = cl_uint(utils::call_on_vector(current_node->lhs, utils::internal_size_fun()));
                 }
                 else{
-                  assert(false && bool("unexpected expression tree"));
+                   throw "unexpected expression tree";
                 }
               }
               k.arg(n_arg++, cl_uint(vector_size/simd_width_));
