@@ -763,10 +763,6 @@ namespace viennacl
                      ScalarType alpha,
                      ScalarType beta)
       {
-        bool A_not_aligned = (A.internal_size1() % matrix_base<NumericT>::alignment > 0) || (A.internal_size2() % matrix_base<NumericT>::alignment > 0);
-        bool B_not_aligned = (B.internal_size1() % matrix_base<NumericT>::alignment > 0) || (B.internal_size2() % matrix_base<NumericT>::alignment > 0);
-        bool C_not_aligned = (C.internal_size1() % matrix_base<NumericT>::alignment > 0) || (C.internal_size2() % matrix_base<NumericT>::alignment > 0);
-
         // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
         /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
@@ -781,45 +777,7 @@ namespace viennacl
         string_prod16.append(trans_B ? "T" : "A");
         string_prod.append(trans_B ? "T" : "A");
 
-        if (A_not_aligned || A.start1() > 0 || A.start2() > 0 || A.stride1() > 1 || A.stride2() > 1
-          ||B_not_aligned || B.start1() > 0 || B.start2() > 0 || B.stride1() > 1 || B.stride2() > 1
-          ||C_not_aligned || C.start1() > 0 || C.start2() > 0 || C.stride1() > 1 || C.stride2() > 1)
-          detail::prod(A, B, C, alpha, beta, string_prod16, string_prod);
-        else
-        {
-
-          using namespace viennacl::device_specific;
-          device_specific::expression_numeric_type NUMERIC_TYPE = device_specific::result_of::numeric_type_id<NumericT>::value;
-
-          if (!trans_A && !trans_B)
-          {
-            typedef matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_mat_mat_prod> ProdType;
-            viennacl::device_specific::execute(profiles::get(MATRIX_PRODUCT_NN_TYPE,NUMERIC_TYPE)
-                                               ,viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,B)+beta*C));
-          }
-          else if (!trans_A && trans_B)
-          {
-            typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> RhsType;
-            typedef matrix_expression<const matrix_base<NumericT>, RhsType, op_mat_mat_prod> ProdType;
-            viennacl::device_specific::execute(profiles::get(MATRIX_PRODUCT_NT_TYPE,NUMERIC_TYPE)
-                                               ,viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(A,RhsType(B,B))+beta*C));
-          }
-          else if (trans_A && !trans_B)
-          {
-            typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> LhsType;
-            typedef matrix_expression<LhsType, const matrix_base<NumericT>, op_mat_mat_prod> ProdType;
-            viennacl::device_specific::execute(profiles::get(MATRIX_PRODUCT_TN_TYPE,NUMERIC_TYPE)
-                                               ,viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(LhsType(A,A),B)+beta*C));
-          }
-          else if (trans_A && trans_B)
-          {
-            typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> LhsType;
-            typedef const viennacl::matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> RhsType;
-            typedef matrix_expression<LhsType, RhsType, op_mat_mat_prod> ProdType;
-            viennacl::device_specific::execute(profiles::get(MATRIX_PRODUCT_TT_TYPE,NUMERIC_TYPE)
-                                               ,viennacl::scheduler::statement(C, viennacl::op_assign(),alpha*ProdType(LhsType(A,A),RhsType(B,B))+beta*C));
-          }
-        }
+         detail::prod(A, B, C, alpha, beta, string_prod16, string_prod);
       }
 
       //

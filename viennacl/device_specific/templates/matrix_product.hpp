@@ -127,6 +127,7 @@ private:
         C_->set_simd_width(1);
         A_->set_simd_width(simd_width_);
         B_->set_simd_width(simd_width_);
+
     }
 
     std::size_t lmem_used(std::size_t scalartype_size) const
@@ -181,6 +182,7 @@ private:
             stream << B_->ld() << "/=" << simd_width_ << ";" << std::endl;
         }
 
+
         std::string C_scalartype = C_->scalartype();
         std::string A_scalartype = use_a_local_?A_->scalartype():A_->simd_scalartype();
         std::string B_scalartype = use_b_local_?B_->scalartype():B_->simd_scalartype();
@@ -201,7 +203,6 @@ private:
         if(use_b_local_)
             stream << "__local " << B_->scalartype() << " lB[" << KL_ * (NL_ + 1) << "];" << std::endl;
         stream << std::endl;
-
 
         stream << "uint gidx = get_group_id(0);" << std::endl;
         stream << "uint gidy = get_group_id(1);" << std::endl;

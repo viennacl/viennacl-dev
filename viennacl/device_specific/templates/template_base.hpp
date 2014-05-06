@@ -63,8 +63,8 @@ namespace viennacl{
               tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
         }
 
-        virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const &, mapping_type & mapping) const {
-            for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
+        virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const &, mapping_type & mapping) {
+          for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
               if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
                 p->set_simd_width(simd_width_);
         }
@@ -132,7 +132,7 @@ namespace viennacl{
          *
          *  @param stream Stream onto which the code should be generated
          */
-        virtual void operator()(utils::kernel_generation_stream & stream) const {
+        virtual void operator()(utils::kernel_generation_stream & stream) {
           std::vector<mapping_type> mapping(statements_->size());
 
           ///Get Prototype, initialize mapping
