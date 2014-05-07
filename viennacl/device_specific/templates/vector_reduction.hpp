@@ -49,7 +49,7 @@ namespace viennacl{
       /** @brief The user constructor */
       vector_reduction(const char * scalartype, char A_trans, unsigned int simd_width, unsigned int ls0, unsigned int ls1, unsigned int num_groups) : profile_base(scalartype, simd_width, ls0, ls1, 1), A_trans_(A_trans), m_(ls0), k_(ls1), num_groups_(num_groups){ }
 
-      void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
+      void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
         configure_local_sizes(kernel, kernel_id);
         kernel.global_work_size(0,m_*num_groups_);
         kernel.global_work_size(1,k_);
@@ -102,18 +102,7 @@ namespace viennacl{
           return m_*(k_+1)*scalartype_size;
         }
 
-        static void reduction_computation(utils::kernel_generation_stream & os, std::string const & acc, std::string const & val, scheduler::op_element const & op){
-            os << acc << "=";
-            if(op.type_subfamily==scheduler::OPERATION_ELEMENTWISE_FUNCTION_TYPE_SUBFAMILY)
-                os << tree_parsing::generate(op.type) << "(" << acc << "," << val << ")";
-            else
-                os << "(" << acc << ")" << tree_parsing::generate(op.type)  << "(" << val << ")";
-            os << ";" << std::endl;
-
-        }
-
-
-        void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
+        void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
           std::vector<mapped_vector_reduction*> exprs;
           for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it){
             for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit){
@@ -131,11 +120,9 @@ namespace viennacl{
             scheduler::op_element root_op = exprs[k]->root_node().op;
             rops[k].type_family = scheduler::OPERATION_BINARY_TYPE_FAMILY;
             if(root_op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
-              rops[k].type_subfamily = scheduler::OPERATION_ELEMENTWISE_OPERATOR_TYPE_SUBFAMILY;
               rops[k].type        = scheduler::OPERATION_BINARY_ADD_TYPE;
             }
             else{
-              rops[k].type_subfamily = get_subfamily(root_op.type);
               rops[k].type        = root_op.type;
             }
             accs[k] = "sum"+utils::to_string(k);
@@ -195,7 +182,7 @@ namespace viennacl{
                   str += "*";
                   tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("",""),-1,str,exprs[k]->mapping());
                 }
-                reduction_computation(stream,accs[k],str,rops[k]);
+                compute_reduction(stream,accs[k],str,rops[k]);
               }
             }
             stream.dec_tab();

@@ -48,7 +48,10 @@ namespace viennacl{
                    unsigned int group_size, unsigned int num_groups,
                    unsigned int decomposition) : profile_base(scalartype, simd_width, group_size, 1, 1), num_groups_(num_groups), decomposition_(decomposition){ }
 
-      void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+      unsigned int num_groups() const{ return num_groups_; }
+      unsigned int decomposition() const{ return decomposition_; }
+
+      void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         configure_local_sizes(k, kernel_id);
 
         k.global_work_size(0,local_size_1_*num_groups_);
@@ -65,7 +68,7 @@ namespace viennacl{
 
     private:
 
-      void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
+      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
         stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
@@ -113,24 +116,25 @@ namespace viennacl{
                    unsigned int gs1, unsigned int gs2,
                    unsigned int ng1, unsigned int ng2, unsigned int d) : profile_base(scalartype, simd_width, gs1, gs2, 1), num_groups_row_(ng1), num_groups_col_(ng2), decomposition_(d){ }
 
-      void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+      void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+      {
         configure_local_sizes(k, kernel_id);
 
         k.global_work_size(0,local_size_1_*num_groups_row_);
-        k.global_work_size(1,local_size_2_*num_groups_col_);
+        k.global_work_size(1,local_size_1_*num_groups_col_);
 
         scheduler::statement_node const & first_node = statements_->front().second;
         k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun())));
         k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun())));
       }
 
-      void add_kernel_arguments(std::string & arguments_string) const{
+      virtual void add_kernel_arguments(std::string & arguments_string) const{
         arguments_string += generate_value_kernel_argument("unsigned int", "M");
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
     private:
-      void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
+      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
         stream << "for(unsigned int i = get_global_id(0) ; i < M ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();

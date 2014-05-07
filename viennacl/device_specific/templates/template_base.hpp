@@ -51,8 +51,8 @@ namespace viennacl{
         virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
 
         void configure_local_sizes(viennacl::ocl::kernel & k, std::size_t /*kernel_id*/) const {
-          k.local_work_size(0,local_size_1_);
-          k.local_work_size(1,local_size_2_);
+          k.local_work_size(0,local_size_0_);
+          k.local_work_size(1,local_size_1_);
         }
 
         virtual void initialize_mapping(std::vector<mapping_type> & mapping) const{
@@ -76,11 +76,16 @@ namespace viennacl{
          *  @param statements the statements for which the code should be generated
          *  @param mapping    the mapping of the statement_nodes to the mapped_objects
          */
-        virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const = 0;
+        virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const = 0;
 
       public:
         /** @brief The constructor */
-        profile_base(const char * scalartype, unsigned int simd_width, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : scalartype_(scalartype), simd_width_(simd_width), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
+        profile_base(const char * scalartype, unsigned int simd_width, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : scalartype_(scalartype), simd_width_(simd_width), local_size_0_(local_size_1), local_size_1_(local_size_2), num_kernels_(num_kernels){ }
+
+        std::string const & scalartype() const { return scalartype_; }
+        unsigned int simd_width() const { return simd_width_; }
+        unsigned int local_size_0() const { return local_size_0_; }
+        unsigned int local_size_1() const { return local_size_1_; }
 
         void bind_statements(std::list< std::pair<scheduler::statement, scheduler::statement_node> > const * statements) { statements_ = statements; }
 
@@ -88,8 +93,13 @@ namespace viennacl{
         /** @brief The destructor */
         virtual ~profile_base(){ }
 
-        /** @brief Configures the range and enqueues the arguments associated with the profile */
-        virtual void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
+        /** @brief Configures the range and enqueues the arguments associated with the profile
+         *
+         * @param kernel_id If this profile requires multiple kernel, the index for which the core should be generated
+         * @param kernel the kernel object
+         * @param n_arg a dummy reference for keeping track of the added arguments
+         */
+        virtual void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
         virtual void add_kernel_arguments(std::string & arguments_string) const = 0;
 
 
@@ -103,16 +113,16 @@ namespace viennacl{
           size_t max_workgroup_size = dev.max_work_group_size();
 
           std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();
-          bool invalid_work_group_sizes = local_size_1_*local_size_2_ > max_workgroup_size
-              || local_size_1_ > max_work_item_sizes[0]
-              || local_size_2_ > max_work_item_sizes[1]; // uses too much resources
+          bool invalid_work_group_sizes = local_size_0_*local_size_1_ > max_workgroup_size
+              || local_size_0_ > max_work_item_sizes[0]
+              || local_size_1_ > max_work_item_sizes[1]; // uses too much resources
 		  
           bool not_warp_multiple = false;
           if(dev.type()==CL_DEVICE_TYPE_GPU){
             std::size_t warp_size = 32;
             if(dev.vendor_id()==4098)
               warp_size = 64;
-            not_warp_multiple = static_cast<bool>(((local_size_1_*local_size_2_)%warp_size)>0);
+            not_warp_multiple = static_cast<bool>(((local_size_0_*local_size_1_)%warp_size)>0);
           }
 
           std::size_t scalartype_size;
@@ -152,7 +162,7 @@ namespace viennacl{
           //Generate
           for(std::size_t n = 0 ; n < num_kernels_ ; ++n){
             //stream << "__attribute__((vec_type_hint()))" << std::endl;
-            stream << " __attribute__((reqd_work_group_size(" << local_size_1_ << "," << local_size_2_ << "," << 1 << ")))" << std::endl;
+            stream << " __attribute__((reqd_work_group_size(" << local_size_0_ << "," << local_size_1_ << "," << 1 << ")))" << std::endl;
             stream << "__kernel " << "void " << "kernel_" << n << "(" << std::endl;
             stream << prototype << std::endl;
             stream << ")" << std::endl;
@@ -169,8 +179,8 @@ namespace viennacl{
       protected:
         std::string scalartype_;
         unsigned int simd_width_;
+        unsigned int local_size_0_;
         unsigned int local_size_1_;
-        unsigned int local_size_2_;
 
         unsigned int num_kernels_;
 

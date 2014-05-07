@@ -36,8 +36,6 @@
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/device_specific/execute.hpp"
-
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"

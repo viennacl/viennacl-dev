@@ -34,14 +34,16 @@ namespace viennacl{
 
   namespace device_specific{
 
-    inline void compute_reduction(utils::kernel_generation_stream & os, std::string const & acc, std::string const & val, scheduler::op_element const & op){
+    static void compute_reduction(utils::kernel_generation_stream & os, std::string const & acc, std::string const & val, scheduler::op_element const & op){
         os << acc << "=";
-        if(op.type_subfamily==scheduler::OPERATION_ELEMENTWISE_FUNCTION_TYPE_SUBFAMILY)
+        if(utils::elementwise_function(op))
             os << tree_parsing::generate(op.type) << "(" << acc << "," << val << ")";
         else
             os << "(" << acc << ")" << tree_parsing::generate(op.type)  << "(" << val << ")";
         os << ";" << std::endl;
+
     }
+
 
     inline void reduce_1d_local_memory(utils::kernel_generation_stream & stream, std::size_t size, std::vector<std::string> const & bufs, std::vector<scheduler::op_element> const & rops)
     {
@@ -69,13 +71,6 @@ namespace viennacl{
         case scheduler::OPERATION_BINARY_ELEMENT_FMIN_TYPE : return "INFINITY";
         default: throw generator_not_supported_exception("Unsupported reduction operator : no neutral element known");
       }
-    }
-
-    inline scheduler::operation_node_type_subfamily get_subfamily(scheduler::operation_node_type const & op){
-      if(op==scheduler::OPERATION_BINARY_ELEMENT_FMAX_TYPE || op==scheduler::OPERATION_BINARY_ELEMENT_FMIN_TYPE)
-        return scheduler::OPERATION_ELEMENTWISE_FUNCTION_TYPE_SUBFAMILY;
-      else
-        return scheduler::OPERATION_ELEMENTWISE_OPERATOR_TYPE_SUBFAMILY;
     }
 
   }

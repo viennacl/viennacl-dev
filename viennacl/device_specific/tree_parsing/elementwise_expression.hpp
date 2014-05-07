@@ -46,6 +46,7 @@ namespace viennacl{
           //Function
           case scheduler::OPERATION_UNARY_ABS_TYPE : return "abs";
           case scheduler::OPERATION_BINARY_ELEMENT_POW_TYPE : return "pow";
+          case scheduler::OPERATION_UNARY_EXP_TYPE : return "exp";
 
           //Arithmetic
           case scheduler::OPERATION_BINARY_ASSIGN_TYPE : return "=";
@@ -96,7 +97,7 @@ namespace viennacl{
 
           void call_before_expansion(scheduler::statement_node const * root_node) const
           {
-              if(root_node->op.type_subfamily==scheduler::OPERATION_ELEMENTWISE_FUNCTION_TYPE_SUBFAMILY)
+              if(utils::elementwise_function(root_node->op) && !utils::cannot_inline(root_node->op))
                   str_+=generate(root_node->op.type);
               str_+="(";
           }
@@ -107,12 +108,12 @@ namespace viennacl{
           void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, node_type node_type) const {
             if(node_type==PARENT_NODE_TYPE)
             {
-              switch(root_node->op.type_subfamily){
-                  case scheduler::OPERATION_FUNCTION_TYPE_SUBFAMILY: str_ += generate(index_string_, simd_element_, *mapping_.at(std::make_pair(root_node, node_type))); break;
-                  case scheduler::OPERATION_ELEMENTWISE_OPERATOR_TYPE_SUBFAMILY: str_ += generate(root_node->op.type); break;
-                  case scheduler::OPERATION_ELEMENTWISE_FUNCTION_TYPE_SUBFAMILY: str_ += ","; break;
-                  default: break;
-              }
+              if(utils::cannot_inline(root_node->op))
+                str_ += generate(index_string_, simd_element_, *mapping_.at(std::make_pair(root_node, node_type)));
+              else if(utils::elementwise_operator(root_node->op))
+                str_ += generate(root_node->op.type);
+              else if(utils::elementwise_function(root_node->op))
+                str_ += ",";
             }
             else{
               if(node_type==LHS_NODE_TYPE){

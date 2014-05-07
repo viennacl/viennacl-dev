@@ -57,7 +57,7 @@ public:
     , use_a_local_(use_a_local), use_b_local_(use_b_local), local_fetch0_(local_fetch0), local_fetch1_(local_fetch1)
     , ML_(ms*ls0), NL_(ns*ls1){ }
 
-    void configure_range_enqueue_arguments(std::size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+    void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const
     {
         //set M, N
         scheduler::statement_node const & first_node = statements_->front().second;
@@ -170,7 +170,7 @@ private:
         return res;
     }
 
-    void core(std::size_t /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const
+    void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const
     {
 
         //////////////////
