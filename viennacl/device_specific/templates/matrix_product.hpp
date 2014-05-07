@@ -146,8 +146,8 @@ namespace viennacl{
         void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const {
           //set M, N
           scheduler::statement_node const & first_node = statements.front().second;
-          unsigned int M = utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun());
-          unsigned int N = utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun());
+          unsigned int M = static_cast<unsigned int>(utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun()));
+          unsigned int N = static_cast<unsigned int>(utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun()));
 
           //set ND range
           configure_local_sizes(k, kernel_id);
@@ -315,9 +315,9 @@ namespace viennacl{
 
 
 
-          unsigned int ms_res = ms_, ns_res = ns_;
-          unsigned int ml_lhs = ml_, cache_width_lhs = cache_width_, ms_lhs = ms_, ks_lhs = ks_;
-          unsigned int cache_width_rhs = cache_width_, nl_rhs = nl_, ks_rhs = ks_, ns_rhs = ns_;
+          unsigned int ms_res = static_cast<unsigned int>(ms_), ns_res = static_cast<unsigned int>(ns_);
+          unsigned int ml_lhs = static_cast<unsigned int>(ml_), cache_width_lhs = static_cast<unsigned int>(cache_width_), ms_lhs = static_cast<unsigned int>(ms_), ks_lhs = static_cast<unsigned int>(ks_);
+          unsigned int cache_width_rhs = static_cast<unsigned int>(cache_width_), nl_rhs = static_cast<unsigned int>(nl_), ks_rhs = static_cast<unsigned int>(ks_), ns_rhs = static_cast<unsigned int>(ns_);
 
           transform_block(*lhs,use_lhs_shared_,ml_lhs,cache_width_lhs,ms_lhs,ks_lhs);
           transform_block(*rhs,use_rhs_shared_,cache_width_rhs,nl_rhs,ks_rhs,ns_rhs);

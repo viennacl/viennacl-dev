@@ -81,7 +81,7 @@ namespace viennacl{
             //set temporary buffer argument
             for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
               scheduler::statement::container_type const & array = it->first.array();
-              std::size_t size_of_scalartype;
+              unsigned int size_of_scalartype;
               const char * scalartype_name;
               switch(array[0].lhs.numeric_type){
                 case scheduler::FLOAT_TYPE: scalartype_name = "float"; size_of_scalartype = sizeof(float); break;
@@ -255,10 +255,10 @@ namespace viennacl{
               if(simd_width_ > 1){
                 for(unsigned int a = 0 ; a < simd_width_ ; ++a){
                   std::string str;
-                  tree_parsing::generate_all_lhs(statement,root_node,std::make_pair("i","0"),a,str,mapping);
+                  tree_parsing::generate_all_lhs(statement,root_node,std::make_pair("i","0"),static_cast<int>(a),str,mapping);
                   if(root_node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                       str += "*";
-                      tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("i","0"),a,str,mapping);
+                      tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("i","0"),static_cast<int>(a),str,mapping);
                   }
                   compute_reduction(stream,accs[k],str,rops[k]);
                 }

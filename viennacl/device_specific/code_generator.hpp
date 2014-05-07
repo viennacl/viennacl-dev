@@ -183,7 +183,7 @@ namespace viennacl{
           unsigned int kernel_id = 0;
           std::vector<viennacl::ocl::device>::const_iterator found = std::find(ctx_.devices().begin(),ctx_.devices().end(),ctx_.current_device());
           for(statements_type::const_iterator it = statements_.begin() ; it != statements_.end() ; ++it)
-            set_expression_arguments(get_profile(ctx_.current_device(), it->first), std::distance(ctx_.devices().begin(), found), it->second, kernel_id, p, kernels);
+            set_expression_arguments(get_profile(ctx_.current_device(), it->first), static_cast<unsigned int>(std::distance(ctx_.devices().begin(), found)), it->second, kernel_id, p, kernels);
         }
 
         /** @brief Creates an identifier string for the set of expressions in the object */

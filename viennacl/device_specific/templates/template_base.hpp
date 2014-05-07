@@ -159,7 +159,7 @@ namespace viennacl{
           initialize_mapping(statements,mapping);
 
           for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-            mapping_type & mapping_ref = mapping[std::distance(statements.begin(), it)];
+            mapping_type & mapping_ref = mapping[static_cast<vcl_size_t>(std::distance(statements.begin(), it))];
             set_simd_width(*it, mapping_ref);
             tree_parsing::traverse(it->first, it->second, tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping_ref));
           }
