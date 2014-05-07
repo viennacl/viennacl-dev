@@ -16,7 +16,7 @@
 ============================================================================= */
 
 //#define VIENNACL_DEBUG_ALL
-#define VIENNACL_DEBUG_BUILD
+//#define VIENNACL_DEBUG_BUILD
 //#define VIENNACL_DEBUG_BUILD
 //
 // *** System
@@ -137,9 +137,18 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::copy (cz, z);
 
     NumericT alpha = 3.14;
-    NumericT beta = 3.51;
+    NumericT beta = 1;
 
     // --------------------------------------------------------------------------
+
+    {
+        std::cout << "w = x ..." << std::endl;
+        cw = cx;
+        viennacl::scheduler::statement statement(w, viennacl::op_assign(), x);
+        device_specific::execute(profiles::get(VECTOR_SAXPY_TYPE, NUMERIC_TYPE), statement);
+        viennacl::backend::finish();
+        CHECK_RESULT(cw, w, w = x);
+    }
 
     {
         std::cout << "w = x + y ..." << std::endl;
@@ -177,15 +186,25 @@ int test_vector ( Epsilon const& epsilon) {
         CHECK_RESULT(cw, w, w = alpha*x + beta*y);
     }
 
-//    {
-//        std::cout << "w = alpha*x + beta*exp(y) ..." << std::endl;
-//        for(std::size_t i = 0 ; i < size ; ++i)
-//          cw[i] = alpha*cx[i] + beta*std::exp(y[i]);
-//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*viennacl::linalg::element_exp(y));
-//        device_specific::execute(profiles::get(VECTOR_SAXPY_TYPE, NUMERIC_TYPE), statement);
-//        viennacl::backend::finish();
-//        CHECK_RESULT(cw, w, w = alpha*x + beta*exp(y));
-//    }
+    {
+        std::cout << "w = exp(y) ..." << std::endl;
+        for(std::size_t i = 0 ; i < size ; ++i)
+          cw[i] = std::exp(y[i]);
+        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_exp(y));
+        device_specific::execute(profiles::get(VECTOR_SAXPY_TYPE, NUMERIC_TYPE), statement);
+        viennacl::backend::finish();
+        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+    }
+
+    {
+        std::cout << "w = element_prod(x,y) ..." << std::endl;
+        for(std::size_t i = 0 ; i < size ; ++i)
+          cw[i] = x[i]*y[i];
+        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_prod(x,y));
+        device_specific::execute(profiles::get(VECTOR_SAXPY_TYPE, NUMERIC_TYPE), statement);
+        viennacl::backend::finish();
+        CHECK_RESULT(cw, w, w = element_prod(x,y));
+    }
 
 //    {
 //        std::cout << "w = x == x" << std::endl;

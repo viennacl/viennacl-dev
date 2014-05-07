@@ -45,8 +45,8 @@ namespace viennacl{
         switch(type){
           //Function
           case scheduler::OPERATION_UNARY_ABS_TYPE : return "abs";
-          case scheduler::OPERATION_BINARY_ELEMENT_POW_TYPE : return "pow";
           case scheduler::OPERATION_UNARY_EXP_TYPE : return "exp";
+          case scheduler::OPERATION_BINARY_ELEMENT_POW_TYPE : return "pow";
 
           //Arithmetic
           case scheduler::OPERATION_BINARY_ASSIGN_TYPE : return "=";
@@ -55,7 +55,9 @@ namespace viennacl{
           case scheduler::OPERATION_BINARY_ADD_TYPE : return "+";
           case scheduler::OPERATION_BINARY_SUB_TYPE : return "-";
           case scheduler::OPERATION_BINARY_MULT_TYPE : return "*";
+          case scheduler::OPERATION_BINARY_ELEMENT_PROD_TYPE : return "*";
           case scheduler::OPERATION_BINARY_DIV_TYPE : return "/";
+          case scheduler::OPERATION_BINARY_ELEMENT_DIV_TYPE : return "/";
           case scheduler::OPERATION_BINARY_ACCESS_TYPE : return "[]";
 
           //Relational
@@ -77,7 +79,6 @@ namespace viennacl{
           case scheduler::OPERATION_BINARY_INNER_PROD_TYPE : return "iprod";
           case scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE : return "mmprod";
           case scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE : return "mvprod";
-
 
           default : throw generator_not_supported_exception("Unsupported operator");
         }
@@ -112,7 +113,7 @@ namespace viennacl{
                 str_ += generate(index_string_, simd_element_, *mapping_.at(std::make_pair(root_node, node_type)));
               else if(utils::elementwise_operator(root_node->op))
                 str_ += generate(root_node->op.type);
-              else if(utils::elementwise_function(root_node->op))
+              else if(root_node->op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY && utils::elementwise_function(root_node->op))
                 str_ += ",";
             }
             else{

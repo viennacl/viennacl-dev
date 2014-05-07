@@ -148,6 +148,7 @@ namespace viennacl{
             else if(root_node->op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY && node_type==RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node->rhs, *this);
             else if(node_type==PARENT_NODE_TYPE){
+
               if(root_node->op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY)
                 append(ptr_,"vecred");
               if(root_node->op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY)

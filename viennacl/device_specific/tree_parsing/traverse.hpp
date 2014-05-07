@@ -62,16 +62,14 @@ namespace viennacl{
         }
 
         //Self:
-        if(root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY){
-          fun(&statement, &root_node, PARENT_NODE_TYPE);
+        fun(&statement, &root_node, PARENT_NODE_TYPE);
 
-          //Rhs:
-          if(recurse){
-            if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-              traverse(statement, statement.array()[root_node.rhs.node_index], fun, recurse_structurewise_function);
-            if(root_node.rhs.type_family != scheduler::INVALID_TYPE_FAMILY)
-              fun(&statement, &root_node, RHS_NODE_TYPE);
-          }
+        //Rhs:
+        if(recurse && root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY){
+          if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            traverse(statement, statement.array()[root_node.rhs.node_index], fun, recurse_structurewise_function);
+          if(root_node.rhs.type_family != scheduler::INVALID_TYPE_FAMILY)
+            fun(&statement, &root_node, RHS_NODE_TYPE);
         }
 
         fun.call_after_expansion(&root_node);
