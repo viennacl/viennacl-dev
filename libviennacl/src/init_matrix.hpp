@@ -27,9 +27,9 @@ static ViennaCLStatus init_cuda_matrix(viennacl::backend::mem_handle & h, Vienna
   h.cuda_handle().reset(A->cuda_mem);
   h.cuda_handle().inc();
   if (A->precision == ViennaCLFloat)
-    h.raw_size(A->internal_size1 * A->internal_size2 * sizeof(float)); // not necessary, but still set for conciseness
+    h.raw_size(static_cast<viennacl::vcl_size_t>(A->internal_size1) * static_cast<viennacl::vcl_size_t>(A->internal_size2) * sizeof(float)); // not necessary, but still set for conciseness
   else if (A->precision == ViennaCLDouble)
-    h.raw_size(A->internal_size1 * A->internal_size2 * sizeof(double)); // not necessary, but still set for conciseness
+    h.raw_size(static_cast<viennacl::vcl_size_t>(A->internal_size1) * static_cast<viennacl::vcl_size_t>(A->internal_size2) * sizeof(double)); // not necessary, but still set for conciseness
   else
     return ViennaCLGenericFailure;
 
@@ -48,9 +48,9 @@ static ViennaCLStatus init_opencl_matrix(viennacl::backend::mem_handle & h, Vien
   h.opencl_handle() = A->opencl_mem;
   h.opencl_handle().inc();
   if (A->precision == ViennaCLFloat)
-    h.raw_size(A->internal_size1 * A->internal_size2 * sizeof(float)); // not necessary, but still set for conciseness
+    h.raw_size(static_cast<viennacl::vcl_size_t>(A->internal_size1) * static_cast<viennacl::vcl_size_t>(A->internal_size2) * sizeof(float)); // not necessary, but still set for conciseness
   else if (A->precision == ViennaCLDouble)
-    h.raw_size(A->internal_size1 * A->internal_size2 * sizeof(double)); // not necessary, but still set for conciseness
+    h.raw_size(static_cast<viennacl::vcl_size_t>(A->internal_size1) * static_cast<viennacl::vcl_size_t>(A->internal_size2) * sizeof(double)); // not necessary, but still set for conciseness
   else
     return ViennaCLGenericFailure;
 
@@ -69,9 +69,9 @@ static ViennaCLStatus init_host_matrix(viennacl::backend::mem_handle & h, Vienna
   h.ram_handle().reset(A->host_mem);
   h.ram_handle().inc();
   if (A->precision == ViennaCLFloat)
-    h.raw_size(A->internal_size1 * A->internal_size2 * sizeof(float)); // not necessary, but still set for conciseness
+    h.raw_size(static_cast<viennacl::vcl_size_t>(A->internal_size1) * static_cast<viennacl::vcl_size_t>(A->internal_size2) * sizeof(float)); // not necessary, but still set for conciseness
   else if (A->precision == ViennaCLDouble)
-    h.raw_size(A->internal_size1 * A->internal_size2 * sizeof(double)); // not necessary, but still set for conciseness
+    h.raw_size(static_cast<viennacl::vcl_size_t>(A->internal_size1) * static_cast<viennacl::vcl_size_t>(A->internal_size2) * sizeof(double)); // not necessary, but still set for conciseness
   else
     return ViennaCLGenericFailure;
 

@@ -40,11 +40,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLBackend ba
                                                               float beta,
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<float> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<float> v2(y, size_type(m), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
-                                   m, offA_row, incA_row, m,
-                                   n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                   size_type(m), size_type(offA_row), difference_type(incA_row), size_type(m),
+                                   size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
   v2 *= beta;
   if (transA == ViennaCLTrans)
     v2 += alpha * viennacl::linalg::prod(viennacl::trans(mat), v1);
@@ -61,11 +64,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLBackend ba
                                                               double beta,
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<double> v2(y, size_type(m), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
-                                    m, offA_row, incA_row, m,
-                                    n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                    size_type(m), size_type(offA_row), difference_type(incA_row), size_type(m),
+                                    size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
   v2 *= beta;
   if (transA == ViennaCLTrans)
     v2 += alpha * viennacl::linalg::prod(viennacl::trans(mat), v1);
@@ -84,10 +90,13 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLBackend ba
                                                               ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<float> v(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+
+  viennacl::vector_base<float> v(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
-                                   n, offA_row, incA_row, n,
-                                   n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                   size_type(n), size_type(offA_row), difference_type(incA_row), size_type(n),
+                                   size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
   if (transA == ViennaCLTrans)
   {
     if (uplo == ViennaCLUpper)
@@ -111,10 +120,13 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLBackend ba
                                                               ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<double> v(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+
+  viennacl::vector_base<double> v(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
-                                    n, offA_row, incA_row, n,
-                                    n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                    size_type(n), size_type(offA_row), difference_type(incA_row), size_type(n),
+                                    size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
   if (transA == ViennaCLTrans)
   {
     if (uplo == ViennaCLUpper)
@@ -145,11 +157,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSger(ViennaCLBackend bac
                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
                                                              cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<float> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<float> v2(y, size_type(m), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
-                                   m, offA_row, incA_row, m,
-                                   n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                   size_type(m), size_type(offA_row), difference_type(incA_row), size_type(m),
+                                   size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
 
   mat += alpha * viennacl::linalg::outer_prod(v1, v2);
 
@@ -164,11 +179,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDger(ViennaCLBackend bac
                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
                                                              cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<double> v2(y, m, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<double> v2(y, size_type(m), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
-                                    m, offA_row, incA_row, m,
-                                    n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                    size_type(m), size_type(offA_row), difference_type(incA_row), size_type(m),
+                                    size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
 
   mat += alpha * viennacl::linalg::outer_prod(v1, v2);
 

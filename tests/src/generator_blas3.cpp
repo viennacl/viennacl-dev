@@ -98,7 +98,7 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
       }
     }
    //std::cout << ret << std::endl;
-   return ret;
+   return ScalarType(ret);
 }
 
 
@@ -127,8 +127,8 @@ int test_prod(Epsilon const& epsilon,
 {
    int retval = EXIT_SUCCESS;
    NumericT act_diff = 0;
-   NumericT alpha = 3.14;
-   NumericT beta = 4.51;
+   NumericT alpha = NumericT(3.14);
+   NumericT beta  = NumericT(4.51);
 
 std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
 {
@@ -137,7 +137,7 @@ std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
     viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(vcl_A,vcl_B)+beta*vcl_C);
     viennacl::device_specific::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
-    act_diff = fabs(diff(C, vcl_C));
+    act_diff = std::fabs(diff(C, vcl_C));
     if( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -155,7 +155,7 @@ std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
        viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), alpha*viennacl::linalg::prod(trans(vcl_A_trans),vcl_B) + beta*vcl_C);
        viennacl::device_specific::generate_enqueue_statement(statement, statement.array()[0]);
        viennacl::backend::finish();
-       act_diff = fabs(diff(C, vcl_C));
+       act_diff = std::fabs(diff(C, vcl_C));
        if( act_diff > epsilon )
        {
          std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -171,7 +171,7 @@ std::cout << "Testing C = alpha*A * trans(B) + beta*C ..." << std::endl;
     viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A,trans(vcl_B_trans)) + beta*vcl_C);
     viennacl::device_specific::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
-    act_diff = fabs(diff(C, vcl_C));
+    act_diff = std::fabs(diff(C, vcl_C));
     if( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -187,7 +187,7 @@ std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
     viennacl::scheduler::statement statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans),trans(vcl_B_trans)) + beta*vcl_C);
     viennacl::device_specific::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
-    act_diff = fabs(diff(C, vcl_C));
+    act_diff = std::fabs(diff(C, vcl_C));
     if( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
@@ -206,9 +206,9 @@ int test_prod(Epsilon const& epsilon)
 {
   int ret;
 
-  long matrix_size1 = 2*max_large_block_size;
-  long matrix_size2 = 3*max_large_block_size;
-  long matrix_size3 = 4*max_large_block_size;
+  std::size_t matrix_size1 = 2*max_large_block_size;
+  std::size_t matrix_size2 = 3*max_large_block_size;
+  std::size_t matrix_size3 = 4*max_large_block_size;
 
   // --------------------------------------------------------------------------
 
@@ -218,14 +218,14 @@ int test_prod(Epsilon const& epsilon)
   ublas::matrix<NumericT> C(matrix_size1, matrix_size3);
 
   //fill A and B:
-  for (unsigned int i = 0; i < A.size1(); ++i)
-    for (unsigned int j = 0; j < A.size2(); ++j)
+  for (std::size_t i = 0; i < A.size1(); ++i)
+    for (std::size_t j = 0; j < A.size2(); ++j)
         A(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
-  for (unsigned int i = 0; i < B.size1(); ++i)
-    for (unsigned int j = 0; j < B.size2(); ++j)
+  for (std::size_t i = 0; i < B.size1(); ++i)
+    for (std::size_t j = 0; j < B.size2(); ++j)
         B(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
-  for (unsigned int i = 0; i < C.size1(); ++i)
-    for (unsigned int j = 0; j < C.size2(); ++j)
+  for (std::size_t i = 0; i < C.size1(); ++i)
+    for (std::size_t j = 0; j < C.size2(); ++j)
         C(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
 
 
@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
 
             int retval = EXIT_SUCCESS;
 
-            srand(time(NULL));
+            srand(static_cast<unsigned int>(time(NULL)));
 
             std::cout << std::endl;
             std::cout << "----------------------------------------------" << std::endl;

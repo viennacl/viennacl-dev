@@ -51,15 +51,18 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemm(ViennaCLHostScalar alpha,
   {
     case ViennaCLFloat:
     {
+      typedef viennacl::matrix_base<float>::size_type           size_type;
+      typedef viennacl::matrix_base<float>::difference_type     difference_type;
+
       viennacl::matrix_base<float> mat_A(A_handle,
-                                         A->size1, A->start1, A->stride1, A->internal_size1,
-                                         A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
+                                         size_type(A->size1), size_type(A->start1), difference_type(A->stride1), size_type(A->internal_size1),
+                                         size_type(A->size2), size_type(A->start2), difference_type(A->stride2), size_type(A->internal_size2), A->order == ViennaCLRowMajor);
       viennacl::matrix_base<float> mat_B(B_handle,
-                                         B->size1, B->start1, B->stride1, B->internal_size1,
-                                         B->size2, B->start2, B->stride2, B->internal_size2, B->order == ViennaCLRowMajor);
+                                         size_type(B->size1), size_type(B->start1), difference_type(B->stride1), size_type(B->internal_size1),
+                                         size_type(B->size2), size_type(B->start2), difference_type(B->stride2), size_type(B->internal_size2), B->order == ViennaCLRowMajor);
       viennacl::matrix_base<float> mat_C(C_handle,
-                                         C->size1, C->start1, C->stride1, C->internal_size1,
-                                         C->size2, C->start2, C->stride2, C->internal_size2, C->order == ViennaCLRowMajor);
+                                         size_type(C->size1), size_type(C->start1), difference_type(C->stride1), size_type(C->internal_size1),
+                                         size_type(C->size2), size_type(C->start2), difference_type(C->stride2), size_type(C->internal_size2), C->order == ViennaCLRowMajor);
 
       if (A->trans == ViennaCLTrans && B->trans == ViennaCLTrans)
         viennacl::linalg::prod_impl(viennacl::trans(mat_A), viennacl::trans(mat_B), mat_C, alpha->value_float, beta->value_float);
@@ -77,15 +80,18 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemm(ViennaCLHostScalar alpha,
 
     case ViennaCLDouble:
     {
+      typedef viennacl::matrix_base<double>::size_type           size_type;
+      typedef viennacl::matrix_base<double>::difference_type     difference_type;
+
       viennacl::matrix_base<double> mat_A(A_handle,
-                                         A->size1, A->start1, A->stride1, A->internal_size1,
-                                         A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
+                                          size_type(A->size1), size_type(A->start1), difference_type(A->stride1), size_type(A->internal_size1),
+                                          size_type(A->size2), size_type(A->start2), difference_type(A->stride2), size_type(A->internal_size2), A->order == ViennaCLRowMajor);
       viennacl::matrix_base<double> mat_B(B_handle,
-                                         B->size1, B->start1, B->stride1, B->internal_size1,
-                                         B->size2, B->start2, B->stride2, B->internal_size2, B->order == ViennaCLRowMajor);
+                                          size_type(B->size1), size_type(B->start1), difference_type(B->stride1), size_type(B->internal_size1),
+                                          size_type(B->size2), size_type(B->start2), difference_type(B->stride2), size_type(B->internal_size2), B->order == ViennaCLRowMajor);
       viennacl::matrix_base<double> mat_C(C_handle,
-                                         C->size1, C->start1, C->stride1, C->internal_size1,
-                                         C->size2, C->start2, C->stride2, C->internal_size2, C->order == ViennaCLRowMajor);
+                                          size_type(C->size1), size_type(C->start1), difference_type(C->stride1), size_type(C->internal_size1),
+                                          size_type(C->size2), size_type(C->start2), difference_type(C->stride2), size_type(C->internal_size2), C->order == ViennaCLRowMajor);
 
       if (A->trans == ViennaCLTrans && B->trans == ViennaCLTrans)
         viennacl::linalg::prod_impl(viennacl::trans(mat_A), viennacl::trans(mat_B), mat_C, alpha->value_double, beta->value_double);
@@ -124,12 +130,15 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsm(ViennaCLMatrix A, ViennaC
   {
     case ViennaCLFloat:
     {
+      typedef viennacl::matrix_base<float>::size_type           size_type;
+      typedef viennacl::matrix_base<float>::difference_type     difference_type;
+
       viennacl::matrix_base<float> mat_A(A_handle,
-                                         A->size1, A->start1, A->stride1, A->internal_size1,
-                                         A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
+                                         size_type(A->size1), size_type(A->start1), difference_type(A->stride1), size_type(A->internal_size1),
+                                         size_type(A->size2), size_type(A->start2), difference_type(A->stride2), size_type(A->internal_size2), A->order == ViennaCLRowMajor);
       viennacl::matrix_base<float> mat_B(B_handle,
-                                         B->size1, B->start1, B->stride1, B->internal_size1,
-                                         B->size2, B->start2, B->stride2, B->internal_size2, B->order == ViennaCLRowMajor);
+                                         size_type(B->size1), size_type(B->start1), difference_type(B->stride1), size_type(B->internal_size1),
+                                         size_type(B->size2), size_type(B->start2), difference_type(B->stride2), size_type(B->internal_size2), B->order == ViennaCLRowMajor);
 
       if (A->trans == ViennaCLTrans && B->trans == ViennaCLTrans)
       {
@@ -188,12 +197,15 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsm(ViennaCLMatrix A, ViennaC
     }
     case ViennaCLDouble:
     {
+      typedef viennacl::matrix_base<double>::size_type           size_type;
+      typedef viennacl::matrix_base<double>::difference_type     difference_type;
+
       viennacl::matrix_base<double> mat_A(A_handle,
-                                         A->size1, A->start1, A->stride1, A->internal_size1,
-                                         A->size2, A->start2, A->stride2, A->internal_size2, A->order == ViennaCLRowMajor);
+                                          size_type(A->size1), size_type(A->start1), difference_type(A->stride1), size_type(A->internal_size1),
+                                          size_type(A->size2), size_type(A->start2), difference_type(A->stride2), size_type(A->internal_size2), A->order == ViennaCLRowMajor);
       viennacl::matrix_base<double> mat_B(B_handle,
-                                         B->size1, B->start1, B->stride1, B->internal_size1,
-                                         B->size2, B->start2, B->stride2, B->internal_size2, B->order == ViennaCLRowMajor);
+                                          size_type(B->size1), size_type(B->start1), difference_type(B->stride1), size_type(B->internal_size1),
+                                          size_type(B->size2), size_type(B->start2), difference_type(B->stride2), size_type(B->internal_size2), B->order == ViennaCLRowMajor);
 
       if (A->trans == ViennaCLTrans && B->trans == ViennaCLTrans)
       {

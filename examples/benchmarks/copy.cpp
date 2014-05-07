@@ -59,7 +59,7 @@ void run_benchmark()
 
   std_vec1[0] = 1.0;
   std_vec2[0] = 1.0;
-  for (int i=1; i<BENCHMARK_VECTOR_SIZE; ++i)
+  for (std::size_t i=1; i<BENCHMARK_VECTOR_SIZE; ++i)
   {
     std_vec1[i] = std_vec1[i-1] * ScalarType(1.000001);
     std_vec2[i] = std_vec1[i-1] * ScalarType(0.999999);

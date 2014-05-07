@@ -80,9 +80,9 @@ template <typename ScalarType, unsigned int Alignment>
 ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Alignment> & v2 ) {
     ublas::vector<ScalarType> v2_cpu ( v2.size() );
     viennacl::copy( v2.begin(), v2.end(), v2_cpu.begin() );
-    for ( unsigned int i=0; i<v1.size(); ++i ) {
-        if ( std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) ) > 0 )
-            v2_cpu[i] = fabs ( v2_cpu[i] - v1[i] ) / std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) );
+    for (std::size_t i=0; i<v1.size(); ++i) {
+        if ( std::max<ScalarType> ( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) ) > 0 )
+            v2_cpu[i] = std::fabs ( v2_cpu[i] - v1[i] ) / std::max<ScalarType>( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) );
         else
             v2_cpu[i] = 0.0;
     }
@@ -129,8 +129,8 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::copy (cy, y);
     viennacl::copy (cz, z);
 
-    NumericT alpha = 3.14;
-    NumericT beta = 3.51;
+    NumericT alpha = NumericT(3.14);
+    NumericT beta  = NumericT(3.51);
 
     // --------------------------------------------------------------------------
 
@@ -447,7 +447,7 @@ int main(int argc, char* argv[]){
         requested_device=0;
     }
     else{
-        requested_device = atoi(args[1].c_str());
+        requested_device = static_cast<unsigned int>(atoi(args[1].c_str()));
     }
     int retval = EXIT_SUCCESS;
 

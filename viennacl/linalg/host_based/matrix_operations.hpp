@@ -90,7 +90,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha;
           }
           else
@@ -99,7 +99,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
           }
         }
@@ -114,7 +114,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha;
           }
           else
@@ -123,7 +123,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha;
           }
         }
@@ -187,7 +187,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
@@ -196,7 +196,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
           }
           else if (!reciprocal_alpha && reciprocal_beta)
@@ -205,7 +205,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (!reciprocal_alpha && !reciprocal_beta)
@@ -214,7 +214,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
           }
         }
@@ -230,7 +230,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
@@ -239,7 +239,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
           }
           else if (!reciprocal_alpha && reciprocal_beta)
@@ -248,7 +248,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (!reciprocal_alpha && !reciprocal_beta)
@@ -257,7 +257,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) = wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
           }
         }
@@ -322,7 +322,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
@@ -331,7 +331,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
           }
           else if (!reciprocal_alpha && reciprocal_beta)
@@ -340,7 +340,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (!reciprocal_alpha && !reciprocal_beta)
@@ -349,7 +349,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (long col = 0; col < static_cast<long>(A_size2); ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
           }
         }
@@ -365,7 +365,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
@@ -374,7 +374,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) += wrapper_B(row, col) / data_alpha + wrapper_C(row, col) * data_beta;
           }
           else if (!reciprocal_alpha && reciprocal_beta)
@@ -383,7 +383,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (!reciprocal_alpha && !reciprocal_beta)
@@ -392,7 +392,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              for (long row = 0; row < static_cast<long>(A_size1); ++row)
+              for (vcl_size_t row = 0; row < A_size1; ++row)
                 wrapper_A(row, col) += wrapper_B(row, col) * data_alpha + wrapper_C(row, col) * data_beta;
           }
         }
@@ -427,8 +427,8 @@ namespace viennacl
           #pragma omp parallel for
 #endif
           for (long row = 0; row < static_cast<long>(A_size1); ++row)
-            for (long col = 0; col < static_cast<long>(A_size2); ++col)
-              wrapper_A(row, col) = alpha;
+            for (vcl_size_t col = 0; col < A_size2; ++col)
+              wrapper_A(static_cast<vcl_size_t>(row), col) = alpha;
               //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
               // = data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha;
         }
@@ -440,8 +440,8 @@ namespace viennacl
           #pragma omp parallel for
 #endif
           for (long col = 0; col < static_cast<long>(A_size2); ++col)
-            for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              wrapper_A(row, col) = alpha;
+            for (vcl_size_t row = 0; row < A_size1; ++row)
+              wrapper_A(row, static_cast<vcl_size_t>(col)) = alpha;
               //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
               // = data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha;
         }
@@ -606,14 +606,14 @@ namespace viennacl
           detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
           for (vcl_size_t j = 0; j < v_size; ++j)
-            data_vec[v_start + j * v_inc] = wrapper_A(i, j);
+            data_vec[v_start + j * v_inc] = wrapper_A(static_cast<std::size_t>(i), j);
         }
         else
         {
           detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
           for (vcl_size_t j = 0; j < v_size; ++j)
-            data_vec[v_start + j * v_inc] = wrapper_A(i, j);
+            data_vec[v_start + j * v_inc] = wrapper_A(static_cast<std::size_t>(i), j);
         }
       }
 
@@ -643,14 +643,14 @@ namespace viennacl
           detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
           for (vcl_size_t i = 0; i < v_size; ++i)
-            data_vec[v_start + i * v_inc] = wrapper_A(i, j);
+            data_vec[v_start + i * v_inc] = wrapper_A(i, static_cast<std::size_t>(j));
         }
         else
         {
           detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
           for (vcl_size_t i = 0; i < v_size; ++i)
-            data_vec[v_start + i * v_inc] = wrapper_A(i, j);
+            data_vec[v_start + i * v_inc] = wrapper_A(i, static_cast<std::size_t>(j));
         }
       }
 
@@ -711,7 +711,7 @@ namespace viennacl
           #pragma omp parallel for
 #endif
           for (long row = 0; row < static_cast<long>(A_size1); ++row)
-            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+            for (vcl_size_t col = 0; col < A_size2; ++col)
               OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col), wrapper_C(row, col));
               //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
               // =   data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha
@@ -727,7 +727,7 @@ namespace viennacl
           #pragma omp parallel for
 #endif
           for (long col = 0; col < static_cast<long>(A_size2); ++col)
-            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+            for (vcl_size_t row = 0; row < A_size1; ++row)
               OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col), wrapper_C(row, col));
 
               //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
@@ -776,7 +776,7 @@ namespace viennacl
           #pragma omp parallel for
 #endif
           for (long row = 0; row < static_cast<long>(A_size1); ++row)
-            for (long col = 0; col < static_cast<long>(A_size2); ++col)
+            for (vcl_size_t col = 0; col < A_size2; ++col)
               OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col));
         }
         else
@@ -788,7 +788,7 @@ namespace viennacl
           #pragma omp parallel for
 #endif
           for (long col = 0; col < static_cast<long>(A_size2); ++col)
-            for (long row = 0; row < static_cast<long>(A_size1); ++row)
+            for (vcl_size_t row = 0; row < A_size1; ++row)
               OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col));
         }
       }
@@ -863,9 +863,9 @@ namespace viennacl
             {
               value_type temp = 0;
               for (vcl_size_t col = 0; col < A_size2; ++col)
-                temp += data_A[viennacl::row_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
+                temp += data_A[viennacl::row_major::mem_index(static_cast<vcl_size_t>(row) * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
 
-              data_result[row * inc2 + start2] = temp;
+              data_result[static_cast<vcl_size_t>(row) * inc2 + start2] = temp;
             }
           }
         }
@@ -894,9 +894,9 @@ namespace viennacl
             {
               value_type temp = 0;
               for (vcl_size_t col = 0; col < A_size1; ++col)
-                temp += data_A[viennacl::column_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
+                temp += data_A[viennacl::column_major::mem_index(col * A_inc1 + A_start1, static_cast<vcl_size_t>(row) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * data_x[col * inc1 + start1];
 
-              data_result[row * inc2 + start2] = temp;
+              data_result[static_cast<vcl_size_t>(row) * inc2 + start2] = temp;
             }
           }
         }
@@ -924,12 +924,12 @@ namespace viennacl
             {
               NumericT temp = 0;
               for (vcl_size_t k=0; k<A_size2; ++k)
-                temp += a(i, k) * b(k, j);
+                temp += a(static_cast<vcl_size_t>(i), k) * b(k, j);
 
               temp *= alpha;
               if (beta != 0)
-                temp += beta * c(i,j);
-              c(i,j) = temp;
+                temp += beta * c(static_cast<vcl_size_t>(i),j);
+              c(static_cast<vcl_size_t>(i),j) = temp;
             }
           }
         }

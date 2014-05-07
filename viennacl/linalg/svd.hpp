@@ -106,7 +106,7 @@ namespace viennacl
         typedef typename MatrixType::value_type                                   ScalarType;
         typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
 
-        int n = static_cast<int>(q.size());
+        vcl_size_t n = q.size();
         int m = static_cast<int>(vcl_u.size1());
 
         detail::transpose(vcl_u);
@@ -119,7 +119,7 @@ namespace viennacl
 
         bool goto_test_conv = false;
 
-        for (int k = n - 1; k >= 0; k--)
+        for (int k = static_cast<int>(n) - 1; k >= 0; k--)
         {
           // std::cout << "K = " << k << std::endl;
 
@@ -131,14 +131,14 @@ namespace viennacl
             for (l = k; l >= 0; l--)
             {
               goto_test_conv = false;
-              if (std::fabs(e[l]) <= detail::EPS)
+              if (std::fabs(e[vcl_size_t(l)]) <= detail::EPS)
               {
                 // set it
                 goto_test_conv = true;
                 break;
               }
 
-              if (std::fabs(q[l - 1]) <= detail::EPS)
+              if (std::fabs(q[vcl_size_t(l) - 1]) <= detail::EPS)
               {
                 // goto
                 break;
@@ -155,8 +155,8 @@ namespace viennacl
 
               for (int i = l; i <= k; i++)
               {
-                CPU_ScalarType f = s * e[i];
-                e[i] = c * e[i];
+                CPU_ScalarType f = s * e[vcl_size_t(i)];
+                e[vcl_size_t(i)] = c * e[vcl_size_t(i)];
 
                 if (std::fabs(f) <= detail::EPS)
                 {
@@ -164,14 +164,14 @@ namespace viennacl
                   break;
                 }
 
-                CPU_ScalarType g = q[i];
+                CPU_ScalarType g = q[vcl_size_t(i)];
                 CPU_ScalarType h = detail::pythag(f, g);
-                q[i] = h;
+                q[vcl_size_t(i)] = h;
                 c = g / h;
                 s = -f / h;
 
-                cs1[i] = c;
-                ss1[i] = s;
+                cs1[vcl_size_t(i)] = c;
+                ss1[vcl_size_t(i)] = s;
               }
 
               // std::cout << "Hitted!" << l1 << " " << l2 << "\n";
@@ -188,15 +188,15 @@ namespace viennacl
               // }
             }
 
-            CPU_ScalarType z = q[k];
+            CPU_ScalarType z = q[vcl_size_t(k)];
 
             if (l == k)
             {
               if (z < 0)
               {
-                q[k] = -z;
+                q[vcl_size_t(k)] = -z;
 
-                signs_v[k] *= -1;
+                signs_v[vcl_size_t(k)] *= -1;
               }
 
               break;
@@ -205,10 +205,10 @@ namespace viennacl
             if (iter >= detail::ITER_MAX - 1)
               break;
 
-            CPU_ScalarType x = q[l];
-            CPU_ScalarType y = q[k - 1];
-            CPU_ScalarType g = e[k - 1];
-            CPU_ScalarType h = e[k];
+            CPU_ScalarType x = q[vcl_size_t(l)];
+            CPU_ScalarType y = q[vcl_size_t(k) - 1];
+            CPU_ScalarType g = e[vcl_size_t(k) - 1];
+            CPU_ScalarType h = e[vcl_size_t(k)];
             CPU_ScalarType f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2 * h * y);
 
             g = detail::pythag<CPU_ScalarType>(f, 1);
@@ -222,7 +222,7 @@ namespace viennacl
             CPU_ScalarType c = 1;
             CPU_ScalarType s = 1;
 
-            for (vcl_size_t i = l + 1; i <= static_cast<vcl_size_t>(k); i++)
+            for (vcl_size_t i = static_cast<vcl_size_t>(l) + 1; i <= static_cast<vcl_size_t>(k); i++)
             {
               g = e[i];
               y = q[i];
@@ -255,7 +255,7 @@ namespace viennacl
               viennacl::copy(cs1, tmp1);
               viennacl::copy(ss1, tmp2);
 
-              givens_prev(vcl_v, tmp1, tmp2, n, l, k);
+              givens_prev(vcl_v, tmp1, tmp2, static_cast<int>(n), l, k);
             }
 
             {
@@ -265,16 +265,16 @@ namespace viennacl
               givens_prev(vcl_u, tmp1, tmp2, m, l, k);
             }
 
-            e[l] = 0.0;
-            e[k] = f;
-            q[k] = x;
+            e[vcl_size_t(l)] = 0.0;
+            e[vcl_size_t(k)] = f;
+            q[vcl_size_t(k)] = x;
           }
 
         }
 
 
         viennacl::copy(signs_v, tmp1);
-        change_signs(vcl_v, tmp1, n);
+        change_signs(vcl_v, tmp1, static_cast<int>(n));
 
         // transpose singular matrices again
         detail::transpose(vcl_u);

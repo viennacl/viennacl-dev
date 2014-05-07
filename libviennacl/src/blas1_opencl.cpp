@@ -41,7 +41,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLiSamax(ViennaCLBackend b
                                                                ViennaCLInt *index,
                                                                cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
   return ViennaCLSuccess;
@@ -51,7 +53,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLiDamax(ViennaCLBackend b
                                                                ViennaCLInt *index,
                                                                cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
   return ViennaCLSuccess;
@@ -66,7 +70,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSasum(ViennaCLBackend ba
                                                               float *alpha,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   *alpha = viennacl::linalg::norm_1(v1);
   return ViennaCLSuccess;
@@ -76,7 +82,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDasum(ViennaCLBackend ba
                                                               double *alpha,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   *alpha = viennacl::linalg::norm_1(v1);
   return ViennaCLSuccess;
@@ -91,8 +99,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSaxpy(ViennaCLBackend ba
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<float> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   v2 += alpha * v1;
   return ViennaCLSuccess;
@@ -103,8 +113,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDaxpy(ViennaCLBackend ba
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<double> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   v2 += alpha * v1;
   return ViennaCLSuccess;
@@ -117,8 +129,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLScopy(ViennaCLBackend ba
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<float> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   v2 = v1;
   return ViennaCLSuccess;
@@ -128,8 +142,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDcopy(ViennaCLBackend ba
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<double> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   v2 = v1;
   return ViennaCLSuccess;
@@ -142,8 +158,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSdot(ViennaCLBackend bac
                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<float> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   *alpha = viennacl::linalg::inner_prod(v1, v2);
   return ViennaCLSuccess;
@@ -154,8 +172,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDdot(ViennaCLBackend bac
                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<double> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   *alpha = viennacl::linalg::inner_prod(v1, v2);
   return ViennaCLSuccess;
@@ -168,7 +188,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSnrm2(ViennaCLBackend ba
                                                               float *alpha,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   *alpha = viennacl::linalg::norm_2(v1);
   return ViennaCLSuccess;
@@ -178,7 +200,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDnrm2(ViennaCLBackend ba
                                                               double *alpha,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   *alpha = viennacl::linalg::norm_2(v1);
   return ViennaCLSuccess;
@@ -192,8 +216,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSrot(ViennaCLBackend bac
                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
                                                              float c, float s)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<float> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   viennacl::linalg::plane_rotation(v1, v2, c, s);
   return ViennaCLSuccess;
@@ -204,8 +230,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDrot(ViennaCLBackend bac
                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
                                                              double c, double s)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<double> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   viennacl::linalg::plane_rotation(v1, v2, c, s);
   return ViennaCLSuccess;
@@ -219,7 +247,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSscal(ViennaCLBackend ba
                                                               float alpha,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   v1 *= alpha;
   return ViennaCLSuccess;
@@ -229,7 +259,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDscal(ViennaCLBackend ba
                                                               double alpha,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   v1 *= alpha;
   return ViennaCLSuccess;
@@ -241,8 +273,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSswap(ViennaCLBackend ba
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<float> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<float> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<float> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   viennacl::swap(v1, v2);
   return ViennaCLSuccess;
@@ -252,8 +286,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDswap(ViennaCLBackend ba
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
-  viennacl::vector_base<double> v1(x, n, offx, incx, viennacl::ocl::get_context(backend->opencl_backend.context_id));
-  viennacl::vector_base<double> v2(y, n, offy, incy, viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
+  viennacl::vector_base<double> v2(y, size_type(n), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
 
   viennacl::swap(v1, v2);
   return ViennaCLSuccess;

@@ -609,8 +609,8 @@ namespace viennacl
       entry_proxy<SCALARTYPE> operator()(size_type row_index, size_type col_index)
       {
         if (row_major_)
-          return entry_proxy<SCALARTYPE>(row_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
-        return entry_proxy<SCALARTYPE>(column_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
+          return entry_proxy<SCALARTYPE>(row_major::mem_index(start1_ + stride1() * row_index, start2_ + stride2() * col_index, internal_size1(), internal_size2()), elements_);
+        return entry_proxy<SCALARTYPE>(column_major::mem_index(start1_ + stride1() * row_index, start2_ + stride2() * col_index, internal_size1(), internal_size2()), elements_);
       }
 
       /** @brief Read access to a single element of the matrix/matrix_range/matrix_slice
@@ -618,8 +618,8 @@ namespace viennacl
       const_entry_proxy<SCALARTYPE> operator()(size_type row_index, size_type col_index) const
       {
         if (row_major_)
-          return const_entry_proxy<SCALARTYPE>(row_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
-        return const_entry_proxy<SCALARTYPE>(column_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
+          return const_entry_proxy<SCALARTYPE>(row_major::mem_index(start1_ + stride1() * row_index, start2_ + stride2() * col_index, internal_size1(), internal_size2()), elements_);
+        return const_entry_proxy<SCALARTYPE>(column_major::mem_index(start1_ + stride1() * row_index, start2_ + stride2() * col_index, internal_size1(), internal_size2()), elements_);
       }
 
       //
@@ -679,9 +679,9 @@ namespace viennacl
       size_type start2() const { return start2_; }
 
       /** @brief Returns the number of rows */
-      size_type stride1() const { return stride1_;}
+      size_type stride1() const { return static_cast<size_type>(stride1_);}
       /** @brief Returns the number of columns */
-      size_type stride2() const { return stride2_; }
+      size_type stride2() const { return static_cast<size_type>(stride2_); }
 
       /** @brief Resets all entries to zero */
       void clear()
@@ -1068,7 +1068,7 @@ namespace viennacl
                   SCALARTYPE * cpu_matrix_end,
                   matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix)
   {
-    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * (cpu_matrix_end - cpu_matrix_begin), viennacl::traits::context(gpu_matrix), cpu_matrix_begin);
+    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(SCALARTYPE) * static_cast<vcl_size_t>(cpu_matrix_end - cpu_matrix_begin), viennacl::traits::context(gpu_matrix), cpu_matrix_begin);
     /*gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
                                                                           sizeof(SCALARTYPE) * (cpu_matrix_end - cpu_matrix_begin),
                                                                           cpu_matrix_begin);*/

@@ -75,12 +75,12 @@ namespace viennacl
                   boost::numeric::ublas::vector<SCALARTYPE> & d,
                   boost::numeric::ublas::vector<SCALARTYPE> & e)
         {
-            int n = static_cast<int>(Q.size1());
+            vcl_size_t n = Q.size1();
 
             boost::numeric::ublas::vector<SCALARTYPE> cs(n), ss(n);
             viennacl::vector<SCALARTYPE> tmp1(n), tmp2(n);
 
-            for (int i = 1; i < n; i++)
+            for (vcl_size_t i = 1; i < n; i++)
                 e(i - 1) = e(i);
 
             e(n - 1) = 0;
@@ -89,11 +89,11 @@ namespace viennacl
             SCALARTYPE tst1 = 0;
             SCALARTYPE eps = 2 * static_cast<SCALARTYPE>(EPS);
 
-            for (int l = 0; l < n; l++)
+            for (vcl_size_t l = 0; l < n; l++)
             {
                 // Find small subdiagonal element.
                 tst1 = std::max<SCALARTYPE>(tst1, std::fabs(d(l)) + std::fabs(e(l)));
-                int m = l;
+                vcl_size_t m = l;
                 while (m < n)
                 {
                     if (std::fabs(e(m)) <= eps * tst1)
@@ -122,7 +122,7 @@ namespace viennacl
                         d(l + 1) = e(l) * (p + r);
                         SCALARTYPE dl1 = d(l + 1);
                         SCALARTYPE h = g - d(l);
-                        for (int i = l + 2; i < n; i++)
+                        for (vcl_size_t i = l + 2; i < n; i++)
                         {
                             d(i) -= h;
                         }
@@ -137,22 +137,22 @@ namespace viennacl
                         SCALARTYPE el1 = e(l + 1);
                         SCALARTYPE s = 0;
                         SCALARTYPE s2 = 0;
-                        for (int i = m - 1; i >= l; i--)
+                        for (int i = static_cast<int>(m) - 1; i >= static_cast<int>(l); i--)
                         {
                             c3 = c2;
                             c2 = c;
                             s2 = s;
-                            g = c * e(i);
+                            g = c * e(static_cast<vcl_size_t>(i));
                             h = c * p;
-                            r = pythag(p, e(i));
-                            e(i + 1) = s * r;
-                            s = e(i) / r;
+                            r = pythag(p, e(static_cast<vcl_size_t>(i)));
+                            e(static_cast<vcl_size_t>(i) + 1) = s * r;
+                            s = e(static_cast<vcl_size_t>(i)) / r;
                             c = p / r;
-                            p = c * d(i) - s * g;
-                            d(i + 1) = h + s * (c * g + s * d(i));
+                            p = c * d(static_cast<vcl_size_t>(i)) - s * g;
+                            d(static_cast<vcl_size_t>(i) + 1) = h + s * (c * g + s * d(static_cast<vcl_size_t>(i)));
 
-                            cs[i] = c;
-                            ss[i] = s;
+                            cs[static_cast<vcl_size_t>(i)] = c;
+                            ss[static_cast<vcl_size_t>(i)] = s;
                         }
 
                         p = -s * s2 * c3 * el1 * e(l) / dl1;
@@ -163,7 +163,7 @@ namespace viennacl
                             viennacl::copy(cs, tmp1);
                             viennacl::copy(ss, tmp2);
 
-                            givens_next(Q, tmp1, tmp2, l, m);
+                            givens_next(Q, tmp1, tmp2, static_cast<int>(l), static_cast<int>(m));
                         }
 
                         // Check for convergence.
@@ -266,17 +266,17 @@ namespace viennacl
                 {
                     bool notlast = (k != n - 1);
 
-                    SCALARTYPE p = buf[5 * k] * a_ik + buf[5 * k + 1] * a_ik_1;
+                    SCALARTYPE p = buf[5 * static_cast<vcl_size_t>(k)] * a_ik + buf[5 * static_cast<vcl_size_t>(k) + 1] * a_ik_1;
 
                     if (notlast)
                     {
                         a_ik_2 = a_row[k + 2];
-                        p = p + buf[5 * k + 2] * a_ik_2;
-                        a_ik_2 = a_ik_2 - p * buf[5 * k + 4];
+                        p = p + buf[5 * static_cast<vcl_size_t>(k) + 2] * a_ik_2;
+                        a_ik_2 = a_ik_2 - p * buf[5 * static_cast<vcl_size_t>(k) + 4];
                     }
 
                     a_row[k] = a_ik - p;
-                    a_ik_1 = a_ik_1 - p * buf[5 * k + 3];
+                    a_ik_1 = a_ik_1 - p * buf[5 * static_cast<vcl_size_t>(k) + 3];
 
                     a_ik = a_ik_1;
                     a_ik_1 = a_ik_2;
@@ -304,12 +304,12 @@ namespace viennacl
 
             SCALARTYPE& operator()(int i, int j)
             {
-                return data[i * internal_size_ + j];
+                return data[static_cast<vcl_size_t>(i) * internal_size_ + static_cast<vcl_size_t>(j)];
             }
 
             SCALARTYPE* row(int i)
             {
-                return &data[i * internal_size_];
+                return &data[static_cast<vcl_size_t>(i) * internal_size_];
             }
 
             SCALARTYPE* begin()
@@ -339,7 +339,7 @@ namespace viennacl
         {
             transpose(V);
 
-            int nn = static_cast<int>(vcl_H.size1());
+            vcl_size_t nn = vcl_H.size1();
 
             FastMatrix<SCALARTYPE> H(nn, vcl_H.internal_size2());//, V(nn);
 
@@ -349,7 +349,7 @@ namespace viennacl
             viennacl::fast_copy(vcl_H, H.begin());
 
 
-            int n = nn - 1;
+            int n = static_cast<int>(nn) - 1;
 
             SCALARTYPE eps = 2 * static_cast<SCALARTYPE>(EPS);
             SCALARTYPE exshift = 0;
@@ -367,10 +367,10 @@ namespace viennacl
 
             // compute matrix norm
             SCALARTYPE norm = 0;
-            for (int i = 0; i < nn; i++)
+            for (vcl_size_t i = 0; i < nn; i++)
             {
-                for (int j = std::max(i - 1, 0); j < nn; j++)
-                    norm = norm + std::fabs(H(i, j));
+                for (vcl_size_t j = static_cast<vcl_size_t>(std::max<int>(static_cast<int>(i) - 1, 0)); j < nn; j++)
+                    norm = norm + std::fabs(H(static_cast<int>(i), static_cast<int>(j)));
             }
 
             // Outer loop over eigenvalue index
@@ -394,8 +394,8 @@ namespace viennacl
                 {
                     // One root found
                     H(n, n) = H(n, n) + exshift;
-                    d(n) = H(n, n);
-                    e(n) = 0;
+                    d(static_cast<vcl_size_t>(n)) = H(n, n);
+                    e(static_cast<vcl_size_t>(n)) = 0;
                     n--;
                     iter = 0;
                 }
@@ -414,12 +414,12 @@ namespace viennacl
                     {
                         // Real pair
                         z = (p >= 0) ? (p + z) : (p - z);
-                        d(n - 1) = x + z;
-                        d(n) = d(n - 1);
+                        d(static_cast<vcl_size_t>(n) - 1) = x + z;
+                        d(static_cast<vcl_size_t>(n)) = d(static_cast<vcl_size_t>(n) - 1);
                         if (z != 0)
-                            d(n) = x - w / z;
-                        e(n - 1) = 0;
-                        e(n) = 0;
+                            d(static_cast<vcl_size_t>(n)) = x - w / z;
+                        e(static_cast<vcl_size_t>(n) - 1) = 0;
+                        e(static_cast<vcl_size_t>(n)) = 0;
                         x = H(n, n - 1);
                         s = std::fabs(x) + std::fabs(z);
                         p = x / s;
@@ -429,7 +429,7 @@ namespace viennacl
                         q = q / r;
 
                         // Row modification
-                        for (int j = n - 1; j < nn; j++)
+                        for (int j = n - 1; j < static_cast<int>(nn); j++)
                         {
                             SCALARTYPE h_nj = H(n, j);
                             z = H(n - 1, j);
@@ -438,15 +438,15 @@ namespace viennacl
                         }
 
                         final_iter_update(H, n, n + 1, q, p);
-                        final_iter_update_gpu(V, n, nn, q, p);
+                        final_iter_update_gpu(V, n, static_cast<int>(nn), q, p);
                     }
                     else
                     {
                         // Complex pair
-                        d(n - 1) = x + p;
-                        d(n) = x + p;
-                        e(n - 1) = z;
-                        e(n) = -z;
+                        d(static_cast<vcl_size_t>(n) - 1) = x + p;
+                        d(static_cast<vcl_size_t>(n)) = x + p;
+                        e(static_cast<vcl_size_t>(n) - 1) = z;
+                        e(static_cast<vcl_size_t>(n)) = -z;
                     }
 
                     n = n - 2;
@@ -564,18 +564,18 @@ namespace viennacl
                             q = q / p;
                             r = r / p;
 
-                            buf[5 * k] = x;
-                            buf[5 * k + 1] = y;
-                            buf[5 * k + 2] = z;
-                            buf[5 * k + 3] = q;
-                            buf[5 * k + 4] = r;
+                            buf[5 * static_cast<vcl_size_t>(k)] = x;
+                            buf[5 * static_cast<vcl_size_t>(k) + 1] = y;
+                            buf[5 * static_cast<vcl_size_t>(k) + 2] = z;
+                            buf[5 * static_cast<vcl_size_t>(k) + 3] = q;
+                            buf[5 * static_cast<vcl_size_t>(k) + 4] = r;
 
 
                             SCALARTYPE* a_row_k = H.row(k);
                             SCALARTYPE* a_row_k_1 = H.row(k + 1);
                             SCALARTYPE* a_row_k_2 = H.row(k + 2);
                             // Row modification
-                            for (int j = k; j < nn; j++)
+                            for (int j = k; j < static_cast<int>(nn); j++)
                             {
                                 SCALARTYPE h_kj = a_row_k[j];
                                 SCALARTYPE h_k1_j = a_row_k_1[j];
@@ -596,7 +596,7 @@ namespace viennacl
 
 
                             // Column modification
-                            for (int i = k; i < std::min(nn, k + 4); i++)
+                            for (int i = k; i < std::min(static_cast<int>(nn), k + 4); i++)
                             {
                                 p = x * H(i, k) + y * H(i, k + 1);
                                 if (notlast)
@@ -611,11 +611,11 @@ namespace viennacl
                         }
                         else
                         {
-                            buf[5 * k] = 0;
-                            buf[5 * k + 1] = 0;
-                            buf[5 * k + 2] = 0;
-                            buf[5 * k + 3] = 0;
-                            buf[5 * k + 4] = 0;
+                            buf[5 * static_cast<vcl_size_t>(k)] = 0;
+                            buf[5 * static_cast<vcl_size_t>(k) + 1] = 0;
+                            buf[5 * static_cast<vcl_size_t>(k) + 2] = 0;
+                            buf[5 * static_cast<vcl_size_t>(k) + 3] = 0;
+                            buf[5 * static_cast<vcl_size_t>(k) + 4] = 0;
                         }
                     }
 
@@ -623,7 +623,7 @@ namespace viennacl
                     // timer.start();
 
                     update_float_QR_column(H, buf, m, n, n, true);
-                    update_float_QR_column_gpu(V, buf, buf_vcl, m, n, nn, false);
+                    update_float_QR_column_gpu(V, buf, buf_vcl, m, n, static_cast<int>(nn), false);
 
                     // std::cout << timer.get() << "\n";
                 }
@@ -635,10 +635,10 @@ namespace viennacl
                 return;
             }
 
-            for (n = nn - 1; n >= 0; n--)
+            for (n = static_cast<int>(nn) - 1; n >= 0; n--)
             {
-                p = d(n);
-                q = e(n);
+                p = d(static_cast<vcl_size_t>(n));
+                q = e(static_cast<vcl_size_t>(n));
 
                 // Real vector
                 if (q == 0)
@@ -652,7 +652,7 @@ namespace viennacl
                         for (int j = l; j <= n; j++)
                             r = r + H(i, j) * H(j, n);
 
-                        if (e(i) < 0)
+                        if (e(static_cast<vcl_size_t>(i)) < 0)
                         {
                             z = w;
                             s = r;
@@ -660,7 +660,7 @@ namespace viennacl
                         else
                         {
                             l = i;
-                            if (e(i) == 0)
+                            if (e(static_cast<vcl_size_t>(i)) == 0)
                             {
                                 H(i, n) = (w != 0) ? (-r / w) : (-r / (eps * norm));
                             }
@@ -669,7 +669,7 @@ namespace viennacl
                                 // Solve real equations
                                 x = H(i, i + 1);
                                 y = H(i + 1, i);
-                                q = (d(i) - p) * (d(i) - p) + e(i) * e(i);
+                                q = (d(static_cast<vcl_size_t>(i)) - p) * (d(static_cast<vcl_size_t>(i)) - p) + e(static_cast<vcl_size_t>(i)) * e(static_cast<vcl_size_t>(i));
                                 t = (x * s - z * r) / q;
                                 H(i, n) = t;
                                 H(i + 1, n) = (std::fabs(x) > std::fabs(z)) ? ((-r - w * t) / x) : ((-s - y * t) / z);
@@ -718,7 +718,7 @@ namespace viennacl
 
                         w = H(i, i) - p;
 
-                        if (e(i) < 0)
+                        if (e(static_cast<vcl_size_t>(i)) < 0)
                         {
                             z = w;
                             r = ra;
@@ -727,7 +727,7 @@ namespace viennacl
                         else
                         {
                             l = i;
-                            if (e(i) == 0)
+                            if (e(static_cast<vcl_size_t>(i)) == 0)
                             {
                                 cdiv<SCALARTYPE>(-ra, -sa, w, q, out1, out2);
                                 H(i, n - 1) = out1;
@@ -738,8 +738,8 @@ namespace viennacl
                                 // Solve complex equations
                                 x = H(i, i + 1);
                                 y = H(i + 1, i);
-                                vr = (d(i) - p) * (d(i) - p) + e(i) * e(i) - q * q;
-                                vi = (d(i) - p) * 2 * q;
+                                vr = (d(static_cast<vcl_size_t>(i)) - p) * (d(static_cast<vcl_size_t>(i)) - p) + e(static_cast<vcl_size_t>(i)) * e(static_cast<vcl_size_t>(i)) - q * q;
+                                vi = (d(static_cast<vcl_size_t>(i)) - p) * 2 * q;
                                 if ( (vr == 0) && (vi == 0) )
                                     vr = eps * norm * (std::fabs(w) + std::fabs(q) + std::fabs(x) + std::fabs(y) + std::fabs(z));
 

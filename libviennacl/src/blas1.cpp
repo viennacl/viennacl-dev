@@ -48,7 +48,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLiamax(ViennaCLInt *index, Vien
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
 
       *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
       return ViennaCLSuccess;
@@ -56,7 +57,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLiamax(ViennaCLInt *index, Vien
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
 
       *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
       return ViennaCLSuccess;
@@ -86,7 +88,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLasum(ViennaCLHostScalar *alpha
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
 
       (*alpha)->value_float = viennacl::linalg::norm_1(v1);
       return ViennaCLSuccess;
@@ -94,7 +97,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLasum(ViennaCLHostScalar *alpha
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
 
       (*alpha)->value_double = viennacl::linalg::norm_1(v1);
       return ViennaCLSuccess;
@@ -130,8 +134,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLaxpy(ViennaCLHostScalar alpha,
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<float> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       v2 += alpha->value_float * v1;
       return ViennaCLSuccess;
@@ -139,8 +144,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLaxpy(ViennaCLHostScalar alpha,
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<double> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       v2 += alpha->value_double * v1;
       return ViennaCLSuccess;
@@ -172,8 +178,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLcopy(ViennaCLVector x, ViennaC
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<float> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       v2 = v1;
       return ViennaCLSuccess;
@@ -181,8 +188,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLcopy(ViennaCLVector x, ViennaC
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<double> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       v2 = v1;
       return ViennaCLSuccess;
@@ -216,8 +224,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLdot(ViennaCLHostScalar *alpha,
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<float> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       (*alpha)->value_float = viennacl::linalg::inner_prod(v1, v2);
       return ViennaCLSuccess;
@@ -225,8 +234,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLdot(ViennaCLHostScalar *alpha,
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<double> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       (*alpha)->value_double = viennacl::linalg::inner_prod(v1, v2);
       return ViennaCLSuccess;
@@ -253,7 +263,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLnrm2(ViennaCLHostScalar *alpha
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
 
       (*alpha)->value_float = viennacl::linalg::norm_2(v1);
       return ViennaCLSuccess;
@@ -261,7 +272,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLnrm2(ViennaCLHostScalar *alpha
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
 
       (*alpha)->value_double = viennacl::linalg::norm_2(v1);
       return ViennaCLSuccess;
@@ -301,8 +313,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLrot(ViennaCLVector     x, Vien
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<float> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       viennacl::linalg::plane_rotation(v1, v2, c->value_float, s->value_float);
       return ViennaCLSuccess;
@@ -310,8 +323,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLrot(ViennaCLVector     x, Vien
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<double> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       viennacl::linalg::plane_rotation(v1, v2, c->value_double, s->value_double);
       return ViennaCLSuccess;
@@ -338,7 +352,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLscal(ViennaCLHostScalar alpha,
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
 
       v1 *= alpha->value_float;
       return ViennaCLSuccess;
@@ -346,7 +361,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLscal(ViennaCLHostScalar alpha,
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
 
       v1 *= alpha->value_double;
       return ViennaCLSuccess;
@@ -378,8 +394,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaC
   {
     case ViennaCLFloat:
     {
-      viennacl::vector_base<float> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<float> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      viennacl::vector_base<float> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<float> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       viennacl::swap(v1, v2);
       return ViennaCLSuccess;
@@ -387,8 +404,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaC
 
     case ViennaCLDouble:
     {
-      viennacl::vector_base<double> v1(v1_handle, x->size, x->offset, x->inc);
-      viennacl::vector_base<double> v2(v2_handle, y->size, y->offset, y->inc);
+      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      viennacl::vector_base<double> v1(v1_handle, static_cast<viennacl::vcl_size_t>(x->size), static_cast<viennacl::vcl_size_t>(x->offset), static_cast<difference_type>(x->inc));
+      viennacl::vector_base<double> v2(v2_handle, static_cast<viennacl::vcl_size_t>(y->size), static_cast<viennacl::vcl_size_t>(y->offset), static_cast<difference_type>(y->inc));
 
       viennacl::swap(v1, v2);
       return ViennaCLSuccess;

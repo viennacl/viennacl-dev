@@ -180,10 +180,12 @@ namespace viennacl
                                     bool is_column
                                     )
       {
+        typedef typename boost::numeric::ublas::vector<SCALARTYPE>::difference_type  difference_type;
+
         boost::numeric::ublas::vector<SCALARTYPE> tmp = boost::numeric::ublas::scalar_vector<SCALARTYPE>(size, 0);
 
         copy_vec(A, D, row_start, col_start, is_column);
-        fast_copy(D.begin(), D.begin() + vcl_ptrdiff_t(size - start), tmp.begin() + start);
+        fast_copy(D.begin(), D.begin() + vcl_ptrdiff_t(size - start), tmp.begin() + difference_type(start));
 
         //std::cout << "1: " << tmp << "\n";
 

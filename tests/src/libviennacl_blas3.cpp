@@ -88,14 +88,14 @@ T get_value(std::vector<T> & array, ViennaCLInt i, ViennaCLInt j,
 {
   // row-major
   if (order == ViennaCLRowMajor && trans == ViennaCLTrans)
-    return array[(j*stride1 + start1) * cols + (i*stride2 + start2)];
+    return array[static_cast<std::size_t>((j*stride1 + start1) * cols + (i*stride2 + start2))];
   else if (order == ViennaCLRowMajor && trans != ViennaCLTrans)
-    return array[(i*stride1 + start1) * cols + (j*stride2 + start2)];
+    return array[static_cast<std::size_t>((i*stride1 + start1) * cols + (j*stride2 + start2))];
 
   // column-major
   else if (order != ViennaCLRowMajor && trans == ViennaCLTrans)
-    return array[(j*stride1 + start1) + (i*stride2 + start2) * rows];
-  return array[(i*stride1 + start1) + (j*stride2 + start2) * rows];
+    return array[static_cast<std::size_t>((j*stride1 + start1) + (i*stride2 + start2) * rows)];
+  return array[static_cast<std::size_t>((i*stride1 + start1) + (j*stride2 + start2) * rows)];
 }
 
 
@@ -171,13 +171,13 @@ void test_blas(ViennaCLBackend my_backend,
       // write result
       if (order_C == ViennaCLRowMajor)
       {
-        C_float [(i*C_stride1 + C_start1) * C_columns + (j*C_stride2 + C_start2)] = val_float;
-        C_double[(i*C_stride1 + C_start1) * C_columns + (j*C_stride2 + C_start2)] = val_double;
+        C_float [static_cast<std::size_t>((i*C_stride1 + C_start1) * C_columns + (j*C_stride2 + C_start2))] = val_float;
+        C_double[static_cast<std::size_t>((i*C_stride1 + C_start1) * C_columns + (j*C_stride2 + C_start2))] = val_double;
       }
       else
       {
-        C_float [(i*C_stride1 + C_start1) + (j*C_stride2 + C_start2) * C_rows] = val_float;
-        C_double[(i*C_stride1 + C_start1) + (j*C_stride2 + C_start2) * C_rows] = val_double;
+        C_float [static_cast<std::size_t>((i*C_stride1 + C_start1) + (j*C_stride2 + C_start2) * C_rows)] = val_float;
+        C_double[static_cast<std::size_t>((i*C_stride1 + C_start1) + (j*C_stride2 + C_start2) * C_rows)] = val_double;
       }
     }
 
@@ -476,7 +476,7 @@ void test_blas(ViennaCLBackend my_backend,
 
 int main()
 {
-  ViennaCLInt size  = 500*500;
+  std::size_t size  = 500*500;
   float  eps_float  = 1e-5f;
   double eps_double = 1e-12;
 
@@ -490,7 +490,7 @@ int main()
 
   // fill with random data:
 
-  for (ViennaCLInt i = 0; i < size; ++i)
+  for (std::size_t i = 0; i < size; ++i)
   {
     C_float[i] = 0.5f + 0.1f * random<float>();
     A_float[i] = 0.5f + 0.1f * random<float>();

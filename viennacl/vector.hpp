@@ -248,7 +248,7 @@ namespace viennacl
       value_type operator*(void) const
       {
           value_type result;
-          result = const_entry_proxy<SCALARTYPE>(start_ + index_ * stride_, elements_);
+          result = const_entry_proxy<SCALARTYPE>(start_ + index_ * stride(), elements_);
           return result;
       }
       self_type operator++(void) { ++index_; return *this; }
@@ -273,10 +273,10 @@ namespace viennacl
 
       //vcl_size_t index() const { return index_; }
       /** @brief Offset of the current element index with respect to the beginning of the buffer */
-      vcl_size_t offset() const { return start_ + index_ * stride_; }
+      vcl_size_t offset() const { return start_ + index_ * stride(); }
 
       /** @brief Index increment in the underlying buffer when incrementing the iterator to the next element */
-      vcl_size_t stride() const { return stride_; }
+      vcl_size_t stride() const { return static_cast<vcl_size_t>(stride_); }
       handle_type const & handle() const { return elements_; }
 
     protected:
@@ -335,11 +335,11 @@ namespace viennacl
 
       entry_proxy<SCALARTYPE> operator*(void)
       {
-        return entry_proxy<SCALARTYPE>(base_type::start_ + base_type::index_ * base_type::stride_, elements_);
+        return entry_proxy<SCALARTYPE>(base_type::start_ + base_type::index_ * base_type::stride(), elements_);
       }
 
       difference_type operator-(self_type const & other) const { difference_type result = base_type::index_; return (result - static_cast<difference_type>(other.index_)); }
-      self_type operator+(difference_type diff) const { return self_type(elements_, base_type::index_ + diff, base_type::start_, base_type::stride_); }
+      self_type operator+(difference_type diff) const { return self_type(elements_, static_cast<vcl_size_t>(static_cast<difference_type>(base_type::index_) + diff), base_type::start_, base_type::stride_); }
 
       handle_type       & handle()       { return elements_; }
       handle_type const & handle() const { return base_type::elements_; }
@@ -687,7 +687,7 @@ namespace viennacl
         assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
         assert( index < size() && bool("Index out of bounds!") );
 
-        return entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+        return entry_proxy<SCALARTYPE>(start_ + stride() * index, elements_);
       }
 
       /** @brief Read-write access to a single element of the vector
@@ -697,7 +697,7 @@ namespace viennacl
         assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
         assert( index < size() && bool("Index out of bounds!") );
 
-        return entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+        return entry_proxy<SCALARTYPE>(start_ + stride() * index, elements_);
       }
 
 
@@ -708,7 +708,7 @@ namespace viennacl
         assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
         assert( index < size() && bool("Index out of bounds!") );
 
-        return const_entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+        return const_entry_proxy<SCALARTYPE>(start_ + stride() * index, elements_);
       }
 
       /** @brief Read access to a single element of the vector
@@ -718,7 +718,7 @@ namespace viennacl
         assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
         assert( index < size() && bool("Index out of bounds!") );
 
-        return const_entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+        return const_entry_proxy<SCALARTYPE>(start_ + stride() * index, elements_);
       }
 
       //
@@ -864,7 +864,7 @@ namespace viennacl
 
       /** @brief Returns the stride within the buffer (in multiples of sizeof(SCALARTYPE))
       */
-      size_type stride() const { return stride_; }
+      size_type stride() const { return static_cast<size_type>(stride_); }
 
 
       /** @brief Returns true is the size is zero */
@@ -1287,12 +1287,12 @@ namespace viennacl
       {
         viennacl::backend::memory_read(gpu_begin.handle(),
                                       sizeof(SCALARTYPE)*gpu_begin.offset(),
-                                      sizeof(SCALARTYPE)*gpu_begin.stride() * (gpu_end - gpu_begin),
+                                      sizeof(SCALARTYPE)*gpu_begin.stride() * static_cast<vcl_size_t>(gpu_end - gpu_begin),
                                       &(*cpu_begin));
       }
       else
       {
-        vcl_size_t gpu_size = (gpu_end - gpu_begin);
+        vcl_size_t gpu_size = static_cast<vcl_size_t>(gpu_end - gpu_begin);
         std::vector<SCALARTYPE> temp_buffer(gpu_begin.stride() * gpu_size);
         viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
 
@@ -1337,7 +1337,7 @@ namespace viennacl
       {
         viennacl::backend::memory_read(gpu_begin.handle(),
                                        sizeof(SCALARTYPE)*gpu_begin.offset(),
-                                       sizeof(SCALARTYPE)*gpu_begin.stride() * (gpu_end - gpu_begin),
+                                       sizeof(SCALARTYPE)*gpu_begin.stride() * static_cast<vcl_size_t>(gpu_end - gpu_begin),
                                        &(*cpu_begin),
                                        true);
       }
@@ -1372,7 +1372,7 @@ namespace viennacl
     assert(gpu_end - gpu_begin >= 0 && bool("Iterators incompatible"));
     if (gpu_end - gpu_begin != 0)
     {
-      std::vector<SCALARTYPE> temp_buffer(gpu_end - gpu_begin);
+      std::vector<SCALARTYPE> temp_buffer(static_cast<vcl_size_t>(gpu_end - gpu_begin));
       fast_copy(gpu_begin, gpu_end, temp_buffer.begin());
 
       //now copy entries to cpu_vec:
@@ -1453,11 +1453,11 @@ namespace viennacl
       {
         viennacl::backend::memory_write(gpu_begin.handle(),
                                         sizeof(SCALARTYPE)*gpu_begin.offset(),
-                                        sizeof(SCALARTYPE)*gpu_begin.stride() * (cpu_end - cpu_begin), &(*cpu_begin));
+                                        sizeof(SCALARTYPE)*gpu_begin.stride() * static_cast<vcl_size_t>(cpu_end - cpu_begin), &(*cpu_begin));
       }
       else //writing to slice:
       {
-        vcl_size_t cpu_size = (cpu_end - cpu_begin);
+        vcl_size_t cpu_size = static_cast<vcl_size_t>(cpu_end - cpu_begin);
         std::vector<SCALARTYPE> temp_buffer(gpu_begin.stride() * cpu_size);
 
         viennacl::backend::memory_read(gpu_begin.handle(), sizeof(SCALARTYPE)*gpu_begin.offset(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
@@ -1503,7 +1503,7 @@ namespace viennacl
       {
         viennacl::backend::memory_write(gpu_begin.handle(),
                                         sizeof(SCALARTYPE)*gpu_begin.offset(),
-                                        sizeof(SCALARTYPE)*gpu_begin.stride() * (cpu_end - cpu_begin), &(*cpu_begin),
+                                        sizeof(SCALARTYPE)*gpu_begin.stride() * static_cast<vcl_size_t>(cpu_end - cpu_begin), &(*cpu_begin),
                                         true);
       }
       else // fallback to blocking copy. There's nothing we can do to prevent this
@@ -1539,7 +1539,7 @@ namespace viennacl
     if (cpu_begin != cpu_end)
     {
       //we require that the size of the gpu_vector is larger or equal to the cpu-size
-      std::vector<SCALARTYPE> temp_buffer(cpu_end - cpu_begin);
+      std::vector<SCALARTYPE> temp_buffer(static_cast<vcl_size_t>(cpu_end - cpu_begin));
       std::copy(cpu_begin, cpu_end, temp_buffer.begin());
       viennacl::fast_copy(temp_buffer.begin(), temp_buffer.end(), gpu_begin);
     }
@@ -1919,7 +1919,7 @@ namespace viennacl
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (char value, vector_base<T> const & vec)
   {
-    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, T(value));
   }
 
   /** @brief Operator overload for the expression alpha * v1, where alpha is a short
@@ -1931,7 +1931,7 @@ namespace viennacl
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (short value, vector_base<T> const & vec)
   {
-    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, T(value));
   }
 
   /** @brief Operator overload for the expression alpha * v1, where alpha is a int
@@ -1943,7 +1943,7 @@ namespace viennacl
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (int value, vector_base<T> const & vec)
   {
-    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, T(value));
   }
 
   /** @brief Operator overload for the expression alpha * v1, where alpha is a long
@@ -1955,7 +1955,7 @@ namespace viennacl
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (long value, vector_base<T> const & vec)
   {
-    return vector_expression< const vector_base<T>, const T, op_mult>(vec, value);
+    return vector_expression< const vector_base<T>, const T, op_mult>(vec, T(value));
   }
 
 

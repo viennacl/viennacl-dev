@@ -71,7 +71,7 @@ int run_benchmark()
 
   std_vec1[0] = 1.0;
   std_vec2[0] = 1.0;
-  for (int i=1; i<BENCHMARK_VECTOR_SIZE; ++i)
+  for (std::size_t i=1; i<BENCHMARK_VECTOR_SIZE; ++i)
   {
     std_vec1[i] = std_vec1[i-1] * ScalarType(1.000001);
     std_vec2[i] = std_vec1[i-1] * ScalarType(0.999999);
@@ -84,14 +84,14 @@ int run_benchmark()
   viennacl::swap(vcl_vec1, vcl_vec2);
   //check that vcl_vec1 is now equal to std_vec2:
   viennacl::fast_copy(vcl_vec1, std_vec3);
-  for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+  for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
     if (std_vec3[i] != std_vec2[i])
       std::cout << "ERROR in swap(): Failed at entry " << i << std::endl;
 
   viennacl::fast_swap(vcl_vec1, vcl_vec2);
   //check that vcl_vec1 is now equal to std_vec1 again:
   viennacl::copy(vcl_vec1, std_vec3);
-  for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+  for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
     if (std_vec3[i] != std_vec1[i])
       std::cout << "ERROR in fast_swap(): Failed at entry " << i << std::endl;
 
@@ -100,10 +100,10 @@ int run_benchmark()
   viennacl::backend::finish();
   std::cout << "------- Vector inner products ----------" << std::endl;
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     std_result = 0;
-    for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+    for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
       std_result += std_vec1[i] * std_vec2[i];
   }
   exec_time = timer.get();
@@ -116,7 +116,7 @@ int run_benchmark()
   std_result = 0.0;
   viennacl::backend::finish();
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_factor2 = viennacl::linalg::inner_prod(vcl_vec1, vcl_vec2);
   }
@@ -130,10 +130,10 @@ int run_benchmark()
   viennacl::backend::finish();
   std::cout << "------- Vector norm_2 ----------" << std::endl;
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     std_result = 0;
-    for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+    for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
     {
       ScalarType entry = std_vec1[i];
       std_result += entry * entry;
@@ -150,7 +150,7 @@ int run_benchmark()
   std_result = 0.0;
   viennacl::backend::finish();
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_factor2 = viennacl::linalg::norm_2(vcl_vec1);
   }
@@ -164,9 +164,9 @@ int run_benchmark()
 
   std::cout << "------- Vector addition ----------" << std::endl;
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
-    for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+    for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
       std_vec3[i] = std_vec1[i] + std_vec2[i];
   }
   exec_time = timer.get();
@@ -178,7 +178,7 @@ int run_benchmark()
   viennacl::backend::finish();
   std_result = 0.0;
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec3 = vcl_vec1 + vcl_vec2;
   }
@@ -193,9 +193,9 @@ int run_benchmark()
   // multiply add:
   std::cout << "------- Vector multiply add ----------" << std::endl;
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
-    for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+    for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
       std_vec1[i] += std_factor1 * std_vec2[i];
   }
   exec_time = timer.get();
@@ -206,7 +206,7 @@ int run_benchmark()
   vcl_vec1 += vcl_factor1 * vcl_vec2; //startup calculation
   viennacl::backend::finish();
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec1 += vcl_factor1 * vcl_vec2;
   }
@@ -221,9 +221,9 @@ int run_benchmark()
   //complicated vector addition:
   std::cout << "------- Vector complicated expression ----------" << std::endl;
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
-    for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+    for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
       std_vec3[i] += std_vec2[i] / std_factor1 + std_factor2 * (std_vec1[i] - std_factor1 * std_vec2[i]);
   }
   exec_time = timer.get();
@@ -233,7 +233,7 @@ int run_benchmark()
   vcl_vec3 = vcl_vec2 / vcl_factor1 + vcl_factor2 * (vcl_vec1 - vcl_factor1*vcl_vec2); //startup calculation
   viennacl::backend::finish();
   timer.start();
-  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  for (std::size_t runs=0; runs<BENCHMARK_RUNS; ++runs)
   {
     vcl_vec3 = vcl_vec2 / vcl_factor1 + vcl_factor2 * (vcl_vec1 - vcl_factor1*vcl_vec2);
   }

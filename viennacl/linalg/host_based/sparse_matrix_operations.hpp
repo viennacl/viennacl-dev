@@ -124,7 +124,7 @@ namespace viennacl
           vcl_size_t row_end = row_buffer[row+1];
           for (vcl_size_t i = row_buffer[row]; i < row_end; ++i)
             dot_prod += elements[i] * vec_buf[col_buffer[i] * vec.stride() + vec.start()];
-          result_buf[row * result.stride() + result.start()] = dot_prod;
+          result_buf[static_cast<vcl_size_t>(row) * result.stride() + result.start()] = dot_prod;
         }
 
       }
@@ -183,7 +183,7 @@ namespace viennacl
             for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
               NumericT temp = 0;
               for (vcl_size_t k = row_start; k < row_end; ++k) {
-                temp += sp_mat_elements[k] * d_mat_wrapper_row(sp_mat_col_buffer[k], col);
+                temp += sp_mat_elements[k] * d_mat_wrapper_row(static_cast<vcl_size_t>(sp_mat_col_buffer[k]), col);
               }
               if (result.row_major())
                 result_wrapper_row(row, col) = temp;
@@ -202,7 +202,7 @@ namespace viennacl
               vcl_size_t row_end = sp_mat_row_buffer[row+1];
               NumericT temp = 0;
               for (vcl_size_t k = row_start; k < row_end; ++k) {
-                temp += sp_mat_elements[k] * d_mat_wrapper_col(sp_mat_col_buffer[k], col);
+                temp += sp_mat_elements[k] * d_mat_wrapper_col(static_cast<vcl_size_t>(sp_mat_col_buffer[k]), static_cast<vcl_size_t>(col));
               }
               if (result.row_major())
                 result_wrapper_row(row, col) = temp;
@@ -271,7 +271,7 @@ namespace viennacl
             for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
               NumericT temp = 0;
               for (vcl_size_t k = row_start; k < row_end; ++k) {
-                temp += sp_mat_elements[k] * d_mat_wrapper_row(col, sp_mat_col_buffer[k]);
+                temp += sp_mat_elements[k] * d_mat_wrapper_row(col, static_cast<vcl_size_t>(sp_mat_col_buffer[k]));
               }
               if (result.row_major())
                 result_wrapper_row(row, col) = temp;
@@ -290,7 +290,7 @@ namespace viennacl
               vcl_size_t row_end = sp_mat_row_buffer[row+1];
               NumericT temp = 0;
               for (vcl_size_t k = row_start; k < row_end; ++k) {
-                temp += sp_mat_elements[k] * d_mat_wrapper_col(col, sp_mat_col_buffer[k]);
+                temp += sp_mat_elements[k] * d_mat_wrapper_col(col, static_cast<vcl_size_t>(sp_mat_col_buffer[k]));
               }
               if (result.row_major())
                 result_wrapper_row(row, col) = temp;
@@ -1058,8 +1058,8 @@ namespace viennacl
 #endif
           for (long i = 0; i < static_cast<long>(sp_mat.nnz()); ++i) {
             NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
-            unsigned int r = sp_mat_coords[2*i];
-            unsigned int c = sp_mat_coords[2*i+1];
+            vcl_size_t r = static_cast<vcl_size_t>(sp_mat_coords[2*i]);
+            vcl_size_t c = static_cast<vcl_size_t>(sp_mat_coords[2*i+1]);
             for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
               NumericT y = d_mat_wrapper_row( c, col);
               if (result.row_major())
@@ -1093,8 +1093,8 @@ namespace viennacl
             for (vcl_size_t i = 0; i < sp_mat.nnz(); ++i) {
 
               NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
-              unsigned int r = sp_mat_coords[2*i];
-              unsigned int c = sp_mat_coords[2*i+1];
+              vcl_size_t r = static_cast<vcl_size_t>(sp_mat_coords[2*i]);
+              vcl_size_t c = static_cast<vcl_size_t>(sp_mat_coords[2*i+1]);
               NumericT y = d_mat_wrapper_col( c, col);
 
               if (result.row_major())
@@ -1174,8 +1174,8 @@ namespace viennacl
 #endif
           for (long i = 0; i < static_cast<long>(sp_mat.nnz()); ++i) {
             NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
-            unsigned int r = sp_mat_coords[2*i];
-            unsigned int c = sp_mat_coords[2*i+1];
+            vcl_size_t r = static_cast<vcl_size_t>(sp_mat_coords[2*i]);
+            vcl_size_t c = static_cast<vcl_size_t>(sp_mat_coords[2*i+1]);
             if (result.row_major())
             {
               for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
@@ -1214,8 +1214,8 @@ namespace viennacl
 #endif
           for (long i = 0; i < static_cast<long>(sp_mat.nnz()); ++i) {
             NumericT x = static_cast<NumericT>(sp_mat_elements[i]);
-            unsigned int r = sp_mat_coords[2*i];
-            unsigned int c = sp_mat_coords[2*i+1];
+            vcl_size_t r = static_cast<vcl_size_t>(sp_mat_coords[2*i]);
+            vcl_size_t c = static_cast<vcl_size_t>(sp_mat_coords[2*i+1]);
             if (result.row_major())
             {
               for (vcl_size_t col = 0; col < d_mat.size2(); ++col) {
@@ -1339,9 +1339,9 @@ namespace viennacl
           {
             for (long item_id = 0; item_id < static_cast<long>(sp_mat.maxnnz()); ++item_id)
             {
-              vcl_size_t offset = static_cast<vcl_size_t>(row) + item_id * sp_mat.internal_size1();
+              vcl_size_t offset = static_cast<vcl_size_t>(row) + static_cast<vcl_size_t>(item_id) * sp_mat.internal_size1();
               NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
-              unsigned int sp_mat_col = sp_mat_coords[offset];
+              vcl_size_t sp_mat_col = static_cast<vcl_size_t>(sp_mat_coords[offset]);
 
               if( sp_mat_val != 0)
               {
@@ -1380,7 +1380,7 @@ namespace viennacl
 
                 vcl_size_t offset = row + item_id * sp_mat.internal_size1();
                 NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
-                unsigned int sp_mat_col = sp_mat_coords[offset];
+                vcl_size_t sp_mat_col = static_cast<vcl_size_t>(sp_mat_coords[offset]);
 
                 if( sp_mat_val != 0) {
                   if (result.row_major())
@@ -1464,7 +1464,7 @@ namespace viennacl
 
                 vcl_size_t offset = row + item_id * sp_mat.internal_size1();
                 NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
-                unsigned int sp_mat_col = sp_mat_coords[offset];
+                vcl_size_t sp_mat_col = static_cast<vcl_size_t>(sp_mat_coords[offset]);
 
                 if( sp_mat_val != 0)
                 {
@@ -1499,9 +1499,9 @@ namespace viennacl
 
             for(vcl_size_t row = 0; row < sp_mat.size1(); ++row) {
 
-              vcl_size_t offset = row + item_id * sp_mat.internal_size1();
+              vcl_size_t offset = row + static_cast<vcl_size_t>(item_id) * sp_mat.internal_size1();
               NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
-              unsigned int sp_mat_col = sp_mat_coords[offset];
+              vcl_size_t sp_mat_col = static_cast<vcl_size_t>(sp_mat_coords[offset]);
 
               if( sp_mat_val != 0)
               {
@@ -1644,7 +1644,7 @@ namespace viennacl
 
               if(val != 0)
               {
-                unsigned int col = coords[offset];
+                vcl_size_t col = static_cast<vcl_size_t>(coords[offset]);
                 if (d_mat.row_major())
                   sum += d_mat_wrapper_row(col, result_col) * val;
                 else
@@ -1660,10 +1660,10 @@ namespace viennacl
 
             if (d_mat.row_major())
               for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
-                sum += d_mat_wrapper_row(csr_col_buffer[item_id], result_col) * csr_elements[item_id];
+                sum += d_mat_wrapper_row(static_cast<vcl_size_t>(csr_col_buffer[item_id]), result_col) * csr_elements[item_id];
             else
               for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
-                sum += d_mat_wrapper_col(csr_col_buffer[item_id], result_col) * csr_elements[item_id];
+                sum += d_mat_wrapper_col(static_cast<vcl_size_t>(csr_col_buffer[item_id]), result_col) * csr_elements[item_id];
 
             if (result.row_major())
               result_wrapper_row(row, result_col) = sum;
@@ -1739,7 +1739,7 @@ namespace viennacl
 
               if(val != 0)
               {
-                unsigned int col = coords[offset];
+                vcl_size_t col = static_cast<vcl_size_t>(coords[offset]);
                 if (d_mat.lhs().row_major())
                   sum += d_mat_wrapper_row(result_col, col) * val;
                 else
@@ -1755,10 +1755,10 @@ namespace viennacl
 
             if (d_mat.lhs().row_major())
               for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
-                sum += d_mat_wrapper_row(result_col, csr_col_buffer[item_id]) * csr_elements[item_id];
+                sum += d_mat_wrapper_row(result_col, static_cast<vcl_size_t>(csr_col_buffer[item_id])) * csr_elements[item_id];
             else
               for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
-                sum += d_mat_wrapper_col(result_col, csr_col_buffer[item_id]) * csr_elements[item_id];
+                sum += d_mat_wrapper_col(result_col, static_cast<vcl_size_t>(csr_col_buffer[item_id])) * csr_elements[item_id];
 
             if (result.row_major())
               result_wrapper_row(row, result_col) = sum;

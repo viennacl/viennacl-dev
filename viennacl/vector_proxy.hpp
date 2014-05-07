@@ -54,7 +54,7 @@ namespace viennacl
       static const int alignment = VectorType::alignment;
 
       vector_range(VectorType & v, range const & entry_range)
-       : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
+       : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), static_cast<difference_type>(v.stride())) {}
 
 
       using base_type::operator=;
@@ -76,7 +76,7 @@ namespace viennacl
     if (cpu_vector.end() - cpu_vector.begin() > 0)
     {
       //we require that the size of the gpu_vector is larger or equal to the cpu-size
-      std::vector<SCALARTYPE> temp_buffer(cpu_vector.end() - cpu_vector.begin());
+      std::vector<SCALARTYPE> temp_buffer(static_cast<std::size_t>(cpu_vector.end() - cpu_vector.begin()));
       std::copy(cpu_vector.begin(), cpu_vector.end(), temp_buffer.begin());
       viennacl::backend::memory_write(gpu_vector_range.handle(), sizeof(SCALARTYPE)*gpu_vector_range.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
     }
@@ -107,7 +107,7 @@ namespace viennacl
 
     if (cpu_vector.end() > cpu_vector.begin())
     {
-      std::vector<SCALARTYPE> temp_buffer(cpu_vector.end() - cpu_vector.begin());
+      std::vector<SCALARTYPE> temp_buffer(static_cast<vcl_size_t>(cpu_vector.end() - cpu_vector.begin()));
       viennacl::backend::memory_read(gpu_vector_range.handle(), sizeof(SCALARTYPE)*gpu_vector_range.start(), sizeof(SCALARTYPE)*temp_buffer.size(), &(temp_buffer[0]));
 
       //now copy entries to cpu_vec:
@@ -180,7 +180,7 @@ namespace viennacl
       static const int alignment = VectorType::alignment;
 
       vector_slice(VectorType & v, slice const & entry_slice)
-          : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
+          : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), static_cast<difference_type>(v.stride()) * entry_slice.stride()) {}
 
 
       using base_type::operator=;

@@ -374,7 +374,7 @@ namespace viennacl
 
               cached.read((char*)&len, sizeof(std::size_t));
               buffer.resize(len);
-              cached.read((char*)buffer.data(), len);
+              cached.read((char*)buffer.data(), std::streamsize(len));
 
               cl_int status;
               cl_device_id devid = devices_[0].id();
@@ -424,7 +424,7 @@ namespace viennacl
             std::ofstream cached((cache_path+sha1).c_str(),std::ios::binary);
 
             cached.write((char*)&sizes[0], sizeof(size_t));
-            cached.write((char*)binaries[0], sizes[0]);
+            cached.write((char*)binaries[0], std::streamsize(sizes[0]));
 
             for(std::size_t i = 0 ; i < devices_.size() ; ++i)
               delete[] binaries[i];

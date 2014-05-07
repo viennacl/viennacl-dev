@@ -423,7 +423,7 @@ int test(Epsilon const& epsilon,
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin()); \
   { \
   for (std::size_t i=0; i<ublas_v1.size(); ++i) \
-    ublas_v1[i] = OPNAME(ublas_v2[i]); \
+    ublas_v1[i] = std::OPNAME(ublas_v2[i]); \
   viennacl::scheduler::statement my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_v2)); \
   viennacl::scheduler::execute(my_statement); \
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \

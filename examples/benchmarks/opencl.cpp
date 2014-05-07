@@ -85,7 +85,7 @@ int run_benchmark()
   ///////////// Vector operations /////////////////
 
   std_vec1[0] = 1.0;
-  for (int i=1; i<BENCHMARK_VECTOR_SIZE; ++i)
+  for (std::size_t i=1; i<BENCHMARK_VECTOR_SIZE; ++i)
     std_vec1[i] = std_vec1[i-1] * ScalarType(1.000001);
 
   viennacl::copy(std_vec1, vcl_vec1);
@@ -94,7 +94,7 @@ int run_benchmark()
   double vcl_accumulate = 0;
 
   timer.start();
-  for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+  for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
     std_accumulate += std_vec1[i];
   exec_time = timer.get();
   std::cout << "Time for " << BENCHMARK_VECTOR_SIZE << " entry accesses on host: " << exec_time << std::endl;
@@ -105,7 +105,7 @@ int run_benchmark()
   viennacl::ocl::get_queue().finish();
   vcl_accumulate = 0;
   timer.start();
-  for (int i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
+  for (std::size_t i=0; i<BENCHMARK_VECTOR_SIZE; ++i)
     vcl_accumulate += vcl_vec1[i];
   exec_time = timer.get();
   std::cout << "Time for " << BENCHMARK_VECTOR_SIZE << " entry accesses via OpenCL: " << exec_time << std::endl;

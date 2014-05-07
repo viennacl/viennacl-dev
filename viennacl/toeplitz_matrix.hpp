@@ -122,7 +122,7 @@ namespace viennacl {
               index = -index;
             else if
               (index > 0) index = 2 * static_cast<long>(size1()) - index;
-            return elements_[index];
+            return elements_[vcl_size_t(index)];
         }
 
 
@@ -162,8 +162,9 @@ namespace viennacl {
         std::reverse(rvrs.begin(), rvrs.end());
 
         std::vector<SCALARTYPE> tmp(size * 2);
-        std::copy(rvrs.begin() + size - 1, rvrs.end(), tmp.begin());
-        std::copy(rvrs.begin(), rvrs.begin() + size - 1, tmp.begin() + size + 1);
+        typedef typename std::vector<SCALARTYPE>::difference_type  difference_type;
+        std::copy(rvrs.begin() + difference_type(size) - 1, rvrs.end(), tmp.begin());
+        std::copy(rvrs.begin(), rvrs.begin() + difference_type(size) - 1, tmp.begin() + difference_type(size) + 1);
         tmp[size] = 0.0;
         copy(tmp, gpu_mat.elements());
     }
@@ -184,8 +185,9 @@ namespace viennacl {
         copy(gpu_mat.elements(), tmp);
         std::reverse(tmp.begin(), tmp.end());
 
-        std::copy(tmp.begin(), tmp.begin() + size - 1, cpu_vec.begin() + size);
-        std::copy(tmp.begin() + size, tmp.end(), cpu_vec.begin());
+        typedef typename std::vector<SCALARTYPE>::difference_type     difference_type;
+        std::copy(tmp.begin(), tmp.begin() + difference_type(size) - 1, cpu_vec.begin() + difference_type(size));
+        std::copy(tmp.begin() + difference_type(size), tmp.end(), cpu_vec.begin());
 
     }
 
@@ -207,7 +209,7 @@ namespace viennacl {
 
         for(vcl_size_t i = 0; i < size; i++)
             for(vcl_size_t j = 0; j < size; j++)
-                com_dst(i, j) = tmp[static_cast<int>(j) - static_cast<int>(i) + static_cast<int>(size) - 1];
+                com_dst(i, j) = tmp[static_cast<vcl_size_t>(static_cast<int>(j) - static_cast<int>(i) + static_cast<int>(size) - 1)];
     }
 
     /** @brief Copies a the matrix-like object to the Toeplitz matrix from the OpenCL device (either GPU or multi-core CPU)
@@ -227,7 +229,7 @@ namespace viennacl {
         std::vector<SCALARTYPE> tmp(2*size - 1);
 
         for(long i = static_cast<long>(size) - 1; i >= 0; i--)
-            tmp[size - i - 1] = com_src(i, 0);
+            tmp[size - static_cast<vcl_size_t>(i) - 1] = com_src(static_cast<vcl_size_t>(i), 0);
 
         for(vcl_size_t i = 1; i < size; i++)
             tmp[size + i - 1] = com_src(0, i);

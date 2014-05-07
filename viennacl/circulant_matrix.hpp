@@ -118,7 +118,7 @@ namespace viennacl
 
             while (index < 0)
               index += static_cast<long>(size1());
-            return elements_[index];
+            return elements_[static_cast<vcl_size_t>(index)];
         }
 
         /**
@@ -184,8 +184,8 @@ namespace viennacl
             for (vcl_size_t j = 0; j < size; j++) {
                 long index = static_cast<long>(i) - static_cast<long>(j);
                 if (index < 0)
-                  index = static_cast<long>(size + index);
-                com_dst(i, j) = tmp[index];
+                  index += static_cast<long>(size);
+                com_dst(i, j) = tmp[static_cast<vcl_size_t>(index)];
             }
         }
     }

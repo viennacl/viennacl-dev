@@ -86,10 +86,10 @@ namespace viennacl
               presmooth_(presmooth), postsmooth_(postsmooth), coarselevels_(coarselevels) {}
 
             // Getter-/Setter-Functions
-            void set_coarse(unsigned int coarse) { if (coarse > 0) coarse_ = coarse; }
+            void set_coarse(unsigned int coarse) { coarse_ = coarse; }
             unsigned int get_coarse() const { return coarse_; }
 
-            void set_interpol(unsigned int interpol) { if (interpol > 0) interpol_ = interpol; }
+            void set_interpol(unsigned int interpol) { interpol_ = interpol; }
             unsigned int get_interpol() const { return interpol_; }
 
             void set_threshold(double threshold) { if (threshold > 0 && threshold <= 1) threshold_ = threshold; }
@@ -101,13 +101,13 @@ namespace viennacl
             void set_interpolweight(double interpolweight) { if (interpolweight > 0 && interpolweight <= 2) interpolweight_ = interpolweight; }
             double get_jacobiweight() const { return jacobiweight_; }
 
-            void set_presmooth(int presmooth) { if (presmooth >= 0) presmooth_ = presmooth; }
+            void set_presmooth(unsigned int presmooth) { presmooth_ = presmooth; }
             unsigned int get_presmooth() const { return presmooth_; }
 
-            void set_postsmooth(int postsmooth) { if (postsmooth >= 0) postsmooth_ = postsmooth; }
+            void set_postsmooth(unsigned int postsmooth) { postsmooth_ = postsmooth; }
             unsigned int get_postsmooth() const { return postsmooth_; }
 
-            void set_coarselevels(int coarselevels)  { if (coarselevels >= 0) coarselevels_ = coarselevels; }
+            void set_coarselevels(unsigned int coarselevels)  { coarselevels_ = coarselevels; }
             unsigned int get_coarselevels() const { return coarselevels_; }
 
           private:
@@ -881,7 +881,7 @@ namespace viennacl
             void calc_influence() { influence_ = influenced_points.internal_size();  }
 
             // Add to influence measure.
-            unsigned int add_influence(int add)
+            unsigned int add_influence(unsigned int add)
             {
               influence_ += add;
               return influence_;

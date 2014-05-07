@@ -636,14 +636,14 @@ int main()
   ViennaCLOpenCLiSamax(my_backend, ViennaCLInt(size/3),
                        &idx,
                        viennacl::traits::opencl_handle(opencl_float_x).get(), 0, 2);
-  check(ref_float_x[2*ref_index], ref_float_x[2*idx], eps_float);
+  check(ref_float_x[2*static_cast<std::size_t>(ref_index)], ref_float_x[2*static_cast<std::size_t>(idx)], eps_float);
   idx = 0;
   if( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLiDamax(my_backend, ViennaCLInt(size/3),
                          &idx,
                          viennacl::traits::opencl_handle(*opencl_double_x).get(), 0, 2);
-    check(ref_double_x[2*ref_index], ref_double_x[2*idx], eps_double);
+    check(ref_double_x[2*static_cast<std::size_t>(ref_index)], ref_double_x[2*static_cast<std::size_t>(idx)], eps_double);
   }
 #endif
 

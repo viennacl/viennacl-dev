@@ -100,7 +100,7 @@ namespace viennacl
           for (long i = static_cast<long>(R.size2())-1; i >= 0 ; i--)
           {
             x(i) = y(i);
-            for (vcl_size_t j = i+1; j < R.size2(); ++j)
+            for (vcl_size_t j = static_cast<vcl_size_t>(i)+1; j < R.size2(); ++j)
                 x(i) -= R(i,j)*x(j);
 
             x(i) /= R(i,i);

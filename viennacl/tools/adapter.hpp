@@ -69,16 +69,16 @@ namespace viennacl
             }
             else //j_ is valid
             {
-              if (i_ < mat_.size() && mat_[i].size() > 0 )
+              if (i_ < mat_.size() && mat_[static_cast<vcl_size_t>(i)].size() > 0 )
               {
                 //TODO: Start at entry j, not at the beginning
-                if (static_cast<int>(mat_[i].rbegin()->first) < j)
-                  iter2 = mat_[i].end();
+                if (static_cast<int>(mat_[static_cast<vcl_size_t>(i)].rbegin()->first) < j)
+                  iter2 = mat_[static_cast<vcl_size_t>(i)].end();
                 else
-                  iter2 = mat_[i].begin();
+                  iter2 = mat_[static_cast<vcl_size_t>(i)].begin();
               }
-              else if (i_ < mat_.size() && mat_[i].size() == 0)
-                iter2 = mat_[i].end();
+              else if (i_ < mat_.size() && mat_[static_cast<vcl_size_t>(i)].size() == 0)
+                iter2 = mat_[static_cast<vcl_size_t>(i)].end();
               else //i is out of range -> end iterator requested
                 iter2 = mat_.back().end(); //forward iterator end
             }
@@ -157,7 +157,7 @@ namespace viennacl
         {
           int end_ = static_cast<int>(mat_[i_].size());
           if (end_ > 0)
-            end_ = mat_[i_].rbegin()->first;
+            end_ = static_cast<int>(mat_[i_].rbegin()->first);
           return const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, !is_iterator1, true>(mat_, static_cast<int>(i_), end_ + 1);
         }
 

@@ -336,15 +336,15 @@ namespace viennacl
           //#pragma omp parallel for
           for(long i = 0; i < static_cast<long>(M_v.size()); ++i)
           {
-            if(g_is_update[i])
+            if(g_is_update[static_cast<vcl_size_t>(i)])
             {
               //faned out onto sparse vector
-              custom_fan_out(m_v, m_inds[i], g_J[i], M_v[i]);
-              g_res[i].clear();
-              compute_spai_residual<SparseVectorType, ScalarType>(A_v_c,  M_v[i], static_cast<unsigned int>(i), g_res[i]);
+              custom_fan_out(m_v, m_inds[static_cast<vcl_size_t>(i)], g_J[static_cast<vcl_size_t>(i)], M_v[static_cast<vcl_size_t>(i)]);
+              g_res[static_cast<vcl_size_t>(i)].clear();
+              compute_spai_residual<SparseVectorType, ScalarType>(A_v_c,  M_v[static_cast<vcl_size_t>(i)], static_cast<unsigned int>(i), g_res[static_cast<vcl_size_t>(i)]);
               ScalarType res_norm = 0;
               //compute norm of res - just to make sure that this implementatino works correct
-              sparse_norm_2(g_res[i], res_norm);
+              sparse_norm_2(g_res[static_cast<vcl_size_t>(i)], res_norm);
               //std::cout<<"Residual norm of column #: "<<i<<std::endl;
               //std::cout<<res_norm<<std::endl;
               //std::cout<<"************************"<<std::endl;
@@ -381,7 +381,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long i = 0; i < static_cast<long>(M_v.size()); ++i){
-                if(g_is_update[i]){
+                if(g_is_update[static_cast<vcl_size_t>(i)]){
                     VectorType y = boost::numeric::ublas::zero_vector<ScalarType>(g_I[i].size());
                     //std::cout<<y<<std::endl;
                     projectI<VectorType, ScalarType>(g_I[i], y, static_cast<unsigned int>(tag.getBegInd() + i));
@@ -657,7 +657,7 @@ namespace viennacl
             while(go_on){
                 go_on = (tag.getEndInd() < static_cast<long>(M.size2()));
                 cur_iter = 0;
-                unsigned int l_sz = tag.getEndInd() - tag.getBegInd();
+                unsigned int l_sz = static_cast<unsigned int>(tag.getEndInd() - tag.getBegInd());
                 //std::vector<bool> g_is_update(M.size2(), true);
                 std::vector<bool> g_is_update(l_sz, true);
                 //init is update

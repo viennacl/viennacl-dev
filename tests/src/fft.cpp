@@ -109,8 +109,8 @@ ScalarType diff_max(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
 
   for (std::size_t i = 0; i < vec.size(); i++)
   {
-    df = std::max<ScalarType>(fabs(vec[i] - ref[i]), df);
-    mx = std::max<ScalarType>(fabs(vec[i]), mx);
+    df = std::max<ScalarType>(std::fabs(vec[i] - ref[i]), df);
+    mx = std::max<ScalarType>(std::fabs(vec[i]), mx);
 
     if (mx > 0)
     {
@@ -127,15 +127,15 @@ void convolve_ref(std::vector<ScalarType>& in1,
                   std::vector<ScalarType>& out)
 {
     out.resize(in1.size());
-    unsigned int data_size = static_cast<unsigned int>(in1.size()) >> 1;
+    std::size_t data_size = in1.size() / 2;
 
-    for(unsigned int n = 0; n < data_size; n++) {
+    for(std::size_t n = 0; n < data_size; n++) {
         std::complex<ScalarType> el;
-        for(unsigned int k = 0; k < data_size; k++) {
-            int offset = (n - k);
-            if(offset < 0) offset += data_size;
+        for(std::size_t k = 0; k < data_size; k++) {
+            long offset = static_cast<long>(n) - static_cast<long>(k);
+            if (offset < 0) offset += data_size;
             std::complex<ScalarType> m1(in1[2*k], in1[2*k + 1]);
-            std::complex<ScalarType> m2(in2[2*offset], in2[2*offset + 1]);
+            std::complex<ScalarType> m2(in2[2*static_cast<size_t>(offset)], in2[2*static_cast<size_t>(offset) + 1]);
 //            std::cout << offset << " " << m1 << " " << m2 << "\n";
             el = el +  m1 * m2 ;
         }

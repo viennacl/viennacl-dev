@@ -82,7 +82,7 @@ int main()
   viennacl::vector<float> opencl_x = viennacl::scalar_vector<float>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)));
   viennacl::vector<float> opencl_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)));
 
-  ViennaCLBackendSetOpenCLContextID(my_backend, context_id);
+  ViennaCLBackendSetOpenCLContextID(my_backend, static_cast<ViennaCLInt>(context_id));
 
   ViennaCLOpenCLSswap(my_backend, half_size,
                       viennacl::traits::opencl_handle(opencl_x).get(), 1, 2,

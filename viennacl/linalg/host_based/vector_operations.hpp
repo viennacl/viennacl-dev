@@ -88,7 +88,7 @@ namespace viennacl
           #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
           for (long i = 0; i < static_cast<long>(size1); ++i)
-            data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha;
+            data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] / data_alpha;
         }
         else
         {
@@ -96,7 +96,7 @@ namespace viennacl
           #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
           for (long i = 0; i < static_cast<long>(size1); ++i)
-            data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha;
+            data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] * data_alpha;
         }
       }
 
@@ -138,7 +138,7 @@ namespace viennacl
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
             for (long i = 0; i < static_cast<long>(size1); ++i)
-              data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] / data_beta;
+              data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] / data_alpha + data_vec3[static_cast<vcl_size_t>(i)*inc3+start3] / data_beta;
           }
           else
           {
@@ -146,7 +146,7 @@ namespace viennacl
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
             for (long i = 0; i < static_cast<long>(size1); ++i)
-              data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] * data_beta;
+              data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] / data_alpha + data_vec3[static_cast<vcl_size_t>(i)*inc3+start3] * data_beta;
           }
         }
         else
@@ -157,7 +157,7 @@ namespace viennacl
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
             for (long i = 0; i < static_cast<long>(size1); ++i)
-              data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] / data_beta;
+              data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] * data_alpha + data_vec3[static_cast<vcl_size_t>(i)*inc3+start3] / data_beta;
           }
           else
           {
@@ -165,7 +165,7 @@ namespace viennacl
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
             for (long i = 0; i < static_cast<long>(size1); ++i)
-              data_vec1[i*inc1+start1] = data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
+              data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] * data_alpha + data_vec3[static_cast<vcl_size_t>(i)*inc3+start3] * data_beta;
           }
         }
       }
@@ -208,7 +208,7 @@ namespace viennacl
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
             for (long i = 0; i < static_cast<long>(size1); ++i)
-              data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] / data_beta;
+              data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] += data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] / data_alpha + data_vec3[static_cast<vcl_size_t>(i)*inc3+start3] / data_beta;
           }
           else
           {
@@ -216,7 +216,7 @@ namespace viennacl
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
             for (long i = 0; i < static_cast<long>(size1); ++i)
-              data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] / data_alpha + data_vec3[i*inc3+start3] * data_beta;
+              data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] += data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] / data_alpha + data_vec3[static_cast<vcl_size_t>(i)*inc3+start3] * data_beta;
           }
         }
         else
@@ -227,7 +227,7 @@ namespace viennacl
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
             for (long i = 0; i < static_cast<long>(size1); ++i)
-              data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] / data_beta;
+              data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] += data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] * data_alpha + data_vec3[static_cast<vcl_size_t>(i)*inc3+start3] / data_beta;
           }
           else
           {
@@ -235,7 +235,7 @@ namespace viennacl
             #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
             for (long i = 0; i < static_cast<long>(size1); ++i)
-              data_vec1[i*inc1+start1] += data_vec2[i*inc2+start2] * data_alpha + data_vec3[i*inc3+start3] * data_beta;
+              data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] += data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] * data_alpha + data_vec3[static_cast<vcl_size_t>(i)*inc3+start3] * data_beta;
           }
         }
       }
@@ -267,7 +267,7 @@ namespace viennacl
         #pragma omp parallel for if (loop_bound > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
         for (long i = 0; i < static_cast<long>(loop_bound); ++i)
-          data_vec1[i*inc1+start1] = data_alpha;
+          data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_alpha;
       }
 
 
@@ -296,9 +296,9 @@ namespace viennacl
 #endif
         for (long i = 0; i < static_cast<long>(size1); ++i)
         {
-          value_type temp = data_vec2[i*inc2+start2];
-          data_vec2[i*inc2+start2] = data_vec1[i*inc1+start1];
-          data_vec1[i*inc1+start1] = temp;
+          value_type temp = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2];
+          data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
+          data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = temp;
         }
       }
 
@@ -335,7 +335,7 @@ namespace viennacl
         #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
         for (long i = 0; i < static_cast<long>(size1); ++i)
-          OpFunctor::apply(data_vec1[i*inc1+start1], data_vec2[i*inc2+start2], data_vec3[i*inc3+start3]);
+          OpFunctor::apply(data_vec1[static_cast<vcl_size_t>(i)*inc1+start1], data_vec2[static_cast<vcl_size_t>(i)*inc2+start2], data_vec3[static_cast<vcl_size_t>(i)*inc3+start3]);
       }
 
       /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
@@ -364,7 +364,7 @@ namespace viennacl
         #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
         for (long i = 0; i < static_cast<long>(size1); ++i)
-          OpFunctor::apply(data_vec1[i*inc1+start1], data_vec2[i*inc2+start2]);
+          OpFunctor::apply(data_vec1[static_cast<vcl_size_t>(i)*inc1+start1], data_vec2[static_cast<vcl_size_t>(i)*inc2+start2]);
       }
 
 
@@ -402,7 +402,7 @@ namespace viennacl
         #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
         for (long i = 0; i < static_cast<long>(size1); ++i)
-          temp += data_vec1[i*inc1+start1] * data_vec2[i*inc2+start2];
+          temp += data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] * data_vec2[static_cast<vcl_size_t>(i)*inc2+start2];
 
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
@@ -468,7 +468,7 @@ namespace viennacl
         #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
         for (long i = 0; i < static_cast<long>(size1); ++i)
-          temp += static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[i*inc1+start1])));  //casting to double in order to avoid problems if T is an integer type
+          temp += static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[static_cast<vcl_size_t>(i)*inc1+start1])));  //casting to double in order to avoid problems if T is an integer type
 
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
@@ -498,7 +498,7 @@ namespace viennacl
 #endif
         for (long i = 0; i < static_cast<long>(size1); ++i)
         {
-          data = data_vec1[i*inc1+start1];
+          data = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
           temp += data * data;
         }
 
@@ -605,11 +605,11 @@ namespace viennacl
 #endif
         for (long i = 0; i < static_cast<long>(size1); ++i)
         {
-          temp1 = data_vec1[i*inc1+start1];
-          temp2 = data_vec2[i*inc2+start2];
+          temp1 = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
+          temp2 = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2];
 
-          data_vec1[i*inc1+start1] = data_alpha * temp1 + data_beta * temp2;
-          data_vec2[i*inc2+start2] = data_alpha * temp2 - data_beta * temp1;
+          data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_alpha * temp1 + data_beta * temp2;
+          data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] = data_alpha * temp2 - data_beta * temp1;
         }
       }
 

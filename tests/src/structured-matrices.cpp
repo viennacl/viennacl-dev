@@ -126,8 +126,8 @@ ScalarType diff_max(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
 
   for (std::size_t i = 0; i < vec.size(); i++)
   {
-    df = std::max<ScalarType>(fabs(vec[i] - ref[i]), df);
-    mx = std::max<ScalarType>(fabs(vec[i]), mx);
+    df = std::max<ScalarType>(std::fabs(vec[i] - ref[i]), df);
+    mx = std::max<ScalarType>(std::fabs(vec[i]), mx);
 
     if (mx > 0)
     {

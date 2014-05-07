@@ -174,8 +174,8 @@ namespace viennacl
       VectorType result = rhs;
       viennacl::traits::clear(result);
 
-      unsigned int krylov_dim = tag.krylov_dim();
-      if (problem_size < tag.krylov_dim())
+      std::size_t krylov_dim = static_cast<std::size_t>(tag.krylov_dim());
+      if (problem_size < krylov_dim)
         krylov_dim = problem_size; //A Krylov space larger than the matrix would lead to seg-faults (mathematically, error is certain to be zero already)
 
       VectorType res = rhs;
@@ -225,7 +225,7 @@ namespace viennacl
         //
         // Iterate up until maximal Krylove space dimension is reached:
         //
-        unsigned int k = 0;
+        std::size_t k = 0;
         for (k = 0; k < krylov_dim; ++k)
         {
           tag.iters( tag.iters() + 1 ); //increase iteration counter
@@ -246,7 +246,7 @@ namespace viennacl
             v_k_tilde[k-1] = CPU_ScalarType(1);
 
             //Householder rotations, part 1: Compute P_1 * P_2 * ... * P_{k-1} * e_{k-1}
-            for (int i = k-1; i > -1; --i)
+            for (int i = static_cast<int>(k)-1; i > -1; --i)
               detail::gmres_householder_reflect(v_k_tilde, householder_reflectors[i], betas[i]);
 
             v_k_tilde_temp = viennacl::linalg::prod(matrix, v_k_tilde);
@@ -298,9 +298,9 @@ namespace viennacl
         // Triangular solver stage:
         //
 
-        for (int i=k-1; i>-1; --i)
+        for (int i=static_cast<int>(k)-1; i>-1; --i)
         {
-          for (unsigned int j=i+1; j<k; ++j)
+          for (vcl_size_t j=static_cast<vcl_size_t>(i)+1; j<k; ++j)
             projection_rhs[i] -= R[j][i] * projection_rhs[j];     //R is transposed
 
           projection_rhs[i] /= R[i][i];
@@ -321,7 +321,7 @@ namespace viennacl
         //
         // Form z inplace in 'res' by applying P_1 * ... * P_{k}
         //
-        for (int i=k-1; i>=0; --i)
+        for (int i=static_cast<int>(k)-1; i>=0; --i)
           detail::gmres_householder_reflect(res, householder_reflectors[i], betas[i]);
 
         res *= rho_0;

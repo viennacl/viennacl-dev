@@ -40,11 +40,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSgemv(ViennaCLBackend /*ba
                                                             float beta,
                                                             float *y, ViennaCLInt offy, int incy)
 {
-  viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
-  viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, m, offy, incy);
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+
+  viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
+  viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, size_type(m), size_type(offy), difference_type(incy));
   viennacl::matrix_base<float> mat(A, viennacl::MAIN_MEMORY,
-                                   m, offA_row, incA_row, m,
-                                   n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                   size_type(m), size_type(offA_row), difference_type(incA_row), size_type(m),
+                                   size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
   v2 *= beta;
   if (transA == ViennaCLTrans)
     v2 += alpha * viennacl::linalg::prod(viennacl::trans(mat), v1);
@@ -61,11 +64,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDgemv(ViennaCLBackend /*ba
                                                             double beta,
                                                             double *y, ViennaCLInt offy, int incy)
 {
-  viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
-  viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, m, offy, incy);
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+
+  viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
+  viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, size_type(m), size_type(offy), difference_type(incy));
   viennacl::matrix_base<double> mat(A, viennacl::MAIN_MEMORY,
-                                    m, offA_row, incA_row, m,
-                                    n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                    size_type(m), size_type(offA_row), difference_type(incA_row), size_type(m),
+                                    size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
   v2 *= beta;
   if (transA == ViennaCLTrans)
     v2 += alpha * viennacl::linalg::prod(viennacl::trans(mat), v1);
@@ -84,10 +90,13 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostStrsv(ViennaCLBackend /*ba
                                                             ViennaCLInt n, float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, int incA_row, int incA_col, ViennaCLInt lda,
                                                             float *x, ViennaCLInt offx, int incx)
 {
-  viennacl::vector_base<float> v(x, viennacl::MAIN_MEMORY, n, offx, incx);
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+
+  viennacl::vector_base<float> v(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::matrix_base<float> mat(A, viennacl::MAIN_MEMORY,
-                                   n, offA_row, incA_row, n,
-                                   n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                   size_type(n), size_type(offA_row), difference_type(incA_row), size_type(n),
+                                   size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
   if (transA == ViennaCLTrans)
   {
     if (uplo == ViennaCLUpper)
@@ -111,10 +120,13 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDtrsv(ViennaCLBackend /*ba
                                                             ViennaCLInt n, double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, int incA_row, int incA_col, ViennaCLInt lda,
                                                             double *x, ViennaCLInt offx, int incx)
 {
-  viennacl::vector_base<double> v(x, viennacl::MAIN_MEMORY, n, offx, incx);
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+
+  viennacl::vector_base<double> v(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::matrix_base<double> mat(A, viennacl::MAIN_MEMORY,
-                                    n, offA_row, incA_row, n,
-                                    n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                    size_type(n), size_type(offA_row), difference_type(incA_row), size_type(n),
+                                    size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
   if (transA == ViennaCLTrans)
   {
     if (uplo == ViennaCLUpper)
@@ -145,11 +157,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSger(ViennaCLBackend /*bac
                                                            float *y, ViennaCLInt offy, int incy,
                                                            float *A, ViennaCLInt offA_row, ViennaCLInt offA_col, int incA_row, int incA_col, ViennaCLInt lda)
 {
-  viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
-  viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, m, offy, incy);
+  typedef viennacl::vector_base<float>::size_type           size_type;
+  typedef viennacl::vector_base<float>::difference_type     difference_type;
+
+  viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
+  viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, size_type(m), size_type(offy), difference_type(incy));
   viennacl::matrix_base<float> mat(A, viennacl::MAIN_MEMORY,
-                                   m, offA_row, incA_row, m,
-                                   n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                   size_type(m), size_type(offA_row), difference_type(incA_row), size_type(m),
+                                   size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
 
   mat += alpha * viennacl::linalg::outer_prod(v1, v2);
 
@@ -164,11 +179,14 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDger(ViennaCLBackend /*bac
                                                            double *y, ViennaCLInt offy, int incy,
                                                            double *A, ViennaCLInt offA_row, ViennaCLInt offA_col, int incA_row, int incA_col, ViennaCLInt lda)
 {
-  viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, n, offx, incx);
-  viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, m, offy, incy);
+  typedef viennacl::vector_base<double>::size_type           size_type;
+  typedef viennacl::vector_base<double>::difference_type     difference_type;
+
+  viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
+  viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, size_type(m), size_type(offy), difference_type(incy));
   viennacl::matrix_base<double> mat(A, viennacl::MAIN_MEMORY,
-                                    m, offA_row, incA_row, m,
-                                    n, offA_col, incA_col, lda, order == ViennaCLRowMajor);
+                                    size_type(m), size_type(offA_row), difference_type(incA_row), size_type(m),
+                                    size_type(n), size_type(offA_col), difference_type(incA_col), size_type(lda), order == ViennaCLRowMajor);
 
   mat += alpha * viennacl::linalg::outer_prod(v1, v2);
 

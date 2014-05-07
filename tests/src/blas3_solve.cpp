@@ -302,8 +302,8 @@ template< typename NumericT, typename F_A, typename F_B, typename Epsilon >
 int test_solve(Epsilon const& epsilon)
 {
   int ret = EXIT_SUCCESS;
-  long matrix_size = 135;  //some odd number, not too large
-  long rhs_num = 67;
+  std::size_t matrix_size = 135;  //some odd number, not too large
+  std::size_t rhs_num = 67;
 
   std::cout << "--- Part 2: Testing matrix-matrix solver ---" << std::endl;
 

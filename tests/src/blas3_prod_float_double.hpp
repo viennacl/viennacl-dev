@@ -325,9 +325,9 @@ int test_prod(Epsilon const& epsilon)
 {
   int ret;
 
-  long matrix_size1 = 131;  //some odd number, not too large
-  long matrix_size2 = 67;  //some odd number, not too large
-  long matrix_size3 = 73;  //some odd number, not too large
+  std::size_t matrix_size1 = 131;  //some odd number, not too large
+  std::size_t matrix_size2 = 67;  //some odd number, not too large
+  std::size_t matrix_size3 = 73;  //some odd number, not too large
   //long matrix_size1 = 128;  //some odd number, not too large
   //long matrix_size2 = 64;  //some odd number, not too large
   //long matrix_size3 = 128;  //some odd number, not too large
@@ -347,11 +347,11 @@ int test_prod(Epsilon const& epsilon)
   ublas::matrix<NumericT> C(matrix_size1, matrix_size3);
 
   //fill A and B:
-  for (unsigned int i = 0; i < A.size1(); ++i)
-    for (unsigned int j = 0; j < A.size2(); ++j)
+  for (std::size_t i = 0; i < A.size1(); ++i)
+    for (std::size_t j = 0; j < A.size2(); ++j)
         A(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
-  for (unsigned int i = 0; i < B.size1(); ++i)
-    for (unsigned int j = 0; j < B.size2(); ++j)
+  for (std::size_t i = 0; i < B.size1(); ++i)
+    for (std::size_t j = 0; j < B.size2(); ++j)
         B(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
 
   ublas::matrix<NumericT>     A_trans = trans(A);

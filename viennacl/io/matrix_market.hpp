@@ -195,8 +195,8 @@ namespace viennacl
           if (is_header)
           {
             //read header line
-            long rows;
-            long cols;
+            std::size_t rows;
+            std::size_t cols;
 
             if (line.good())
               line >> rows;
@@ -236,7 +236,7 @@ namespace viennacl
             {
               ScalarType value;
               line >> value;
-              viennacl::traits::fill(mat, cur_row, cur_col, value);
+              viennacl::traits::fill(mat, static_cast<vcl_size_t>(cur_row), static_cast<vcl_size_t>(cur_col), value);
 
               if (++cur_row == static_cast<long>(viennacl::traits::size1(mat)))
               {
@@ -292,9 +292,9 @@ namespace viennacl
                 return 0;
               }
 
-              viennacl::traits::fill(mat, row, col, value); //basically equivalent to mat(row, col) = value;
+              viennacl::traits::fill(mat, static_cast<vcl_size_t>(row), static_cast<vcl_size_t>(col), value); //basically equivalent to mat(row, col) = value;
               if (symmetric)
-                viennacl::traits::fill(mat, col, row, value); //basically equivalent to mat(col, row) = value;
+                viennacl::traits::fill(mat, static_cast<vcl_size_t>(col), static_cast<vcl_size_t>(row), value); //basically equivalent to mat(col, row) = value;
 
               if (++valid_entries == nnz)
                 break;

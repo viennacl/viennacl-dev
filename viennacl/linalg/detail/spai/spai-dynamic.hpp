@@ -280,31 +280,31 @@ namespace viennacl
 #endif
             for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
-              if(g_is_update[i])
+              if(g_is_update[static_cast<vcl_size_t>(i)])
               {
-                if(buildAugmentedIndexSet<SparseVectorType, ScalarType>(A_v_c, g_res[i], g_J[i], g_J_u[i], tag))
+                if(buildAugmentedIndexSet<SparseVectorType, ScalarType>(A_v_c, g_res[i], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
                 {
                   //initialize matrix A_I_\hatJ
-                  initProjectSubMatrix(A, g_J_u[i], g_I[i], g_A_I_J_u[i]);
+                  initProjectSubMatrix(A, g_J_u[static_cast<vcl_size_t>(i)], g_I[static_cast<vcl_size_t>(i)], g_A_I_J_u[static_cast<vcl_size_t>(i)]);
                   //multiplication of Q'*A_I_\hatJ
-                  apply_q_trans_mat(g_A_I_J[i], g_b_v[i], g_A_I_J_u[i]);
+                  apply_q_trans_mat(g_A_I_J[static_cast<vcl_size_t>(i)], g_b_v[static_cast<vcl_size_t>(i)], g_A_I_J_u[static_cast<vcl_size_t>(i)]);
                   //building new rows index set \hatI
-                  buildNewRowSet(A_v_c, g_I[i], g_J_u[i], g_I_u[i]);
-                  initProjectSubMatrix(A, g_J_u[i], g_I_u[i], g_A_I_u_J_u[i]);
+                  buildNewRowSet(A_v_c, g_I[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], g_I_u[static_cast<vcl_size_t>(i)]);
+                  initProjectSubMatrix(A, g_J_u[static_cast<vcl_size_t>(i)], g_I_u[static_cast<vcl_size_t>(i)], g_A_I_u_J_u[static_cast<vcl_size_t>(i)]);
                   //composition of block for new QR factorization
-                  QRBlockComposition(g_A_I_J[i], g_A_I_J_u[i], g_A_I_u_J_u[i]);
+                  QRBlockComposition(g_A_I_J[static_cast<vcl_size_t>(i)], g_A_I_J_u[static_cast<vcl_size_t>(i)], g_A_I_u_J_u[static_cast<vcl_size_t>(i)]);
                   //QR factorization
-                  single_qr(g_A_I_u_J_u[i], g_b_v_u[i]);
+                  single_qr(g_A_I_u_J_u[static_cast<vcl_size_t>(i)], g_b_v_u[static_cast<vcl_size_t>(i)]);
                   //composition of new R and new vector b_v
-                  composeNewR(g_A_I_J_u[i], g_A_I_u_J_u[i], g_A_I_J[i]);
-                  composeNewVector(g_b_v_u[i], g_b_v[i]);
+                  composeNewR(g_A_I_J_u[static_cast<vcl_size_t>(i)], g_A_I_u_J_u[static_cast<vcl_size_t>(i)], g_A_I_J[static_cast<vcl_size_t>(i)]);
+                  composeNewVector(g_b_v_u[static_cast<vcl_size_t>(i)], g_b_v[static_cast<vcl_size_t>(i)]);
                   //composition of new sets: I and J
-                  g_J[i].insert(g_J[i].end(), g_J_u[i].begin(), g_J_u[i].end());
-                  g_I[i].insert(g_I[i].end(), g_I_u[i].begin(), g_I_u[i].end());
+                  g_J[static_cast<vcl_size_t>(i)].insert(g_J[static_cast<vcl_size_t>(i)].end(), g_J_u[static_cast<vcl_size_t>(i)].begin(), g_J_u[static_cast<vcl_size_t>(i)].end());
+                  g_I[static_cast<vcl_size_t>(i)].insert(g_I[static_cast<vcl_size_t>(i)].end(), g_I_u[static_cast<vcl_size_t>(i)].begin(), g_I_u[static_cast<vcl_size_t>(i)].end());
                 }
                 else
                 {
-                  g_is_update[i] = false;
+                  g_is_update[static_cast<vcl_size_t>(i)] = false;
                 }
               }
             }
@@ -604,10 +604,10 @@ namespace viennacl
 #endif
             for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
-              if(g_is_update[i])
+              if(g_is_update[static_cast<vcl_size_t>(i)])
               {
-                if(buildAugmentedIndexSet<SparseVectorType, ScalarType>(A_v_c, g_res[i], g_J[i], g_J_u[i], tag))
-                    buildNewRowSet(A_v_c, g_I[i], g_J_u[i], g_I_u[i]);
+                if(buildAugmentedIndexSet<SparseVectorType, ScalarType>(A_v_c, g_res[i], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
+                    buildNewRowSet(A_v_c, g_I[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], g_I_u[static_cast<vcl_size_t>(i)]);
               }
             }
             //assemble new A_I_J_u blocks on GPU and multiply them with Q'
@@ -626,8 +626,8 @@ namespace viennacl
 #endif
             for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
-              g_J[i].insert(g_J[i].end(), g_J_u[i].begin(), g_J_u[i].end());
-              g_I[i].insert(g_I[i].end(), g_I_u[i].begin(), g_I_u[i].end());
+              g_J[static_cast<vcl_size_t>(i)].insert(g_J[static_cast<vcl_size_t>(i)].end(), g_J_u[static_cast<vcl_size_t>(i)].begin(), g_J_u[static_cast<vcl_size_t>(i)].end());
+              g_I[static_cast<vcl_size_t>(i)].insert(g_I[static_cast<vcl_size_t>(i)].end(), g_I_u[static_cast<vcl_size_t>(i)].begin(), g_I_u[static_cast<vcl_size_t>(i)].end());
             }
             assemble_r<ScalarType>(g_I, g_J, g_A_I_J_vcl, g_A_I_J_u_vcl, g_A_I_u_J_u_vcl,  g_bv_vcl,  g_bv_u_vcl, g_is_update, ctx);
           }

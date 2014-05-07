@@ -147,10 +147,10 @@ namespace viennacl
         void processBlock() {
           uint32_t w[80];
           for (size_t i = 0; i < 16; i++) {
-            w[i] = (m_block[i*4 + 0] << 24);
-            w[i] |= (m_block[i*4 + 1] << 16);
-            w[i] |= (m_block[i*4 + 2] << 8);
-            w[i] |= (m_block[i*4 + 3]);
+            w[i] = static_cast<uint32_t>(m_block[i*4 + 0] << 24);
+            w[i] |= static_cast<uint32_t>(m_block[i*4 + 1] << 16);
+            w[i] |= static_cast<uint32_t>(m_block[i*4 + 2] << 8);
+            w[i] |= static_cast<uint32_t>(m_block[i*4 + 3]);
           }
           for (size_t i = 16; i < 80; i++) {
             w[i] = LeftRotate((w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16]), 1);

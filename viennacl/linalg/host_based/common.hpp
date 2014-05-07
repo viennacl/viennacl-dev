@@ -91,6 +91,11 @@ namespace viennacl
               return A_[F::mem_index(i * inc1_ + start1_, j * inc2_ + start2_, internal_size1_, internal_size2_)];
             }
 
+            // convenience overloads to address signed index types for OpenMP:
+            value_type & operator()(vcl_size_t i, long j) { return operator()(i, static_cast<vcl_size_t>(j)); }
+            value_type & operator()(long i, vcl_size_t j) { return operator()(static_cast<vcl_size_t>(i), j); }
+            value_type & operator()(long i, long j) { return operator()(static_cast<vcl_size_t>(i), static_cast<vcl_size_t>(j)); }
+
           private:
             value_type * A_;
             vcl_size_t start1_, start2_;
@@ -118,6 +123,11 @@ namespace viennacl
             {
               return A_[F::mem_index(j * inc1_ + start1_, i * inc2_ + start2_, internal_size1_, internal_size2_)];  //swapping row and column indices here
             }
+
+            // convenience overloads to address signed index types for OpenMP:
+            value_type & operator()(vcl_size_t i, long j) { return operator()(i, static_cast<vcl_size_t>(j)); }
+            value_type & operator()(long i, vcl_size_t j) { return operator()(static_cast<vcl_size_t>(i), j); }
+            value_type & operator()(long i, long j) { return operator()(static_cast<vcl_size_t>(i), static_cast<vcl_size_t>(j)); }
 
           private:
             value_type * A_;

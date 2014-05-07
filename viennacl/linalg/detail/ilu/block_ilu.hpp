@@ -338,15 +338,15 @@ namespace viennacl
           for (long i=0; i<static_cast<long>(block_indices_.size()); ++i)
           {
             // Step 1: Extract blocks
-            vcl_size_t block_size = block_indices_[i].second - block_indices_[i].first;
-            vcl_size_t block_nnz  = row_buffer[block_indices_[i].second] - row_buffer[block_indices_[i].first];
+            vcl_size_t block_size = block_indices_[static_cast<vcl_size_t>(i)].second - block_indices_[static_cast<vcl_size_t>(i)].first;
+            vcl_size_t block_nnz  = row_buffer[block_indices_[static_cast<vcl_size_t>(i)].second] - row_buffer[block_indices_[static_cast<vcl_size_t>(i)].first];
             viennacl::compressed_matrix<ScalarType> mat_block(block_size, block_size, block_nnz, host_context);
 
-            detail::extract_block_matrix(mat, mat_block, block_indices_[i].first, block_indices_[i].second);
+            detail::extract_block_matrix(mat, mat_block, block_indices_[static_cast<vcl_size_t>(i)].first, block_indices_[static_cast<vcl_size_t>(i)].second);
 
             // Step 2: Precondition blocks:
-            viennacl::switch_memory_context(LU_blocks[i], host_context);
-            preconditioner_dispatch(mat_block, LU_blocks[i], tag_);
+            viennacl::switch_memory_context(LU_blocks[static_cast<vcl_size_t>(i)], host_context);
+            preconditioner_dispatch(mat_block, LU_blocks[static_cast<vcl_size_t>(i)], tag_);
           }
 
           /*
