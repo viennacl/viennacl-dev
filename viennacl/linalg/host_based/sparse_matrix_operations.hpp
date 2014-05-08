@@ -86,9 +86,6 @@ namespace viennacl
                   }
                 }
                 break;
-
-              default:
-                break;
             }
             result_buf[row] = value;
           }
