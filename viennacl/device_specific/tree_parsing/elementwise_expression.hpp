@@ -40,7 +40,7 @@ namespace viennacl{
     namespace tree_parsing{
 
       /** @brief generate a string from an operation_node_type */
-      static const char * generate(scheduler::operation_node_type type){
+      inline const char * generate(scheduler::operation_node_type type){
         // unary expression
         switch(type){
           //Function

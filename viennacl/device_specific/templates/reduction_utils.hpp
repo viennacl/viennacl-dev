@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/vector_reduction.hpp
+/** @file viennacl/generator/row_wise_reduction.hpp
  *
  * Kernel template for the vector reduction operation
 */

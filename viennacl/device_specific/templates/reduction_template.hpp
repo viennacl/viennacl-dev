@@ -1,5 +1,5 @@
-#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_SCALAR_REDUCTION_HPP
-#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_SCALAR_REDUCTION_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_REDUCTION_TEMPLATE_HPP
+#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_REDUCTION_TEMPLATE_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -42,12 +42,12 @@ namespace viennacl{
 
   namespace device_specific{
 
-    class scalar_reduction : public profile_base{
+    class reduction_template : public template_base{
       typedef std::vector<std::pair<const char *, viennacl::ocl::handle<cl_mem> > > temporaries_type;
 
     public:
       /** @brief The user constructor */
-      scalar_reduction(const char * scalartype, unsigned int simd_width, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : profile_base(scalartype, simd_width, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
+      reduction_template(const char * scalartype, unsigned int simd_width, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : template_base(scalartype, simd_width, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
 
 
       void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{

@@ -46,12 +46,12 @@ namespace viennacl{
     }
 
     enum expression_type{
-      SCALAR_SAXPY_TYPE,
-      VECTOR_SAXPY_TYPE,
-      MATRIX_SAXPY_TYPE,
-      SCALAR_REDUCE_TYPE,
-      VECTOR_REDUCE_Nx_TYPE,
-      VECTOR_REDUCE_Tx_TYPE,
+      SCALAR_AXPY_TYPE,
+      VECTOR_AXPY_TYPE,
+      MATRIX_AXPY_TYPE,
+      REDUCTION_TYPE,
+      ROW_WISE_REDUCTION_Nx_TYPE,
+      ROW_WISE_REDUCTION_Tx_TYPE,
       MATRIX_PRODUCT_NN_TYPE,
       MATRIX_PRODUCT_TN_TYPE,
       MATRIX_PRODUCT_NT_TYPE,
@@ -73,12 +73,12 @@ namespace viennacl{
 
     inline const char * expression_type_to_string(expression_type type){
       switch(type){
-        case SCALAR_SAXPY_TYPE : return "Scalar SAXPY";
-        case VECTOR_SAXPY_TYPE : return "Vector SAXPY";
-        case MATRIX_SAXPY_TYPE : return "Matrix SAXPY";
-        case SCALAR_REDUCE_TYPE : return "Inner Product";
-        case VECTOR_REDUCE_Nx_TYPE : return "Matrix-Vector Product : Ax";
-        case VECTOR_REDUCE_Tx_TYPE : return "Matrix-Vector Product : Tx";
+        case SCALAR_AXPY_TYPE : return "Scalar AXPY";
+        case VECTOR_AXPY_TYPE : return "Vector AXPY";
+        case MATRIX_AXPY_TYPE : return "Matrix AXPY";
+        case REDUCTION_TYPE : return "Reduction";
+        case ROW_WISE_REDUCTION_Nx_TYPE : return "Row-wise reduction: Ax";
+        case ROW_WISE_REDUCTION_Tx_TYPE : return "Row-wise reduction : Tx";
         case MATRIX_PRODUCT_NN_TYPE : return "Matrix-Matrix Product : AA";
         case MATRIX_PRODUCT_TN_TYPE : return "Matrix-Matrix Product : TA";
         case MATRIX_PRODUCT_NT_TYPE : return "Matrix-Matrix Product : AT";
@@ -115,16 +115,12 @@ namespace viennacl{
     {
     public:
       generator_not_supported_exception() : message_() {}
-      generator_not_supported_exception(std::string message) : message_("ViennaCL: Internal error: The scheduler encountered a problem with the operation provided: " + message) {}
-
+      generator_not_supported_exception(std::string message) : message_("ViennaCL: Internal error: The generator cannot handle the statement provided: " + message) {}
       virtual const char* what() const throw() { return message_.c_str(); }
-
       virtual ~generator_not_supported_exception() throw() {}
     private:
       std::string message_;
     };
-
-
 
     namespace utils{
       class kernel_generation_stream;
@@ -153,8 +149,8 @@ namespace viennacl{
     namespace tree_parsing{
 
       template<class Fun>
-      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true);
-      static void generate_all_rhs(scheduler::statement const & statement
+      static inline void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true);
+      static inline void generate_all_rhs(scheduler::statement const & statement
                                 , scheduler::statement_node const & root_node
                                 , std::pair<std::string, std::string> const & index
                                 , int vector_element

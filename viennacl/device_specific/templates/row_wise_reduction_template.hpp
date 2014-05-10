@@ -1,5 +1,5 @@
-#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_VECTOR_REDUCTION_HPP
-#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_VECTOR_REDUCTION_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_ROW_WISE_REDUCTION_HPP
+#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_ROW_WISE_REDUCTION_HPP
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/vector_reduction.hpp
+/** @file viennacl/generator/row_wise_reduction.hpp
  *
  * Kernel template for the vector reduction operation
 */
@@ -44,16 +44,15 @@ namespace viennacl{
 
   namespace device_specific{
 
-    class vector_reduction : public profile_base{
+    class row_wise_reduction_template : public template_base{
     public:
       /** @brief The user constructor */
-      vector_reduction(const char * scalartype, char A_trans, unsigned int simd_width, unsigned int ls0, unsigned int ls1, unsigned int num_groups) : profile_base(scalartype, simd_width, ls0, ls1, 1), A_trans_(A_trans), m_(ls0), k_(ls1), num_groups_(num_groups){ }
+      row_wise_reduction_template(const char * scalartype, char A_trans, unsigned int simd_width, unsigned int ls0, unsigned int ls1, unsigned int num_groups) : template_base(scalartype, simd_width, ls0, ls1, 1), A_trans_(A_trans), m_(ls0), k_(ls1), num_groups_(num_groups){ }
 
       void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
         configure_local_sizes(kernel, kernel_id);
         kernel.global_work_size(0,m_*num_groups_);
         kernel.global_work_size(1,k_);
-
 
         for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           scheduler::statement::container_type exprs = it->first.array();
@@ -67,7 +66,8 @@ namespace viennacl{
                 kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
                 return;
               }
-              else{
+              else
+              {
                 //The LHS of the prod is a matrix expression
                 current_node = &exprs[current_node->lhs.node_index];
                 if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
@@ -82,14 +82,14 @@ namespace viennacl{
                   kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
                   return;
                 }
-                else{
-                  assert(false && bool("unexpected expression tree"));
-                }
+                else
+                  throw generator_not_supported_exception("Unexpected expression tree");
               }
               return;
             }
           }
         }
+
       }
 
       void add_kernel_arguments(std::string & arguments_string) const{

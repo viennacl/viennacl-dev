@@ -76,7 +76,7 @@ namespace viennacl{
           statement_representation_functor(void* (&memory)[64], unsigned int & current_arg, char *& ptr) : memory_(memory), current_arg_(current_arg), ptr_(ptr){ }
 
           template<class ScalarType>
-          result_type operator()(ScalarType const & /*scal*/) const {
+          inline result_type operator()(ScalarType const & /*scal*/) const {
             *ptr_++='h'; //host
             *ptr_++='s'; //scalar
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
@@ -84,7 +84,7 @@ namespace viennacl{
 
           /** @brief Scalar mapping */
           template<class ScalarType>
-          result_type operator()(scalar<ScalarType> const & scal) const {
+          inline result_type operator()(scalar<ScalarType> const & scal) const {
             *ptr_++='s'; //scalar
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
             append_id(ptr_, get_id((void*)&scal));
@@ -92,7 +92,7 @@ namespace viennacl{
 
           /** @brief Vector mapping */
           template<class ScalarType>
-          result_type operator()(vector_base<ScalarType> const & vec) const {
+          inline result_type operator()(vector_base<ScalarType> const & vec) const {
             *ptr_++='v'; //vector
             if(viennacl::traits::start(vec)>0)
               *ptr_++='r';
@@ -104,7 +104,7 @@ namespace viennacl{
 
           /** @brief Implicit vector mapping */
           template<class ScalarType>
-          result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
+          inline result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             *ptr_++='i'; //implicit
             *ptr_++='v'; //vector
             if(vec.is_value_static())
@@ -116,7 +116,7 @@ namespace viennacl{
 
           /** @brief Matrix mapping */
           template<class ScalarType>
-          result_type operator()(matrix_base<ScalarType> const & mat) const {
+          inline result_type operator()(matrix_base<ScalarType> const & mat) const {
             *ptr_++='m'; //Matrix
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
             if(mat.row_major())
@@ -128,7 +128,7 @@ namespace viennacl{
 
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
-          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
+          inline result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
             *ptr_++='i'; //implicit
             *ptr_++='m'; //matrix
             if(mat.is_value_static())
@@ -136,19 +136,18 @@ namespace viennacl{
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 
-          static void append(char*& p, const char * str){
+          static inline void append(char*& p, const char * str){
             std::size_t n = std::strlen(str);
             std::memcpy(p, str, n);
             p+=n;
           }
 
-          void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, node_type node_type) const {
+          inline void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, node_type node_type) const {
             if(node_type==LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node->lhs, *this);
             else if(root_node->op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY && node_type==RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node->rhs, *this);
             else if(node_type==PARENT_NODE_TYPE){
-
               if(root_node->op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY)
                 append(ptr_,"vecred");
               if(root_node->op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY)

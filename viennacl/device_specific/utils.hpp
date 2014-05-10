@@ -264,7 +264,7 @@ namespace viennacl{
         std::ostringstream oss;
       };
 
-      bool cannot_inline(scheduler::op_element const & op){
+      inline bool cannot_inline(scheduler::op_element const & op){
         using namespace scheduler;
         return op.type==OPERATION_UNARY_NORM_1_TYPE
             || op.type==OPERATION_UNARY_NORM_2_TYPE
@@ -278,7 +278,7 @@ namespace viennacl{
             || op.type_family==OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY;
       }
 
-      bool elementwise_operator(scheduler::op_element const & op){
+      inline bool elementwise_operator(scheduler::op_element const & op){
         using namespace scheduler;
         return op.type== OPERATION_BINARY_ASSIGN_TYPE
             || op.type== OPERATION_BINARY_INPLACE_ADD_TYPE
@@ -291,7 +291,7 @@ namespace viennacl{
             || op.type== OPERATION_BINARY_DIV_TYPE;
       }
 
-      bool elementwise_function(scheduler::op_element const & op){
+      inline bool elementwise_function(scheduler::op_element const & op){
         using namespace scheduler;
         return op.type== OPERATION_UNARY_ABS_TYPE
             || op.type== OPERATION_UNARY_ACOS_TYPE

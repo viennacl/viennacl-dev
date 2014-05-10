@@ -44,18 +44,20 @@ namespace viennacl{
 
 
     /** @brief Base class for an operation profile */
-    class profile_base{
+    class template_base{
       protected:
         virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const { return false; }
 
         virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
 
-        void configure_local_sizes(viennacl::ocl::kernel & k, std::size_t /*kernel_id*/) const {
+        void configure_local_sizes(viennacl::ocl::kernel & k, std::size_t /*kernel_id*/) const
+        {
           k.local_work_size(0,local_size_0_);
           k.local_work_size(1,local_size_1_);
         }
 
-        virtual void initialize_mapping(std::vector<mapping_type> & mapping) const{
+        virtual void initialize_mapping(std::vector<mapping_type> & mapping) const
+        {
             std::map<void *, std::size_t> memory;
             unsigned int current_arg = 0;
             std::size_t i = 0;
@@ -63,7 +65,8 @@ namespace viennacl{
               tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
         }
 
-        virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const &, mapping_type & mapping) {
+        virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const &, mapping_type & mapping)
+        {
           for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
               if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
                 p->set_simd_width(simd_width_);
@@ -76,11 +79,11 @@ namespace viennacl{
          *  @param statements the statements for which the code should be generated
          *  @param mapping    the mapping of the statement_nodes to the mapped_objects
          */
-        virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const = 0;
+        virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const{ }
 
       public:
         /** @brief The constructor */
-        profile_base(const char * scalartype, unsigned int simd_width, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : scalartype_(scalartype), simd_width_(simd_width), local_size_0_(local_size_1), local_size_1_(local_size_2), num_kernels_(num_kernels){ }
+        template_base(const char * scalartype, unsigned int simd_width, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : scalartype_(scalartype), simd_width_(simd_width), local_size_0_(local_size_1), local_size_1_(local_size_2), num_kernels_(num_kernels){ }
 
         std::string const & scalartype() const { return scalartype_; }
         unsigned int simd_width() const { return simd_width_; }
@@ -91,7 +94,7 @@ namespace viennacl{
 
         unsigned int num_kernels() const { return num_kernels_; }
         /** @brief The destructor */
-        virtual ~profile_base(){ }
+        virtual ~template_base(){ }
 
         /** @brief Configures the range and enqueues the arguments associated with the profile
          *
@@ -99,42 +102,50 @@ namespace viennacl{
          * @param kernel the kernel object
          * @param n_arg a dummy reference for keeping track of the added arguments
          */
-        virtual void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
-        virtual void add_kernel_arguments(std::string & arguments_string) const = 0;
+        virtual void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const{ }
+        virtual void add_kernel_arguments(std::string & arguments_string) const{ }
 
 
         /** @brief returns whether or not the profile leads to undefined behavior on particular device
          *  @param dev               the given device
          *  @param scalartype_size   Local memory required to execute the kernel
          */
-        bool is_invalid(viennacl::ocl::device const & dev) const{
+        bool is_invalid() const
+        {
+          bool invalid = false;
+          viennacl::ocl::device const & dev = viennacl::ocl::current_device();
+
           //Query device informations
           size_t lmem_available = static_cast<size_t>(dev.local_mem_size());
-          size_t max_workgroup_size = dev.max_work_group_size();
-
-          std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();
-          bool invalid_work_group_sizes = local_size_0_*local_size_1_ > max_workgroup_size
-              || local_size_0_ > max_work_item_sizes[0]
-              || local_size_1_ > max_work_item_sizes[1]; // uses too much resources
-		  
-          bool not_warp_multiple = false;
-          if(dev.type()==CL_DEVICE_TYPE_GPU){
-            std::size_t warp_size = 32;
-            if(dev.vendor_id()==4098)
-              warp_size = 64;
-            not_warp_multiple = static_cast<bool>(((local_size_0_*local_size_1_)%warp_size)>0);
-          }
-
           std::size_t scalartype_size;
           if(scalartype_=="float")
             scalartype_size = 4;
           else
             scalartype_size = 8;
+          invalid |= (lmem_used(scalartype_size)>lmem_available);
 
-          return  invalid_work_group_sizes
-              || lmem_used(scalartype_size)>lmem_available
-              || invalid_impl(dev, scalartype_size)
-              || not_warp_multiple;
+          //Invalid work group size
+          size_t max_workgroup_size = dev.max_work_group_size();
+          std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();
+          invalid |= local_size_0_*local_size_1_ > max_workgroup_size
+              || local_size_0_ > max_work_item_sizes[0]
+              || local_size_1_ > max_work_item_sizes[1]; // uses too much resources
+		  
+
+          //Not warp multiple
+          if(dev.type()==CL_DEVICE_TYPE_GPU){
+            std::size_t warp_size = 32;
+            if(dev.vendor_id()==4098)
+              warp_size = 64;
+            invalid |= (((local_size_0_*local_size_1_)%warp_size)>0);
+          }
+
+          //Invalid SIMD Width
+          invalid |= (simd_width_!=1 && simd_width_!=2 &&
+                      simd_width_!=4 && simd_width_!=8 &&
+                      simd_width_!=16);
+
+          return  invalid || invalid_impl(dev, scalartype_size);
         }
 
         /** @brief Generates the code associated with this profile onto the provided stream
@@ -142,7 +153,8 @@ namespace viennacl{
          *
          *  @param stream Stream onto which the code should be generated
          */
-        virtual void operator()(utils::kernel_generation_stream & stream) {
+        virtual void operator()(utils::kernel_generation_stream & stream)
+        {
           std::vector<mapping_type> mapping(statements_->size());
 
           ///Get Prototype, initialize mapping

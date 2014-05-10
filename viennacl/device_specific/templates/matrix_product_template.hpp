@@ -43,16 +43,16 @@ namespace viennacl{
 namespace device_specific{
 
 
-class matrix_product : public profile_base{
+class matrix_product_template : public template_base{
 
 public:
     /** @brief The user constructor */
-    matrix_product(const char * scalartype, char A_trans, char B_trans
+    matrix_product_template(const char * scalartype, char A_trans, char B_trans
                    ,unsigned int simd_width
                    , std::size_t ls0, std::size_t KL, std::size_t ls1
                    , unsigned int ms, unsigned int ks, unsigned int ns
                    , bool use_a_local, bool use_b_local
-                   , std::size_t local_fetch0, std::size_t local_fetch1) : profile_base(scalartype, simd_width,ls0, ls1,1)
+                   , std::size_t local_fetch0, std::size_t local_fetch1) : template_base(scalartype, simd_width,ls0, ls1,1)
     , A_trans_(A_trans), B_trans_(B_trans), ls0_(ls0), ls1_(ls1), KL_(KL), ms_(ms), ks_(ks), ns_(ns)
     , use_a_local_(use_a_local), use_b_local_(use_b_local), local_fetch0_(local_fetch0), local_fetch1_(local_fetch1)
     , ML_(ms*ls0), NL_(ns*ls1){ }
