@@ -47,12 +47,13 @@ namespace viennacl{
     class row_wise_reduction_template : public template_base{
     public:
       /** @brief The user constructor */
-      row_wise_reduction_template(const char * scalartype, char A_trans, unsigned int simd_width, unsigned int ls0, unsigned int ls1, unsigned int num_groups) : template_base(scalartype, simd_width, ls0, ls1, 1), A_trans_(A_trans), m_(ls0), k_(ls1), num_groups_(num_groups){ }
+      row_wise_reduction_template(const char * scalartype, char A_trans, unsigned int simd_width,
+                                  unsigned int local_size_0, unsigned int local_size_1, unsigned int num_groups_0) : template_base(scalartype, simd_width, local_size_0, local_size_1, 1), A_trans_(A_trans),  num_groups_0_(num_groups_0){ }
 
       void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
         configure_local_sizes(kernel, kernel_id);
-        kernel.global_work_size(0,m_*num_groups_);
-        kernel.global_work_size(1,k_);
+        kernel.global_work_size(0,local_size_0_*num_groups_0_);
+        kernel.global_work_size(1,local_size_1_);
 
         for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           scheduler::statement::container_type exprs = it->first.array();
@@ -98,8 +99,8 @@ namespace viennacl{
       }
 
       private:
-        std::size_t lmem_used(std::size_t scalartype_size) const {
-          return m_*(k_+1)*scalartype_size;
+        unsigned int lmem_used(unsigned int scalartype_size) const {
+          return local_size_0_*(local_size_1_+1)*scalartype_size;
         }
 
         void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
@@ -111,12 +112,12 @@ namespace viennacl{
             }
           }
 
-          std::size_t N = exprs.size();
+          unsigned int N = exprs.size();
 
           std::vector<scheduler::op_element> rops(N);
           std::vector<std::string> accs(N);
           std::vector<std::string> local_buffers_names(N);
-          for(std::size_t k = 0 ; k < N ; ++k){
+          for(unsigned int k = 0 ; k < N ; ++k){
             scheduler::op_element root_op = exprs[k]->root_node().op;
             rops[k].type_family = scheduler::OPERATION_BINARY_TYPE_FAMILY;
             if(root_op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
@@ -131,8 +132,8 @@ namespace viennacl{
 
 
 
-          std::size_t lsize1 = m_;
-          std::size_t lsize2 = k_+1;
+          unsigned int lsize1 = local_size_0_;
+          unsigned int lsize2 = local_size_1_+1;
 
           std::string size1 = "M", size2 = "N";
 
@@ -148,16 +149,16 @@ namespace viennacl{
           stream << "for(unsigned int r = get_global_id(0) ; r < " << size1 << " ; r += get_global_size(0)){" << std::endl;
           stream.inc_tab();
           {
-            for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+            for(unsigned int k = 0 ; k < exprs.size() ; ++k)
               stream << exprs[k]->scalartype() << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
 
             stream << "for( unsigned int c = get_local_id(1) ; c < " << size2 << " ; c += get_local_size(1)){" << std::endl;
             stream.inc_tab();
             {
               std::set<std::string>  fetched;
-              std::size_t N = exprs.size();
+              unsigned int N = exprs.size();
 
-              for(std::size_t k = 0 ; k < N ; ++k)
+              for(unsigned int k = 0 ; k < N ; ++k)
               {
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
                 viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
@@ -172,7 +173,7 @@ namespace viennacl{
 
 
               //Update sums;
-              for(std::size_t k = 0 ; k < N ; ++k)
+              for(unsigned int k = 0 ; k < N ; ++k)
               {
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
                 viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
@@ -189,17 +190,17 @@ namespace viennacl{
             stream << "}" << std::endl;
 
 
-            for(std::size_t k = 0 ; k < exprs.size() ; ++k){
+            for(unsigned int k = 0 ; k < exprs.size() ; ++k){
               stream << "buf" << k << "[lid0*" << lsize2 << "+ lid1] = " << accs[k] << ";" << std::endl;
             }
 
-            for(unsigned int stride = k_/2 ; stride>0 ; stride /=2){
+            for(unsigned int stride = local_size_1_/2 ; stride>0 ; stride /=2){
               stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
               stream <<  "if(lid1 < " << stride << ")" ;
               stream << "{" << std::endl;
               stream.inc_tab();
 
-              for(std::size_t k = 0 ; k < N ; ++k)
+              for(unsigned int k = 0 ; k < N ; ++k)
                 compute_reduction(stream
                                       ,local_buffers_names[k] + "[lid0*" + utils::to_string(lsize2) + "+ lid1]"
                                       ,local_buffers_names[k] + "[lid0*" + utils::to_string(lsize2) + "+ lid1 + " + utils::to_string(stride) + "]"
@@ -213,10 +214,10 @@ namespace viennacl{
             stream <<  "if(lid1 == 0)" ;
             stream << "{" << std::endl;
             stream.inc_tab();
-            for(std::size_t k = 0 ; k < N ; ++k)
+            for(unsigned int k = 0 ; k < N ; ++k)
               exprs[k]->access_name(local_buffers_names[k] + "[lid0*"+utils::to_string(lsize2)+"]");
 
-            std::size_t i = 0;
+            unsigned int i = 0;
             for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
               std::string str;
               tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("r","0"), -1, str, mapping[i++]), false);
@@ -232,11 +233,8 @@ namespace viennacl{
         }
 
       private:
-        char A_trans_;
-
-        unsigned int m_;
-        unsigned int k_;
-        unsigned int num_groups_;
+        const char A_trans_;
+        unsigned int num_groups_0_;
     };
 
   }

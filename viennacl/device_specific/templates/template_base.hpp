@@ -48,9 +48,9 @@ namespace viennacl{
       protected:
         virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const { return false; }
 
-        virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
+        virtual unsigned int lmem_used(unsigned int /*scalartype_size*/) const { return 0; }
 
-        void configure_local_sizes(viennacl::ocl::kernel & k, std::size_t /*kernel_id*/) const
+        void configure_local_sizes(viennacl::ocl::kernel & k, unsigned int /*kernel_id*/) const
         {
           k.local_work_size(0,local_size_0_);
           k.local_work_size(1,local_size_1_);
@@ -58,9 +58,9 @@ namespace viennacl{
 
         virtual void initialize_mapping(std::vector<mapping_type> & mapping) const
         {
-            std::map<void *, std::size_t> memory;
+            std::map<void *, unsigned int> memory;
             unsigned int current_arg = 0;
-            std::size_t i = 0;
+            unsigned int i = 0;
             for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it)
               tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
         }
@@ -83,12 +83,7 @@ namespace viennacl{
 
       public:
         /** @brief The constructor */
-        template_base(const char * scalartype, unsigned int simd_width, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : scalartype_(scalartype), simd_width_(simd_width), local_size_0_(local_size_1), local_size_1_(local_size_2), num_kernels_(num_kernels){ }
-
-        std::string const & scalartype() const { return scalartype_; }
-        unsigned int simd_width() const { return simd_width_; }
-        unsigned int local_size_0() const { return local_size_0_; }
-        unsigned int local_size_1() const { return local_size_1_; }
+        template_base(const char * scalartype, unsigned int simd_width, unsigned int local_size_1, unsigned int local_size_2, unsigned int num_kernels) : scalartype_(scalartype), simd_width_(simd_width), local_size_0_(local_size_1), local_size_1_(local_size_2), num_kernels_(num_kernels){ }
 
         void bind_statements(std::list< std::pair<scheduler::statement, scheduler::statement_node> > const * statements) { statements_ = statements; }
 
@@ -117,7 +112,7 @@ namespace viennacl{
 
           //Query device informations
           size_t lmem_available = static_cast<size_t>(dev.local_mem_size());
-          std::size_t scalartype_size;
+          unsigned int scalartype_size;
           if(scalartype_=="float")
             scalartype_size = 4;
           else
@@ -134,7 +129,7 @@ namespace viennacl{
 
           //Not warp multiple
           if(dev.type()==CL_DEVICE_TYPE_GPU){
-            std::size_t warp_size = 32;
+            unsigned int warp_size = 32;
             if(dev.vendor_id()==4098)
               warp_size = 64;
             invalid |= (((local_size_0_*local_size_1_)%warp_size)>0);
@@ -172,7 +167,7 @@ namespace viennacl{
           prototype.erase(prototype.size()-1); //Last comma pruned
 
           //Generate
-          for(std::size_t n = 0 ; n < num_kernels_ ; ++n){
+          for(unsigned int n = 0 ; n < num_kernels_ ; ++n){
             //stream << "__attribute__((vec_type_hint()))" << std::endl;
             stream << " __attribute__((reqd_work_group_size(" << local_size_0_ << "," << local_size_1_ << "," << 1 << ")))" << std::endl;
             stream << "__kernel " << "void " << "kernel_" << n << "(" << std::endl;

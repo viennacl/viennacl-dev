@@ -45,14 +45,14 @@ namespace viennacl{
     }
 
 
-    inline void reduce_1d_local_memory(utils::kernel_generation_stream & stream, std::size_t size, std::vector<std::string> const & bufs, std::vector<scheduler::op_element> const & rops)
+    inline void reduce_1d_local_memory(utils::kernel_generation_stream & stream, unsigned int size, std::vector<std::string> const & bufs, std::vector<scheduler::op_element> const & rops)
     {
         //Reduce local memory
-        for(std::size_t stride = size/2 ; stride>0 ; stride /=2){
+        for(unsigned int stride = size/2 ; stride>0 ; stride /=2){
           stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
           stream << "if(lid < " << stride << "){" << std::endl;
           stream.inc_tab();
-          for(std::size_t k = 0 ; k < bufs.size() ; ++k){
+          for(unsigned int k = 0 ; k < bufs.size() ; ++k){
               std::string acc = bufs[k] + "[lid]";
               std::string str = bufs[k] + "[lid + " + utils::to_string(stride) + "]";
               compute_reduction(stream,acc,str,rops[k]);

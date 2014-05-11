@@ -48,9 +48,6 @@ namespace viennacl{
                    unsigned int group_size, unsigned int num_groups,
                    unsigned int decomposition) : template_base(scalartype, simd_width, group_size, 1, 1), num_groups_(num_groups), decomposition_(decomposition){ }
 
-      unsigned int num_groups() const{ return num_groups_; }
-      unsigned int decomposition() const{ return decomposition_; }
-
       void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         configure_local_sizes(k, kernel_id);
 
@@ -82,7 +79,7 @@ namespace viennacl{
               p->fetch( std::make_pair("i","0"), fetched, stream);
 
         //Generates all the expression, in order
-        std::size_t i = 0;
+        unsigned int i = 0;
         for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           std::string str;
           tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("i","0"), -1, str, mapping[i++]));

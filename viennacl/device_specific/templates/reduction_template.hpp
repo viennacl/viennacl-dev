@@ -49,7 +49,6 @@ namespace viennacl{
       /** @brief The user constructor */
       reduction_template(const char * scalartype, unsigned int simd_width, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : template_base(scalartype, simd_width, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
 
-
       void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         //create temporaries
         init_temporaries();
@@ -57,7 +56,7 @@ namespace viennacl{
         //configure ND range
         if(kernel_id==0){
           configure_local_sizes(k, 0);
-          std::size_t gsize = local_size_0_*num_groups_;
+          unsigned int gsize = local_size_0_*num_groups_;
           k.global_work_size(0,gsize);
           k.global_work_size(1,1);
         }
@@ -83,7 +82,7 @@ namespace viennacl{
       }
 
     private:
-      std::size_t lmem_used(std::size_t scalartype_size) const {
+      unsigned int lmem_used(unsigned int scalartype_size) const {
         return local_size_0_*scalartype_size;
       }
 
@@ -92,7 +91,7 @@ namespace viennacl{
           //set temporary buffer argument
           for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
             scheduler::statement::container_type const & array = it->first.array();
-            std::size_t size_of_scalartype;
+            unsigned int size_of_scalartype;
             const char * scalartype_name;
             switch(array[0].lhs.numeric_type){
             case scheduler::FLOAT_TYPE: scalartype_name = "float"; size_of_scalartype = sizeof(float); break;
@@ -133,12 +132,12 @@ namespace viennacl{
       }
 
       void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> const & scalartypes, std::vector<mapping_type> const & /*mapping*/) const {
-        std::size_t N = exprs.size();
+        unsigned int N = exprs.size();
 
         std::vector<scheduler::op_element> rops(N);
         std::vector<std::string> accs(N);
         std::vector<std::string> local_buffers_names(N);
-        for(std::size_t k = 0 ; k < N ; ++k){
+        for(unsigned int k = 0 ; k < N ; ++k){
           scheduler::op_element root_op = exprs[k]->root_node().op;
           rops[k].type_family = scheduler::OPERATION_BINARY_TYPE_FAMILY;
           if(root_op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
@@ -153,7 +152,7 @@ namespace viennacl{
 
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
-        for(std::size_t k = 0 ; k < N ; ++k)
+        for(unsigned int k = 0 ; k < N ; ++k)
           stream << scalartypes[k] << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
 
         std::string init;
@@ -186,7 +185,7 @@ namespace viennacl{
             tree_parsing::fetch_all_rhs(fetched,statement,root_node, std::make_pair("i", "0"),stream,(*it)->mapping());
           }
           //Update accs;
-          for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+          for(unsigned int k = 0 ; k < exprs.size() ; ++k)
           {
             viennacl::scheduler::statement const & statement = exprs[k]->statement();
             viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
@@ -218,10 +217,10 @@ namespace viennacl{
 
 
         //Declare and fill local memory
-        for(std::size_t k = 0 ; k < N ; ++k)
+        for(unsigned int k = 0 ; k < N ; ++k)
           stream << "__local " << scalartypes[k] << " " << local_buffers_names[k] << "[" << local_size_0_ << "];" << std::endl;
 
-        for(std::size_t k = 0 ; k < N ; ++k)
+        for(unsigned int k = 0 ; k < N ; ++k)
           stream << local_buffers_names[k] << "[lid] = " << accs[k] << ";" << std::endl;
 
         //Reduce and write to temporary buffers
@@ -229,7 +228,7 @@ namespace viennacl{
 
         stream << "if(lid==0){" << std::endl;
         stream.inc_tab();
-        for(std::size_t k = 0 ; k < N ; ++k)
+        for(unsigned int k = 0 ; k < N ; ++k)
           stream << "temp"<< k << "[get_group_id(0)] = buf" << k << "[0];" << std::endl;
         stream.dec_tab();
         stream << "}" << std::endl;
@@ -237,11 +236,11 @@ namespace viennacl{
 
 
       void core_1(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> scalartypes, std::vector<mapping_type> const & mapping) const {
-        std::size_t N = exprs.size();
+        unsigned int N = exprs.size();
         std::vector<scheduler::op_element> rops(N);
         std::vector<std::string> accs(N);
         std::vector<std::string> local_buffers_names(N);
-        for(std::size_t k = 0 ; k < N ; ++k){
+        for(unsigned int k = 0 ; k < N ; ++k){
           scheduler::op_element root_op = exprs[k]->root_node().op;
           rops[k].type_family = scheduler::OPERATION_BINARY_TYPE_FAMILY;
           if(root_op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
@@ -258,31 +257,31 @@ namespace viennacl{
 
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
-        for(std::size_t k = 0 ; k < exprs.size() ; ++k)
+        for(unsigned int k = 0 ; k < exprs.size() ; ++k)
           stream << "__local " << scalartypes[k] << " " << local_buffers_names[k] << "[" << local_size_0_ << "];" << std::endl;
 
-        for(std::size_t k = 0 ; k < local_buffers_names.size() ; ++k)
+        for(unsigned int k = 0 ; k < local_buffers_names.size() ; ++k)
           stream << scalartypes[0] << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
 
         stream << "for(unsigned int i = lid ; i < " << num_groups_ << " ; i += get_local_size(0)){" << std::endl;
         stream.inc_tab();
-        for(std::size_t k = 0 ; k < N ; ++k)
+        for(unsigned int k = 0 ; k < N ; ++k)
           compute_reduction(stream,accs[k],"temp"+utils::to_string(k)+"[i]",rops[k]);
         stream.dec_tab();
         stream << "}" << std::endl;
 
-        for(std::size_t k = 0 ; k < local_buffers_names.size() ; ++k)
+        for(unsigned int k = 0 ; k < local_buffers_names.size() ; ++k)
           stream << local_buffers_names[k] << "[lid] = " << accs[k] << ";" << std::endl;
 
 
         //Reduce and write final result
         reduce_1d_local_memory(stream, local_size_0_,local_buffers_names,rops);
-        for(std::size_t k = 0 ; k < N ; ++k)
+        for(unsigned int k = 0 ; k < N ; ++k)
           exprs[k]->access_name(local_buffers_names[k]+"[0]");
 
         stream << "if(lid==0){" << std::endl;
         stream.inc_tab();
-        std::size_t i = 0;
+        unsigned int i = 0;
         for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           std::string str;
           tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("0", "0"), -1, str, mapping[i++]), false);

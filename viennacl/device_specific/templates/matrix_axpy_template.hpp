@@ -90,7 +90,7 @@ namespace viennacl{
               p->fetch(std::make_pair("i", "j"), fetched, stream);
 
 
-        std::size_t i = 0;
+        unsigned int i = 0;
         for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           std::string str;
           tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("i", "j"), -1, str, mapping[i++]));
