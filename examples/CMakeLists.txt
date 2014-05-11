@@ -16,5 +16,4 @@ foreach(f ${EXAMPLES_TESTDATA})
 endforeach()
 
 add_subdirectory(tutorial)
-add_subdirectory(autotuner)
 add_subdirectory(benchmarks)
