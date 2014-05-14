@@ -152,6 +152,50 @@ namespace viennacl
           throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm_m()");
       }
 
+      /** @brief Scheduler unwrapper for A = trans(B) */
+      inline void assign_trans(lhs_rhs_element const & A,
+                               lhs_rhs_element const & B)
+      {
+        assert(   A.type_family == MATRIX_TYPE_FAMILY && B.type_family == MATRIX_TYPE_FAMILY
+               && bool("Arguments are not matrix types!"));
+
+        assert(A.numeric_type == B.numeric_type && bool("Matrices do not have the same scalar type"));
+
+        if (A.subtype == DENSE_ROW_MATRIX_TYPE)
+        {
+          switch (A.numeric_type)
+          {
+          case FLOAT_TYPE:
+            *A.matrix_row_float = viennacl::trans(*B.matrix_row_float);
+            break;
+          case DOUBLE_TYPE:
+            *A.matrix_row_double = viennacl::trans(*B.matrix_row_double);
+            break;
+
+          default:
+            throw statement_not_supported_exception("Invalid arguments in scheduler when calling assign_trans()");
+          }
+        }
+        else if (A.subtype == DENSE_COL_MATRIX_TYPE)
+        {
+          switch (A.numeric_type)
+          {
+          case FLOAT_TYPE:
+            *A.matrix_col_float = viennacl::trans(*B.matrix_col_float);
+            break;
+          case DOUBLE_TYPE:
+            *A.matrix_col_double = viennacl::trans(*B.matrix_col_double);
+            break;
+
+          default:
+            throw statement_not_supported_exception("Invalid arguments in scheduler when calling assign_trans()");
+          }
+        }
+        else
+        {
+          throw statement_not_supported_exception("Invalid arguments in scheduler when calling assign_trans()");
+        }
+      }
 
     } // namespace detail
   } // namespace scheduler
