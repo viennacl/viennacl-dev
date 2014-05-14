@@ -746,28 +746,6 @@ namespace viennacl
         return *this;
       }
 
-      template <typename LHS, typename RHS, typename OP>
-      self_type & operator += (const vector_expression<const LHS, const RHS, OP> & proxy)
-      {
-        assert( (viennacl::traits::size(proxy) == size()) && bool("Incompatible vector sizes!"));
-        assert( (size() > 0) && bool("Vector not yet initialized!") );
-
-        linalg::detail::op_executor<self_type, op_inplace_add, vector_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
-
-        return *this;
-      }
-
-      template <typename LHS, typename RHS, typename OP>
-      self_type & operator -= (const vector_expression<const LHS, const RHS, OP> & proxy)
-      {
-        assert( (viennacl::traits::size(proxy) == size()) && bool("Incompatible vector sizes!"));
-        assert( (size() > 0) && bool("Vector not yet initialized!") );
-
-        linalg::detail::op_executor<self_type, op_inplace_sub, vector_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
-
-        return *this;
-      }
-
       /** @brief Scales a vector (or proxy) by a CPU scalar value
       */
       self_type & operator *= (SCALARTYPE val)

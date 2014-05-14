@@ -883,6 +883,29 @@ namespace viennacl
     }
 
   } //namespace linalg
+
+  template <typename T, typename LHS, typename RHS, typename OP>
+  vector_base<T> & operator += (vector_base<T> & v1, const vector_expression<const LHS, const RHS, OP> & proxy)
+  {
+    assert( (viennacl::traits::size(proxy) == v1.size()) && bool("Incompatible vector sizes!"));
+    assert( (v1.size() > 0) && bool("Vector not yet initialized!") );
+
+    linalg::detail::op_executor<vector_base<T>, op_inplace_add, vector_expression<const LHS, const RHS, OP> >::apply(v1, proxy);
+
+    return v1;
+  }
+
+  template <typename T, typename LHS, typename RHS, typename OP>
+  vector_base<T> & operator -= (vector_base<T> & v1, const vector_expression<const LHS, const RHS, OP> & proxy)
+  {
+    assert( (viennacl::traits::size(proxy) == v1.size()) && bool("Incompatible vector sizes!"));
+    assert( (v1.size() > 0) && bool("Vector not yet initialized!") );
+
+    linalg::detail::op_executor<vector_base<T>, op_inplace_sub, vector_expression<const LHS, const RHS, OP> >::apply(v1, proxy);
+
+    return v1;
+  }
+
 } //namespace viennacl
 
 
