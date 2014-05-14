@@ -175,6 +175,10 @@ namespace viennacl
         {
           execute_matrix_prod(s, root_node);
         }
+        else if (   leaf.op.type == OPERATION_UNARY_TRANS_TYPE)
+        {
+          assign_trans(root_node.lhs, leaf.lhs);
+        }
         else
           throw statement_not_supported_exception("Unsupported binary operator");
       }
