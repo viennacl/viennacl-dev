@@ -161,30 +161,15 @@ namespace viennacl
 
         assert(A.numeric_type == B.numeric_type && bool("Matrices do not have the same scalar type"));
 
-        if (A.subtype == DENSE_ROW_MATRIX_TYPE)
+        if (A.subtype == DENSE_MATRIX_TYPE)
         {
           switch (A.numeric_type)
           {
           case FLOAT_TYPE:
-            *A.matrix_row_float = viennacl::trans(*B.matrix_row_float);
+            *A.matrix_float = viennacl::trans(*B.matrix_float);
             break;
           case DOUBLE_TYPE:
-            *A.matrix_row_double = viennacl::trans(*B.matrix_row_double);
-            break;
-
-          default:
-            throw statement_not_supported_exception("Invalid arguments in scheduler when calling assign_trans()");
-          }
-        }
-        else if (A.subtype == DENSE_COL_MATRIX_TYPE)
-        {
-          switch (A.numeric_type)
-          {
-          case FLOAT_TYPE:
-            *A.matrix_col_float = viennacl::trans(*B.matrix_col_float);
-            break;
-          case DOUBLE_TYPE:
-            *A.matrix_col_double = viennacl::trans(*B.matrix_col_double);
+            *A.matrix_double = viennacl::trans(*B.matrix_double);
             break;
 
           default:
