@@ -4,6 +4,14 @@
 
 *** Version 1.5.x ***
 
+-- Version 1.5.2 --
+While the work for the upcoming 1.6.0 release is in full progress, this maintenance release fixes a couple of bugs and performance regressions reported to us:
+ - Fixed compilation problems on Visual Studio for the operations y += prod(A, x) and y -= prod(A, x) with dense matrix A.
+ - Added a better performance profile for NVIDIA Kepler GPUs. For example, this increases the performance of matrix-matrix multiplications to 600 GFLOPs in single precision on a GeForce GTX 680. Thanks to Paul Dufort for bringing this to our attention.
+ - Added support for the operation A = trans(B) for matrices A and B to the scheduler.
+ - Fixed compilation problems in block-ILU preconditioners when passing block boundaries manually.
+ - Ensured compatibility with OpenCL 1.0, which may still be available on older devices.
+
 -- Version 1.5.1 --
 This maintenance release fixes a few nasty bugs:
  - Fixed a memory leak in the OpenCL kernel generator. Thanks to GitHub user dxyzab for spotting this.
@@ -14,7 +22,6 @@ This maintenance release fixes a few nasty bugs:
  - Fixed an invalid default kernel parameter set for matrix-matrix multiplications on CPUs when using the OpenCL backend. Thanks again to Tom Nicholson.
  - Corrected a weak check used in two tests. Thanks to Walter Mascarenhas for providing a fix.
  - Fixed a wrong global work size inside the SPAI preconditioner. Thanks to Andreas Rost.
-
 
 -- Version 1.5.0 --
 This new minor release number update focuses on a more powerful API, and on first steps in making ViennaCL more accessible from languages other than C++.

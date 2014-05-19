@@ -3,6 +3,16 @@
 
 \section*{Version 1.5.x}
 
+\subsection*{Version 1.5.2}
+While the work for the upcoming 1.6.0 release is in full progress, this maintenance release fixes a couple of bugs and performance regressions reported to us:
+\begin{itemize}
+ \item Fixed compilation problems on Visual Studio for the operations \lstinline|y += prod(A, x)| and \lstinline|y -= prod(A, x)| with dense matrix A.
+ \item Added a better performance profile for NVIDIA Kepler GPUs. For example, this increases the performance of matrix-matrix multiplications to 600 GFLOPs in single precision on a GeForce GTX 680. Thanks to Paul Dufort for bringing this to our attention.
+ \item Added support for the operation \lstinline|A = trans(B)| for matrices A and B to the scheduler.
+ \item Fixed compilation problems in block-ILU preconditioners when passing block boundaries manually.
+ \item Ensured compatibility with OpenCL 1.0, which may still be available on older devices.
+\end{itemize}
+
 \subsection*{Version 1.5.1}
 This maintenance release fixes a few nasty bugs:
 \begin{itemize}

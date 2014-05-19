@@ -24,7 +24,7 @@
 */
 
 /**
- @mainpage Source Code Documentation for ViennaCL 1.5.1
+ @mainpage Source Code Documentation for ViennaCL 1.5.2
 
  This is the source code documentation of ViennaCL. Detailed information about the functions in ViennaCL can be found here.
 
