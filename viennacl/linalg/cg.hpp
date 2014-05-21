@@ -76,71 +76,29 @@ namespace viennacl
         mutable double last_error_;
     };
 
+    namespace detail{
 
-    /** @brief Implementation of the conjugate gradient solver without preconditioner
-    *
-    * Following the algorithm in the book by Y. Saad "Iterative Methods for sparse linear systems"
-    *
-    * @param matrix     The system matrix
-    * @param rhs        The load vector
-    * @param tag        Solver configuration tag
-    * @return The result vector
-    */
-    template <typename MatrixType, typename VectorType>
-    VectorType solve(const MatrixType & matrix, VectorType const & rhs, cg_tag const & tag)
-    {
-      //typedef typename VectorType::value_type      ScalarType;
-      typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
-      typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-      //std::cout << "Starting CG" << std::endl;
-      VectorType result = rhs;
-      viennacl::traits::clear(result);
+      /** @brief handles the no_precond case at minimal overhead */
+      template<typename VectorType, typename PreconditionerType>
+      class z_handler{
+      public:
+        z_handler(VectorType & residual) : z_(residual){ }
+        VectorType & get() { return z_; }
+      private:
+        VectorType z_;
+      };
 
-      VectorType residual = rhs;
-      VectorType p = rhs;
-      VectorType tmp = rhs;
+      template<typename VectorType>
+      class z_handler<VectorType, viennacl::linalg::no_precond>{
+      public:
+        z_handler(VectorType & residual) : presidual_(&residual){ }
+        VectorType & get() { return *presidual_; }
+      private:
+        VectorType * presidual_;
+      };
 
-      CPU_ScalarType ip_rr = viennacl::linalg::inner_prod(rhs,rhs);
-      CPU_ScalarType alpha;
-      CPU_ScalarType new_ip_rr = 0;
-      CPU_ScalarType beta;
-      CPU_ScalarType norm_rhs = std::sqrt(ip_rr);
-
-      //std::cout << "Starting CG solver iterations... " << std::endl;
-      if (norm_rhs == 0) //solution is zero if RHS norm is zero
-        return result;
-
-      for (unsigned int i = 0; i < tag.max_iterations(); ++i)
-      {
-        tag.iters(i+1);
-        tmp = viennacl::linalg::prod(matrix, p);
-
-        alpha = ip_rr / viennacl::linalg::inner_prod(tmp, p);
-        result += alpha * p;
-        residual -= alpha * tmp;
-
-        new_ip_rr = viennacl::linalg::norm_2(residual);
-        if (new_ip_rr / norm_rhs < tag.tolerance())
-          break;
-        new_ip_rr *= new_ip_rr;
-
-        beta = new_ip_rr / ip_rr;
-        ip_rr = new_ip_rr;
-
-        p = residual + beta * p;
-      }
-
-      //store last error estimate:
-      tag.error(std::sqrt(new_ip_rr) / norm_rhs);
-
-      return result;
     }
 
-    template <typename MatrixType, typename VectorType>
-    VectorType solve(const MatrixType & matrix, VectorType const & rhs, cg_tag const & tag, viennacl::linalg::no_precond)
-    {
-      return solve(matrix, rhs, tag);
-    }
 
     /** @brief Implementation of the preconditioned conjugate gradient solver
     *
@@ -163,7 +121,8 @@ namespace viennacl
 
       VectorType residual = rhs;
       VectorType tmp = rhs;
-      VectorType z = rhs;
+      detail::z_handler<VectorType, PreconditionerType> zhandler(residual);
+      VectorType & z = zhandler.get();
 
       precond.apply(z);
       VectorType p = z;
@@ -190,7 +149,11 @@ namespace viennacl
         z = residual;
         precond.apply(z);
 
-        new_ip_rr = viennacl::linalg::inner_prod(residual, z);
+        if(&residual==&z)
+          new_ip_rr = std::pow(viennacl::linalg::norm_2(residual),2);
+        else
+          new_ip_rr = viennacl::linalg::inner_prod(residual, z);
+
         new_ipp_rr_over_norm_rhs = new_ip_rr / norm_rhs_squared;
         if (std::fabs(new_ipp_rr_over_norm_rhs) < tag.tolerance() *  tag.tolerance())    //squared norms involved here
           break;
@@ -205,6 +168,12 @@ namespace viennacl
       tag.error(std::sqrt(std::fabs(new_ip_rr / norm_rhs_squared)));
 
       return result;
+    }
+
+    template <typename MatrixType, typename VectorType>
+    VectorType solve(const MatrixType & matrix, VectorType const & rhs, cg_tag const & tag)
+    {
+      solve(matrix, rhs, tag, viennacl::linalg::no_precond());
     }
 
   }
