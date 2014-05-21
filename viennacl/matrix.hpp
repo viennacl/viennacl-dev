@@ -383,6 +383,9 @@ namespace viennacl
 
       self_type & operator=(const self_type & other)  //enables implicit conversions
       {
+        if(this==&other)
+          return *this;
+
         if (internal_size() == 0)
         {
           if (other.internal_size() == 0)

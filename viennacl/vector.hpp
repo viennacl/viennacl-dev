@@ -482,6 +482,9 @@ namespace viennacl
         assert( ( (vec.size() == size()) || (size() == 0) )
                 && bool("Incompatible vector sizes!"));
 
+        if(this==&vec)
+          return *this;
+
         if (vec.size() > 0)
         {
           if (size_ == 0)
