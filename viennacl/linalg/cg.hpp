@@ -173,7 +173,7 @@ namespace viennacl
     template <typename MatrixType, typename VectorType>
     VectorType solve(const MatrixType & matrix, VectorType const & rhs, cg_tag const & tag)
     {
-      solve(matrix, rhs, tag, viennacl::linalg::no_precond());
+      return solve(matrix, rhs, tag, viennacl::linalg::no_precond());
     }
 
   }
