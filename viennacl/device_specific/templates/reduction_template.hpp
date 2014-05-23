@@ -89,7 +89,7 @@ namespace viennacl{
       void init_temporaries() const {
         if(temporaries_.empty()){
           //set temporary buffer argument
-          for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+          for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
             scheduler::statement::container_type const & array = it->first.array();
             unsigned int size_of_scalartype;
             const char * scalartype_name;
@@ -109,7 +109,7 @@ namespace viennacl{
 
       void fill_scalartypes(std::vector<const char *> & res) const {
         res.reserve(statements_->size());
-        for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+        for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           if (it->second.lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
           {
             switch(it->second.lhs.numeric_type){
@@ -282,7 +282,7 @@ namespace viennacl{
         stream << "if(lid==0){" << std::endl;
         stream.inc_tab();
         unsigned int i = 0;
-        for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+        for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           std::string str;
           tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("0", "0"), -1, str, mapping[i++]), false);
           stream << str << ";" << std::endl;

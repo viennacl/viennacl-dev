@@ -2,6 +2,7 @@
 #define VIENNACL_LINALG_OPENCL_KERNELS_VECTOR_HPP
 
 #include "viennacl/tools/tools.hpp"
+
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"

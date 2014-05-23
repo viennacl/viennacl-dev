@@ -55,7 +55,7 @@ namespace viennacl{
         kernel.global_work_size(0,local_size_0_*num_groups_0_);
         kernel.global_work_size(1,local_size_1_);
 
-        for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+        for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           scheduler::statement::container_type exprs = it->first.array();
           for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
             if(is_vector_reduction(*iit)){
@@ -218,7 +218,7 @@ namespace viennacl{
               exprs[k]->access_name(local_buffers_names[k] + "[lid0*"+utils::to_string(lsize2)+"]");
 
             unsigned int i = 0;
-            for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+            for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
               std::string str;
               tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("r","0"), -1, str, mapping[i++]), false);
               stream << str << ";" << std::endl;

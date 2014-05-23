@@ -35,6 +35,10 @@ namespace viennacl{
 
   namespace device_specific{
 
+    typedef std::list< std::pair<scheduler::statement, scheduler::statement_node> > statements_container;
+
+
+
     inline bool is_scalar_reduction(scheduler::statement_node const & node){
       return node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE || node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY;
     }
@@ -134,17 +138,12 @@ namespace viennacl{
           RHS_NODE_TYPE
         };
     }
-
     class mapped_object;
 
     typedef std::pair<scheduler::statement_node const *, tree_parsing::node_type> key_type;
     typedef tools::shared_ptr<mapped_object> container_ptr_type;
     typedef std::map<key_type, container_ptr_type> mapping_type;
 
-    static std::string generate(std::pair<std::string, std::string> const & index, int vector_index, mapped_object const & s);
-    static void fetch(std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_object & s);
-    static const char * generate(scheduler::operation_node_type arg);
-    static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, mapped_object const & s);
 
     namespace tree_parsing{
 

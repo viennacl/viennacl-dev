@@ -91,14 +91,14 @@ namespace viennacl{
 
 
         unsigned int i = 0;
-        for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+        for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           std::string str;
           tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("i", "j"), -1, str, mapping[i++]));
           stream << str << ";" << std::endl;
         }
 
         //Writes back
-        for(std::list< std::pair<scheduler::statement, scheduler::statement_node> >::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+        for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
           if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements_->begin(),it)).at(std::make_pair(&it->second,tree_parsing::LHS_NODE_TYPE)).get()))
             p->write_back(std::make_pair("i", "j"), fetched, stream);
         }
