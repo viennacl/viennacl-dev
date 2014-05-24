@@ -3,6 +3,12 @@
 
 #include "viennacl/tools/tools.hpp"
 
+#include "viennacl/device_specific/profiles.hpp"
+#include "viennacl/device_specific/generate.hpp"
+
+#include "viennacl/scheduler/forwards.h"
+#include "viennacl/scheduler/io.hpp"
+
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
@@ -80,8 +86,66 @@ namespace viennacl
         }
 
         template <typename StringType>
-        void generate_avbv_impl(StringType & source, std::string const & numeric_string, avbv_config const & cfg)
+        void generate_avbv_impl(StringType & source, scheduler::statement_node_numeric_type const & NUMERIC_TYPE,
+                                scheduler::statement_node_subtype const & A_TYPE,
+                                scheduler::statement_node_subtype const & B_TYPE,
+                                std::string const & kernel_prefix_name)
         {
+          using namespace scheduler;
+          using namespace device_specific;
+
+          //Hardcoded statement. Don't instantiate templates to save compilation time
+          viennacl::scheduler::statement::container_type array(4);
+
+          //0
+          array[0].lhs.type_family = VECTOR_TYPE_FAMILY;
+          array[0].lhs.subtype = DENSE_VECTOR_TYPE;
+          array[0].lhs.numeric_type = NUMERIC_TYPE;
+
+          array[0].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+          array[0].op.type = OPERATION_BINARY_ASSIGN_TYPE;
+
+          array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
+          array[0].rhs.node_index = 1;
+
+          //1
+          array[1].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
+          array[1].lhs.node_index = 2;
+
+          array[1].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+          array[1].op.type = OPERATION_BINARY_ADD_TYPE;
+
+          array[1].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
+          array[1].rhs.node_index = 3;
+
+          //2
+          array[2].lhs.type_family = SCALAR_TYPE_FAMILY;
+          array[2].lhs.subtype = A_TYPE;
+          array[2].lhs.numeric_type = NUMERIC_TYPE;
+
+          array[2].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+          array[2].op.type = OPERATION_BINARY_MULT_TYPE;
+
+          array[2].rhs.type_family = VECTOR_TYPE_FAMILY;
+          array[2].rhs.subtype = DENSE_VECTOR_TYPE;
+          array[2].rhs.numeric_type = NUMERIC_TYPE;
+
+          //3
+          array[3].lhs.type_family = SCALAR_TYPE_FAMILY;
+          array[3].lhs.subtype = B_TYPE;
+          array[3].lhs.numeric_type = NUMERIC_TYPE;
+
+          array[3].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+          array[3].op.type = OPERATION_BINARY_MULT_TYPE;
+
+          array[3].rhs.type_family = VECTOR_TYPE_FAMILY;
+          array[3].rhs.subtype = DENSE_VECTOR_TYPE;
+          array[3].rhs.numeric_type = NUMERIC_TYPE;
+
+          statements_container avbv(1, std::make_pair(statement(array), array[0]));
+          source.append(generate::opencl_source(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), avbv, kernel_prefix_name));
+
+
           source.append("__kernel void av");
           if (cfg.b != VIENNACL_AVBV_NONE)
             source.append("bv");
