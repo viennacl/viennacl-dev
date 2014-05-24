@@ -27,6 +27,8 @@
 #include <vector>
 
 #include "viennacl/scheduler/forwards.h"
+
+#include "viennacl/device_specific/tree_parsing/elementwise_expression.hpp"
 #include "viennacl/device_specific/utils.hpp"
 
 
@@ -37,9 +39,9 @@ namespace viennacl{
     static void compute_reduction(utils::kernel_generation_stream & os, std::string const & acc, std::string const & val, scheduler::op_element const & op){
         os << acc << "=";
         if(utils::elementwise_function(op))
-            os << tree_parsing::generate(op.type) << "(" << acc << "," << val << ")";
+            os << tree_parsing::evaluate(op.type) << "(" << acc << "," << val << ")";
         else
-            os << "(" << acc << ")" << tree_parsing::generate(op.type)  << "(" << val << ")";
+            os << "(" << acc << ")" << tree_parsing::evaluate(op.type)  << "(" << val << ")";
         os << ";" << std::endl;
 
     }

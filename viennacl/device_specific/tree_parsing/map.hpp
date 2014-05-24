@@ -98,10 +98,8 @@ namespace viennacl{
           result_type operator()(vector_base<ScalarType> const & vec) const {
             mapped_vector * p = new mapped_vector(utils::type_to_string<ScalarType>::value());
             p->name_ = create_name(current_arg_, memory_, (void*)&vec);
-            if(vec.start() > 0)
-              p->start_name_ = p->name_ +"_start";
-            if(vec.stride() > 1)
-              p->stride_name_ = p->name_ + "_stride";
+            p->start_name_ = p->name_ +"_start";
+            p->stride_name_ = p->name_ + "_stride";
             return container_ptr_type(p);
           }
 
@@ -124,14 +122,10 @@ namespace viennacl{
             p->name_ = create_name(current_arg_, memory_, (void*)&mat);
             p->ld_name_ = p->name_ + "_ld";
             p->interpret_as_transposed_ = static_cast<bool>(mat.row_major());
-            if(mat.start1() > 0)
-              p->start1_name_ = p->name_ +"_start1";
-            if(mat.stride1() > 1)
-              p->stride1_name_ = p->name_ + "_stride1";
-            if(mat.start2() > 0)
-              p->start2_name_ = p->name_ +"_start2";
-            if(mat.stride2() > 1)
-              p->stride2_name_ = p->name_ + "_stride2";
+            p->start1_name_ = p->name_ +"_start1";
+            p->stride1_name_ = p->name_ + "_stride1";
+            p->start2_name_ = p->name_ +"_start2";
+            p->stride2_name_ = p->name_ + "_stride2";
             return container_ptr_type(p);
           }
 

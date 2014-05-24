@@ -27,13 +27,10 @@
 #include <cstring>
 
 #include "viennacl/forwards.h"
+
 #include "viennacl/scheduler/forwards.h"
+
 #include "viennacl/device_specific/forwards.h"
-
-#include "viennacl/tools/shared_ptr.hpp"
-
-#include "viennacl/ocl/kernel.hpp"
-
 #include "viennacl/device_specific/tree_parsing/traverse.hpp"
 #include "viennacl/device_specific/utils.hpp"
 #include "viennacl/device_specific/mapped_objects.hpp"
@@ -94,10 +91,6 @@ namespace viennacl{
           template<class ScalarType>
           inline result_type operator()(vector_base<ScalarType> const & vec) const {
             *ptr_++='v'; //vector
-            if(viennacl::traits::start(vec)>0)
-              *ptr_++='r';
-            if(vec.stride()>1)
-              *ptr_++='s';
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
             append_id(ptr_, get_id((void*)&vec));
           }
@@ -154,7 +147,7 @@ namespace viennacl{
                 append(ptr_,"rowred");
               if(root_node->op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY)
                 append(ptr_,"colred");
-              append(ptr_,generate(root_node->op.type));
+              append(ptr_,evaluate(root_node->op.type));
             }
           }
 

@@ -104,7 +104,7 @@ ScalarType diff(ScalarType s, viennacl::scalar<ScalarType> & gs){
 template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
     using namespace viennacl::device_specific;
-    device_specific::expression_numeric_type NUMERIC_TYPE = device_specific::result_of::numeric_type_id<NumericT>::value;
+    scheduler::statement_node_numeric_type NUMERIC_TYPE =  scheduler::statement_node_numeric_type(scheduler::result_of::numeric_type_id<NumericT>::value);
     int retval = EXIT_SUCCESS;
 
     unsigned int size = 1024*32;
@@ -154,6 +154,7 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "w = x + y ..." << std::endl;
         cw = cx + cy;
         viennacl::scheduler::statement statement(w, viennacl::op_assign(), x + y);
+        std::cout << statement << std::endl;
         device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
         viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x + y);

@@ -28,6 +28,7 @@
 #include "CL/cl.h"
 
 #include "viennacl/forwards.h"
+
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/forwards.h"
@@ -40,7 +41,7 @@ namespace viennacl{
     namespace tree_parsing{
 
       /** @brief generate a string from an operation_node_type */
-      inline const char * generate(scheduler::operation_node_type type){
+      inline const char * evaluate(scheduler::operation_node_type type){
         // unary expression
         switch(type){
           //Function
@@ -99,7 +100,7 @@ namespace viennacl{
           void call_before_expansion(scheduler::statement_node const * root_node) const
           {
               if(utils::elementwise_function(root_node->op) && !utils::cannot_inline(root_node->op))
-                  str_+=generate(root_node->op.type);
+                  str_+=evaluate(root_node->op.type);
               str_+="(";
           }
           void call_after_expansion(scheduler::statement_node const *) const
@@ -110,20 +111,20 @@ namespace viennacl{
             if(node_type==PARENT_NODE_TYPE)
             {
               if(utils::cannot_inline(root_node->op))
-                str_ += generate(index_string_, simd_element_, *mapping_.at(std::make_pair(root_node, node_type)));
+                str_ += evaluate(index_string_, simd_element_, *mapping_.at(std::make_pair(root_node, node_type)));
               else if(utils::elementwise_operator(root_node->op))
-                str_ += generate(root_node->op.type);
+                str_ += evaluate(root_node->op.type);
               else if(root_node->op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY && utils::elementwise_function(root_node->op))
                 str_ += ",";
             }
             else{
               if(node_type==LHS_NODE_TYPE){
                 if(root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                  str_ += generate(index_string_,simd_element_, *mapping_.at(std::make_pair(root_node,node_type)));
+                  str_ += evaluate(index_string_,simd_element_, *mapping_.at(std::make_pair(root_node,node_type)));
               }
               else if(node_type==RHS_NODE_TYPE){
                 if(root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                  str_ += generate(index_string_,simd_element_, *mapping_.at(std::make_pair(root_node,node_type)));
+                  str_ += evaluate(index_string_,simd_element_, *mapping_.at(std::make_pair(root_node,node_type)));
               }
             }
           }
@@ -138,7 +139,7 @@ namespace viennacl{
         if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
           traverse(statement, statement.array()[root_node.lhs.node_index], expression_generation_traversal(index, simd_element, str, mapping));
         else
-          str += generate(index, simd_element,*mapping.at(std::make_pair(&root_node,LHS_NODE_TYPE)));
+          str += evaluate(index, simd_element,*mapping.at(std::make_pair(&root_node,LHS_NODE_TYPE)));
       }
 
 
@@ -151,7 +152,7 @@ namespace viennacl{
         if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
           traverse(statement, statement.array()[root_node.rhs.node_index], expression_generation_traversal(index, simd_element, str, mapping));
         else
-          str += generate(index, simd_element,*mapping.at(std::make_pair(&root_node,RHS_NODE_TYPE)));
+          str += evaluate(index, simd_element,*mapping.at(std::make_pair(&root_node,RHS_NODE_TYPE)));
       }
 
 

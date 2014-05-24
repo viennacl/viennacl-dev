@@ -29,6 +29,7 @@
 #include <stdexcept>
 
 #include "viennacl/tools/shared_ptr.hpp"
+
 #include "viennacl/scheduler/forwards.h"
 
 namespace viennacl{
@@ -62,18 +63,6 @@ namespace viennacl{
       MATRIX_PRODUCT_TT_TYPE,
       INVALID_EXPRESSION_TYPE
     };
-
-    enum expression_numeric_type{
-      FLOAT_TYPE,
-      DOUBLE_TYPE
-    };
-
-    namespace result_of{
-      template<class T> struct numeric_type_id{ };
-
-      template <> struct numeric_type_id<float>          { static const expression_numeric_type value = FLOAT_TYPE; };
-      template <> struct numeric_type_id<double>         { static const expression_numeric_type value = DOUBLE_TYPE; };
-    }
 
     inline const char * expression_type_to_string(expression_type type){
       switch(type){
@@ -112,7 +101,7 @@ namespace viennacl{
       throw std::out_of_range("Generator: Key not found in map");
     }
 
-    typedef std::pair<expression_type, expression_numeric_type> expression_key_type;
+    typedef std::pair<expression_type, scheduler::statement_node_numeric_type> expression_key_type;
 
     /** @brief Exception for the case the generator is unable to deal with the operation */
     class generator_not_supported_exception : public std::exception

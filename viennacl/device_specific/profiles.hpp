@@ -41,6 +41,8 @@
 
 #include "viennacl/device_specific/templates/matrix_product_template.hpp"
 
+#include "viennacl/scheduler/forwards.h"
+
 namespace viennacl{
 
   namespace device_specific{
@@ -48,6 +50,8 @@ namespace viennacl{
     namespace profiles{
 
       using namespace viennacl::ocl;
+      using scheduler::FLOAT_TYPE;
+      using scheduler::DOUBLE_TYPE;
 
       typedef cl_uint vendor_id_type;
       typedef cl_device_type device_type;
@@ -325,7 +329,7 @@ namespace viennacl{
       }
 
       /** @brief Get the profile for a device and a descriptor */
-      static template_base & get(expression_type expression, expression_numeric_type numeric_type){
+      static template_base & get(expression_type expression, scheduler::statement_node_numeric_type numeric_type){
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
 
         device_type dev_type = device.type();

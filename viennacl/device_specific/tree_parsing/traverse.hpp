@@ -28,6 +28,7 @@
 #include "CL/cl.h"
 
 #include "viennacl/forwards.h"
+
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/utils.hpp"

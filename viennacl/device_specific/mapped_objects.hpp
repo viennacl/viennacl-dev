@@ -50,7 +50,7 @@ namespace viennacl{
           std::string const & scalartype() const { return scalartype_; }
           void access_name(std::string const & str) { access_name_ = str; }
           std::string const & access_name() const { return access_name_; }
-          virtual std::string generate(std::pair<std::string, std::string> const & index, int) const{
+          virtual std::string evaluate(std::pair<std::string, std::string> const & index, int) const{
             if(!access_name_.empty())
               return access_name_;
             else
@@ -131,14 +131,8 @@ namespace viennacl{
           mapped_handle(std::string const & scalartype) : mapped_object(scalartype){ }
 
           std::string const & name() const { return name_; }
-
-          void set_simd_width(unsigned int val) {
-              simd_width_ = val;
-          }
-
-          unsigned int simd_width() const{
-              return simd_width_;
-          }
+          void set_simd_width(unsigned int val) {  simd_width_ = val; }
+          unsigned int simd_width() const{ return simd_width_; }
 
           std::string simd_scalartype() const{
               std::string res = scalartype_;
@@ -198,10 +192,10 @@ namespace viennacl{
       class mapped_buffer : public mapped_handle{
         public:
           mapped_buffer(std::string const & scalartype) : mapped_handle(scalartype){ }
-          virtual std::string generate(std::pair<std::string, std::string> const & index, int vector_element) const{
+          virtual std::string evaluate(std::pair<std::string, std::string> const & index, int vector_element) const{
             if(vector_element>-1)
-              return mapped_object::generate(index, vector_element)+".s"+utils::to_string(vector_element);
-            return mapped_object::generate(index, vector_element);
+              return mapped_object::evaluate(index, vector_element)+".s"+utils::to_string(vector_element);
+            return mapped_object::evaluate(index, vector_element);
           }
 
       };
@@ -216,16 +210,12 @@ namespace viennacl{
               return str;
             }
             else
-              return index.first;
+              return start_name_+"+"+index.first+"*"+stride_name_;
           }
 
           void append_optional_arguments(std::string & str) const{
-            if(!start_name_.empty())
-              str += generate_value_kernel_argument("unsigned int", start_name_);
-            if(!stride_name_.empty())
-              str += generate_value_kernel_argument("unsigned int", stride_name_);
-            if(!shift_name_.empty())
-              str += generate_value_kernel_argument("unsigned int", shift_name_);
+            str += generate_value_kernel_argument("unsigned int", start_name_);
+            str += generate_value_kernel_argument("unsigned int", stride_name_);
           }
         public:
           mapped_vector(std::string const & scalartype) : mapped_buffer(scalartype){ }
@@ -234,7 +224,6 @@ namespace viennacl{
 
           std::string start_name_;
           std::string stride_name_;
-          std::string shift_name_;
       };
 
       /** @brief Mapping of a matrix to a generator class */
@@ -242,22 +231,15 @@ namespace viennacl{
           friend class tree_parsing::map_functor;
           void append_optional_arguments(std::string & str) const{
             str += generate_value_kernel_argument("unsigned int", ld_name_);
-            if(!start1_name_.empty())
-              str += generate_value_kernel_argument("unsigned int", start1_name_);
-            if(!stride1_name_.empty())
-              str += generate_value_kernel_argument("unsigned int", stride1_name_);
-            if(!start2_name_.empty())
-              str += generate_value_kernel_argument("unsigned int", start2_name_);
-            if(!stride2_name_.empty())
-              str += generate_value_kernel_argument("unsigned int", stride2_name_);
+            str += generate_value_kernel_argument("unsigned int", start1_name_);
+            str += generate_value_kernel_argument("unsigned int", stride1_name_);
+            str += generate_value_kernel_argument("unsigned int", start2_name_);
+            str += generate_value_kernel_argument("unsigned int", stride2_name_);
           }
         public:
           mapped_matrix(std::string const & scalartype) : mapped_buffer(scalartype){ }
 
           bool interpret_as_transposed() const { return interpret_as_transposed_; }
-
-//          std::string const & size1() const { return size1_; }
-//          std::string const & size2() const { return size2_; }
 
           std::string const & ld() const { return ld_name_; }
 
@@ -273,20 +255,13 @@ namespace viennacl{
           }
 
         private:
-//          std::string size1_;
-//          std::string size2_;
-
           std::string start1_name_;
           std::string start2_name_;
 
           std::string stride1_name_;
           std::string stride2_name_;
 
-          std::string shift1_name_;
-          std::string shift2_name_;
-
           mutable std::string ld_name_;
-
           bool interpret_as_transposed_;
       };
 
@@ -327,8 +302,8 @@ namespace viennacl{
           }
       };
 
-      static std::string generate(std::pair<std::string, std::string> const & index, int simd_element, mapped_object const & s){
-        return s.generate(index, simd_element);
+      static std::string evaluate(std::pair<std::string, std::string> const & index, int simd_element, mapped_object const & s){
+        return s.evaluate(index, simd_element);
       }
 
       static void fetch(std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_object & s){

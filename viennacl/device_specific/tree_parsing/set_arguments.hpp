@@ -73,10 +73,8 @@ namespace viennacl{
           result_type operator()(vector_base<ScalarType> const & vec) const {
             if(memory_.insert((void*)&vec).second){
               kernel_.arg(current_arg_++, vec.handle().opencl_handle());
-              if(viennacl::traits::start(vec)>0)
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start(vec)));
-              if(vec.stride()>1)
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride(vec)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start(vec)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride(vec)));
             }
           }
 
@@ -99,25 +97,17 @@ namespace viennacl{
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
               if(mat.row_major()){
                 kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size2(mat)));
-                if(viennacl::traits::start2(mat)>0)
-                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
-                if(viennacl::traits::stride2(mat)>1)
-                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
-                if(viennacl::traits::start1(mat)>0)
-                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
-                if(viennacl::traits::stride1(mat)>1)
-                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
               }
               else{
                 kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size1(mat)));
-                if(viennacl::traits::start1(mat)>0)
-                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
-                if(viennacl::traits::stride1(mat)>1)
-                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
-                if(viennacl::traits::start2(mat)>0)
-                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
-                if(viennacl::traits::stride2(mat)>1)
-                  kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
               }
             }
           }
