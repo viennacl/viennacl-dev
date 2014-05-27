@@ -28,17 +28,15 @@
 #include <set>
 #include <stdexcept>
 
+#include "viennacl/ocl/forwards.h"
 #include "viennacl/tools/shared_ptr.hpp"
-
 #include "viennacl/scheduler/forwards.h"
 
 namespace viennacl{
 
   namespace device_specific{
 
-    typedef std::list< std::pair<scheduler::statement, scheduler::statement_node> > statements_container;
-
-
+    typedef std::list< std::pair<scheduler::statement, unsigned int> > statements_container;
 
     inline bool is_scalar_reduction(scheduler::statement_node const & node){
       return node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE || node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY;
@@ -101,8 +99,6 @@ namespace viennacl{
       throw std::out_of_range("Generator: Key not found in map");
     }
 
-    typedef std::pair<expression_type, scheduler::statement_node_numeric_type> expression_key_type;
-
     /** @brief Exception for the case the generator is unable to deal with the operation */
     class generator_not_supported_exception : public std::exception
     {
@@ -129,17 +125,16 @@ namespace viennacl{
     }
     class mapped_object;
 
-    typedef std::pair<scheduler::statement_node const *, tree_parsing::node_type> key_type;
     typedef tools::shared_ptr<mapped_object> container_ptr_type;
-    typedef std::map<key_type, container_ptr_type> mapping_type;
+    typedef std::map<std::pair<unsigned int, tree_parsing::node_type>, container_ptr_type> mapping_type;
 
 
     namespace tree_parsing{
 
       template<class Fun>
-      static inline void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true);
+      static inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool recurse_binary_leaf = true);
       static inline void generate_all_rhs(scheduler::statement const & statement
-                                , scheduler::statement_node const & root_node
+                                , unsigned int root_idx
                                 , std::pair<std::string, std::string> const & index
                                 , int vector_element
                                 , std::string & str
@@ -149,6 +144,32 @@ namespace viennacl{
 
     }
 
+    using scheduler::FLOAT_TYPE;
+    using scheduler::DOUBLE_TYPE;
+
+    typedef cl_uint vendor_id_type;
+    typedef cl_device_type device_type;
+    typedef std::string device_name_type;
+
+    template<class KeyType, class ValueType>
+    struct map_wrapper{
+        typedef std::map<KeyType,ValueType> map_type;
+        map_type map;
+        ValueType & operator[](KeyType const & key){ return map[key]; }
+    };
+
+    class template_base;
+    struct expression_map : public map_wrapper<scheduler::statement_node_numeric_type, tools::shared_ptr<template_base> >{ };
+    struct device_name_map : public map_wrapper<device_name_type, expression_map>{ };
+    struct device_architecture_map : public map_wrapper<ocl::device_architecture_family, device_name_map>{ };
+    struct device_type_map : public map_wrapper<device_type,device_architecture_map>{ };
+    struct database_type : public map_wrapper<vendor_id_type, device_type_map>{ };
+
+    namespace database{
+      using scheduler::FLOAT_TYPE;
+      using scheduler::DOUBLE_TYPE;
+      using namespace viennacl::ocl;
+    }
   }
 
 }

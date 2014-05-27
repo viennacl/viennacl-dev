@@ -31,7 +31,7 @@
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/traits/size.hpp"
-#include "viennacl/traits/row_major.hpp"
+#include "viennacl/traits/handle.hpp"
 
 namespace viennacl{
 
@@ -170,7 +170,7 @@ namespace viennacl{
       struct handle_fun{
         typedef cl_mem result_type;
         template<class T>
-        result_type operator()(T const &t) const { return t.handle().opencl_handle(); }
+        result_type operator()(T const &t) const { return viennacl::traits::opencl_handle(t); }
       };
 
       struct internal_size1_fun{
@@ -191,31 +191,10 @@ namespace viennacl{
       template<class T>
       struct is_same_type<T,T> { enum { value = 1 }; };
 
-      template <class T>
-      inline std::string to_string ( T const t )
-      {
-        std::stringstream ss;
-        ss << t;
-        return ss.str();
-      }
-
-      inline bool is_row_major_matrix(scheduler::lhs_rhs_element const & element){
-        return  (element.subtype==scheduler::DENSE_MATRIX_TYPE && element.numeric_type==scheduler::FLOAT_TYPE && viennacl::traits::row_major(*(matrix_base<float>*)element.matrix_float))
-            || (element.subtype==scheduler::DENSE_MATRIX_TYPE && element.numeric_type==scheduler::DOUBLE_TYPE && viennacl::traits::row_major(*(matrix_base<double>*)element.matrix_double));
-      }
-
       inline bool is_reduction(scheduler::op_element const & op){
         return op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
             || op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY
             || op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY;
-      }
-
-      inline bool interpret_as_transposed(std::vector<scheduler::statement_node> const & array, scheduler::lhs_rhs_element const & element){
-        return  is_row_major_matrix(element)
-
-            || (element.type_family==scheduler::COMPOSITE_OPERATION_FAMILY
-                && array[element.node_index].op.type==scheduler::OPERATION_UNARY_TRANS_TYPE
-            && !is_row_major_matrix(array[element.node_index].lhs));
       }
 
       template<class T>
@@ -231,7 +210,6 @@ namespace viennacl{
 
       class kernel_generation_stream : public std::ostream{
       private:
-
         class kgenstream : public std::stringbuf{
         public:
           kgenstream(std::ostringstream& oss,unsigned int const & tab_count) : oss_(oss), tab_count_(tab_count){ }
@@ -250,15 +228,10 @@ namespace viennacl{
 
       public:
         kernel_generation_stream() : std::ostream(new kgenstream(oss,tab_count_)), tab_count_(0){ }
-
         std::string str(){ return oss.str(); }
-
         void inc_tab(){ ++tab_count_; }
-
         void dec_tab(){ --tab_count_; }
-
         ~kernel_generation_stream(){ delete rdbuf(); }
-
       private:
         unsigned int tab_count_;
         std::ostringstream oss;
@@ -321,7 +294,6 @@ namespace viennacl{
             || op.type== OPERATION_BINARY_ELEMENT_FMAX_TYPE
             || op.type== OPERATION_BINARY_ELEMENT_FMIN_TYPE;
       }
-
 
     }
 

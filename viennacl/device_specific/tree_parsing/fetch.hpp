@@ -50,10 +50,11 @@ namespace viennacl{
         public:
           fetch_traversal(std::set<std::string> & fetched, std::pair<std::string, std::string> const & index, utils::kernel_generation_stream & stream, mapping_type const & mapping) : fetched_(fetched), index_string_(index), stream_(stream), mapping_(mapping){ }
 
-          void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, node_type node_type) const {
-            if( (node_type==LHS_NODE_TYPE && root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-              ||(node_type==RHS_NODE_TYPE && root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
-              fetch(index_string_, fetched_, stream_, *mapping_.at(std::make_pair(root_node, node_type)));
+          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
+            scheduler::statement_node const & root_node = statement.array()[root_idx];
+            if( (node_type==LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+              ||(node_type==RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
+              fetch(index_string_, fetched_, stream_, *mapping_.at(std::make_pair(root_idx, node_type)));
           }
       };
 
@@ -61,16 +62,17 @@ namespace viennacl{
       *
       *   Forwards to fetch_traversal functor if the LHS is not a leaf
       */
-      static void fetch_all_lhs(std::set<std::string> & fetched
+      inline void fetch_all_lhs(std::set<std::string> & fetched
                                 , scheduler::statement const & statement
-                                , scheduler::statement_node const & root_node
+                                , unsigned int root_idx
                                 , std::pair<std::string, std::string> const & index
                                 , utils::kernel_generation_stream & stream
                                 , mapping_type const & mapping){
+        scheduler::statement_node const & root_node = statement.array()[root_idx];
         if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          traverse(statement, statement.array()[root_node.lhs.node_index], fetch_traversal(fetched, index, stream, mapping));
+          traverse(statement, root_node.lhs.node_index, fetch_traversal(fetched, index, stream, mapping));
         else
-          fetch(index, fetched, stream, *mapping.at(std::make_pair(&root_node,LHS_NODE_TYPE)));
+          fetch(index, fetched, stream, *mapping.at(std::make_pair(root_idx,LHS_NODE_TYPE)));
 
       }
 
@@ -78,16 +80,17 @@ namespace viennacl{
       *
       *   Forwards to fetch_traversal functor if the RHS is not a leaf
       */
-      static void fetch_all_rhs(std::set<std::string> & fetched
+      inline void fetch_all_rhs(std::set<std::string> & fetched
                                 , scheduler::statement const & statement
-                                , scheduler::statement_node const & root_node
+                                , unsigned int root_idx
                                 , std::pair<std::string, std::string> const & index
                                 , utils::kernel_generation_stream & stream
                                 , mapping_type const & mapping){
+        scheduler::statement_node const & root_node = statement.array()[root_idx];
         if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          traverse(statement, statement.array()[root_node.rhs.node_index], fetch_traversal(fetched, index, stream, mapping));
+          traverse(statement, root_node.rhs.node_index, fetch_traversal(fetched, index, stream, mapping));
         else
-          fetch(index, fetched, stream, *mapping.at(std::make_pair(&root_node,RHS_NODE_TYPE)));
+          fetch(index, fetched, stream, *mapping.at(std::make_pair(root_idx,RHS_NODE_TYPE)));
 
       }
 

@@ -35,6 +35,7 @@
 #include "viennacl/device_specific/utils.hpp"
 #include "viennacl/device_specific/mapped_objects.hpp"
 
+
 namespace viennacl{
 
   namespace device_specific{
@@ -100,10 +101,8 @@ namespace viennacl{
           inline result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             *ptr_++='i'; //implicit
             *ptr_++='v'; //vector
-            if(vec.is_value_static())
-              *ptr_++='v'; //value
             if(vec.has_index())
-              *ptr_++='i';
+              *ptr_++='i'; //index
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 
@@ -112,10 +111,6 @@ namespace viennacl{
           inline result_type operator()(matrix_base<ScalarType> const & mat) const {
             *ptr_++='m'; //Matrix
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
-            if(mat.row_major())
-              *ptr_++='r';
-            else
-              *ptr_++='c';
             append_id(ptr_, get_id((void*)&mat));
           }
 
@@ -124,8 +119,6 @@ namespace viennacl{
           inline result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
             *ptr_++='i'; //implicit
             *ptr_++='m'; //matrix
-            if(mat.is_value_static())
-              *ptr_++='v'; //value
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 
@@ -135,19 +128,20 @@ namespace viennacl{
             p+=n;
           }
 
-          inline void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, node_type node_type) const {
-            if(node_type==LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
-              utils::call_on_element(root_node->lhs, *this);
-            else if(root_node->op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY && node_type==RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
-              utils::call_on_element(root_node->rhs, *this);
+          inline void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
+            scheduler::statement_node const & root_node = statement.array()[root_idx];
+            if(node_type==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              utils::call_on_element(root_node.lhs, *this);
+            else if(root_node.op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY && node_type==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              utils::call_on_element(root_node.rhs, *this);
             else if(node_type==PARENT_NODE_TYPE){
-              if(root_node->op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY)
+              if(root_node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY)
                 append(ptr_,"vecred");
-              if(root_node->op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY)
+              if(root_node.op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY)
                 append(ptr_,"rowred");
-              if(root_node->op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY)
+              if(root_node.op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY)
                 append(ptr_,"colred");
-              append(ptr_,evaluate(root_node->op.type));
+              append(ptr_,evaluate_str(root_node.op.type));
             }
           }
 

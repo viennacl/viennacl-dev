@@ -36,32 +36,12 @@
 #include <string>
 
 #include "viennacl/forwards.h"
+#include "viennacl/ocl/forwards.h"
 
 namespace viennacl
 {
   namespace ocl
   {
-
-    static const cl_uint intel_id = 32902;
-    static const cl_uint nvidia_id = 4318;
-    static const cl_uint amd_id = 4098;
-    static const cl_uint unknown_id = 0;
-
-    //Architecture Family
-    enum device_architecture_family{
-      //NVidia
-      Tesla,
-      Fermi,
-      Kepler,
-
-      //AMD
-      Evergreen,
-      NorthernIslands,
-      SouthernIslands,
-	  VolcanicIslands,
-
-      UNKNOWN
-    };
 
     static device_architecture_family get_device_architecture(cl_uint vendor_id, std::string const & name){
 

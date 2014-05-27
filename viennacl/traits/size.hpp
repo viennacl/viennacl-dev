@@ -26,6 +26,7 @@
 #include <fstream>
 #include <sstream>
 #include "viennacl/forwards.h"
+
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/predicate.hpp"
 

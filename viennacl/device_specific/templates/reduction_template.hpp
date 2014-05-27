@@ -77,7 +77,7 @@ namespace viennacl{
         init_temporaries();
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
         for(temporaries_type::iterator it = temporaries_.begin() ; it != temporaries_.end() ; ++it){
-          arguments_string += generate_pointer_kernel_argument("__global", it->first, "temp" + utils::to_string(std::distance(temporaries_.begin(), it)));
+          arguments_string += generate_pointer_kernel_argument("__global", it->first, "temp" + tools::to_string(std::distance(temporaries_.begin(), it)));
         }
       }
 
@@ -146,8 +146,8 @@ namespace viennacl{
           else{
             rops[k].type        = root_op.type;
           }
-          accs[k] = "acc"+utils::to_string(k);
-          local_buffers_names[k] = "buf"+utils::to_string(k);
+          accs[k] = "acc"+tools::to_string(k);
+          local_buffers_names[k] = "buf"+tools::to_string(k);
         }
 
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
@@ -188,12 +188,12 @@ namespace viennacl{
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
           {
             viennacl::scheduler::statement const & statement = exprs[k]->statement();
-            viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
+            unsigned int root_idx = exprs[k]->root_idx();
             mapping_type const & mapping = exprs[k]->mapping();
             if(simd_width_ > 1){
               for(unsigned int a = 0 ; a < simd_width_ ; ++a){
                 std::string str;
-                tree_parsing::generate_all_lhs(statement,root_node,std::make_pair("i","0"),a,str,mapping);
+                tree_parsing::generate_all_lhs(statement,root_idx,std::make_pair("i","0"),a,str,mapping);
                 if(root_node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                   str += "*";
                   tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("i","0"),a,str,mapping);
@@ -203,7 +203,7 @@ namespace viennacl{
             }
             else{
               std::string str;
-              tree_parsing::generate_all_lhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
+              tree_parsing::generate_all_lhs(statement,root_idx,std::make_pair("i","0"),-1,str,mapping);
               if(root_node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                 str += "*";
                 tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
@@ -249,8 +249,8 @@ namespace viennacl{
           else{
             rops[k].type        = root_op.type;
           }
-          accs[k] = "acc"+utils::to_string(k);
-          local_buffers_names[k] = "buf"+utils::to_string(k);
+          accs[k] = "acc"+tools::to_string(k);
+          local_buffers_names[k] = "buf"+tools::to_string(k);
         }
 
 
@@ -266,7 +266,7 @@ namespace viennacl{
         stream << "for(unsigned int i = lid ; i < " << num_groups_ << " ; i += get_local_size(0)){" << std::endl;
         stream.inc_tab();
         for(unsigned int k = 0 ; k < N ; ++k)
-          compute_reduction(stream,accs[k],"temp"+utils::to_string(k)+"[i]",rops[k]);
+          compute_reduction(stream,accs[k],"temp"+tools::to_string(k)+"[i]",rops[k]);
         stream.dec_tab();
         stream << "}" << std::endl;
 

@@ -39,7 +39,7 @@ namespace viennacl{
 
     namespace generate{
 
-      inline std::string program_name(statements_container const & statements)
+      inline std::string statements_representation(statements_container const & statements)
       {
           std::vector<char> program_name_vector(256);
           char* program_name = program_name_vector.data();
@@ -48,15 +48,17 @@ namespace viennacl{
           for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
               tree_parsing::traverse(it->first, it->second, tree_parsing::statement_representation_functor(memory, current_arg, program_name),true);
           *program_name='\0';
-          return std::string(program_name_vector.begin(), program_name_vector.end());
+          return std::string(program_name_vector.data());
       }
 
-      inline std::string opencl_source(template_base& tplt, statements_container const & statements, std::string const & kernel_name_prefix)
+      inline std::string opencl_source(template_base& tplt, statements_container const & statements)
       {
         tplt.bind_to(&statements);
-        return tplt.generate(kernel_name_prefix);
+        std::string prefix = statements_representation(statements);
+        return tplt.generate(prefix);
       }
 
+      //CUDA Conversion
       inline std::string opencl_source_to_cuda_source(std::string const & opencl_src)
       {
         std::string res = opencl_src;

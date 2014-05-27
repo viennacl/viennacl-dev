@@ -54,8 +54,8 @@ namespace viennacl{
         k.global_work_size(0,local_size_0_*num_groups_);
         k.global_work_size(1,1);
 
-        scheduler::statement_node const & first_node = statements_->front().second;
-        viennacl::vcl_size_t N = utils::call_on_vector(first_node.lhs, utils::internal_size_fun());
+        scheduler::statement_node const & root = statements_->front().first.array()[statements_->front().second];
+        viennacl::vcl_size_t N = utils::call_on_vector(root.lhs, utils::internal_size_fun());
         k.arg(n_arg++, cl_uint(N/simd_width_));
       }
 
@@ -89,7 +89,7 @@ namespace viennacl{
         //Writes back
         for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it)
           //Gets the mapped object at the LHS of each expression
-          if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements_->begin(),it)).at(std::make_pair(&it->second, tree_parsing::LHS_NODE_TYPE)).get()))
+          if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements_->begin(),it)).at(std::make_pair(it->second, tree_parsing::LHS_NODE_TYPE)).get()))
             p->write_back( std::make_pair("i", "0"), fetched, stream);
 
         stream.dec_tab();

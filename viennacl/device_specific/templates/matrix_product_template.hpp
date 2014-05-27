@@ -60,9 +60,9 @@ public:
     void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const
     {
         //set M, N
-        scheduler::statement_node const & first_node = statements_->front().second;
-        unsigned int M = utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun());
-        unsigned int N = utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun());
+        scheduler::statement_node const & root = statements_->front().first.array()[statements_->front().second];
+        unsigned int M = utils::call_on_matrix(root.lhs, utils::internal_size1_fun());
+        unsigned int N = utils::call_on_matrix(root.lhs, utils::internal_size2_fun());
 
         //set ND range
         configure_local_sizes(k, kernel_id);
@@ -99,10 +99,10 @@ public:
         arguments_string += generate_value_kernel_argument("unsigned int", "K");
     }
 private:
-    virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const & statement_pair, mapping_type & mapping)
+    virtual void init(std::pair<scheduler::statement, unsigned int> const & statement_pair, mapping_type & mapping)
     {
         scheduler::statement const & statement = statement_pair.first;
-        scheduler::statement_node const & root_node = statement_pair.second;
+        scheduler::statement_node const & root_node = statement.array()[statement_pair.second];
         scheduler::statement::container_type const & exprs = statement.array();
         scheduler::statement_node const * prod_node = NULL;
         for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
@@ -361,15 +361,15 @@ private:
             for(unsigned int nn=0 ; nn < nS_ ; ++nn){
                 for(unsigned int mm=0 ; mm < mS_ ; ++mm){
                     std::string res_str, lhs_str, rhs_str;
-                    res_str = "rC[" + utils::to_string(mm) + "][" + utils::to_string(nn) + "]";
+                    res_str = "rC[" + tools::to_string(mm) + "][" + tools::to_string(nn) + "]";
                     if(use_A_local_ || simd_width_==1)
-                        lhs_str = "rA[" + utils::to_string(kk) + "][" + utils::to_string(mm) + "]";
+                        lhs_str = "rA[" + tools::to_string(kk) + "][" + tools::to_string(mm) + "]";
                     else
-                        lhs_str = "rA[" + utils::to_string(kk) + "][" + utils::to_string(mm/simd_width_) + "].s" + utils::to_string(mm%simd_width_);
+                        lhs_str = "rA[" + tools::to_string(kk) + "][" + tools::to_string(mm/simd_width_) + "].s" + tools::to_string(mm%simd_width_);
                     if(use_B_local_ || simd_width_==1)
-                        rhs_str = "rB[" + utils::to_string(kk) + "]["+utils::to_string(nn)+"]";
+                        rhs_str = "rB[" + tools::to_string(kk) + "]["+tools::to_string(nn)+"]";
                     else
-                        rhs_str = "rB[" + utils::to_string(kk) + "]["+utils::to_string(nn/simd_width_)+"].s"+utils::to_string(nn%simd_width_);
+                        rhs_str = "rB[" + tools::to_string(kk) + "]["+tools::to_string(nn/simd_width_)+"].s"+tools::to_string(nn%simd_width_);
                     stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
                 }
             }
@@ -406,8 +406,8 @@ private:
             stream << C_->name() << "+= idy*" << simd_width_ << "*" << C_->ld() << ";" << std::endl;
             for(unsigned int m=0 ; m < mS_ ; ++m){
                 for(unsigned int n=0 ; n < nS_ ; ++n){
-                    std::string j = utils::to_string((n/simd_width_)*(local_size_1_*simd_width_) + n%simd_width_);
-                    prod_->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
+                    std::string j = tools::to_string((n/simd_width_)*(local_size_1_*simd_width_) + n%simd_width_);
+                    prod_->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;
                     tree_parsing::traverse(statements_->front().first, statements_->front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
                     stream << str << ";" << std::endl;
@@ -425,8 +425,8 @@ private:
             stream << C_->name() << "+= idy*" << simd_width_ << ";" << std::endl;
             for(unsigned int n=0 ; n < nS_ ; ++n){
                 for(unsigned int m=0 ; m < mS_ ; ++m){
-                    std::string j = utils::to_string((m/simd_width_)*(local_size_0_*simd_width_) + m%simd_width_);
-                    prod_->access_name("rC["+utils::to_string(m)+"]["+utils::to_string(n)+"]");
+                    std::string j = tools::to_string((m/simd_width_)*(local_size_0_*simd_width_) + m%simd_width_);
+                    prod_->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;
                     tree_parsing::traverse(statements_->front().first, statements_->front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
                     stream << str << ";" << std::endl;

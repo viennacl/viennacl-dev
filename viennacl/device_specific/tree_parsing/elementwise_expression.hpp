@@ -50,6 +50,7 @@ namespace viennacl{
           case scheduler::OPERATION_BINARY_ELEMENT_POW_TYPE : return "pow";
 
           //Arithmetic
+          case scheduler::OPERATION_UNARY_MINUS_TYPE : return "-";
           case scheduler::OPERATION_BINARY_ASSIGN_TYPE : return "=";
           case scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE : return "+=";
           case scheduler::OPERATION_BINARY_INPLACE_SUB_TYPE : return "-=";
@@ -85,6 +86,23 @@ namespace viennacl{
         }
       }
 
+      inline const char * evaluate_str(scheduler::operation_node_type type){
+        switch(type){
+        case scheduler::OPERATION_UNARY_MINUS_TYPE : return "mi";
+        case scheduler::OPERATION_BINARY_ASSIGN_TYPE : return "as";
+        case scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE : return "iad";
+        case scheduler::OPERATION_BINARY_INPLACE_SUB_TYPE : return "isu";
+        case scheduler::OPERATION_BINARY_ADD_TYPE : return "ad";
+        case scheduler::OPERATION_BINARY_SUB_TYPE : return "su";
+        case scheduler::OPERATION_BINARY_MULT_TYPE : return "mu";
+        case scheduler::OPERATION_BINARY_ELEMENT_PROD_TYPE : return "epr";
+        case scheduler::OPERATION_BINARY_DIV_TYPE : return "di";
+        case scheduler::OPERATION_BINARY_ELEMENT_DIV_TYPE : return "edi";
+        case scheduler::OPERATION_BINARY_ACCESS_TYPE : return "ac";
+          default : return evaluate(type);
+        }
+      }
+
 
       /** @brief functor for generating the expression string from a statement */
       class expression_generation_traversal : public traversal_functor{
@@ -97,62 +115,71 @@ namespace viennacl{
         public:
           expression_generation_traversal(std::pair<std::string, std::string> const & index, int simd_element, std::string & str, mapping_type const & mapping) : index_string_(index), simd_element_(simd_element), str_(str), mapping_(mapping){ }
 
-          void call_before_expansion(scheduler::statement_node const * root_node) const
+          void call_before_expansion(scheduler::statement const & statement, unsigned int root_idx) const
           {
-              if(utils::elementwise_function(root_node->op) && !utils::cannot_inline(root_node->op))
-                  str_+=evaluate(root_node->op.type);
+              scheduler::statement_node const & root_node = statement.array()[root_idx];
+              if( (root_node.op.type_family==scheduler::OPERATION_UNARY_TYPE_FAMILY
+                  || utils::elementwise_function(root_node.op)) && !utils::cannot_inline(root_node.op))
+                  str_+=evaluate(root_node.op.type);
               str_+="(";
+
           }
-          void call_after_expansion(scheduler::statement_node const *) const
-          { str_+=")";
+          void call_after_expansion(scheduler::statement const & statement, unsigned int root_idx) const
+          {
+            str_+=")";
           }
 
-          void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, node_type node_type) const {
+          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
+            scheduler::statement_node const & root_node = statement.array()[root_idx];
             if(node_type==PARENT_NODE_TYPE)
             {
-              if(utils::cannot_inline(root_node->op))
-                str_ += evaluate(index_string_, simd_element_, *mapping_.at(std::make_pair(root_node, node_type)));
-              else if(utils::elementwise_operator(root_node->op))
-                str_ += evaluate(root_node->op.type);
-              else if(root_node->op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY && utils::elementwise_function(root_node->op))
+              if(utils::cannot_inline(root_node.op))
+                str_ += evaluate(index_string_, simd_element_, *mapping_.at(std::make_pair(root_idx, node_type)));
+              else if(utils::elementwise_operator(root_node.op))
+                str_ += evaluate(root_node.op.type);
+              else if(root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY && utils::elementwise_function(root_node.op))
                 str_ += ",";
             }
             else{
               if(node_type==LHS_NODE_TYPE){
-                if(root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                  str_ += evaluate(index_string_,simd_element_, *mapping_.at(std::make_pair(root_node,node_type)));
+                if(root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                  str_ += evaluate(index_string_,simd_element_, *mapping_.at(std::make_pair(root_idx,node_type)));
               }
               else if(node_type==RHS_NODE_TYPE){
-                if(root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                  str_ += evaluate(index_string_,simd_element_, *mapping_.at(std::make_pair(root_node,node_type)));
+                if(root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                  str_ += evaluate(index_string_,simd_element_, *mapping_.at(std::make_pair(root_idx,node_type)));
               }
             }
           }
       };
 
       static void generate_all_lhs(scheduler::statement const & statement
-                                , scheduler::statement_node const & root_node
+                                , unsigned int root_idx
                                 , std::pair<std::string, std::string> const & index
                                 , int simd_element
                                 , std::string & str
-                                , mapping_type const & mapping){
+                                , mapping_type const & mapping)
+      {
+        scheduler::statement_node const & root_node = statement.array()[root_idx];
         if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          traverse(statement, statement.array()[root_node.lhs.node_index], expression_generation_traversal(index, simd_element, str, mapping));
+          traverse(statement, root_node.lhs.node_index, expression_generation_traversal(index, simd_element, str, mapping));
         else
-          str += evaluate(index, simd_element,*mapping.at(std::make_pair(&root_node,LHS_NODE_TYPE)));
+          str += evaluate(index, simd_element,*mapping.at(std::make_pair(root_idx,LHS_NODE_TYPE)));
       }
 
 
       static void generate_all_rhs(scheduler::statement const & statement
-                                , scheduler::statement_node const & root_node
+                                , unsigned int root_idx
                                 , std::pair<std::string, std::string> const & index
                                 , int simd_element
                                 , std::string & str
-                                , mapping_type const & mapping){
+                                , mapping_type const & mapping)
+      {
+        scheduler::statement_node const & root_node = statement.array()[root_idx];
         if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          traverse(statement, statement.array()[root_node.rhs.node_index], expression_generation_traversal(index, simd_element, str, mapping));
+          traverse(statement, root_node.rhs.node_index, expression_generation_traversal(index, simd_element, str, mapping));
         else
-          str += evaluate(index, simd_element,*mapping.at(std::make_pair(&root_node,RHS_NODE_TYPE)));
+          str += evaluate(index, simd_element,*mapping.at(std::make_pair(root_idx,RHS_NODE_TYPE)));
       }
 
 

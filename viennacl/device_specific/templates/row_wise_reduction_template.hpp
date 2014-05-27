@@ -126,8 +126,8 @@ namespace viennacl{
             else{
               rops[k].type        = root_op.type;
             }
-            accs[k] = "sum"+utils::to_string(k);
-            local_buffers_names[k] = "buf"+utils::to_string(k);
+            accs[k] = "sum"+tools::to_string(k);
+            local_buffers_names[k] = "buf"+tools::to_string(k);
           }
 
 
@@ -176,9 +176,9 @@ namespace viennacl{
               for(unsigned int k = 0 ; k < N ; ++k)
               {
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
-                viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
+                unsigned int root_idx = exprs[k]->root_idx();
                 std::string str;
-                tree_parsing::generate_all_lhs(statement,root_node,std::make_pair("",""),-1,str,exprs[k]->mapping());
+                tree_parsing::generate_all_lhs(statement,root_idx,std::make_pair("",""),-1,str,exprs[k]->mapping());
                 if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
                   str += "*";
                   tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("",""),-1,str,exprs[k]->mapping());
@@ -202,8 +202,8 @@ namespace viennacl{
 
               for(unsigned int k = 0 ; k < N ; ++k)
                 compute_reduction(stream
-                                      ,local_buffers_names[k] + "[lid0*" + utils::to_string(lsize2) + "+ lid1]"
-                                      ,local_buffers_names[k] + "[lid0*" + utils::to_string(lsize2) + "+ lid1 + " + utils::to_string(stride) + "]"
+                                      ,local_buffers_names[k] + "[lid0*" + tools::to_string(lsize2) + "+ lid1]"
+                                      ,local_buffers_names[k] + "[lid0*" + tools::to_string(lsize2) + "+ lid1 + " + tools::to_string(stride) + "]"
                                       ,rops[k]);
 
               stream.dec_tab();
@@ -215,7 +215,7 @@ namespace viennacl{
             stream << "{" << std::endl;
             stream.inc_tab();
             for(unsigned int k = 0 ; k < N ; ++k)
-              exprs[k]->access_name(local_buffers_names[k] + "[lid0*"+utils::to_string(lsize2)+"]");
+              exprs[k]->access_name(local_buffers_names[k] + "[lid0*"+tools::to_string(lsize2)+"]");
 
             unsigned int i = 0;
             for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){

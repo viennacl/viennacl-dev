@@ -36,7 +36,6 @@
 
 #include "viennacl/tools/shared_ptr.hpp"
 
-#include "viennacl/ocl/kernel.hpp"
 
 #include "viennacl/device_specific/tree_parsing/traverse.hpp"
 #include "viennacl/device_specific/utils.hpp"
@@ -83,8 +82,7 @@ namespace viennacl{
           result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
             if(memory_.insert((void*)&vec).second){
-              if(vec.is_value_static()==false)
-                kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
+              kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
               if(vec.has_index())
                 kernel_.arg(current_arg_++, cl_uint(vec.index()));
             }
@@ -115,16 +113,16 @@ namespace viennacl{
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
           result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
-            if(mat.is_value_static()==false)
-              kernel_.arg(current_arg_++, mat.value());
+            kernel_.arg(current_arg_++, mat.value());
           }
 
           /** @brief Traversal functor: */
-          void operator()(scheduler::statement const * /*statement*/, scheduler::statement_node const * root_node, node_type node_type) const {
-            if(node_type==LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
-              utils::call_on_element(root_node->lhs, *this);
-            else if(node_type==RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
-              utils::call_on_element(root_node->rhs, *this);
+          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
+            scheduler::statement_node const & root_node = statement.array()[root_idx];
+            if(node_type==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              utils::call_on_element(root_node.lhs, *this);
+            else if(node_type==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              utils::call_on_element(root_node.rhs, *this);
           }
 
         private:

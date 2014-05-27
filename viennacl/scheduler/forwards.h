@@ -67,6 +67,9 @@ namespace viennacl
     {
       OPERATION_INVALID_TYPE = 0,
 
+      // unary operator
+      OPERATION_UNARY_MINUS_TYPE,
+
       // unary expression
       OPERATION_UNARY_ABS_TYPE,
       OPERATION_UNARY_ACOS_TYPE,
@@ -185,7 +188,7 @@ namespace viennacl
       template <> struct op_type_info<op_mult>                          { enum { id = OPERATION_BINARY_MULT_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY}; };
       template <> struct op_type_info<op_div>                           { enum { id = OPERATION_BINARY_DIV_TYPE,          family = OPERATION_BINARY_TYPE_FAMILY}; };
 
-
+      template <> struct op_type_info<op_flip_sign>                     { enum { id = OPERATION_UNARY_MINUS_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
 
 
       /** \endcond */
@@ -482,35 +485,41 @@ namespace viennacl
 
         size_type root() const { return 0; }
 
-      private:
-
         ///////////// Scalar node helper ////////////////
+        /// Public because they can be useful for custom statements
+        ////////////////////////////////////////////////
 
         // TODO: add integer vector overloads here
-        void assign_element(lhs_rhs_element & elem, viennacl::scalar<float>  const & t) { elem.scalar_float  = const_cast<viennacl::scalar<float> *>(&t); }
-        void assign_element(lhs_rhs_element & elem, viennacl::scalar<double> const & t) { elem.scalar_double = const_cast<viennacl::scalar<double> *>(&t); }
+        static void assign_element(lhs_rhs_element & elem, float const & t) { elem.host_float  = t; }
+        static void assign_element(lhs_rhs_element & elem, double const & t) { elem.host_double = t; }
+
+        // TODO: add integer vector overloads here
+        static void assign_element(lhs_rhs_element & elem, viennacl::scalar<float>  const & t) { elem.scalar_float  = const_cast<viennacl::scalar<float> *>(&t); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::scalar<double> const & t) { elem.scalar_double = const_cast<viennacl::scalar<double> *>(&t); }
 
         ///////////// Vector node helper ////////////////
         // TODO: add integer vector overloads here
-        void assign_element(lhs_rhs_element & elem, viennacl::vector_base<float>  const & t) { elem.vector_float  = const_cast<viennacl::vector_base<float> *>(&t); }
-        void assign_element(lhs_rhs_element & elem, viennacl::vector_base<double> const & t) { elem.vector_double = const_cast<viennacl::vector_base<double> *>(&t); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<float>  const & t) { elem.vector_float  = const_cast<viennacl::vector_base<float> *>(&t); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<double> const & t) { elem.vector_double = const_cast<viennacl::vector_base<double> *>(&t); }
 
         ///////////// Matrix node helper ////////////////
         // TODO: add integer matrix overloads here
-        void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<float> const & t) { elem.matrix_float  = const_cast<viennacl::matrix_base<float> *>(&t); }
-        void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double> const & t) { elem.matrix_double = const_cast<viennacl::matrix_base<double> *>(&t); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<float> const & t) { elem.matrix_float  = const_cast<viennacl::matrix_base<float> *>(&t); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double> const & t) { elem.matrix_double = const_cast<viennacl::matrix_base<double> *>(&t); }
 
-        void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<float>  const & m) { elem.compressed_matrix_float  = const_cast<viennacl::compressed_matrix<float>  *>(&m); }
-        void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<double> const & m) { elem.compressed_matrix_double = const_cast<viennacl::compressed_matrix<double> *>(&m); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<float>  const & m) { elem.compressed_matrix_float  = const_cast<viennacl::compressed_matrix<float>  *>(&m); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::compressed_matrix<double> const & m) { elem.compressed_matrix_double = const_cast<viennacl::compressed_matrix<double> *>(&m); }
 
-        void assign_element(lhs_rhs_element & elem, viennacl::coordinate_matrix<float>  const & m) { elem.coordinate_matrix_float  = const_cast<viennacl::coordinate_matrix<float>  *>(&m); }
-        void assign_element(lhs_rhs_element & elem, viennacl::coordinate_matrix<double> const & m) { elem.coordinate_matrix_double = const_cast<viennacl::coordinate_matrix<double> *>(&m); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::coordinate_matrix<float>  const & m) { elem.coordinate_matrix_float  = const_cast<viennacl::coordinate_matrix<float>  *>(&m); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::coordinate_matrix<double> const & m) { elem.coordinate_matrix_double = const_cast<viennacl::coordinate_matrix<double> *>(&m); }
 
-        void assign_element(lhs_rhs_element & elem, viennacl::ell_matrix<float>  const & m) { elem.ell_matrix_float  = const_cast<viennacl::ell_matrix<float>  *>(&m); }
-        void assign_element(lhs_rhs_element & elem, viennacl::ell_matrix<double> const & m) { elem.ell_matrix_double = const_cast<viennacl::ell_matrix<double> *>(&m); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::ell_matrix<float>  const & m) { elem.ell_matrix_float  = const_cast<viennacl::ell_matrix<float>  *>(&m); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::ell_matrix<double> const & m) { elem.ell_matrix_double = const_cast<viennacl::ell_matrix<double> *>(&m); }
 
-        void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<float>  const & m) { elem.hyb_matrix_float  = const_cast<viennacl::hyb_matrix<float>  *>(&m); }
-        void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<double> const & m) { elem.hyb_matrix_double = const_cast<viennacl::hyb_matrix<double> *>(&m); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<float>  const & m) { elem.hyb_matrix_float  = const_cast<viennacl::hyb_matrix<float>  *>(&m); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<double> const & m) { elem.hyb_matrix_double = const_cast<viennacl::hyb_matrix<double> *>(&m); }
+
+      private:
 
         //////////// Tree leaves (terminals) ////////////////////
 

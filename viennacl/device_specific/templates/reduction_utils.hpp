@@ -56,7 +56,7 @@ namespace viennacl{
           stream.inc_tab();
           for(unsigned int k = 0 ; k < bufs.size() ; ++k){
               std::string acc = bufs[k] + "[lid]";
-              std::string str = bufs[k] + "[lid + " + utils::to_string(stride) + "]";
+              std::string str = bufs[k] + "[lid + " + tools::to_string(stride) + "]";
               compute_reduction(stream,acc,str,rops[k]);
           }
           stream.dec_tab();

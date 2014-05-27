@@ -56,20 +56,22 @@ namespace viennacl{
       }
     }
 
-    void enqueue(template_base & tplt, viennacl::ocl::program & program, std::string const & kernel_name_prefix){
+    void enqueue(template_base & tplt, viennacl::ocl::program & program, statements_container const & statements){
+      tplt.bind_to(&statements);
+      std::string prefix = generate::statements_representation(statements);
+
       //Get the kernels
       std::list<viennacl::ocl::kernel*> kernels;
       for(unsigned int i = 0 ; i < tplt.num_kernels() ; ++i)
-          kernels.push_back(&program.get_kernel(kernel_name_prefix+utils::to_string(i)));
+          kernels.push_back(&program.get_kernel(prefix+tools::to_string(i)));
 
       //Configure
-      statements_container const * pstatements = tplt.statements();
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
       {
         unsigned int current_arg = 0;
         tplt.configure_range_enqueue_arguments(std::distance(kernels.begin(), it), **it, current_arg);
         std::set<void *> memory;
-        for(typename statements_container::const_iterator itt = pstatements->begin() ; itt != pstatements->end() ; ++itt)
+        for(typename statements_container::const_iterator itt = statements.begin() ; itt != statements.end() ; ++itt)
           tree_parsing::traverse(itt->first, itt->second, tree_parsing::set_arguments_functor(memory,current_arg,**it));
       }
 
@@ -83,7 +85,7 @@ namespace viennacl{
       tplt.bind_to(&statements);
 
       //Generate program name
-      std::string program_name = generate::program_name(statements);
+      std::string program_name = generate::statements_representation(statements);
 
       //Retrieve/Compile program
       viennacl::ocl::context & ctx = viennacl::ocl::current_context();
@@ -97,15 +99,15 @@ namespace viennacl{
         src+="#elif defined(cl_amd_fp64)\n";
         src+="#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
         src+="#endif\n";
-        src +=generate::opencl_source(tplt, statements, "kernel");
+        src +=generate::opencl_source(tplt, statements);
         ctx.add_program(src, program_name);
       }
 
-      enqueue(tplt, ctx.get_program(program_name), "kernel");
+      enqueue(tplt, ctx.get_program(program_name), statements);
     }
 
     inline void execute(template_base & tplt, scheduler::statement const & statement, bool force_recompilation = false){
-      execute(tplt, statements_container(1, std::make_pair(statement,statement.array()[0])), force_recompilation);
+      execute(tplt, statements_container(1, std::make_pair(statement, 0)), force_recompilation);
     }
 
   }

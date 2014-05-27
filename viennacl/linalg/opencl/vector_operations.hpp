@@ -25,6 +25,8 @@
 #include <cmath>
 
 #include "viennacl/forwards.h"
+#include "viennacl/device_specific/database.hpp"
+#include "viennacl/device_specific/execute.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/kernel.hpp"
@@ -35,6 +37,7 @@
 #include "viennacl/linalg/opencl/kernels/vector_element.hpp"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/enable_if.hpp"
+#include "viennacl/scheduler/preset.hpp"
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
@@ -60,34 +63,22 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
-        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
+        scheduler::statement_node_numeric_type NUMERIC_TYPE =  scheduler::statement_node_numeric_type(scheduler::result_of::numeric_type_id<T>::value);
+        scheduler::statement_node_subtype A_TYPE = viennacl::is_cpu_scalar<ScalarType1>::value?scheduler::HOST_SCALAR_TYPE:scheduler::DEVICE_SCALAR_TYPE;
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(),
-                                                   (viennacl::is_cpu_scalar<ScalarType1>::value ? "av_cpu" : "av_gpu"));
-        k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        device_specific::statements_container tmp = scheduler::preset::avbv(NUMERIC_TYPE,A_TYPE,flip_sign_alpha,reciprocal_alpha,scheduler::INVALID_SUBTYPE,false,false);
+        scheduler::statement::container_type& array = const_cast<scheduler::statement::container_type&>(tmp.front().first.array());
 
-        viennacl::ocl::packed_cl_uint size_vec1;
-        size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
-        size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
-        size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
-        size_vec1.internal_size   = cl_uint(viennacl::traits::internal_size(vec1));
+        std::cout << &vec1 << " " << &vec2 << std::endl;
+        std::cout << vec1.internal_size() << " " << vec2.internal_size() << std::endl;
 
-        viennacl::ocl::packed_cl_uint size_vec2;
-        size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
-        size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
-        size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
-        size_vec2.internal_size   = cl_uint(viennacl::traits::internal_size(vec2));
+        scheduler::statement::assign_element(array[0].lhs,vec1);
+        scheduler::statement::assign_element(array[3].lhs,vec2);
+        scheduler::statement::assign_element(array[3].rhs,alpha);
 
-
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 size_vec1,
-
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<T>(alpha)),
-                                 options_alpha,
-                                 viennacl::traits::opencl_handle(vec2),
-                                 size_vec2 )
-                              );
+        viennacl::device_specific::enqueue(device_specific::database::get(device_specific::database::axpy,NUMERIC_TYPE),
+                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           tmp);
       }
 
 
@@ -102,54 +93,22 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
-        std::string kernel_name;
-        if (viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
-          kernel_name = "avbv_cpu_cpu";
-        else if (viennacl::is_cpu_scalar<ScalarType1>::value && !viennacl::is_cpu_scalar<ScalarType2>::value)
-          kernel_name = "avbv_cpu_gpu";
-        else if (!viennacl::is_cpu_scalar<ScalarType1>::value && viennacl::is_cpu_scalar<ScalarType2>::value)
-          kernel_name = "avbv_gpu_cpu";
-        else
-          kernel_name = "avbv_gpu_gpu";
+        scheduler::statement_node_numeric_type NUMERIC_TYPE =  scheduler::statement_node_numeric_type(scheduler::result_of::numeric_type_id<T>::value);
+        scheduler::statement_node_subtype A_TYPE = viennacl::is_cpu_scalar<ScalarType1>::value?scheduler::HOST_SCALAR_TYPE:scheduler::DEVICE_SCALAR_TYPE;
+        scheduler::statement_node_subtype B_TYPE = viennacl::is_cpu_scalar<ScalarType2>::value?scheduler::HOST_SCALAR_TYPE:scheduler::DEVICE_SCALAR_TYPE;
 
-        cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
-        cl_uint options_beta  = detail::make_options(len_beta,  reciprocal_beta,  flip_sign_beta);
+        device_specific::statements_container tmp = scheduler::preset::avbv(NUMERIC_TYPE,A_TYPE,flip_sign_alpha,reciprocal_alpha,B_TYPE,flip_sign_beta,reciprocal_beta);
+        scheduler::statement::container_type& array = const_cast<scheduler::statement::container_type&>(tmp.front().first.array());
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), kernel_name);
-        k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
+        scheduler::statement::assign_element(array[0].lhs,vec1);
+        scheduler::statement::assign_element(array[3].lhs,vec2);
+        scheduler::statement::assign_element(array[3].rhs,alpha);
+        scheduler::statement::assign_element(array[5].lhs,vec3);
+        scheduler::statement::assign_element(array[5].rhs,beta);
 
-        viennacl::ocl::packed_cl_uint size_vec1;
-        size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
-        size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
-        size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
-        size_vec1.internal_size   = cl_uint(viennacl::traits::internal_size(vec1));
-
-        viennacl::ocl::packed_cl_uint size_vec2;
-        size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
-        size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
-        size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
-        size_vec2.internal_size   = cl_uint(viennacl::traits::internal_size(vec2));
-
-        viennacl::ocl::packed_cl_uint size_vec3;
-        size_vec3.start  = cl_uint(viennacl::traits::start(vec3));
-        size_vec3.stride = cl_uint(viennacl::traits::stride(vec3));
-        size_vec3.size   = cl_uint(viennacl::traits::size(vec3));
-        size_vec3.internal_size   = cl_uint(viennacl::traits::internal_size(vec3));
-
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 size_vec1,
-
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<T>(alpha)),
-                                 options_alpha,
-                                 viennacl::traits::opencl_handle(vec2),
-                                 size_vec2,
-
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<T>(beta)),
-                                 options_beta,
-                                 viennacl::traits::opencl_handle(vec3),
-                                 size_vec3 )
-                              );
+        viennacl::device_specific::enqueue(device_specific::database::get(device_specific::database::axpy,NUMERIC_TYPE),
+                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           tmp);
       }
 
 

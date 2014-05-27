@@ -38,10 +38,10 @@ namespace viennacl{
       class mapped_object{
         protected:
           struct node_info{
-              node_info() : mapping(NULL), statement(NULL), root_node(NULL) { }
+              node_info() : mapping(NULL), statement(NULL), root_idx(0) { }
               mapping_type const * mapping;
               scheduler::statement const * statement;
-              scheduler::statement_node const * root_node;
+              unsigned int root_idx;
           };
           virtual std::string generate_default(std::pair<std::string, std::string> const & index) const = 0;
         public:
@@ -69,7 +69,7 @@ namespace viennacl{
           mapped_binary_leaf(std::string const & scalartype) : mapped_object(scalartype){ }
           mapping_type const & mapping() const { return *info_.mapping; }
           scheduler::statement const & statement() const { return *info_.statement; }
-          scheduler::statement_node const & root_node() const { return *info_.root_node; }
+          unsigned int root_idx() const { return info_.root_idx; }
           std::string generate_default(std::pair<std::string, std::string> const &) const { return "";}
         protected:
           node_info info_;
@@ -137,7 +137,7 @@ namespace viennacl{
           std::string simd_scalartype() const{
               std::string res = scalartype_;
               if(simd_width_ > 1)
-                  res+=utils::to_string(simd_width_);
+                  res+=tools::to_string(simd_width_);
               return res;
           }
 
@@ -166,7 +166,7 @@ namespace viennacl{
             if(already_generated.insert(name_).second){
               std::string vector_scalartype = scalartype_;
               if(simd_width_>1)
-                vector_scalartype+=utils::to_string(simd_width_);
+                vector_scalartype+=tools::to_string(simd_width_);
               str += generate_pointer_kernel_argument("__global", vector_scalartype, name_);
               append_optional_arguments(str);
             }
@@ -194,7 +194,7 @@ namespace viennacl{
           mapped_buffer(std::string const & scalartype) : mapped_handle(scalartype){ }
           virtual std::string evaluate(std::pair<std::string, std::string> const & index, int vector_element) const{
             if(vector_element>-1)
-              return mapped_object::evaluate(index, vector_element)+".s"+utils::to_string(vector_element);
+              return mapped_object::evaluate(index, vector_element)+".s"+tools::to_string(vector_element);
             return mapped_object::evaluate(index, vector_element);
           }
 
@@ -206,7 +206,7 @@ namespace viennacl{
           std::string offset(std::pair<std::string, std::string> const & index) const {
             if(info_.statement){
               std::string str;
-              tree_parsing::generate_all_rhs(*info_.statement, *info_.root_node, index, -1, str, *info_.mapping);
+              tree_parsing::generate_all_rhs(*info_.statement, info_.root_idx, index, -1, str, *info_.mapping);
               return str;
             }
             else

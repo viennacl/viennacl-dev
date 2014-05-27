@@ -36,16 +36,14 @@
 //#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_WITH_UBLAS
 
-#include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
-#include "viennacl/linalg/inner_prod.hpp"
-#include "viennacl/linalg/reduce.hpp"
+#include "viennacl/vector.hpp"
+//#include "viennacl/linalg/inner_prod.hpp"
+//#include "viennacl/linalg/reduce.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
-#include "viennacl/linalg/norm_1.hpp"
-#include "viennacl/linalg/norm_2.hpp"
-#include "viennacl/linalg/norm_inf.hpp"
-#include "viennacl/device_specific/profiles.hpp"
-#include "viennacl/device_specific/execute.hpp"
+//#include "viennacl/linalg/norm_1.hpp"
+//#include "viennacl/linalg/norm_2.hpp"
+//#include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/scheduler/io.hpp"
 
 
@@ -145,67 +143,76 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "w = x ..." << std::endl;
         cw = cx;
         viennacl::scheduler::statement statement(w, viennacl::op_assign(), x);
-        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
+        device_specific::execute(database::get(database::axpy, NUMERIC_TYPE), statement);
         viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x);
     }
 
-    {
-        std::cout << "w = x + y ..." << std::endl;
-        cw = cx + cy;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), x + y);
-        std::cout << statement << std::endl;
-        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = x + y);
-    }
+//    {
+//        std::cout << "w = -x ..." << std::endl;
+//        viennacl::scalar<NumericT> s0(1);
+//        cw =  -cx;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), -s0*x);
+//        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = -x);
+//    }
 
-    {
-        std::cout << "y = w + x ..." << std::endl;
-        cy = cw + cx;
-        viennacl::scheduler::statement statement(y, viennacl::op_assign(), w + x);
-        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cy, y, y = w + x);
-    }
+//    {
+//        std::cout << "w = x + y ..." << std::endl;
+//        cw = cx + cy;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), x + y);
+//        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = x + y);
+//    }
 
-    {
-        std::cout << "x = y + w ..." << std::endl;
-        cx = cy + cw;
-        viennacl::scheduler::statement statement(x, viennacl::op_assign(), y + w);
-        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cx, x, x = y + w);
-    }
+//    {
+//        std::cout << "y = w + x ..." << std::endl;
+//        cy = cw + cx;
+//        viennacl::scheduler::statement statement(y, viennacl::op_assign(), w + x);
+//        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cy, y, y = w + x);
+//    }
 
-    {
-        std::cout << "w = alpha*x + beta*y ..." << std::endl;
-        cw = alpha*cx + beta*cy;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
-        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
-    }
+//    {
+//        std::cout << "x = y + w ..." << std::endl;
+//        cx = cy + cw;
+//        viennacl::scheduler::statement statement(x, viennacl::op_assign(), y + w);
+//        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cx, x, x = y + w);
+//    }
 
-    {
-        std::cout << "w = exp(y) ..." << std::endl;
-        for(std::size_t i = 0 ; i < size ; ++i)
-          cw[i] = std::exp(y[i]);
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_exp(y));
-        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
-    }
+//    {
+//        std::cout << "w = alpha*x + beta*y ..." << std::endl;
+//        cw = alpha*cx + beta*cy;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
+//        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
 
-    {
-        std::cout << "w = element_prod(x,y) ..." << std::endl;
-        for(std::size_t i = 0 ; i < size ; ++i)
-          cw[i] = x[i]*y[i];
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_prod(x,y));
-        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = element_prod(x,y));
-    }
+//    {
+//        std::cout << "w = exp(y) ..." << std::endl;
+//        for(std::size_t i = 0 ; i < size ; ++i)
+//          cw[i] = std::exp(y[i]);
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_exp(y));
+//        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
+
+//    {
+//        std::cout << "w = element_prod(x,y) ..." << std::endl;
+//        for(std::size_t i = 0 ; i < size ; ++i)
+//          cw[i] = x[i]*y[i];
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_prod(x,y));
+//        device_specific::execute(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = element_prod(x,y));
+//    }
 
 //    {
 //        std::cout << "w = x == x" << std::endl;
@@ -295,25 +302,25 @@ int test_vector ( Epsilon const& epsilon) {
 //        CHECK_RESULT(s, gs, s = inner_prod(x,y));
 //    }
 
-    {
-        std::cout << "s = reduce<add>(x)..." << std::endl;
-        s = 0;
-        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i];
-        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_add>(x));
-        device_specific::execute(profiles::get(REDUCTION_TYPE, NUMERIC_TYPE), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(s, gs, s = reduce<add>(x));
-    }
+//    {
+//        std::cout << "s = reduce<add>(x)..." << std::endl;
+//        s = 0;
+//        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i];
+//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_add>(x));
+//        device_specific::execute(profiles::get(REDUCTION_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(s, gs, s = reduce<add>(x));
+//    }
 
-    {
-        std::cout << "s = reduce<fmax>(x)..." << std::endl;
-        s = cx[0];
-        for(unsigned int i=1 ; i<size ; ++i)  s=std::max(s,cx[i]);
-        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_element_binary<viennacl::op_fmax> >(x));
-        device_specific::execute(profiles::get(REDUCTION_TYPE, NUMERIC_TYPE), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(s, gs, s = reduce<mult>(x));
-    }
+//    {
+//        std::cout << "s = reduce<fmax>(x)..." << std::endl;
+//        s = cx[0];
+//        for(unsigned int i=1 ; i<size ; ++i)  s=std::max(s,cx[i]);
+//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_element_binary<viennacl::op_fmax> >(x));
+//        device_specific::execute(profiles::get(REDUCTION_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(s, gs, s = reduce<mult>(x));
+//    }
 
     return retval;
 }

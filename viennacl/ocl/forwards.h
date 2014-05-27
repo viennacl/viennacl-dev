@@ -24,6 +24,7 @@
 
 #define VIENNACL_OCL_MAX_DEVICE_NUM  8
 
+#include "CL/cl.h"
 #include <stddef.h>
 
 namespace viennacl
@@ -55,6 +56,28 @@ namespace viennacl
 
     inline viennacl::ocl::context & current_context();
     inline viennacl::ocl::device const & current_device();
+
+    static const cl_uint intel_id = 32902;
+    static const cl_uint nvidia_id = 4318;
+    static const cl_uint amd_id = 4098;
+    static const cl_uint unknown_id = 0;
+
+    //Architecture Family
+    enum device_architecture_family{
+      //NVidia
+      Tesla,
+      Fermi,
+      Kepler,
+
+      //AMD
+      Evergreen,
+      NorthernIslands,
+      SouthernIslands,
+      VolcanicIslands,
+
+      UNKNOWN
+    };
+
   }
 } //namespace viennacl
 

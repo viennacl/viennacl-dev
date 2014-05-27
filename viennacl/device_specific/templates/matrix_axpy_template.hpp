@@ -63,9 +63,9 @@ namespace viennacl{
         k.global_work_size(0,local_size_0_*num_groups_0_);
         k.global_work_size(1,local_size_1_*num_groups_1_);
 
-        scheduler::statement_node const & first_node = statements_->front().second;
-        k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::internal_size1_fun())));
-        k.arg(n_arg++, cl_uint(utils::call_on_matrix(first_node.lhs, utils::internal_size2_fun())));
+        scheduler::statement_node const & root = statements_->front().first.array()[statements_->front().second];
+        k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size1_fun())));
+        k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size2_fun())));
       }
 
       virtual void add_kernel_arguments(std::string & arguments_string) const{

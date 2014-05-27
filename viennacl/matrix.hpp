@@ -46,7 +46,7 @@ namespace viennacl
   {
     protected:
       typedef vcl_size_t        size_type;
-      implicit_matrix_base(size_type size1, size_type size2, std::pair<SCALARTYPE, bool> value, bool diag) : size1_(size1), size2_(size2), value_(value), diag_(diag){ }
+      implicit_matrix_base(size_type size1, size_type size2, SCALARTYPE value, bool diag) : size1_(size1), size2_(size2), value_(value), diag_(diag){ }
     public:
       typedef SCALARTYPE const & const_reference;
       typedef SCALARTYPE cpu_value_type;
@@ -54,19 +54,18 @@ namespace viennacl
       size_type size1() const { return size1_; }
       size_type size2() const { return size2_; }
 
-      SCALARTYPE  value() const { return value_.first; }
-      bool is_value_static( ) const { return value_.second; }
+      SCALARTYPE  value() const { return value_; }
       bool diag() const { return diag_; }
 
       const_reference operator()(size_type i, size_type j) const {
-        if(diag_) return (i == j) ? value_.first : 0;
-        return value_.first;
+        if(diag_) return (i == j) ? value_ : 0;
+        return value_;
       }
 
     protected:
       size_type size1_;
       size_type size2_;
-      std::pair<SCALARTYPE, bool> value_;
+      SCALARTYPE value_;
       bool diag_;
   };
 

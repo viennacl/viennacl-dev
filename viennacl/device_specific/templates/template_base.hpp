@@ -65,7 +65,7 @@ namespace viennacl{
               tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
         }
 
-        virtual void init(std::pair<scheduler::statement, scheduler::statement_node> const &, mapping_type & mapping)
+        virtual void init(std::pair<scheduler::statement, unsigned int> const &, mapping_type & mapping)
         {
           for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
               if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))

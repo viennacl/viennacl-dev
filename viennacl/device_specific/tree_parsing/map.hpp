@@ -26,6 +26,7 @@
 #include <set>
 
 #include "viennacl/forwards.h"
+
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/scheduler/io.hpp"
 #include "viennacl/device_specific/forwards.h"
@@ -37,7 +38,10 @@
 #include "viennacl/device_specific/utils.hpp"
 #include "viennacl/device_specific/mapped_objects.hpp"
 
+#include "viennacl/traits/row_major.hpp"
+
 namespace viennacl{
+
 
   namespace device_specific{
 
@@ -47,14 +51,15 @@ namespace viennacl{
       class map_functor : public traversal_functor{
           std::string create_name(unsigned int & current_arg, std::map<void *, unsigned int> & memory, void * handle) const{
             if(handle==NULL)
-              return "arg" + utils::to_string(current_arg_++);
+              return "arg" + tools::to_string(current_arg_++);
             if(memory.insert(std::make_pair(handle, current_arg)).second)
-              return "arg" + utils::to_string(current_arg_++);
+              return "arg" + tools::to_string(current_arg_++);
             else
-              return "arg" + utils::to_string(memory.at(handle));
+              return "arg" + tools::to_string(memory.at(handle));
           }
 
-          scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, scheduler::statement_node const * root_node) const {
+          scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, unsigned int root_idx) const {
+              scheduler::statement_node const * root_node = &statement->array()[root_idx];
               while(root_node->lhs.numeric_type==scheduler::INVALID_NUMERIC_TYPE)
                   root_node = &statement->array()[root_node->lhs.node_index];
               return root_node->lhs.numeric_type;
@@ -67,14 +72,11 @@ namespace viennacl{
 
           /** @brief Binary leaf */
           template<class T>
-          result_type structurewise_function(scheduler::statement const * statement, scheduler::statement_node const * root_node, mapping_type const * mapping) const {
-
-            T * p = new T(utils::numeric_type_to_string(numeric_type(statement,root_node)));
-
+          result_type structurewise_function(scheduler::statement const * statement, unsigned int root_idx, mapping_type const * mapping) const {
+            T * p = new T(utils::numeric_type_to_string(numeric_type(statement,root_idx)));
             p->info_.statement = statement;
-            p->info_.root_node = root_node;
+            p->info_.root_idx = root_idx;
             p->info_.mapping = mapping;
-
             return container_ptr_type(p);
           }
 
@@ -105,13 +107,9 @@ namespace viennacl{
 
           /** @brief Implicit vector mapping */
           template<class ScalarType>
-          result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
+          result_type operator()(implicit_vector_base<ScalarType> const &) const {
             mapped_implicit_vector * p = new mapped_implicit_vector(utils::type_to_string<ScalarType>::value());
-
-            if(vec.is_value_static()==false)
-              p->value_name_ = create_name(current_arg_, memory_, NULL);
-            if(vec.has_index())
-              p->value_name_ = create_name(current_arg_, memory_, NULL);
+            p->value_name_ = create_name(current_arg_, memory_, NULL);
             return container_ptr_type(p);
           }
 
@@ -121,7 +119,7 @@ namespace viennacl{
             mapped_matrix * p = new mapped_matrix(utils::type_to_string<ScalarType>::value());
             p->name_ = create_name(current_arg_, memory_, (void*)&mat);
             p->ld_name_ = p->name_ + "_ld";
-            p->interpret_as_transposed_ = static_cast<bool>(mat.row_major());
+            p->interpret_as_transposed_ = viennacl::traits::row_major(mat);
             p->start1_name_ = p->name_ +"_start1";
             p->stride1_name_ = p->name_ + "_stride1";
             p->start2_name_ = p->name_ +"_start2";
@@ -131,32 +129,31 @@ namespace viennacl{
 
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
-          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
+          result_type operator()(implicit_matrix_base<ScalarType> const &) const {
             mapped_implicit_matrix * p = new mapped_implicit_matrix(utils::type_to_string<ScalarType>::value());
-
-            if(mat.is_value_static()==false)
-              p->value_name_ = create_name(current_arg_, memory_, NULL);
-
+            p->value_name_ = create_name(current_arg_, memory_, NULL);
             return container_ptr_type(p);
           }
 
           /** @brief Traversal functor */
-          void operator()(scheduler::statement const * statement, scheduler::statement_node const * root_node, node_type node_type) const {
-            key_type key(root_node, node_type);
-            if(node_type == LHS_NODE_TYPE && root_node->lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
-                 mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node->lhs, *this)));
-            else if(node_type == RHS_NODE_TYPE && root_node->rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
-                 mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node->rhs, *this)));
+          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
+            typename mapping_type::key_type key(root_idx, node_type);
+            scheduler::statement_node const & root_node = statement.array()[root_idx];
+
+            if(node_type == LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+                 mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this)));
+            else if(node_type == RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+                 mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node.rhs, *this)));
             else if( node_type== PARENT_NODE_TYPE){
-                if(is_scalar_reduction(*root_node))
-                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_scalar_reduction>(statement, root_node, &mapping_)));
-                else if(is_vector_reduction(*root_node))
-                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_vector_reduction>(statement, root_node, &mapping_)));
-                else if(root_node->op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_matrix_product>(statement, root_node, &mapping_)));
-                else if(root_node->op.type == scheduler::OPERATION_UNARY_TRANS_TYPE){
+                if(is_scalar_reduction(root_node))
+                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_scalar_reduction>(&statement, root_idx, &mapping_)));
+                else if(is_vector_reduction(root_node))
+                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_vector_reduction>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_matrix_product>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE){
                   key.second = tree_parsing::LHS_NODE_TYPE;
-                  mapping_type::iterator it = mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node->lhs, *this))).first;
+                  mapping_type::iterator it = mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this))).first;
                   ((mapped_matrix *)it->second.get())->interpret_as_transposed_ = !((mapped_matrix *)it->second.get())->interpret_as_transposed();
                 }
            }

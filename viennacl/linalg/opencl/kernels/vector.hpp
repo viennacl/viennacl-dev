@@ -3,11 +3,12 @@
 
 #include "viennacl/tools/tools.hpp"
 
-#include "viennacl/device_specific/profiles.hpp"
+#include "viennacl/device_specific/database.hpp"
 #include "viennacl/device_specific/generate.hpp"
 
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/scheduler/io.hpp"
+#include "viennacl/scheduler/preset.hpp"
 
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/platform.hpp"
@@ -25,252 +26,6 @@ namespace viennacl
       {
 
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
-
-        /** @brief Enumeration for the scalar type in avbv-like operations */
-        enum avbv_scalar_type
-        {
-          VIENNACL_AVBV_NONE = 0, // vector does not exist/contribute
-          VIENNACL_AVBV_CPU,
-          VIENNACL_AVBV_GPU
-        };
-
-        /** @brief Configuration struct for generating OpenCL kernels for linear combinations of vectors */
-        struct avbv_config
-        {
-          avbv_config() : with_stride_and_range(true), a(VIENNACL_AVBV_CPU), b(VIENNACL_AVBV_NONE) {}
-
-          bool with_stride_and_range;
-          std::string      assign_op;
-          avbv_scalar_type a;
-          avbv_scalar_type b;
-        };
-
-        // just returns the for-loop
-        template <typename StringType>
-        void generate_avbv_impl2(StringType & source, std::string const & /*numeric_string*/, avbv_config const & cfg, bool mult_alpha, bool mult_beta)
-        {
-          source.append("    for (unsigned int i = get_global_id(0); i < size1.z; i += get_global_size(0)) \n");
-          if (cfg.with_stride_and_range)
-          {
-            source.append("      vec1[i*size1.y+size1.x] "); source.append(cfg.assign_op); source.append(" vec2[i*size2.y+size2.x] ");
-            if (mult_alpha)
-              source.append("* alpha ");
-            else
-              source.append("/ alpha ");
-            if (cfg.b != VIENNACL_AVBV_NONE)
-            {
-              source.append("+ vec3[i*size3.y+size3.x] ");
-              if (mult_beta)
-                source.append("* beta");
-              else
-                source.append("/ beta");
-            }
-          }
-          else
-          {
-            source.append("    vec1[i] "); source.append(cfg.assign_op); source.append(" vec2[i] ");
-            if (mult_alpha)
-              source.append("* alpha ");
-            else
-              source.append("/ alpha ");
-            if (cfg.b != VIENNACL_AVBV_NONE)
-            {
-              source.append("+ vec3[i] ");
-              if (mult_beta)
-                source.append("* beta");
-              else
-                source.append("/ beta");
-            }
-          }
-          source.append("; \n");
-        }
-
-        template <typename StringType>
-        void generate_avbv_impl(StringType & source, scheduler::statement_node_numeric_type const & NUMERIC_TYPE,
-                                scheduler::statement_node_subtype const & A_TYPE,
-                                scheduler::statement_node_subtype const & B_TYPE,
-                                std::string const & kernel_prefix_name)
-        {
-          using namespace scheduler;
-          using namespace device_specific;
-
-          //Hardcoded statement. Don't instantiate templates to save compilation time
-          viennacl::scheduler::statement::container_type array(4);
-
-          //0
-          array[0].lhs.type_family = VECTOR_TYPE_FAMILY;
-          array[0].lhs.subtype = DENSE_VECTOR_TYPE;
-          array[0].lhs.numeric_type = NUMERIC_TYPE;
-
-          array[0].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-          array[0].op.type = OPERATION_BINARY_ASSIGN_TYPE;
-
-          array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-          array[0].rhs.node_index = 1;
-
-          //1
-          array[1].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
-          array[1].lhs.node_index = 2;
-
-          array[1].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-          array[1].op.type = OPERATION_BINARY_ADD_TYPE;
-
-          array[1].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-          array[1].rhs.node_index = 3;
-
-          //2
-          array[2].lhs.type_family = SCALAR_TYPE_FAMILY;
-          array[2].lhs.subtype = A_TYPE;
-          array[2].lhs.numeric_type = NUMERIC_TYPE;
-
-          array[2].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-          array[2].op.type = OPERATION_BINARY_MULT_TYPE;
-
-          array[2].rhs.type_family = VECTOR_TYPE_FAMILY;
-          array[2].rhs.subtype = DENSE_VECTOR_TYPE;
-          array[2].rhs.numeric_type = NUMERIC_TYPE;
-
-          //3
-          array[3].lhs.type_family = SCALAR_TYPE_FAMILY;
-          array[3].lhs.subtype = B_TYPE;
-          array[3].lhs.numeric_type = NUMERIC_TYPE;
-
-          array[3].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-          array[3].op.type = OPERATION_BINARY_MULT_TYPE;
-
-          array[3].rhs.type_family = VECTOR_TYPE_FAMILY;
-          array[3].rhs.subtype = DENSE_VECTOR_TYPE;
-          array[3].rhs.numeric_type = NUMERIC_TYPE;
-
-          statements_container avbv(1, std::make_pair(statement(array), array[0]));
-          source.append(generate::opencl_source(profiles::get(VECTOR_AXPY_TYPE, NUMERIC_TYPE), avbv, kernel_prefix_name));
-
-
-          source.append("__kernel void av");
-          if (cfg.b != VIENNACL_AVBV_NONE)
-            source.append("bv");
-          if (cfg.assign_op != "=")
-            source.append("_v");
-
-          if (cfg.a == VIENNACL_AVBV_CPU)
-            source.append("_cpu");
-          else if (cfg.a == VIENNACL_AVBV_GPU)
-            source.append("_gpu");
-
-          if (cfg.b == VIENNACL_AVBV_CPU)
-            source.append("_cpu");
-          else if (cfg.b == VIENNACL_AVBV_GPU)
-            source.append("_gpu");
-          source.append("( \n");
-          source.append("  __global "); source.append(numeric_string); source.append(" * vec1, \n");
-          source.append("  uint4 size1, \n");
-          source.append(" \n");
-          if (cfg.a == VIENNACL_AVBV_CPU)
-          {
-            source.append("  "); source.append(numeric_string); source.append(" fac2, \n");
-          }
-          else if (cfg.a == VIENNACL_AVBV_GPU)
-          {
-            source.append("  __global "); source.append(numeric_string); source.append(" * fac2, \n");
-          }
-          source.append("  unsigned int options2, \n");  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
-          source.append("  __global const "); source.append(numeric_string); source.append(" * vec2, \n");
-          source.append("  uint4 size2");
-
-          if (cfg.b != VIENNACL_AVBV_NONE)
-          {
-            source.append(", \n\n");
-            if (cfg.b == VIENNACL_AVBV_CPU)
-            {
-              source.append("  "); source.append(numeric_string); source.append(" fac3, \n");
-            }
-            else if (cfg.b == VIENNACL_AVBV_GPU)
-            {
-              source.append("  __global "); source.append(numeric_string); source.append(" * fac3, \n");
-            }
-            source.append("  unsigned int options3, \n");  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
-            source.append("  __global const "); source.append(numeric_string); source.append(" * vec3, \n");
-            source.append("  uint4 size3 \n");
-          }
-          source.append(") { \n");
-
-          if (cfg.a == VIENNACL_AVBV_CPU)
-          {
-            source.append("  "); source.append(numeric_string); source.append(" alpha = fac2; \n");
-          }
-          else if (cfg.a == VIENNACL_AVBV_GPU)
-          {
-            source.append("  "); source.append(numeric_string); source.append(" alpha = fac2[0]; \n");
-          }
-          source.append("  if (options2 & (1 << 0)) \n");
-          source.append("    alpha = -alpha; \n");
-          source.append(" \n");
-
-          if (cfg.b == VIENNACL_AVBV_CPU)
-          {
-            source.append("  "); source.append(numeric_string); source.append(" beta = fac3; \n");
-          }
-          else if (cfg.b == VIENNACL_AVBV_GPU)
-          {
-            source.append("  "); source.append(numeric_string); source.append(" beta = fac3[0]; \n");
-          }
-          if (cfg.b != VIENNACL_AVBV_NONE)
-          {
-            source.append("  if (options3 & (1 << 0)) \n");
-            source.append("    beta = -beta; \n");
-            source.append(" \n");
-          }
-          source.append("  if (options2 & (1 << 1)) { \n");
-          if (cfg.b != VIENNACL_AVBV_NONE)
-          {
-            source.append("    if (options3 & (1 << 1)) {\n");
-            generate_avbv_impl2(source, numeric_string, cfg, false, false);
-            source.append("    } else {\n");
-            generate_avbv_impl2(source, numeric_string, cfg, false, true);
-            source.append("    } \n");
-          }
-          else
-            generate_avbv_impl2(source, numeric_string, cfg, false, true);
-          source.append("  } else { \n");
-          if (cfg.b != VIENNACL_AVBV_NONE)
-          {
-            source.append("    if (options3 & (1 << 1)) {\n");
-            generate_avbv_impl2(source, numeric_string, cfg, true, false);
-            source.append("    } else {\n");
-            generate_avbv_impl2(source, numeric_string, cfg, true, true);
-            source.append("    } \n");
-          }
-          else
-            generate_avbv_impl2(source, numeric_string, cfg, true, true);
-          source.append("  } \n");
-          source.append("} \n");
-        }
-
-        template <typename StringType>
-        void generate_avbv(StringType & source, std::string const & numeric_string)
-        {
-          avbv_config cfg;
-          cfg.assign_op = "=";
-          cfg.with_stride_and_range = true;
-
-          // av
-          cfg.b = VIENNACL_AVBV_NONE; cfg.a = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
-          cfg.b = VIENNACL_AVBV_NONE; cfg.a = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
-
-          // avbv
-          cfg.a = VIENNACL_AVBV_CPU; cfg.b = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
-          cfg.a = VIENNACL_AVBV_CPU; cfg.b = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
-          cfg.a = VIENNACL_AVBV_GPU; cfg.b = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
-          cfg.a = VIENNACL_AVBV_GPU; cfg.b = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
-
-          // avbv
-          cfg.assign_op = "+=";
-
-          cfg.a = VIENNACL_AVBV_CPU; cfg.b = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
-          cfg.a = VIENNACL_AVBV_CPU; cfg.b = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
-          cfg.a = VIENNACL_AVBV_GPU; cfg.b = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
-          cfg.a = VIENNACL_AVBV_GPU; cfg.b = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
-        }
 
         template <typename StringType>
         void generate_plane_rotation(StringType & source, std::string const & numeric_string)
@@ -657,6 +412,104 @@ namespace viennacl
         }
 
 
+        inline void generate_avbv(std::string & source, device_specific::template_base & axpy, scheduler::statement_node_numeric_type NUMERIC_TYPE)
+        {
+          using device_specific::generate::opencl_source;
+          using scheduler::HOST_SCALAR_TYPE;
+          using scheduler::DEVICE_SCALAR_TYPE;
+          using scheduler::INVALID_SUBTYPE;
+
+          //av
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, INVALID_SUBTYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, INVALID_SUBTYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, INVALID_SUBTYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, INVALID_SUBTYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, INVALID_SUBTYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, INVALID_SUBTYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, INVALID_SUBTYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, INVALID_SUBTYPE, false, false)));
+
+          //avbv
+
+          // b = HOST
+
+          // b = no flip, no reciprocal
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, HOST_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, HOST_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, HOST_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, HOST_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, HOST_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, HOST_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, HOST_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, HOST_SCALAR_TYPE, false, false)));
+          // b = flip, no reciprocal
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, HOST_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, HOST_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, HOST_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, HOST_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, HOST_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, HOST_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, HOST_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, HOST_SCALAR_TYPE, true, false)));
+          // b = no flip, reciprocal
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, HOST_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, HOST_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, HOST_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, HOST_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, HOST_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, HOST_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, HOST_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, HOST_SCALAR_TYPE, false, true)));
+          // b = flip, reciprocal
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, HOST_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, HOST_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, HOST_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, HOST_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, HOST_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, HOST_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, HOST_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, HOST_SCALAR_TYPE, true, true)));
+
+          // b = DEVICE
+
+          // b = no flip, no reciprocal
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, DEVICE_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, DEVICE_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, DEVICE_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, DEVICE_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, DEVICE_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, DEVICE_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, DEVICE_SCALAR_TYPE, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, DEVICE_SCALAR_TYPE, false, false)));
+          // b = flip, no reciprocal
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, DEVICE_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, DEVICE_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, DEVICE_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, DEVICE_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, DEVICE_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, DEVICE_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, DEVICE_SCALAR_TYPE, true, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, DEVICE_SCALAR_TYPE, true, false)));
+          // b = no flip, reciprocal
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, DEVICE_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, DEVICE_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, DEVICE_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, DEVICE_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, DEVICE_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, DEVICE_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, DEVICE_SCALAR_TYPE, false, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, DEVICE_SCALAR_TYPE, false, true)));
+          // b = flip, reciprocal
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, false, DEVICE_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, false, DEVICE_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, false, true, DEVICE_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, HOST_SCALAR_TYPE, true, true, DEVICE_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, false, DEVICE_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, false, DEVICE_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, false, true, DEVICE_SCALAR_TYPE, true, true)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(NUMERIC_TYPE, DEVICE_SCALAR_TYPE, true, true, DEVICE_SCALAR_TYPE, true, true)));
+        }
+
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         // main kernel class
@@ -673,6 +526,7 @@ namespace viennacl
           {
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
             std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
+            scheduler::statement_node_numeric_type NUMERIC_TYPE = scheduler::statement_node_numeric_type(scheduler::result_of::numeric_type_id<TYPE>::value);
 
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
@@ -682,8 +536,7 @@ namespace viennacl
 
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
-              // fully parametrized kernels:
-              generate_avbv(source, numeric_string);
+              generate_avbv(source, device_specific::database::get(device_specific::database::axpy, NUMERIC_TYPE), NUMERIC_TYPE);
 
               // kernels with mostly predetermined skeleton:
               generate_plane_rotation(source, numeric_string);

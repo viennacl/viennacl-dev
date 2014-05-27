@@ -47,95 +47,62 @@ namespace viennacl
   class implicit_vector_base
   {
     protected:
-      typedef vcl_size_t        size_type;
-      implicit_vector_base(size_type s, vcl_size_t i, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(true,i)), value_(v), ctx_(ctx){ }
-      implicit_vector_base(size_type s, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(false,0)), value_(v), ctx_(ctx){ }
+      implicit_vector_base(vcl_size_t s, vcl_size_t i, SCALARTYPE v, viennacl::context ctx) : size_(s), index_(std::make_pair(true,i)), value_(v), ctx_(ctx){ }
+      implicit_vector_base(vcl_size_t s, SCALARTYPE v, viennacl::context ctx) : size_(s), index_(std::make_pair(false,0)), value_(v), ctx_(ctx){ }
 
     public:
       typedef SCALARTYPE const & const_reference;
       typedef SCALARTYPE cpu_value_type;
 
       viennacl::context context() const { return ctx_; }
-
-      size_type size() const { return size_; }
-
-      cpu_value_type  value() const { return value_.first; }
-
-      bool is_value_static() const { return value_.second; }
-
+      vcl_size_t size() const { return size_; }
+      cpu_value_type  value() const { return value_; }
       vcl_size_t index() const { return index_.second; }
-
       bool has_index() const { return index_.first; }
 
-      cpu_value_type operator()(size_type i) const {
+      cpu_value_type operator()(vcl_size_t i) const {
         if(index_.first)
-          return (i==index_.second)?value_.first:0;
-        return value_.first;
+          return (i==index_.second)?value_:0;
+        return value_;
       }
 
-      cpu_value_type operator[](size_type i) const {
+      cpu_value_type operator[](vcl_size_t i) const {
         if(index_.first)
-          return (i==index_.second)?value_.first:0;
+          return (i==index_.second)?value_:0;
         return
-            value_.first;
+            value_;
       }
 
     protected:
-      size_type size_;
+      vcl_size_t size_;
       std::pair<bool, vcl_size_t> index_;
-      std::pair<SCALARTYPE, bool> value_;
+      SCALARTYPE value_;
       viennacl::context ctx_;
   };
 
   /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise.*/
   template <typename SCALARTYPE>
-  class unit_vector : public implicit_vector_base<SCALARTYPE>
+  struct unit_vector : public implicit_vector_base<SCALARTYPE>
   {
-      typedef implicit_vector_base<SCALARTYPE> base_type;
-    public:
-      typedef typename base_type::size_type size_type;
-      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : base_type(s, ind, std::make_pair(SCALARTYPE(1),true), ctx)
+      unit_vector(vcl_size_t s, vcl_size_t ind, viennacl::context ctx = viennacl::context()) : implicit_vector_base<SCALARTYPE>(s, ind, ctx)
       {
         assert( (ind < s) && bool("Provided index out of range!") );
       }
   };
 
 
-  /** @brief Represents a vector consisting of zeros only. */
-  template <typename SCALARTYPE>
-  class zero_vector : public implicit_vector_base<SCALARTYPE>
-  {
-      typedef implicit_vector_base<SCALARTYPE> base_type;
-    public:
-      typedef typename base_type::size_type size_type;
-      typedef SCALARTYPE        const_reference;
-      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(SCALARTYPE(0),true), ctx) {}
-  };
-
-  /** @brief Represents a vector consisting of ones only. */
-  template <typename SCALARTYPE>
-  class one_vector : public implicit_vector_base<SCALARTYPE>
-  {
-      typedef implicit_vector_base<SCALARTYPE> base_type;
-    public:
-      typedef typename base_type::size_type size_type;
-      typedef SCALARTYPE        const_reference;
-      one_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(SCALARTYPE(1),true), ctx) {}
-  };
-
-
   /** @brief Represents a vector consisting of scalars 's' only, i.e. v[i] = s for all i. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
   template <typename SCALARTYPE>
-  class scalar_vector : public implicit_vector_base<SCALARTYPE>
+  struct scalar_vector : public implicit_vector_base<SCALARTYPE>
   {
-      typedef implicit_vector_base<SCALARTYPE> base_type;
-    public:
-      typedef typename base_type::size_type size_type;
-      typedef SCALARTYPE const & const_reference;
-
-      scalar_vector(size_type s, SCALARTYPE val, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(val,false), ctx) {}
+    scalar_vector(vcl_size_t s, SCALARTYPE val, viennacl::context ctx = viennacl::context()) : implicit_vector_base<SCALARTYPE>(s, val, ctx) {}
   };
 
+  template <typename SCALARTYPE>
+  struct zero_vector : public scalar_vector<SCALARTYPE>
+  {
+    zero_vector(vcl_size_t s, viennacl::context ctx = viennacl::context()) : scalar_vector<SCALARTYPE>(s, 0, ctx){}
+  };
 
 //#ifdef VIENNACL_WITH_OPENCL
 //  template<class SCALARTYPE, class DISTRIBUTION>

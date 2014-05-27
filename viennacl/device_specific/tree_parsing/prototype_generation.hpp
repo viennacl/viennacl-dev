@@ -50,10 +50,11 @@ namespace viennacl{
         public:
           prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping) : already_generated_(already_generated), str_(str),  mapping_(mapping){ }
 
-          void operator()(scheduler::statement const *, scheduler::statement_node const * root_node, node_type node_type) const {
-              if( (node_type==LHS_NODE_TYPE && root_node->lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                ||(node_type==RHS_NODE_TYPE && root_node->rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
-                  append_kernel_arguments(already_generated_, str_, *mapping_.at(std::make_pair(root_node,node_type)));
+          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
+              scheduler::statement_node const & root_node = statement.array()[root_idx];
+              if( (node_type==LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                ||(node_type==RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
+                  append_kernel_arguments(already_generated_, str_, *mapping_.at(std::make_pair(root_idx,node_type)));
           }
       };
 
