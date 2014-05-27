@@ -206,7 +206,7 @@ namespace viennacl
       detail::sha1 sha1;
       sha1.processBytes(src.c_str(),src.size());
 
-      u_int32_t hash[5];
+      uint32_t hash[5];
       sha1.getDigest(hash);
 
       std::ostringstream oss;
