@@ -486,7 +486,8 @@ namespace viennacl
         size_type root() const { return 0; }
 
         ///////////// Scalar node helper ////////////////
-        /// Public because they can be useful for custom statements
+        /// Public because they can be useful for presets
+        /// Probably can be made back private once the scheduler is fully integrated
         ////////////////////////////////////////////////
 
         // TODO: add integer vector overloads here
@@ -519,11 +520,9 @@ namespace viennacl
         static void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<float>  const & m) { elem.hyb_matrix_float  = const_cast<viennacl::hyb_matrix<float>  *>(&m); }
         static void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<double> const & m) { elem.hyb_matrix_double = const_cast<viennacl::hyb_matrix<double> *>(&m); }
 
-      private:
-
         //////////// Tree leaves (terminals) ////////////////////
 
-        vcl_size_t add_element(vcl_size_t       next_free,
+        static vcl_size_t add_element(vcl_size_t       next_free,
                                 lhs_rhs_element & elem,
                                 float const &     t)
         {
@@ -534,7 +533,7 @@ namespace viennacl
           return next_free;
         }
 
-        vcl_size_t add_element(vcl_size_t       next_free,
+        static vcl_size_t add_element(vcl_size_t       next_free,
                                 lhs_rhs_element & elem,
                                 double const &    t)
         {
@@ -546,7 +545,7 @@ namespace viennacl
         }
 
         template <typename T>
-        vcl_size_t add_element(vcl_size_t next_free,
+        static vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element            & elem,
                                 viennacl::scalar<T> const & t)
         {
@@ -559,7 +558,7 @@ namespace viennacl
 
 
         template <typename T>
-        vcl_size_t add_element(vcl_size_t next_free,
+        static vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element            & elem,
                                 viennacl::vector_base<T> const & t)
         {
@@ -571,7 +570,7 @@ namespace viennacl
         }
 
         template <typename T>
-        vcl_size_t add_element(vcl_size_t next_free,
+        static vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element            & elem,
                                 viennacl::matrix_base<T> const & t)
         {
@@ -583,7 +582,7 @@ namespace viennacl
         }
 
         template <typename T>
-        vcl_size_t add_element(vcl_size_t next_free,
+        static vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element            & elem,
                                 viennacl::compressed_matrix<T> const & t)
         {
@@ -595,7 +594,7 @@ namespace viennacl
         }
 
         template <typename T>
-        vcl_size_t add_element(vcl_size_t next_free,
+        static vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element            & elem,
                                 viennacl::coordinate_matrix<T> const & t)
         {
@@ -607,7 +606,7 @@ namespace viennacl
         }
 
         template <typename T>
-        vcl_size_t add_element(vcl_size_t next_free,
+        static vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element            & elem,
                                 viennacl::ell_matrix<T> const & t)
         {
@@ -619,7 +618,7 @@ namespace viennacl
         }
 
         template <typename T>
-        vcl_size_t add_element(vcl_size_t next_free,
+        static vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element            & elem,
                                 viennacl::hyb_matrix<T> const & t)
         {
@@ -634,7 +633,7 @@ namespace viennacl
         //////////// Tree nodes (non-terminals) ////////////////////
 
         template <typename LHS, typename RHS, typename OP>
-        vcl_size_t add_element(vcl_size_t       next_free,
+        static vcl_size_t add_element(vcl_size_t       next_free,
                                 lhs_rhs_element & elem,
                                 viennacl::scalar_expression<LHS, RHS, OP> const & t)
         {
@@ -646,7 +645,7 @@ namespace viennacl
         }
 
         template <typename LHS, typename RHS, typename OP>
-        vcl_size_t add_element(vcl_size_t       next_free,
+        static vcl_size_t add_element(vcl_size_t       next_free,
                                 lhs_rhs_element & elem,
                                 viennacl::vector_expression<LHS, RHS, OP> const & t)
         {
@@ -658,7 +657,7 @@ namespace viennacl
         }
 
         template <typename LHS, typename RHS, typename OP>
-        vcl_size_t add_element(vcl_size_t next_free,
+        static vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element & elem,
                                 viennacl::matrix_expression<LHS, RHS, OP> const & t)
         {
@@ -669,6 +668,7 @@ namespace viennacl
           return add_node(next_free, next_free + 1, t);
         }
 
+    private:
 
         //////////// Helper routines ////////////////////
 

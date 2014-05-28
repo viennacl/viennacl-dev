@@ -30,7 +30,6 @@
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/generate.hpp"
-#include "viennacl/device_specific/profiles.hpp"
 
 #include "viennacl/device_specific/tree_parsing/statement_representation.hpp"
 #include "viennacl/device_specific/tree_parsing/set_arguments.hpp"

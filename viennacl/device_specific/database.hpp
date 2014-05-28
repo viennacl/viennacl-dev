@@ -59,8 +59,10 @@ namespace viennacl{
       }
 
       /** @brief Get the profile for a device and a descriptor */
-      static template_base & get(database_type & database, scheduler::statement_node_numeric_type numeric_type){
+      template<class T>
+      static template_base & get(database_type & database){
         viennacl::ocl::device const & device = viennacl::ocl::current_device();
+        scheduler::statement_node_numeric_type numeric_type = scheduler::statement_node_numeric_type(scheduler::result_of::numeric_type_id<T>::value);
 
         device_type dev_type = device.type();
         vendor_id_type vendor_id = device.vendor_id();

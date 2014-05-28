@@ -84,7 +84,7 @@ namespace viennacl
   template <typename SCALARTYPE>
   struct unit_vector : public implicit_vector_base<SCALARTYPE>
   {
-      unit_vector(vcl_size_t s, vcl_size_t ind, viennacl::context ctx = viennacl::context()) : implicit_vector_base<SCALARTYPE>(s, ind, ctx)
+      unit_vector(vcl_size_t s, vcl_size_t ind, viennacl::context ctx = viennacl::context()) : implicit_vector_base<SCALARTYPE>(s, ind, 1, ctx)
       {
         assert( (ind < s) && bool("Provided index out of range!") );
       }
