@@ -31,6 +31,7 @@
 #include "viennacl/device_specific/mapped_objects.hpp"
 #include "viennacl/device_specific/tree_parsing/fetch.hpp"
 #include "viennacl/device_specific/tree_parsing/elementwise_expression.hpp"
+#include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/utils.hpp"
 
 #include "viennacl/device_specific/templates/template_base.hpp"
@@ -48,13 +49,13 @@ namespace viennacl{
                    unsigned int group_size, unsigned int num_groups,
                    unsigned int decomposition) : template_base(scalartype, simd_width, group_size, 1, 1), num_groups_(num_groups), decomposition_(decomposition){ }
 
-      void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+      void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         configure_local_sizes(k, kernel_id);
 
         k.global_work_size(0,local_size_0_*num_groups_);
         k.global_work_size(1,1);
 
-        scheduler::statement_node const & root = statements_->front().first.array()[statements_->front().second];
+        scheduler::statement_node const & root = statements.front().first.array()[statements.front().second];
         viennacl::vcl_size_t N = utils::call_on_vector(root.lhs, utils::internal_size_fun());
         k.arg(n_arg++, cl_uint(N/simd_width_));
       }
@@ -65,7 +66,7 @@ namespace viennacl{
 
     private:
 
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
+      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const statements, std::vector<mapping_type> const & mapping) const {
         stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
@@ -80,16 +81,16 @@ namespace viennacl{
 
         //Generates all the expression, in order
         unsigned int i = 0;
-        for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
           std::string str;
           tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("i","0"), -1, str, mapping[i++]));
           stream << str << ";" << std::endl;
         }
 
         //Writes back
-        for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it)
+        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
           //Gets the mapped object at the LHS of each expression
-          if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements_->begin(),it)).at(std::make_pair(it->second, tree_parsing::LHS_NODE_TYPE)).get()))
+          if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements.begin(),it)).at(std::make_pair(it->second, tree_parsing::LHS_NODE_TYPE)).get()))
             p->write_back( std::make_pair("i", "0"), fetched, stream);
 
         stream.dec_tab();

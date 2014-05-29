@@ -50,12 +50,12 @@ namespace viennacl{
       row_wise_reduction_template(const char * scalartype, char A_trans, unsigned int simd_width,
                                   unsigned int local_size_0, unsigned int local_size_1, unsigned int num_groups_0) : template_base(scalartype, simd_width, local_size_0, local_size_1, 1), A_trans_(A_trans),  num_groups_0_(num_groups_0){ }
 
-      void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const{
+      void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         configure_local_sizes(kernel, kernel_id);
         kernel.global_work_size(0,local_size_0_*num_groups_0_);
         kernel.global_work_size(1,local_size_1_);
 
-        for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
           scheduler::statement::container_type exprs = it->first.array();
           for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
             if(is_vector_reduction(*iit)){
@@ -103,7 +103,7 @@ namespace viennacl{
           return local_size_0_*(local_size_1_+1)*scalartype_size;
         }
 
-        void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const {
+        void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const statements, std::vector<mapping_type> const & mapping) const {
           std::vector<mapped_vector_reduction*> exprs;
           for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it){
             for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit){
@@ -218,7 +218,7 @@ namespace viennacl{
               exprs[k]->access_name(local_buffers_names[k] + "[lid0*"+tools::to_string(lsize2)+"]");
 
             unsigned int i = 0;
-            for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
+            for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
               std::string str;
               tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("r","0"), -1, str, mapping[i++]), false);
               stream << str << ";" << std::endl;

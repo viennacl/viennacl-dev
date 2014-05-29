@@ -457,49 +457,46 @@ namespace viennacl
           //x = a*y
           generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, (viennacl::vector<T>*)NULL, (T*)NULL);
           generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, (viennacl::vector<T>*)NULL, (T*)NULL);
-          //x = a*x
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, (viennacl::vector<T>*)NULL, (T*)NULL);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, (viennacl::vector<T>*)NULL, (T*)NULL);
 
           //x = a*y + b*z
           generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &z, &hb);
           generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &z, &hb);
           generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &z, &db);
           generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &z, &db);
-          //x = a*y + a*z
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &z, &da);
+//          //x = a*y + a*z
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &z, &da);
 
-          //x = a*y + b*y
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &y, &hb);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &y, &hb);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &y, &db);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &y, &db);
-          //x = a*y + a*y
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &y, &da);
+//          //x = a*y + b*y
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &y, &hb);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &y, &hb);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &y, &db);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &y, &db);
+//          //x = a*y + a*y
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &y, &da);
 
-          //x = a*x + b*y
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, &y, &hb);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &y, &hb);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, &y, &db);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &y, &db);
-          //x = a*x + a*y
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &y, &da);
+//          //x = a*x + b*y
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, &y, &hb);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &y, &hb);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, &y, &db);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &y, &db);
+//          //x = a*x + a*y
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &y, &da);
 
-          //x = a*y + b*x
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &x, &hb);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &x, &hb);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &x, &db);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &x, &db);
-          //x = a*y + a*x
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &x, &da);
+//          //x = a*y + b*x
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &x, &hb);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &x, &hb);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &ha, &x, &db);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &x, &db);
+//          //x = a*y + a*x
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &y, &da, &x, &da);
 
-          //x = a*x + b*x
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, &x, &hb);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &x, &hb);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, &x, &db);
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &x, &db);
-          //x = a*x + a*x
-          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &x, &da);
+//          //x = a*x + b*x
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, &x, &hb);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &x, &hb);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &ha, &x, &db);
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &x, &db);
+//          //x = a*x + a*x
+//          generate_avbv_impl(source, generator, ASSIGN_TYPE, &x, &x, &da, &x, &da);
         }
 
         template<class T>

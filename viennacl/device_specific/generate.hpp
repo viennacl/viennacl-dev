@@ -53,9 +53,16 @@ namespace viennacl{
 
       inline std::string opencl_source(template_base& tplt, statements_container const & statements)
       {
-        tplt.bind_to(&statements);
         std::string prefix = statements_representation(statements);
-        return tplt.generate(prefix);
+
+        std::vector<mapping_type> mapping(statements.size());
+        std::map<void *, unsigned int> memory;
+        unsigned int current_arg = 0;
+        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
+          tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[std::distance(statements.begin(), it)]));
+
+
+        return tplt.generate(statements, mapping, prefix);
       }
 
       //CUDA Conversion

@@ -56,16 +56,7 @@ namespace viennacl{
           k.local_work_size(1,local_size_1_);
         }
 
-        virtual void initialize_mapping(std::vector<mapping_type> & mapping) const
-        {
-            std::map<void *, unsigned int> memory;
-            unsigned int current_arg = 0;
-            unsigned int i = 0;
-            for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it)
-              tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
-        }
-
-        virtual void init(std::pair<scheduler::statement, unsigned int> const &, mapping_type & mapping)
+        virtual void init(std::pair<scheduler::statement, unsigned int> const &, mapping_type const & mapping)
         {
           for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
               if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
@@ -88,9 +79,6 @@ namespace viennacl{
         /** @brief The destructor */
         virtual ~template_base(){ }
 
-        void bind_to(statements_container const * statements) { statements_ = statements; }
-        statements_container const * statements() { return statements_; }
-
         unsigned int num_kernels() const { return num_kernels_; }
 
         /** @brief Configures the range and enqueues the arguments associated with the profile
@@ -100,7 +88,7 @@ namespace viennacl{
          * @param kernel the kernel object
          * @param n_arg a dummy reference for keeping track of the added arguments
          */
-        virtual void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const{ }
+        virtual void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{ }
 
         virtual void add_kernel_arguments(std::string & arguments_string) const{ }
 
@@ -152,23 +140,16 @@ namespace viennacl{
          *
          *  @param stream Stream onto which the code should be generated
          */
-        virtual std::string generate(std::string const & kernel_prefix)
+        virtual std::string generate(statements_container const & statements, std::vector<mapping_type>  const & mapping, std::string const & kernel_prefix)
         {
           utils::kernel_generation_stream stream;
-
-          //Generate Mapping
-          std::vector<mapping_type> mapping(statements_->size());
-          std::map<void *, unsigned int> memory;
-          unsigned int current_arg = 0;
-          for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it)
-            tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[std::distance(statements_->begin(), it)]));
 
           //Generate Prototype
           std::string prototype;
           std::set<std::string> already_generated;
           add_kernel_arguments(prototype);
-          for(statements_container::const_iterator it = statements_->begin() ; it != statements_->end() ; ++it){
-            mapping_type & mapping_ref = mapping[std::distance(statements_->begin(), it)];
+          for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+            mapping_type const & mapping_ref = mapping[std::distance(statements.begin(), it)];
             init(*it, mapping_ref);
             tree_parsing::traverse(it->first, it->second, tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping_ref));
           }
@@ -199,8 +180,6 @@ namespace viennacl{
         unsigned int local_size_1_;
 
         unsigned int num_kernels_;
-
-        statements_container const * statements_;
     };
 
   }

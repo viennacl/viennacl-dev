@@ -39,6 +39,7 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/command_queue.hpp"
 
+#include "viennacl/tools/timer.hpp"
 namespace viennacl
 {
   namespace ocl
@@ -362,6 +363,8 @@ namespace viennacl
           VIENNACL_ERR_CHECK(err);
 
           const char * options = build_options_.c_str();
+          tools::timer t;
+          t.start();
           err = clBuildProgram(temp, 0, NULL, options, NULL, NULL);
           if (err != CL_SUCCESS)
           {
@@ -376,7 +379,7 @@ namespace viennacl
           VIENNACL_ERR_CHECK(err);
 
           programs_.push_back(viennacl::ocl::program(temp, *this, prog_name));
-
+          std::cout << t.get() << std::endl;
           viennacl::ocl::program & prog = programs_.back();
 
           //

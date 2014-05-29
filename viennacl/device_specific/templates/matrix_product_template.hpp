@@ -57,10 +57,10 @@ public:
     , use_A_local_(use_A_local), use_B_local_(use_B_local), local_fetch_0_(local_fetch_0), local_fetch_1_(local_fetch_1)
     , mL_(ms*local_size_0), nL_(ns*local_size_1){ }
 
-    void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const
+    void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
     {
         //set M, N
-        scheduler::statement_node const & root = statements_->front().first.array()[statements_->front().second];
+        scheduler::statement_node const & root = statements.front().first.array()[statements.front().second];
         unsigned int M = utils::call_on_matrix(root.lhs, utils::internal_size1_fun());
         unsigned int N = utils::call_on_matrix(root.lhs, utils::internal_size2_fun());
 
@@ -75,7 +75,7 @@ public:
         k.arg(n_arg++, cl_uint(N));
 
         //K
-        scheduler::statement::container_type const & exprs = statements_->back().first.array();
+        scheduler::statement::container_type const & exprs = statements.back().first.array();
 
         scheduler::statement_node const * prod_node = NULL;
         for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
@@ -170,7 +170,7 @@ private:
         return res;
     }
 
-    void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const
+    void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const statements, std::vector<mapping_type> const & mapping) const {
     {
 
         //////////////////
@@ -409,7 +409,7 @@ private:
                     std::string j = tools::to_string((n/simd_width_)*(local_size_1_*simd_width_) + n%simd_width_);
                     prod_->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;
-                    tree_parsing::traverse(statements_->front().first, statements_->front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
+                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
                     stream << str << ";" << std::endl;
                 }
                 if((m+1)%simd_width_>0)
@@ -428,7 +428,7 @@ private:
                     std::string j = tools::to_string((m/simd_width_)*(local_size_0_*simd_width_) + m%simd_width_);
                     prod_->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;
-                    tree_parsing::traverse(statements_->front().first, statements_->front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
+                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
                     stream << str << ";" << std::endl;
                 }
                 if((n+1)%simd_width_>0)

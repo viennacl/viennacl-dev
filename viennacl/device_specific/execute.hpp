@@ -42,21 +42,7 @@ namespace viennacl{
 
   namespace device_specific{
 
-    inline void configure(template_base & tplt, std::list<viennacl::ocl::kernel*> & kernels)
-    {
-      statements_container const * pstatements = tplt.statements();
-      for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
-      {
-        unsigned int current_arg = 0;
-        tplt.configure_range_enqueue_arguments(std::distance(kernels.begin(), it), **it, current_arg);
-        std::set<void *> memory;
-        for(typename statements_container::const_iterator itt = pstatements->begin() ; itt != pstatements->end() ; ++itt)
-          tree_parsing::traverse(itt->first, itt->second, tree_parsing::set_arguments_functor(memory,current_arg,**it));
-      }
-    }
-
     void enqueue(template_base & tplt, viennacl::ocl::program & program, statements_container const & statements){
-      tplt.bind_to(&statements);
       std::string prefix = generate::statements_representation(statements);
 
       //Get the kernels
@@ -68,7 +54,7 @@ namespace viennacl{
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
       {
         unsigned int current_arg = 0;
-        tplt.configure_range_enqueue_arguments(std::distance(kernels.begin(), it), **it, current_arg);
+        tplt.configure_range_enqueue_arguments(std::distance(kernels.begin(), it), statements, **it, current_arg);
         std::set<void *> memory;
         for(typename statements_container::const_iterator itt = statements.begin() ; itt != statements.end() ; ++itt)
           tree_parsing::traverse(itt->first, itt->second, tree_parsing::set_arguments_functor(memory,current_arg,**it));
@@ -81,8 +67,6 @@ namespace viennacl{
 
     inline void execute(template_base & tplt, statements_container const & statements, bool force_compilation = false)
     {
-      tplt.bind_to(&statements);
-
       //Generate program name
       std::string program_name = generate::statements_representation(statements);
 
