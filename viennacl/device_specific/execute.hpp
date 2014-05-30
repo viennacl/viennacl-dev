@@ -42,8 +42,8 @@ namespace viennacl{
 
   namespace device_specific{
 
-    void enqueue(template_base & tplt, viennacl::ocl::program & program, statements_container const & statements){
-      std::string prefix = generate::statements_representation(statements);
+    void enqueue(template_base & tplt, viennacl::ocl::program & program, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE){
+      std::string prefix = generate::statements_representation(statements, binding_policy);
 
       //Get the kernels
       std::list<viennacl::ocl::kernel*> kernels;
@@ -54,10 +54,11 @@ namespace viennacl{
       for(std::list<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
       {
         unsigned int current_arg = 0;
+        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
         tplt.configure_range_enqueue_arguments(std::distance(kernels.begin(), it), statements, **it, current_arg);
-        std::set<void *> memory;
-        for(typename statements_container::const_iterator itt = statements.begin() ; itt != statements.end() ; ++itt)
-          tree_parsing::traverse(itt->first, itt->second, tree_parsing::set_arguments_functor(memory,current_arg,**it));
+        for(typename statements_container::const_iterator itt = statements.begin() ; itt != statements.end() ; ++itt){
+          tree_parsing::traverse(itt->first, itt->second, tree_parsing::set_arguments_functor(*binder,current_arg,**it));
+        }
       }
 
       //Enqueue

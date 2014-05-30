@@ -32,6 +32,8 @@
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/scheduler/forwards.h"
 
+#include "viennacl/backend/mem_handle.hpp"
+
 namespace viennacl{
 
   namespace device_specific{
@@ -132,8 +134,8 @@ namespace viennacl{
     namespace tree_parsing{
 
       template<class Fun>
-      static inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool recurse_binary_leaf = true);
-      static inline void generate_all_rhs(scheduler::statement const & statement
+      inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool recurse_binary_leaf = true);
+      inline void generate_all_rhs(scheduler::statement const & statement
                                 , unsigned int root_idx
                                 , std::pair<std::string, std::string> const & index
                                 , int vector_element
@@ -170,6 +172,47 @@ namespace viennacl{
       using scheduler::DOUBLE_TYPE;
       using namespace viennacl::ocl;
     }
+
+    class symbolic_binder{
+    public:
+      virtual ~symbolic_binder(){ }
+      virtual bool bind(viennacl::backend::mem_handle const * ph) = 0;
+      virtual unsigned int get(viennacl::backend::mem_handle const * ph) = 0;
+    };
+
+    class bind_to_handle : public symbolic_binder{
+    public:
+      bind_to_handle() : current_arg_(0){ }
+      bool bind(viennacl::backend::mem_handle const * ph) {return (ph==NULL)?true:memory.insert(std::make_pair((void*)ph, current_arg_)).second; }
+      unsigned int get(viennacl::backend::mem_handle const * ph){ return bind(ph)?current_arg_++:memory.at((void*)ph); }
+    private:
+      unsigned int current_arg_;
+      std::map<void*,unsigned int> memory;
+    };
+
+    class bind_all_unique : public symbolic_binder{
+    public:
+      bind_all_unique() : current_arg_(0){ }
+      bool bind(viennacl::backend::mem_handle const *) {return true; }
+      unsigned int get(viennacl::backend::mem_handle const *){ return current_arg_++; }
+    private:
+      unsigned int current_arg_;
+      std::map<void*,unsigned int> memory;
+    };
+
+    enum binding_policy_t{
+      BIND_ALL_UNIQUE,
+      BIND_TO_HANDLE
+    };
+
+    tools::shared_ptr<symbolic_binder> make_binder(binding_policy_t policy)
+    {
+      if(policy==BIND_TO_HANDLE)
+        return tools::shared_ptr<symbolic_binder>(new bind_to_handle());
+      else
+        return tools::shared_ptr<symbolic_binder>(new bind_all_unique());
+    }
+
   }
 
 }

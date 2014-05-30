@@ -52,7 +52,7 @@ namespace viennacl{
         public:
           typedef void result_type;
 
-          set_arguments_functor(std::set<void *> & memory, unsigned int & current_arg, viennacl::ocl::kernel & kernel) : memory_(memory), current_arg_(current_arg), kernel_(kernel){ }
+          set_arguments_functor(symbolic_binder & binder, unsigned int & current_arg, viennacl::ocl::kernel & kernel) : binder_(binder), current_arg_(current_arg), kernel_(kernel){ }
 
           template<class ScalarType>
           result_type operator()(ScalarType const & scal) const {
@@ -63,14 +63,15 @@ namespace viennacl{
           /** @brief Scalar mapping */
           template<class ScalarType>
           result_type operator()(scalar<ScalarType> const & scal) const {
-            if(memory_.insert((void*)&scal).second)
+            if(binder_.bind(&viennacl::traits::handle(scal)))
               kernel_.arg(current_arg_++, scal.handle().opencl_handle());
           }
 
           /** @brief Vector mapping */
           template<class ScalarType>
           result_type operator()(vector_base<ScalarType> const & vec) const {
-            if(memory_.insert((void*)&vec).second){
+            if(binder_.bind(&viennacl::traits::handle(vec)))
+            {
               kernel_.arg(current_arg_++, vec.handle().opencl_handle());
               kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start(vec)));
               kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride(vec)));
@@ -81,17 +82,16 @@ namespace viennacl{
           template<class ScalarType>
           result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
-            if(memory_.insert((void*)&vec).second){
-              kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
-              if(vec.has_index())
-                kernel_.arg(current_arg_++, cl_uint(vec.index()));
-            }
+            kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
+            if(vec.has_index())
+              kernel_.arg(current_arg_++, cl_uint(vec.index()));
           }
 
           /** @brief Matrix mapping */
           template<class ScalarType>
           result_type operator()(matrix_base<ScalarType> const & mat) const {
-            if(memory_.insert((void*)&mat).second){
+            if(binder_.bind(&viennacl::traits::handle(mat)))
+            {
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
               if(mat.row_major()){
                 kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size2(mat)));
@@ -126,7 +126,7 @@ namespace viennacl{
           }
 
         private:
-          std::set<void *> & memory_;
+          symbolic_binder & binder_;
           unsigned int & current_arg_;
           viennacl::ocl::kernel & kernel_;
       };

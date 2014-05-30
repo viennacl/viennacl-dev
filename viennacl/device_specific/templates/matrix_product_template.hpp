@@ -57,7 +57,7 @@ public:
     , use_A_local_(use_A_local), use_B_local_(use_B_local), local_fetch_0_(local_fetch_0), local_fetch_1_(local_fetch_1)
     , mL_(ms*local_size_0), nL_(ns*local_size_1){ }
 
-    void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+    void configure_range_enqueue_arguments(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const
     {
         //set M, N
         scheduler::statement_node const & root = statements.front().first.array()[statements.front().second];
@@ -98,7 +98,7 @@ public:
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
         arguments_string += generate_value_kernel_argument("unsigned int", "K");
     }
-private:
+
     virtual void init(std::pair<scheduler::statement, unsigned int> const & statement_pair, mapping_type & mapping)
     {
         scheduler::statement const & statement = statement_pair.first;
@@ -129,6 +129,9 @@ private:
         B_->set_simd_width(simd_width_);
 
     }
+
+private:
+
 
     unsigned int lmem_used(unsigned int scalartype_size) const
     {
@@ -170,7 +173,7 @@ private:
         return res;
     }
 
-    void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const statements, std::vector<mapping_type> const & mapping) const {
+    void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
     {
 
         //////////////////

@@ -42,23 +42,20 @@
 
 namespace viennacl{
 
-
   namespace device_specific{
 
     namespace tree_parsing{
 
       /** @brief Functor to map the statements to the types defined in mapped_objects.hpp */
       class map_functor : public traversal_functor{
-          std::string create_name(unsigned int & current_arg, std::map<void *, unsigned int> & memory, void * handle) const{
-            if(handle==NULL)
-              return "arg" + tools::to_string(current_arg_++);
-            if(memory.insert(std::make_pair(handle, current_arg)).second)
-              return "arg" + tools::to_string(current_arg_++);
-            else
-              return "arg" + tools::to_string(memory.at(handle));
+
+          std::string create_name(viennacl::backend::mem_handle const * ph) const
+          {
+            return "arg" + tools::to_string(binder_.get(ph));
           }
 
-          scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, unsigned int root_idx) const {
+          scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, unsigned int root_idx) const
+          {
               scheduler::statement_node const * root_node = &statement->array()[root_idx];
               while(root_node->lhs.numeric_type==scheduler::INVALID_NUMERIC_TYPE)
                   root_node = &statement->array()[root_node->lhs.node_index];
@@ -68,11 +65,12 @@ namespace viennacl{
         public:
           typedef container_ptr_type result_type;
 
-          map_functor(std::map<void *, unsigned int> & memory, unsigned int & current_arg, mapping_type & mapping) : memory_(memory), current_arg_(current_arg), mapping_(mapping){ }
+          map_functor(symbolic_binder & binder, mapping_type & mapping) : binder_(binder), mapping_(mapping){ }
 
           /** @brief Binary leaf */
           template<class T>
-          result_type structurewise_function(scheduler::statement const * statement, unsigned int root_idx, mapping_type const * mapping) const {
+          result_type structurewise_function(scheduler::statement const * statement, unsigned int root_idx, mapping_type const * mapping) const
+          {
             T * p = new T(utils::numeric_type_to_string(numeric_type(statement,root_idx)));
             p->info_.statement = statement;
             p->info_.root_idx = root_idx;
@@ -81,9 +79,9 @@ namespace viennacl{
           }
 
           template<class ScalarType>
-          result_type operator()(ScalarType const & /*scal*/) const {
+          result_type operator()(ScalarType const & scal) const {
             mapped_host_scalar * p = new mapped_host_scalar(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(current_arg_, memory_, NULL);
+            p->name_ = create_name(NULL);
             return container_ptr_type(p);
           }
 
@@ -91,7 +89,7 @@ namespace viennacl{
           template<class ScalarType>
           result_type operator()(scalar<ScalarType> const & scal) const {
             mapped_scalar * p = new mapped_scalar(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(current_arg_, memory_, (void*)&scal);
+            p->name_ = create_name(&viennacl::traits::handle(scal));
             return container_ptr_type(p);
           }
 
@@ -99,7 +97,7 @@ namespace viennacl{
           template<class ScalarType>
           result_type operator()(vector_base<ScalarType> const & vec) const {
             mapped_vector * p = new mapped_vector(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(current_arg_, memory_, (void*)&vec);
+            p->name_ = create_name(&viennacl::traits::handle(vec));
             p->start_name_ = p->name_ +"_start";
             p->stride_name_ = p->name_ + "_stride";
             return container_ptr_type(p);
@@ -107,9 +105,9 @@ namespace viennacl{
 
           /** @brief Implicit vector mapping */
           template<class ScalarType>
-          result_type operator()(implicit_vector_base<ScalarType> const &) const {
+          result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             mapped_implicit_vector * p = new mapped_implicit_vector(utils::type_to_string<ScalarType>::value());
-            p->value_name_ = create_name(current_arg_, memory_, NULL);
+            p->value_name_ = create_name(NULL);
             return container_ptr_type(p);
           }
 
@@ -117,7 +115,7 @@ namespace viennacl{
           template<class ScalarType>
           result_type operator()(matrix_base<ScalarType> const & mat) const {
             mapped_matrix * p = new mapped_matrix(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(current_arg_, memory_, (void*)&mat);
+            p->name_ = create_name(&viennacl::traits::handle(mat));
             p->ld_name_ = p->name_ + "_ld";
             p->interpret_as_transposed_ = viennacl::traits::row_major(mat);
             p->start1_name_ = p->name_ +"_start1";
@@ -129,9 +127,9 @@ namespace viennacl{
 
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
-          result_type operator()(implicit_matrix_base<ScalarType> const &) const {
+          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
             mapped_implicit_matrix * p = new mapped_implicit_matrix(utils::type_to_string<ScalarType>::value());
-            p->value_name_ = create_name(current_arg_, memory_, NULL);
+            p->value_name_ = create_name(NULL);
             return container_ptr_type(p);
           }
 
@@ -160,8 +158,7 @@ namespace viennacl{
           }
 
         private:
-          std::map<void *, unsigned int> & memory_;
-          unsigned int & current_arg_;
+          symbolic_binder & binder_;
           mapping_type & mapping_;
       };
 

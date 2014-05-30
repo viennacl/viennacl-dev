@@ -64,7 +64,8 @@ namespace viennacl
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
                                            ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
-                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, (vector_base<T>*)NULL, (T*)NULL, false, false));
+                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, (vector_base<T>*)NULL, (T*)NULL, false, false),
+                                           device_specific::BIND_ALL_UNIQUE);
       }
 
 
@@ -81,7 +82,8 @@ namespace viennacl
 
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
                                            ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
-                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta));
+                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta),
+                                           device_specific::BIND_ALL_UNIQUE);
       }
 
 
@@ -97,7 +99,8 @@ namespace viennacl
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
                                            ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
-                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta));
+                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta),
+                                           device_specific::BIND_ALL_UNIQUE);
       }
 
 

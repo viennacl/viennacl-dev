@@ -153,7 +153,7 @@ namespace viennacl{
           }
       };
 
-      static void generate_all_lhs(scheduler::statement const & statement
+      inline void generate_all_lhs(scheduler::statement const & statement
                                 , unsigned int root_idx
                                 , std::pair<std::string, std::string> const & index
                                 , int simd_element
@@ -168,7 +168,7 @@ namespace viennacl{
       }
 
 
-      static void generate_all_rhs(scheduler::statement const & statement
+      inline void generate_all_rhs(scheduler::statement const & statement
                                 , unsigned int root_idx
                                 , std::pair<std::string, std::string> const & index
                                 , int simd_element

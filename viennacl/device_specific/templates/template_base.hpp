@@ -56,13 +56,6 @@ namespace viennacl{
           k.local_work_size(1,local_size_1_);
         }
 
-        virtual void init(std::pair<scheduler::statement, unsigned int> const &, mapping_type const & mapping)
-        {
-          for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
-              if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
-                p->set_simd_width(simd_width_);
-        }
-
         /** @brief Generates the body of the associated kernel function
          *
          *  @param kernel_id  If this profile requires multiple kernel, the index for which the core should be generated
@@ -70,7 +63,7 @@ namespace viennacl{
          *  @param statements the statements for which the code should be generated
          *  @param mapping    the mapping of the statement_nodes to the mapped_objects
          */
-        virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, std::vector<mapping_type> const & mapping) const{ }
+        virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
 
       public:
         /** @brief The constructor */
@@ -78,6 +71,13 @@ namespace viennacl{
 
         /** @brief The destructor */
         virtual ~template_base(){ }
+
+        virtual void init(std::pair<scheduler::statement, unsigned int> const &, mapping_type const & mapping)
+        {
+          for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
+              if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
+                p->set_simd_width(simd_width_);
+        }
 
         unsigned int num_kernels() const { return num_kernels_; }
 
@@ -88,9 +88,9 @@ namespace viennacl{
          * @param kernel the kernel object
          * @param n_arg a dummy reference for keeping track of the added arguments
          */
-        virtual void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{ }
+        virtual void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const = 0;
 
-        virtual void add_kernel_arguments(std::string & arguments_string) const{ }
+        virtual void add_kernel_arguments(std::string & arguments_string) const = 0;
 
 
         /** @brief returns whether or not the profile leads to undefined behavior on particular device
@@ -148,11 +148,8 @@ namespace viennacl{
           std::string prototype;
           std::set<std::string> already_generated;
           add_kernel_arguments(prototype);
-          for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-            mapping_type const & mapping_ref = mapping[std::distance(statements.begin(), it)];
-            init(*it, mapping_ref);
-            tree_parsing::traverse(it->first, it->second, tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping_ref));
-          }
+          for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
+            tree_parsing::traverse(it->first, it->second, tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping[std::distance(statements.begin(), it)]));
           prototype.erase(prototype.size()-1); //Last comma pruned
 
           for(unsigned int i = 0 ; i < num_kernels_ ; ++i)
@@ -165,7 +162,7 @@ namespace viennacl{
             //core:
             stream << "{" << std::endl;
             stream.inc_tab();
-            core(i, stream, mapping);
+            core(i, stream, statements, mapping);
             stream.dec_tab();
             stream << "}" << std::endl;
           }

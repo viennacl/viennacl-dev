@@ -629,11 +629,12 @@ namespace viennacl
           return next_free;
         }
 
+    private:
 
         //////////// Tree nodes (non-terminals) ////////////////////
 
         template <typename LHS, typename RHS, typename OP>
-        static vcl_size_t add_element(vcl_size_t       next_free,
+        vcl_size_t add_element(vcl_size_t       next_free,
                                 lhs_rhs_element & elem,
                                 viennacl::scalar_expression<LHS, RHS, OP> const & t)
         {
@@ -645,7 +646,7 @@ namespace viennacl
         }
 
         template <typename LHS, typename RHS, typename OP>
-        static vcl_size_t add_element(vcl_size_t       next_free,
+        vcl_size_t add_element(vcl_size_t       next_free,
                                 lhs_rhs_element & elem,
                                 viennacl::vector_expression<LHS, RHS, OP> const & t)
         {
@@ -657,7 +658,7 @@ namespace viennacl
         }
 
         template <typename LHS, typename RHS, typename OP>
-        static vcl_size_t add_element(vcl_size_t next_free,
+        vcl_size_t add_element(vcl_size_t next_free,
                                 lhs_rhs_element & elem,
                                 viennacl::matrix_expression<LHS, RHS, OP> const & t)
         {
@@ -667,8 +668,6 @@ namespace viennacl
           elem.node_index    = next_free;
           return add_node(next_free, next_free + 1, t);
         }
-
-    private:
 
         //////////// Helper routines ////////////////////
 

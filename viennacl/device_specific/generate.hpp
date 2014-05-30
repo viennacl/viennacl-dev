@@ -39,28 +39,28 @@ namespace viennacl{
 
     namespace generate{
 
-      inline std::string statements_representation(statements_container const & statements)
+      inline std::string statements_representation(statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
       {
           std::vector<char> program_name_vector(256);
           char* program_name = program_name_vector.data();
-          unsigned int current_arg = 0;
-          void* memory[64] = {NULL};
+          tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
           for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
-              tree_parsing::traverse(it->first, it->second, tree_parsing::statement_representation_functor(memory, current_arg, program_name),true);
+              tree_parsing::traverse(it->first, it->second, tree_parsing::statement_representation_functor(*binder, program_name),true);
           *program_name='\0';
           return std::string(program_name_vector.data());
       }
 
-      inline std::string opencl_source(template_base& tplt, statements_container const & statements)
+      inline std::string opencl_source(template_base& tplt, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
       {
-        std::string prefix = statements_representation(statements);
+        std::string prefix = statements_representation(statements, binding_policy);
 
         std::vector<mapping_type> mapping(statements.size());
-        std::map<void *, unsigned int> memory;
-        unsigned int current_arg = 0;
+        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
         for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
-          tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[std::distance(statements.begin(), it)]));
+          tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(*binder,mapping[std::distance(statements.begin(), it)]));
 
+        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
+          tplt.init(*it, mapping[std::distance(statements.begin(), it)]);
 
         return tplt.generate(statements, mapping, prefix);
       }

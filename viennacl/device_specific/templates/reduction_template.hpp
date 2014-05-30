@@ -49,7 +49,7 @@ namespace viennacl{
       /** @brief The user constructor */
       reduction_template(const char * scalartype, unsigned int simd_width, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : template_base(scalartype, simd_width, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
 
-      void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+      void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         //create temporaries
         init_temporaries();
 
@@ -131,7 +131,7 @@ namespace viennacl{
         }
       }
 
-      void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> const & scalartypes, statements_container const statements, std::vector<mapping_type> const & /*mapping*/) const {
+      void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> const & scalartypes, statements_container const & statements, std::vector<mapping_type> const & /*mapping*/) const {
         unsigned int N = exprs.size();
 
         std::vector<scheduler::op_element> rops(N);
@@ -235,7 +235,7 @@ namespace viennacl{
       }
 
 
-      void core_1(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> scalartypes, statements_container const statements, std::vector<mapping_type> const & mapping) const {
+      void core_1(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, std::vector<const char *> scalartypes, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
         unsigned int N = exprs.size();
         std::vector<scheduler::op_element> rops(N);
         std::vector<std::string> accs(N);
@@ -310,7 +310,7 @@ namespace viennacl{
         throw "unexpected expression tree";
       }
 
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const statements, std::vector<mapping_type> const & mapping) const {
+      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
         std::vector<mapped_scalar_reduction*> exprs;
         for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
           for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit)

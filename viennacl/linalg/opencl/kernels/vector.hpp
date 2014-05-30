@@ -418,26 +418,26 @@ namespace viennacl
         {
           using device_specific::generate::opencl_source;
 
-          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false)));
-          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false)));
-          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false)));
-          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false)));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false), device_specific::BIND_ALL_UNIQUE));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false), device_specific::BIND_ALL_UNIQUE));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false), device_specific::BIND_ALL_UNIQUE));
+          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false), device_specific::BIND_ALL_UNIQUE));
           if(b)
           {
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false)));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false), device_specific::BIND_ALL_UNIQUE));
 
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true)));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true), device_specific::BIND_ALL_UNIQUE));
 
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true)));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true)));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true), device_specific::BIND_ALL_UNIQUE));
           }
         }
 

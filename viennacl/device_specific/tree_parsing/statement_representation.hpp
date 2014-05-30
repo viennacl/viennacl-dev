@@ -44,19 +44,6 @@ namespace viennacl{
 
       class statement_representation_functor : public traversal_functor{
         private:
-          unsigned int get_id(void * handle) const{
-            unsigned int i = 0;
-            for( ; i < 64 ; ++i){
-              void* current = memory_[i];
-              if(current==NULL)
-                break;
-              if(current==handle)
-                return i;
-            }
-            memory_[i] = handle;
-            return i;
-          }
-
           static void append_id(char * & ptr, unsigned int val){
             if(val==0)
               *ptr++='0';
@@ -71,7 +58,7 @@ namespace viennacl{
         public:
           typedef void result_type;
 
-          statement_representation_functor(void* (&memory)[64], unsigned int & current_arg, char *& ptr) : memory_(memory), current_arg_(current_arg), ptr_(ptr){ }
+          statement_representation_functor(symbolic_binder & binder, char *& ptr) : binder_(binder), ptr_(ptr){ }
 
           template<class ScalarType>
           inline result_type operator()(ScalarType const & /*scal*/) const {
@@ -85,7 +72,7 @@ namespace viennacl{
           inline result_type operator()(scalar<ScalarType> const & scal) const {
             *ptr_++='s'; //scalar
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
-            append_id(ptr_, get_id((void*)&scal));
+            append_id(ptr_, binder_.get(&traits::handle(scal)));
           }
 
           /** @brief Vector mapping */
@@ -93,7 +80,7 @@ namespace viennacl{
           inline result_type operator()(vector_base<ScalarType> const & vec) const {
             *ptr_++='v'; //vector
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
-            append_id(ptr_, get_id((void*)&vec));
+            append_id(ptr_, binder_.get(&traits::handle(vec)));
           }
 
           /** @brief Implicit vector mapping */
@@ -111,7 +98,7 @@ namespace viennacl{
           inline result_type operator()(matrix_base<ScalarType> const & mat) const {
             *ptr_++='m'; //Matrix
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
-            append_id(ptr_, get_id((void*)&mat));
+            append_id(ptr_, binder_.get(&traits::handle(mat)));
           }
 
           /** @brief Implicit matrix mapping */
@@ -146,8 +133,7 @@ namespace viennacl{
           }
 
         private:
-          void* (&memory_)[64];
-          unsigned int & current_arg_;
+          symbolic_binder & binder_;
           char *& ptr_;
       };
 
