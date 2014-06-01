@@ -29,8 +29,8 @@
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/mapped_objects.hpp"
-#include "viennacl/device_specific/tree_parsing/fetch.hpp"
-#include "viennacl/device_specific/tree_parsing/elementwise_expression.hpp"
+#include "viennacl/device_specific/tree_parsing/read_write.hpp"
+#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
 #include "viennacl/device_specific/utils.hpp"
 
 #include "viennacl/device_specific/templates/template_base.hpp"
@@ -55,7 +55,7 @@ namespace viennacl{
         kernel.global_work_size(0,local_size_0_*num_groups_0_);
         kernel.global_work_size(1,local_size_1_);
 
-        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
           scheduler::statement::container_type exprs = it->first.array();
           for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
             if(is_vector_reduction(*iit)){
@@ -155,7 +155,7 @@ namespace viennacl{
             stream << "for( unsigned int c = get_local_id(1) ; c < " << size2 << " ; c += get_local_size(1)){" << std::endl;
             stream.inc_tab();
             {
-              std::set<std::string>  fetched;
+              std::set<std::string>  cache;
               unsigned int N = exprs.size();
 
               for(unsigned int k = 0 ; k < N ; ++k)
@@ -163,12 +163,12 @@ namespace viennacl{
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
                 viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
                 if(A_trans_=='T')
-                  tree_parsing::fetch_all_lhs(fetched,statement,root_node, std::make_pair("c", "r"),stream,exprs[k]->mapping());
+                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, std::make_pair("c", "r"),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
                 else
-                  tree_parsing::fetch_all_lhs(fetched,statement,root_node, std::make_pair("r", "c"),stream,exprs[k]->mapping());
+                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, std::make_pair("r", "c"),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
 
                 if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                  tree_parsing::fetch_all_rhs(fetched,statement,root_node, std::make_pair("c", "0"),stream,exprs[k]->mapping());
+                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, std::make_pair("c", "0"),stream,exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
               }
 
 
@@ -218,9 +218,9 @@ namespace viennacl{
               exprs[k]->access_name(local_buffers_names[k] + "[lid0*"+tools::to_string(lsize2)+"]");
 
             unsigned int i = 0;
-            for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+            for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
               std::string str;
-              tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("r","0"), -1, str, mapping[i++]), false);
+              tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(std::make_pair("r","0"), -1, str, mapping[i++]), false);
               stream << str << ";" << std::endl;
             }
             stream.dec_tab();

@@ -29,8 +29,8 @@
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/mapped_objects.hpp"
-#include "viennacl/device_specific/tree_parsing/fetch.hpp"
-#include "viennacl/device_specific/tree_parsing/elementwise_expression.hpp"
+#include "viennacl/device_specific/tree_parsing/read_write.hpp"
+#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
 #include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/utils.hpp"
 
@@ -55,7 +55,7 @@ namespace viennacl{
         k.global_work_size(0,local_size_0_*num_groups_);
         k.global_work_size(1,1);
 
-        scheduler::statement_node const & root = statements.front().first.array()[statements.front().second];
+        scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
         viennacl::vcl_size_t N = utils::call_on_vector(root.lhs, utils::internal_size_fun());
         k.arg(n_arg++, cl_uint(N/simd_width_));
       }
@@ -71,27 +71,33 @@ namespace viennacl{
         stream << "{" << std::endl;
         stream.inc_tab();
 
-        //Fetches entries to registers
-        std::set<std::string>  fetched;
-        for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
-          for(mapping_type::const_reverse_iterator iit = it->rbegin() ; iit != it->rend() ; ++iit)
-            //Useless to fetch cpu scalars into registers
-            if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
-              p->fetch( std::make_pair("i","0"), fetched, stream);
+        //Registers already allocated
+        std::set<std::string>  cache;
+
+        //Fetch
+        std::string rhs_suffix = "reg";
+        std::string lhs_suffix = statements.order()==statements_container::INDEPENDENT?"tmp":rhs_suffix;
+
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        {
+          tree_parsing::read_write(&mapped_handle::fetch, lhs_suffix, cache,*it, it->root(), std::make_pair("i","0"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(&mapped_handle::fetch, rhs_suffix, cache,*it, it->root(), std::make_pair("i","0"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::RHS_NODE_TYPE);
+        }
 
         //Generates all the expression, in order
         unsigned int i = 0;
-        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        {
           std::string str;
-          tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("i","0"), -1, str, mapping[i++]));
+          tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(std::make_pair("i","0"), -1, str, mapping[i++]));
           stream << str << ";" << std::endl;
         }
 
-        //Writes back
-        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
-          //Gets the mapped object at the LHS of each expression
-          if(mapped_handle * p = dynamic_cast<mapped_handle *>(mapping.at(std::distance(statements.begin(),it)).at(std::make_pair(it->second, tree_parsing::LHS_NODE_TYPE)).get()))
-            p->write_back( std::make_pair("i", "0"), fetched, stream);
+        //Write back
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        {
+          tree_parsing::read_write(&mapped_handle::write_back, lhs_suffix, cache,*it, it->root(), std::make_pair("i","0"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+        }
 
         stream.dec_tab();
         stream << "}" << std::endl;

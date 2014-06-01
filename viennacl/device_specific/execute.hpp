@@ -56,9 +56,9 @@ namespace viennacl{
         unsigned int current_arg = 0;
         tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
         tplt.configure_range_enqueue_arguments(std::distance(kernels.begin(), it), statements, **it, current_arg);
-        for(typename statements_container::const_iterator itt = statements.begin() ; itt != statements.end() ; ++itt){
-          tree_parsing::traverse(itt->first, itt->second, tree_parsing::set_arguments_functor(*binder,current_arg,**it));
-        }
+        for(typename statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
+          tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**it));
+
       }
 
       //Enqueue
@@ -84,6 +84,7 @@ namespace viennacl{
         src+="#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
         src+="#endif\n";
         src +=generate::opencl_source(tplt, statements);
+        std::cout << src << std::endl;
         ctx.add_program(src, program_name);
       }
 
@@ -91,7 +92,7 @@ namespace viennacl{
     }
 
     inline void execute(template_base & tplt, scheduler::statement const & statement, bool force_recompilation = false){
-      execute(tplt, statements_container(1, std::make_pair(statement, 0)), force_recompilation);
+      execute(tplt, statements_container(statement), force_recompilation);
     }
 
   }

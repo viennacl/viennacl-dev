@@ -41,11 +41,15 @@ namespace viennacl{
 
       inline std::string statements_representation(statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
       {
-          std::vector<char> program_name_vector(256);
+          std::vector<char> program_name_vector(256);            
           char* program_name = program_name_vector.data();
+          if(statements.order()==statements_container::INDEPENDENT)
+            *program_name++='i';
+          else
+            *program_name++='s';
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
-          for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
-              tree_parsing::traverse(it->first, it->second, tree_parsing::statement_representation_functor(*binder, program_name),true);
+          for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+              tree_parsing::traverse(*it, it->root(), tree_parsing::statement_representation_functor(*binder, program_name),true);
           *program_name='\0';
           return std::string(program_name_vector.data());
       }
@@ -54,13 +58,13 @@ namespace viennacl{
       {
         std::string prefix = statements_representation(statements, binding_policy);
 
-        std::vector<mapping_type> mapping(statements.size());
+        std::vector<mapping_type> mapping(statements.data().size());
         tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
-        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
-          tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(*binder,mapping[std::distance(statements.begin(), it)]));
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+          tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]));
 
-        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
-          tplt.init(*it, mapping[std::distance(statements.begin(), it)]);
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+          tplt.init(*it, mapping[std::distance(statements.data().begin(), it)]);
 
         return tplt.generate(statements, mapping, prefix);
       }

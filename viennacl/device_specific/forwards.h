@@ -38,8 +38,6 @@ namespace viennacl{
 
   namespace device_specific{
 
-    typedef std::list< std::pair<scheduler::statement, unsigned int> > statements_container;
-
     inline bool is_scalar_reduction(scheduler::statement_node const & node){
       return node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE || node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY;
     }
@@ -127,8 +125,7 @@ namespace viennacl{
     }
     class mapped_object;
 
-    typedef tools::shared_ptr<mapped_object> container_ptr_type;
-    typedef std::map<std::pair<unsigned int, tree_parsing::node_type>, container_ptr_type> mapping_type;
+    typedef std::map<std::pair<unsigned int, tree_parsing::node_type>, tools::shared_ptr<mapped_object> > mapping_type;
 
 
     namespace tree_parsing{
@@ -212,6 +209,30 @@ namespace viennacl{
       else
         return tools::shared_ptr<symbolic_binder>(new bind_all_unique());
     }
+
+    class statements_container
+    {
+    public:
+      typedef std::list<scheduler::statement> data_type;
+      enum order_type { SEQUENTIAL, INDEPENDENT };
+
+      statements_container(scheduler::statement const & s0) : order_(SEQUENTIAL)
+      {
+        data_.push_back(s0);
+      }
+
+      statements_container(scheduler::statement const & s0, scheduler::statement const & s1, order_type order) : order_(order)
+      {
+        data_.push_back(s0);
+        data_.push_back(s1);
+      }
+      std::list<scheduler::statement> const & data() const { return data_; }
+      order_type order() const { return order_; }
+
+    private:
+      order_type order_;
+      std::list<scheduler::statement> data_;
+    };
 
   }
 

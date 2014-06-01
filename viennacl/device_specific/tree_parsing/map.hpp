@@ -63,7 +63,7 @@ namespace viennacl{
           }
 
         public:
-          typedef container_ptr_type result_type;
+          typedef tools::shared_ptr<mapped_object> result_type;
 
           map_functor(symbolic_binder & binder, mapping_type & mapping) : binder_(binder), mapping_(mapping){ }
 
@@ -75,14 +75,14 @@ namespace viennacl{
             p->info_.statement = statement;
             p->info_.root_idx = root_idx;
             p->info_.mapping = mapping;
-            return container_ptr_type(p);
+            return result_type(p);
           }
 
           template<class ScalarType>
           result_type operator()(ScalarType const & scal) const {
             mapped_host_scalar * p = new mapped_host_scalar(utils::type_to_string<ScalarType>::value());
             p->name_ = create_name(NULL);
-            return container_ptr_type(p);
+            return result_type(p);
           }
 
           /** @brief Scalar mapping */
@@ -90,7 +90,7 @@ namespace viennacl{
           result_type operator()(scalar<ScalarType> const & scal) const {
             mapped_scalar * p = new mapped_scalar(utils::type_to_string<ScalarType>::value());
             p->name_ = create_name(&viennacl::traits::handle(scal));
-            return container_ptr_type(p);
+            return result_type(p);
           }
 
           /** @brief Vector mapping */
@@ -100,7 +100,7 @@ namespace viennacl{
             p->name_ = create_name(&viennacl::traits::handle(vec));
             p->start_name_ = p->name_ +"_start";
             p->stride_name_ = p->name_ + "_stride";
-            return container_ptr_type(p);
+            return result_type(p);
           }
 
           /** @brief Implicit vector mapping */
@@ -108,7 +108,7 @@ namespace viennacl{
           result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             mapped_implicit_vector * p = new mapped_implicit_vector(utils::type_to_string<ScalarType>::value());
             p->value_name_ = create_name(NULL);
-            return container_ptr_type(p);
+            return result_type(p);
           }
 
           /** @brief Matrix mapping */
@@ -122,7 +122,7 @@ namespace viennacl{
             p->stride1_name_ = p->name_ + "_stride1";
             p->start2_name_ = p->name_ +"_start2";
             p->stride2_name_ = p->name_ + "_stride2";
-            return container_ptr_type(p);
+            return result_type(p);
           }
 
           /** @brief Implicit matrix mapping */
@@ -130,7 +130,7 @@ namespace viennacl{
           result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
             mapped_implicit_matrix * p = new mapped_implicit_matrix(utils::type_to_string<ScalarType>::value());
             p->value_name_ = create_name(NULL);
-            return container_ptr_type(p);
+            return result_type(p);
           }
 
           /** @brief Traversal functor */

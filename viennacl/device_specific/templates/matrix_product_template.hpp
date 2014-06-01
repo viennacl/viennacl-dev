@@ -32,8 +32,8 @@ License:         MIT (X11), see file LICENSE in the base directory
 
 #include "viennacl/device_specific/mapped_objects.hpp"
 #include "viennacl/device_specific/utils.hpp"
-#include "viennacl/device_specific/tree_parsing/fetch.hpp"
-#include "viennacl/device_specific/tree_parsing/elementwise_expression.hpp"
+#include "viennacl/device_specific/tree_parsing/read_write.hpp"
+#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
 #include "viennacl/forwards.h"
 
 #include "viennacl/tools/tools.hpp"
@@ -99,10 +99,9 @@ public:
         arguments_string += generate_value_kernel_argument("unsigned int", "K");
     }
 
-    virtual void init(std::pair<scheduler::statement, unsigned int> const & statement_pair, mapping_type & mapping)
+    virtual void init(scheduler::statement const & statement, mapping_type const & mapping)
     {
-        scheduler::statement const & statement = statement_pair.first;
-        scheduler::statement_node const & root_node = statement.array()[statement_pair.second];
+        scheduler::statement_node const & root_node = statement.array()[statement.root()];
         scheduler::statement::container_type const & exprs = statement.array();
         scheduler::statement_node const * prod_node = NULL;
         for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
@@ -412,7 +411,7 @@ private:
                     std::string j = tools::to_string((n/simd_width_)*(local_size_1_*simd_width_) + n%simd_width_);
                     prod_->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;
-                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
+                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::evaluate_expression_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
                     stream << str << ";" << std::endl;
                 }
                 if((m+1)%simd_width_>0)
@@ -431,7 +430,7 @@ private:
                     std::string j = tools::to_string((m/simd_width_)*(local_size_0_*simd_width_) + m%simd_width_);
                     prod_->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;
-                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::expression_generation_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
+                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::evaluate_expression_traversal(std::make_pair("0", j), -1, str, mapping[0]), false);
                     stream << str << ";" << std::endl;
                 }
                 if((n+1)%simd_width_>0)

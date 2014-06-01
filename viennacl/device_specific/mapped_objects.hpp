@@ -141,25 +141,22 @@ namespace viennacl{
               return res;
           }
 
-          void fetch(std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream) {
-            std::string new_access_name = name_ + "_private";
-            if(fetched.find(name_)==fetched.end()){
+          void fetch(std::string const & suffix, std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream) {
+            access_name_ = name_ + suffix;
+            if(fetched.insert(access_name_).second){
               stream << scalartype_;
               if(simd_width_ > 1)
                   stream << simd_width_;
-              stream << " " << new_access_name << " = " << generate_default(index) << ';' << std::endl;
-              fetched.insert(name_);
+              stream << " " << access_name_ << " = " << generate_default(index) << ';' << std::endl;
             }
-            access_name_ = new_access_name;
           }
 
-          void write_back(std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream) {
-            std::string old_access_name = access_name_ ;
-            access_name_ = "";
-            if(fetched.find(name_)!=fetched.end()){
-              stream << generate_default(index) << " = " << old_access_name << ';' << std::endl;
-              fetched.erase(name_);
+          void write_back(std::string const &, std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream) {
+            if(fetched.find(access_name_)!=fetched.end()){
+              stream << generate_default(index) << " = " << access_name_ << ';' << std::endl;
+              fetched.erase(access_name_);
             }
+            access_name_ = "";
           }
 
           std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const{
@@ -304,11 +301,6 @@ namespace viennacl{
 
       static std::string evaluate(std::pair<std::string, std::string> const & index, int simd_element, mapped_object const & s){
         return s.evaluate(index, simd_element);
-      }
-
-      static void fetch(std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_object & s){
-        if(mapped_handle * p = dynamic_cast<mapped_handle  *>(&s))
-          p->fetch(index, fetched, stream);
       }
 
       static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, mapped_object const & s){

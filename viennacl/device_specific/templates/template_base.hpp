@@ -72,7 +72,7 @@ namespace viennacl{
         /** @brief The destructor */
         virtual ~template_base(){ }
 
-        virtual void init(std::pair<scheduler::statement, unsigned int> const &, mapping_type const & mapping)
+        virtual void init(scheduler::statement const &, mapping_type const & mapping)
         {
           for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
               if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
@@ -148,8 +148,8 @@ namespace viennacl{
           std::string prototype;
           std::set<std::string> already_generated;
           add_kernel_arguments(prototype);
-          for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
-            tree_parsing::traverse(it->first, it->second, tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping[std::distance(statements.begin(), it)]));
+          for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+            tree_parsing::traverse(*it, it->root(), tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping[std::distance(statements.data().begin(), it)]));
           prototype.erase(prototype.size()-1); //Last comma pruned
 
           for(unsigned int i = 0 ; i < num_kernels_ ; ++i)

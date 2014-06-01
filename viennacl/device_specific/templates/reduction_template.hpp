@@ -29,8 +29,8 @@
 #include "viennacl/backend/opencl.hpp"
 
 #include "viennacl/scheduler/forwards.h"
-#include "viennacl/device_specific/tree_parsing/fetch.hpp"
-#include "viennacl/device_specific/tree_parsing/elementwise_expression.hpp"
+#include "viennacl/device_specific/tree_parsing/read_write.hpp"
+#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
 #include "viennacl/device_specific/utils.hpp"
 
 #include "viennacl/device_specific/templates/template_base.hpp"
@@ -89,7 +89,7 @@ namespace viennacl{
       void init_temporaries() const {
         if(temporaries_.empty()){
           //set temporary buffer argument
-          for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+          for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
             scheduler::statement::container_type const & array = it->first.array();
             unsigned int size_of_scalartype;
             const char * scalartype_name;
@@ -109,7 +109,7 @@ namespace viennacl{
 
       void fill_scalartypes(std::vector<const char *> & res) const {
         res.reserve(statements.size());
-        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
           if (it->second.lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
           {
             switch(it->second.lhs.numeric_type){
@@ -176,13 +176,12 @@ namespace viennacl{
         stream.inc_tab();
         {
           //Fetch vector entry
-          std::set<std::string>  fetched;
+          std::set<std::string>  cache;
           for(std::vector<mapped_scalar_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           {
             viennacl::scheduler::statement const & statement = (*it)->statement();
             viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
-            tree_parsing::fetch_all_lhs(fetched,statement,root_node, std::make_pair("i", "0"),stream,(*it)->mapping());
-            tree_parsing::fetch_all_rhs(fetched,statement,root_node, std::make_pair("i", "0"),stream,(*it)->mapping());
+            tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, std::make_pair("i", "0"),stream,(*it)->mapping(), tree_parsing::PARENT_NODE_TYPE);
           }
           //Update accs;
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
@@ -282,9 +281,9 @@ namespace viennacl{
         stream << "if(lid==0){" << std::endl;
         stream.inc_tab();
         unsigned int i = 0;
-        for(statements_container::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
           std::string str;
-          tree_parsing::traverse(it->first, it->second, tree_parsing::expression_generation_traversal(std::make_pair("0", "0"), -1, str, mapping[i++]), false);
+          tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(std::make_pair("0", "0"), -1, str, mapping[i++]), false);
           stream << str << ";" << std::endl;
         }
         stream.dec_tab();

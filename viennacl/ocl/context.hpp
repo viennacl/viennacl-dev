@@ -379,7 +379,7 @@ namespace viennacl
           VIENNACL_ERR_CHECK(err);
 
           programs_.push_back(viennacl::ocl::program(temp, *this, prog_name));
-          std::cout << t.get() << std::endl;
+//          std::cout << t.get() << std::endl;
           viennacl::ocl::program & prog = programs_.back();
 
           //

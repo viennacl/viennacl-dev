@@ -28,7 +28,7 @@
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/device_specific/tree_parsing/elementwise_expression.hpp"
+#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
 #include "viennacl/device_specific/utils.hpp"
 
 
