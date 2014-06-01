@@ -43,14 +43,14 @@ namespace viennacl{
               scheduler::statement const * statement;
               unsigned int root_idx;
           };
-          virtual std::string generate_default(std::pair<std::string, std::string> const & index) const = 0;
+          virtual std::string generate_default(index_tuple const & index) const = 0;
         public:
           mapped_object(std::string const & scalartype) : scalartype_(scalartype){          }
           virtual std::string & append_kernel_arguments(std::set<std::string> &, std::string & str) const{ return str; }
           std::string const & scalartype() const { return scalartype_; }
           void access_name(std::string const & str) { access_name_ = str; }
           std::string const & access_name() const { return access_name_; }
-          virtual std::string evaluate(std::pair<std::string, std::string> const & index, int) const{
+          virtual std::string evaluate(index_tuple const & index, int) const{
             if(!access_name_.empty())
               return access_name_;
             else
@@ -70,7 +70,7 @@ namespace viennacl{
           mapping_type const & mapping() const { return *info_.mapping; }
           scheduler::statement const & statement() const { return *info_.statement; }
           unsigned int root_idx() const { return info_.root_idx; }
-          std::string generate_default(std::pair<std::string, std::string> const &) const { return "";}
+          std::string generate_default(index_tuple const &) const { return "";}
         protected:
           node_info info_;
       };
@@ -108,7 +108,7 @@ namespace viennacl{
       /** @brief Mapping of a host scalar to a generator class */
       class mapped_host_scalar : public mapped_object{
           friend class tree_parsing::map_functor;
-          std::string generate_default(std::pair<std::string, std::string> const &) const{ return name_;  }
+          std::string generate_default(index_tuple const &) const{ return name_;  }
         public:
           mapped_host_scalar(std::string const & scalartype) : mapped_object(scalartype){ }
           std::string const & name() { return name_; }
@@ -124,9 +124,9 @@ namespace viennacl{
 
       /** @brief Base class for datastructures passed by pointer */
       class mapped_handle : public mapped_object{
-          virtual std::string offset(std::pair<std::string, std::string> const & index) const = 0;
+          virtual std::string offset(index_tuple const & index) const = 0;
           virtual void append_optional_arguments(std::string &) const{ }
-          std::string generate_default(std::pair<std::string, std::string> const & index) const{ return name_  + '[' + offset(index) + ']'; }
+          std::string generate_default(index_tuple const & index) const{ return name_  + '[' + offset(index) + ']'; }
         public:
           mapped_handle(std::string const & scalartype) : mapped_object(scalartype){ }
 
@@ -141,7 +141,7 @@ namespace viennacl{
               return res;
           }
 
-          void fetch(std::string const & suffix, std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream) {
+          void fetch(std::string const & suffix, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream) {
             access_name_ = name_ + suffix;
             if(fetched.insert(access_name_).second){
               stream << scalartype_;
@@ -151,7 +151,7 @@ namespace viennacl{
             }
           }
 
-          void write_back(std::string const &, std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream) {
+          void write_back(std::string const &, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream) {
             if(fetched.find(access_name_)!=fetched.end()){
               stream << generate_default(index) << " = " << access_name_ << ';' << std::endl;
               fetched.erase(access_name_);
@@ -179,7 +179,7 @@ namespace viennacl{
       class mapped_scalar : public mapped_handle{
           friend class tree_parsing::map_functor;
         private:
-          std::string offset(std::pair<std::string, std::string> const &)  const { return "0"; }
+          std::string offset(index_tuple const &)  const { return "0"; }
         public:
           mapped_scalar(std::string const & scalartype) : mapped_handle(scalartype){ }
       };
@@ -189,7 +189,7 @@ namespace viennacl{
       class mapped_buffer : public mapped_handle{
         public:
           mapped_buffer(std::string const & scalartype) : mapped_handle(scalartype){ }
-          virtual std::string evaluate(std::pair<std::string, std::string> const & index, int vector_element) const{
+          virtual std::string evaluate(index_tuple const & index, int vector_element) const{
             if(vector_element>-1)
               return mapped_object::evaluate(index, vector_element)+".s"+tools::to_string(vector_element);
             return mapped_object::evaluate(index, vector_element);
@@ -200,14 +200,14 @@ namespace viennacl{
       /** @brief Mapping of a vector to a generator class */
       class mapped_vector : public mapped_buffer{
           friend class tree_parsing::map_functor;
-          std::string offset(std::pair<std::string, std::string> const & index) const {
+          std::string offset(index_tuple const & index) const {
             if(info_.statement){
               std::string str;
               tree_parsing::generate_all_rhs(*info_.statement, info_.root_idx, index, -1, str, *info_.mapping);
               return str;
             }
             else
-              return start_name_+"+"+index.first+"*"+stride_name_;
+              return start_name_+"+"+index.i+"*"+stride_name_;
           }
 
           void append_optional_arguments(std::string & str) const{
@@ -240,15 +240,13 @@ namespace viennacl{
 
           std::string const & ld() const { return ld_name_; }
 
-          std::string offset(std::pair<std::string, std::string> const & index) const {
-            std::string i = index.first;
-            std::string j = index.second;
-            if(i=="0")
-              return  "(" + j + ')' + '*' + ld_name_;
-            else if(j=="0")
-              return "(" + i + ")";
+          std::string offset(index_tuple const & index) const {
+            if(index.i=="0")
+              return  "(" + index.j + ')' + '*' + ld_name_;
+            else if(index.j=="0")
+              return "(" + index.i + ")";
             else
-              return  '(' + i + ')' + "+ (" + j + ')' + '*' + ld_name_;
+              return  '(' + index.i + ')' + "+ (" + index.j + ')' + '*' + ld_name_;
           }
 
         private:
@@ -270,9 +268,7 @@ namespace viennacl{
           bool is_value_static_;
         public:
           mapped_implicit_vector(std::string const & scalartype) : mapped_object(scalartype){ }
-          std::string generate_default(std::pair<std::string, std::string> const & /*index*/) const{
-            return value_name_;
-          }
+          std::string generate_default(index_tuple const & index) const { return "("+index.i+"<"+index.bound0+")?"+value_name_+":0"; }
           std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str) const{
             if(!value_name_.empty())
               str += generate_value_kernel_argument(scalartype_, value_name_);
@@ -289,9 +285,7 @@ namespace viennacl{
           bool is_diag_;
         public:
           mapped_implicit_matrix(std::string const & scalartype) : mapped_object(scalartype){ }
-          std::string generate_default(std::pair<std::string, std::string> const & /* index */) const{
-            return value_name_;
-          }
+          std::string generate_default(index_tuple const & /* index */) const{ return value_name_; }
           std::string & append_kernel_arguments(std::set<std::string> & /*already generated*/, std::string & str) const{
             if(!value_name_.empty())
               str += generate_value_kernel_argument(scalartype_, value_name_);
@@ -299,7 +293,7 @@ namespace viennacl{
           }
       };
 
-      static std::string evaluate(std::pair<std::string, std::string> const & index, int simd_element, mapped_object const & s){
+      static std::string evaluate(index_tuple const & index, int simd_element, mapped_object const & s){
         return s.evaluate(index, simd_element);
       }
 

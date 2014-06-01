@@ -181,7 +181,7 @@ namespace viennacl{
           {
             viennacl::scheduler::statement const & statement = (*it)->statement();
             viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
-            tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, std::make_pair("i", "0"),stream,(*it)->mapping(), tree_parsing::PARENT_NODE_TYPE);
+            tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, index_tuple("i", "N"),stream,(*it)->mapping(), tree_parsing::PARENT_NODE_TYPE);
           }
           //Update accs;
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
@@ -192,20 +192,20 @@ namespace viennacl{
             if(simd_width_ > 1){
               for(unsigned int a = 0 ; a < simd_width_ ; ++a){
                 std::string str;
-                tree_parsing::generate_all_lhs(statement,root_idx,std::make_pair("i","0"),a,str,mapping);
+                tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("i","N"),a,str,mapping);
                 if(root_node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                   str += "*";
-                  tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("i","0"),a,str,mapping);
+                  tree_parsing::generate_all_rhs(statement,root_node,index_tuple("i","N"),a,str,mapping);
                 }
                 compute_reduction(stream,accs[k],str,rops[k]);
               }
             }
             else{
               std::string str;
-              tree_parsing::generate_all_lhs(statement,root_idx,std::make_pair("i","0"),-1,str,mapping);
+              tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("i","N"),-1,str,mapping);
               if(root_node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                 str += "*";
-                tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("i","0"),-1,str,mapping);
+                tree_parsing::generate_all_rhs(statement,root_node,index_tuple("i","N"),-1,str,mapping);
               }
               compute_reduction(stream,accs[k],str,rops[k]);
             }
@@ -283,7 +283,7 @@ namespace viennacl{
         unsigned int i = 0;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
           std::string str;
-          tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(std::make_pair("0", "0"), -1, str, mapping[i++]), false);
+          tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(index_tuple("0", "N"), -1, str, mapping[i++]), false);
           stream << str << ";" << std::endl;
         }
         stream.dec_tab();

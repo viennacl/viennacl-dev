@@ -503,6 +503,9 @@ namespace viennacl
         static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<float>  const & t) { elem.vector_float  = const_cast<viennacl::vector_base<float> *>(&t); }
         static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<double> const & t) { elem.vector_double = const_cast<viennacl::vector_base<double> *>(&t); }
 
+        static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<float>  const & t) { elem.implicit_vector_float  = const_cast<viennacl::implicit_vector_base<float> *>(&t); }
+        static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<double> const & t) { elem.implicit_vector_double = const_cast<viennacl::implicit_vector_base<double> *>(&t); }
+
         ///////////// Matrix node helper ////////////////
         // TODO: add integer matrix overloads here
         static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<float> const & t) { elem.matrix_float  = const_cast<viennacl::matrix_base<float> *>(&t); }
@@ -564,6 +567,18 @@ namespace viennacl
         {
           elem.type_family           = VECTOR_TYPE_FAMILY;
           elem.subtype               = DENSE_VECTOR_TYPE;
+          elem.numeric_type          = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
+          return next_free;
+        }
+
+        template <typename T>
+        static vcl_size_t add_element(vcl_size_t next_free,
+                                lhs_rhs_element            & elem,
+                                viennacl::implicit_vector_base<T> const & t)
+        {
+          elem.type_family           = VECTOR_TYPE_FAMILY;
+          elem.subtype               = IMPLICIT_VECTOR_TYPE;
           elem.numeric_type          = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
           assign_element(elem, t);
           return next_free;

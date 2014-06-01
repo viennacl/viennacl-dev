@@ -139,6 +139,16 @@ int test_vector ( Epsilon const& epsilon) {
     // --------------------------------------------------------------------------
 
     {
+        std::cout << "w = scalar_vector(alpha) ..." << std::endl;
+        for(unsigned int i = 0 ; i < size ; ++i)
+          cw[i] = alpha;
+        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::scalar_vector<NumericT>(size,alpha));
+        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+        viennacl::backend::finish();
+        CHECK_RESULT(cw, w, w = scalar_vector(alpha));
+    }
+
+    {
         std::cout << "w = x ..." << std::endl;
         cw = cx;
         viennacl::scheduler::statement statement(w, viennacl::op_assign(), x);
@@ -146,6 +156,7 @@ int test_vector ( Epsilon const& epsilon) {
         viennacl::backend::finish();
         CHECK_RESULT(cw, w, w = x);
     }
+
 
     {
         std::cout << "w = -x ..." << std::endl;

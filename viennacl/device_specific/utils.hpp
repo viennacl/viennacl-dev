@@ -163,8 +163,12 @@ namespace viennacl{
 
       struct internal_size_fun{
         typedef std::size_t result_type;
-        template<class T>
-        result_type operator()(T const &t) const { return viennacl::traits::internal_size(t); }
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::internal_size(t); }
+      };
+
+      struct size_fun{
+        typedef std::size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::size(t); }
       };
 
       struct handle_fun{

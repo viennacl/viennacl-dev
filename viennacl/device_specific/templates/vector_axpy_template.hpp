@@ -56,18 +56,19 @@ namespace viennacl{
         k.global_work_size(1,1);
 
         scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
-        viennacl::vcl_size_t N = utils::call_on_vector(root.lhs, utils::internal_size_fun());
-        k.arg(n_arg++, cl_uint(N/simd_width_));
+        k.arg(n_arg++, cl_uint(utils::call_on_vector(root.lhs, utils::internal_size_fun())/simd_width_));
+        k.arg(n_arg++, cl_uint(utils::call_on_vector(root.lhs, utils::size_fun())/simd_width_));
       }
 
       void add_kernel_arguments(std::string & arguments_string) const{
+        arguments_string += generate_value_kernel_argument("unsigned int", "internalN");
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
     private:
 
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
-        stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
+        stream << "for(unsigned int i = get_global_id(0) ; i < internalN ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
 
@@ -80,8 +81,8 @@ namespace viennacl{
 
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
-          tree_parsing::read_write(&mapped_handle::fetch, lhs_suffix, cache,*it, it->root(), std::make_pair("i","0"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
-          tree_parsing::read_write(&mapped_handle::fetch, rhs_suffix, cache,*it, it->root(), std::make_pair("i","0"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::RHS_NODE_TYPE);
+          tree_parsing::read_write(&mapped_handle::fetch, lhs_suffix, cache,*it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(&mapped_handle::fetch, rhs_suffix, cache,*it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::RHS_NODE_TYPE);
         }
 
         //Generates all the expression, in order
@@ -89,14 +90,14 @@ namespace viennacl{
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
           std::string str;
-          tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(std::make_pair("i","0"), -1, str, mapping[i++]));
+          tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(index_tuple("i", "N"), -1, str, mapping[i++]));
           stream << str << ";" << std::endl;
         }
 
         //Write back
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
-          tree_parsing::read_write(&mapped_handle::write_back, lhs_suffix, cache,*it, it->root(), std::make_pair("i","0"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(&mapped_handle::write_back, lhs_suffix, cache,*it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
         }
 
         stream.dec_tab();

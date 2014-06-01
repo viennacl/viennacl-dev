@@ -27,35 +27,21 @@ namespace viennacl
 
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
-        template <typename StringType>
-        void generate_plane_rotation(StringType & source, std::string const & numeric_string)
+        template<class T>
+        void generate_plane_rotation(std::string & source, device_specific::template_base & axpy)
         {
-          source.append("__kernel void plane_rotation( \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * vec2, \n");
-          source.append("          unsigned int start2, \n");
-          source.append("          unsigned int inc2, \n");
-          source.append("          unsigned int size2, \n");
-          source.append("          "); source.append(numeric_string); source.append(" alpha, \n");
-          source.append("          "); source.append(numeric_string); source.append(" beta) \n");
-          source.append("{ \n");
-          source.append("  "); source.append(numeric_string); source.append(" tmp1 = 0; \n");
-          source.append("  "); source.append(numeric_string); source.append(" tmp2 = 0; \n");
-          source.append(" \n");
-          source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
-          source.append(" { \n");
-          source.append("    tmp1 = vec1[i*inc1+start1]; \n");
-          source.append("    tmp2 = vec2[i*inc2+start2]; \n");
-          source.append(" \n");
-          source.append("    vec1[i*inc1+start1] = alpha * tmp1 + beta * tmp2; \n");
-          source.append("    vec2[i*inc2+start2] = alpha * tmp2 - beta * tmp1; \n");
-          source.append("  } \n");
-          source.append(" \n");
-          source.append("} \n");
+          viennacl::vector<T> x; viennacl::vector<T> y;
+          T a; T b;
+          source.append(device_specific::generate::opencl_source(axpy, scheduler::preset::plane_rotation(&x, &y, &a, &b)));
         }
+
+        template<class T>
+        void generate_vector_swap(std::string & source, device_specific::template_base & axpy)
+        {
+          viennacl::vector<T> x; viennacl::vector<T> y;
+          source.append(device_specific::generate::opencl_source(axpy, scheduler::preset::swap(&x, &y)));
+        }
+
 
         template <typename StringType>
         void generate_vector_swap(StringType & source, std::string const & numeric_string)
@@ -488,6 +474,7 @@ namespace viennacl
           static void init(viennacl::ocl::context & ctx)
           {
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
+            viennacl::device_specific::template_base & axpy = device_specific::database::get<TYPE>(device_specific::database::axpy);
             std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
@@ -497,13 +484,12 @@ namespace viennacl
 
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
-              generate_avbv<TYPE>(source, device_specific::database::get<TYPE>(device_specific::database::axpy));
+              generate_avbv<TYPE>(source, axpy);
+              generate_plane_rotation<TYPE>(source, axpy);
+              generate_vector_swap<TYPE>(source, axpy);
 
               // kernels with mostly predetermined skeleton:
-              generate_plane_rotation(source, numeric_string);
-              generate_vector_swap(source, numeric_string);
               generate_assign_cpu(source, numeric_string);
-
               generate_inner_prod(source, numeric_string, 1);
               generate_norm(source, numeric_string);
               generate_sum(source, numeric_string);

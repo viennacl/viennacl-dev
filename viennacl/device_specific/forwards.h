@@ -38,6 +38,15 @@ namespace viennacl{
 
   namespace device_specific{
 
+    struct index_tuple{
+      index_tuple(std::string const & _i, std::string const & _bound0) : i(_i), bound0(_bound0), j(""), bound1(""){ }
+      index_tuple(std::string const & _i, std::string const & _bound0, std::string const & _j, std::string const & _bound1) : i(_i), bound0(_bound0), j(_j), bound1(_bound1){ }
+      std::string i;
+      std::string bound0;
+      std::string j;
+      std::string bound1;
+    };
+
     inline bool is_scalar_reduction(scheduler::statement_node const & node){
       return node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE || node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY;
     }
@@ -134,7 +143,7 @@ namespace viennacl{
       inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool recurse_binary_leaf = true);
       inline void generate_all_rhs(scheduler::statement const & statement
                                 , unsigned int root_idx
-                                , std::pair<std::string, std::string> const & index
+                                , index_tuple const & index
                                 , int vector_element
                                 , std::string & str
                                 , mapping_type const & mapping);
@@ -216,6 +225,8 @@ namespace viennacl{
       typedef std::list<scheduler::statement> data_type;
       enum order_type { SEQUENTIAL, INDEPENDENT };
 
+      statements_container(data_type const & data, order_type order) : data_(data), order_(order){ }
+
       statements_container(scheduler::statement const & s0) : order_(SEQUENTIAL)
       {
         data_.push_back(s0);
@@ -230,9 +241,11 @@ namespace viennacl{
       order_type order() const { return order_; }
 
     private:
-      order_type order_;
       std::list<scheduler::statement> data_;
+      order_type order_;
     };
+
+
 
   }
 

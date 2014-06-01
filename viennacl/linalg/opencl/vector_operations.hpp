@@ -143,18 +143,9 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "swap");
-
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 cl_uint(viennacl::traits::start(vec1)),
-                                 cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
-                                 viennacl::traits::opencl_handle(vec2),
-                                 cl_uint(viennacl::traits::start(vec2)),
-                                 cl_uint(viennacl::traits::stride(vec2)),
-                                 cl_uint(viennacl::traits::size(vec2)))
-                              );
+        device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
+                                 ctx.get_program(viennacl::linalg::opencl::kernels::vector<T>::program_name()),
+                                 scheduler::preset::swap(&vec1, &vec2));
       }
 
       ///////////////////////// Binary Elementwise operations /////////////
@@ -836,24 +827,13 @@ namespace viennacl
                           T alpha, T beta)
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-
-        assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2));
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "plane_rotation");
-
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 cl_uint(viennacl::traits::start(vec1)),
-                                 cl_uint(viennacl::traits::stride(vec1)),
-                                 cl_uint(viennacl::traits::size(vec1)),
-                                 viennacl::traits::opencl_handle(vec2),
-                                 cl_uint(viennacl::traits::start(vec2)),
-                                 cl_uint(viennacl::traits::stride(vec2)),
-                                 cl_uint(viennacl::traits::size(vec2)),
-                                 viennacl::traits::opencl_handle(alpha),
-                                 viennacl::traits::opencl_handle(beta))
-                              );
+        device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
+                                 ctx.get_program(viennacl::linalg::opencl::kernels::vector<T>::program_name()),
+                                 scheduler::preset::plane_rotation(&vec1, &vec2, &alpha, &beta));
       }
 
     } //namespace opencl

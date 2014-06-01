@@ -163,12 +163,12 @@ namespace viennacl{
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
                 viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
                 if(A_trans_=='T')
-                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, std::make_pair("c", "r"),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
+                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, index_tuple("c", size1, "r", size2),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
                 else
-                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, std::make_pair("r", "c"),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
+                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, index_tuple("r", size1, "c", size2),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
 
                 if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, std::make_pair("c", "0"),stream,exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
+                  tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, index_tuple("c", size1),stream,exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
               }
 
 
@@ -178,10 +178,10 @@ namespace viennacl{
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
                 unsigned int root_idx = exprs[k]->root_idx();
                 std::string str;
-                tree_parsing::generate_all_lhs(statement,root_idx,std::make_pair("",""),-1,str,exprs[k]->mapping());
+                tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("",""),-1,str,exprs[k]->mapping());
                 if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
                   str += "*";
-                  tree_parsing::generate_all_rhs(statement,root_node,std::make_pair("",""),-1,str,exprs[k]->mapping());
+                  tree_parsing::generate_all_rhs(statement,root_node,index_tuple("",""),-1,str,exprs[k]->mapping());
                 }
                 compute_reduction(stream,accs[k],str,rops[k]);
               }
@@ -220,7 +220,7 @@ namespace viennacl{
             unsigned int i = 0;
             for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
               std::string str;
-              tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(std::make_pair("r","0"), -1, str, mapping[i++]), false);
+              tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(index_tuple("r",size1, "0", size2), -1, str, mapping[i++]), false);
               stream << str << ";" << std::endl;
             }
             stream.dec_tab();
