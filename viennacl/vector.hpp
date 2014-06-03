@@ -340,7 +340,7 @@ namespace viennacl
       typedef const_vector_iterator<SCALARTYPE, 1>              const_iterator;
       typedef vector_iterator<SCALARTYPE, 1>                    iterator;
 
-      static const size_type alignment = 128;
+      static const size_type alignment = 1;
 
       /** @brief Default constructor in order to be compatible with various containers.
       */

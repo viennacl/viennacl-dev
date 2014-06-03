@@ -268,7 +268,7 @@ namespace viennacl{
           bool is_value_static_;
         public:
           mapped_implicit_vector(std::string const & scalartype) : mapped_object(scalartype){ }
-          std::string generate_default(index_tuple const & index) const { return "("+index.i+"<"+index.bound0+")?"+value_name_+":0"; }
+          std::string generate_default(index_tuple const &) const { return value_name_; }
           std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str) const{
             if(!value_name_.empty())
               str += generate_value_kernel_argument(scalartype_, value_name_);

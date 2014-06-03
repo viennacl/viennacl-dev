@@ -115,19 +115,10 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "assign_cpu");
-        k.global_work_size(0, std::min<vcl_size_t>(128 * k.local_work_size(),
-                                                    viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size(vec1), k.local_work_size()) ) );
-
-        cl_uint size = up_to_internal_size ? cl_uint(vec1.internal_size()) : cl_uint(viennacl::traits::size(vec1));
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 cl_uint(viennacl::traits::start(vec1)),
-                                 cl_uint(viennacl::traits::stride(vec1)),
-                                 size,
-                                 cl_uint(vec1.internal_size()),     //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
-                                 viennacl::traits::opencl_handle(T(alpha)) )
-                              );
+        scalar_vector<T> vec2(viennacl::traits::size(vec1),alpha);
+        device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
+                                 ctx.get_program(viennacl::linalg::opencl::kernels::vector<T>::program_name()),
+                                 scheduler::preset::assign_cpu(&vec1, &vec2));
       }
 
 
@@ -230,55 +221,6 @@ namespace viennacl
 
       ///////////////////////// Norms and inner product ///////////////////
 
-      /** @brief Computes the partial inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
-      *
-      * @param vec1 The first vector
-      * @param vec2 The second vector
-      * @param partial_result The results of each group
-      */
-      template <typename T>
-      void inner_prod_impl(vector_base<T> const & vec1,
-                           vector_base<T> const & vec2,
-                           vector_base<T> & partial_result)
-      {
-        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-
-        assert( (viennacl::traits::size(vec1) == viennacl::traits::size(vec2))
-              && bool("Incompatible vector sizes in inner_prod_impl()!"));
-
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "inner_prod1");
-
-        assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in inner_prod_impl()") );
-
-        viennacl::ocl::packed_cl_uint size_vec1;
-        size_vec1.start  = cl_uint(viennacl::traits::start(vec1));
-        size_vec1.stride = cl_uint(viennacl::traits::stride(vec1));
-        size_vec1.size   = cl_uint(viennacl::traits::size(vec1));
-        size_vec1.internal_size   = cl_uint(viennacl::traits::internal_size(vec1));
-
-        viennacl::ocl::packed_cl_uint size_vec2;
-        size_vec2.start  = cl_uint(viennacl::traits::start(vec2));
-        size_vec2.stride = cl_uint(viennacl::traits::stride(vec2));
-        size_vec2.size   = cl_uint(viennacl::traits::size(vec2));
-        size_vec2.internal_size   = cl_uint(viennacl::traits::internal_size(vec2));
-
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
-                                 size_vec1,
-                                 viennacl::traits::opencl_handle(vec2),
-                                 size_vec2,
-                                 viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * k.local_work_size()),
-                                 viennacl::traits::opencl_handle(partial_result)
-                                )
-                              );
-      }
-
-
-      //implementation of inner product:
-      //namespace {
       /** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
       *
       * @param vec1 The first vector
@@ -294,27 +236,11 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-
-        vcl_size_t work_groups = 128;
-        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
-        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
-
-        // Step 1: Compute partial inner products for each work group:
-        inner_prod_impl(vec1, vec2, temp);
-
-        // Step 2: Sum partial results:
-        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
-
-        ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, work_groups);
-        viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
-                                    cl_uint(viennacl::traits::start(temp)),
-                                    cl_uint(viennacl::traits::stride(temp)),
-                                    cl_uint(viennacl::traits::size(temp)),
-                                    cl_uint(1),
-                                    viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * ksum.local_work_size()),
-                                    viennacl::traits::opencl_handle(result) )
-                              );
+        linalg::opencl::kernels::vector<T>::init(ctx);
+        viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
+                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           scheduler::preset::reduction(&result, &vec1, &vec2, scheduler::OPERATION_BINARY_TYPE_FAMILY, scheduler::OPERATION_BINARY_INNER_PROD_TYPE),
+                                           device_specific::BIND_ALL_UNIQUE);
       }
 
       namespace detail
@@ -511,40 +437,50 @@ namespace viennacl
       }
 
 
-      //implementation of inner product:
-      //namespace {
-      /** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
-      *
-      * @param vec1 The first vector
-      * @param vec2 The second vector
-      * @param result The result scalar (on the gpu)
-      */
       template <typename T>
       void inner_prod_cpu(vector_base<T> const & vec1,
                           vector_base<T> const & vec2,
                           T & result)
       {
-        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-
-        vcl_size_t work_groups = 128;
-        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
-        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
-
-        // Step 1: Compute partial inner products for each work group:
-        inner_prod_impl(vec1, vec2, temp);
-
-        // Step 2: Sum partial results:
-
-        // Now copy partial results from GPU back to CPU and run reduction there:
-        std::vector<T> temp_cpu(work_groups);
-        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
-
-        result = 0;
-        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
-          result += *it;
+        scalar<T> tmp(0);
+        inner_prod_impl(vec1, vec2, tmp);
+        result = tmp;
       }
+
+//      //implementation of inner product:
+//      //namespace {
+//      /** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
+//      *
+//      * @param vec1 The first vector
+//      * @param vec2 The second vector
+//      * @param result The result scalar (on the gpu)
+//      */
+//      template <typename T>
+//      void inner_prod_cpu(vector_base<T> const & vec1,
+//                          vector_base<T> const & vec2,
+//                          T & result)
+//      {
+//        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+//        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+
+//        vcl_size_t work_groups = 128;
+//        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
+//        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
+
+//        // Step 1: Compute partial inner products for each work group:
+//        inner_prod_impl(vec1, vec2, temp);
+
+//        // Step 2: Sum partial results:
+
+//        // Now copy partial results from GPU back to CPU and run reduction there:
+//        std::vector<T> temp_cpu(work_groups);
+//        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+
+//        result = 0;
+//        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+//          result += *it;
+//      }
 
 
       //////////// Helper for norms

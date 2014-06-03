@@ -51,7 +51,7 @@ namespace viennacl{
 
       void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         //create temporaries
-        init_temporaries();
+        init_temporaries(statements);
 
         //configure ND range
         if(kernel_id==0){
@@ -67,14 +67,14 @@ namespace viennacl{
         }
 
         //set arguments
-        cl_uint size = get_vector_size(statements.front().first);
+        cl_uint size = get_vector_size(statements.data().front());
         k.arg(n_arg++, size/simd_width_);
         for(temporaries_type::iterator it = temporaries_.begin() ; it != temporaries_.end() ; ++it)
           k.arg(n_arg++, it->second);
       }
 
-      void add_kernel_arguments(std::string & arguments_string) const{
-        init_temporaries();
+      void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const{
+        init_temporaries(statements);
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
         for(temporaries_type::iterator it = temporaries_.begin() ; it != temporaries_.end() ; ++it){
           arguments_string += generate_pointer_kernel_argument("__global", it->first, "temp" + tools::to_string(std::distance(temporaries_.begin(), it)));
@@ -86,11 +86,11 @@ namespace viennacl{
         return local_size_0_*scalartype_size;
       }
 
-      void init_temporaries() const {
+      void init_temporaries(statements_container const & statements) const {
         if(temporaries_.empty()){
           //set temporary buffer argument
           for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
-            scheduler::statement::container_type const & array = it->first.array();
+            scheduler::statement::container_type const & array = it->array();
             unsigned int size_of_scalartype;
             const char * scalartype_name;
             switch(array[0].lhs.numeric_type){
@@ -107,12 +107,13 @@ namespace viennacl{
         }
       }
 
-      void fill_scalartypes(std::vector<const char *> & res) const {
-        res.reserve(statements.size());
+      void fill_scalartypes(statements_container const & statements, std::vector<const char *> & res) const {
+        res.reserve(statements.data().size());
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
-          if (it->second.lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
+          scheduler::lhs_rhs_element const & lhs = it->array()[it->root()].lhs;
+          if (lhs.type_family == scheduler::SCALAR_TYPE_FAMILY)
           {
-            switch(it->second.lhs.numeric_type){
+            switch(lhs.numeric_type){
             case scheduler::FLOAT_TYPE:
               res.push_back("float");
               break;
@@ -138,7 +139,7 @@ namespace viennacl{
         std::vector<std::string> accs(N);
         std::vector<std::string> local_buffers_names(N);
         for(unsigned int k = 0 ; k < N ; ++k){
-          scheduler::op_element root_op = exprs[k]->root_node().op;
+          scheduler::op_element root_op = exprs[k]->statement().array()[exprs[k]->root_idx()].op;
           rops[k].type_family = scheduler::OPERATION_BINARY_TYPE_FAMILY;
           if(root_op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
             rops[k].type        = scheduler::OPERATION_BINARY_ADD_TYPE;
@@ -179,9 +180,7 @@ namespace viennacl{
           std::set<std::string>  cache;
           for(std::vector<mapped_scalar_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           {
-            viennacl::scheduler::statement const & statement = (*it)->statement();
-            viennacl::scheduler::statement_node const & root_node = (*it)->root_node();
-            tree_parsing::read_write(mapped_handle::fetch, "reg", cache,statement,root_node, index_tuple("i", "N"),stream,(*it)->mapping(), tree_parsing::PARENT_NODE_TYPE);
+            tree_parsing::read_write(&mapped_handle::fetch, "reg", cache, (*it)->statement(), (*it)->root_idx(), index_tuple("i", "N"),stream,(*it)->mapping(), tree_parsing::PARENT_NODE_TYPE);
           }
           //Update accs;
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
@@ -193,9 +192,9 @@ namespace viennacl{
               for(unsigned int a = 0 ; a < simd_width_ ; ++a){
                 std::string str;
                 tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("i","N"),a,str,mapping);
-                if(root_node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
+                if(statement.array()[root_idx].op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                   str += "*";
-                  tree_parsing::generate_all_rhs(statement,root_node,index_tuple("i","N"),a,str,mapping);
+                  tree_parsing::generate_all_rhs(statement,root_idx,index_tuple("i","N"),a,str,mapping);
                 }
                 compute_reduction(stream,accs[k],str,rops[k]);
               }
@@ -203,9 +202,9 @@ namespace viennacl{
             else{
               std::string str;
               tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("i","N"),-1,str,mapping);
-              if(root_node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
+              if(statement.array()[root_idx].op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                 str += "*";
-                tree_parsing::generate_all_rhs(statement,root_node,index_tuple("i","N"),-1,str,mapping);
+                tree_parsing::generate_all_rhs(statement,root_idx,index_tuple("i","N"),-1,str,mapping);
               }
               compute_reduction(stream,accs[k],str,rops[k]);
             }
@@ -240,7 +239,7 @@ namespace viennacl{
         std::vector<std::string> accs(N);
         std::vector<std::string> local_buffers_names(N);
         for(unsigned int k = 0 ; k < N ; ++k){
-          scheduler::op_element root_op = exprs[k]->root_node().op;
+          scheduler::op_element root_op = exprs[k]->statement().array()[exprs[k]->root_idx()].op;
           rops[k].type_family = scheduler::OPERATION_BINARY_TYPE_FAMILY;
           if(root_op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
             rops[k].type        = scheduler::OPERATION_BINARY_ADD_TYPE;
@@ -309,7 +308,7 @@ namespace viennacl{
         throw "unexpected expression tree";
       }
 
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
+      void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
         std::vector<mapped_scalar_reduction*> exprs;
         for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
           for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit)
@@ -317,7 +316,7 @@ namespace viennacl{
               exprs.push_back(p);
 
         std::vector<const char *> scalartypes;
-        fill_scalartypes(scalartypes);
+        fill_scalartypes(statements, scalartypes);
 
         if(kernel_id==0){
           core_0(stream,exprs,scalartypes,statements,mapping);

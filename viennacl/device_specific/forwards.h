@@ -227,7 +227,7 @@ namespace viennacl{
 
       statements_container(data_type const & data, order_type order) : data_(data), order_(order){ }
 
-      statements_container(scheduler::statement const & s0) : order_(SEQUENTIAL)
+      statements_container(scheduler::statement const & s0) : order_(INDEPENDENT)
       {
         data_.push_back(s0);
       }

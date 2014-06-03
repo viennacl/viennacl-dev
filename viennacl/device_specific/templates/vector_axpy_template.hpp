@@ -56,19 +56,17 @@ namespace viennacl{
         k.global_work_size(1,1);
 
         scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
-        k.arg(n_arg++, cl_uint(utils::call_on_vector(root.lhs, utils::internal_size_fun())/simd_width_));
         k.arg(n_arg++, cl_uint(utils::call_on_vector(root.lhs, utils::size_fun())/simd_width_));
       }
 
-      void add_kernel_arguments(std::string & arguments_string) const{
-        arguments_string += generate_value_kernel_argument("unsigned int", "internalN");
+      void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const{
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
     private:
 
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
-        stream << "for(unsigned int i = get_global_id(0) ; i < internalN ; i += get_global_size(0))" << std::endl;
+        stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
 

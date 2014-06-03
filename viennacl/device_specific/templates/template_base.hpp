@@ -90,7 +90,7 @@ namespace viennacl{
          */
         virtual void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const = 0;
 
-        virtual void add_kernel_arguments(std::string & arguments_string) const = 0;
+        virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
 
 
         /** @brief returns whether or not the profile leads to undefined behavior on particular device
@@ -147,7 +147,7 @@ namespace viennacl{
           //Generate Prototype
           std::string prototype;
           std::set<std::string> already_generated;
-          add_kernel_arguments(prototype);
+          add_kernel_arguments(statements, prototype);
           for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
             tree_parsing::traverse(*it, it->root(), tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping[std::distance(statements.data().begin(), it)]));
           prototype.erase(prototype.size()-1); //Last comma pruned

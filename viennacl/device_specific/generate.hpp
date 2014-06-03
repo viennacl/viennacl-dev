@@ -65,10 +65,6 @@ namespace viennacl{
 
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
           tplt.init(*it, mapping[std::distance(statements.data().begin(), it)]);
-
-        std::string res = tplt.generate(statements, mapping, prefix);
-        std::cout << res << std::endl;
-
         return tplt.generate(statements, mapping, prefix);
       }
 

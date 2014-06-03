@@ -68,7 +68,7 @@ namespace viennacl{
         k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size2_fun())));
       }
 
-      virtual void add_kernel_arguments(std::string & arguments_string) const{
+      virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const{
         arguments_string += generate_value_kernel_argument("unsigned int", "M");
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }

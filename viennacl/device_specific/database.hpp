@@ -4,6 +4,7 @@
 #include "viennacl/ocl/device_utils.hpp"
 #include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/templates/vector_axpy_template.hpp"
+#include "viennacl/device_specific/templates/reduction_template.hpp"
 #include "viennacl/scheduler/forwards.h"
 
 namespace viennacl{
@@ -12,7 +13,9 @@ namespace viennacl{
 
     namespace database{
 
-        /** @brief Initialize the database */
+      /////////////////////
+      /// AXPY
+      ////////////////////
       static database_type init_axpy_database(){
         database_type map;
 
@@ -48,6 +51,26 @@ namespace viennacl{
         return map;
       }
       database_type axpy = init_axpy_database();
+
+      /////////////////////
+      /// Reduction
+      ////////////////////
+      static database_type init_reduction_database(){
+        database_type map;
+
+        //GPU Defaults
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][FLOAT_TYPE] = tools::shared_ptr<template_base>(new reduction_template("float",1,128,128,true));
+        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][DOUBLE_TYPE] = tools::shared_ptr<template_base>(new reduction_template("double",1,128,128,true));
+        //CPU Defaults
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][FLOAT_TYPE] = tools::shared_ptr<template_base>(new reduction_template("float",8,16,256,true));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][DOUBLE_TYPE] = tools::shared_ptr<template_base>(new reduction_template("double",8,16,32,true));
+        //Accelerator Defaults
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][FLOAT_TYPE] = tools::shared_ptr<template_base>(new reduction_template("float",8,16,256,true));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][DOUBLE_TYPE] = tools::shared_ptr<template_base>(new reduction_template("double",8,16,32,true));
+
+        return map;
+      }
+      database_type reduction = init_reduction_database();
 
 
       /** @brief If the fallback is too harsh, use a very conservative profile */

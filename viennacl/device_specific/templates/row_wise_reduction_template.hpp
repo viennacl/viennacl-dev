@@ -93,7 +93,7 @@ namespace viennacl{
 
       }
 
-      void add_kernel_arguments(std::string & arguments_string) const{
+      void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const{
         arguments_string += generate_value_kernel_argument("unsigned int", "M");
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }

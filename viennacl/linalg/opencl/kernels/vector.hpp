@@ -25,137 +25,44 @@ namespace viennacl
       namespace kernels
       {
 
+        using namespace viennacl::device_specific;
+
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
         template<class T>
-        void generate_plane_rotation(std::string & source, device_specific::template_base & axpy)
+        void generate_plane_rotation(std::string & source, template_base & generator)
         {
           viennacl::vector<T> x; viennacl::vector<T> y;
           T a; T b;
-          source.append(device_specific::generate::opencl_source(axpy, scheduler::preset::plane_rotation(&x, &y, &a, &b)));
+          source.append(generate::opencl_source(generator, scheduler::preset::plane_rotation(&x, &y, &a, &b)));
         }
 
         template<class T>
-        void generate_vector_swap(std::string & source, device_specific::template_base & axpy)
+        void generate_vector_swap(std::string & source, template_base & generator)
         {
           viennacl::vector<T> x; viennacl::vector<T> y;
-          source.append(device_specific::generate::opencl_source(axpy, scheduler::preset::swap(&x, &y)));
+          source.append(generate::opencl_source(generator, scheduler::preset::swap(&x, &y)));
         }
 
-
-        template <typename StringType>
-        void generate_vector_swap(StringType & source, std::string const & numeric_string)
+        template<class T>
+        void generate_assign_cpu(std::string & source, template_base & generator)
         {
-          source.append("__kernel void swap( \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * vec2, \n");
-          source.append("          unsigned int start2, \n");
-          source.append("          unsigned int inc2, \n");
-          source.append("          unsigned int size2 \n");
-          source.append("          ) \n");
-          source.append("{ \n");
-          source.append("  "); source.append(numeric_string); source.append(" tmp; \n");
-          source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
-          source.append("  { \n");
-          source.append("    tmp = vec2[i*inc2+start2]; \n");
-          source.append("    vec2[i*inc2+start2] = vec1[i*inc1+start1]; \n");
-          source.append("    vec1[i*inc1+start1] = tmp; \n");
-          source.append("  } \n");
-          source.append("} \n");
+          viennacl::vector<T> x; viennacl::scalar_vector<T> y(0,0);
+          source.append(generate::opencl_source(generator, scheduler::preset::assign_cpu(&x, &y)));
         }
 
-        template <typename StringType>
-        void generate_assign_cpu(StringType & source, std::string const & numeric_string)
+        template<typename T>
+        void generate_inner_prod(std::string & source, template_base & generator, vcl_size_t vector_num)
         {
-          source.append("__kernel void assign_cpu( \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          unsigned int internal_size1, \n");
-          source.append("          "); source.append(numeric_string); source.append(" alpha) \n");
-          source.append("{ \n");
-          source.append("  for (unsigned int i = get_global_id(0); i < internal_size1; i += get_global_size(0)) \n");
-          source.append("    vec1[i*inc1+start1] = (i < size1) ? alpha : 0; \n");
-          source.append("} \n");
+          viennacl::vector<T> x;
+          viennacl::vector<T> y;
+          viennacl::scalar<T> s;
 
-        }
+          statements_container::data_type statements;
+          for(unsigned int i = 0 ; i < vector_num ; ++i)
+            statements.push_back(scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_BINARY_TYPE_FAMILY, scheduler::OPERATION_BINARY_INNER_PROD_TYPE));
 
-        template <typename StringType>
-        void generate_inner_prod(StringType & source, std::string const & numeric_string, vcl_size_t vector_num)
-        {
-          std::stringstream ss;
-          ss << vector_num;
-          std::string vector_num_string = ss.str();
-
-          source.append("__kernel void inner_prod"); source.append(vector_num_string); source.append("( \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * x, \n");
-          source.append("          uint4 params_x, \n");
-          for (vcl_size_t i=0; i<vector_num; ++i)
-          {
-            ss.str("");
-            ss << i;
-            source.append("          __global const "); source.append(numeric_string); source.append(" * y"); source.append(ss.str()); source.append(", \n");
-            source.append("          uint4 params_y"); source.append(ss.str()); source.append(", \n");
-          }
-          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * group_buffer) \n");
-          source.append("{ \n");
-          source.append("  unsigned int entries_per_thread = (params_x.z - 1) / get_global_size(0) + 1; \n");
-          source.append("  unsigned int vec_start_index = get_group_id(0) * get_local_size(0) * entries_per_thread; \n");
-          source.append("  unsigned int vec_stop_index  = min((unsigned int)((get_group_id(0) + 1) * get_local_size(0) * entries_per_thread), params_x.z); \n");
-
-          // compute partial results within group:
-          for (vcl_size_t i=0; i<vector_num; ++i)
-          {
-            ss.str("");
-            ss << i;
-            source.append("  "); source.append(numeric_string); source.append(" tmp"); source.append(ss.str()); source.append(" = 0; \n");
-          }
-          source.append("  for (unsigned int i = vec_start_index + get_local_id(0); i < vec_stop_index; i += get_local_size(0)) { \n");
-          source.append("    ");  source.append(numeric_string); source.append(" val_x = x[i*params_x.y + params_x.x]; \n");
-          for (vcl_size_t i=0; i<vector_num; ++i)
-          {
-            ss.str("");
-            ss << i;
-            source.append("    tmp"); source.append(ss.str()); source.append(" += val_x * y"); source.append(ss.str()); source.append("[i * params_y"); source.append(ss.str()); source.append(".y + params_y"); source.append(ss.str()); source.append(".x]; \n");
-          }
-          source.append("  } \n");
-          for (vcl_size_t i=0; i<vector_num; ++i)
-          {
-            ss.str("");
-            ss << i;
-            source.append("  tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)] = tmp"); source.append(ss.str()); source.append("; \n");
-          }
-
-          // now run reduction:
-          source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
-          source.append("  { \n");
-          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
-          source.append("    if (get_local_id(0) < stride) { \n");
-          for (vcl_size_t i=0; i<vector_num; ++i)
-          {
-            ss.str("");
-            ss << i;
-            source.append("      tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)] += tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0) + stride]; \n");
-          }
-          source.append("    } \n");
-          source.append("  } \n");
-          source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
-
-          source.append("  if (get_local_id(0) == 0) { \n");
-          for (vcl_size_t i=0; i<vector_num; ++i)
-          {
-            ss.str("");
-            ss << i;
-            source.append("    group_buffer[get_group_id(0) + "); source.append(ss.str()); source.append(" * get_num_groups(0)] = tmp_buffer["); source.append(ss.str()); source.append(" * get_local_size(0)]; \n");
-          }
-          source.append("  } \n");
-          source.append("} \n");
-
+          source.append(generate::opencl_source(generator, statements_container(statements,statements_container::INDEPENDENT),BIND_ALL_UNIQUE));
         }
 
         template <typename StringType>
@@ -398,37 +305,37 @@ namespace viennacl
         }
 
         template<typename T, typename ScalarType1, typename ScalarType2>
-        inline void generate_avbv_impl(std::string & source, device_specific::template_base & axpy, scheduler::operation_node_type ASSIGN_OP,
+        inline void generate_avbv_impl(std::string & source, template_base & generator, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType1 const * a,
                                        viennacl::vector_base<T> const * z, ScalarType2 const * b)
         {
-          using device_specific::generate::opencl_source;
+          using generate::opencl_source;
 
-          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false), device_specific::BIND_ALL_UNIQUE));
-          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false), device_specific::BIND_ALL_UNIQUE));
-          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false), device_specific::BIND_ALL_UNIQUE));
-          source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false), device_specific::BIND_ALL_UNIQUE));
+          source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false), BIND_ALL_UNIQUE));
+          source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false), BIND_ALL_UNIQUE));
+          source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false), BIND_ALL_UNIQUE));
+          source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false), BIND_ALL_UNIQUE));
           if(b)
           {
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false), BIND_ALL_UNIQUE));
 
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true), BIND_ALL_UNIQUE));
 
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true), device_specific::BIND_ALL_UNIQUE));
-            source.append(opencl_source(axpy, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true), device_specific::BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true), BIND_ALL_UNIQUE));
+            source.append(opencl_source(generator, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true), BIND_ALL_UNIQUE));
           }
         }
 
         template<class T>
-        inline void generate_avbv(std::string & source, device_specific::template_base & generator, scheduler::operation_node_type ASSIGN_TYPE)
+        inline void generate_avbv(std::string & source, template_base & generator, scheduler::operation_node_type ASSIGN_TYPE)
         {
           viennacl::vector<T> x;
           viennacl::vector<T> y;
@@ -452,7 +359,7 @@ namespace viennacl
         }
 
         template<class T>
-        inline void generate_avbv(std::string & source, device_specific::template_base & generator)
+        inline void generate_avbv(std::string & source, template_base & generator)
         {
           generate_avbv<T>(source, generator, scheduler::OPERATION_BINARY_ASSIGN_TYPE);
           generate_avbv<T>(source, generator, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE);
@@ -474,11 +381,13 @@ namespace viennacl
           static void init(viennacl::ocl::context & ctx)
           {
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
-            viennacl::device_specific::template_base & axpy = device_specific::database::get<TYPE>(device_specific::database::axpy);
-            std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
+              std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
+              template_base & axpy = database::get<TYPE>(database::axpy);
+              template_base & reduction = database::get<TYPE>(database::reduction);
+
               std::string source;
               source.reserve(8192);
 
@@ -487,10 +396,10 @@ namespace viennacl
               generate_avbv<TYPE>(source, axpy);
               generate_plane_rotation<TYPE>(source, axpy);
               generate_vector_swap<TYPE>(source, axpy);
+              generate_assign_cpu<TYPE>(source, axpy);
+              generate_inner_prod<TYPE>(source, reduction, 1);
 
               // kernels with mostly predetermined skeleton:
-              generate_assign_cpu(source, numeric_string);
-              generate_inner_prod(source, numeric_string, 1);
               generate_norm(source, numeric_string);
               generate_sum(source, numeric_string);
               generate_index_norm_inf(source, numeric_string);
@@ -518,22 +427,20 @@ namespace viennacl
           static void init(viennacl::ocl::context & ctx)
           {
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
-            std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
-
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
+              template_base & reduction = database::get<TYPE>(database::reduction);
+
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
-              generate_inner_prod(source, numeric_string, 2);
-              generate_inner_prod(source, numeric_string, 3);
-              generate_inner_prod(source, numeric_string, 4);
-              generate_inner_prod(source, numeric_string, 8);
-
-              generate_inner_prod_sum(source, numeric_string);
+              generate_inner_prod<TYPE>(source, reduction, 2);
+              generate_inner_prod<TYPE>(source, reduction, 3);
+              generate_inner_prod<TYPE>(source, reduction, 4);
+              generate_inner_prod<TYPE>(source, reduction, 8);
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO
