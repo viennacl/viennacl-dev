@@ -234,6 +234,45 @@ namespace viennacl
       }
     }
 
+// Helper macro for generating unary element-wise operations such as element_exp(), element_sin(), etc. without unnecessary code duplication */
+#define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
+    template <typename T> \
+    viennacl::scalar_expression<const scalar<T>, const scalar<T>, op_element_unary<op_##funcname> > \
+    element_##funcname(scalar<T> const & v) \
+    { \
+      return viennacl::scalar_expression<const scalar<T>, const scalar<T>, op_element_unary<op_##funcname> >(v, v); \
+    } \
+    template <typename LHS, typename RHS, typename OP> \
+    viennacl::scalar_expression<const scalar_expression<const LHS, const RHS, OP>, \
+                                const scalar_expression<const LHS, const RHS, OP>, \
+                                op_element_unary<op_##funcname> > \
+    element_##funcname(scalar_expression<const LHS, const RHS, OP> const & proxy) \
+    { \
+      return viennacl::scalar_expression<const scalar_expression<const LHS, const RHS, OP>, \
+                                         const scalar_expression<const LHS, const RHS, OP>, \
+                                         op_element_unary<op_##funcname> >(proxy, proxy); \
+    } \
+
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(abs)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(acos)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(asin)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(atan)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(ceil)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(cos)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(cosh)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(exp)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(fabs)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(floor)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(log)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(log10)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sin)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sinh)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(sqrt)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(tan)
+    VIENNACL_MAKE_UNARY_ELEMENT_OP(tanh)
+
+#undef VIENNACL_MAKE_UNARY_ELEMENT_OP
+
 
   } //namespace linalg
 } //namespace viennacl

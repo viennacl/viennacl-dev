@@ -38,7 +38,7 @@
 
 #include "viennacl/matrix.hpp"
 #include "viennacl/vector.hpp"
-//#include "viennacl/linalg/inner_prod.hpp"
+#include "viennacl/linalg/inner_prod.hpp"
 //#include "viennacl/linalg/reduce.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 //#include "viennacl/linalg/norm_1.hpp"
@@ -123,7 +123,8 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::vector<NumericT> x (size);
     viennacl::vector<NumericT> y (size);
     viennacl::vector<NumericT> z (size);
-//    viennacl::scalar<NumericT> gs(0);
+    NumericT s = 0;
+    viennacl::scalar<NumericT> gs(0);
 
     cx = 2.0f*cw;
     cy = 3.0f*cw;
@@ -138,103 +139,103 @@ int test_vector ( Epsilon const& epsilon) {
 
     // --------------------------------------------------------------------------
 
-    {
-        std::cout << "w = scalar_vector(alpha) ..." << std::endl;
-        for(unsigned int i = 0 ; i < size ; ++i)
-          cw[i] = alpha;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::scalar_vector<NumericT>(size,alpha));
-        device_specific::execute(database::get<NumericT>(database::axpy), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = scalar_vector(alpha));
-    }
+//    {
+//        std::cout << "w = scalar_vector(alpha) ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size ; ++i)
+//          cw[i] = alpha;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::scalar_vector<NumericT>(size,alpha));
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = scalar_vector(alpha));
+//    }
 
-    {
-        std::cout << "w = x ..." << std::endl;
-        cw = cx;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), x);
-        device_specific::execute(database::get<NumericT>(database::axpy), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = x);
-    }
+//    {
+//        std::cout << "w = x ..." << std::endl;
+//        cw = cx;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), x);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = x);
+//    }
 
 
-    {
-        std::cout << "w = -x ..." << std::endl;
-        viennacl::scalar<NumericT> s0(1);
-        cw =  -cx;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), -s0*x);
-        device_specific::execute(database::get<NumericT>(database::axpy), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = -x);
-    }
+//    {
+//        std::cout << "w = -x ..." << std::endl;
+//        viennacl::scalar<NumericT> s0(1);
+//        cw =  -cx;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), -s0*x);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = -x);
+//    }
 
-    {
-        std::cout << "w = alpha*x + beta*y ..." << std::endl;
-        cw = alpha*cx + beta*cy;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
-        device_specific::execute(database::get<NumericT>(database::axpy), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
-    }
+//    {
+//        std::cout << "w = alpha*x + beta*y ..." << std::endl;
+//        cw = alpha*cx + beta*cy;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
 
-    {
-        std::cout << "x = alpha*w + beta*y ..." << std::endl;
-        cx = alpha*cw + beta*cy;
-        viennacl::scheduler::statement statement(x, viennacl::op_assign(), alpha*w + beta*y);
-        device_specific::execute(database::get<NumericT>(database::axpy), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
-    }
+//    {
+//        std::cout << "x = alpha*w + beta*y ..." << std::endl;
+//        cx = alpha*cw + beta*cy;
+//        viennacl::scheduler::statement statement(x, viennacl::op_assign(), alpha*w + beta*y);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
 
-    {
-        std::cout << "[Independent] x = alpha*w + beta*y, y = alpha*x + beta*w ..." << std::endl;
-        for(std::size_t i = 0 ; i < size ; ++i)
-        {
-          NumericT tmpcx = cx[i];
-          NumericT tmpcy = cy[i];
+//    {
+//        std::cout << "[Independent] x = alpha*w + beta*y, y = alpha*x + beta*w ..." << std::endl;
+//        for(std::size_t i = 0 ; i < size ; ++i)
+//        {
+//          NumericT tmpcx = cx[i];
+//          NumericT tmpcy = cy[i];
 
-          cx[i] = alpha*cw[i] + beta*tmpcy;
-          cy[i] = alpha*tmpcx + beta*cw[i];
-        }
-        viennacl::scheduler::statement s1(x, viennacl::op_assign(), alpha*w + beta*y);
-        viennacl::scheduler::statement s2(y, viennacl::op_assign(), alpha*x + beta*w);
-        device_specific::execute(database::get<NumericT>(database::axpy), statements_container(s1, s2, statements_container::INDEPENDENT));
-        viennacl::backend::finish();
-        CHECK_RESULT(cx, x, (x = alpha*w + beta*y, y = alpha*x + beta*w));
-        CHECK_RESULT(cy, y, (x = alpha*w + beta*y, y = alpha*x + beta*w));
-    }
+//          cx[i] = alpha*cw[i] + beta*tmpcy;
+//          cy[i] = alpha*tmpcx + beta*cw[i];
+//        }
+//        viennacl::scheduler::statement s1(x, viennacl::op_assign(), alpha*w + beta*y);
+//        viennacl::scheduler::statement s2(y, viennacl::op_assign(), alpha*x + beta*w);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statements_container(s1, s2, statements_container::INDEPENDENT));
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cx, x, (x = alpha*w + beta*y, y = alpha*x + beta*w));
+//        CHECK_RESULT(cy, y, (x = alpha*w + beta*y, y = alpha*x + beta*w));
+//    }
 
-    {
-        std::cout << "[Sequential] x = alpha*w + beta*y, y = alpha*x + beta*w ..." << std::endl;
-        cx = alpha*cw + beta*cy;
-        cy = alpha*cx + beta*cw;
-        viennacl::scheduler::statement s1(x, viennacl::op_assign(), alpha*w + beta*y);
-        viennacl::scheduler::statement s2(y, viennacl::op_assign(), alpha*x + beta*w);
-        device_specific::execute(database::get<NumericT>(database::axpy), statements_container(s1, s2, statements_container::SEQUENTIAL));
-        viennacl::backend::finish();
-        CHECK_RESULT(cx, x, (x = alpha*w + beta*y, y = alpha*x + beta*w));
-        CHECK_RESULT(cy, y, (x = alpha*w + beta*y, y = alpha*x + beta*w));
-    }
+//    {
+//        std::cout << "[Sequential] x = alpha*w + beta*y, y = alpha*x + beta*w ..." << std::endl;
+//        cx = alpha*cw + beta*cy;
+//        cy = alpha*cx + beta*cw;
+//        viennacl::scheduler::statement s1(x, viennacl::op_assign(), alpha*w + beta*y);
+//        viennacl::scheduler::statement s2(y, viennacl::op_assign(), alpha*x + beta*w);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statements_container(s1, s2, statements_container::SEQUENTIAL));
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cx, x, (x = alpha*w + beta*y, y = alpha*x + beta*w));
+//        CHECK_RESULT(cy, y, (x = alpha*w + beta*y, y = alpha*x + beta*w));
+//    }
 
-    {
-        std::cout << "w = exp(y) ..." << std::endl;
-        for(std::size_t i = 0 ; i < size ; ++i)
-          cw[i] = std::exp(y[i]);
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_exp(y));
-        device_specific::execute(database::get<NumericT>(database::axpy), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
-    }
+//    {
+//        std::cout << "w = exp(y) ..." << std::endl;
+//        for(std::size_t i = 0 ; i < size ; ++i)
+//          cw[i] = std::exp(y[i]);
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_exp(y));
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
 
-    {
-        std::cout << "w = element_prod(x,y) ..." << std::endl;
-        for(std::size_t i = 0 ; i < size ; ++i)
-          cw[i] = x[i]*y[i];
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_prod(x,y));
-        device_specific::execute(database::get<NumericT>(database::axpy), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = element_prod(x,y));
-    }
+//    {
+//        std::cout << "w = element_prod(x,y) ..." << std::endl;
+//        for(std::size_t i = 0 ; i < size ; ++i)
+//          cw[i] = x[i]*y[i];
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_prod(x,y));
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = element_prod(x,y));
+//    }
 
 //    {
 //        std::cout << "w = x == x" << std::endl;
@@ -314,15 +315,15 @@ int test_vector ( Epsilon const& epsilon) {
 //        CHECK_RESULT(cw, w, w = x.^y)
 //    }
 
-//    {
-//        std::cout << "s = inner_prod(x,y)..." << std::endl;
-//        s = 0;
-//        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
-//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y));
-//        device_specific::execute(profiles::get(SCALAR_REDUCE_TYPE, NUMERIC_TYPE), statement);
-//        viennacl::backend::finish();
-//        CHECK_RESULT(s, gs, s = inner_prod(x,y));
-//    }
+    {
+        std::cout << "s = inner_prod(x,y)..." << std::endl;
+        s = 0;
+        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
+        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::element_sqrt(viennacl::linalg::inner_prod(x,x)));
+        device_specific::execute(database::get<NumericT>(database::reduction), statement);
+        viennacl::backend::finish();
+        CHECK_RESULT(s, gs, s = inner_prod(x,y));
+    }
 
 //    {
 //        std::cout << "s = reduce<add>(x)..." << std::endl;

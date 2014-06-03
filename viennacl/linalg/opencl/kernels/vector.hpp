@@ -65,6 +65,19 @@ namespace viennacl
           source.append(generate::opencl_source(generator, statements_container(statements,statements_container::INDEPENDENT),BIND_ALL_UNIQUE));
         }
 
+
+//        template <typename T>
+//        void generate_reductions(std::string & source, template_base & generator)
+//        {
+//          viennacl::vector<T> x;
+//          viennacl::scalar<T> s;
+//          source.append(generate::opencl_source(generator, scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_UNARY_TYPE_FAMILY, scheduler::OPERATION_UNARY_NORM_1_TYPE)));
+//          source.append(generate::opencl_source(generator, scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_UNARY_TYPE_FAMILY, scheduler::OPERATION_UNARY_NORM_2_TYPE)));
+//          source.append(generate::opencl_source(generator, scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_UNARY_TYPE_FAMILY, scheduler::OPERATION_UNARY_NORM_INF_TYPE)));
+
+//          source.append(generate::opencl_source(generator, scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY, scheduler::OPERATION_BINARY_ADD_TYPE)));
+//        }
+
         template <typename StringType>
         void generate_norm(StringType & source, std::string const & numeric_string)
         {
