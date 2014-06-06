@@ -104,11 +104,7 @@ namespace viennacl{
 
           //Query device informations
           size_t lmem_available = static_cast<size_t>(dev.local_mem_size());
-          unsigned int scalartype_size;
-          if(scalartype_=="float")
-            scalartype_size = 4;
-          else
-            scalartype_size = 8;
+          unsigned int scalartype_size = utils::scalartype_size(scalartype_);
           invalid |= (lmem_used(scalartype_size)>lmem_available);
 
           //Invalid work group size

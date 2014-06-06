@@ -104,6 +104,8 @@ namespace viennacl
       OPERATION_BINARY_SUB_TYPE,
       OPERATION_BINARY_MULT_TYPE,    // scalar times vector/matrix
       OPERATION_BINARY_DIV_TYPE,     // vector/matrix divided by scalar
+      OPERATION_BINARY_ELEMENT_ARGMAX_TYPE,
+      OPERATION_BINARY_ELEMENT_ARGMIN_TYPE,
       OPERATION_BINARY_ELEMENT_PROD_TYPE,
       OPERATION_BINARY_ELEMENT_DIV_TYPE,
       OPERATION_BINARY_ELEMENT_EQ_TYPE,
@@ -151,6 +153,8 @@ namespace viennacl
       template <> struct op_type_info<op_element_unary<op_tan>   >      { enum { id = OPERATION_UNARY_TAN_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
       template <> struct op_type_info<op_element_unary<op_tanh>  >      { enum { id = OPERATION_UNARY_TANH_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
 
+      template <> struct op_type_info<op_element_binary<op_argmax> >       { enum { id = OPERATION_BINARY_ELEMENT_ARGMAX_TYPE ,     family = OPERATION_BINARY_TYPE_FAMILY}; };
+      template <> struct op_type_info<op_element_binary<op_argmin> >       { enum { id = OPERATION_BINARY_ELEMENT_ARGMIN_TYPE ,     family = OPERATION_BINARY_TYPE_FAMILY}; };
       template <> struct op_type_info<op_element_binary<op_pow> >       { enum { id = OPERATION_BINARY_ELEMENT_POW_TYPE ,     family = OPERATION_BINARY_TYPE_FAMILY}; };
       template <> struct op_type_info<op_element_binary<op_eq> >        { enum { id = OPERATION_BINARY_ELEMENT_EQ_TYPE,       family = OPERATION_BINARY_TYPE_FAMILY}; };
       template <> struct op_type_info<op_element_binary<op_neq> >       { enum { id = OPERATION_BINARY_ELEMENT_NEQ_TYPE,      family = OPERATION_BINARY_TYPE_FAMILY}; };

@@ -177,13 +177,13 @@ namespace viennacl{
               {
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
                 unsigned int root_idx = exprs[k]->root_idx();
-                std::string str;
-                tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("",""),-1,str,exprs[k]->mapping());
+                std::string value;
+                tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("",""),-1,value,exprs[k]->mapping());
                 if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
-                  str += "*";
-                  tree_parsing::generate_all_rhs(statement,root_node,index_tuple("",""),-1,str,exprs[k]->mapping());
+                  value += "*";
+                  tree_parsing::generate_all_rhs(statement,root_node,index_tuple("",""),-1,value,exprs[k]->mapping());
                 }
-                compute_reduction(stream,accs[k],str,rops[k]);
+                compute_reduction(stream,accs[k],value,rops[k]);
               }
             }
             stream.dec_tab();

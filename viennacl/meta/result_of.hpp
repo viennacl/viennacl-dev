@@ -301,6 +301,12 @@ namespace viennacl
         typedef T    type;
       };
 
+      template <typename T1, typename T2, typename OP>
+      struct cpu_value_type<viennacl::scalar_expression<T1, T2, OP> >
+      {
+        typedef typename cpu_value_type<T1>::type    type;
+      };
+
       template <typename T>
       struct cpu_value_type<viennacl::vector_base<T> >
       {

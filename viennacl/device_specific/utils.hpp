@@ -299,6 +299,15 @@ namespace viennacl{
             || op.type== OPERATION_BINARY_ELEMENT_FMIN_TYPE;
       }
 
+      inline unsigned int scalartype_size(std::string scalartype)
+      {
+        if(scalartype=="float")
+         return 4;
+        else
+         return 8;
+      }
+
+
     }
 
   }

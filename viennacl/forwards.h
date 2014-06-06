@@ -117,6 +117,10 @@ namespace viennacl
   struct op_acos {};
   /** @brief A tag class representing the asin() function */
   struct op_asin {};
+  /** @brief A tag class for representing the argmax() function */
+  struct op_argmax {};
+  /** @brief A tag class for representing the argmin() function */
+  struct op_argmin {};
   /** @brief A tag class representing the atan() function */
   struct op_atan {};
   /** @brief A tag class representing the atan2() function */

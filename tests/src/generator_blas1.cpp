@@ -39,7 +39,7 @@
 #include "viennacl/matrix.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
-//#include "viennacl/linalg/reduce.hpp"
+#include "viennacl/linalg/reduce.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 //#include "viennacl/linalg/norm_1.hpp"
 //#include "viennacl/linalg/norm_2.hpp"
@@ -315,15 +315,15 @@ int test_vector ( Epsilon const& epsilon) {
 //        CHECK_RESULT(cw, w, w = x.^y)
 //    }
 
-    {
-        std::cout << "s = inner_prod(x,y)..." << std::endl;
-        s = 0;
-        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
-        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::element_sqrt(viennacl::linalg::inner_prod(x,x)));
-        device_specific::execute(database::get<NumericT>(database::reduction), statement);
-        viennacl::backend::finish();
-        CHECK_RESULT(s, gs, s = inner_prod(x,y));
-    }
+//    {
+//        std::cout << "s = inner_prod(x,y)..." << std::endl;
+//        s = 0;
+//        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
+//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y));
+//        device_specific::execute(database::get<NumericT>(database::reduction), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(s, gs, s = inner_prod(x,y));
+//    }
 
 //    {
 //        std::cout << "s = reduce<add>(x)..." << std::endl;
@@ -339,11 +339,29 @@ int test_vector ( Epsilon const& epsilon) {
 //        std::cout << "s = reduce<fmax>(x)..." << std::endl;
 //        s = cx[0];
 //        for(unsigned int i=1 ; i<size ; ++i)  s=std::max(s,cx[i]);
-//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_element_binary<viennacl::op_fmax> >(x));
-//        device_specific::execute(profiles::get(REDUCTION_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<iennacl::op_fmax>(x));
+//        device_specific::execute(database::get<NumericT>(database::reduction), statement);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(s, gs, s = reduce<mult>(x));
 //    }
+
+    {
+        std::cout << "s = reduce<argmax>(x)..." << std::endl;
+        int res = 0;
+        s = cx[0];
+        for(unsigned int i=1 ; i<size ; ++i)
+        {
+            if(cx[i] > s)
+            {
+                res = i;
+                s = cx[i];
+            }
+        }
+        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_argmax>(x));
+        device_specific::execute(database::get<NumericT>(database::reduction), statement);
+        viennacl::backend::finish();
+        CHECK_RESULT(s, gs, s = reduce<mult>(x));
+    }
 
     return retval;
 }

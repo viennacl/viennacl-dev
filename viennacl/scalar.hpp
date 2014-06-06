@@ -46,9 +46,8 @@ namespace viennacl
     template <typename LHS, typename RHS, typename OP>
     class scalar_expression
     {
-        typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
       public:
-        typedef typename viennacl::result_of::cpu_value_type<DummyType>::type    ScalarType;
+        typedef typename viennacl::result_of::cpu_value_type<LHS>::type    ScalarType;
 
         scalar_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
 

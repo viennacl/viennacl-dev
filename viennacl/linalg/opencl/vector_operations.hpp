@@ -239,7 +239,7 @@ namespace viennacl
         linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
                                            ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
-                                           scheduler::preset::reduction(&result, &vec1, &vec2, scheduler::OPERATION_BINARY_TYPE_FAMILY, scheduler::OPERATION_BINARY_INNER_PROD_TYPE),
+                                           scheduler::preset::inner_prod(&result, &vec1, &vec2),
                                            device_specific::BIND_ALL_UNIQUE);
       }
 
@@ -483,37 +483,37 @@ namespace viennacl
 //      }
 
 
-      //////////// Helper for norms
+//      //////////// Helper for norms
 
-      /** @brief Computes the partial work group results for vector norms
-      *
-      * @param vec The vector
-      * @param partial_result The result scalar
-      * @param norm_id        Norm selector. 0: norm_inf, 1: norm_1, 2: norm_2
-      */
-      template <typename T>
-      void norm_reduction_impl(vector_base<T> const & vec,
-                               vector_base<T> & partial_result,
-                                cl_uint norm_id)
-      {
-        assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+//      /** @brief Computes the partial work group results for vector norms
+//      *
+//      * @param vec The vector
+//      * @param partial_result The result scalar
+//      * @param norm_id        Norm selector. 0: norm_inf, 1: norm_1, 2: norm_2
+//      */
+//      template <typename T>
+//      void norm_reduction_impl(vector_base<T> const & vec,
+//                               vector_base<T> & partial_result,
+//                                cl_uint norm_id)
+//      {
+//        assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
+//        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+//        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "norm");
+//        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "norm");
 
-        assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
+//        assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
 
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
-                                 cl_uint(viennacl::traits::start(vec)),
-                                 cl_uint(viennacl::traits::stride(vec)),
-                                 cl_uint(viennacl::traits::size(vec)),
-                                 cl_uint(norm_id),
-                                 viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * k.local_work_size()),
-                                 viennacl::traits::opencl_handle(partial_result) )
-                              );
-      }
+//        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
+//                                 cl_uint(viennacl::traits::start(vec)),
+//                                 cl_uint(viennacl::traits::stride(vec)),
+//                                 cl_uint(viennacl::traits::size(vec)),
+//                                 cl_uint(norm_id),
+//                                 viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * k.local_work_size()),
+//                                 viennacl::traits::opencl_handle(partial_result) )
+//                              );
+//      }
 
 
       //////////// Norm 1
@@ -530,26 +530,10 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
-        vcl_size_t work_groups = 128;
-        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
-
-        // Step 1: Compute the partial work group results
-        norm_reduction_impl(vec, temp, 1);
-
-        // Step 2: Compute the partial reduction using OpenCL
-        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
-
-        ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, work_groups);
-        viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
-                                    cl_uint(viennacl::traits::start(temp)),
-                                    cl_uint(viennacl::traits::stride(temp)),
-                                    cl_uint(viennacl::traits::size(temp)),
-                                    cl_uint(1),
-                                    viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * ksum.local_work_size()),
-                                    result)
-                              );
+        linalg::opencl::kernels::vector<T>::init(ctx);
+        viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
+                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           scheduler::preset::norm_1(&result, &vec));
       }
 
       /** @brief Computes the l^1-norm of a vector with final reduction on CPU
@@ -561,21 +545,9 @@ namespace viennacl
       void norm_1_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        vcl_size_t work_groups = 128;
-        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
-
-        // Step 1: Compute the partial work group results
-        norm_reduction_impl(vec, temp, 1);
-
-        // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        typedef std::vector<typename viennacl::result_of::cl_type<T>::type>  CPUVectorType;
-
-        CPUVectorType temp_cpu(work_groups);
-        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
-
-        result = 0;
-        for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
-          result += static_cast<T>(*it);
+        scalar<T> tmp(0);
+        norm_1_impl(vec, tmp);
+        result = tmp;
       }
 
 
@@ -595,26 +567,10 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
-        vcl_size_t work_groups = 128;
-        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
-
-        // Step 1: Compute the partial work group results
-        norm_reduction_impl(vec, temp, 2);
-
-        // Step 2: Reduction via OpenCL
-        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
-
-        ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, work_groups);
-        viennacl::ocl::enqueue( ksum(viennacl::traits::opencl_handle(temp),
-                                      cl_uint(viennacl::traits::start(temp)),
-                                      cl_uint(viennacl::traits::stride(temp)),
-                                      cl_uint(viennacl::traits::size(temp)),
-                                      cl_uint(2),
-                                      viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * ksum.local_work_size()),
-                                      result)
-                              );
+        linalg::opencl::kernels::vector<T>::init(ctx);
+        viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
+                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           scheduler::preset::norm_2(&result, &vec));
       }
 
       /** @brief Computes the l^1-norm of a vector with final reduction on CPU
@@ -626,22 +582,9 @@ namespace viennacl
       void norm_2_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        vcl_size_t work_groups = 128;
-        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
-
-        // Step 1: Compute the partial work group results
-        norm_reduction_impl(vec, temp, 2);
-
-        // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        typedef std::vector<typename viennacl::result_of::cl_type<T>::type>  CPUVectorType;
-
-        CPUVectorType temp_cpu(work_groups);
-        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
-
-        result = 0;
-        for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
-          result += static_cast<T>(*it);
-        result = std::sqrt(result);
+        scalar<T> tmp(0);
+        norm_2_impl(vec, tmp);
+        result = tmp;
       }
 
 
@@ -660,26 +603,10 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-
-        vcl_size_t work_groups = 128;
-        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
-
-        // Step 1: Compute the partial work group results
-        norm_reduction_impl(vec, temp, 0);
-
-        //part 2: parallel reduction of reduced kernel:
-        viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
-        ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, work_groups);
-
-        viennacl::ocl::enqueue( ksum(viennacl::traits::opencl_handle(temp),
-                                     cl_uint(viennacl::traits::start(temp)),
-                                     cl_uint(viennacl::traits::stride(temp)),
-                                     cl_uint(viennacl::traits::size(temp)),
-                                     cl_uint(0),
-                                     viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * ksum.local_work_size()),
-                                     result)
-                              );
+        linalg::opencl::kernels::vector<T>::init(ctx);
+        viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
+                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           scheduler::preset::norm_inf(&result, &vec));
       }
 
       /** @brief Computes the supremum-norm of a vector
@@ -691,21 +618,9 @@ namespace viennacl
       void norm_inf_cpu(vector_base<T> const & vec,
                         T & result)
       {
-        vcl_size_t work_groups = 128;
-        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
-
-        // Step 1: Compute the partial work group results
-        norm_reduction_impl(vec, temp, 0);
-
-        // Step 2: Now copy partial results from GPU back to CPU and run reduction there:
-        typedef std::vector<typename viennacl::result_of::cl_type<T>::type>  CPUVectorType;
-
-        CPUVectorType temp_cpu(work_groups);
-        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
-
-        result = 0;
-        for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
-          result = std::max(result, static_cast<T>(*it));
+        scalar<T> tmp(0);
+        norm_inf_impl(vec, tmp);
+        result = tmp;
       }
 
 

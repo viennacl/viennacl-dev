@@ -104,26 +104,71 @@ namespace viennacl{
         return scheduler::statement(array);
       }
 
+
+
       template<typename T>
-      scheduler::statement reduction(scalar<T> const * s, vector_base<T> const * x, vector_base<T> const * y,
-                                      scheduler::operation_node_type_family LHS_FAMILY, scheduler::operation_node_type LHS_TYPE)
+      scheduler::statement reduction_inner_prod(scalar<T> const * s, vector_base<T> const * x, vector_base<T> const * y,
+                                      scheduler::operation_node_type ROP, scheduler::operation_node_type FILTEROP)
       {
         vcl_size_t dummy = 0;
-        statement::container_type array(2);
+        statement::container_type array(3);
 
         statement::add_element(dummy, array[0].lhs, *s);
         array[0].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         array[0].op.type = OPERATION_BINARY_ASSIGN_TYPE;
         array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-        array[0].rhs.node_index = 1;
+        array[0].rhs.node_index = FILTEROP==OPERATION_INVALID_TYPE?2:1;
 
-        statement::add_element(dummy, array[1].lhs, *x);
-        array[1].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-        array[1].op.type = OPERATION_BINARY_INNER_PROD_TYPE;
-        statement::add_element(dummy, array[1].rhs, *y);
+        array[1].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
+        array[1].lhs.node_index = 2;
+        array[1].op.type_family = OPERATION_UNARY_TYPE_FAMILY;
+        array[1].op.type = FILTEROP;
 
+        statement::add_element(dummy, array[2].lhs, *x);
+        if(y)
+        {
+          array[2].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+          array[2].op.type = OPERATION_BINARY_INNER_PROD_TYPE;
+          statement::add_element(dummy, array[2].rhs, *y);
+        }
+        else
+        {
+          array[2].op.type_family = OPERATION_VECTOR_REDUCTION_TYPE_FAMILY;
+          array[2].op.type = ROP;
+        }
         return scheduler::statement(array);
       }
+
+      template<class T>
+      statement inner_prod(scalar<T> const * s, vector_base<T> const * x, vector_base<T> const * y)
+      {
+        return preset::reduction_inner_prod(s,x,y, OPERATION_INVALID_TYPE, OPERATION_INVALID_TYPE);
+      }
+
+      template<class T>
+      statement norm_1(scalar<T> const * s, vector_base<T> const * x)
+      {
+        return preset::reduction_inner_prod(s,x, (vector_base<T>*)NULL, OPERATION_BINARY_ADD_TYPE, OPERATION_UNARY_FABS_TYPE);
+      }
+
+      template<class T>
+      statement norm_2(scalar<T> const * s, vector_base<T> const * x)
+      {
+        return  preset::reduction_inner_prod(s, x, x, OPERATION_INVALID_TYPE, OPERATION_UNARY_SQRT_TYPE);
+      }
+
+      template<class T>
+      statement norm_inf(scalar<T> const * s, vector_base<T> const * x)
+      {
+        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ELEMENT_FMAX_TYPE, OPERATION_UNARY_FABS_TYPE);
+      }
+
+      template<class T>
+      statement sum(scalar<T> const * s, vector_base<T> const * x)
+      {
+        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ADD_TYPE, OPERATION_INVALID_TYPE);
+      }
+
 
 
     }

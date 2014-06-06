@@ -34,40 +34,40 @@ namespace viennacl
   namespace linalg
   {
 
-    template<typename OP, typename NumericT>
-    viennacl::scalar_expression< const vector_base<NumericT>, const vector_base<NumericT>, viennacl::op_reduce_vector<OP> >
+    template<typename ROP, typename NumericT>
+    viennacl::scalar_expression< const vector_base<NumericT>, const vector_base<NumericT>, viennacl::op_reduce_vector< viennacl::op_element_binary<ROP> > >
     reduce(vector_base<NumericT> const & vector)
     {
       return viennacl::scalar_expression< const vector_base<NumericT>,
                                           const vector_base<NumericT>,
-                                          viennacl::op_reduce_vector<OP> >(vector, vector);
+                                          viennacl::op_reduce_vector< viennacl::op_element_binary<ROP> > >(vector, vector);
     }
 
     template< typename ROP, typename LHS, typename RHS, typename OP>
     viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>,
                                  const viennacl::vector_expression<LHS, RHS, OP>,
-                                 viennacl::op_reduce_vector<ROP> >
+                                 viennacl::op_reduce_vector< viennacl::op_element_binary<ROP> > >
     reduce(viennacl::vector_expression<LHS, RHS, OP> const & vector)
     {
         return  viennacl::scalar_expression< const viennacl::vector_expression<LHS, RHS, OP>,
                                             const viennacl::vector_expression<LHS, RHS, OP>,
-                                            viennacl::op_reduce_vector<ROP> >(vector,vector);
+                                            viennacl::op_reduce_vector< viennacl::op_element_binary<ROP> > >(vector,vector);
     }
 
     //row-wise reduction
     template<typename ROP, typename NumericT>
-    viennacl::vector_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, viennacl::op_reduce_rows<ROP> >
+    viennacl::vector_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, viennacl::op_reduce_rows< viennacl::op_element_binary<ROP> > >
     reduce_rows(matrix_base<NumericT> const & mat)
     {
-      return viennacl::vector_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, viennacl::op_reduce_rows<ROP> >(mat, mat);
+      return viennacl::vector_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, viennacl::op_reduce_rows< viennacl::op_element_binary<ROP> > >(mat, mat);
     }
 
     //column-wise reduction
     template<typename ROP, typename NumericT>
-    viennacl::vector_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, viennacl::op_reduce_columns<ROP> >
+    viennacl::vector_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, viennacl::op_reduce_columns< viennacl::op_element_binary<ROP> > >
     reduce_columns(matrix_base<NumericT> const & mat)
     {
-      return viennacl::vector_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, viennacl::op_reduce_columns<ROP> >(mat, mat);
+      return viennacl::vector_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, viennacl::op_reduce_columns< viennacl::op_element_binary<ROP> > >(mat, mat);
     }
 
 

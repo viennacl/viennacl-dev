@@ -60,198 +60,198 @@ namespace viennacl
 
           statements_container::data_type statements;
           for(unsigned int i = 0 ; i < vector_num ; ++i)
-            statements.push_back(scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_BINARY_TYPE_FAMILY, scheduler::OPERATION_BINARY_INNER_PROD_TYPE));
+            statements.push_back(scheduler::preset::inner_prod(&s, &x, &y));
 
           source.append(generate::opencl_source(generator, statements_container(statements,statements_container::INDEPENDENT),BIND_ALL_UNIQUE));
         }
 
 
-//        template <typename T>
-//        void generate_reductions(std::string & source, template_base & generator)
-//        {
-//          viennacl::vector<T> x;
-//          viennacl::scalar<T> s;
-//          source.append(generate::opencl_source(generator, scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_UNARY_TYPE_FAMILY, scheduler::OPERATION_UNARY_NORM_1_TYPE)));
-//          source.append(generate::opencl_source(generator, scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_UNARY_TYPE_FAMILY, scheduler::OPERATION_UNARY_NORM_2_TYPE)));
-//          source.append(generate::opencl_source(generator, scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_UNARY_TYPE_FAMILY, scheduler::OPERATION_UNARY_NORM_INF_TYPE)));
+        template <typename T>
+        void generate_norms_sum(std::string & source, template_base & generator)
+        {
+          viennacl::vector<T> x;
+          viennacl::scalar<T> s;
 
-//          source.append(generate::opencl_source(generator, scheduler::preset::reduction(&s, &x, &y, scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY, scheduler::OPERATION_BINARY_ADD_TYPE)));
+          source.append(generate::opencl_source(generator, scheduler::preset::norm_1(&s, &x)));
+          source.append(generate::opencl_source(generator, scheduler::preset::norm_2(&s, &x)));
+          source.append(generate::opencl_source(generator, scheduler::preset::norm_inf(&s, &x)));
+          source.append(generate::opencl_source(generator, scheduler::preset::sum(&s, &x)));
+        }
+
+//        template <typename StringType>
+//        void generate_norm(StringType & source, std::string const & numeric_string)
+//        {
+//          bool is_float_or_double = (numeric_string == "float" || numeric_string == "double");
+
+//          source.append(numeric_string); source.append(" impl_norm( \n");
+//          source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
+//          source.append("          unsigned int start1, \n");
+//          source.append("          unsigned int inc1, \n");
+//          source.append("          unsigned int size1, \n");
+//          source.append("          unsigned int norm_selector, \n");
+//          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer) \n");
+//          source.append("{ \n");
+//          source.append("  "); source.append(numeric_string); source.append(" tmp = 0; \n");
+//          source.append("  if (norm_selector == 1) \n"); //norm_1
+//          source.append("  { \n");
+//          source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
+//          if (is_float_or_double)
+//            source.append("      tmp += fabs(vec[i*inc1 + start1]); \n");
+//          else
+//            source.append("      tmp += abs(vec[i*inc1 + start1]); \n");
+//          source.append("  } \n");
+//          source.append("  else if (norm_selector == 2) \n"); //norm_2
+//          source.append("  { \n");
+//          source.append("    "); source.append(numeric_string); source.append(" vec_entry = 0; \n");
+//          source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
+//          source.append("    { \n");
+//          source.append("      vec_entry = vec[i*inc1 + start1]; \n");
+//          source.append("      tmp += vec_entry * vec_entry; \n");
+//          source.append("    } \n");
+//          source.append("  } \n");
+//          source.append("  else if (norm_selector == 0) \n"); //norm_inf
+//          source.append("  { \n");
+//          source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
+//          if (is_float_or_double)
+//            source.append("      tmp = fmax(fabs(vec[i*inc1 + start1]), tmp); \n");
+//          else
+//          {
+//            source.append("      tmp = max(("); source.append(numeric_string); source.append(")abs(vec[i*inc1 + start1]), tmp); \n");
+//          }
+//          source.append("  } \n");
+
+//          source.append("  tmp_buffer[get_local_id(0)] = tmp; \n");
+
+//          source.append("  if (norm_selector > 0) \n"); //norm_1 or norm_2:
+//          source.append("  { \n");
+//          source.append("    for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+//          source.append("    { \n");
+//          source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
+//          source.append("      if (get_local_id(0) < stride) \n");
+//          source.append("        tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0)+stride]; \n");
+//          source.append("    } \n");
+//          source.append("    return tmp_buffer[0]; \n");
+//          source.append("  } \n");
+
+//          //norm_inf:
+//          source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+//          source.append("  { \n");
+//          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+//          source.append("    if (get_local_id(0) < stride) \n");
+//          if (is_float_or_double)
+//            source.append("      tmp_buffer[get_local_id(0)] = fmax(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
+//          else
+//            source.append("      tmp_buffer[get_local_id(0)] = max(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
+//          source.append("  } \n");
+
+//          source.append("  return tmp_buffer[0]; \n");
+//          source.append("}; \n");
+
+//          source.append("__kernel void norm( \n");
+//          source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
+//          source.append("          unsigned int start1, \n");
+//          source.append("          unsigned int inc1, \n");
+//          source.append("          unsigned int size1, \n");
+//          source.append("          unsigned int norm_selector, \n");
+//          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+//          source.append("          __global "); source.append(numeric_string); source.append(" * group_buffer) \n");
+//          source.append("{ \n");
+//          source.append("  "); source.append(numeric_string); source.append(" tmp = impl_norm(vec, \n");
+//          source.append("                        (        get_group_id(0)  * size1) / get_num_groups(0) * inc1 + start1, \n");
+//          source.append("                        inc1, \n");
+//          source.append("                        (   (1 + get_group_id(0)) * size1) / get_num_groups(0) \n");
+//          source.append("                      - (        get_group_id(0)  * size1) / get_num_groups(0), \n");
+//          source.append("                        norm_selector, \n");
+//          source.append("                        tmp_buffer); \n");
+
+//          source.append("  if (get_local_id(0) == 0) \n");
+//          source.append("    group_buffer[get_group_id(0)] = tmp; \n");
+//          source.append("} \n");
+
 //        }
 
-        template <typename StringType>
-        void generate_norm(StringType & source, std::string const & numeric_string)
-        {
-          bool is_float_or_double = (numeric_string == "float" || numeric_string == "double");
+//        template <typename StringType>
+//        void generate_inner_prod_sum(StringType & source, std::string const & numeric_string)
+//        {
+//          // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
+//          source.append("__kernel void sum_inner_prod( \n");
+//          source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+//          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+//          source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
+//          source.append("          unsigned int start_result, \n");
+//          source.append("          unsigned int inc_result) \n");
+//          source.append("{ \n");
+//          source.append("  tmp_buffer[get_local_id(0)] = vec1[get_global_id(0)]; \n");
 
-          source.append(numeric_string); source.append(" impl_norm( \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          unsigned int norm_selector, \n");
-          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer) \n");
-          source.append("{ \n");
-          source.append("  "); source.append(numeric_string); source.append(" tmp = 0; \n");
-          source.append("  if (norm_selector == 1) \n"); //norm_1
-          source.append("  { \n");
-          source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
-          if (is_float_or_double)
-            source.append("      tmp += fabs(vec[i*inc1 + start1]); \n");
-          else
-            source.append("      tmp += abs(vec[i*inc1 + start1]); \n");
-          source.append("  } \n");
-          source.append("  else if (norm_selector == 2) \n"); //norm_2
-          source.append("  { \n");
-          source.append("    "); source.append(numeric_string); source.append(" vec_entry = 0; \n");
-          source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
-          source.append("    { \n");
-          source.append("      vec_entry = vec[i*inc1 + start1]; \n");
-          source.append("      tmp += vec_entry * vec_entry; \n");
-          source.append("    } \n");
-          source.append("  } \n");
-          source.append("  else if (norm_selector == 0) \n"); //norm_inf
-          source.append("  { \n");
-          source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
-          if (is_float_or_double)
-            source.append("      tmp = fmax(fabs(vec[i*inc1 + start1]), tmp); \n");
-          else
-          {
-            source.append("      tmp = max(("); source.append(numeric_string); source.append(")abs(vec[i*inc1 + start1]), tmp); \n");
-          }
-          source.append("  } \n");
+//          source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+//          source.append("  { \n");
+//          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+//          source.append("    if (get_local_id(0) < stride) \n");
+//          source.append("      tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
+//          source.append("  } \n");
+//          source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
 
-          source.append("  tmp_buffer[get_local_id(0)] = tmp; \n");
+//          source.append("  if (get_local_id(0) == 0) \n");
+//          source.append("    result[start_result + inc_result * get_group_id(0)] = tmp_buffer[0]; \n");
+//          source.append("} \n");
 
-          source.append("  if (norm_selector > 0) \n"); //norm_1 or norm_2:
-          source.append("  { \n");
-          source.append("    for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
-          source.append("    { \n");
-          source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
-          source.append("      if (get_local_id(0) < stride) \n");
-          source.append("        tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0)+stride]; \n");
-          source.append("    } \n");
-          source.append("    return tmp_buffer[0]; \n");
-          source.append("  } \n");
+//        }
 
-          //norm_inf:
-          source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
-          source.append("  { \n");
-          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
-          source.append("    if (get_local_id(0) < stride) \n");
-          if (is_float_or_double)
-            source.append("      tmp_buffer[get_local_id(0)] = fmax(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
-          else
-            source.append("      tmp_buffer[get_local_id(0)] = max(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
-          source.append("  } \n");
+//        template <typename StringType>
+//        void generate_sum(StringType & source, std::string const & numeric_string)
+//        {
+//          // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
+//          source.append("__kernel void sum( \n");
+//          source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+//          source.append("          unsigned int start1, \n");
+//          source.append("          unsigned int inc1, \n");
+//          source.append("          unsigned int size1, \n");
+//          source.append("          unsigned int option,  \n"); //0: use fmax, 1: just sum, 2: sum and return sqrt of sum
+//          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+//          source.append("          __global "); source.append(numeric_string); source.append(" * result) \n");
+//          source.append("{ \n");
+//          source.append("  "); source.append(numeric_string); source.append(" thread_sum = 0; \n");
+//          source.append("  "); source.append(numeric_string); source.append(" tmp = 0; \n");
+//          source.append("  for (unsigned int i = get_local_id(0); i<size1; i += get_local_size(0)) \n");
+//          source.append("  { \n");
+//          source.append("    if (option > 0) \n");
+//          source.append("      thread_sum += vec1[i*inc1+start1]; \n");
+//          source.append("    else \n");
+//          source.append("    { \n");
+//          source.append("      tmp = vec1[i*inc1+start1]; \n");
+//          source.append("      tmp = (tmp < 0) ? -tmp : tmp; \n");
+//          source.append("      thread_sum = (thread_sum > tmp) ? thread_sum : tmp; \n");
+//          source.append("    } \n");
+//          source.append("  } \n");
 
-          source.append("  return tmp_buffer[0]; \n");
-          source.append("}; \n");
+//          source.append("  tmp_buffer[get_local_id(0)] = thread_sum; \n");
 
-          source.append("__kernel void norm( \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          unsigned int norm_selector, \n");
-          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * group_buffer) \n");
-          source.append("{ \n");
-          source.append("  "); source.append(numeric_string); source.append(" tmp = impl_norm(vec, \n");
-          source.append("                        (        get_group_id(0)  * size1) / get_num_groups(0) * inc1 + start1, \n");
-          source.append("                        inc1, \n");
-          source.append("                        (   (1 + get_group_id(0)) * size1) / get_num_groups(0) \n");
-          source.append("                      - (        get_group_id(0)  * size1) / get_num_groups(0), \n");
-          source.append("                        norm_selector, \n");
-          source.append("                        tmp_buffer); \n");
+//          source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+//          source.append("  { \n");
+//          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+//          source.append("    if (get_local_id(0) < stride) \n");
+//          source.append("    { \n");
+//          source.append("      if (option > 0) \n");
+//          source.append("        tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
+//          source.append("      else \n");
+//          source.append("        tmp_buffer[get_local_id(0)] = (tmp_buffer[get_local_id(0)] > tmp_buffer[get_local_id(0) + stride]) ? tmp_buffer[get_local_id(0)] : tmp_buffer[get_local_id(0) + stride]; \n");
+//          source.append("    } \n");
+//          source.append("  } \n");
+//          source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
 
-          source.append("  if (get_local_id(0) == 0) \n");
-          source.append("    group_buffer[get_group_id(0)] = tmp; \n");
-          source.append("} \n");
+//          source.append("  if (get_global_id(0) == 0) \n");
+//          source.append("  { \n");
+//          if (numeric_string == "float" || numeric_string == "double")
+//          {
+//            source.append("    if (option == 2) \n");
+//            source.append("      *result = sqrt(tmp_buffer[0]); \n");
+//            source.append("    else \n");
+//          }
+//          source.append("      *result = tmp_buffer[0]; \n");
+//          source.append("  } \n");
+//          source.append("} \n");
 
-        }
-
-        template <typename StringType>
-        void generate_inner_prod_sum(StringType & source, std::string const & numeric_string)
-        {
-          // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
-          source.append("__kernel void sum_inner_prod( \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
-          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
-          source.append("          unsigned int start_result, \n");
-          source.append("          unsigned int inc_result) \n");
-          source.append("{ \n");
-          source.append("  tmp_buffer[get_local_id(0)] = vec1[get_global_id(0)]; \n");
-
-          source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
-          source.append("  { \n");
-          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
-          source.append("    if (get_local_id(0) < stride) \n");
-          source.append("      tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
-          source.append("  } \n");
-          source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
-
-          source.append("  if (get_local_id(0) == 0) \n");
-          source.append("    result[start_result + inc_result * get_group_id(0)] = tmp_buffer[0]; \n");
-          source.append("} \n");
-
-        }
-
-        template <typename StringType>
-        void generate_sum(StringType & source, std::string const & numeric_string)
-        {
-          // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
-          source.append("__kernel void sum( \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          unsigned int option,  \n"); //0: use fmax, 1: just sum, 2: sum and return sqrt of sum
-          source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * result) \n");
-          source.append("{ \n");
-          source.append("  "); source.append(numeric_string); source.append(" thread_sum = 0; \n");
-          source.append("  "); source.append(numeric_string); source.append(" tmp = 0; \n");
-          source.append("  for (unsigned int i = get_local_id(0); i<size1; i += get_local_size(0)) \n");
-          source.append("  { \n");
-          source.append("    if (option > 0) \n");
-          source.append("      thread_sum += vec1[i*inc1+start1]; \n");
-          source.append("    else \n");
-          source.append("    { \n");
-          source.append("      tmp = vec1[i*inc1+start1]; \n");
-          source.append("      tmp = (tmp < 0) ? -tmp : tmp; \n");
-          source.append("      thread_sum = (thread_sum > tmp) ? thread_sum : tmp; \n");
-          source.append("    } \n");
-          source.append("  } \n");
-
-          source.append("  tmp_buffer[get_local_id(0)] = thread_sum; \n");
-
-          source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
-          source.append("  { \n");
-          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
-          source.append("    if (get_local_id(0) < stride) \n");
-          source.append("    { \n");
-          source.append("      if (option > 0) \n");
-          source.append("        tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
-          source.append("      else \n");
-          source.append("        tmp_buffer[get_local_id(0)] = (tmp_buffer[get_local_id(0)] > tmp_buffer[get_local_id(0) + stride]) ? tmp_buffer[get_local_id(0)] : tmp_buffer[get_local_id(0) + stride]; \n");
-          source.append("    } \n");
-          source.append("  } \n");
-          source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
-
-          source.append("  if (get_global_id(0) == 0) \n");
-          source.append("  { \n");
-          if (numeric_string == "float" || numeric_string == "double")
-          {
-            source.append("    if (option == 2) \n");
-            source.append("      *result = sqrt(tmp_buffer[0]); \n");
-            source.append("    else \n");
-          }
-          source.append("      *result = tmp_buffer[0]; \n");
-          source.append("  } \n");
-          source.append("} \n");
-
-        }
+//        }
 
         template <typename StringType>
         void generate_index_norm_inf(StringType & source, std::string const & numeric_string)
@@ -411,10 +411,10 @@ namespace viennacl
               generate_vector_swap<TYPE>(source, axpy);
               generate_assign_cpu<TYPE>(source, axpy);
               generate_inner_prod<TYPE>(source, reduction, 1);
-
+              generate_norms_sum<TYPE>(source, reduction);
               // kernels with mostly predetermined skeleton:
-              generate_norm(source, numeric_string);
-              generate_sum(source, numeric_string);
+//              generate_norm(source, numeric_string);
+//              generate_sum(source, numeric_string);
               generate_index_norm_inf(source, numeric_string);
 
               std::string prog_name = program_name();
