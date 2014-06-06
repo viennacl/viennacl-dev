@@ -201,6 +201,11 @@ namespace viennacl{
             || op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY;
       }
 
+      inline bool is_index_reduction(scheduler::statement_node const & node)
+      {
+        return node.op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE
+            || node.op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMIN_TYPE;
+      }
       template<class T>
       struct type_to_string;
       template<> struct type_to_string<float> { static const char * value() { return "float"; } };

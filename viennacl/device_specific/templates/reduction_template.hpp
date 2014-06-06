@@ -71,8 +71,11 @@ namespace viennacl{
           std::vector<scheduler::statement_node const *> reductions;
           for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
             tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions));
-          for(std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it)
+          for(std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it){
             temporaries_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*utils::scalartype_size(scalartype_)));
+            if((*it)->op.type == scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE)
+              temporaries_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*4));
+          }
         }
         for(std::vector< viennacl::ocl::handle<cl_mem> >::iterator it = temporaries_.begin() ; it != temporaries_.end() ; ++it)
           k.arg(n_arg++, *it);
@@ -85,9 +88,11 @@ namespace viennacl{
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
           tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions));
 
-        for(std::vector<scheduler::statement_node const *>::iterator it = reductions.begin() ; it != reductions.end() ; ++it)
-          arguments_string += generate_pointer_kernel_argument("__global", scalartype_,
-                                                               "temp" + tools::to_string(std::distance(reductions.begin(), it)));
+        for(std::vector<scheduler::statement_node const *>::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
+          arguments_string += generate_pointer_kernel_argument("__global", scalartype_,  "temp" + tools::to_string(std::distance(reductions.begin(), it)));
+          if(utils::is_index_reduction(**it))
+            arguments_string += generate_pointer_kernel_argument("__global", "unsigned int",  "temp" + tools::to_string(std::distance(reductions.begin(), it)) + "idx");
+        }
       }
 
     private:
@@ -96,6 +101,7 @@ namespace viennacl{
         return node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
             || node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE;
       }
+
       unsigned int lmem_used(unsigned int scalartype_size) const { return local_size_0_*scalartype_size; }
 
       void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, statements_container const & statements, std::vector<mapping_type> const & /*mapping*/) const {
@@ -103,6 +109,7 @@ namespace viennacl{
 
         std::vector<scheduler::op_element> rops(N);
         std::vector<std::string> accs(N);
+        std::vector<std::string> accsidx(N);
         std::vector<std::string> local_buffers_names(N);
         for(unsigned int k = 0 ; k < N ; ++k){
           scheduler::op_element root_op = exprs[k]->statement().array()[exprs[k]->root_idx()].op;
@@ -114,6 +121,7 @@ namespace viennacl{
             rops[k].type        = root_op.type;
           }
           accs[k] = "acc"+tools::to_string(k);
+          accsidx[k] = accs[k] + "idx";
           local_buffers_names[k] = "buf"+tools::to_string(k);
         }
 
@@ -121,6 +129,8 @@ namespace viennacl{
 
         for(unsigned int k = 0 ; k < N ; ++k){
           stream << scalartype_ << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
+          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
+            stream << "unsigned int " << accsidx[k] << " = " << 0 << ";" << std::endl;
         }
 
         std::string init;
@@ -163,7 +173,7 @@ namespace viennacl{
                   value += "*";
                   tree_parsing::generate_all_rhs(statement,root_idx,index_tuple("i","N"),a,value,mapping);
                 }
-                compute_reduction(stream,accs[k],value,rops[k]);
+                compute_reduction(stream,accsidx[k],"i",accs[k],value,rops[k]);
               }
             }
             else{
@@ -173,7 +183,7 @@ namespace viennacl{
                 value += "*";
                 tree_parsing::generate_all_rhs(statement,root_idx,index_tuple("i","N"),-1,value,mapping);
               }
-              compute_reduction(stream,accs[k],value,rops[k]);
+              compute_reduction(stream,accsidx[k],"i",accs[k],value,rops[k]);
             }
           }
         }
@@ -182,11 +192,18 @@ namespace viennacl{
 
 
         //Declare and fill local memory
-        for(unsigned int k = 0 ; k < N ; ++k)
+        for(unsigned int k = 0 ; k < N ; ++k){
           stream << "__local " << scalartype_ << " " << local_buffers_names[k] << "[" << local_size_0_ << "];" << std::endl;
+          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
+            stream << "__local " << scalartype_ << " " << local_buffers_names[k] << "idx[" << local_size_0_ << "];" << std::endl;
+        }
 
-        for(unsigned int k = 0 ; k < N ; ++k)
+
+        for(unsigned int k = 0 ; k < N ; ++k){
           stream << local_buffers_names[k] << "[lid] = " << accs[k] << ";" << std::endl;
+          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
+            stream << local_buffers_names[k] << "idx[lid] = " << accsidx[k] << ";" << std::endl;
+        }
 
         //Reduce and write to temporary buffers
         reduce_1d_local_memory(stream, local_size_0_,local_buffers_names,rops);
@@ -194,7 +211,11 @@ namespace viennacl{
         stream << "if(lid==0){" << std::endl;
         stream.inc_tab();
         for(unsigned int k = 0 ; k < N ; ++k)
+        {
           stream << "temp"<< k << "[get_group_id(0)] = buf" << k << "[0];" << std::endl;
+          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
+            stream << "temp"<< k << "idx[get_group_id(0)] = buf" << k << "idx[0];" << std::endl;
+        }
         stream.dec_tab();
         stream << "}" << std::endl;
       }
@@ -204,6 +225,7 @@ namespace viennacl{
         unsigned int N = exprs.size();
         std::vector<scheduler::op_element> rops(N);
         std::vector<std::string> accs(N);
+        std::vector<std::string> accsidx(N);
         std::vector<std::string> local_buffers_names(N);
         for(unsigned int k = 0 ; k < N ; ++k){
           scheduler::op_element root_op = exprs[k]->statement().array()[exprs[k]->root_idx()].op;
@@ -215,34 +237,48 @@ namespace viennacl{
             rops[k].type        = root_op.type;
           }
           accs[k] = "acc"+tools::to_string(k);
+          accsidx[k] = accs[k] + "idx";
           local_buffers_names[k] = "buf"+tools::to_string(k);
         }
 
-
-
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
-        for(unsigned int k = 0 ; k < exprs.size() ; ++k)
+        for(unsigned int k = 0 ; k < exprs.size() ; ++k){
           stream << "__local " << scalartype_ << " " << local_buffers_names[k] << "[" << local_size_0_ << "];" << std::endl;
+          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
+            stream << "__local " << scalartype_ << " " << local_buffers_names[k] << "idx[" << local_size_0_ << "];" << std::endl;
+        }
 
-        for(unsigned int k = 0 ; k < local_buffers_names.size() ; ++k)
+        for(unsigned int k = 0 ; k < local_buffers_names.size() ; ++k){
           stream << scalartype_ << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
+          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
+            stream << "unsigned int" << " " << accsidx[k] << " = " << 0 << ";" << std::endl;
+        }
 
         stream << "for(unsigned int i = lid ; i < " << num_groups_ << " ; i += get_local_size(0)){" << std::endl;
         stream.inc_tab();
         for(unsigned int k = 0 ; k < N ; ++k)
-          compute_reduction(stream,accs[k],"temp"+tools::to_string(k)+"[i]",rops[k]);
+          compute_reduction(stream,accsidx[k],"temp"+tools::to_string(k)+"idx[i]",accs[k],"temp"+tools::to_string(k)+"[i]",rops[k]);
         stream.dec_tab();
         stream << "}" << std::endl;
 
         for(unsigned int k = 0 ; k < local_buffers_names.size() ; ++k)
+        {
           stream << local_buffers_names[k] << "[lid] = " << accs[k] << ";" << std::endl;
+          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
+            stream << local_buffers_names[k] << "idx[lid] = " << accsidx[k] << ";" << std::endl;
+        }
 
 
         //Reduce and write final result
         reduce_1d_local_memory(stream, local_size_0_,local_buffers_names,rops);
         for(unsigned int k = 0 ; k < N ; ++k)
-          exprs[k]->access_name(local_buffers_names[k]+"[0]");
+        {
+          std::string suffix = "";
+          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
+            suffix = "idx";
+          exprs[k]->access_name(local_buffers_names[k]+suffix+"[0]");
+        }
 
         stream << "if(lid==0){" << std::endl;
         stream.inc_tab();

@@ -36,14 +36,20 @@ namespace viennacl{
 
   namespace device_specific{
 
-    static void compute_reduction(utils::kernel_generation_stream & os, std::string const & acc, std::string const & val, scheduler::op_element const & op){
-        os << acc << "=";
-        if(utils::elementwise_function(op))
-            os << tree_parsing::evaluate(op.type) << "(" << acc << "," << val << ")";
-        else
-            os << "(" << acc << ")" << tree_parsing::evaluate(op.type)  << "(" << val << ")";
-        os << ";" << std::endl;
-
+    static void compute_reduction(utils::kernel_generation_stream & os, std::string accidx, std::string curidx, std::string const & acc, std::string const & cur, scheduler::op_element const & op){
+        if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE)
+        {
+          os << accidx << "= select(" << accidx << "," << curidx << "," << cur << ">" << acc << ");" << std::endl;
+          os << acc << "= fmax(" << acc << "," << cur << ");"<< std::endl;
+        }
+        else{
+          os << acc << "=";
+          if(utils::elementwise_function(op))
+              os << tree_parsing::evaluate(op.type) << "(" << acc << "," << cur << ")";
+          else
+              os << "(" << acc << ")" << tree_parsing::evaluate(op.type)  << "(" << cur << ")";
+          os << ";" << std::endl;
+        }
     }
 
 
@@ -56,8 +62,10 @@ namespace viennacl{
           stream.inc_tab();
           for(unsigned int k = 0 ; k < bufs.size() ; ++k){
               std::string acc = bufs[k] + "[lid]";
-              std::string str = bufs[k] + "[lid + " + tools::to_string(stride) + "]";
-              compute_reduction(stream,acc,str,rops[k]);
+              std::string accidx = (bufs[k] + "idx") + "[lid]";
+              std::string cur = bufs[k] + "[lid + " + tools::to_string(stride) + "]";
+              std::string curidx = (bufs[k] + "idx") + "[lid + " + tools::to_string(stride) + "]";
+              compute_reduction(stream,accidx,curidx,acc,cur,rops[k]);
           }
           stream.dec_tab();
           stream << "}" << std::endl;
@@ -70,6 +78,7 @@ namespace viennacl{
         case scheduler::OPERATION_BINARY_MULT_TYPE : return "1";
         case scheduler::OPERATION_BINARY_DIV_TYPE : return "1";
         case scheduler::OPERATION_BINARY_ELEMENT_FMAX_TYPE : return "-INFINITY";
+        case scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE : return "-INFINITY";
         case scheduler::OPERATION_BINARY_ELEMENT_FMIN_TYPE : return "INFINITY";
         default: throw generator_not_supported_exception("Unsupported reduction operator : no neutral element known");
       }

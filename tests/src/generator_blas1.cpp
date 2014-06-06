@@ -347,20 +347,20 @@ int test_vector ( Epsilon const& epsilon) {
 
     {
         std::cout << "s = reduce<argmax>(x)..." << std::endl;
-        int res = 0;
-        s = cx[0];
+        NumericT s = 0;
+        NumericT val = cx[0];
         for(unsigned int i=1 ; i<size ; ++i)
         {
-            if(cx[i] > s)
+            if(cx[i] > val)
             {
-                res = i;
-                s = cx[i];
+                s = i;
+                val = cx[i];
             }
         }
         viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_argmax>(x));
         device_specific::execute(database::get<NumericT>(database::reduction), statement);
         viennacl::backend::finish();
-        CHECK_RESULT(s, gs, s = reduce<mult>(x));
+        CHECK_RESULT(s, gs, s = reduce<argmax>(x));
     }
 
     return retval;
@@ -577,9 +577,9 @@ int main(int argc, char* argv[]){
 
                     std::cout << std::endl;
 
-                    std::cout << "# Testing setup:" << std::endl;
-                    std::cout << "  numeric: double" << std::endl;
-                    retval = test_vector<double> (epsilon);
+//                    std::cout << "# Testing setup:" << std::endl;
+//                    std::cout << "  numeric: double" << std::endl;
+//                    retval = test_vector<double> (epsilon);
 
                     if ( retval == EXIT_SUCCESS )
                         std::cout << "# Test passed" << std::endl;
