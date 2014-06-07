@@ -204,7 +204,7 @@ namespace viennacl{
         for(unsigned int k = 0 ; k < N ; ++k){
           stream << "__local " << scalartype_ << " " << local_buffers_names[k] << "[" << local_size_0_ << "];" << std::endl;
           if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
-            stream << "__local " << scalartype_ << " " << local_buffers_names[k] << "idx[" << local_size_0_ << "];" << std::endl;
+            stream << "__local " << "unsigned int" << " " << local_buffers_names[k] << "idx[" << local_size_0_ << "];" << std::endl;
         }
 
 
@@ -255,7 +255,7 @@ namespace viennacl{
         for(unsigned int k = 0 ; k < exprs.size() ; ++k){
           stream << "__local " << scalartype_ << " " << local_buffers_names[k] << "[" << local_size_0_ << "];" << std::endl;
           if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()]))
-            stream << "__local " << scalartype_ << " " << local_buffers_names[k] << "idx[" << local_size_0_ << "];" << std::endl;
+            stream << "__local " << "unsigned int" << " " << local_buffers_names[k] << "idx[" << local_size_0_ << "];" << std::endl;
         }
 
         for(unsigned int k = 0 ; k < local_buffers_names.size() ; ++k){

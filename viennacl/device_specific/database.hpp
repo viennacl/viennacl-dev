@@ -62,11 +62,11 @@ namespace viennacl{
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][FLOAT_TYPE] = tools::shared_ptr<template_base>(new reduction_template("float",1,128,128,true));
         map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][DOUBLE_TYPE] = tools::shared_ptr<template_base>(new reduction_template("double",1,128,128,true));
         //CPU Defaults
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][FLOAT_TYPE] = tools::shared_ptr<template_base>(new reduction_template("float",8,16,256,true));
-        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][DOUBLE_TYPE] = tools::shared_ptr<template_base>(new reduction_template("double",8,16,32,true));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][FLOAT_TYPE] = tools::shared_ptr<template_base>(new reduction_template("float",1,16,256,true));
+        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][DOUBLE_TYPE] = tools::shared_ptr<template_base>(new reduction_template("double",1,16,32,true));
         //Accelerator Defaults
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][FLOAT_TYPE] = tools::shared_ptr<template_base>(new reduction_template("float",8,16,256,true));
-        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][DOUBLE_TYPE] = tools::shared_ptr<template_base>(new reduction_template("double",8,16,32,true));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][FLOAT_TYPE] = tools::shared_ptr<template_base>(new reduction_template("float",1,16,256,true));
+        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][DOUBLE_TYPE] = tools::shared_ptr<template_base>(new reduction_template("double",1,16,32,true));
 
         return map;
       }

@@ -39,6 +39,7 @@ namespace viennacl{
     static void compute_reduction(utils::kernel_generation_stream & os, std::string accidx, std::string curidx, std::string const & acc, std::string const & cur, scheduler::op_element const & op){
         if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE)
         {
+//          os << accidx << "= (" << cur << ">" << acc << ")?" << curidx << ":" << accidx << ";" << std::endl;
           os << accidx << "= select(" << accidx << "," << curidx << "," << cur << ">" << acc << ");" << std::endl;
           os << acc << "= fmax(" << acc << "," << cur << ");"<< std::endl;
         }

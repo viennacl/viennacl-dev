@@ -108,23 +108,32 @@ namespace viennacl{
 
       template<typename T>
       scheduler::statement reduction_inner_prod(scalar<T> const * s, vector_base<T> const * x, vector_base<T> const * y,
-                                      scheduler::operation_node_type ROP, scheduler::operation_node_type FILTEROP)
+                                      scheduler::operation_node_type ROP, bool use_sqrt, bool x_fabs)
       {
         vcl_size_t dummy = 0;
-        statement::container_type array(3);
+        statement::container_type array(4);
 
         statement::add_element(dummy, array[0].lhs, *s);
         array[0].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         array[0].op.type = OPERATION_BINARY_ASSIGN_TYPE;
         array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-        array[0].rhs.node_index = FILTEROP==OPERATION_INVALID_TYPE?2:1;
+        array[0].rhs.node_index = use_sqrt?1:2;
 
         array[1].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
         array[1].lhs.node_index = 2;
         array[1].op.type_family = OPERATION_UNARY_TYPE_FAMILY;
-        array[1].op.type = FILTEROP;
+        array[1].op.type = OPERATION_UNARY_SQRT_TYPE;
 
-        statement::add_element(dummy, array[2].lhs, *x);
+
+        if(x_fabs)
+        {
+          array[2].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
+          array[2].lhs.node_index = 3;
+        }
+        else
+        {
+          statement::add_element(dummy, array[2].lhs, *x);
+        }
         if(y)
         {
           array[2].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
@@ -136,43 +145,48 @@ namespace viennacl{
           array[2].op.type_family = OPERATION_VECTOR_REDUCTION_TYPE_FAMILY;
           array[2].op.type = ROP;
         }
+
+        statement::add_element(dummy, array[3].lhs, *x);
+        array[3].op.type_family = OPERATION_UNARY_TYPE_FAMILY;
+        array[3].op.type = OPERATION_UNARY_FABS_TYPE;
+
         return scheduler::statement(array);
       }
 
       template<class T>
       statement inner_prod(scalar<T> const * s, vector_base<T> const * x, vector_base<T> const * y)
       {
-        return preset::reduction_inner_prod(s,x,y, OPERATION_INVALID_TYPE, OPERATION_INVALID_TYPE);
+        return preset::reduction_inner_prod(s,x,y, OPERATION_INVALID_TYPE, false, false);
       }
 
       template<class T>
       statement norm_1(scalar<T> const * s, vector_base<T> const * x)
       {
-        return preset::reduction_inner_prod(s,x, (vector_base<T>*)NULL, OPERATION_BINARY_ADD_TYPE, OPERATION_UNARY_FABS_TYPE);
+        return preset::reduction_inner_prod(s,x, (vector_base<T>*)NULL, OPERATION_BINARY_ADD_TYPE, false, true);
       }
 
       template<class T>
       statement norm_2(scalar<T> const * s, vector_base<T> const * x)
       {
-        return  preset::reduction_inner_prod(s, x, x, OPERATION_INVALID_TYPE, OPERATION_UNARY_SQRT_TYPE);
+        return  preset::reduction_inner_prod(s, x, x, OPERATION_INVALID_TYPE, true, false);
       }
 
       template<class T>
       statement norm_inf(scalar<T> const * s, vector_base<T> const * x)
       {
-        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ELEMENT_FMAX_TYPE, OPERATION_UNARY_FABS_TYPE);
+        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ELEMENT_FMAX_TYPE, false, true);
       }
 
       template<class T>
       statement index_norm_inf(scalar<T> const * s, vector_base<T> const * x)
       {
-        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ELEMENT_ARGMAX_TYPE, OPERATION_UNARY_FABS_TYPE);
+        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ELEMENT_ARGMAX_TYPE, false, true);
       }
 
       template<class T>
       statement sum(scalar<T> const * s, vector_base<T> const * x)
       {
-        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ADD_TYPE, OPERATION_INVALID_TYPE);
+        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ADD_TYPE, false, false);
       }
 
 
