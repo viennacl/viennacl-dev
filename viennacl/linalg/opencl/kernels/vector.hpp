@@ -75,6 +75,7 @@ namespace viennacl
           source.append(generate::opencl_source(generator, scheduler::preset::norm_1(&s, &x)));
           source.append(generate::opencl_source(generator, scheduler::preset::norm_2(&s, &x)));
           source.append(generate::opencl_source(generator, scheduler::preset::norm_inf(&s, &x)));
+          source.append(generate::opencl_source(generator, scheduler::preset::index_norm_inf(&s, &x)));
           source.append(generate::opencl_source(generator, scheduler::preset::sum(&s, &x)));
         }
 
@@ -253,69 +254,69 @@ namespace viennacl
 
 //        }
 
-        template <typename StringType>
-        void generate_index_norm_inf(StringType & source, std::string const & numeric_string)
-        {
-          //index_norm_inf:
-          source.append("unsigned int index_norm_inf_impl( \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          __local "); source.append(numeric_string); source.append(" * entry_buffer, \n");
-          source.append("          __local unsigned int * index_buffer) \n");
-          source.append("{ \n");
-          //step 1: fill buffer:
-          source.append("  "); source.append(numeric_string); source.append(" cur_max = 0; \n");
-          source.append("  "); source.append(numeric_string); source.append(" tmp; \n");
-          source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
-          source.append("  { \n");
-          if (numeric_string == "float" || numeric_string == "double")
-            source.append("    tmp = fabs(vec[i*inc1+start1]); \n");
-          else
-            source.append("    tmp = abs(vec[i*inc1+start1]); \n");
-          source.append("    if (cur_max < tmp) \n");
-          source.append("    { \n");
-          source.append("      entry_buffer[get_global_id(0)] = tmp; \n");
-          source.append("      index_buffer[get_global_id(0)] = i; \n");
-          source.append("      cur_max = tmp; \n");
-          source.append("    } \n");
-          source.append("  } \n");
+//        template <typename StringType>
+//        void generate_index_norm_inf(StringType & source, std::string const & numeric_string)
+//        {
+//          //index_norm_inf:
+//          source.append("unsigned int index_norm_inf_impl( \n");
+//          source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
+//          source.append("          unsigned int start1, \n");
+//          source.append("          unsigned int inc1, \n");
+//          source.append("          unsigned int size1, \n");
+//          source.append("          __local "); source.append(numeric_string); source.append(" * entry_buffer, \n");
+//          source.append("          __local unsigned int * index_buffer) \n");
+//          source.append("{ \n");
+//          //step 1: fill buffer:
+//          source.append("  "); source.append(numeric_string); source.append(" cur_max = 0; \n");
+//          source.append("  "); source.append(numeric_string); source.append(" tmp; \n");
+//          source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
+//          source.append("  { \n");
+//          if (numeric_string == "float" || numeric_string == "double")
+//            source.append("    tmp = fabs(vec[i*inc1+start1]); \n");
+//          else
+//            source.append("    tmp = abs(vec[i*inc1+start1]); \n");
+//          source.append("    if (cur_max < tmp) \n");
+//          source.append("    { \n");
+//          source.append("      entry_buffer[get_global_id(0)] = tmp; \n");
+//          source.append("      index_buffer[get_global_id(0)] = i; \n");
+//          source.append("      cur_max = tmp; \n");
+//          source.append("    } \n");
+//          source.append("  } \n");
 
-          //step 2: parallel reduction:
-          source.append("  for (unsigned int stride = get_global_size(0)/2; stride > 0; stride /= 2) \n");
-          source.append("  { \n");
-          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
-          source.append("    if (get_global_id(0) < stride) \n");
-          source.append("   { \n");
-          //find the first occurring index
-          source.append("      if (entry_buffer[get_global_id(0)] < entry_buffer[get_global_id(0)+stride]) \n");
-          source.append("      { \n");
-          source.append("        index_buffer[get_global_id(0)] = index_buffer[get_global_id(0)+stride]; \n");
-          source.append("        entry_buffer[get_global_id(0)] = entry_buffer[get_global_id(0)+stride]; \n");
-          source.append("      } \n");
-          source.append("    } \n");
-          source.append("  } \n");
-          source.append(" \n");
-          source.append("  return index_buffer[0]; \n");
-          source.append("} \n");
+//          //step 2: parallel reduction:
+//          source.append("  for (unsigned int stride = get_global_size(0)/2; stride > 0; stride /= 2) \n");
+//          source.append("  { \n");
+//          source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+//          source.append("    if (get_global_id(0) < stride) \n");
+//          source.append("   { \n");
+//          //find the first occurring index
+//          source.append("      if (entry_buffer[get_global_id(0)] < entry_buffer[get_global_id(0)+stride]) \n");
+//          source.append("      { \n");
+//          source.append("        index_buffer[get_global_id(0)] = index_buffer[get_global_id(0)+stride]; \n");
+//          source.append("        entry_buffer[get_global_id(0)] = entry_buffer[get_global_id(0)+stride]; \n");
+//          source.append("      } \n");
+//          source.append("    } \n");
+//          source.append("  } \n");
+//          source.append(" \n");
+//          source.append("  return index_buffer[0]; \n");
+//          source.append("} \n");
 
-          source.append("__kernel void index_norm_inf( \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * vec, \n");
-          source.append("          unsigned int start1, \n");
-          source.append("          unsigned int inc1, \n");
-          source.append("          unsigned int size1, \n");
-          source.append("          __local "); source.append(numeric_string); source.append(" * entry_buffer, \n");
-          source.append("          __local unsigned int * index_buffer, \n");
-          source.append("          __global unsigned int * result) \n");
-          source.append("{ \n");
-          source.append("  entry_buffer[get_global_id(0)] = 0; \n");
-          source.append("  index_buffer[get_global_id(0)] = 0; \n");
-          source.append("  unsigned int tmp = index_norm_inf_impl(vec, start1, inc1, size1, entry_buffer, index_buffer); \n");
-          source.append("  if (get_global_id(0) == 0) *result = tmp; \n");
-          source.append("} \n");
+//          source.append("__kernel void index_norm_inf( \n");
+//          source.append("          __global "); source.append(numeric_string); source.append(" * vec, \n");
+//          source.append("          unsigned int start1, \n");
+//          source.append("          unsigned int inc1, \n");
+//          source.append("          unsigned int size1, \n");
+//          source.append("          __local "); source.append(numeric_string); source.append(" * entry_buffer, \n");
+//          source.append("          __local unsigned int * index_buffer, \n");
+//          source.append("          __global unsigned int * result) \n");
+//          source.append("{ \n");
+//          source.append("  entry_buffer[get_global_id(0)] = 0; \n");
+//          source.append("  index_buffer[get_global_id(0)] = 0; \n");
+//          source.append("  unsigned int tmp = index_norm_inf_impl(vec, start1, inc1, size1, entry_buffer, index_buffer); \n");
+//          source.append("  if (get_global_id(0) == 0) *result = tmp; \n");
+//          source.append("} \n");
 
-        }
+//        }
 
         template<typename T, typename ScalarType1, typename ScalarType2>
         inline void generate_avbv_impl(std::string & source, template_base & generator, scheduler::operation_node_type ASSIGN_OP,
@@ -415,7 +416,7 @@ namespace viennacl
               // kernels with mostly predetermined skeleton:
 //              generate_norm(source, numeric_string);
 //              generate_sum(source, numeric_string);
-              generate_index_norm_inf(source, numeric_string);
+//              generate_index_norm_inf(source, numeric_string);
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

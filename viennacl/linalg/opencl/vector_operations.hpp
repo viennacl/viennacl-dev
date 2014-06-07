@@ -637,29 +637,14 @@ namespace viennacl
       template <typename T>
       cl_uint index_norm_inf(vector_base<T> const & vec)
       {
+        viennacl::scalar<T> result(0);
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-
-        viennacl::ocl::handle<cl_mem> h = ctx.create_memory(CL_MEM_READ_WRITE, sizeof(cl_uint));
-
-        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "index_norm_inf");
-        //cl_uint size = static_cast<cl_uint>(vcl_vec.internal_size());
-
-        //TODO: Use multi-group kernel for large vector sizes
-
-        k.global_work_size(0, k.local_work_size());
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
-                                 cl_uint(viennacl::traits::start(vec)),
-                                 cl_uint(viennacl::traits::stride(vec)),
-                                 cl_uint(viennacl::traits::size(vec)),
-                                 viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * k.local_work_size()),
-                                 viennacl::ocl::local_mem(sizeof(cl_uint) * k.local_work_size()), h));
-
-        //read value:
-        cl_uint result;
-        cl_int err = clEnqueueReadBuffer(ctx.get_queue().handle().get(), h.get(), CL_TRUE, 0, sizeof(cl_uint), &result, 0, NULL, NULL);
-        VIENNACL_ERR_CHECK(err);
-        return result;
+        linalg::opencl::kernels::vector<T>::init(ctx);
+        viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
+                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           scheduler::preset::index_norm_inf(&result, &vec));
+        T host_result = result;
+        return host_result;
       }
 
       //TODO: Special case vec1 == vec2 allows improvement!!

@@ -164,6 +164,12 @@ namespace viennacl{
       }
 
       template<class T>
+      statement index_norm_inf(scalar<T> const * s, vector_base<T> const * x)
+      {
+        return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ELEMENT_ARGMAX_TYPE, OPERATION_UNARY_FABS_TYPE);
+      }
+
+      template<class T>
       statement sum(scalar<T> const * s, vector_base<T> const * x)
       {
         return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ADD_TYPE, OPERATION_INVALID_TYPE);

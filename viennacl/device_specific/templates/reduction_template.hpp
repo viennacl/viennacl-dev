@@ -66,19 +66,27 @@ namespace viennacl{
         cl_uint size = get_vector_size(statements.data().front());
         k.arg(n_arg++, size/simd_width_);
 
-        if(temporaries_.empty())
+        std::vector<scheduler::statement_node const *> reductions;
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+          tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions));
+
+        unsigned int i = 0;
+        unsigned int j = 0;
+        for(std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it)
         {
-          std::vector<scheduler::statement_node const *> reductions;
-          for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-            tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions));
-          for(std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it){
-            temporaries_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*utils::scalartype_size(scalartype_)));
-            if((*it)->op.type == scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE)
-              temporaries_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*4));
+          if(tmp_.size() <= i)
+            tmp_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*utils::scalartype_size(scalartype_)));
+          k.arg(n_arg++, tmp_[i]);
+          i++;
+
+          if(utils::is_index_reduction(**it))
+          {
+            if(tmpidx_.size() <= j)
+              tmpidx_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*4));
+            k.arg(n_arg++, tmpidx_[j]);
+            j++;
           }
         }
-        for(std::vector< viennacl::ocl::handle<cl_mem> >::iterator it = temporaries_.begin() ; it != temporaries_.end() ; ++it)
-          k.arg(n_arg++, *it);
       }
 
       void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const{
@@ -88,7 +96,8 @@ namespace viennacl{
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
           tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions));
 
-        for(std::vector<scheduler::statement_node const *>::iterator it = reductions.begin() ; it != reductions.end() ; ++it){
+        for(std::vector<scheduler::statement_node const *>::iterator it = reductions.begin() ; it != reductions.end() ; ++it)
+        {
           arguments_string += generate_pointer_kernel_argument("__global", scalartype_,  "temp" + tools::to_string(std::distance(reductions.begin(), it)));
           if(utils::is_index_reduction(**it))
             arguments_string += generate_pointer_kernel_argument("__global", "unsigned int",  "temp" + tools::to_string(std::distance(reductions.begin(), it)) + "idx");
@@ -318,18 +327,17 @@ namespace viennacl{
             if(mapped_scalar_reduction * p = dynamic_cast<mapped_scalar_reduction*>(iit->second.get()))
               exprs.push_back(p);
 
-        if(kernel_id==0){
+        if(kernel_id==0)
           core_0(stream,exprs,statements,mapping);
-        }
-        else{
+        else
           core_1(stream,exprs,statements,mapping);
-        }
       }
 
     private:
       unsigned int num_groups_;
       unsigned int decomposition_;
-      mutable std::vector< viennacl::ocl::handle<cl_mem> > temporaries_;
+      mutable std::vector< viennacl::ocl::handle<cl_mem> > tmp_;
+      mutable std::vector< viennacl::ocl::handle<cl_mem> > tmpidx_;
     };
 
 
