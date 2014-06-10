@@ -159,19 +159,28 @@ namespace viennacl{
     typedef cl_device_type device_type;
     typedef std::string device_name_type;
 
-    template<class KeyType, class ValueType>
-    struct map_wrapper{
-        typedef std::map<KeyType,ValueType> map_type;
-        map_type map;
-        ValueType & operator[](KeyType const & key){ return map[key]; }
-    };
+    template<class ParamT>
+    class database_type
+    {
+    public:
+      typedef std::map<scheduler::statement_node_numeric_type, ParamT> expression_map;
+      typedef std::map<device_name_type, expression_map> device_name_map;
+      typedef std::map<ocl::device_architecture_family, device_name_map> device_architecture_map;
+      typedef std::map<device_type, device_architecture_map> device_type_map;
+      typedef std::map<vendor_id_type, device_type_map> map_type;
+      map_type map;
 
-    class template_base;
-    struct expression_map : public map_wrapper<scheduler::statement_node_numeric_type, tools::shared_ptr<template_base> >{ };
-    struct device_name_map : public map_wrapper<device_name_type, expression_map>{ };
-    struct device_architecture_map : public map_wrapper<ocl::device_architecture_family, device_name_map>{ };
-    struct device_type_map : public map_wrapper<device_type,device_architecture_map>{ };
-    struct database_type : public map_wrapper<vendor_id_type, device_type_map>{ };
+      database_type(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4, ParamT const & p5)
+      {
+        map[p0][p1][p2][p3].insert(std::make_pair(p4, p5));
+      }
+
+      database_type<ParamT> & operator()(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4, ParamT const & p5)
+      {
+        map[p0][p1][p2][p3].insert(std::make_pair(p4, p5));
+         return *this;
+      }
+    };
 
     namespace database{
       using scheduler::FLOAT_TYPE;

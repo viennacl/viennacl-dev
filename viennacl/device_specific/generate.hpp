@@ -39,7 +39,7 @@ namespace viennacl{
 
     namespace generate{
 
-      inline std::string statements_representation(statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
+      static std::string statements_representation(statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
       {
           std::vector<char> program_name_vector(256);            
           char* program_name = program_name_vector.data();
@@ -54,8 +54,11 @@ namespace viennacl{
           return std::string(program_name_vector.data());
       }
 
-      inline std::string opencl_source(template_base& tplt, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
+      template<class TemplateT>
+      static std::string opencl_source(typename TemplateT::parameters const & params, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
       {
+        TemplateT tplt(params, binding_policy);
+
         std::string prefix = statements_representation(statements, binding_policy);
 
         std::vector<mapping_type> mapping(statements.data().size());

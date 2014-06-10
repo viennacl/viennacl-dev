@@ -38,46 +38,34 @@
 
 #include "viennacl/tools/tools.hpp"
 
-namespace viennacl{
+namespace viennacl
+{
 
-  namespace device_specific{
+  namespace device_specific
+  {
 
-    class vector_axpy_template : public template_base{
+    class vector_axpy_template : public template_base
+    {
 
     public:
-      vector_axpy_template(const char * scalartype, unsigned int simd_width,
+      class parameters : public template_base::parameters
+      {
+      public:
+        parameters(const char * scalartype, unsigned int simd_width,
                    unsigned int group_size, unsigned int num_groups,
-                   unsigned int decomposition) : template_base(scalartype, simd_width, group_size, 1, 1), num_groups_(num_groups), decomposition_(decomposition)
-      {
+                   unsigned int decomposition) : template_base::parameters(scalartype, simd_width, group_size, 1, 1), num_groups_(num_groups), decomposition_(decomposition){ }
 
-      }
+        unsigned int num_groups() const { return num_groups_; }
+        unsigned int decomposition() const { return decomposition_; }
 
-      void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
-      {
-        k.global_work_size(0,local_size_0_*num_groups_);
-        k.global_work_size(1,1);
-
-        scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
-        k.arg(n_arg++, cl_uint(utils::call_on_vector(root.lhs, utils::size_fun())/simd_width_));
-      }
-
-      void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const
-      {
-        arguments_string += generate_value_kernel_argument("unsigned int", "N");
-      }
+      private:
+        unsigned int num_groups_;
+        unsigned int decomposition_;
+      };
 
     private:
-
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
-        for(unsigned int i = 0 ; i < mapping.size() ; ++i)
-        {
-          for(mapping_type::const_iterator it = mapping[i].begin() ; it != mapping[i].end() ; ++it)
-              if(mapped_handle * p = dynamic_cast<mapped_handle *>(it->second.get()))
-                p->set_simd_width(simd_width_);
-        }
-
-
         stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
@@ -114,9 +102,25 @@ namespace viennacl{
         stream << "}" << std::endl;
       }
 
+      void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const
+      {
+        arguments_string += generate_value_kernel_argument("unsigned int", "N");
+      }
+
+      void configure_impl(unsigned int /*kernel_id*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+      {
+        k.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups());
+        k.global_work_size(1,1);
+
+        scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
+        k.arg(n_arg++, cl_uint(utils::call_on_vector(root.lhs, utils::size_fun())/parameters_.simd_width()));
+      }
+
+    public:
+      vector_axpy_template(vector_axpy_template::parameters const & parameters, binding_policy_t binding_policy) : template_base(parameters, binding_policy), parameters_(parameters){ }
+
     private:
-      unsigned int num_groups_;
-      unsigned int decomposition_;
+      vector_axpy_template::parameters const & parameters_;
     };
 
   }

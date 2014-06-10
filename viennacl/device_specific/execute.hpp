@@ -42,13 +42,15 @@ namespace viennacl{
 
   namespace device_specific{
 
-    void enqueue(template_base & tplt, std::string const & program_name, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
+    template<class TemplateT>
+    void enqueue(typename TemplateT::parameters const & params, std::string const & program_name, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
     {
+      TemplateT tplt(params, binding_policy);
       viennacl::ocl::program & program = viennacl::ocl::current_context().get_program(program_name);
       std::string prefix = generate::statements_representation(statements, binding_policy);
 
       //Get the kernels
-      std::vector<viennacl::ocl::kernel*> kernels(tplt.num_kernels());
+      std::vector<viennacl::ocl::kernel*> kernels(params.num_kernels());
       for(std::vector<viennacl::ocl::kernel*> ::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
          *it = &program.get_kernel(prefix+tools::to_string(std::distance(kernels.begin(), it)));
 
@@ -60,8 +62,11 @@ namespace viennacl{
         viennacl::ocl::enqueue(**it);
     }
 
-    inline void execute(template_base & tplt, statements_container const & statements, bool force_compilation = false)
+    template<class TemplateT>
+    inline void execute(typename TemplateT::parameters const & params, statements_container const & statements, bool force_compilation = false)
     {
+      TemplateT tplt(params);
+
       //Generate program name
       std::string program_name = generate::statements_representation(statements);
 
@@ -81,11 +86,12 @@ namespace viennacl{
         ctx.add_program(src, program_name);
       }
 
-      enqueue(tplt, program_name, statements);
+      enqueue<TemplateT>(tplt, program_name, statements);
     }
 
-    inline void execute(template_base & tplt, scheduler::statement const & statement, bool force_recompilation = false){
-      execute(tplt, statements_container(statement), force_recompilation);
+    template<class TemplateT>
+    inline void execute(typename TemplateT::parameters const & params, scheduler::statement const & statement, bool force_recompilation = false){
+      execute<TemplateT>(params, statements_container(statement), force_recompilation);
     }
 
   }
