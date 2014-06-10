@@ -48,23 +48,24 @@ namespace viennacl{
       /** @brief The user constructor */
       reduction_template(const char * scalartype, unsigned int simd_width, unsigned int local_size, unsigned int num_groups, unsigned int decomposition) : template_base(scalartype, simd_width, local_size, 1, 2), num_groups_(num_groups), decomposition_(decomposition){ }
 
-      void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+      void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
+      {
         //configure ND range
-        if(kernel_id==0){
-          configure_local_sizes(k, 0);
+        if(kernel_id==0)
+        {
           unsigned int gsize = local_size_0_*num_groups_;
-          k.global_work_size(0,gsize);
-          k.global_work_size(1,1);
+          kernel.global_work_size(0,gsize);
+          kernel.global_work_size(1,1);
         }
-        else{
-          configure_local_sizes(k, 1);
-          k.global_work_size(0,local_size_0_);
-          k.global_work_size(1,1);
+        else
+        {
+          kernel.global_work_size(0,local_size_0_);
+          kernel.global_work_size(1,1);
         }
 
         //set arguments
         cl_uint size = get_vector_size(statements.data().front());
-        k.arg(n_arg++, size/simd_width_);
+        kernel.arg(n_arg++, size/simd_width_);
 
         std::vector<scheduler::statement_node const *> reductions;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
@@ -76,14 +77,14 @@ namespace viennacl{
         {
           if(tmp_.size() <= i)
             tmp_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*utils::scalartype_size(scalartype_)));
-          k.arg(n_arg++, tmp_[i]);
+          kernel.arg(n_arg++, tmp_[i]);
           i++;
 
           if(utils::is_index_reduction(**it))
           {
             if(tmpidx_.size() <= j)
               tmpidx_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, num_groups_*4));
-            k.arg(n_arg++, tmpidx_[j]);
+            kernel.arg(n_arg++, tmpidx_[j]);
             j++;
           }
         }
@@ -111,15 +112,20 @@ namespace viennacl{
             || node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE;
       }
 
-      unsigned int lmem_used(unsigned int scalartype_size) const { return local_size_0_*scalartype_size; }
+      unsigned int lmem_used(unsigned int scalartype_size) const
+      {
+        return local_size_0_*scalartype_size;
+      }
 
-      void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, statements_container const & statements, std::vector<mapping_type> const & /*mapping*/) const {
+      void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, statements_container const & statements, std::vector<mapping_type> const & /*mapping*/) const
+      {
         unsigned int N = exprs.size();
 
         std::vector<scheduler::op_element> rops(N);
         std::vector<std::string> accs(N);
         std::vector<std::string> accsidx(N);
         std::vector<std::string> local_buffers_names(N);
+
         for(unsigned int k = 0 ; k < N ; ++k){
           scheduler::op_element root_op = exprs[k]->statement().array()[exprs[k]->root_idx()].op;
           rops[k].type_family = scheduler::OPERATION_BINARY_TYPE_FAMILY;
@@ -301,9 +307,11 @@ namespace viennacl{
         stream << "}" << std::endl;
       }
 
-      cl_uint get_vector_size(viennacl::scheduler::statement const & s) const {
+      cl_uint get_vector_size(viennacl::scheduler::statement const & s) const
+      {
         scheduler::statement::container_type exprs = s.array();
-        for(scheduler::statement::container_type::iterator it = exprs.begin() ; it != exprs.end() ; ++it){
+        for(scheduler::statement::container_type::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+        {
           if(is_scalar_reduction(*it)){
             scheduler::statement_node const * current_node = &(*it);
             //The LHS of the prod is a vector
@@ -320,7 +328,8 @@ namespace viennacl{
         throw "unexpected expression tree";
       }
 
-      void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
+      void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
+      {
         std::vector<mapped_scalar_reduction*> exprs;
         for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
           for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit)

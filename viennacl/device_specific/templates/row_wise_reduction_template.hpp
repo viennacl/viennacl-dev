@@ -50,7 +50,7 @@ namespace viennacl{
       row_wise_reduction_template(const char * scalartype, char A_trans, unsigned int simd_width,
                                   unsigned int local_size_0, unsigned int local_size_1, unsigned int num_groups_0) : template_base(scalartype, simd_width, local_size_0, local_size_1, 1), A_trans_(A_trans),  num_groups_0_(num_groups_0){ }
 
-      void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+      void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         configure_local_sizes(kernel, kernel_id);
         kernel.global_work_size(0,local_size_0_*num_groups_0_);
         kernel.global_work_size(1,local_size_1_);

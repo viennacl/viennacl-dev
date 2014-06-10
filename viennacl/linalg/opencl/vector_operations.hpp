@@ -63,7 +63,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
-                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           linalg::opencl::kernels::vector<T>::program_name(),
                                            scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, (vector_base<T>*)NULL, (T*)NULL, false, false),
                                            device_specific::BIND_ALL_UNIQUE);
       }
@@ -81,7 +81,7 @@ namespace viennacl
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
-                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           linalg::opencl::kernels::vector<T>::program_name(),
                                            scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta),
                                            device_specific::BIND_ALL_UNIQUE);
       }
@@ -98,7 +98,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
-                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           linalg::opencl::kernels::vector<T>::program_name(),
                                            scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta),
                                            device_specific::BIND_ALL_UNIQUE);
       }
@@ -117,7 +117,7 @@ namespace viennacl
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         scalar_vector<T> vec2(viennacl::traits::size(vec1),alpha);
         device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
-                                 ctx.get_program(viennacl::linalg::opencl::kernels::vector<T>::program_name()),
+                                 viennacl::linalg::opencl::kernels::vector<T>::program_name(),
                                  scheduler::preset::assign_cpu(&vec1, &vec2));
       }
 
@@ -135,7 +135,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
-                                 ctx.get_program(viennacl::linalg::opencl::kernels::vector<T>::program_name()),
+                                 viennacl::linalg::opencl::kernels::vector<T>::program_name(),
                                  scheduler::preset::swap(&vec1, &vec2));
       }
 
@@ -238,7 +238,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
-                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           linalg::opencl::kernels::vector<T>::program_name(),
                                            scheduler::preset::inner_prod(&result, &vec1, &vec2),
                                            device_specific::BIND_ALL_UNIQUE);
       }
@@ -447,74 +447,6 @@ namespace viennacl
         result = tmp;
       }
 
-//      //implementation of inner product:
-//      //namespace {
-//      /** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
-//      *
-//      * @param vec1 The first vector
-//      * @param vec2 The second vector
-//      * @param result The result scalar (on the gpu)
-//      */
-//      template <typename T>
-//      void inner_prod_cpu(vector_base<T> const & vec1,
-//                          vector_base<T> const & vec2,
-//                          T & result)
-//      {
-//        assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-//        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-
-//        vcl_size_t work_groups = 128;
-//        viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
-//        temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
-
-//        // Step 1: Compute partial inner products for each work group:
-//        inner_prod_impl(vec1, vec2, temp);
-
-//        // Step 2: Sum partial results:
-
-//        // Now copy partial results from GPU back to CPU and run reduction there:
-//        std::vector<T> temp_cpu(work_groups);
-//        viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
-
-//        result = 0;
-//        for (typename std::vector<T>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
-//          result += *it;
-//      }
-
-
-//      //////////// Helper for norms
-
-//      /** @brief Computes the partial work group results for vector norms
-//      *
-//      * @param vec The vector
-//      * @param partial_result The result scalar
-//      * @param norm_id        Norm selector. 0: norm_inf, 1: norm_1, 2: norm_2
-//      */
-//      template <typename T>
-//      void norm_reduction_impl(vector_base<T> const & vec,
-//                               vector_base<T> & partial_result,
-//                                cl_uint norm_id)
-//      {
-//        assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-//        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
-//        viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-
-//        viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "norm");
-
-//        assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
-
-//        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
-//                                 cl_uint(viennacl::traits::start(vec)),
-//                                 cl_uint(viennacl::traits::stride(vec)),
-//                                 cl_uint(viennacl::traits::size(vec)),
-//                                 cl_uint(norm_id),
-//                                 viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<T>::type) * k.local_work_size()),
-//                                 viennacl::traits::opencl_handle(partial_result) )
-//                              );
-//      }
-
 
       //////////// Norm 1
 
@@ -532,7 +464,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
-                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           linalg::opencl::kernels::vector<T>::program_name(),
                                            scheduler::preset::norm_1(&result, &vec));
       }
 
@@ -569,7 +501,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
-                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           linalg::opencl::kernels::vector<T>::program_name(),
                                            scheduler::preset::norm_2(&result, &vec));
       }
 
@@ -605,7 +537,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
-                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           linalg::opencl::kernels::vector<T>::program_name(),
                                            scheduler::preset::norm_inf(&result, &vec));
       }
 
@@ -641,7 +573,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
         viennacl::device_specific::enqueue(device_specific::database::get<T>(device_specific::database::reduction),
-                                           ctx.get_program(linalg::opencl::kernels::vector<T>::program_name()),
+                                           linalg::opencl::kernels::vector<T>::program_name(),
                                            scheduler::preset::index_norm_inf(&result, &vec));
         T host_result = result;
         return host_result;
@@ -668,7 +600,7 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         device_specific::enqueue(device_specific::database::get<T>(device_specific::database::axpy),
-                                 ctx.get_program(viennacl::linalg::opencl::kernels::vector<T>::program_name()),
+                                 viennacl::linalg::opencl::kernels::vector<T>::program_name(),
                                  scheduler::preset::plane_rotation(&vec1, &vec2, &alpha, &beta));
       }
 

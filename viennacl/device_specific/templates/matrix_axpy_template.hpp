@@ -56,7 +56,7 @@ namespace viennacl{
       unsigned int num_groups_1() const { return num_groups_1_; }
       unsigned int decomposition() const { return decomposition_; }
 
-      void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+      void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
         configure_local_sizes(k, kernel_id);
 
@@ -75,6 +75,10 @@ namespace viennacl{
 
     private:
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
+        for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
+            if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
+              p->set_simd_width(simd_width_);
+
         stream << "for(unsigned int i = get_global_id(0) ; i < M ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();

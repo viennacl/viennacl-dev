@@ -63,8 +63,6 @@ namespace viennacl{
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
           tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]));
 
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tplt.init(*it, mapping[std::distance(statements.data().begin(), it)]);
         return tplt.generate(statements, mapping, prefix);
       }
 

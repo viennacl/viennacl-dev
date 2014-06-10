@@ -47,11 +47,13 @@ namespace viennacl{
     public:
       vector_axpy_template(const char * scalartype, unsigned int simd_width,
                    unsigned int group_size, unsigned int num_groups,
-                   unsigned int decomposition) : template_base(scalartype, simd_width, group_size, 1, 1), num_groups_(num_groups), decomposition_(decomposition){ }
+                   unsigned int decomposition) : template_base(scalartype, simd_width, group_size, 1, 1), num_groups_(num_groups), decomposition_(decomposition)
+      {
 
-      void configure_range_enqueue_arguments(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
-        configure_local_sizes(k, kernel_id);
+      }
 
+      void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+      {
         k.global_work_size(0,local_size_0_*num_groups_);
         k.global_work_size(1,1);
 
@@ -59,13 +61,23 @@ namespace viennacl{
         k.arg(n_arg++, cl_uint(utils::call_on_vector(root.lhs, utils::size_fun())/simd_width_));
       }
 
-      void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const{
+      void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const
+      {
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
     private:
 
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
+      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
+      {
+        for(unsigned int i = 0 ; i < mapping.size() ; ++i)
+        {
+          for(mapping_type::const_iterator it = mapping[i].begin() ; it != mapping[i].end() ; ++it)
+              if(mapped_handle * p = dynamic_cast<mapped_handle *>(it->second.get()))
+                p->set_simd_width(simd_width_);
+        }
+
+
         stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
@@ -79,8 +91,8 @@ namespace viennacl{
 
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
-          tree_parsing::read_write(&mapped_handle::fetch, lhs_suffix, cache,*it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
-          tree_parsing::read_write(&mapped_handle::fetch, rhs_suffix, cache,*it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::RHS_NODE_TYPE);
+          tree_parsing::read_write(&mapped_handle::fetch, lhs_suffix, cache, *it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(&mapped_handle::fetch, rhs_suffix, cache, *it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::RHS_NODE_TYPE);
         }
 
         //Generates all the expression, in order
