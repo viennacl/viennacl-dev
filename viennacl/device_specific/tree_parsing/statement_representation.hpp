@@ -137,6 +137,21 @@ namespace viennacl{
           char *& ptr_;
       };
 
+      inline std::string statements_representation(statements_container const & statements, binding_policy_t binding_policy)
+      {
+          std::vector<char> program_name_vector(256);
+          char* program_name = program_name_vector.data();
+          if(statements.order()==statements_container::INDEPENDENT)
+            *program_name++='i';
+          else
+            *program_name++='s';
+          tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
+          for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+              tree_parsing::traverse(*it, it->root(), tree_parsing::statement_representation_functor(*binder, program_name),true);
+          *program_name='\0';
+          return std::string(program_name_vector.data());
+      }
+
     }
 
   }

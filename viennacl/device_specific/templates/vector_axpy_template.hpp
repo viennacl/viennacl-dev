@@ -113,14 +113,26 @@ namespace viennacl
         k.global_work_size(1,1);
 
         scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
-        k.arg(n_arg++, cl_uint(utils::call_on_vector(root.lhs, utils::size_fun())/parameters_.simd_width()));
+        cl_uint size;
+        if(up_to_internal_size_)
+          size = utils::call_on_vector(root.lhs, utils::internal_size_fun());
+        else
+          size = utils::call_on_vector(root.lhs, utils::size_fun());
+        k.arg(n_arg++, size/parameters_.simd_width());
       }
 
     public:
       vector_axpy_template(vector_axpy_template::parameters const & parameters, binding_policy_t binding_policy) : template_base(parameters, binding_policy), parameters_(parameters){ }
 
+      void enqueue(std::string const & program_name, statements_container const & statements, bool up_to_internal_size = false)
+      {
+        up_to_internal_size_ = up_to_internal_size;
+        template_base::enqueue(program_name, statements);
+      }
+
     private:
       vector_axpy_template::parameters const & parameters_;
+      bool up_to_internal_size_;
     };
 
   }

@@ -39,35 +39,35 @@ namespace viennacl{
 
     namespace generate{
 
-      static std::string statements_representation(statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
-      {
-          std::vector<char> program_name_vector(256);            
-          char* program_name = program_name_vector.data();
-          if(statements.order()==statements_container::INDEPENDENT)
-            *program_name++='i';
-          else
-            *program_name++='s';
-          tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
-          for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-              tree_parsing::traverse(*it, it->root(), tree_parsing::statement_representation_functor(*binder, program_name),true);
-          *program_name='\0';
-          return std::string(program_name_vector.data());
-      }
+//      static std::string statements_representation(statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
+//      {
+//          std::vector<char> program_name_vector(256);
+//          char* program_name = program_name_vector.data();
+//          if(statements.order()==statements_container::INDEPENDENT)
+//            *program_name++='i';
+//          else
+//            *program_name++='s';
+//          tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
+//          for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+//              tree_parsing::traverse(*it, it->root(), tree_parsing::statement_representation_functor(*binder, program_name),true);
+//          *program_name='\0';
+//          return std::string(program_name_vector.data());
+//      }
 
-      template<class TemplateT>
-      static std::string opencl_source(typename TemplateT::parameters const & params, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
-      {
-        TemplateT tplt(params, binding_policy);
+//      template<class TemplateT>
+//      static std::string opencl_source(typename TemplateT::parameters const & params, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
+//      {
+//        TemplateT tplt(params, binding_policy);
 
-        std::string prefix = statements_representation(statements, binding_policy);
+//        std::string prefix = statements_representation(statements, binding_policy);
 
-        std::vector<mapping_type> mapping(statements.data().size());
-        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]));
+//        std::vector<mapping_type> mapping(statements.data().size());
+//        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
+//        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+//          tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]));
 
-        return tplt.generate(statements, mapping, prefix);
-      }
+//        return tplt.generate(statements, mapping, prefix);
+//      }
 
       //CUDA Conversion
       inline std::string opencl_source_to_cuda_source(std::string const & opencl_src)

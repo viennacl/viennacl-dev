@@ -70,7 +70,7 @@ namespace viennacl{
       /////////////////////
       /// Vector AXPY
       ////////////////////
-      database_type<vector_axpy_template::parameters> axpy = database_type<vector_axpy_template::parameters>
+      database_type<vector_axpy_template::parameters> vector_axpy = database_type<vector_axpy_template::parameters>
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, vector_axpy_template::parameters("float",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, vector_axpy_template::parameters("double",1,128,128,true));
 

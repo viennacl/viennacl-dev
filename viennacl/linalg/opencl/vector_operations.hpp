@@ -62,10 +62,9 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-        viennacl::device_specific::enqueue<device_specific::vector_axpy_template>(device_specific::database::get<T>(device_specific::database::axpy),
-                                           linalg::opencl::kernels::vector<T>::program_name(),
-                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, (vector_base<T>*)NULL, (T*)NULL, false, false),
-                                           device_specific::BIND_ALL_UNIQUE);
+        device_specific::vector_axpy_template(device_specific::database::get<T>(device_specific::database::vector_axpy), device_specific::BIND_ALL_UNIQUE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(),
+                                                 scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, (vector_base<T>*)NULL, (T*)NULL, false, false));
       }
 
 
@@ -80,10 +79,9 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
 
-        viennacl::device_specific::enqueue<device_specific::vector_axpy_template>(device_specific::database::get<T>(device_specific::database::axpy),
-                                           linalg::opencl::kernels::vector<T>::program_name(),
-                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta),
-                                           device_specific::BIND_ALL_UNIQUE);
+        device_specific::vector_axpy_template(device_specific::database::get<T>(device_specific::database::vector_axpy), device_specific::BIND_ALL_UNIQUE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(),
+                                        scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta));
       }
 
 
@@ -97,10 +95,9 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-        viennacl::device_specific::enqueue<device_specific::vector_axpy_template>(device_specific::database::get<T>(device_specific::database::axpy),
-                                           linalg::opencl::kernels::vector<T>::program_name(),
-                                           scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta),
-                                           device_specific::BIND_ALL_UNIQUE);
+        device_specific::vector_axpy_template(device_specific::database::get<T>(device_specific::database::vector_axpy), device_specific::BIND_ALL_UNIQUE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(),
+                                          scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta));
       }
 
 
@@ -116,9 +113,8 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
         scalar_vector<T> vec2(viennacl::traits::size(vec1),alpha);
-        device_specific::enqueue<device_specific::vector_axpy_template>(device_specific::database::get<T>(device_specific::database::axpy),
-                                 viennacl::linalg::opencl::kernels::vector<T>::program_name(),
-                                 scheduler::preset::assign_cpu(&vec1, &vec2));
+        device_specific::vector_axpy_template(device_specific::database::get<T>(device_specific::database::vector_axpy), device_specific::BIND_TO_HANDLE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::assign_cpu(&vec1, &vec2), up_to_internal_size);
       }
 
 
@@ -134,9 +130,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-        device_specific::enqueue<device_specific::vector_axpy_template>(device_specific::database::get<T>(device_specific::database::axpy),
-                                 viennacl::linalg::opencl::kernels::vector<T>::program_name(),
-                                 scheduler::preset::swap(&vec1, &vec2));
+        device_specific::vector_axpy_template(device_specific::database::get<T>(device_specific::database::vector_axpy), device_specific::BIND_TO_HANDLE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::swap(&vec1, &vec2));
       }
 
       ///////////////////////// Binary Elementwise operations /////////////
@@ -237,10 +232,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
-        viennacl::device_specific::enqueue<device_specific::reduction_template>(device_specific::database::get<T>(device_specific::database::reduction),
-                                           linalg::opencl::kernels::vector<T>::program_name(),
-                                           scheduler::preset::inner_prod(&result, &vec1, &vec2),
-                                           device_specific::BIND_ALL_UNIQUE);
+        device_specific::reduction_template(device_specific::database::get<T>(device_specific::database::reduction), device_specific::BIND_ALL_UNIQUE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::inner_prod(&result, &vec1, &vec2));
       }
 
       namespace detail
@@ -463,9 +456,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
-        viennacl::device_specific::enqueue<device_specific::reduction_template>(device_specific::database::get<T>(device_specific::database::reduction),
-                                           linalg::opencl::kernels::vector<T>::program_name(),
-                                           scheduler::preset::norm_1(&result, &vec));
+        device_specific::reduction_template(device_specific::database::get<T>(device_specific::database::reduction), device_specific::BIND_TO_HANDLE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::norm_1(&result, &vec));
       }
 
       /** @brief Computes the l^1-norm of a vector with final reduction on CPU
@@ -500,9 +492,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
-        viennacl::device_specific::enqueue<device_specific::reduction_template>(device_specific::database::get<T>(device_specific::database::reduction),
-                                           linalg::opencl::kernels::vector<T>::program_name(),
-                                           scheduler::preset::norm_2(&result, &vec));
+        device_specific::reduction_template(device_specific::database::get<T>(device_specific::database::reduction), device_specific::BIND_TO_HANDLE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::norm_2(&result, &vec));
       }
 
       /** @brief Computes the l^1-norm of a vector with final reduction on CPU
@@ -536,9 +527,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
-        viennacl::device_specific::enqueue<device_specific::reduction_template>(device_specific::database::get<T>(device_specific::database::reduction),
-                                           linalg::opencl::kernels::vector<T>::program_name(),
-                                           scheduler::preset::norm_inf(&result, &vec));
+        device_specific::reduction_template(device_specific::database::get<T>(device_specific::database::reduction), device_specific::BIND_TO_HANDLE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::norm_inf(&result, &vec));
       }
 
       /** @brief Computes the supremum-norm of a vector
@@ -572,9 +562,8 @@ namespace viennacl
         viennacl::scalar<T> result(0);
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
         linalg::opencl::kernels::vector<T>::init(ctx);
-        viennacl::device_specific::enqueue<device_specific::reduction_template>(device_specific::database::get<T>(device_specific::database::reduction),
-                                           linalg::opencl::kernels::vector<T>::program_name(),
-                                           scheduler::preset::index_norm_inf(&result, &vec));
+        device_specific::reduction_template(device_specific::database::get<T>(device_specific::database::reduction), device_specific::BIND_TO_HANDLE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::index_norm_inf(&result, &vec));
         T host_result = result;
         return host_result;
       }
@@ -599,9 +588,8 @@ namespace viennacl
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
         viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
-        device_specific::enqueue<device_specific::vector_axpy_template>(device_specific::database::get<T>(device_specific::database::axpy),
-                                 viennacl::linalg::opencl::kernels::vector<T>::program_name(),
-                                 scheduler::preset::plane_rotation(&vec1, &vec2, &alpha, &beta));
+        device_specific::vector_axpy_template(device_specific::database::get<T>(device_specific::database::vector_axpy), device_specific::BIND_TO_HANDLE)
+                                        .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::plane_rotation(&vec1, &vec2, &alpha, &beta));
       }
 
     } //namespace opencl

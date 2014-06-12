@@ -57,20 +57,23 @@ namespace viennacl{
     inline void reduce_1d_local_memory(utils::kernel_generation_stream & stream, unsigned int size, std::vector<std::string> const & bufs, std::vector<scheduler::op_element> const & rops)
     {
         //Reduce local memory
-        for(unsigned int stride = size/2 ; stride>0 ; stride /=2){
-          stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
-          stream << "if(lid < " << stride << "){" << std::endl;
-          stream.inc_tab();
-          for(unsigned int k = 0 ; k < bufs.size() ; ++k){
-              std::string acc = bufs[k] + "[lid]";
-              std::string accidx = (bufs[k] + "idx") + "[lid]";
-              std::string cur = bufs[k] + "[lid + " + tools::to_string(stride) + "]";
-              std::string curidx = (bufs[k] + "idx") + "[lid + " + tools::to_string(stride) + "]";
-              compute_reduction(stream,accidx,curidx,acc,cur,rops[k]);
-          }
-          stream.dec_tab();
-          stream << "}" << std::endl;
+        stream << "#pragma unroll" << std::endl;
+        stream << "for(unsigned int stride = " << size/2 << "; stride >0 ; stride /=2){" << std::endl;
+        stream.inc_tab();
+        stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
+        stream << "if(lid <  stride){" << std::endl;
+        stream.inc_tab();
+        for(unsigned int k = 0 ; k < bufs.size() ; ++k){
+            std::string acc = bufs[k] + "[lid]";
+            std::string accidx = (bufs[k] + "idx") + "[lid]";
+            std::string cur = bufs[k] + "[lid + stride]";
+            std::string curidx = (bufs[k] + "idx") + "[lid + stride]";
+            compute_reduction(stream,accidx,curidx,acc,cur,rops[k]);
         }
+        stream.dec_tab();
+        stream << "}" << std::endl;
+        stream.dec_tab();
+        stream << "}" << std::endl;
     }
 
     inline std::string neutral_element(scheduler::op_element const & op){

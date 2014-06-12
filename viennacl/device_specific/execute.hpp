@@ -42,33 +42,33 @@ namespace viennacl{
 
   namespace device_specific{
 
-    template<class TemplateT>
-    void enqueue(typename TemplateT::parameters const & params, std::string const & program_name, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
-    {
-      TemplateT tplt(params, binding_policy);
-      viennacl::ocl::program & program = viennacl::ocl::current_context().get_program(program_name);
-      std::string prefix = generate::statements_representation(statements, binding_policy);
+//    template<class TemplateT>
+//    void enqueue(typename TemplateT::parameters const & params, std::string const & program_name, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
+//    {
+//      TemplateT tplt(params, binding_policy);
+//      viennacl::ocl::program & program = viennacl::ocl::current_context().get_program(program_name);
+//      std::string prefix = generate::statements_representation(statements, binding_policy);
 
-      //Get the kernels
-      std::vector<viennacl::ocl::kernel*> kernels(params.num_kernels());
-      for(std::vector<viennacl::ocl::kernel*> ::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
-         *it = &program.get_kernel(prefix+tools::to_string(std::distance(kernels.begin(), it)));
+//      //Get the kernels
+//      std::vector<viennacl::ocl::kernel*> kernels(params.num_kernels());
+//      for(std::vector<viennacl::ocl::kernel*> ::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
+//         *it = &program.get_kernel(prefix+tools::to_string(std::distance(kernels.begin(), it)));
 
-      //Configure
-      tplt.configure(statements, kernels, binding_policy);
+//      //Configure
+//      tplt.configure(statements, kernels, binding_policy);
 
-      //Enqueue
-      for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
-        viennacl::ocl::enqueue(**it);
-    }
+//      //Enqueue
+//      for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
+//        viennacl::ocl::enqueue(**it);
+//    }
 
     template<class TemplateT>
     inline void execute(typename TemplateT::parameters const & params, statements_container const & statements, bool force_compilation = false)
     {
-      TemplateT tplt(params);
+      TemplateT tplt(params, BIND_TO_HANDLE);
 
       //Generate program name
-      std::string program_name = generate::statements_representation(statements);
+      std::string program_name = tree_parsing::statements_representation(statements, BIND_TO_HANDLE);
 
       //Retrieve/Compile program
       viennacl::ocl::context & ctx = viennacl::ocl::current_context();
@@ -82,15 +82,16 @@ namespace viennacl{
         src+="#elif defined(cl_amd_fp64)\n";
         src+="#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
         src+="#endif\n";
-        src +=generate::opencl_source(tplt, statements);
+        src +=tplt.generate(statements);
         ctx.add_program(src, program_name);
       }
 
-      enqueue<TemplateT>(tplt, program_name, statements);
+      tplt.enqueue(statements, program_name);
     }
 
     template<class TemplateT>
-    inline void execute(typename TemplateT::parameters const & params, scheduler::statement const & statement, bool force_recompilation = false){
+    inline void execute(typename TemplateT::parameters const & params, scheduler::statement const & statement, bool force_recompilation = false)
+    {
       execute<TemplateT>(params, statements_container(statement), force_recompilation);
     }
 

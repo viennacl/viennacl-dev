@@ -135,7 +135,7 @@ namespace viennacl
       typedef typename viennacl::result_of::reference_if_nonscalar<RHS>::type     rhs_reference_type;
 
     public:
-      enum { alignment = 1 };
+      enum { alignment = 128 };
 
       /** @brief Extracts the vector type from the two operands.
       */

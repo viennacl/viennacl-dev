@@ -34,21 +34,21 @@ namespace viennacl
         {
           viennacl::vector<T> x; viennacl::vector<T> y;
           T a; T b;
-          source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::plane_rotation(&x, &y, &a, &b)));
+          source.append(vector_axpy_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::plane_rotation(&x, &y, &a, &b)));
         }
 
         template<class T>
         void generate_vector_swap(std::string & source, vector_axpy_template::parameters const & parameters)
         {
           viennacl::vector<T> x; viennacl::vector<T> y;
-          source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::swap(&x, &y)));
+          source.append(vector_axpy_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::swap(&x, &y)));
         }
 
         template<class T>
         void generate_assign_cpu(std::string & source, vector_axpy_template::parameters const & parameters)
         {
           viennacl::vector<T> x; viennacl::scalar_vector<T> y(0,0);
-          source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::assign_cpu(&x, &y)));
+          source.append(vector_axpy_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::assign_cpu(&x, &y)));
         }
 
         template<typename T>
@@ -62,7 +62,7 @@ namespace viennacl
           for(unsigned int i = 0 ; i < vector_num ; ++i)
             statements.push_back(scheduler::preset::inner_prod(&s, &x, &y));
 
-          source.append(generate::opencl_source<reduction_template>(parameters, statements_container(statements,statements_container::INDEPENDENT),BIND_ALL_UNIQUE));
+          source.append(reduction_template(parameters, BIND_ALL_UNIQUE).generate(statements_container(statements,statements_container::INDEPENDENT)));
         }
 
 
@@ -72,11 +72,11 @@ namespace viennacl
           viennacl::vector<T> x;
           viennacl::scalar<T> s;
 
-          source.append(generate::opencl_source<reduction_template>(parameters, scheduler::preset::norm_1(&s, &x)));
-          source.append(generate::opencl_source<reduction_template>(parameters, scheduler::preset::norm_2(&s, &x)));
-          source.append(generate::opencl_source<reduction_template>(parameters, scheduler::preset::norm_inf(&s, &x)));
-          source.append(generate::opencl_source<reduction_template>(parameters, scheduler::preset::index_norm_inf(&s, &x)));
-          source.append(generate::opencl_source<reduction_template>(parameters, scheduler::preset::sum(&s, &x)));
+          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_1(&s, &x)));
+          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&s, &x)));
+          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_inf(&s, &x)));
+          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::index_norm_inf(&s, &x)));
+          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::sum(&s, &x)));
         }
 
 
@@ -85,26 +85,26 @@ namespace viennacl
                                        viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType1 const * a,
                                        viennacl::vector_base<T> const * z, ScalarType2 const * b)
         {
-          source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false), BIND_ALL_UNIQUE));
-          source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false), BIND_ALL_UNIQUE));
-          source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false), BIND_ALL_UNIQUE));
-          source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false), BIND_ALL_UNIQUE));
+          source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false)));
+          source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false)));
+          source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false)));
+          source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false)));
           if(b)
           {
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false), BIND_ALL_UNIQUE));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false)));
 
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true), BIND_ALL_UNIQUE));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true)));
 
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true), BIND_ALL_UNIQUE));
-            source.append(generate::opencl_source<vector_axpy_template>(parameters, scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true), BIND_ALL_UNIQUE));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true)));
+            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true)));
           }
         }
 
@@ -159,7 +159,7 @@ namespace viennacl
             if (!init_done[ctx.handle().get()])
             {
               std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
-              vector_axpy_template::parameters const & axpy = database::get<TYPE>(database::axpy);
+              vector_axpy_template::parameters const & axpy = database::get<TYPE>(database::vector_axpy);
               reduction_template::parameters const & reduction = database::get<TYPE>(database::reduction);
 
               std::string source;
@@ -200,7 +200,7 @@ namespace viennacl
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
-              template_base & reduction = database::get<TYPE>(database::reduction);
+              reduction_template::parameters const & reduction = database::get<TYPE>(database::reduction);
 
               std::string source;
               source.reserve(8192);
