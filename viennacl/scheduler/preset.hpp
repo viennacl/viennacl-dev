@@ -189,7 +189,32 @@ namespace viennacl{
         return preset::reduction_inner_prod(s, x, (vector_base<T>*)NULL, OPERATION_BINARY_ADD_TYPE, false, false);
       }
 
+      template<typename T>
+      statement binary_element_op(vector_base<T> const * x, vector_base<T> const * y, vector_base<T> const * z, scheduler::operation_node_type TYPE)
+      {
+        vcl_size_t dummy = 0;
+        statement::container_type array(2);
 
+        statement::add_element(dummy, array[0].lhs, *x);
+        array[0].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+        array[0].op.type = OPERATION_BINARY_ASSIGN_TYPE;
+        array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
+        array[0].rhs.node_index = 1;
+
+        statement::add_element(dummy, array[1].lhs, *y);
+        array[1].op.type_family = z?OPERATION_BINARY_TYPE_FAMILY:OPERATION_UNARY_TYPE_FAMILY;
+        array[1].op.type = TYPE;
+        if(z)
+          statement::add_element(dummy, array[1].rhs, *z);
+
+        return statement(array);
+      }
+
+      template<typename T>
+      statement unary_element_op(vector_base<T> const * x, vector_base<T> const * y, scheduler::operation_node_type TYPE)
+      {
+        return binary_element_op(x, y, static_cast<vector_base<T> const *>(NULL), TYPE);
+      }
 
     }
   }

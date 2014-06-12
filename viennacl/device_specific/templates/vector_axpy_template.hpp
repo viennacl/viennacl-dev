@@ -122,7 +122,7 @@ namespace viennacl
       }
 
     public:
-      vector_axpy_template(vector_axpy_template::parameters const & parameters, binding_policy_t binding_policy) : template_base(parameters, binding_policy), parameters_(parameters){ }
+      vector_axpy_template(vector_axpy_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), parameters_(parameters){ }
 
       void enqueue(std::string const & program_name, statements_container const & statements, bool up_to_internal_size = false)
       {

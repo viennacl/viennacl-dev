@@ -36,7 +36,7 @@ namespace viennacl
           statements_container::data_type statements;
           for(unsigned int i = 0 ; i < vector_num ; ++i)
             statements.push_back(scheduler::preset::inner_prod(s, x, y));
-          source.append(reduction_template(parameters, BIND_ALL_UNIQUE).generate(statements_container(statements,statements_container::INDEPENDENT)));
+          source.append(reduction_template(parameters).generate(statements_container(statements,statements_container::INDEPENDENT)));
         }
 
         template<typename T, typename ScalarType1, typename ScalarType2>
@@ -44,26 +44,26 @@ namespace viennacl
                                        viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType1 const * a,
                                        viennacl::vector_base<T> const * z, ScalarType2 const * b)
         {
-          source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false)));
-          source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false)));
-          source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false)));
-          source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false)));
+          source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false)));
+          source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false)));
+          source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false)));
+          source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false)));
           if(b)
           {
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false)));
 
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true)));
 
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true)));
-            source.append(vector_axpy_template(parameters, BIND_ALL_UNIQUE).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true)));
+            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true)));
           }
         }
 
@@ -122,16 +122,16 @@ namespace viennacl
               generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
               generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
 
-              source.append(vector_axpy_template(axpy_parameters, BIND_TO_HANDLE).generate(scheduler::preset::plane_rotation(&x, &y, &ha, &hb)));
-              source.append(vector_axpy_template(axpy_parameters, BIND_TO_HANDLE).generate(scheduler::preset::swap(&x, &y)));
-              source.append(vector_axpy_template(axpy_parameters, BIND_TO_HANDLE).generate(scheduler::preset::assign_cpu(&x, &scalary)));
+              source.append(vector_axpy_template(axpy_parameters).generate(scheduler::preset::plane_rotation(&x, &y, &ha, &hb)));
+              source.append(vector_axpy_template(axpy_parameters).generate(scheduler::preset::swap(&x, &y)));
+              source.append(vector_axpy_template(axpy_parameters).generate(scheduler::preset::assign_cpu(&x, &scalary)));
 
               generate_inner_prod_impl(source, reduction_parameters, 1, &x, &y, &da);
-              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_1(&da, &x)));
-              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&da, &x)));
-              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_inf(&da, &x)));
-              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::index_norm_inf(&da, &x)));
-              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::sum(&da, &x)));
+              source.append(reduction_template(reduction_parameters).generate(scheduler::preset::norm_1(&da, &x)));
+              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&da, &x))); //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
+              source.append(reduction_template(reduction_parameters).generate(scheduler::preset::norm_inf(&da, &x)));
+              source.append(reduction_template(reduction_parameters).generate(scheduler::preset::index_norm_inf(&da, &x)));
+              source.append(reduction_template(reduction_parameters).generate(scheduler::preset::sum(&da, &x)));
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

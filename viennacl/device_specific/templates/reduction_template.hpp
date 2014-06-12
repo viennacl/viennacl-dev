@@ -361,7 +361,7 @@ namespace viennacl
 
 
     public:
-      reduction_template(reduction_template::parameters const & parameters, binding_policy_t binding_policy) : template_base(parameters, binding_policy), parameters_(parameters){ }
+      reduction_template(reduction_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), parameters_(parameters){ }
 
     private:
       reduction_template::parameters const & parameters_;
