@@ -29,59 +29,18 @@ namespace viennacl
 
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
-        template<class T>
-        void generate_plane_rotation(std::string & source, vector_axpy_template::parameters const & parameters)
-        {
-          viennacl::vector<T> x; viennacl::vector<T> y;
-          T a; T b;
-          source.append(vector_axpy_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::plane_rotation(&x, &y, &a, &b)));
-        }
-
-        template<class T>
-        void generate_vector_swap(std::string & source, vector_axpy_template::parameters const & parameters)
-        {
-          viennacl::vector<T> x; viennacl::vector<T> y;
-          source.append(vector_axpy_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::swap(&x, &y)));
-        }
-
-        template<class T>
-        void generate_assign_cpu(std::string & source, vector_axpy_template::parameters const & parameters)
-        {
-          viennacl::vector<T> x; viennacl::scalar_vector<T> y(0,0);
-          source.append(vector_axpy_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::assign_cpu(&x, &y)));
-        }
-
         template<typename T>
-        void generate_inner_prod(std::string & source, reduction_template::parameters const & parameters, vcl_size_t vector_num)
+        void generate_inner_prod_impl(std::string & source, reduction_template::parameters const & parameters, vcl_size_t vector_num,
+                                       viennacl::vector<T> const * x, viennacl::vector<T> const * y, viennacl::scalar<T> const* s)
         {
-          viennacl::vector<T> x;
-          viennacl::vector<T> y;
-          viennacl::scalar<T> s;
-
           statements_container::data_type statements;
           for(unsigned int i = 0 ; i < vector_num ; ++i)
-            statements.push_back(scheduler::preset::inner_prod(&s, &x, &y));
-
+            statements.push_back(scheduler::preset::inner_prod(s, x, y));
           source.append(reduction_template(parameters, BIND_ALL_UNIQUE).generate(statements_container(statements,statements_container::INDEPENDENT)));
         }
 
-
-        template <typename T>
-        void generate_norms_sum(std::string & source, reduction_template::parameters const & parameters)
-        {
-          viennacl::vector<T> x;
-          viennacl::scalar<T> s;
-
-          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_1(&s, &x)));
-          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&s, &x)));
-          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_inf(&s, &x)));
-          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::index_norm_inf(&s, &x)));
-          source.append(reduction_template(parameters, BIND_TO_HANDLE).generate(scheduler::preset::sum(&s, &x)));
-        }
-
-
         template<typename T, typename ScalarType1, typename ScalarType2>
-        inline void generate_avbv_impl(std::string & source, vector_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
+        inline void generate_avbv_impl2(std::string & source, vector_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType1 const * a,
                                        viennacl::vector_base<T> const * z, ScalarType2 const * b)
         {
@@ -108,35 +67,20 @@ namespace viennacl
           }
         }
 
-        template<class T>
-        inline void generate_avbv(std::string & source, vector_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_TYPE)
+        template<typename T, typename ScalarType>
+        inline void generate_avbv_impl(std::string & source, vector_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
+                                       viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType const * ha, viennacl::scalar<ScalarType> const * da,
+                                       viennacl::vector_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db)
         {
-          viennacl::vector<T> x;
-          viennacl::vector<T> y;
-          viennacl::vector<T> z;
+          //x ASSIGN_OP a*y
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, (viennacl::vector<T>*)NULL, (T*)NULL);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, (viennacl::vector<T>*)NULL, (T*)NULL);
 
-          viennacl::scalar<T> da;
-          viennacl::scalar<T> db;
-
-          T ha;
-          T hb;
-
-          //x = a*y
-          generate_avbv_impl(source, parameters, ASSIGN_TYPE, &x, &y, &ha, (viennacl::vector<T>*)NULL, (T*)NULL);
-          generate_avbv_impl(source, parameters, ASSIGN_TYPE, &x, &y, &da, (viennacl::vector<T>*)NULL, (T*)NULL);
-
-          //x = a*y + b*z
-          generate_avbv_impl(source, parameters, ASSIGN_TYPE, &x, &y, &ha, &z, &hb);
-          generate_avbv_impl(source, parameters, ASSIGN_TYPE, &x, &y, &da, &z, &hb);
-          generate_avbv_impl(source, parameters, ASSIGN_TYPE, &x, &y, &ha, &z, &db);
-          generate_avbv_impl(source, parameters, ASSIGN_TYPE, &x, &y, &da, &z, &db);
-        }
-
-        template<class T>
-        inline void generate_avbv(std::string & source, vector_axpy_template::parameters const & parameters)
-        {
-          generate_avbv<T>(source, parameters, scheduler::OPERATION_BINARY_ASSIGN_TYPE);
-          generate_avbv<T>(source, parameters, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE);
+          //x ASSIGN_OP a*y + b*z
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, hb);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, z, hb);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, db);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, z, db);
         }
 
 
@@ -158,21 +102,36 @@ namespace viennacl
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
-              std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
-              vector_axpy_template::parameters const & axpy = database::get<TYPE>(database::vector_axpy);
-              reduction_template::parameters const & reduction = database::get<TYPE>(database::reduction);
+              vector_axpy_template::parameters const & axpy_parameters = database::get<TYPE>(database::vector_axpy);
+              reduction_template::parameters const & reduction_parameters = database::get<TYPE>(database::reduction);
 
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
-              generate_avbv<TYPE>(source, axpy);
-              generate_plane_rotation<TYPE>(source, axpy);
-              generate_vector_swap<TYPE>(source, axpy);
-              generate_assign_cpu<TYPE>(source, axpy);
-              generate_inner_prod<TYPE>(source, reduction, 1);
-              generate_norms_sum<TYPE>(source, reduction);
+              viennacl::vector<TYPE> x;
+              viennacl::vector<TYPE> y;
+              viennacl::scalar_vector<TYPE> scalary(0,0);
+              viennacl::vector<TYPE> z;
+              viennacl::scalar<TYPE> da;
+              viennacl::scalar<TYPE> db;
+              TYPE ha;
+              TYPE hb;
+
+              generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
+              generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
+
+              source.append(vector_axpy_template(axpy_parameters, BIND_TO_HANDLE).generate(scheduler::preset::plane_rotation(&x, &y, &ha, &hb)));
+              source.append(vector_axpy_template(axpy_parameters, BIND_TO_HANDLE).generate(scheduler::preset::swap(&x, &y)));
+              source.append(vector_axpy_template(axpy_parameters, BIND_TO_HANDLE).generate(scheduler::preset::assign_cpu(&x, &scalary)));
+
+              generate_inner_prod_impl(source, reduction_parameters, 1, &x, &y, &da);
+              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_1(&da, &x)));
+              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&da, &x)));
+              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_inf(&da, &x)));
+              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::index_norm_inf(&da, &x)));
+              source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::sum(&da, &x)));
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO
@@ -200,17 +159,22 @@ namespace viennacl
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
-              reduction_template::parameters const & reduction = database::get<TYPE>(database::reduction);
+              reduction_template::parameters const & reduction_parameters = database::get<TYPE>(database::reduction);
 
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
-              generate_inner_prod<TYPE>(source, reduction, 2);
-              generate_inner_prod<TYPE>(source, reduction, 3);
-              generate_inner_prod<TYPE>(source, reduction, 4);
-              generate_inner_prod<TYPE>(source, reduction, 8);
+              //Dummy holders for the statements
+              viennacl::vector<TYPE> x;
+              viennacl::vector<TYPE> y;
+              viennacl::scalar<TYPE> da;
+
+              generate_inner_prod_impl(source, reduction_parameters, 2, &x, &y, &da);
+              generate_inner_prod_impl(source, reduction_parameters, 3, &x, &y, &da);
+              generate_inner_prod_impl(source, reduction_parameters, 4, &x, &y, &da);
+              generate_inner_prod_impl(source, reduction_parameters, 8, &x, &y, &da);
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO
