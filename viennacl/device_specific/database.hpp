@@ -4,6 +4,7 @@
 #include "viennacl/ocl/device_utils.hpp"
 #include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/templates/vector_axpy_template.hpp"
+#include "viennacl/device_specific/templates/matrix_axpy_template.hpp"
 #include "viennacl/device_specific/templates/reduction_template.hpp"
 #include "viennacl/scheduler/forwards.h"
 
@@ -13,59 +14,6 @@ namespace viennacl{
 
     namespace database{
 
-
-//      static database_type<vector_axpy_template::parameters> init_axpy_database(){
-//        database_type<vector_axpy_template::parameters> map;
-
-//        //GPU Defaults
-//        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][FLOAT_TYPE] = vector_axpy_template::parameters("float",1,128,128,true);
-//        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][DOUBLE_TYPE] = vector_axpy_template::parameters("double",1,128,128,true);
-//        //CPU Defaults
-//        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][FLOAT_TYPE] = vector_axpy_template::parameters("float",8,16,256,true);
-//        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][DOUBLE_TYPE] = vector_axpy_template::parameters("double",8,16,32,true);
-//        //Accelerator Defaults
-//        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][FLOAT_TYPE] = vector_axpy_template::parameters("float",8,16,256,true);
-//        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][DOUBLE_TYPE] = vector_axpy_template::parameters("double",8,16,32,true);
-
-//        /* AMD */
-//        //Evergreen
-//        map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen][""][FLOAT_TYPE] = vector_axpy_template::parameters("float",1,4,64,true);
-//        map[amd_id][CL_DEVICE_TYPE_GPU][Evergreen][""][DOUBLE_TYPE] = vector_axpy_template::parameters("double",2,1,64,true);
-//        //Southern Islands
-//        map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands][""][FLOAT_TYPE] = vector_axpy_template::parameters("float",1,4,64,true);
-//        map[amd_id][CL_DEVICE_TYPE_GPU][SouthernIslands][""][DOUBLE_TYPE] = vector_axpy_template::parameters("double",2,1,64,true);
-//        //Volcanic Islands
-//        map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands][""][FLOAT_TYPE] = vector_axpy_template::parameters("float",1,4,64,true);
-//        map[amd_id][CL_DEVICE_TYPE_GPU][VolcanicIslands][""][DOUBLE_TYPE] = vector_axpy_template::parameters("double",2,1,64,true);
-
-//        /* NVidia */
-//        //Fermi
-//        map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi][""][FLOAT_TYPE]      =    vector_axpy_template::parameters("float",1,1,256,true);
-//        map[nvidia_id][CL_DEVICE_TYPE_GPU][Fermi][""][DOUBLE_TYPE]      =    vector_axpy_template::parameters("double",2,1,64,true);
-//        //Kepler
-//        map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler][""][FLOAT_TYPE]      =    vector_axpy_template::parameters("float",1,1,256,true);
-//        map[nvidia_id][CL_DEVICE_TYPE_GPU][Kepler][""][DOUBLE_TYPE]      =    vector_axpy_template::parameters("double",2,1,64,true);
-
-//        return map;
-//      }
-
-
-//      static database_type<reduction_template::parameters> init_reduction_database(){
-//        database_type<reduction_template::parameters> map;
-
-//        //GPU Defaults
-//        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][FLOAT_TYPE] = reduction_template::parameters("float",1,128,128,true);
-//        map[unknown_id][CL_DEVICE_TYPE_GPU][UNKNOWN][""][DOUBLE_TYPE] = reduction_template::parameters("double",1,128,128,true);
-//        //CPU Defaults
-//        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][FLOAT_TYPE] = reduction_template::parameters("float",1,16,256,true);
-//        map[unknown_id][CL_DEVICE_TYPE_CPU][UNKNOWN][""][DOUBLE_TYPE] = reduction_template::parameters("double",1,16,32,true);
-//        //Accelerator Defaults
-//        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][FLOAT_TYPE] = reduction_template::parameters("float",1,16,256,true);
-//        map[unknown_id][CL_DEVICE_TYPE_ACCELERATOR][UNKNOWN][""][DOUBLE_TYPE] = reduction_template::parameters("double",1,16,32,true);
-
-//        return map;
-//      }
-//      database_type<reduction_template::parameters> reduction = init_reduction_database();
 
       /////////////////////
       /// Vector AXPY
@@ -81,6 +29,13 @@ namespace viennacl{
       database_type<reduction_template::parameters> reduction = database_type<reduction_template::parameters>
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, reduction_template::parameters("float",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, reduction_template::parameters("double",1,128,128,true));
+
+      /////////////////////
+      /// Matrix AXPY
+      ////////////////////
+      database_type<matrix_axpy_template::parameters> matrix_axpy = database_type<matrix_axpy_template::parameters>
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_axpy_template::parameters("float",1,8,8,8,8,true))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_axpy_template::parameters("double",1,8,8,8,8,true));
 
 
       /** @brief If the fallback is too harsh, use a very conservative profile */

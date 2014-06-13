@@ -189,6 +189,18 @@ namespace viennacl{
         result_type operator()(T const &t) const { return viennacl::traits::internal_size2(t); }
       };
 
+      struct size1_fun{
+        typedef std::size_t result_type;
+        template<class T>
+        result_type operator()(T const &t) const { return viennacl::traits::size1(t); }
+      };
+
+      struct size2_fun{
+        typedef std::size_t result_type;
+        template<class T>
+        result_type operator()(T const &t) const { return viennacl::traits::size2(t); }
+      };
+
       template<class T, class U>
       struct is_same_type { enum { value = 0 }; };
 

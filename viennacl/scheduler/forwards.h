@@ -91,6 +91,8 @@ namespace viennacl
 
       //structurewise functions
       OPERATION_UNARY_TRANS_TYPE,
+      OPERATION_UNARY_MATRIX_DIAG_TYPE,
+      OPERATION_UNARY_VECTOR_DIAG_TYPE,
       OPERATION_UNARY_NORM_1_TYPE,
       OPERATION_UNARY_NORM_2_TYPE,
       OPERATION_UNARY_NORM_INF_TYPE,
@@ -172,6 +174,9 @@ namespace viennacl
       template <> struct op_type_info<op_norm_inf                >      { enum { id = OPERATION_UNARY_NORM_INF_TYPE,      family = OPERATION_UNARY_TYPE_FAMILY}; };
 
       template <> struct op_type_info<op_trans                   >      { enum { id = OPERATION_UNARY_TRANS_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
+
+      template <> struct op_type_info<op_matrix_diag>                    { enum { id = OPERATION_UNARY_MATRIX_DIAG_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY}; };
+      template <> struct op_type_info<op_vector_diag>                    { enum { id = OPERATION_UNARY_VECTOR_DIAG_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY}; };
 
       template <> struct op_type_info<op_prod>                          { enum { id = OPERATION_BINARY_MAT_VEC_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY}; };
       template <> struct op_type_info<op_mat_mat_prod>                  { enum { id = OPERATION_BINARY_MAT_MAT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY}; };

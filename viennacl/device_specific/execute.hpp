@@ -42,26 +42,6 @@ namespace viennacl{
 
   namespace device_specific{
 
-//    template<class TemplateT>
-//    void enqueue(typename TemplateT::parameters const & params, std::string const & program_name, statements_container const & statements, binding_policy_t binding_policy = BIND_TO_HANDLE)
-//    {
-//      TemplateT tplt(params, binding_policy);
-//      viennacl::ocl::program & program = viennacl::ocl::current_context().get_program(program_name);
-//      std::string prefix = generate::statements_representation(statements, binding_policy);
-
-//      //Get the kernels
-//      std::vector<viennacl::ocl::kernel*> kernels(params.num_kernels());
-//      for(std::vector<viennacl::ocl::kernel*> ::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
-//         *it = &program.get_kernel(prefix+tools::to_string(std::distance(kernels.begin(), it)));
-
-//      //Configure
-//      tplt.configure(statements, kernels, binding_policy);
-
-//      //Enqueue
-//      for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
-//        viennacl::ocl::enqueue(**it);
-//    }
-
     template<class TemplateT>
     inline void execute(typename TemplateT::parameters const & params, statements_container const & statements, bool force_compilation = false)
     {
@@ -86,13 +66,7 @@ namespace viennacl{
         ctx.add_program(src, program_name);
       }
 
-      tplt.enqueue(statements, program_name);
-    }
-
-    template<class TemplateT>
-    inline void execute(typename TemplateT::parameters const & params, scheduler::statement const & statement, bool force_recompilation = false)
-    {
-      execute<TemplateT>(params, statements_container(statement), force_recompilation);
+      tplt.enqueue(program_name, statements);
     }
 
   }

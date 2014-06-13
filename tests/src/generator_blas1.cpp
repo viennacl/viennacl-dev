@@ -423,14 +423,14 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::copy(cx,x);
     viennacl::copy(cPattern,pattern);
 
-//    {
-//      std::cout << "C = A + B ..." << std::endl;
-//      cC     = ( cA + cB );
-//      viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
-//      device_specific::execute(statement, statement.array()[0]);
-//      viennacl::backend::finish();
-//      CHECK_RESULT(cC, C, C=A+B)
-//    }
+    {
+      std::cout << "C = A + B ..." << std::endl;
+      cC     = ( cA + cB );
+      viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
+      device_specific::execute<device_specific::matrix_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy), statement);
+      viennacl::backend::finish();
+      CHECK_RESULT(cC, C, C=A+B)
+    }
 
 //    {
 //        std::cout << "C = diag(x) ..." << std::endl;
@@ -561,70 +561,70 @@ int main(int argc, char* argv[]){
                 std::cout << "----------------------------------------------" << std::endl;
                 std::cout << viennacl::ocl::current_device().info() << std::endl;
 
-                std::cout << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "## Test :: Vector" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
+//                std::cout << std::endl;
+//                std::cout << "----------------------------------------------" << std::endl;
+//                std::cout << "----------------------------------------------" << std::endl;
+//                std::cout << "## Test :: Vector" << std::endl;
+//                std::cout << "----------------------------------------------" << std::endl;
 
-                {
-                    double epsilon = 1.0E-4;
+//                {
+//                    double epsilon = 1.0E-4;
 
-                    std::cout << "# Testing setup:" << std::endl;
-                    std::cout << "  numeric: float" << std::endl;
-                    retval = test_vector<float> (epsilon);
+//                    std::cout << "# Testing setup:" << std::endl;
+//                    std::cout << "  numeric: float" << std::endl;
+//                    retval = test_vector<float> (epsilon);
 
 
-                    std::cout << std::endl;
+//                    std::cout << std::endl;
 
 //                    std::cout << "# Testing setup:" << std::endl;
 //                    std::cout << "  numeric: double" << std::endl;
 //                    retval = test_vector<double> (epsilon);
 
-                    if ( retval == EXIT_SUCCESS )
-                        std::cout << "# Test passed" << std::endl;
-                    else
-                        return retval;
-              }
-
-
-//              std::cout << std::endl;
-//              std::cout << "----------------------------------------------" << std::endl;
-//              std::cout << "----------------------------------------------" << std::endl;
-//              std::cout << "## Test :: Matrix" << std::endl;
-//              std::cout << "----------------------------------------------" << std::endl;
-
-//              {
-//                  double epsilon = 1.0E-4;
-//                  std::cout << "# Testing setup:" << std::endl;
-
-//                  std::cout << "  numeric: float" << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  std::cout << "  Row-Major"      << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  retval = test_matrix<float, viennacl::row_major> (epsilon);
-
-//                  std::cout << "  --------------" << std::endl;
-//                  std::cout << "  Column-Major"      << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  retval &= test_matrix<float, viennacl::column_major> (epsilon);
-
-//                  std::cout << "  numeric: double" << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  std::cout << "  Row-Major"      << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  retval = test_matrix<double, viennacl::row_major> (epsilon);
-
-//                  std::cout << "  --------------" << std::endl;
-//                  std::cout << "  Column-Major"      << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  retval &= test_matrix<double, viennacl::column_major> (epsilon);
-
-//                  if ( retval == EXIT_SUCCESS )
-//                      std::cout << "# Test passed" << std::endl;
-//                  else
-//                      return retval;
+//                    if ( retval == EXIT_SUCCESS )
+//                        std::cout << "# Test passed" << std::endl;
+//                    else
+//                        return retval;
 //              }
+
+
+              std::cout << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
+              std::cout << "## Test :: Matrix" << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
+
+              {
+                  double epsilon = 1.0E-4;
+                  std::cout << "# Testing setup:" << std::endl;
+
+                  std::cout << "  numeric: float" << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Row-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval = test_matrix<float, viennacl::row_major> (epsilon);
+
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Column-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval &= test_matrix<float, viennacl::column_major> (epsilon);
+
+                  std::cout << "  numeric: double" << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Row-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval = test_matrix<double, viennacl::row_major> (epsilon);
+
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Column-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval &= test_matrix<double, viennacl::column_major> (epsilon);
+
+                  if ( retval == EXIT_SUCCESS )
+                      std::cout << "# Test passed" << std::endl;
+                  else
+                      return retval;
+              }
 
             }
         }

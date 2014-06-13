@@ -41,44 +41,31 @@ namespace viennacl{
 
   namespace device_specific{
 
-    class matrix_axpy_template : public template_base{
-
-      bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const{ return false; }
-      bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
+    class matrix_axpy_template : public template_base
+    {
 
     public:
-      matrix_axpy_template(const char * scalartype, unsigned int simd_width,
+      class parameters : public template_base::parameters
+      {
+      public:
+        parameters(const char * scalartype, unsigned int simd_width,
                    unsigned int local_size_0, unsigned int local_size_1,
                    unsigned int num_groups_0, unsigned int num_groups_1,
-                           unsigned int decomposition) : template_base(scalartype, simd_width, local_size_0, local_size_1, 1), num_groups_0_(num_groups_0), num_groups_1_(num_groups_1), decomposition_(decomposition){ }
+                   unsigned int decomposition) : template_base::parameters(scalartype, simd_width, local_size_0, local_size_1, 1), num_groups_0_(num_groups_0), num_groups_1_(num_groups_1), decomposition_(decomposition){ }
 
-      unsigned int num_groups_0() const { return num_groups_0_; }
-      unsigned int num_groups_1() const { return num_groups_1_; }
-      unsigned int decomposition() const { return decomposition_; }
+        unsigned int num_groups_0() const { return num_groups_0_; }
+        unsigned int num_groups_1() const { return num_groups_1_; }
+        unsigned int decomposition() const { return decomposition_; }
 
-      void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
-      {
-        configure_local_sizes(k, kernel_id);
-
-        k.global_work_size(0,local_size_0_*num_groups_0_);
-        k.global_work_size(1,local_size_1_*num_groups_1_);
-
-        scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
-        k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size1_fun())));
-        k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size2_fun())));
-      }
-
-      virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const{
-        arguments_string += generate_value_kernel_argument("unsigned int", "M");
-        arguments_string += generate_value_kernel_argument("unsigned int", "N");
-      }
+      private:
+        unsigned int num_groups_0_;
+        unsigned int num_groups_1_;
+        unsigned int decomposition_;
+      };
 
     private:
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const {
-        for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
-            if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
-              p->set_simd_width(simd_width_);
-
+      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
+      {
         stream << "for(unsigned int i = get_global_id(0) ; i < M ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
@@ -109,11 +96,44 @@ namespace viennacl{
         stream << "}" << std::endl;
       }
 
+      void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const
+      {
+        arguments_string += generate_value_kernel_argument("unsigned int", "M");
+        arguments_string += generate_value_kernel_argument("unsigned int", "N");
+      }
+
+      void configure_impl(unsigned int /*kernel_id*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+      {
+        k.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups_0());
+        k.global_work_size(1,parameters_.local_size_1()*parameters_.num_groups_1());
+
+        scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
+        if(up_to_internal_size_)
+        {
+          k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size1_fun())));
+          k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size2_fun())));
+        }
+        else
+        {
+          k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::size1_fun())));
+          k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::size2_fun())));
+        }
+      }
+
+    public:
+      matrix_axpy_template(matrix_axpy_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), parameters_(parameters){ }
+
+      void enqueue(std::string const & program_name, statements_container const & statements, bool up_to_internal_size = false)
+      {
+        up_to_internal_size_ = up_to_internal_size;
+        template_base::enqueue(program_name, statements);
+      }
+
     private:
-      unsigned int num_groups_0_;
-      unsigned int num_groups_1_;
-      unsigned int decomposition_;
+      matrix_axpy_template::parameters const & parameters_;
+      bool up_to_internal_size_;
     };
+
   }
 
 }
