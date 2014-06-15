@@ -423,14 +423,36 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::copy(cx,x);
     viennacl::copy(cPattern,pattern);
 
+//    {
+//      std::cout << "C = A + B ..." << std::endl;
+//      cC     = ( cA + cB );
+//      viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
+//      device_specific::execute<device_specific::matrix_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy), statement);
+//      viennacl::backend::finish();
+//      CHECK_RESULT(cC, C, C=A+B)
+//    }
+
     {
-      std::cout << "C = A + B ..." << std::endl;
-      cC     = ( cA + cB );
-      viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
+      std::cout << "C = diag(x) ..." << std::endl;
+      for(unsigned int i = 0 ; i < size1 ; ++i)
+        for(unsigned int j = 0 ; j < size2 ; ++j)
+          cC(i,j) = (i==j)?cx[i]:0;
+      viennacl::scheduler::statement statement(C, viennacl::op_assign(), viennacl::diag(x));
       device_specific::execute<device_specific::matrix_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy), statement);
       viennacl::backend::finish();
-      CHECK_RESULT(cC, C, C=A+B)
+      CHECK_RESULT(cC, C, C=diag(x))
     }
+
+//    {
+//      std::cout << "x = diag(C) ..." << std::endl;
+//      for(unsigned int i = 0 ; i < std::min(size1, size2) ; ++i)
+//        cx[i] = cC(i,i);
+//      viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::diag(C));
+//      device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
+//      viennacl::backend::finish();
+//      CHECK_RESULT(cx, x, x=diag(C))
+//    }
+
 
 //    {
 //        std::cout << "C = diag(x) ..." << std::endl;

@@ -140,13 +140,21 @@ namespace viennacl{
     namespace tree_parsing{
 
       template<class Fun>
-      inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool recurse_binary_leaf = true);
-      inline void generate_all_rhs(scheduler::statement const & statement
-                                , unsigned int root_idx
-                                , index_tuple const & index
-                                , int vector_element
-                                , std::string & str
-                                , mapping_type const & mapping);
+      inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool inspect);
+
+      inline std::string evaluate_expression(scheduler::statement const & statement, unsigned int root_idx, index_tuple const & index, int simd_element, mapping_type const & mapping, node_type initial_leaf);
+//      inline void generate_all_rhs(scheduler::statement const & statement
+//                                , unsigned int root_idx
+//                                , index_tuple const & index
+//                                , int vector_element
+//                                , std::string & str
+//                                , mapping_type const & mapping);
+//      inline void generate_all_lhs(scheduler::statement const & statement
+//                                , unsigned int root_idx
+//                                , index_tuple const & index
+//                                , int vector_element
+//                                , std::string & str
+//                                , mapping_type const & mapping);
 
       struct map_functor;
 

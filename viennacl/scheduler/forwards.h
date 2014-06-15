@@ -495,15 +495,12 @@ namespace viennacl
         size_type root() const { return 0; }
 
         ///////////// Scalar node helper ////////////////
-        /// Public because they can be useful for presets
-        /// Probably can be made back private once the scheduler is fully integrated
         ////////////////////////////////////////////////
 
-        // TODO: add integer vector overloads here
+        static void assign_element(lhs_rhs_element & elem, int const & t) { elem.host_int  = t; }
         static void assign_element(lhs_rhs_element & elem, float const & t) { elem.host_float  = t; }
         static void assign_element(lhs_rhs_element & elem, double const & t) { elem.host_double = t; }
 
-        // TODO: add integer vector overloads here
         static void assign_element(lhs_rhs_element & elem, viennacl::scalar<float>  const & t) { elem.scalar_float  = const_cast<viennacl::scalar<float> *>(&t); }
         static void assign_element(lhs_rhs_element & elem, viennacl::scalar<double> const & t) { elem.scalar_double = const_cast<viennacl::scalar<double> *>(&t); }
 
@@ -533,6 +530,18 @@ namespace viennacl
         static void assign_element(lhs_rhs_element & elem, viennacl::hyb_matrix<double> const & m) { elem.hyb_matrix_double = const_cast<viennacl::hyb_matrix<double> *>(&m); }
 
         //////////// Tree leaves (terminals) ////////////////////
+
+        static vcl_size_t add_element(vcl_size_t       next_free,
+                                lhs_rhs_element & elem,
+                                int const &     t)
+        {
+          elem.type_family  = SCALAR_TYPE_FAMILY;
+          elem.subtype      = HOST_SCALAR_TYPE;
+          elem.numeric_type = INT_TYPE;
+          elem.host_float   = t;
+          return next_free;
+        }
+
 
         static vcl_size_t add_element(vcl_size_t       next_free,
                                 lhs_rhs_element & elem,

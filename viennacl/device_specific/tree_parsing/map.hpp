@@ -49,11 +49,6 @@ namespace viennacl{
       /** @brief Functor to map the statements to the types defined in mapped_objects.hpp */
       class map_functor : public traversal_functor{
 
-          std::string create_name(viennacl::backend::mem_handle const * ph) const
-          {
-            return "arg" + tools::to_string(binder_.get(ph));
-          }
-
           scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, unsigned int root_idx) const
           {
               scheduler::statement_node const * root_node = &statement->array()[root_idx];
@@ -71,66 +66,49 @@ namespace viennacl{
           template<class T>
           result_type structurewise_function(scheduler::statement const * statement, unsigned int root_idx, mapping_type const * mapping) const
           {
-            T * p = new T(utils::numeric_type_to_string(numeric_type(statement,root_idx)));
-            p->info_.statement = statement;
-            p->info_.root_idx = root_idx;
-            p->info_.mapping = mapping;
-            return result_type(p);
+            return result_type(new T(utils::numeric_type_to_string(numeric_type(statement,root_idx)), binder_.get(NULL), mapped_object::node_info(mapping, statement, root_idx)));
           }
 
           template<class ScalarType>
-          result_type operator()(ScalarType const & scal) const {
-            mapped_host_scalar * p = new mapped_host_scalar(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(NULL);
-            return result_type(p);
+          result_type operator()(ScalarType const & scal) const
+          {
+            return result_type(new mapped_host_scalar(utils::type_to_string<ScalarType>::value(), binder_.get(NULL)));
           }
 
           /** @brief Scalar mapping */
           template<class ScalarType>
-          result_type operator()(scalar<ScalarType> const & scal) const {
-            mapped_scalar * p = new mapped_scalar(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(&viennacl::traits::handle(scal));
-            return result_type(p);
+          result_type operator()(scalar<ScalarType> const & scal) const
+          {
+            return result_type(new mapped_scalar(utils::type_to_string<ScalarType>::value(), binder_.get(&viennacl::traits::handle(scal))));
           }
 
           /** @brief Vector mapping */
           template<class ScalarType>
-          result_type operator()(vector_base<ScalarType> const & vec) const {
-            mapped_vector * p = new mapped_vector(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(&viennacl::traits::handle(vec));
-            p->start_name_ = p->name_ +"_start";
-            p->stride_name_ = p->name_ + "_stride";
-            return result_type(p);
+          result_type operator()(vector_base<ScalarType> const & vec) const
+          {
+            return result_type(new mapped_vector(utils::type_to_string<ScalarType>::value(), binder_.get(&viennacl::traits::handle(vec))));
           }
 
           /** @brief Implicit vector mapping */
           template<class ScalarType>
-          result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
-            mapped_implicit_vector * p = new mapped_implicit_vector(utils::type_to_string<ScalarType>::value());
-            p->value_name_ = create_name(NULL);
-            return result_type(p);
+          result_type operator()(implicit_vector_base<ScalarType> const & vec) const
+          {
+            return result_type(new mapped_implicit_vector(utils::type_to_string<ScalarType>::value(), binder_.get(NULL)));
           }
 
           /** @brief Matrix mapping */
           template<class ScalarType>
-          result_type operator()(matrix_base<ScalarType> const & mat) const {
-            mapped_matrix * p = new mapped_matrix(utils::type_to_string<ScalarType>::value());
-            p->name_ = create_name(&viennacl::traits::handle(mat));
-            p->ld_name_ = p->name_ + "_ld";
-            p->interpret_as_transposed_ = viennacl::traits::row_major(mat);
-            p->start1_name_ = p->name_ +"_start1";
-            p->stride1_name_ = p->name_ + "_stride1";
-            p->start2_name_ = p->name_ +"_start2";
-            p->stride2_name_ = p->name_ + "_stride2";
-            return result_type(p);
+          result_type operator()(matrix_base<ScalarType> const & mat) const
+          {
+            return result_type(new mapped_matrix(utils::type_to_string<ScalarType>::value(), binder_.get(&viennacl::traits::handle(mat)),
+                                                  viennacl::traits::row_major(mat)));
           }
 
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
-          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
-            mapped_implicit_matrix * p = new mapped_implicit_matrix(utils::type_to_string<ScalarType>::value());
-            p->value_name_ = create_name(NULL);
-            return result_type(p);
+          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const
+          {
+            return result_type(new mapped_implicit_matrix(utils::type_to_string<ScalarType>::value(), binder_.get(NULL)));
           }
 
           /** @brief Traversal functor */
@@ -142,7 +120,10 @@ namespace viennacl{
                  mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this)));
             else if(node_type == RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                  mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node.rhs, *this)));
-            else if( node_type== PARENT_NODE_TYPE){
+            else if( node_type== PARENT_NODE_TYPE)
+            {
+                if(root_node.op.type==scheduler::OPERATION_UNARY_VECTOR_DIAG_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_vector_diag>(&statement, root_idx, &mapping_)));
                 if(is_scalar_reduction(root_node))
                   mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_scalar_reduction>(&statement, root_idx, &mapping_)));
                 else if(is_vector_reduction(root_node))
@@ -152,7 +133,7 @@ namespace viennacl{
                 else if(root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE){
                   key.second = tree_parsing::LHS_NODE_TYPE;
                   mapping_type::iterator it = mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this))).first;
-                  ((mapped_matrix *)it->second.get())->interpret_as_transposed_ = !((mapped_matrix *)it->second.get())->interpret_as_transposed();
+                  ((mapped_matrix *)it->second.get())->flip_transpose();
                 }
            }
           }

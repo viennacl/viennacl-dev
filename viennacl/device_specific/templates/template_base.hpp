@@ -139,7 +139,7 @@ namespace viennacl
         std::vector<mapping_type> mapping(statements.data().size());
         tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]));
+          tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]), true);
         for(unsigned int i = 0 ; i < mapping.size() ; ++i)
           for(mapping_type::const_iterator it = mapping[i].begin() ; it != mapping[i].end() ; ++it)
               init_simd_width(*it);
@@ -149,7 +149,7 @@ namespace viennacl
         std::set<std::string> already_generated;
         add_kernel_arguments(statements, prototype);
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::traverse(*it, it->root(), tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping[std::distance(statements.data().begin(), it)]));
+          tree_parsing::traverse(*it, it->root(), tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping[std::distance(statements.data().begin(), it)]), true);
         prototype.erase(prototype.size()-1); //Last comma pruned
 
         for(unsigned int i = 0 ; i < parameters_.num_kernels() ; ++i)
@@ -185,7 +185,7 @@ namespace viennacl
           (*it)->local_work_size(1,parameters_.local_size_1());
           configure_impl(std::distance(kernels.begin(), it), statements, **it, current_arg);
           for(typename statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
-            tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**it));
+            tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**it), true);
         }
 
         //Enqueue
