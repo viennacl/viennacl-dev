@@ -23,6 +23,8 @@
     @brief Provides the datastructures for dealing with a single statement such as 'x = y + z;'
 */
 
+#include "viennacl/meta/enable_if.hpp"
+#include "viennacl/meta/predicate.hpp"
 #include "viennacl/forwards.h"
 
 #include <vector>
@@ -89,10 +91,7 @@ namespace viennacl
       OPERATION_UNARY_TAN_TYPE,
       OPERATION_UNARY_TANH_TYPE,
 
-      //structurewise functions
       OPERATION_UNARY_TRANS_TYPE,
-      OPERATION_UNARY_MATRIX_DIAG_TYPE,
-      OPERATION_UNARY_VECTOR_DIAG_TYPE,
       OPERATION_UNARY_NORM_1_TYPE,
       OPERATION_UNARY_NORM_2_TYPE,
       OPERATION_UNARY_NORM_INF_TYPE,
@@ -120,10 +119,14 @@ namespace viennacl
       OPERATION_BINARY_ELEMENT_FMAX_TYPE,
       OPERATION_BINARY_ELEMENT_FMIN_TYPE,
 
-      //structurewise functions
+      OPERATION_BINARY_MATRIX_DIAG_TYPE,
+      OPERATION_BINARY_VECTOR_DIAG_TYPE,
+      OPERATION_BINARY_MATRIX_ROW_TYPE,
+      OPERATION_BINARY_MATRIX_COLUMN_TYPE,
       OPERATION_BINARY_MAT_VEC_PROD_TYPE,
       OPERATION_BINARY_MAT_MAT_PROD_TYPE,
       OPERATION_BINARY_INNER_PROD_TYPE
+
     };
 
 
@@ -174,9 +177,11 @@ namespace viennacl
       template <> struct op_type_info<op_norm_inf                >      { enum { id = OPERATION_UNARY_NORM_INF_TYPE,      family = OPERATION_UNARY_TYPE_FAMILY}; };
 
       template <> struct op_type_info<op_trans                   >      { enum { id = OPERATION_UNARY_TRANS_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
+      template <> struct op_type_info<op_row                   >      { enum { id = OPERATION_BINARY_MATRIX_ROW_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY}; };
+      template <> struct op_type_info<op_column                   >      { enum { id = OPERATION_BINARY_MATRIX_COLUMN_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY}; };
 
-      template <> struct op_type_info<op_matrix_diag>                    { enum { id = OPERATION_UNARY_MATRIX_DIAG_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY}; };
-      template <> struct op_type_info<op_vector_diag>                    { enum { id = OPERATION_UNARY_VECTOR_DIAG_TYPE,   family = OPERATION_UNARY_TYPE_FAMILY}; };
+      template <> struct op_type_info<op_matrix_diag>                    { enum { id = OPERATION_BINARY_MATRIX_DIAG_TYPE,   family = OPERATION_BINARY_TYPE_FAMILY}; };
+      template <> struct op_type_info<op_vector_diag>                    { enum { id = OPERATION_BINARY_VECTOR_DIAG_TYPE,   family = OPERATION_BINARY_TYPE_FAMILY}; };
 
       template <> struct op_type_info<op_prod>                          { enum { id = OPERATION_BINARY_MAT_VEC_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY}; };
       template <> struct op_type_info<op_mat_mat_prod>                  { enum { id = OPERATION_BINARY_MAT_MAT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY}; };
@@ -498,6 +503,7 @@ namespace viennacl
         ////////////////////////////////////////////////
 
         static void assign_element(lhs_rhs_element & elem, int const & t) { elem.host_int  = t; }
+        static void assign_element(lhs_rhs_element & elem, unsigned int const & t) { elem.host_uint  = t; }
         static void assign_element(lhs_rhs_element & elem, float const & t) { elem.host_float  = t; }
         static void assign_element(lhs_rhs_element & elem, double const & t) { elem.host_double = t; }
 
@@ -531,37 +537,16 @@ namespace viennacl
 
         //////////// Tree leaves (terminals) ////////////////////
 
-        static vcl_size_t add_element(vcl_size_t       next_free,
+        template<class T>
+        static typename viennacl::enable_if<viennacl::is_primitive_type<T>::value, vcl_size_t>::type
+                                add_element(vcl_size_t       next_free,
                                 lhs_rhs_element & elem,
-                                int const &     t)
+                                T const &    t)
         {
           elem.type_family  = SCALAR_TYPE_FAMILY;
           elem.subtype      = HOST_SCALAR_TYPE;
-          elem.numeric_type = INT_TYPE;
-          elem.host_float   = t;
-          return next_free;
-        }
-
-
-        static vcl_size_t add_element(vcl_size_t       next_free,
-                                lhs_rhs_element & elem,
-                                float const &     t)
-        {
-          elem.type_family  = SCALAR_TYPE_FAMILY;
-          elem.subtype      = HOST_SCALAR_TYPE;
-          elem.numeric_type = FLOAT_TYPE;
-          elem.host_float   = t;
-          return next_free;
-        }
-
-        static vcl_size_t add_element(vcl_size_t       next_free,
-                                lhs_rhs_element & elem,
-                                double const &    t)
-        {
-          elem.type_family  = SCALAR_TYPE_FAMILY;
-          elem.subtype      = HOST_SCALAR_TYPE;
-          elem.numeric_type = DOUBLE_TYPE;
-          elem.host_double  = t;
+          elem.numeric_type = statement_node_numeric_type(result_of::numeric_type_id<T>::value);
+          assign_element(elem, t);
           return next_free;
         }
 

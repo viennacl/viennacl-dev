@@ -114,13 +114,6 @@ namespace viennacl
       /** @brief generates the arguments that are global to the kernel (different from the object-specific arguments) */
       virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
 
-      /** @brief Sets the SIMD width of the mapped objects (Necessary for generating the prototype ) */
-      virtual void init_simd_width(mapping_type::value_type const & v) const
-      {
-        if(mapped_handle * p = dynamic_cast<mapped_handle *>(v.second.get()))
-          p->set_simd_width(parameters_.simd_width());
-      }
-
       virtual void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
 
     public:
@@ -140,16 +133,13 @@ namespace viennacl
         tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
           tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]), true);
-        for(unsigned int i = 0 ; i < mapping.size() ; ++i)
-          for(mapping_type::const_iterator it = mapping[i].begin() ; it != mapping[i].end() ; ++it)
-              init_simd_width(*it);
 
         //Generate Prototype
         std::string prototype;
         std::set<std::string> already_generated;
         add_kernel_arguments(statements, prototype);
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::traverse(*it, it->root(), tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping[std::distance(statements.data().begin(), it)]), true);
+          tree_parsing::traverse(*it, it->root(), tree_parsing::prototype_generation_traversal(parameters_.simd_width(), already_generated, prototype, mapping[std::distance(statements.data().begin(), it)]), true);
         prototype.erase(prototype.size()-1); //Last comma pruned
 
         for(unsigned int i = 0 ; i < parameters_.num_kernels() ; ++i)

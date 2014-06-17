@@ -44,17 +44,18 @@ namespace viennacl{
       /** @brief functor for generating the prototype of a statement */
       class prototype_generation_traversal : public traversal_functor{
         private:
+          unsigned int simd_width_;
           std::set<std::string> & already_generated_;
           std::string & str_;
           mapping_type const & mapping_;
         public:
-          prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping) : already_generated_(already_generated), str_(str),  mapping_(mapping){ }
+          prototype_generation_traversal(unsigned int simd_width, std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping) : simd_width_(simd_width), already_generated_(already_generated), str_(str),  mapping_(mapping){ }
 
           void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
               scheduler::statement_node const & root_node = statement.array()[root_idx];
               if( (node_type==LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
                 ||(node_type==RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
-                  append_kernel_arguments(already_generated_, str_, *mapping_.at(std::make_pair(root_idx,node_type)));
+                  mapping_.at(std::make_pair(root_idx,node_type))->append_kernel_arguments(simd_width_, already_generated_, str_);
           }
       };
 

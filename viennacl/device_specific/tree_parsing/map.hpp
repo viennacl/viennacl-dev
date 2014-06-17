@@ -64,7 +64,7 @@ namespace viennacl{
 
           /** @brief Binary leaf */
           template<class T>
-          result_type structurewise_function(scheduler::statement const * statement, unsigned int root_idx, mapping_type const * mapping) const
+          result_type binary_leaf(scheduler::statement const * statement, unsigned int root_idx, mapping_type const * mapping) const
           {
             return result_type(new T(utils::numeric_type_to_string(numeric_type(statement,root_idx)), binder_.get(NULL), mapped_object::node_info(mapping, statement, root_idx)));
           }
@@ -122,14 +122,20 @@ namespace viennacl{
                  mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node.rhs, *this)));
             else if( node_type== PARENT_NODE_TYPE)
             {
-                if(root_node.op.type==scheduler::OPERATION_UNARY_VECTOR_DIAG_TYPE)
-                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_vector_diag>(&statement, root_idx, &mapping_)));
-                if(is_scalar_reduction(root_node))
-                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_scalar_reduction>(&statement, root_idx, &mapping_)));
+                if(root_node.op.type==scheduler::OPERATION_BINARY_VECTOR_DIAG_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_diag>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_DIAG_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_diag>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_ROW_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_row>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_COLUMN_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_column>(&statement, root_idx, &mapping_)));
+                else if(is_scalar_reduction(root_node))
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_scalar_reduction>(&statement, root_idx, &mapping_)));
                 else if(is_vector_reduction(root_node))
-                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_vector_reduction>(&statement, root_idx, &mapping_)));
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_reduction>(&statement, root_idx, &mapping_)));
                 else if(root_node.op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                  mapping_.insert(mapping_type::value_type(key, structurewise_function<mapped_matrix_product>(&statement, root_idx, &mapping_)));
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_product>(&statement, root_idx, &mapping_)));
                 else if(root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE){
                   key.second = tree_parsing::LHS_NODE_TYPE;
                   mapping_type::iterator it = mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this))).first;

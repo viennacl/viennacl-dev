@@ -39,26 +39,34 @@ namespace viennacl
        */
       class mapped_object
       {
+        friend class fetchable;
+        friend class writable;
+
         protected:
-          struct node_info{
-              node_info() : mapping(NULL), statement(NULL), root_idx(0){ }
+          struct node_info
+          {
               node_info(mapping_type const * _mapping, scheduler::statement const * _statement, unsigned int _root_idx) :
                   mapping(_mapping), statement(_statement), root_idx(_root_idx) { }
               mapping_type const * mapping;
               scheduler::statement const * statement;
               unsigned int root_idx;
           };
+
           virtual std::string generate_default(index_tuple const & index) const = 0;
+
         public:
-          mapped_object(std::string const & scalartype, unsigned int id) : scalartype_(scalartype), name_("obj"+tools::to_string(id)){}
+          mapped_object(std::string const & scalartype, unsigned int id) : scalartype_(scalartype), name_("obj"+tools::to_string(id)) {}
+          virtual ~mapped_object(){ }
 
           std::string const & scalartype() const { return scalartype_; }
           void access_name(std::string const & str) { access_name_ = str; }
           std::string const & access_name() const { return access_name_; }
 
-          virtual std::string & append_kernel_arguments(std::set<std::string> &, std::string & str) const{ return str; }
-          virtual void fetch(std::string const & suffix, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream){ }
-          virtual void write_back(std::string const & suffix, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream){ }
+          virtual std::string & append_kernel_arguments(unsigned int simd_width, std::set<std::string> &, std::string & str) const
+          {
+            return str;
+          }
+
           virtual std::string evaluate(index_tuple const & index, int) const
           {
             if(!access_name_.empty())
@@ -66,11 +74,37 @@ namespace viennacl
             else
               return generate_default(index);
           }
-          virtual ~mapped_object(){ }
+
         protected:
           std::string access_name_;
           std::string scalartype_;
           std::string const name_;
+      };
+
+      class fetchable
+      {
+      public:
+        fetchable(mapped_object * obj): obj_(obj){ }
+
+        void fetch(unsigned int simd_width, std::string const & suffix, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
+        {
+          obj_->access_name_ = obj_->name_ + suffix;
+          if(fetched.insert(obj_->access_name_).second)
+            stream << utils::simd_scalartype(obj_->scalartype_, simd_width) << " " << obj_->access_name_ << " = " << obj_->generate_default(index) << ';' << std::endl;
+        }
+      protected:
+        mapped_object * obj_;
+      };
+
+      class writable : public fetchable
+      {
+      public:
+        writable(mapped_object * obj): fetchable(obj){ }
+        void write_back(unsigned int simd_width, std::string const &, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
+        {
+          if(fetched.find(obj_->access_name_)!=fetched.end())
+            stream << obj_->generate_default(index) << " = " << obj_->access_name_ << ';' << std::endl;
+        }
       };
 
       /** @brief Base class for mapping binary leaves (inner product-based, matrix vector product-base, matrix-matrix product based...)
@@ -87,43 +121,65 @@ namespace viennacl
           node_info info_;
       };
 
-      class mapped_vector_diag : public mapped_binary_leaf
+      class mapped_vector_diag : public mapped_binary_leaf, public fetchable
       {
-
-      public:
-        mapped_vector_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info){ }
-
+      private:
         std::string generate_default(index_tuple const & index) const
         {
           std::string lhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, -1, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
           return "(" + index.i + "!=" + index.j + ")?0:"+lhs;
         }
+      public:
+        mapped_vector_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), fetchable(this){ }
+      };
 
-        void fetch(std::string const & suffix, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
+      class mapped_matrix_diag : public mapped_binary_leaf, public writable
+      {
+      private:
+        std::string generate_default(index_tuple const & index) const
         {
-          access_name_ = "diag";
-          if(fetched.insert(access_name_).second){
-            stream << scalartype_ << " " << access_name_ << " = " << generate_default(index) << ';' << std::endl;
-          }
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.i,index.bound0, index.i, index.bound1), -1, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
         }
+      public:
+        mapped_matrix_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
+      };
+
+      class mapped_matrix_row : public mapped_binary_leaf, public writable
+      {
+      private:
+        std::string generate_default(index_tuple const & index) const
+        {
+          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, -1, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(idx,index.bound0, index.i, index.bound0), -1, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+        }
+      public:
+        mapped_matrix_row(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
+      };
+
+      class mapped_matrix_column : public mapped_binary_leaf, public writable
+      {
+      private:
+        std::string generate_default(index_tuple const & index) const
+        {
+          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, -1, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.i,index.bound0, idx, index.bound1), -1, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+        }
+      public:
+        mapped_matrix_column(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
       };
 
       /** @brief Mapping of a matrix product */
       class mapped_matrix_product : public mapped_binary_leaf
       {
-
-        public:
+      public:
           mapped_matrix_product(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info){ }
       };
 
       /** @brief Base class for mapping a reduction */
       class mapped_reduction : public mapped_binary_leaf
       {
-        public:
+      public:
           mapped_reduction(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info){ }
-          scheduler::operation_node_type reduction_type() const { return reduction_type_; }
-        private:
-          scheduler::operation_node_type reduction_type_;
       };
 
       /** @brief Mapping of a scalar reduction (based on inner product) */
@@ -149,8 +205,7 @@ namespace viennacl
           std::string generate_default(index_tuple const &) const{ return name_;  }
         public:
           mapped_host_scalar(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id){ }
-
-          std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
+          std::string & append_kernel_arguments(unsigned int simd_width, std::set<std::string> & already_generated, std::string & str) const
           {
             if(already_generated.insert(name_).second)
               str += generate_value_kernel_argument(scalartype_, name_);
@@ -159,69 +214,31 @@ namespace viennacl
       };
 
       /** @brief Base class for datastructures passed by pointer */
-      class mapped_handle : public mapped_object
+      class mapped_handle : public mapped_object, public writable
       {
           virtual std::string offset(index_tuple const & index) const = 0;
           virtual void append_optional_arguments(std::string &) const{ }
+          std::string generate_default(index_tuple const & index) const {  return name_  + '[' + offset(index) + ']'; }
 
-          std::string generate_default(index_tuple const & index) const
-          {
-              return name_  + '[' + offset(index) + ']';
-          }
         public:
-          mapped_handle(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id){ }
+          mapped_handle(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id), writable(this){ }
 
           std::string const & name() const { return name_; }
-          void set_simd_width(unsigned int val) {  simd_width_ = val; }
-          unsigned int simd_width() const{ return simd_width_; }
 
-          std::string simd_scalartype() const{
-              std::string res = scalartype_;
-              if(simd_width_ > 1)
-                  res+=tools::to_string(simd_width_);
-              return res;
-          }
-
-          void fetch(std::string const & suffix, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
+          std::string & append_kernel_arguments(unsigned int simd_width, std::set<std::string> & already_generated, std::string & str) const
           {
-            access_name_ = name_ + suffix;
-            if(fetched.insert(access_name_).second){
-              stream << scalartype_;
-              if(simd_width_ > 1)
-                  stream << simd_width_;
-              stream << " " << access_name_ << " = " << generate_default(index) << ';' << std::endl;
-            }
-          }
-
-          void write_back(std::string const &, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
-          {
-            if(fetched.find(access_name_)!=fetched.end()){
-              stream << generate_default(index) << " = " << access_name_ << ';' << std::endl;
-              fetched.erase(access_name_);
-            }
-            access_name_ = "";
-          }
-
-          std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
-          {
-            if(already_generated.insert(name_).second){
-              std::string vector_scalartype = scalartype_;
-              if(simd_width_>1)
-                vector_scalartype+=tools::to_string(simd_width_);
-              str += generate_pointer_kernel_argument("__global", vector_scalartype, name_);
+            if(already_generated.insert(name_).second)
+            {
+              str += generate_pointer_kernel_argument("__global", utils::simd_scalartype(scalartype_, simd_width), name_);
               append_optional_arguments(str);
             }
             return str;
           }
-
-        protected:
-          unsigned int simd_width_;
       };
 
       /** @brief Mapping of a scalar to a generator class */
       class mapped_scalar : public mapped_handle
       {
-
         private:
           std::string offset(index_tuple const &)  const { return "0"; }
         public:
@@ -249,15 +266,11 @@ namespace viennacl
       {
           std::string offset(index_tuple const & index) const
           {
-            if(info_.statement)
-            {
-              return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, -1, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
-            }
-            else
-              return start_name_+"+"+index.i+"*"+stride_name_;
+            return start_name_+"+"+index.i+"*"+stride_name_;
           }
 
-          void append_optional_arguments(std::string & str) const{
+          void append_optional_arguments(std::string & str) const
+          {
             str += generate_value_kernel_argument("unsigned int", start_name_);
             str += generate_value_kernel_argument("unsigned int", stride_name_);
           }
@@ -268,8 +281,6 @@ namespace viennacl
               stride_name_ = name_ + "stride";
           }
         private:
-          node_info info_;
-
           std::string start_name_;
           std::string stride_name_;
       };
@@ -329,7 +340,7 @@ namespace viennacl
           mapped_implicit_vector(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id){ }
           std::string generate_default(index_tuple const &) const { return name_; }
 
-          std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str) const{
+          std::string & append_kernel_arguments(unsigned int simd_width, std::set<std::string> & /*already_generated*/, std::string & str) const{
             str += generate_value_kernel_argument(scalartype_, name_);
             return str;
           }
@@ -344,22 +355,12 @@ namespace viennacl
         public:
           mapped_implicit_matrix(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id){ }
           std::string generate_default(index_tuple const & /* index */) const{ return value_name_; }
-          std::string & append_kernel_arguments(std::set<std::string> & /*already generated*/, std::string & str) const{
+          std::string & append_kernel_arguments(unsigned int simd_width, std::set<std::string> & /*already generated*/, std::string & str) const{
             if(!value_name_.empty())
               str += generate_value_kernel_argument(scalartype_, value_name_);
             return str;
           }
       };
-
-      inline std::string evaluate(index_tuple const & index, int simd_element, mapped_object const & s)
-      {
-        return s.evaluate(index, simd_element);
-      }
-
-      inline std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, mapped_object const & s)
-      {
-        return s.append_kernel_arguments(already_generated, str);
-      }
 
     }
 

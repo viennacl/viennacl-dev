@@ -33,6 +33,8 @@
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/handle.hpp"
 
+#include "viennacl/tools/tools.hpp"
+
 namespace viennacl{
 
   namespace device_specific{
@@ -53,7 +55,12 @@ namespace viennacl{
       template<class Fun>
       static typename Fun::result_type call_on_host_scalar(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.type_family == scheduler::SCALAR_TYPE_FAMILY && bool("Must be called on a host scalar"));
-        switch(element.numeric_type){
+        switch(element.numeric_type)
+        {
+        case scheduler::INT_TYPE:
+          return fun(element.host_int);
+        case scheduler::UINT_TYPE:
+          return fun(element.host_uint);
         case scheduler::FLOAT_TYPE :
           return fun(element.host_float);
         case scheduler::DOUBLE_TYPE :
@@ -220,12 +227,16 @@ namespace viennacl{
       }
       template<class T>
       struct type_to_string;
+      template<> struct type_to_string<unsigned int> { static const char * value() { return "uint"; } };
+      template<> struct type_to_string<int> { static const char * value() { return "int"; } };
       template<> struct type_to_string<float> { static const char * value() { return "float"; } };
       template<> struct type_to_string<double> { static const char * value() { return "double"; } };
 
 
       template<class T>
       struct first_letter_of_type;
+      template<> struct first_letter_of_type<int> { static char value() { return 'i'; } };
+      template<> struct first_letter_of_type<unsigned int> { static char value() { return 'u'; } };
       template<> struct first_letter_of_type<float> { static char value() { return 'f'; } };
       template<> struct first_letter_of_type<double> { static char value() { return 'd'; } };
 
@@ -267,8 +278,10 @@ namespace viennacl{
             || op.type==OPERATION_BINARY_MAT_VEC_PROD_TYPE
             || op.type==OPERATION_BINARY_MAT_MAT_PROD_TYPE
             || op.type==OPERATION_BINARY_INNER_PROD_TYPE
-            || op.type==OPERATION_UNARY_MATRIX_DIAG_TYPE
-            || op.type==OPERATION_UNARY_VECTOR_DIAG_TYPE
+            || op.type==OPERATION_BINARY_MATRIX_DIAG_TYPE
+            || op.type==OPERATION_BINARY_VECTOR_DIAG_TYPE
+            || op.type==OPERATION_BINARY_MATRIX_ROW_TYPE
+            || op.type==OPERATION_BINARY_MATRIX_COLUMN_TYPE
             || op.type_family==OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
             || op.type_family==OPERATION_ROWS_REDUCTION_TYPE_FAMILY
             || op.type_family==OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY;
@@ -324,6 +337,13 @@ namespace viennacl{
          return 4;
         else
          return 8;
+      }
+
+      inline std::string simd_scalartype(std::string const & scalartype, unsigned int width)
+      {
+        if(width==1)
+          return scalartype;
+        return scalartype + tools::to_string(width);
       }
 
 

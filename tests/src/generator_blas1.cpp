@@ -35,6 +35,7 @@
 //
 //#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_WITH_UBLAS
+//#define VIENNACL_DEBUG_ALL
 
 #include "viennacl/matrix.hpp"
 #include "viennacl/vector.hpp"
@@ -388,6 +389,7 @@ int test_matrix ( Epsilon const& epsilon) {
     ublas::matrix<NumericT> cPattern(pattern_size1,pattern_size2);
 
     ublas::vector<NumericT> cx(size1);
+    ublas::vector<NumericT> cy(size2);
 
 
     for(unsigned int i=0; i<size1; ++i)
@@ -401,6 +403,7 @@ int test_matrix ( Epsilon const& epsilon) {
 
     for(unsigned int i=0; i<size2; ++i){
         cx(i) = (NumericT)std::rand()/RAND_MAX;
+        cy(i) = (NumericT)std::rand()/RAND_MAX;
     }
 
 //    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
@@ -412,6 +415,7 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::matrix<NumericT, Layout> pattern(pattern_size1, pattern_size2);
 
     viennacl::vector<NumericT> x(size1);
+    viennacl::vector<NumericT> y(size2);
 
 
     cB = cA;
@@ -421,6 +425,7 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::copy(cC,C);
 
     viennacl::copy(cx,x);
+    viennacl::copy(cy,y);
     viennacl::copy(cPattern,pattern);
 
 //    {
@@ -441,6 +446,26 @@ int test_matrix ( Epsilon const& epsilon) {
       device_specific::execute<device_specific::matrix_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy), statement);
       viennacl::backend::finish();
       CHECK_RESULT(cC, C, C=diag(x))
+    }
+
+    {
+      std::cout << "x = diag(C) ..." << std::endl;
+      for(unsigned int i = 0 ; i < std::min(size1, size2) ; ++i)
+        cx[i] = cC(i,i);
+      viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::diag(C));
+      device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
+      viennacl::backend::finish();
+      CHECK_RESULT(cx, x, x=diag(C))
+    }
+
+    {
+      std::cout << "y = row(C, 7) ..." << std::endl;
+      for(unsigned int j = 0 ; j < size2 ; ++j)
+        cy[j] = cC(7,j);
+      viennacl::scheduler::statement statement(y, viennacl::op_assign(), viennacl::row(C, 7));
+      device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
+      viennacl::backend::finish();
+      CHECK_RESULT(cy, y, y=row(C, 7))
     }
 
 //    {

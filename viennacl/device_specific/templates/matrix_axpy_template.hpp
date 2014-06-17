@@ -76,7 +76,7 @@ namespace viennacl{
         //Fetches entries to registers
         std::set<std::string>  cache;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache,*it, it->root(), index_tuple("i","M","j","N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::PARENT_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), "reg", cache,*it, it->root(), index_tuple("i","M","j","N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::PARENT_NODE_TYPE);
 
         unsigned int i = 0;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
@@ -87,7 +87,7 @@ namespace viennacl{
 
         //Write back
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, "reg", cache,*it, it->root(), index_tuple("i","M","j","N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width(), "reg", cache,*it, it->root(), index_tuple("i","M","j","N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
 
 
         stream.dec_tab();

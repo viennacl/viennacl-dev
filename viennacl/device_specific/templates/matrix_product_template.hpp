@@ -102,12 +102,6 @@ public:
 
 private:
 
-    void init_simd_width(mapping_type::value_type & v) const
-    {
-      if(mapped_handle * p = dynamic_cast<mapped_handle *>(v.second.get()))
-        p->set_simd_width(simd_width_);
-    }
-
     unsigned int lmem_used(unsigned int scalartype_size) const
     {
         unsigned int lmem_used = 0;

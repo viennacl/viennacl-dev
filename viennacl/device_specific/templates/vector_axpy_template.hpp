@@ -79,8 +79,8 @@ namespace viennacl
 
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, lhs_suffix, cache, *it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, rhs_suffix, cache, *it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::RHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), lhs_suffix, cache, *it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), rhs_suffix, cache, *it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::RHS_NODE_TYPE);
         }
 
         //Generates all the expression, in order
@@ -91,7 +91,7 @@ namespace viennacl
         //Write back
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, lhs_suffix, cache,*it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width(), lhs_suffix, cache,*it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
         }
 
         stream.dec_tab();
