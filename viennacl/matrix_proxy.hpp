@@ -193,8 +193,7 @@ namespace viennacl
        std::vector<SCALARTYPE> entries(gpu_matrix_range.size1()*gpu_matrix_range.internal_size2());
 
        vcl_size_t start_offset = gpu_matrix_range.start1() * gpu_matrix_range.internal_size2();
-       vcl_size_t num_entries = gpu_matrix_range.size1() * gpu_matrix_range.size2();
-         viennacl::backend::memory_read(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*num_entries, &(entries[0]));
+       viennacl::backend::memory_read(gpu_matrix_range.handle(), sizeof(SCALARTYPE)*start_offset, sizeof(SCALARTYPE)*entries.size(), &(entries[0]));
        //std::cout << "Block copy worked!" << std::endl;
 
        for (vcl_size_t i=0; i < gpu_matrix_range.size1(); ++i)
