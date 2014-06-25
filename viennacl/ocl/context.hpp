@@ -275,7 +275,9 @@ namespace viennacl
         /** @brief Returns the queue with the provided index for the given device */
         viennacl::ocl::command_queue & get_queue(cl_device_id dev, vcl_size_t i = 0)
         {
-          assert(i < queues_.size() && bool("In class 'context': id invalid in get_queue()"));
+          if(i >= queues_[dev].size())
+            throw invalid_command_queue();
+
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Getting queue " << i << " for device " << dev << " in context " << h_ << std::endl;
           #endif
