@@ -174,7 +174,7 @@ namespace viennacl
           (*it)->local_work_size(0,parameters_.local_size_0());
           (*it)->local_work_size(1,parameters_.local_size_1());
           configure_impl(std::distance(kernels.begin(), it), statements, **it, current_arg);
-          for(typename statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
+          for(statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
             tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**it), true);
         }
 

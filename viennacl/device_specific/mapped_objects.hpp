@@ -43,6 +43,9 @@ namespace viennacl
         friend class writable;
 
         protected:
+          virtual std::string generate_default(index_tuple const & index) const = 0;
+
+        public:
           struct node_info
           {
               node_info(mapping_type const * _mapping, scheduler::statement const * _statement, unsigned int _root_idx) :
@@ -52,9 +55,6 @@ namespace viennacl
               unsigned int root_idx;
           };
 
-          virtual std::string generate_default(index_tuple const & index) const = 0;
-
-        public:
           mapped_object(std::string const & scalartype, unsigned int id) : scalartype_(scalartype), name_("obj"+tools::to_string(id)) {}
           virtual ~mapped_object(){ }
 

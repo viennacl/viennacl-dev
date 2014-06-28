@@ -49,7 +49,7 @@ namespace viennacl{
 
       /** @brief Recursively execute a functor on a statement */
       template<class Fun>
-      static void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool inspect){
+      inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool inspect){
         scheduler::statement_node const & root_node = statement.array()[root_idx];
         bool recurse = utils::node_leaf(root_node.op)?inspect:true;
 
