@@ -144,7 +144,7 @@ namespace viennacl{
 
       inline std::string evaluate_expression(scheduler::statement const & statement, unsigned int root_idx, index_tuple const & index, int simd_element, mapping_type const & mapping, node_type initial_leaf);
 
-      struct map_functor;
+      class map_functor;
 
     }
 

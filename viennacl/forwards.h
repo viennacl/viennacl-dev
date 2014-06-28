@@ -228,16 +228,16 @@ namespace viennacl
   class implicit_vector_base;
 
   template <typename SCALARTYPE>
-  class zero_vector;
+  struct zero_vector;
 
   template <typename SCALARTYPE>
-  class unit_vector;
+  struct unit_vector;
 
   template <typename SCALARTYPE>
-  class one_vector;
+  struct one_vector;
 
   template <typename SCALARTYPE>
-  class scalar_vector;
+  struct scalar_vector;
 
   template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class vector_base;
