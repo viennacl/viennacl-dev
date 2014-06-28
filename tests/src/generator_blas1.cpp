@@ -15,6 +15,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+//#define VIENNACL_DEBUG_ALL
+//#define VIENNACL_DEBUG_BUILD
 //#define VIENNACL_DEBUG_BUILD
 //
 // *** System
@@ -26,21 +28,23 @@
 //
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/vector.hpp>
+#include <boost/foreach.hpp>
 
 //
 // *** ViennaCL
 //
 //#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_WITH_UBLAS
+//#define VIENNACL_DEBUG_ALL
 
-#include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
+#include "viennacl/vector.hpp"
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/linalg/reduce.hpp"
-#include "viennacl/linalg/norm_1.hpp"
-#include "viennacl/linalg/norm_2.hpp"
-#include "viennacl/linalg/norm_inf.hpp"
-#include "viennacl/device_specific/code_generator.hpp"
+#include "viennacl/linalg/vector_operations.hpp"
+//#include "viennacl/linalg/norm_1.hpp"
+//#include "viennacl/linalg/norm_2.hpp"
+//#include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/scheduler/io.hpp"
 
 
@@ -80,9 +84,9 @@ template <typename ScalarType, unsigned int Alignment>
 ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Alignment> & v2 ) {
     ublas::vector<ScalarType> v2_cpu ( v2.size() );
     viennacl::copy( v2.begin(), v2.end(), v2_cpu.begin() );
-    for (std::size_t i=0; i<v1.size(); ++i) {
-        if ( std::max<ScalarType> ( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) ) > 0 )
-            v2_cpu[i] = std::fabs ( v2_cpu[i] - v1[i] ) / std::max<ScalarType>( std::fabs ( v2_cpu[i] ), std::fabs ( v1[i] ) );
+    for ( unsigned int i=0; i<v1.size(); ++i ) {
+        if ( std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) ) > 0 )
+            v2_cpu[i] = fabs ( v2_cpu[i] - v1[i] ) / std::max ( fabs ( v2_cpu[i] ), fabs ( v1[i] ) );
         else
             v2_cpu[i] = 0.0;
     }
@@ -98,6 +102,7 @@ ScalarType diff(ScalarType s, viennacl::scalar<ScalarType> & gs){
 
 template< typename NumericT, typename Epsilon >
 int test_vector ( Epsilon const& epsilon) {
+    using namespace viennacl::device_specific;
     int retval = EXIT_SUCCESS;
 
     unsigned int size = 1024*32;
@@ -106,7 +111,7 @@ int test_vector ( Epsilon const& epsilon) {
     ublas::vector<NumericT> cy(size);
     ublas::vector<NumericT> cz(size);
 
-    NumericT s;
+//    NumericT s;
 
 
 
@@ -119,6 +124,7 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::vector<NumericT> x (size);
     viennacl::vector<NumericT> y (size);
     viennacl::vector<NumericT> z (size);
+    NumericT s = 0;
     viennacl::scalar<NumericT> gs(0);
 
     cx = 2.0f*cw;
@@ -129,46 +135,108 @@ int test_vector ( Epsilon const& epsilon) {
     viennacl::copy (cy, y);
     viennacl::copy (cz, z);
 
-    NumericT alpha = NumericT(3.14);
-    NumericT beta  = NumericT(3.51);
+    NumericT alpha = 3.14;
+    NumericT beta = 1;
 
     // --------------------------------------------------------------------------
 
-    {
-        std::cout << "w = x + y ..." << std::endl;
-        cw = cx + cy;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), x + y);
-        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = x + y);
-    }
+//    {
+//        std::cout << "w = scalar_vector(alpha) ..." << std::endl;
+//        for(unsigned int i = 0 ; i < size ; ++i)
+//          cw[i] = alpha;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::scalar_vector<NumericT>(size,alpha));
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = scalar_vector(alpha));
+//    }
 
-    {
-        std::cout << "y = w + x ..." << std::endl;
-        cy = cw + cx;
-        viennacl::scheduler::statement statement(y, viennacl::op_assign(), w + x);
-        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
-        viennacl::backend::finish();
-        CHECK_RESULT(cy, y, y = w + x);
-    }
+//    {
+//        std::cout << "w = x ..." << std::endl;
+//        cw = cx;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), x);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = x);
+//    }
 
-    {
-        std::cout << "x = y + w ..." << std::endl;
-        cx = cy + cw;
-        viennacl::scheduler::statement statement(x, viennacl::op_assign(), y + w);
-        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
-        viennacl::backend::finish();
-        CHECK_RESULT(cx, x, x = y + w);
-    }
 
-    {
-        std::cout << "w = alpha*x + beta*y ..." << std::endl;
-        cw = alpha*cx + beta*cy;
-        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
-        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
-        viennacl::backend::finish();
-        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
-    }
+//    {
+//        std::cout << "w = -x ..." << std::endl;
+//        viennacl::scalar<NumericT> s0(1);
+//        cw =  -cx;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), -s0*x);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = -x);
+//    }
+
+//    {
+//        std::cout << "w = alpha*x + beta*y ..." << std::endl;
+//        cw = alpha*cx + beta*cy;
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), alpha*x + beta*y);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
+
+//    {
+//        std::cout << "x = alpha*w + beta*y ..." << std::endl;
+//        cx = alpha*cw + beta*cy;
+//        viennacl::scheduler::statement statement(x, viennacl::op_assign(), alpha*w + beta*y);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
+
+//    {
+//        std::cout << "[Independent] x = alpha*w + beta*y, y = alpha*x + beta*w ..." << std::endl;
+//        for(std::size_t i = 0 ; i < size ; ++i)
+//        {
+//          NumericT tmpcx = cx[i];
+//          NumericT tmpcy = cy[i];
+
+//          cx[i] = alpha*cw[i] + beta*tmpcy;
+//          cy[i] = alpha*tmpcx + beta*cw[i];
+//        }
+//        viennacl::scheduler::statement s1(x, viennacl::op_assign(), alpha*w + beta*y);
+//        viennacl::scheduler::statement s2(y, viennacl::op_assign(), alpha*x + beta*w);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statements_container(s1, s2, statements_container::INDEPENDENT));
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cx, x, (x = alpha*w + beta*y, y = alpha*x + beta*w));
+//        CHECK_RESULT(cy, y, (x = alpha*w + beta*y, y = alpha*x + beta*w));
+//    }
+
+//    {
+//        std::cout << "[Sequential] x = alpha*w + beta*y, y = alpha*x + beta*w ..." << std::endl;
+//        cx = alpha*cw + beta*cy;
+//        cy = alpha*cx + beta*cw;
+//        viennacl::scheduler::statement s1(x, viennacl::op_assign(), alpha*w + beta*y);
+//        viennacl::scheduler::statement s2(y, viennacl::op_assign(), alpha*x + beta*w);
+//        device_specific::execute(database::get<NumericT>(database::axpy), statements_container(s1, s2, statements_container::SEQUENTIAL));
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cx, x, (x = alpha*w + beta*y, y = alpha*x + beta*w));
+//        CHECK_RESULT(cy, y, (x = alpha*w + beta*y, y = alpha*x + beta*w));
+//    }
+
+//    {
+//        std::cout << "w = exp(y) ..." << std::endl;
+//        for(std::size_t i = 0 ; i < size ; ++i)
+//          cw[i] = std::exp(y[i]);
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_exp(y));
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = alpha*x + beta*y);
+//    }
+
+//    {
+//        std::cout << "w = element_prod(x,y) ..." << std::endl;
+//        for(std::size_t i = 0 ; i < size ; ++i)
+//          cw[i] = x[i]*y[i];
+//        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_prod(x,y));
+//        device_specific::execute(database::get<NumericT>(database::axpy), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(cw, w, w = element_prod(x,y));
+//    }
 
 //    {
 //        std::cout << "w = x == x" << std::endl;
@@ -176,7 +244,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = (cx(i) == cx(i));
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_eq(x,x));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = (x == x))
 //    }
@@ -187,7 +255,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) != cx(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_neq(x,x));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x != x)
 //    }
@@ -198,7 +266,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) > cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_greater(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x > y)
 //    }
@@ -209,7 +277,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) >= cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_geq(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x > y)
 //    }
@@ -220,7 +288,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) < cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_less(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x > y)
 //    }
@@ -231,7 +299,7 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = cx(i) <= cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_leq(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x > y)
 //    }
@@ -243,39 +311,57 @@ int test_vector ( Epsilon const& epsilon) {
 //            cw(i) = std::pow(cx(i),cy(i));
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_pow(x,y));
-//        generator::generate_enqueue_statement(statement, statement.array()[0]);
+//        generator::execute(statement, statement.array()[0]);
 //        viennacl::backend::finish();
 //        CHECK_RESULT(cw, w, w = x.^y)
 //    }
 
-    {
-        std::cout << "s = inner_prod(x,y)..." << std::endl;
-        s = 0;
-        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
-        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y));
-        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
-        viennacl::backend::finish();
-        CHECK_RESULT(s, gs, s = inner_prod(x,y));
-    }
+//    {
+//        std::cout << "s = inner_prod(x,y)..." << std::endl;
+//        s = 0;
+//        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
+//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y));
+//        device_specific::execute(database::get<NumericT>(database::reduction), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(s, gs, s = inner_prod(x,y));
+//    }
+
+//    {
+//        std::cout << "s = reduce<add>(x)..." << std::endl;
+//        s = 0;
+//        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i];
+//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_add>(x));
+//        device_specific::execute(profiles::get(REDUCTION_TYPE, NUMERIC_TYPE), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(s, gs, s = reduce<add>(x));
+//    }
+
+//    {
+//        std::cout << "s = reduce<fmax>(x)..." << std::endl;
+//        s = cx[0];
+//        for(unsigned int i=1 ; i<size ; ++i)  s=std::max(s,cx[i]);
+//        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<iennacl::op_fmax>(x));
+//        device_specific::execute(database::get<NumericT>(database::reduction), statement);
+//        viennacl::backend::finish();
+//        CHECK_RESULT(s, gs, s = reduce<mult>(x));
+//    }
 
     {
-        std::cout << "s = reduce<add>(x)..." << std::endl;
-        s = 0;
-        for(unsigned int i=0 ; i<size ; ++i)  s+=cx[i];
-        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_add>(x));
-        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
+        std::cout << "s = reduce<argmax>(x)..." << std::endl;
+        NumericT s = 0;
+        NumericT val = cx[0];
+        for(unsigned int i=1 ; i<size ; ++i)
+        {
+            if(cx[i] > val)
+            {
+                s = i;
+                val = cx[i];
+            }
+        }
+        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_argmax>(x));
+        device_specific::execute(database::get<NumericT>(database::reduction), statement);
         viennacl::backend::finish();
-        CHECK_RESULT(s, gs, s = reduce<add>(x));
-    }
-
-    {
-        std::cout << "s = reduce<fmax>(x)..." << std::endl;
-        s = cx[0];
-        for(unsigned int i=1 ; i<size ; ++i)  s=std::max(s,cx[i]);
-        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_element_binary<viennacl::op_fmax> >(x));
-        device_specific::generate_enqueue_statement(statement, statement.array()[0]);
-        viennacl::backend::finish();
-        CHECK_RESULT(s, gs, s = reduce<mult>(x));
+        CHECK_RESULT(s, gs, s = reduce<argmax>(x));
     }
 
     return retval;
@@ -303,6 +389,7 @@ int test_matrix ( Epsilon const& epsilon) {
     ublas::matrix<NumericT> cPattern(pattern_size1,pattern_size2);
 
     ublas::vector<NumericT> cx(size1);
+    ublas::vector<NumericT> cy(size2);
 
 
     for(unsigned int i=0; i<size1; ++i)
@@ -316,6 +403,7 @@ int test_matrix ( Epsilon const& epsilon) {
 
     for(unsigned int i=0; i<size2; ++i){
         cx(i) = (NumericT)std::rand()/RAND_MAX;
+        cy(i) = (NumericT)std::rand()/RAND_MAX;
     }
 
 //    std::cout << "Running tests for matrix of size " << cA.size1() << "," << cA.size2() << std::endl;
@@ -327,6 +415,7 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::matrix<NumericT, Layout> pattern(pattern_size1, pattern_size2);
 
     viennacl::vector<NumericT> x(size1);
+    viennacl::vector<NumericT> y(size2);
 
 
     cB = cA;
@@ -336,16 +425,59 @@ int test_matrix ( Epsilon const& epsilon) {
     viennacl::copy(cC,C);
 
     viennacl::copy(cx,x);
+    viennacl::copy(cy,y);
     viennacl::copy(cPattern,pattern);
 
+//    {
+//      std::cout << "C = A + B ..." << std::endl;
+//      cC     = ( cA + cB );
+//      viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
+//      device_specific::execute<device_specific::matrix_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy), statement);
+//      viennacl::backend::finish();
+//      CHECK_RESULT(cC, C, C=A+B)
+//    }
+
     {
-      std::cout << "C = A + B ..." << std::endl;
-      cC     = ( cA + cB );
-      viennacl::scheduler::statement statement(C, viennacl::op_assign(), A + B);
-      device_specific::generate_enqueue_statement(statement, statement.array()[0]);
+      std::cout << "C = diag(x) ..." << std::endl;
+      for(unsigned int i = 0 ; i < size1 ; ++i)
+        for(unsigned int j = 0 ; j < size2 ; ++j)
+          cC(i,j) = (i==j)?cx[i]:0;
+      viennacl::scheduler::statement statement(C, viennacl::op_assign(), viennacl::diag(x));
+      device_specific::execute<device_specific::matrix_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy), statement);
       viennacl::backend::finish();
-      CHECK_RESULT(cC, C, C=A+B)
+      CHECK_RESULT(cC, C, C=diag(x))
     }
+
+    {
+      std::cout << "x = diag(C) ..." << std::endl;
+      for(unsigned int i = 0 ; i < std::min(size1, size2) ; ++i)
+        cx[i] = cC(i,i);
+      viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::diag(C));
+      device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
+      viennacl::backend::finish();
+      CHECK_RESULT(cx, x, x=diag(C))
+    }
+
+    {
+      std::cout << "y = row(C, 7) ..." << std::endl;
+      for(unsigned int j = 0 ; j < size2 ; ++j)
+        cy[j] = cC(7,j);
+      viennacl::scheduler::statement statement(y, viennacl::op_assign(), viennacl::row(C, 7));
+      device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
+      viennacl::backend::finish();
+      CHECK_RESULT(cy, y, y=row(C, 7))
+    }
+
+//    {
+//      std::cout << "x = diag(C) ..." << std::endl;
+//      for(unsigned int i = 0 ; i < std::min(size1, size2) ; ++i)
+//        cx[i] = cC(i,i);
+//      viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::diag(C));
+//      device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
+//      viennacl::backend::finish();
+//      CHECK_RESULT(cx, x, x=diag(C))
+//    }
+
 
 //    {
 //        std::cout << "C = diag(x) ..." << std::endl;
@@ -447,7 +579,7 @@ int main(int argc, char* argv[]){
         requested_device=0;
     }
     else{
-        requested_device = static_cast<unsigned int>(atoi(args[1].c_str()));
+        requested_device = atoi(args[1].c_str());
     }
     int retval = EXIT_SUCCESS;
 
@@ -476,70 +608,70 @@ int main(int argc, char* argv[]){
                 std::cout << "----------------------------------------------" << std::endl;
                 std::cout << viennacl::ocl::current_device().info() << std::endl;
 
-                std::cout << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
-                std::cout << "## Test :: Vector" << std::endl;
-                std::cout << "----------------------------------------------" << std::endl;
+//                std::cout << std::endl;
+//                std::cout << "----------------------------------------------" << std::endl;
+//                std::cout << "----------------------------------------------" << std::endl;
+//                std::cout << "## Test :: Vector" << std::endl;
+//                std::cout << "----------------------------------------------" << std::endl;
 
-                {
-                    double epsilon = 1.0E-4;
+//                {
+//                    double epsilon = 1.0E-4;
 
-                    std::cout << "# Testing setup:" << std::endl;
-                    std::cout << "  numeric: float" << std::endl;
-                    retval = test_vector<float> (epsilon);
-
-
-                    std::cout << std::endl;
-
-                    std::cout << "# Testing setup:" << std::endl;
-                    std::cout << "  numeric: double" << std::endl;
-                    retval = test_vector<double> (epsilon);
-
-                    if ( retval == EXIT_SUCCESS )
-                        std::cout << "# Test passed" << std::endl;
-                    else
-                        return retval;
-              }
+//                    std::cout << "# Testing setup:" << std::endl;
+//                    std::cout << "  numeric: float" << std::endl;
+//                    retval = test_vector<float> (epsilon);
 
 
-//              std::cout << std::endl;
-//              std::cout << "----------------------------------------------" << std::endl;
-//              std::cout << "----------------------------------------------" << std::endl;
-//              std::cout << "## Test :: Matrix" << std::endl;
-//              std::cout << "----------------------------------------------" << std::endl;
+//                    std::cout << std::endl;
 
-//              {
-//                  double epsilon = 1.0E-4;
-//                  std::cout << "# Testing setup:" << std::endl;
+//                    std::cout << "# Testing setup:" << std::endl;
+//                    std::cout << "  numeric: double" << std::endl;
+//                    retval = test_vector<double> (epsilon);
 
-//                  std::cout << "  numeric: float" << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  std::cout << "  Row-Major"      << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  retval = test_matrix<float, viennacl::row_major> (epsilon);
-
-//                  std::cout << "  --------------" << std::endl;
-//                  std::cout << "  Column-Major"      << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  retval &= test_matrix<float, viennacl::column_major> (epsilon);
-
-//                  std::cout << "  numeric: double" << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  std::cout << "  Row-Major"      << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  retval = test_matrix<double, viennacl::row_major> (epsilon);
-
-//                  std::cout << "  --------------" << std::endl;
-//                  std::cout << "  Column-Major"      << std::endl;
-//                  std::cout << "  --------------" << std::endl;
-//                  retval &= test_matrix<double, viennacl::column_major> (epsilon);
-
-//                  if ( retval == EXIT_SUCCESS )
-//                      std::cout << "# Test passed" << std::endl;
-//                  else
-//                      return retval;
+//                    if ( retval == EXIT_SUCCESS )
+//                        std::cout << "# Test passed" << std::endl;
+//                    else
+//                        return retval;
 //              }
+
+
+              std::cout << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
+              std::cout << "## Test :: Matrix" << std::endl;
+              std::cout << "----------------------------------------------" << std::endl;
+
+              {
+                  double epsilon = 1.0E-4;
+                  std::cout << "# Testing setup:" << std::endl;
+
+                  std::cout << "  numeric: float" << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Row-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval = test_matrix<float, viennacl::row_major> (epsilon);
+
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Column-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval &= test_matrix<float, viennacl::column_major> (epsilon);
+
+                  std::cout << "  numeric: double" << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Row-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval = test_matrix<double, viennacl::row_major> (epsilon);
+
+                  std::cout << "  --------------" << std::endl;
+                  std::cout << "  Column-Major"      << std::endl;
+                  std::cout << "  --------------" << std::endl;
+                  retval &= test_matrix<double, viennacl::column_major> (epsilon);
+
+                  if ( retval == EXIT_SUCCESS )
+                      std::cout << "# Test passed" << std::endl;
+                  else
+                      return retval;
+              }
 
             }
         }

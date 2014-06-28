@@ -24,7 +24,7 @@
 */
 
 /**
- @mainpage Source Code Documentation for ViennaCL 1.5.2
+ @mainpage Source Code Documentation for ViennaCL 1.5.1
 
  This is the source code documentation of ViennaCL. Detailed information about the functions in ViennaCL can be found here.
 
@@ -108,6 +108,10 @@ namespace viennacl
   template<class T>
   struct op_reduce_columns{ };
 
+  /** @brief A tag class representing element-wise casting operations on vectors and matrices */
+  template <typename OP>
+  struct op_element_cast {};
+
   /** @brief A tag class representing element-wise binary operations (like multiplication) on vectors or matrices */
   template <typename OP>
   struct op_element_binary {};
@@ -122,6 +126,10 @@ namespace viennacl
   struct op_acos {};
   /** @brief A tag class representing the asin() function */
   struct op_asin {};
+  /** @brief A tag class for representing the argmax() function */
+  struct op_argmax {};
+  /** @brief A tag class for representing the argmin() function */
+  struct op_argmin {};
   /** @brief A tag class representing the atan() function */
   struct op_atan {};
   /** @brief A tag class representing the atan2() function */

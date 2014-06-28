@@ -1,5 +1,5 @@
-#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_TEMPLATE_BASE_BASE
-#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_TEMPLATE_BASE_BASE
+#ifndef VIENNACL_DEVICE_SPECIFIC_TEMPLATES_TEMPLATE_BASE_
+#define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_TEMPLATE_BASE_
 
 /* =========================================================================
    Copyright (c) 2010-2013, Institute for Microelectronics,
@@ -37,164 +37,156 @@
 #include "viennacl/device_specific/tree_parsing/traverse.hpp"
 #include "viennacl/device_specific/tree_parsing/map.hpp"
 #include "viennacl/device_specific/tree_parsing/prototype_generation.hpp"
+#include "viennacl/device_specific/tree_parsing/set_arguments.hpp"
+#include "viennacl/device_specific/tree_parsing/statement_representation.hpp"
 
-namespace viennacl{
+namespace viennacl
+{
 
-  namespace device_specific{
+  namespace device_specific
+  {
 
-
-    /** @brief Base class for an operation profile */
-    class profile_base{
-      public:
-        typedef std::list< std::pair<scheduler::statement, scheduler::statement_node> > statements_type;
-
-      protected:
-        friend std::ostream & operator<<(std::ostream &, profile_base const &);
-
+    class template_base
+    {
+    public:
+      class parameters{
+      private:
         virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const { return false; }
-        virtual bool is_slow_impl(viennacl::ocl::device const &) const { return false; }
-
-        virtual std::size_t lmem_used(std::size_t /*scalartype_size*/) const { return 0; }
-
-        void configure_local_sizes(viennacl::ocl::kernel & k, std::size_t /*kernel_id*/) const {
-          k.local_work_size(0,local_size_1_);
-          k.local_work_size(1,local_size_2_);
-        }
-
-        virtual void print(std::ostream & s) const{
-          s << csv_representation();
-        }
-
-        virtual void initialize_mapping(statements_type const & statements, std::vector<mapping_type> & mapping) const{
-            std::map<void *, std::size_t> memory;
-            unsigned int current_arg = 0;
-            std::size_t i = 0;
-            for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it)
-              tree_parsing::traverse(it->first, it->second, tree_parsing::map_functor(memory,current_arg,mapping[i++]));
-        }
-
-        virtual void set_simd_width(statements_type::value_type const & /*statement_pair*/, mapping_type & mapping) const{
-            for(mapping_type::const_iterator iit = mapping.begin() ; iit != mapping.end() ; ++iit)
-              if(mapped_handle * p = dynamic_cast<mapped_handle *>(iit->second.get()))
-                p->set_simd_width(simd_width_);
-        }
-
-        /** @brief Generates the body of the associated kernel function
-         *
-         *  @param kernel_id  If this profile requires multiple kernel, the index for which the core should be generated
-         *  @param stream     The output stream the kernel is written to
-         *  @param statements the statements for which the code should be generated
-         *  @param mapping    the mapping of the statement_nodes to the mapped_objects
-         */
-        virtual void core(std::size_t kernel_id, utils::kernel_generation_stream& stream, expression_descriptor descriptor, statements_type const & statements, std::vector<mapping_type> const & mapping) const = 0;
-
+        virtual unsigned int lmem_used(unsigned int /*scalartype_size*/) const { return 0; }
       public:
-        /** @brief The constructor */
-        profile_base(unsigned int vectorization, std::size_t local_size_1, std::size_t local_size_2, std::size_t num_kernels) : simd_width_(vectorization), local_size_1_(local_size_1), local_size_2_(local_size_2), num_kernels_(num_kernels){ }
+        parameters(const char * scalartype, unsigned int simd_width, unsigned int local_size_1, unsigned int local_size_2, unsigned int num_kernels) :
+          scalartype_(scalartype), simd_width_(simd_width), local_size_0_(local_size_1), local_size_1_(local_size_2), num_kernels_(num_kernels){ }
 
-        /** @brief The destructor */
-        virtual ~profile_base(){ }
+        unsigned int num_kernels() const  { return num_kernels_; }
+        std::string const & scalartype() const { return scalartype_; }
+        unsigned int local_size_0() const { return local_size_0_; }
+        unsigned int local_size_1() const { return local_size_1_; }
+        unsigned int simd_width() const { return simd_width_; }
 
-        /** @brief Configures the range and enqueues the arguments associated with the profile */
-        virtual void configure_range_enqueue_arguments(std::size_t kernel_id, statements_type  const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const = 0;
+        /** @brief returns whether or not the profile has undefined behavior on particular device */
+        bool is_invalid() const
+        {
+          bool invalid = false;
+          viennacl::ocl::device const & dev = viennacl::ocl::current_device();
 
-        virtual void add_kernel_arguments(statements_type  const & statements, std::string & arguments_string) const = 0;
-
-        /** @brief Get the vector size of the kernel */
-        unsigned int vector_size() const { return simd_width_; }
-
-        /** @brief csv representation of an operation
-         *
-         *  Useful when writing to a file */
-        virtual std::string csv_representation() const = 0;
-
-        /** @brief returns whether or not the profile is likely to be slow on a particular device
-         *  @param dev the given device*/
-        bool is_slow(viennacl::ocl::device const & dev) const{
-          bool res = false;
-          if(dev.type()==CL_DEVICE_TYPE_GPU){
-            std::size_t warp_size = 32;
-            if(dev.vendor_id()==4098)
-              warp_size = 64;
-            res = static_cast<bool>(((local_size_1_*local_size_2_)%warp_size)>0);
-          }
-          return res || is_slow_impl(dev);
-        }
-
-        /** @brief returns whether or not the profile leads to undefined behavior on particular device
-         *  @param dev               the given device
-         *  @param scalartype_size   Local memory required to execute the kernel
-         */
-        bool is_invalid(viennacl::ocl::device const & dev, size_t scalartype_size) const{
           //Query device informations
           size_t lmem_available = static_cast<size_t>(dev.local_mem_size());
+          unsigned int scalartype_size = utils::scalartype_size(scalartype_);
+          invalid |= (lmem_used(scalartype_size)>lmem_available);
+
+          //Invalid work group size
           size_t max_workgroup_size = dev.max_work_group_size();
-
           std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();
-          bool invalid_work_group_sizes = local_size_1_*local_size_2_ > max_workgroup_size
-              || local_size_1_ > max_work_item_sizes[0]
-              || local_size_2_ > max_work_item_sizes[1]; // uses too much resources
+          invalid |= local_size_0_*local_size_1_ > max_workgroup_size
+              || local_size_0_ > max_work_item_sizes[0]
+              || local_size_1_ > max_work_item_sizes[1]; // uses too much resources
 
-          return  invalid_work_group_sizes
-              || lmem_used(scalartype_size)>lmem_available
-              || invalid_impl(dev, scalartype_size);
-        }
 
-        /** @brief Returns the number of kernels needed by this operation */
-        std::size_t num_kernels() const{ return num_kernels_; }
-
-        /** @brief Generates the code associated with this profile onto the provided stream
-         *  Redirects to the virtual core() method
-         *
-         *  @param stream Stream onto which the code should be generated
-         *  @param device_offset the index of the device in the context (used for the kernel name)
-         *  @param statements the statements associated with this profile */
-        virtual void operator()(utils::kernel_generation_stream & stream, std::size_t device_offset, expression_descriptor descriptor, statements_type const & statements) const {
-          std::vector<mapping_type> mapping(statements.size());
-
-          ///Get Prototype, initialize mapping
-          std::string prototype;
-          std::set<std::string> already_generated;
-          add_kernel_arguments(statements, prototype);
-          initialize_mapping(statements,mapping);
-
-          for(statements_type::const_iterator it = statements.begin() ; it != statements.end() ; ++it){
-            mapping_type & mapping_ref = mapping[static_cast<vcl_size_t>(std::distance(statements.begin(), it))];
-            set_simd_width(*it, mapping_ref);
-            tree_parsing::traverse(it->first, it->second, tree_parsing::prototype_generation_traversal(already_generated, prototype, mapping_ref));
+          //Not warp multiple
+          if(dev.type()==CL_DEVICE_TYPE_GPU){
+            unsigned int warp_size = 32;
+            if(dev.vendor_id()==4098)
+              warp_size = 64;
+            invalid |= (((local_size_0_*local_size_1_)%warp_size)>0);
           }
 
-          prototype.erase(prototype.size()-1); //Last comma pruned
+          //Invalid SIMD Width
+          invalid |= (simd_width_!=1 && simd_width_!=2 &&
+                      simd_width_!=4 && simd_width_!=8 &&
+                      simd_width_!=16);
 
-          //Generate
-          for(std::size_t n = 0 ; n < num_kernels() ; ++n){
-            //stream << "__attribute__((vec_type_hint()))" << std::endl;
-            stream << " __attribute__((reqd_work_group_size(" << local_size_1_ << "," << local_size_2_ << "," << 1 << ")))" << std::endl;
-            stream << "__kernel " << "void " << "kernel_" << device_offset << "_" << n << "(" << std::endl;
-            stream << prototype << std::endl;
-            stream << ")" << std::endl;
-
-            //core:
-            stream << "{" << std::endl;
-            stream.inc_tab();
-            core(n, stream, descriptor, statements, mapping);
-            stream.dec_tab();
-            stream << "}" << std::endl;
-          }
+          return  invalid || invalid_impl(dev, scalartype_size);
         }
-
       protected:
+        std::string scalartype_;
+
         unsigned int simd_width_;
-        std::size_t local_size_1_;
-        std::size_t local_size_2_;
-        std::size_t num_kernels_;
+        unsigned int local_size_0_;
+        unsigned int local_size_1_;
+        unsigned int num_kernels_;
+      };
+
+    private:
+
+      /** @brief Generates the body of the associated kernel function */
+      virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
+
+      /** @brief generates the arguments that are global to the kernel (different from the object-specific arguments) */
+      virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
+
+      virtual void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
+
+    public:
+      /** @brief The constructor */
+      template_base(template_base::parameters const & parameters, binding_policy_t binding_policy) : parameters_(parameters), binding_policy_(binding_policy){ }
+
+      /** @brief Generates the code associated with this profile onto the provided stream */
+      std::string generate(statements_container const & statements)
+      {
+        utils::kernel_generation_stream stream;
+
+        //Kernel Prefix
+        std::string kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
+
+        //Create mapping
+        std::vector<mapping_type> mapping(statements.data().size());
+        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+          tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]), true);
+
+        //Generate Prototype
+        std::string prototype;
+        std::set<std::string> already_generated;
+        add_kernel_arguments(statements, prototype);
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+          tree_parsing::traverse(*it, it->root(), tree_parsing::prototype_generation_traversal(parameters_.simd_width(), already_generated, prototype, mapping[std::distance(statements.data().begin(), it)]), true);
+        prototype.erase(prototype.size()-1); //Last comma pruned
+
+        for(unsigned int i = 0 ; i < parameters_.num_kernels() ; ++i)
+        {
+          stream << " __attribute__((reqd_work_group_size(" << parameters_.local_size_0() << "," << parameters_.local_size_1() << "," << 1 << ")))" << std::endl;
+          stream << "__kernel " << "void " << kernel_prefix << i << "(" << prototype << ")" << std::endl;
+          stream << "{" << std::endl;
+          stream.inc_tab();
+          core(i, stream, statements, mapping);
+          stream.dec_tab();
+          stream << "}" << std::endl;
+        }
+
+        return stream.str();
+      }
+
+      void enqueue(std::string const & program_name, statements_container const & statements)
+      {
+        viennacl::ocl::program & program = viennacl::ocl::current_context().get_program(program_name);
+        std::string prefix = tree_parsing::statements_representation(statements, binding_policy_);
+
+        //Get the kernels
+        std::vector<viennacl::ocl::kernel*> kernels(parameters_.num_kernels());
+        for(std::vector<viennacl::ocl::kernel*> ::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
+           *it = &program.get_kernel(prefix+tools::to_string(std::distance(kernels.begin(), it)));
+
+        //Configure
+        for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
+        {
+          unsigned int current_arg = 0;
+          tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
+          (*it)->local_work_size(0,parameters_.local_size_0());
+          (*it)->local_work_size(1,parameters_.local_size_1());
+          configure_impl(std::distance(kernels.begin(), it), statements, **it, current_arg);
+          for(typename statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
+            tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**it), true);
+        }
+
+        //Enqueue
+        for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
+          viennacl::ocl::enqueue(**it);
+      }
+
+    protected:
+      template_base::parameters const & parameters_;
+      binding_policy_t binding_policy_;
     };
-
-
-    inline std::ostream & operator<<(std::ostream & os, profile_base const & profile){
-      profile.print(os);
-      return os;
-    }
 
   }
 

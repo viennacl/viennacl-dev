@@ -503,6 +503,11 @@ namespace viennacl
     template<> struct is_cl_type<cl_short> { enum { value = true }; };
     /** \endcond */
 
+    /** @brief Helper class for checking whether a particular type is a floating point type. */
+    template<class T> struct is_floating_point { enum { value = false }; };
+    template<> struct is_floating_point<float> { enum { value = true }; };
+    template<> struct is_floating_point<double> { enum { value = true }; };
+
 #endif
 
 } //namespace viennacl

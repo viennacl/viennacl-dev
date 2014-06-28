@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/vector_reduction.hpp
+/** @file viennacl/generator/row_wise_reduction.hpp
  *
  * Kernel template for the vector reduction operation
 */
@@ -27,6 +27,8 @@
 #include <vector>
 
 #include "viennacl/scheduler/forwards.h"
+
+#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
 #include "viennacl/device_specific/utils.hpp"
 
 
@@ -34,30 +36,48 @@ namespace viennacl{
 
   namespace device_specific{
 
-    inline void compute_reduction(utils::kernel_generation_stream & os, std::string const & acc, std::string const & val, scheduler::op_element const & op){
-        os << acc << "=";
-        if(op.type_subfamily==scheduler::OPERATION_ELEMENTWISE_FUNCTION_TYPE_SUBFAMILY)
-            os << tree_parsing::generate(op.type) << "(" << acc << "," << val << ")";
-        else
-            os << "(" << acc << ")" << tree_parsing::generate(op.type)  << "(" << val << ")";
-        os << ";" << std::endl;
+    static void compute_reduction(utils::kernel_generation_stream & os, std::string accidx, std::string curidx, std::string const & acc, std::string const & cur, scheduler::op_element const & op){
+        if(utils::is_index_reduction(op))
+        {
+          os << accidx << "= select(" << accidx << "," << curidx << "," << cur << ">" << acc << ");" << std::endl;
+          os << acc << "=";
+          if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGFMAX_TYPE) os << "fmax";
+          if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE) os << "max";
+          if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGFMIN_TYPE) os << "fmin";
+          if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMIN_TYPE) os << "min";
+          os << "(" << acc << "," << cur << ");"<< std::endl;
+        }
+        else{
+          os << acc << "=";
+          if(utils::elementwise_function(op))
+              os << tree_parsing::evaluate(op.type) << "(" << acc << "," << cur << ")";
+          else
+              os << "(" << acc << ")" << tree_parsing::evaluate(op.type)  << "(" << cur << ")";
+          os << ";" << std::endl;
+        }
     }
 
-    inline void reduce_1d_local_memory(utils::kernel_generation_stream & stream, std::size_t size, std::vector<std::string> const & bufs, std::vector<scheduler::op_element> const & rops)
+
+    inline void reduce_1d_local_memory(utils::kernel_generation_stream & stream, unsigned int size, std::vector<std::string> const & bufs, std::vector<scheduler::op_element> const & rops)
     {
         //Reduce local memory
-        for(std::size_t stride = size/2 ; stride>0 ; stride /=2){
-          stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
-          stream << "if(lid < " << stride << "){" << std::endl;
-          stream.inc_tab();
-          for(std::size_t k = 0 ; k < bufs.size() ; ++k){
-              std::string acc = bufs[k] + "[lid]";
-              std::string str = bufs[k] + "[lid + " + utils::to_string(stride) + "]";
-              compute_reduction(stream,acc,str,rops[k]);
-          }
-          stream.dec_tab();
-          stream << "}" << std::endl;
+        stream << "#pragma unroll" << std::endl;
+        stream << "for(unsigned int stride = " << size/2 << "; stride >0 ; stride /=2){" << std::endl;
+        stream.inc_tab();
+        stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
+        stream << "if(lid <  stride){" << std::endl;
+        stream.inc_tab();
+        for(unsigned int k = 0 ; k < bufs.size() ; ++k){
+            std::string acc = bufs[k] + "[lid]";
+            std::string accidx = (bufs[k] + "idx") + "[lid]";
+            std::string cur = bufs[k] + "[lid + stride]";
+            std::string curidx = (bufs[k] + "idx") + "[lid + stride]";
+            compute_reduction(stream,accidx,curidx,acc,cur,rops[k]);
         }
+        stream.dec_tab();
+        stream << "}" << std::endl;
+        stream.dec_tab();
+        stream << "}" << std::endl;
     }
 
     inline std::string neutral_element(scheduler::op_element const & op){
@@ -66,16 +86,16 @@ namespace viennacl{
         case scheduler::OPERATION_BINARY_MULT_TYPE : return "1";
         case scheduler::OPERATION_BINARY_DIV_TYPE : return "1";
         case scheduler::OPERATION_BINARY_ELEMENT_FMAX_TYPE : return "-INFINITY";
+        case scheduler::OPERATION_BINARY_ELEMENT_ARGFMAX_TYPE : return "-INFINITY";
+        case scheduler::OPERATION_BINARY_ELEMENT_MAX_TYPE : return "-INFINITY";
+        case scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE : return "-INFINITY";
         case scheduler::OPERATION_BINARY_ELEMENT_FMIN_TYPE : return "INFINITY";
+        case scheduler::OPERATION_BINARY_ELEMENT_ARGFMIN_TYPE : return "INFINITY";
+        case scheduler::OPERATION_BINARY_ELEMENT_MIN_TYPE : return "INFINITY";
+        case scheduler::OPERATION_BINARY_ELEMENT_ARGMIN_TYPE : return "INFINITY";
+
         default: throw generator_not_supported_exception("Unsupported reduction operator : no neutral element known");
       }
-    }
-
-    inline scheduler::operation_node_type_subfamily get_subfamily(scheduler::operation_node_type const & op){
-      if(op==scheduler::OPERATION_BINARY_ELEMENT_FMAX_TYPE || op==scheduler::OPERATION_BINARY_ELEMENT_FMIN_TYPE)
-        return scheduler::OPERATION_ELEMENTWISE_FUNCTION_TYPE_SUBFAMILY;
-      else
-        return scheduler::OPERATION_ELEMENTWISE_OPERATOR_TYPE_SUBFAMILY;
     }
 
   }

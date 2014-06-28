@@ -282,6 +282,14 @@ namespace viennacl
     template <typename HostScalarType>
     HostScalarType promote_if_host_scalar(unsigned int s) { return s; }
 
+    template <class T>
+    inline std::string to_string ( T const t )
+    {
+      std::stringstream ss;
+      ss << t;
+      return ss.str();
+    }
+      
   } //namespace tools
 } //namespace viennacl
 

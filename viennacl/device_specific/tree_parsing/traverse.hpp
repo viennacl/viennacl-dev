@@ -28,6 +28,7 @@
 #include "CL/cl.h"
 
 #include "viennacl/forwards.h"
+
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/utils.hpp"
@@ -42,37 +43,40 @@ namespace viennacl{
       /** @brief base functor class for traversing a statement */
       class traversal_functor{
         public:
-          void call_before_expansion(scheduler::statement_node const *) const { }
-          void call_after_expansion(scheduler::statement_node const *) const { }
+          void call_before_expansion(scheduler::statement const &, unsigned int) const { }
+          void call_after_expansion(scheduler::statement const &, unsigned int) const { }
       };
 
       /** @brief Recursively execute a functor on a statement */
       template<class Fun>
-      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_structurewise_function /* see forwards.h for default argument */){
-        bool recurse = recurse_structurewise_function || root_node.op.type_subfamily!=scheduler::OPERATION_FUNCTION_TYPE_SUBFAMILY;
+      static void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool inspect){
+        scheduler::statement_node const & root_node = statement.array()[root_idx];
+        bool recurse = utils::node_leaf(root_node.op)?inspect:true;
 
-        fun.call_before_expansion(&root_node);
+        fun.call_before_expansion(statement, root_idx);
 
         //Lhs:
-        if(recurse){
+        if(recurse)
+        {
           if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            traverse(statement, statement.array()[root_node.lhs.node_index], fun, recurse_structurewise_function);
+            traverse(statement, root_node.lhs.node_index, fun, inspect);
           if(root_node.lhs.type_family != scheduler::INVALID_TYPE_FAMILY)
-            fun(&statement, &root_node, LHS_NODE_TYPE);
+            fun(statement, root_idx, LHS_NODE_TYPE);
         }
 
         //Self:
-        fun(&statement, &root_node, PARENT_NODE_TYPE);
+        fun(statement, root_idx, PARENT_NODE_TYPE);
 
         //Rhs:
-        if(recurse){
+        if(recurse && root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY)
+        {
           if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            traverse(statement, statement.array()[root_node.rhs.node_index], fun, recurse_structurewise_function);
+            traverse(statement, root_node.rhs.node_index, fun, inspect);
           if(root_node.rhs.type_family != scheduler::INVALID_TYPE_FAMILY)
-            fun(&statement, &root_node, RHS_NODE_TYPE);
+            fun(statement, root_idx, RHS_NODE_TYPE);
         }
 
-        fun.call_after_expansion(&root_node);
+        fun.call_after_expansion(statement, root_idx);
 
 
       }

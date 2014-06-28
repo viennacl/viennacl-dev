@@ -28,24 +28,23 @@
 #include <set>
 #include <stdexcept>
 
+#include "viennacl/ocl/forwards.h"
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/scheduler/forwards.h"
+
+#include "viennacl/backend/mem_handle.hpp"
 
 namespace viennacl{
 
   namespace device_specific{
 
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s, scheduler::statement_node const & root_node);
-    static void generate_enqueue_statement(viennacl::scheduler::statement const & s);
-
-    enum expression_type_family{
-      SCALAR_SAXPY_FAMILY,
-      VECTOR_SAXPY_FAMILY,
-      MATRIX_SAXPY_FAMILY,
-      SCALAR_REDUCE_FAMILY,
-      VECTOR_REDUCE_FAMILY,
-      MATRIX_PRODUCT_FAMILY,
-      INVALID_EXPRESSION_FAMILY
+    struct index_tuple{
+      index_tuple(std::string const & _i, std::string const & _bound0) : i(_i), bound0(_bound0), j(""), bound1(""){ }
+      index_tuple(std::string const & _i, std::string const & _bound0, std::string const & _j, std::string const & _bound1) : i(_i), bound0(_bound0), j(_j), bound1(_bound1){ }
+      std::string i;
+      std::string bound0;
+      std::string j;
+      std::string bound1;
     };
 
     inline bool is_scalar_reduction(scheduler::statement_node const & node){
@@ -59,12 +58,12 @@ namespace viennacl{
     }
 
     enum expression_type{
-      SCALAR_SAXPY_TYPE,
-      VECTOR_SAXPY_TYPE,
-      MATRIX_SAXPY_TYPE,
-      SCALAR_REDUCE_TYPE,
-      VECTOR_REDUCE_Nx_TYPE,
-      VECTOR_REDUCE_Tx_TYPE,
+      SCALAR_AXPY_TYPE,
+      VECTOR_AXPY_TYPE,
+      MATRIX_AXPY_TYPE,
+      REDUCTION_TYPE,
+      ROW_WISE_REDUCTION_Nx_TYPE,
+      ROW_WISE_REDUCTION_Tx_TYPE,
       MATRIX_PRODUCT_NN_TYPE,
       MATRIX_PRODUCT_TN_TYPE,
       MATRIX_PRODUCT_NT_TYPE,
@@ -74,12 +73,12 @@ namespace viennacl{
 
     inline const char * expression_type_to_string(expression_type type){
       switch(type){
-        case SCALAR_SAXPY_TYPE : return "Scalar SAXPY";
-        case VECTOR_SAXPY_TYPE : return "Vector SAXPY";
-        case MATRIX_SAXPY_TYPE : return "Matrix SAXPY";
-        case SCALAR_REDUCE_TYPE : return "Inner Product";
-        case VECTOR_REDUCE_Nx_TYPE : return "Matrix-Vector Product : Ax";
-        case VECTOR_REDUCE_Tx_TYPE : return "Matrix-Vector Product : Tx";
+        case SCALAR_AXPY_TYPE : return "Scalar AXPY";
+        case VECTOR_AXPY_TYPE : return "Vector AXPY";
+        case MATRIX_AXPY_TYPE : return "Matrix AXPY";
+        case REDUCTION_TYPE : return "Reduction";
+        case ROW_WISE_REDUCTION_Nx_TYPE : return "Row-wise reduction: Ax";
+        case ROW_WISE_REDUCTION_Tx_TYPE : return "Row-wise reduction : Tx";
         case MATRIX_PRODUCT_NN_TYPE : return "Matrix-Matrix Product : AA";
         case MATRIX_PRODUCT_TN_TYPE : return "Matrix-Matrix Product : TA";
         case MATRIX_PRODUCT_NT_TYPE : return "Matrix-Matrix Product : AT";
@@ -109,34 +108,17 @@ namespace viennacl{
       throw std::out_of_range("Generator: Key not found in map");
     }
 
-    typedef std::pair<expression_type, std::size_t> expression_key_type;
-
-    struct expression_descriptor{
-        expression_key_type make_key() const { return expression_key_type(type,scalartype_size); }
-        bool operator==(expression_descriptor const & other) const
-        {
-          return type_family == other.type_family && type == other.type && scalartype_size==other.scalartype_size;
-        }
-        expression_type_family type_family;
-        expression_type type;
-        std::size_t scalartype_size;
-    };
-
     /** @brief Exception for the case the generator is unable to deal with the operation */
     class generator_not_supported_exception : public std::exception
     {
     public:
       generator_not_supported_exception() : message_() {}
-      generator_not_supported_exception(std::string message) : message_("ViennaCL: Internal error: The scheduler encountered a problem with the operation provided: " + message) {}
-
+      generator_not_supported_exception(std::string message) : message_("ViennaCL: Internal error: The generator cannot handle the statement provided: " + message) {}
       virtual const char* what() const throw() { return message_.c_str(); }
-
       virtual ~generator_not_supported_exception() throw() {}
     private:
       std::string message_;
     };
-
-
 
     namespace utils{
       class kernel_generation_stream;
@@ -150,32 +132,129 @@ namespace viennacl{
           RHS_NODE_TYPE
         };
     }
-
     class mapped_object;
 
-    typedef std::pair<scheduler::statement_node const *, tree_parsing::node_type> key_type;
-    typedef tools::shared_ptr<mapped_object> container_ptr_type;
-    typedef std::map<key_type, container_ptr_type> mapping_type;
+    typedef std::map<std::pair<unsigned int, tree_parsing::node_type>, tools::shared_ptr<mapped_object> > mapping_type;
 
-    static std::string generate(std::pair<std::string, std::string> const & index, int vector_index, mapped_object const & s);
-    static void fetch(std::pair<std::string, std::string> const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream, mapped_object & s);
-    //static const char * generate(scheduler::operation_node_type arg);
-    static std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, mapped_object const & s);
 
     namespace tree_parsing{
 
       template<class Fun>
-      static void traverse(scheduler::statement const & statement, scheduler::statement_node const & root_node, Fun const & fun, bool recurse_binary_leaf = true);
-      static void generate_all_rhs(scheduler::statement const & statement
-                                , scheduler::statement_node const & root_node
-                                , std::pair<std::string, std::string> const & index
-                                , int vector_element
-                                , std::string & str
-                                , mapping_type const & mapping);
+      inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool inspect);
 
-      class map_functor;
+      inline std::string evaluate_expression(scheduler::statement const & statement, unsigned int root_idx, index_tuple const & index, int simd_element, mapping_type const & mapping, node_type initial_leaf);
+
+      struct map_functor;
 
     }
+
+    using scheduler::INT_TYPE;
+    using scheduler::UINT_TYPE;
+    using scheduler::ULONG_TYPE;
+    using scheduler::LONG_TYPE;
+    using scheduler::FLOAT_TYPE;
+    using scheduler::DOUBLE_TYPE;
+
+    typedef cl_uint vendor_id_type;
+    typedef cl_device_type device_type;
+    typedef std::string device_name_type;
+
+    template<class ParamT>
+    class database_type
+    {
+    public:
+      typedef std::map<scheduler::statement_node_numeric_type, ParamT> expression_map;
+      typedef std::map<device_name_type, expression_map> device_name_map;
+      typedef std::map<ocl::device_architecture_family, device_name_map> device_architecture_map;
+      typedef std::map<device_type, device_architecture_map> device_type_map;
+      typedef std::map<vendor_id_type, device_type_map> map_type;
+      map_type map;
+
+      database_type(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4, ParamT const & p5)
+      {
+        map[p0][p1][p2][p3].insert(std::make_pair(p4, p5));
+      }
+
+      database_type<ParamT> & operator()(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4, ParamT const & p5)
+      {
+        map[p0][p1][p2][p3].insert(std::make_pair(p4, p5));
+         return *this;
+      }
+    };
+
+    namespace database{
+      using scheduler::FLOAT_TYPE;
+      using scheduler::DOUBLE_TYPE;
+      using namespace viennacl::ocl;
+    }
+
+    class symbolic_binder{
+    public:
+      virtual ~symbolic_binder(){ }
+      virtual bool bind(viennacl::backend::mem_handle const * ph) = 0;
+      virtual unsigned int get(viennacl::backend::mem_handle const * ph) = 0;
+    };
+
+    class bind_to_handle : public symbolic_binder{
+    public:
+      bind_to_handle() : current_arg_(0){ }
+      bool bind(viennacl::backend::mem_handle const * ph) {return (ph==NULL)?true:memory.insert(std::make_pair((void*)ph, current_arg_)).second; }
+      unsigned int get(viennacl::backend::mem_handle const * ph){ return bind(ph)?current_arg_++:memory.at((void*)ph); }
+    private:
+      unsigned int current_arg_;
+      std::map<void*,unsigned int> memory;
+    };
+
+    class bind_all_unique : public symbolic_binder{
+    public:
+      bind_all_unique() : current_arg_(0){ }
+      bool bind(viennacl::backend::mem_handle const *) {return true; }
+      unsigned int get(viennacl::backend::mem_handle const *){ return current_arg_++; }
+    private:
+      unsigned int current_arg_;
+      std::map<void*,unsigned int> memory;
+    };
+
+    enum binding_policy_t{
+      BIND_ALL_UNIQUE,
+      BIND_TO_HANDLE
+    };
+
+    inline tools::shared_ptr<symbolic_binder> make_binder(binding_policy_t policy)
+    {
+      if(policy==BIND_TO_HANDLE)
+        return tools::shared_ptr<symbolic_binder>(new bind_to_handle());
+      else
+        return tools::shared_ptr<symbolic_binder>(new bind_all_unique());
+    }
+
+    class statements_container
+    {
+    public:
+      typedef std::list<scheduler::statement> data_type;
+      enum order_type { SEQUENTIAL, INDEPENDENT };
+
+      statements_container(data_type const & data, order_type order) : data_(data), order_(order){ }
+
+      statements_container(scheduler::statement const & s0) : order_(INDEPENDENT)
+      {
+        data_.push_back(s0);
+      }
+
+      statements_container(scheduler::statement const & s0, scheduler::statement const & s1, order_type order) : order_(order)
+      {
+        data_.push_back(s0);
+        data_.push_back(s1);
+      }
+      std::list<scheduler::statement> const & data() const { return data_; }
+      order_type order() const { return order_; }
+
+    private:
+      std::list<scheduler::statement> data_;
+      order_type order_;
+    };
+
+
 
   }
 
