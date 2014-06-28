@@ -52,11 +52,16 @@
 
 #include "viennacl/meta/enable_if.hpp"
 
+#ifdef VIENNACL_WITH_OPENCL
+#include "CL/cl.h"
+#endif
+
 /** @brief Main namespace in ViennaCL. Holds all the basic types such as vector, matrix, etc. and defines operations upon them. */
 namespace viennacl
 {
   typedef std::size_t                                       vcl_size_t;
   typedef std::ptrdiff_t                                    vcl_ptrdiff_t;
+
 
 
   /** @brief A tag class representing assignment */
@@ -199,6 +204,9 @@ namespace viennacl
   template <typename SCALARTYPE>
   class entry_proxy;
 
+  template <typename SCALARTYPE>
+  class const_entry_proxy;
+
   template <typename LHS, typename RHS, typename OP>
   class vector_expression;
 
@@ -304,11 +312,33 @@ namespace viennacl
   template <typename LHS, typename RHS, typename OP>
   class matrix_expression;
 
+  class context;
+
+  enum memory_types
+  {
+    MEMORY_NOT_INITIALIZED
+    , MAIN_MEMORY
+    , OPENCL_MEMORY
+    , CUDA_MEMORY
+  };
+
+  namespace backend
+  {
+    class mem_handle;
+  }
+
   //
   // Matrix types:
   //
+  /** @brief A dense matrix class
+  *
+  * @tparam SCALARTYPE   The underlying scalar type (either float or double)
+  * @tparam ALIGNMENT   The internal memory size is given by (size()/ALIGNMENT + 1) * ALIGNMENT. ALIGNMENT must be a power of two. Best values or usually 4, 8 or 16, higher values are usually a waste of memory.
+  */
+  template <typename ROWCOL, typename MATRIXTYPE>
+  class matrix_iterator;
 
-  template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
+  template <class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class matrix_base;
 
   template <class SCALARTYPE, typename F = row_major, unsigned int ALIGNMENT = 1>
@@ -495,13 +525,7 @@ namespace viennacl
   };
 
 
-  enum memory_types
-  {
-    MEMORY_NOT_INITIALIZED
-    , MAIN_MEMORY
-    , OPENCL_MEMORY
-    , CUDA_MEMORY
-  };
+
 
   /** @brief Exception class in case of memory errors */
   class memory_exception : public std::exception
@@ -530,7 +554,6 @@ namespace viennacl
   };
 
 
-  class context;
 
   namespace tools
   {

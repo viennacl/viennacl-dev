@@ -85,10 +85,7 @@ namespace viennacl{
           result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
             typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
             if(memory_.insert((void*)&vec).second){
-              if(vec.is_value_static()==false)
-                kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
-              if(vec.has_index())
-                kernel_.arg(current_arg_++, cl_uint(vec.index()));
+              kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
             }
           }
 
@@ -125,8 +122,7 @@ namespace viennacl{
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
           result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
-            if(mat.is_value_static()==false)
-              kernel_.arg(current_arg_++, mat.value());
+            kernel_.arg(current_arg_++, mat.value());
           }
 
           /** @brief Traversal functor: */

@@ -104,13 +104,9 @@ namespace viennacl{
 
           /** @brief Implicit vector mapping */
           template<class ScalarType>
-          result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
+          result_type operator()(implicit_vector_base<ScalarType> const & /*vec*/) const {
             *ptr_++='i'; //implicit
             *ptr_++='v'; //vector
-            if(vec.is_value_static())
-              *ptr_++='v'; //value
-            if(vec.has_index())
-              *ptr_++='i';
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 
@@ -128,11 +124,9 @@ namespace viennacl{
 
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
-          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
+          result_type operator()(implicit_matrix_base<ScalarType> const & /*mat*/) const {
             *ptr_++='i'; //implicit
             *ptr_++='m'; //matrix
-            if(mat.is_value_static())
-              *ptr_++='v'; //value
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
           }
 

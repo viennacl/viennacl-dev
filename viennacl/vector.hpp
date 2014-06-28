@@ -23,8 +23,8 @@
            Linear algebra operations such as norms and inner products are located in linalg/vector_operations.hpp
 */
 
-
 #include "viennacl/forwards.h"
+#include "viennacl/vector_def.hpp"
 #include "viennacl/backend/memory.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"
@@ -38,112 +38,6 @@
 
 namespace viennacl
 {
-
-  /** @brief Common base class for representing vectors where the entries are not all stored explicitly.
-    *
-    * Typical examples are zero_vector or scalar_vector.
-    */
-  template<typename SCALARTYPE>
-  class implicit_vector_base
-  {
-    protected:
-      typedef vcl_size_t        size_type;
-      implicit_vector_base(size_type s, vcl_size_t i, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(true,i)), value_(v), ctx_(ctx){ }
-      implicit_vector_base(size_type s, std::pair<SCALARTYPE, bool> v, viennacl::context ctx) : size_(s), index_(std::make_pair(false,0)), value_(v), ctx_(ctx){ }
-
-    public:
-      typedef SCALARTYPE const & const_reference;
-      typedef SCALARTYPE cpu_value_type;
-
-      viennacl::context context() const { return ctx_; }
-
-      size_type size() const { return size_; }
-
-      cpu_value_type  value() const { return value_.first; }
-
-      bool is_value_static() const { return value_.second; }
-
-      vcl_size_t index() const { return index_.second; }
-
-      bool has_index() const { return index_.first; }
-
-      cpu_value_type operator()(size_type i) const {
-        if(index_.first)
-          return (i==index_.second)?value_.first:0;
-        return value_.first;
-      }
-
-      cpu_value_type operator[](size_type i) const {
-        if(index_.first)
-          return (i==index_.second)?value_.first:0;
-        return
-            value_.first;
-      }
-
-    protected:
-      size_type size_;
-      std::pair<bool, vcl_size_t> index_;
-      std::pair<SCALARTYPE, bool> value_;
-      viennacl::context ctx_;
-  };
-
-  /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise.*/
-  template <typename SCALARTYPE>
-  class unit_vector : public implicit_vector_base<SCALARTYPE>
-  {
-      typedef implicit_vector_base<SCALARTYPE> base_type;
-    public:
-      typedef typename base_type::size_type size_type;
-      unit_vector(size_type s, size_type ind, viennacl::context ctx = viennacl::context()) : base_type(s, ind, std::make_pair(SCALARTYPE(1),true), ctx)
-      {
-        assert( (ind < s) && bool("Provided index out of range!") );
-      }
-  };
-
-
-  /** @brief Represents a vector consisting of zeros only. */
-  template <typename SCALARTYPE>
-  class zero_vector : public implicit_vector_base<SCALARTYPE>
-  {
-      typedef implicit_vector_base<SCALARTYPE> base_type;
-    public:
-      typedef typename base_type::size_type size_type;
-      typedef SCALARTYPE        const_reference;
-      zero_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(SCALARTYPE(0),true), ctx) {}
-  };
-
-  /** @brief Represents a vector consisting of ones only. */
-  template <typename SCALARTYPE>
-  class one_vector : public implicit_vector_base<SCALARTYPE>
-  {
-      typedef implicit_vector_base<SCALARTYPE> base_type;
-    public:
-      typedef typename base_type::size_type size_type;
-      typedef SCALARTYPE        const_reference;
-      one_vector(size_type s, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(SCALARTYPE(1),true), ctx) {}
-  };
-
-
-  /** @brief Represents a vector consisting of scalars 's' only, i.e. v[i] = s for all i. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
-  class scalar_vector : public implicit_vector_base<SCALARTYPE>
-  {
-      typedef implicit_vector_base<SCALARTYPE> base_type;
-    public:
-      typedef typename base_type::size_type size_type;
-      typedef SCALARTYPE const & const_reference;
-
-      scalar_vector(size_type s, SCALARTYPE val, viennacl::context ctx = viennacl::context()) : base_type(s, std::make_pair(val,false), ctx) {}
-  };
-
-
-//#ifdef VIENNACL_WITH_OPENCL
-//  template<class SCALARTYPE, class DISTRIBUTION>
-//  rand::random_vector_t<SCALARTYPE, DISTRIBUTION> random_vector(unsigned int size, DISTRIBUTION const & distribution){
-//      return rand::random_vector_t<SCALARTYPE,DISTRIBUTION>(size,distribution);
-//  }
-//#endif
-
 
   //
   // Vector expression
@@ -353,626 +247,513 @@ namespace viennacl
   };
 
 
-  /** @brief Common base class for dense vectors, vector ranges, and vector slices.
-    *
-    * @tparam SCALARTYPE   The floating point type, either 'float' or 'double'
-    */
-  template<class SCALARTYPE, typename SizeType /* see forwards.h for default type */, typename DistanceType /* see forwards.h for default type */>
-  class vector_base
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base() : size_(0), start_(0), stride_(1), internal_size_(0) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(viennacl::backend::mem_handle & h,
+                       size_type vec_size, size_type vec_start, difference_type vec_stride)
+    : size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(size_type vec_size, viennacl::context ctx)
+    : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
   {
-      typedef vector_base<SCALARTYPE>         self_type;
+    if (size_ > 0)
+    {
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx);
+      clear();
+    }
+  }
 
-    public:
-      typedef scalar<SCALARTYPE>                                value_type;
-      typedef SCALARTYPE                                        cpu_value_type;
-      typedef viennacl::backend::mem_handle                     handle_type;
-      typedef SizeType                                          size_type;
-      typedef DistanceType                                      difference_type;
-      typedef const_vector_iterator<SCALARTYPE, 1>              const_iterator;
-      typedef vector_iterator<SCALARTYPE, 1>                    iterator;
-
-      static const size_type alignment = 128;
-
-      /** @brief Default constructor in order to be compatible with various containers.
-      */
-      explicit vector_base() : size_(0), start_(0), stride_(1), internal_size_(0) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
-
-      /** @brief An explicit constructor for wrapping an existing vector into a vector_range or vector_slice.
-       *
-       *
-       *
-       * @param h          The existing memory handle from a vector/vector_range/vector_slice
-       * @param vec_size   The length (i.e. size) of the buffer
-       * @param vec_start  The offset from the beginning of the buffer identified by 'h'
-       * @param vec_stride Increment between two elements in the original buffer (in multiples of SCALARTYPE)
-      */
-      explicit vector_base(viennacl::backend::mem_handle & h,
-                           size_type vec_size, size_type vec_start, difference_type vec_stride)
-        : size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
-
-      /** @brief Creates a vector and allocates the necessary memory */
-      explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context())
-        : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
-      {
-        if (size_ > 0)
-        {
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx);
-          clear();
-        }
-      }
-
-      // CUDA or host memory:
-      explicit vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start = 0, difference_type stride = 1)
-        : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
-      {
-        if (mem_type == viennacl::CUDA_MEMORY)
-        {
+  // CUDA or host memory:
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start, difference_type stride)
+    : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
+  {
+    if (mem_type == viennacl::CUDA_MEMORY)
+    {
 #ifdef VIENNACL_WITH_CUDA
-          elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
-          elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
-          elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+      elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
+      elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
+      elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
 #else
-          throw cuda_not_available_exception();
+      throw cuda_not_available_exception();
 #endif
-        }
-        else if (mem_type == viennacl::MAIN_MEMORY)
-        {
-          elements_.switch_active_handle_id(viennacl::MAIN_MEMORY);
-          elements_.ram_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
-          elements_.ram_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
-        }
+    }
+    else if (mem_type == viennacl::MAIN_MEMORY)
+    {
+      elements_.switch_active_handle_id(viennacl::MAIN_MEMORY);
+      elements_.ram_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
+      elements_.ram_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+    }
 
-        elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
+    elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
 
-      }
+  }
 
 #ifdef VIENNACL_WITH_OPENCL
-      /** @brief Create a vector from existing OpenCL memory
-      *
-      * Note: The provided memory must take an eventual ALIGNMENT into account, i.e. existing_mem must be at least of size internal_size()!
-      * This is trivially the case with the default alignment, but should be considered when using vector<> with an alignment parameter not equal to 1.
-      *
-      * @param existing_mem   An OpenCL handle representing the memory
-      * @param vec_size       The size of the vector.
-      */
-      explicit vector_base(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1, viennacl::context ctx = viennacl::context())
-        : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
-      {
-        elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
-        elements_.opencl_handle() = existing_mem;
-        elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
-        elements_.opencl_handle().context(ctx.opencl_context());
-        elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
-      }
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(cl_mem existing_mem, size_type vec_size, size_type start, difference_type stride, viennacl::context ctx)
+    : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
+  {
+    elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+    elements_.opencl_handle() = existing_mem;
+    elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+    elements_.opencl_handle().context(ctx.opencl_context());
+    elements_.raw_size(sizeof(SCALARTYPE) * vec_size);
+  }
 #endif
 
-      /** @brief Creates the vector from the supplied random vector. */
-      /*template<class DISTRIBUTION>
-      vector(rand::random_vector_t<SCALARTYPE, DISTRIBUTION> v) : size_(v.size)
-      {
-        if(size_ > 0)
-        {
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-          rand::buffer_dumper<SCALARTYPE, DISTRIBUTION>::dump(elements_,v.distribution,0,size_);
-        }
-      } */
 
-      template <typename LHS, typename RHS, typename OP>
-      explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy)
-        : size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template <typename LHS, typename RHS, typename OP>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(vector_expression<const LHS, const RHS, OP> const & proxy)
+    : size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
+  {
+    if (size_ > 0)
+    {
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
+      clear();
+    }
+    self_type::operator=(proxy);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator=(const self_type & vec)
+  {
+    assert( ( (vec.size() == size()) || (size() == 0) )
+            && bool("Incompatible vector sizes!"));
+
+    if (vec.size() > 0)
+    {
+      if (size_ == 0)
       {
-        if (size_ > 0)
-        {
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
-          clear();
-        }
-        self_type::operator=(proxy);
+        size_ = vec.size();
+        internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+        elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(vec));
+        pad();
       }
 
+      viennacl::linalg::av(*this,
+                           vec, cpu_value_type(1.0), 1, false, false);
+    }
 
-      //
-      // operator=
-      //
+    return *this;
+  }
 
 
-      /** @brief Assignment operator. Other vector needs to be of the same size, or this vector is not yet initialized.
-      */
-      self_type & operator=(const self_type & vec)
-      {
-        assert( ( (vec.size() == size()) || (size() == 0) )
-                && bool("Incompatible vector sizes!"));
-
-        if(this==&vec)
-          return *this;
-
-        if (vec.size() > 0)
-        {
-          if (size_ == 0)
-          {
-            size_ = vec.size();
-            internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
-            elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(vec));
-            pad();
-          }
-
-          viennacl::linalg::av(*this,
-                               vec, cpu_value_type(1.0), 1, false, false);
-        }
-
-        return *this;
-      }
-
-
-      /** @brief Implementation of the operation v1 = v2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename LHS, typename RHS, typename OP>
-      self_type & operator=(const vector_expression<const LHS, const RHS, OP> & proxy)
-      {
-        assert( ( (viennacl::traits::size(proxy) == size()) || (size() == 0) )
-                && bool("Incompatible vector sizes!"));
-
-        // initialize the necessary buffer
-        if (size() == 0)
-        {
-          size_ = viennacl::traits::size(proxy);
-          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
-          pad();
-        }
-
-        linalg::detail::op_executor<self_type, op_assign, vector_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
-
-        return *this;
-      }
-
-      // assign vector range or vector slice
-      template <typename T>
-      self_type &
-      operator = (const vector_base<T> & v1)
-      {
-        assert( ( (v1.size() == size()) || (size() == 0) )
-                && bool("Incompatible vector sizes!"));
-
-        if (size() == 0)
-        {
-          size_ = v1.size();
-          if (size_ > 0)
-          {
-            internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(v1));
-            pad();
-          }
-        }
-
-        viennacl::linalg::av(*this,
-                             v1, SCALARTYPE(1.0), 1, false, false);
-
-        return *this;
-      }
-
-      /** @brief Creates the vector from the supplied unit vector. */
-      self_type & operator = (unit_vector<SCALARTYPE> const & v)
-      {
-        assert( ( (v.size() == size()) || (size() == 0) )
-                && bool("Incompatible vector sizes!"));
-
-        if (size() == 0)
-        {
-          size_ = v.size();
-          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
-          if (size_ > 0)
-          {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
-            clear();
-          }
-        }
-        else
-          viennacl::linalg::vector_assign(*this, SCALARTYPE(0));
-
-        if (size_ > 0)
-          this->operator()(v.index()) = SCALARTYPE(1);
-
-        return *this;
-      }
-
-      /** @brief Creates the vector from the supplied zero vector. */
-      self_type & operator = (zero_vector<SCALARTYPE> const & v)
-      {
-        assert( ( (v.size() == size()) || (size() == 0) )
-                && bool("Incompatible vector sizes!"));
-
-        if (size() == 0)
-        {
-          size_ = v.size();
-          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
-          if (size_ > 0)
-          {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
-            clear();
-          }
-        }
-        else
-          viennacl::linalg::vector_assign(*this, SCALARTYPE(0));
-
-        return *this;
-      }
-
-      /** @brief Creates the vector from the supplied scalar vector. */
-      self_type & operator = (scalar_vector<SCALARTYPE> const & v)
-      {
-        assert( ( (v.size() == size()) || (size() == 0) )
-                && bool("Incompatible vector sizes!"));
-
-        if (size() == 0)
-        {
-          size_ = v.size();
-          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
-          if (size_ > 0)
-          {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
-            pad();
-          }
-        }
-
-        if (size_ > 0)
-          viennacl::linalg::vector_assign(*this, v[0]);
-
-        return *this;
-      }
-
-
-
-      ///////////////////////////// Matrix Vector interaction start ///////////////////////////////////
-
-      //Note: The following operator overloads are defined in matrix_operations.hpp, compressed_matrix_operations.hpp and coordinate_matrix_operations.hpp
-      //This is certainly not the nicest approach and will most likely by changed in the future, but it works :-)
-
-      //matrix<>
-      /** @brief Operator overload for v1 = A * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      self_type & operator=(const viennacl::vector_expression< const matrix_base<SCALARTYPE>, const vector_base<SCALARTYPE>, viennacl::op_prod> & proxy)
-      {
-        assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
-
-        // check for the special case x = A * x
-        if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
-        {
-          viennacl::vector<SCALARTYPE> result(viennacl::traits::size1(proxy.lhs()));
-          viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-          *this = result;
-        }
-        else
-        {
-          viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-        }
-        return *this;
-      }
-
-
-      //transposed_matrix_proxy:
-      /** @brief Operator overload for v1 = trans(A) * v2, where v1, v2 are vectors and A is a dense matrix.
-      *
-      * @param proxy An expression template proxy class
-      */
-      self_type & operator=(const vector_expression< const matrix_expression< const matrix_base<SCALARTYPE>, const matrix_base<SCALARTYPE>, op_trans >,
-                                                     const vector_base<SCALARTYPE>,
-                                                     op_prod> & proxy)
-      {
-        assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)"));
-
-        // check for the special case x = trans(A) * x
-        if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
-        {
-          viennacl::vector<SCALARTYPE> result(viennacl::traits::size1(proxy.lhs()));
-          viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-          *this = result;
-        }
-        else
-        {
-          viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-        }
-        return *this;
-      }
-
-      ///////////////////////////// Matrix Vector interaction end ///////////////////////////////////
-
-
-      //read-write access to an element of the vector
-      /** @brief Read-write access to a single element of the vector
-      */
-      entry_proxy<SCALARTYPE> operator()(size_type index)
-      {
-        assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
-        assert( index < size() && bool("Index out of bounds!") );
-
-        return entry_proxy<SCALARTYPE>(start_ + stride() * index, elements_);
-      }
-
-      /** @brief Read-write access to a single element of the vector
-      */
-      entry_proxy<SCALARTYPE> operator[](size_type index)
-      {
-        assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
-        assert( index < size() && bool("Index out of bounds!") );
-
-        return entry_proxy<SCALARTYPE>(start_ + stride() * index, elements_);
-      }
-
-
-      /** @brief Read access to a single element of the vector
-      */
-      const_entry_proxy<SCALARTYPE> operator()(size_type index) const
-      {
-        assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
-        assert( index < size() && bool("Index out of bounds!") );
-
-        return const_entry_proxy<SCALARTYPE>(start_ + stride() * index, elements_);
-      }
-
-      /** @brief Read access to a single element of the vector
-      */
-      const_entry_proxy<SCALARTYPE> operator[](size_type index) const
-      {
-        assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
-        assert( index < size() && bool("Index out of bounds!") );
-
-        return const_entry_proxy<SCALARTYPE>(start_ + stride() * index, elements_);
-      }
-
-      //
-      // Operator overloads with implicit conversion (thus cannot be made global without introducing additional headache)
-      //
-      self_type & operator += (const self_type & vec)
-      {
-        assert(vec.size() == size() && bool("Incompatible vector sizes!"));
-
-        if (size() > 0)
-          viennacl::linalg::avbv(*this,
-                                  *this, SCALARTYPE(1.0), 1, false, false,
-                                  vec,   SCALARTYPE(1.0), 1, false, false);
-        return *this;
-      }
-
-      self_type & operator -= (const self_type & vec)
-      {
-        assert(vec.size() == size() && bool("Incompatible vector sizes!"));
-
-        if (size() > 0)
-          viennacl::linalg::avbv(*this,
-                                  *this, SCALARTYPE(1.0),  1, false, false,
-                                  vec,   SCALARTYPE(-1.0), 1, false, false);
-        return *this;
-      }
-
-      /** @brief Scales a vector (or proxy) by a CPU scalar value
-      */
-      self_type & operator *= (SCALARTYPE val)
-      {
-        if (size() > 0)
-          viennacl::linalg::av(*this,
-                                *this, val, 1, false, false);
-        return *this;
-      }
-
-      /** @brief Scales this vector by a CPU scalar value
-      */
-      self_type & operator /= (SCALARTYPE val)
-      {
-        if (size() > 0)
-          viennacl::linalg::av(*this,
-                               *this, val, 1, true, false);
-        return *this;
-      }
-
-
-      /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
-      */
-      vector_expression< const self_type, const SCALARTYPE, op_mult>
-      operator * (SCALARTYPE value) const
-      {
-        return vector_expression< const self_type, const SCALARTYPE, op_mult>(*this, value);
-      }
-
-
-      /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
-      */
-      vector_expression< const self_type, const SCALARTYPE, op_div>
-      operator / (SCALARTYPE value) const
-      {
-        return vector_expression< const self_type, const SCALARTYPE, op_div>(*this, value);
-      }
-
-
-      /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
-      vector_expression<const self_type, const SCALARTYPE, op_mult> operator-() const
-      {
-        return vector_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1.0));
-      }
-
-      //
-      //// iterators:
-      //
-
-      /** @brief Returns an iterator pointing to the beginning of the vector  (STL like)*/
-      iterator begin()
-      {
-        return iterator(*this, 0, start_, stride_);
-      }
-
-      /** @brief Returns an iterator pointing to the end of the vector (STL like)*/
-      iterator end()
-      {
-        return iterator(*this, size(), start_, stride_);
-      }
-
-      /** @brief Returns a const-iterator pointing to the beginning of the vector (STL like)*/
-      const_iterator begin() const
-      {
-        return const_iterator(*this, 0, start_, stride_);
-      }
-
-      /** @brief Returns a const-iterator pointing to the end of the vector (STL like)*/
-      const_iterator end() const
-      {
-        return const_iterator(*this, size(), start_, stride_);
-      }
-
-      /** @brief Swaps the entries of the two vectors
-      */
-      self_type & swap(self_type & other)
-      {
-        viennacl::linalg::vector_swap(*this, other);
-        return *this;
-      };
-
-
-      /** @brief Returns the length of the vector (cf. std::vector)
-      */
-      size_type size() const { return size_; }
-
-      /** @brief Returns the internal length of the vector, which is given by size() plus the extra memory due to padding the memory with zeros up to a multiple of 'ALIGNMENT'
-      */
-      size_type internal_size() const { return internal_size_; }
-
-      /** @brief Returns the offset within the buffer
-      */
-      size_type start() const { return start_; }
-
-      /** @brief Returns the stride within the buffer (in multiples of sizeof(SCALARTYPE))
-      */
-      size_type stride() const { return static_cast<size_type>(stride_); }
-
-
-      /** @brief Returns true is the size is zero */
-      bool empty() const { return size_ == 0; }
-
-      /** @brief Returns the memory handle. */
-      const handle_type & handle() const { return elements_; }
-
-      /** @brief Returns the memory handle. */
-      handle_type & handle() { return elements_; }
-
-      /** @brief Resets all entries to zero. Does not change the size of the vector.
-      */
-      void clear()
-      {
-        viennacl::linalg::vector_assign(*this, cpu_value_type(0.0), true);
-      }
-
-      viennacl::memory_types memory_domain() const
-      {
-        return elements_.get_active_handle_id();
-      }
-
-    protected:
-
-      void set_handle(viennacl::backend::mem_handle const & h)
-      {
-        elements_ = h;
-      }
-
-      /** @brief Swaps the handles of two vectors by swapping the OpenCL handles only, no data copy
-      */
-      self_type & fast_swap(self_type & other)
-      {
-        assert(this->size_ == other.size_ && bool("Vector size mismatch"));
-        this->elements_.swap(other.elements_);
-        return *this;
-      }
-
-      /** @brief Pads vectors with alignment > 1 with trailing zeros if the internal size is larger than the visible size */
-      void pad()
-      {
-        if (internal_size() != size())
-        {
-          std::vector<SCALARTYPE> pad(internal_size() - size());
-          viennacl::backend::memory_write(elements_, sizeof(SCALARTYPE) * size(), sizeof(SCALARTYPE) * pad.size(), &(pad[0]));
-        }
-      }
-
-      void switch_memory_context(viennacl::context new_ctx)
-      {
-        viennacl::backend::switch_memory_context<SCALARTYPE>(elements_, new_ctx);
-      }
-
-      //TODO: Think about implementing the following public member functions
-      //void insert_element(unsigned int i, SCALARTYPE val){}
-      //void erase_element(unsigned int i){}
-
-      //enlarge or reduce allocated memory and set unused memory to zero
-      /** @brief Resizes the allocated memory for the vector. Pads the memory to be a multiple of 'ALIGNMENT'
-      *
-      *  @param new_size  The new size of the vector
-      *  @param preserve  If true, old entries of the vector are preserved, otherwise eventually discarded.
-      */
-      void resize(size_type new_size, bool preserve = true)
-      {
-        resize_impl(new_size, viennacl::traits::context(*this), preserve);
-      }
-
-      /** @brief Resizes the allocated memory for the vector. Convenience function for setting an OpenCL context in case reallocation is needed
-      *
-      *  @param new_size  The new size of the vector
-      *  @param ctx       The context within which the new memory should be allocated
-      *  @param preserve  If true, old entries of the vector are preserved, otherwise eventually discarded.
-      */
-      void resize(size_type new_size, viennacl::context ctx, bool preserve = true)
-      {
-        resize_impl(new_size, ctx, preserve);
-      }
-
-    private:
-
-      void resize_impl(size_type new_size, viennacl::context ctx, bool preserve = true)
-      {
-        assert(new_size > 0 && bool("Positive size required when resizing vector!"));
-
-        if (new_size != size_)
-        {
-          vcl_size_t new_internal_size = viennacl::tools::align_to_multiple<vcl_size_t>(new_size, alignment);
-
-          std::vector<SCALARTYPE> temp(size_);
-          if (preserve && size_ > 0)
-            fast_copy(*this, temp);
-          temp.resize(new_size);  //drop all entries above new_size
-          temp.resize(new_internal_size); //enlarge to fit new internal size
-
-          if (new_internal_size != internal_size())
-          {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_internal_size, ctx, NULL);
-          }
-
-          fast_copy(temp, *this);
-          size_ = new_size;
-          internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
-          pad();
-        }
-
-      }
-
-      size_type       size_;
-      size_type       start_;
-      difference_type stride_;
-      size_type       internal_size_;
-      handle_type elements_;
-  }; //vector_base
-
-
-
-  // forward definition in forwards.h!
-  /** @brief A vector class representing a linear memory sequence on the GPU. Inspired by boost::numeric::ublas::vector
+  /** @brief Implementation of the operation v1 = v2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
   *
-  *  This is the basic vector type of ViennaCL. It is similar to std::vector and boost::numeric::ublas::vector and supports various linear algebra operations.
-  * By default, the internal length of the vector is padded to a multiple of 'ALIGNMENT' in order to speed up several GPU viennacl::ocl::kernels.
-  *
-  * @tparam SCALARTYPE  The floating point type, either 'float' or 'double'
-  * @tparam ALIGNMENT   The internal memory size is given by (size()/ALIGNMENT + 1) * ALIGNMENT. ALIGNMENT must be a power of two. Best values or usually 4, 8 or 16, higher values are usually a waste of memory.
+  * @param proxy  An expression template proxy class.
   */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template <typename LHS, typename RHS, typename OP>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator=(const vector_expression<const LHS, const RHS, OP> & proxy)
+  {
+    assert( ( (viennacl::traits::size(proxy) == size()) || (size() == 0) )
+            && bool("Incompatible vector sizes!"));
+
+    // initialize the necessary buffer
+    if (size() == 0)
+    {
+      size_ = viennacl::traits::size(proxy);
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
+      pad();
+    }
+
+    linalg::detail::op_executor<self_type, op_assign, vector_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
+
+    return *this;
+  }
+
+  // assign vector range or vector slice
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template <typename T>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>:: operator = (const vector_base<T> & v1)
+  {
+    assert( ( (v1.size() == size()) || (size() == 0) )
+            && bool("Incompatible vector sizes!"));
+
+    if (size() == 0)
+    {
+      size_ = v1.size();
+      if (size_ > 0)
+      {
+        internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(v1));
+        pad();
+      }
+    }
+
+    viennacl::linalg::av(*this,
+                         v1, SCALARTYPE(1.0), 1, false, false);
+
+    return *this;
+  }
+
+  /** @brief Creates the vector from the supplied unit vector. */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator = (unit_vector<SCALARTYPE> const & v)
+  {
+    assert( ( (v.size() == size()) || (size() == 0) )
+            && bool("Incompatible vector sizes!"));
+
+    if (size() == 0)
+    {
+      size_ = v.size();
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      if (size_ > 0)
+      {
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+        clear();
+      }
+    }
+    else
+      viennacl::linalg::vector_assign(*this, SCALARTYPE(0));
+
+    if (size_ > 0)
+      this->operator()(v.index()) = SCALARTYPE(1);
+
+    return *this;
+  }
+
+  /** @brief Creates the vector from the supplied zero vector. */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator = (zero_vector<SCALARTYPE> const & v)
+  {
+    assert( ( (v.size() == size()) || (size() == 0) )
+            && bool("Incompatible vector sizes!"));
+
+    if (size() == 0)
+    {
+      size_ = v.size();
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      if (size_ > 0)
+      {
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+        clear();
+      }
+    }
+    else
+      viennacl::linalg::vector_assign(*this, SCALARTYPE(0));
+
+    return *this;
+  }
+
+  /** @brief Creates the vector from the supplied scalar vector. */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator = (scalar_vector<SCALARTYPE> const & v)
+  {
+    assert( ( (v.size() == size()) || (size() == 0) )
+            && bool("Incompatible vector sizes!"));
+
+    if (size() == 0)
+    {
+      size_ = v.size();
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      if (size_ > 0)
+      {
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
+        pad();
+      }
+    }
+
+    if (size_ > 0)
+      viennacl::linalg::vector_assign(*this, v[0]);
+
+    return *this;
+  }
+
+
+
+  ///////////////////////////// Matrix Vector interaction start ///////////////////////////////////
+
+  //Note: The following operator overloads are defined in matrix_operations.hpp, compressed_matrix_operations.hpp and coordinate_matrix_operations.hpp
+  //This is certainly not the nicest approach and will most likely by changed in the future, but it works :-)
+
+  //matrix<>
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator=(const viennacl::vector_expression< const matrix_base<SCALARTYPE>, const vector_base<SCALARTYPE>, viennacl::op_prod> & proxy)
+  {
+    assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
+
+    // check for the special case x = A * x
+    if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
+    {
+      viennacl::vector<SCALARTYPE> result(viennacl::traits::size1(proxy.lhs()));
+      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
+      *this = result;
+    }
+    else
+    {
+      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+    }
+    return *this;
+  }
+
+
+  //transposed_matrix_proxy:
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator=(const vector_expression< const matrix_expression< const matrix_base<SCALARTYPE>, const matrix_base<SCALARTYPE>, op_trans >,
+                                                 const vector_base<SCALARTYPE>,
+                                                 op_prod> & proxy)
+  {
+    assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)"));
+
+    // check for the special case x = trans(A) * x
+    if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
+    {
+      viennacl::vector<SCALARTYPE> result(viennacl::traits::size1(proxy.lhs()));
+      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
+      *this = result;
+    }
+    else
+    {
+      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+    }
+    return *this;
+  }
+
+  ///////////////////////////// Matrix Vector interaction end ///////////////////////////////////
+
+
+  //////////////////////////// Read-write access to an element of the vector start ///////////////////
+  //read-write access to an element of the vector
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  entry_proxy<SCALARTYPE> vector_base<SCALARTYPE, SizeType, DistanceType>::operator()(size_type index)
+  {
+    assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
+    assert( index < size() && bool("Index out of bounds!") );
+
+    return entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  entry_proxy<SCALARTYPE> vector_base<SCALARTYPE, SizeType, DistanceType>::operator[](size_type index)
+  {
+    assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
+    assert( index < size() && bool("Index out of bounds!") );
+
+    return entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  const_entry_proxy<SCALARTYPE> vector_base<SCALARTYPE, SizeType, DistanceType>::operator()(size_type index) const
+  {
+    assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
+    assert( index < size() && bool("Index out of bounds!") );
+
+    return const_entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  const_entry_proxy<SCALARTYPE> vector_base<SCALARTYPE, SizeType, DistanceType>::operator[](size_type index) const
+  {
+    assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
+    assert( index < size() && bool("Index out of bounds!") );
+
+    return const_entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
+  }
+
+  //////////////////////////// Read-write access to an element of the vector end ///////////////////
+
+
+  //
+  // Operator overloads with implicit conversion (thus cannot be made global without introducing additional headache)
+  //
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator += (const self_type & vec)
+  {
+    assert(vec.size() == size() && bool("Incompatible vector sizes!"));
+
+    if (size() > 0)
+      viennacl::linalg::avbv(*this,
+                              *this, SCALARTYPE(1.0), 1, false, false,
+                              vec,   SCALARTYPE(1.0), 1, false, false);
+    return *this;
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator -= (const self_type & vec)
+  {
+    assert(vec.size() == size() && bool("Incompatible vector sizes!"));
+
+    if (size() > 0)
+      viennacl::linalg::avbv(*this,
+                              *this, SCALARTYPE(1.0),  1, false, false,
+                              vec,   SCALARTYPE(-1.0), 1, false, false);
+    return *this;
+  }
+
+  /** @brief Scales a vector (or proxy) by a CPU scalar value
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator *= (SCALARTYPE val)
+  {
+    if (size() > 0)
+      viennacl::linalg::av(*this,
+                            *this, val, 1, false, false);
+    return *this;
+  }
+
+  /** @brief Scales this vector by a CPU scalar value
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator /= (SCALARTYPE val)
+  {
+    if (size() > 0)
+      viennacl::linalg::av(*this,
+                           *this, val, 1, true, false);
+    return *this;
+  }
+
+
+  /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_expression< const vector_base<SCALARTYPE, SizeType, DistanceType>, const SCALARTYPE, op_mult>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::operator * (SCALARTYPE value) const
+  {
+    return vector_expression< const self_type, const SCALARTYPE, op_mult>(*this, value);
+  }
+
+
+  /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_expression< const vector_base<SCALARTYPE, SizeType, DistanceType>, const SCALARTYPE, op_div>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::operator / (SCALARTYPE value) const
+  {
+    return vector_expression< const self_type, const SCALARTYPE, op_div>(*this, value);
+  }
+
+
+  /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_expression<const vector_base<SCALARTYPE, SizeType, DistanceType>, const SCALARTYPE, op_mult>
+  vector_base<SCALARTYPE, SizeType, DistanceType>::operator-() const
+  {
+    return vector_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1.0));
+  }
+
+  //
+  //// iterators:
+  //
+
+  /** @brief Returns an iterator pointing to the beginning of the vector  (STL like)*/
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  typename vector_base<SCALARTYPE, SizeType, DistanceType>::iterator vector_base<SCALARTYPE, SizeType, DistanceType>::begin()
+  {
+    return iterator(*this, 0, start_, stride_);
+  }
+
+  /** @brief Returns an iterator pointing to the end of the vector (STL like)*/
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  typename vector_base<SCALARTYPE, SizeType, DistanceType>::iterator vector_base<SCALARTYPE, SizeType, DistanceType>::end()
+  {
+    return iterator(*this, size(), start_, stride_);
+  }
+
+  /** @brief Returns a const-iterator pointing to the beginning of the vector (STL like)*/
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  typename vector_base<SCALARTYPE, SizeType, DistanceType>::const_iterator vector_base<SCALARTYPE, SizeType, DistanceType>::begin() const
+  {
+    return const_iterator(*this, 0, start_, stride_);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  typename vector_base<SCALARTYPE, SizeType, DistanceType>::const_iterator vector_base<SCALARTYPE, SizeType, DistanceType>::end() const
+  {
+    return const_iterator(*this, size(), start_, stride_);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::swap(self_type & other)
+  {
+    viennacl::linalg::vector_swap(*this, other);
+    return *this;
+  }
+
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  void vector_base<SCALARTYPE, SizeType, DistanceType>::clear()
+  {
+    viennacl::linalg::vector_assign(*this, cpu_value_type(0.0), true);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::fast_swap(self_type & other)
+  {
+    assert(this->size_ == other.size_ && bool("Vector size mismatch"));
+    this->elements_.swap(other.elements_);
+    return *this;
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  void vector_base<SCALARTYPE, SizeType, DistanceType>::pad()
+  {
+    if (internal_size() != size())
+    {
+      std::vector<SCALARTYPE> pad(internal_size() - size());
+      viennacl::backend::memory_write(elements_, sizeof(SCALARTYPE) * size(), sizeof(SCALARTYPE) * pad.size(), &(pad[0]));
+    }
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  void vector_base<SCALARTYPE, SizeType, DistanceType>::switch_memory_context(viennacl::context new_ctx)
+  {
+    viennacl::backend::switch_memory_context<SCALARTYPE>(elements_, new_ctx);
+  }
+
+  //TODO: Think about implementing the following public member functions
+  //void insert_element(unsigned int i, SCALARTYPE val){}
+  //void erase_element(unsigned int i){}
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  void vector_base<SCALARTYPE, SizeType, DistanceType>::resize(size_type new_size, bool preserve)
+  {
+    resize_impl(new_size, viennacl::traits::context(*this), preserve);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  void vector_base<SCALARTYPE, SizeType, DistanceType>::resize(size_type new_size, viennacl::context ctx, bool preserve)
+  {
+    resize_impl(new_size, ctx, preserve);
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  void vector_base<SCALARTYPE, SizeType, DistanceType>::resize_impl(size_type new_size, viennacl::context ctx, bool preserve)
+  {
+    assert(new_size > 0 && bool("Positive size required when resizing vector!"));
+
+    if (new_size != size_)
+    {
+      vcl_size_t new_internal_size = viennacl::tools::align_to_multiple<vcl_size_t>(new_size, alignment);
+
+      std::vector<SCALARTYPE> temp(size_);
+      if (preserve && size_ > 0)
+        fast_copy(*this, temp);
+      temp.resize(new_size);  //drop all entries above new_size
+      temp.resize(new_internal_size); //enlarge to fit new internal size
+
+      if (new_internal_size != internal_size())
+      {
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_internal_size, ctx, NULL);
+      }
+
+      fast_copy(temp, *this);
+      size_ = new_size;
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      pad();
+    }
+
+  }
+
+
   template<class SCALARTYPE, unsigned int ALIGNMENT>
   class vector : public vector_base<SCALARTYPE>
   {

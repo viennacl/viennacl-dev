@@ -23,8 +23,8 @@
 */
 
 #include "viennacl/forwards.h"
+#include "viennacl/matrix_def.hpp"
 #include "viennacl/scalar.hpp"
-#include "viennacl/vector.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
 #include "viennacl/linalg/sparse_matrix_operations.hpp"
 #include "viennacl/tools/tools.hpp"
@@ -37,114 +37,6 @@
 
 namespace viennacl
 {
-  /** @brief Base class for representing matrices where the individual entries are not all stored explicitly, e.g. identity_matrix<>
-    *
-    * Examples are identity_matrix, scalar_matrix, and zero_matrix.
-    */
-  template<typename SCALARTYPE>
-  class implicit_matrix_base
-  {
-    protected:
-      typedef vcl_size_t        size_type;
-      implicit_matrix_base(size_type size1, size_type size2, std::pair<SCALARTYPE, bool> value, bool diag) : size1_(size1), size2_(size2), value_(value), diag_(diag){ }
-    public:
-      typedef SCALARTYPE const & const_reference;
-      typedef SCALARTYPE cpu_value_type;
-
-      size_type size1() const { return size1_; }
-      size_type size2() const { return size2_; }
-
-      SCALARTYPE  value() const { return value_.first; }
-      bool is_value_static( ) const { return value_.second; }
-      bool diag() const { return diag_; }
-
-      const_reference operator()(size_type i, size_type j) const {
-        if(diag_) return (i == j) ? value_.first : 0;
-        return value_.first;
-      }
-
-    protected:
-      size_type size1_;
-      size_type size2_;
-      std::pair<SCALARTYPE, bool> value_;
-      bool diag_;
-  };
-
-  //
-  // Initializer types
-  //
-  /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
-  class identity_matrix
-  {
-    public:
-      typedef vcl_size_t         size_type;
-      typedef SCALARTYPE const & const_reference;
-
-      identity_matrix(size_type s, viennacl::context ctx = viennacl::context()) : size_(s), diag_(1), off_diag_(0), ctx_(ctx) {}
-
-      size_type size1() const { return size_; }
-      size_type size2() const { return size_; }
-      const_reference operator()(size_type i, size_type j) const { return (i == j) ? diag_ : off_diag_; }
-
-      viennacl::context context() const { return ctx_; }
-
-    private:
-      size_type size_;
-      SCALARTYPE diag_;
-      SCALARTYPE off_diag_;
-      viennacl::context ctx_;
-  };
-
-
-  /** @brief Represents a vector consisting of zeros only. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
-  class zero_matrix
-  {
-    public:
-      typedef vcl_size_t         size_type;
-      typedef SCALARTYPE const & const_reference;
-
-      zero_matrix(size_type s1, size_type s2, viennacl::context ctx = viennacl::context()) : size1_(s1), size2_(s2), val_(0), ctx_(ctx) {}
-
-      size_type size1() const { return size1_; }
-      size_type size2() const { return size2_; }
-      const_reference operator()(size_type /*i*/, size_type /*j*/) const { return val_; }
-
-      viennacl::context context() const { return ctx_; }
-
-    private:
-      size_type size1_;
-      size_type size2_;
-      SCALARTYPE val_;
-      viennacl::context ctx_;
-  };
-
-
-  /** @brief Represents a vector consisting of scalars 's' only, i.e. v[i] = s for all i. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
-  class scalar_matrix
-  {
-    public:
-      typedef vcl_size_t         size_type;
-      typedef SCALARTYPE const & const_reference;
-
-      scalar_matrix(size_type s1, size_type s2, const_reference val, viennacl::context ctx = viennacl::context()) : size1_(s1), size2_(s2), value_(val), ctx_(ctx) {}
-
-      size_type size1() const { return size1_; }
-      size_type size2() const { return size2_; }
-      const_reference operator()(size_type /*i*/, size_type /*j*/) const { return value_; }
-
-      viennacl::context context() const { return ctx_; }
-
-    private:
-      size_type size1_;
-      size_type size2_;
-      SCALARTYPE value_;
-      viennacl::context ctx_;
-  };
-
-
 
 //#ifdef VIENNACL_WITH_OPENCL
 //  template<class SCALARTYPE, class DISTRIBUTION>
@@ -227,576 +119,490 @@ namespace viennacl
   };
 
 
-  /** @brief A dense matrix class
+  /** @brief The default constructor. Does not allocate any memory. */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(false), row_major_(true) {}
+
+  /** @brief The layout constructor. Does not allocate any memory. */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(bool is_row_major) : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(true), row_major_(is_row_major) {}
+
+  /** @brief Creates the matrix with the given dimensions
   *
-  * @tparam SCALARTYPE   The underlying scalar type (either float or double)
-  * @tparam ALIGNMENT   The internal memory size is given by (size()/ALIGNMENT + 1) * ALIGNMENT. ALIGNMENT must be a power of two. Best values or usually 4, 8 or 16, higher values are usually a waste of memory.
+  * @param rows     Number of rows
+  * @param columns  Number of columns
+  * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
   */
-  template <class SCALARTYPE, typename SizeType /* see forwards.h for default type */, typename DistanceType /* see forwards.h for default type */>
-  class matrix_base
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(size_type rows, size_type columns, bool is_row_major, viennacl::context ctx)
+      : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1),
+        internal_size1_(viennacl::tools::align_to_multiple<size_type>(rows, alignment)),
+        internal_size2_(viennacl::tools::align_to_multiple<size_type>(columns, alignment)),
+        row_major_fixed_(true), row_major_(is_row_major)
   {
-      typedef matrix_base<SCALARTYPE, SizeType, DistanceType>          self_type;
-    public:
+    if (rows > 0 && columns > 0)
+    {
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx);
+      clear();
+    }
+  }
 
-      typedef matrix_iterator<row_iteration, self_type >   iterator1;
-      typedef matrix_iterator<col_iteration, self_type >   iterator2;
-      typedef scalar<SCALARTYPE>                                                  value_type;
-      typedef SCALARTYPE                                                          cpu_value_type;
-      typedef SizeType                                                            size_type;
-      typedef DistanceType                                                        difference_type;
-      typedef viennacl::backend::mem_handle                                       handle_type;
+  /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(viennacl::backend::mem_handle & h,
+                       size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
+                       size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                       bool is_row_major)
+    : size1_(mat_size1), size2_(mat_size2),
+      start1_(mat_start1), start2_(mat_start2),
+      stride1_(mat_stride1), stride2_(mat_stride2),
+      internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
+      row_major_fixed_(true), row_major_(is_row_major),
+      elements_(h) {}
 
-      static const size_type alignment = 128;
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template <typename LHS, typename RHS, typename OP>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) :
+    size1_(viennacl::traits::size1(proxy)), size2_(viennacl::traits::size2(proxy)), start1_(0), start2_(0), stride1_(1), stride2_(1),
+    internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, alignment)),
+    internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, alignment)),
+    row_major_fixed_(true), row_major_(viennacl::traits::row_major(proxy))
+  {
+    elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
+    if (internal_size() > 0)
+    {
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
+      clear();
+      self_type::operator=(proxy);
+    }
+  }
 
-      /** @brief The default constructor. Does not allocate any memory. */
-      explicit matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(false), row_major_(true) {}
-
-      /** @brief The layout constructor. Does not allocate any memory. */
-      explicit matrix_base(bool is_row_major) : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(true), row_major_(is_row_major) {}
-
-      /** @brief Creates the matrix with the given dimensions
-      *
-      * @param rows     Number of rows
-      * @param columns  Number of columns
-      * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
-      */
-      explicit matrix_base(size_type rows, size_type columns, bool is_row_major, viennacl::context ctx = viennacl::context())
-          : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1),
-            internal_size1_(viennacl::tools::align_to_multiple<size_type>(rows, alignment)),
-            internal_size2_(viennacl::tools::align_to_multiple<size_type>(columns, alignment)),
-            row_major_fixed_(true), row_major_(is_row_major)
-      {
-        if (rows > 0 && columns > 0)
-        {
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), ctx);
-          clear();
-        }
-      }
-
-
-      /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
-      explicit matrix_base(viennacl::backend::mem_handle & h,
-                           size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                           size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
-                           bool is_row_major)
-        : size1_(mat_size1), size2_(mat_size2),
-          start1_(mat_start1), start2_(mat_start2),
-          stride1_(mat_stride1), stride2_(mat_stride2),
-          internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
-          row_major_fixed_(true), row_major_(is_row_major),
-          elements_(h) {}
-
-      template <typename LHS, typename RHS, typename OP>
-      explicit matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) :
-        size1_(viennacl::traits::size1(proxy)), size2_(viennacl::traits::size2(proxy)), start1_(0), start2_(0), stride1_(1), stride2_(1),
-        internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, alignment)),
-        internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, alignment)),
-        row_major_fixed_(true), row_major_(viennacl::traits::row_major(proxy))
-      {
-        elements_.switch_active_handle_id(viennacl::traits::active_handle_id(proxy));
-        if (internal_size() > 0)
-        {
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
-          clear();
-          self_type::operator=(proxy);
-        }
-      }
-
-      // CUDA or host memory:
-      explicit matrix_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type,
-                           size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                           size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
-                           bool is_row_major)
-        : size1_(mat_size1), size2_(mat_size2),
-          start1_(mat_start1), start2_(mat_start2),
-          stride1_(mat_stride1), stride2_(mat_stride2),
-          internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
-          row_major_fixed_(true), row_major_(is_row_major)
-      {
-        if (mem_type == viennacl::CUDA_MEMORY)
-        {
+  // CUDA or host memory:
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type,
+                       size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
+                       size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                       bool is_row_major)
+    : size1_(mat_size1), size2_(mat_size2),
+      start1_(mat_start1), start2_(mat_start2),
+      stride1_(mat_stride1), stride2_(mat_stride2),
+      internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
+      row_major_fixed_(true), row_major_(is_row_major)
+  {
+    if (mem_type == viennacl::CUDA_MEMORY)
+    {
 #ifdef VIENNACL_WITH_CUDA
-          elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
-          elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
-          elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+      elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
+      elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
+      elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
 #else
-          throw cuda_not_available_exception();
+      throw cuda_not_available_exception();
 #endif
-        }
-        else if (mem_type == viennacl::MAIN_MEMORY)
-        {
-          elements_.switch_active_handle_id(viennacl::MAIN_MEMORY);
-          elements_.ram_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
-          elements_.ram_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
-        }
+    }
+    else if (mem_type == viennacl::MAIN_MEMORY)
+    {
+      elements_.switch_active_handle_id(viennacl::MAIN_MEMORY);
+      elements_.ram_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
+      elements_.ram_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+    }
 
-        elements_.raw_size(sizeof(SCALARTYPE) * internal_size());
-      }
+    elements_.raw_size(sizeof(SCALARTYPE) * internal_size());
+  }
 
 #ifdef VIENNACL_WITH_OPENCL
-      explicit matrix_base(cl_mem mem, size_type rows, size_type columns, bool is_row_major, viennacl::context ctx = viennacl::context())
-        : size1_(rows), size2_(columns),
-          start1_(0), start2_(0),
-          stride1_(1), stride2_(1),
-          internal_size1_(rows), internal_size2_(columns),
-          row_major_fixed_(true), row_major_(is_row_major)
-      {
-        elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
-        elements_.opencl_handle() = mem;
-        elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
-        elements_.opencl_handle().context(ctx.opencl_context());
-        elements_.raw_size(sizeof(SCALARTYPE)*internal_size());
-      }
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(cl_mem mem, size_type rows, size_type columns, bool is_row_major, viennacl::context ctx)
+    : size1_(rows), size2_(columns),
+      start1_(0), start2_(0),
+      stride1_(1), stride2_(1),
+      internal_size1_(rows), internal_size2_(columns),
+      row_major_fixed_(true), row_major_(is_row_major)
+  {
+    elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+    elements_.opencl_handle() = mem;
+    elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+    elements_.opencl_handle().context(ctx.opencl_context());
+    elements_.raw_size(sizeof(SCALARTYPE)*internal_size());
+  }
 
-      explicit matrix_base(cl_mem mem, viennacl::context ctx,
-                           size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                           size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
-                           bool is_row_major)
-        : size1_(mat_size1), size2_(mat_size2),
-          start1_(mat_start1), start2_(mat_start2),
-          stride1_(mat_stride1), stride2_(mat_stride2),
-          internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
-          row_major_fixed_(true), row_major_(is_row_major)
-      {
-        elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
-        elements_.opencl_handle() = mem;
-        elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
-        elements_.opencl_handle().context(ctx.opencl_context());
-        elements_.raw_size(sizeof(SCALARTYPE)*internal_size());
-      }
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(cl_mem mem, viennacl::context ctx,
+                       size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
+                       size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                       bool is_row_major)
+    : size1_(mat_size1), size2_(mat_size2),
+      start1_(mat_start1), start2_(mat_start2),
+      stride1_(mat_stride1), stride2_(mat_stride2),
+      internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
+      row_major_fixed_(true), row_major_(is_row_major)
+  {
+    elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+    elements_.opencl_handle() = mem;
+    elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+    elements_.opencl_handle().context(ctx.opencl_context());
+    elements_.raw_size(sizeof(SCALARTYPE)*internal_size());
+  }
 #endif
 
-      matrix_base(const self_type & other) :
-        size1_(other.size1()), size2_(other.size2()), start1_(0), start2_(0), stride1_(1), stride2_(1),
-        internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, alignment)),
-        internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, alignment)),
-        row_major_fixed_(true), row_major_(other.row_major())
-      {
-        elements_.switch_active_handle_id(viennacl::traits::active_handle_id(other));
-        if (internal_size() > 0)
-        {
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(other));
-          clear();
-          self_type::operator=(other);
-        }
-      }
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(const matrix_base<SCALARTYPE, SizeType, DistanceType> & other) :
+    size1_(other.size1()), size2_(other.size2()), start1_(0), start2_(0), stride1_(1), stride2_(1),
+    internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, alignment)),
+    internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, alignment)),
+    row_major_fixed_(true), row_major_(other.row_major())
+  {
+    elements_.switch_active_handle_id(viennacl::traits::active_handle_id(other));
+    if (internal_size() > 0)
+    {
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(other));
+      clear();
+      self_type::operator=(other);
+    }
+  }
 
-      self_type & operator=(const self_type & other)  //enables implicit conversions
-      {
-        if(this==&other)
-          return *this;
-
-        if (internal_size() == 0)
-        {
-          if (other.internal_size() == 0)
-            return *this;
-          if (!row_major_fixed_)
-            row_major_ = other.row_major();
-          resize(other.size1(), other.size2(), false);
-        }
-
-        viennacl::linalg::am(*this,
-                             other, cpu_value_type(1.0), 1, false, false);
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator=(const matrix_base<SCALARTYPE, SizeType, DistanceType> & other)  //enables implicit conversions
+  {
+    if (internal_size() == 0)
+    {
+      if (other.internal_size() == 0)
         return *this;
-      }
+      if (!row_major_fixed_)
+        row_major_ = other.row_major();
+      resize(other.size1(), other.size2(), false);
+    }
 
-      /** @brief Creates the matrix from the supplied random matrix. */
-      /*template<class DISTRIBUTION>
-      matrix(rand::random_matrix_t<SCALARTYPE, DISTRIBUTION> const & m) : rows_(m.size1), columns_(m.size2)
+    viennacl::linalg::am(*this,
+                         other, cpu_value_type(1.0), 1, false, false);
+    return *this;
+  }
+
+  /** @brief Implementation of the operation m1 = m2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
+  *
+  * @param proxy  An expression template proxy class.
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template <typename LHS, typename RHS, typename OP>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator=(const matrix_expression<const LHS, const RHS, OP> & proxy)
+  {
+    assert(  (viennacl::traits::size1(proxy) == size1() || size1() == 0)
+          && (viennacl::traits::size2(proxy) == size2() || size2() == 0)
+          && bool("Incompatible matrix sizes!"));
+
+    if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
+    {
+      size1_ = viennacl::traits::size1(proxy);
+      size2_ = viennacl::traits::size2(proxy);
+      internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+      internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
+      if (!row_major_fixed_)
+        row_major_ = viennacl::traits::row_major(proxy);
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
+      if (size1_ != internal_size1_ || size2_ != internal_size2_)
+        clear();
+    }
+
+    if (internal_size() > 0)
+      linalg::detail::op_executor<self_type, op_assign, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
+
+    return *this;
+  }
+
+
+  // A = trans(B). Currently achieved in CPU memory
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator=(const matrix_expression< const self_type,
+                                                 const self_type,
+                                                 op_trans> & proxy)
+  {
+    assert( (handle() != proxy.lhs().handle()) && bool("Self-assignment of matrix transpose not implemented"));
+    assert( ( (proxy.lhs().size1() == size2()) || (size2() == 0) ) && bool("Matrix dimensions do not match!"));
+    assert( ( (proxy.lhs().size2() == size1()) || (size1() == 0) ) && bool("Matrix dimensions do not match!"));
+
+    if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
+    {
+      size1_ = viennacl::traits::size1(proxy);
+      size2_ = viennacl::traits::size2(proxy);
+      internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+      internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
+      if (!row_major_fixed_)
+        row_major_ = viennacl::traits::row_major(proxy);
+    }
+
+    std::vector<SCALARTYPE> temp(proxy.lhs().internal_size());
+
+    viennacl::backend::memory_read(proxy.lhs().handle(), 0, sizeof(SCALARTYPE)*proxy.lhs().internal_size(), &(temp[0]));
+
+    // now transpose it
+    std::vector<SCALARTYPE> temp_trans(internal_size());
+
+    if (row_major_)
+    {
+      for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
+        for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
+          temp_trans[row_major::mem_index(start2() + stride2() * j,
+                                          start1() + stride1() * i,
+                                          internal_size1(), internal_size2())]
+            = temp[row_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
+                                        proxy.lhs().start2() + proxy.lhs().stride2() * j,
+                                        proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
+    }
+    else
+    {
+      for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
+        for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
+          temp_trans[column_major::mem_index(start2() + stride2() * j,
+                                             start1() + stride1() * i,
+                                             internal_size1(), internal_size2())]
+            = temp[column_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
+                                           proxy.lhs().start2() + proxy.lhs().stride2() * j,
+                                           proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
+    }
+
+    // write back
+    viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy), &(temp_trans[0]));
+
+    return *this;
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template <typename LHS, typename RHS, typename OP>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator+=(const matrix_expression<const LHS, const RHS, OP> & proxy)
+  {
+    assert(  (viennacl::traits::size1(proxy) == size1())
+          && (viennacl::traits::size2(proxy) == size2())
+          && bool("Incompatible matrix sizes!"));
+    assert( (size1() > 0) && bool("Vector not yet initialized!") );
+    assert( (size2() > 0) && bool("Vector not yet initialized!") );
+
+    linalg::detail::op_executor<self_type, op_inplace_add, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
+
+    return *this;
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template <typename LHS, typename RHS, typename OP>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator-=(const matrix_expression<const LHS, const RHS, OP> & proxy)
+  {
+    assert(  (viennacl::traits::size1(proxy) == size1())
+          && (viennacl::traits::size2(proxy) == size2())
+          && bool("Incompatible matrix sizes!"));
+    assert( (size1() > 0) && bool("Vector not yet initialized!") );
+    assert( (size2() > 0) && bool("Vector not yet initialized!") );
+
+    linalg::detail::op_executor<self_type, op_inplace_sub, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
+
+    return *this;
+  }
+
+  /** @brief Assigns the supplied identity matrix to the matrix. */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator = (identity_matrix<SCALARTYPE> const & m)
+  {
+    assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
+    assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
+
+    if (internal_size() == 0)
+    {
+      size1_ = m.size1();
+      size2_ = m.size2();
+      internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+      internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
+      if (internal_size() > 0)
       {
-        if (internal_size() > 0)
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
+        clear();
+      }
+    }
+    else
+      viennacl::linalg::matrix_assign(*this, SCALARTYPE(0));
+
+    if (internal_size() > 0)
+      viennacl::linalg::matrix_diagonal_assign(*this, m(0,0));
+
+    return *this;
+  }
+
+  /** @brief Assigns the supplied zero matrix to the matrix. */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator = (zero_matrix<SCALARTYPE> const & m)
+  {
+    assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
+    assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
+
+    if (internal_size() == 0)
+    {
+      size1_ = m.size1();
+      size2_ = m.size2();
+      internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+      internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
+      if (internal_size() > 0)
+      {
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
+        clear();
+      }
+    }
+    else
+      viennacl::linalg::matrix_assign(*this, SCALARTYPE(0));
+
+    return *this;
+  }
+
+  /** @brief Assigns the supplied scalar vector to the matrix. */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator = (scalar_matrix<SCALARTYPE> const & m)
+  {
+    assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
+    assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
+
+    if (internal_size() == 0)
+    {
+      size1_ = m.size1();
+      size2_ = m.size2();
+      internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+      internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
+      if (internal_size() > 0)
+      {
+        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
+        clear();
+      }
+    }
+
+    if (internal_size() > 0)
+    {
+      viennacl::linalg::matrix_assign(*this, m(0,0));
+    }
+
+    return *this;
+  }
+
+
+  //read-write access to an element of the matrix/matrix_range/matrix_slice
+  /** @brief Read-write access to a single element of the matrix/matrix_range/matrix_slice
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  entry_proxy<SCALARTYPE> matrix_base<SCALARTYPE, SizeType, DistanceType>::operator()(size_type row_index, size_type col_index)
+  {
+    if (row_major_)
+      return entry_proxy<SCALARTYPE>(row_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
+    return entry_proxy<SCALARTYPE>(column_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
+  }
+
+  /** @brief Read access to a single element of the matrix/matrix_range/matrix_slice
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  const_entry_proxy<SCALARTYPE> matrix_base<SCALARTYPE, SizeType, DistanceType>::operator()(size_type row_index, size_type col_index) const
+  {
+    if (row_major_)
+      return const_entry_proxy<SCALARTYPE>(row_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
+    return const_entry_proxy<SCALARTYPE>(column_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
+  }
+
+  //
+  // Operator overloads for enabling implicit conversions:
+  //
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator += (const matrix_base<SCALARTYPE, SizeType, DistanceType> & other)
+  {
+    viennacl::linalg::ambm(*this,
+                            *this, SCALARTYPE(1.0), 1, false, false,
+                            other, SCALARTYPE(1.0), 1, false, false);
+    return *this;
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator -= (const matrix_base<SCALARTYPE, SizeType, DistanceType> & other)
+  {
+    viennacl::linalg::ambm(*this,
+                            *this, SCALARTYPE(1.0), 1, false, false,
+                            other, SCALARTYPE(1.0), 1, false, true);
+    return *this;
+  }
+
+  /** @brief Scales a matrix by a CPU scalar value
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator *= (SCALARTYPE val)
+  {
+    //viennacl::linalg::inplace_mult(*this, val);
+    viennacl::linalg::am(*this,
+                          *this, val, 1, false, false);
+    return *this;
+  }
+
+  /** @brief Scales this matrix by a CPU scalar value
+  */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator /= (SCALARTYPE val)
+  {
+    //viennacl::linalg::inplace_mult(*this, static_cast<SCALARTYPE>(1) / val);
+    viennacl::linalg::am(*this,
+                          *this, val, 1, true, false);
+    return *this;
+  }
+
+
+  /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  matrix_expression<const matrix_base<SCALARTYPE, SizeType, DistanceType>, const SCALARTYPE, op_mult> matrix_base<SCALARTYPE, SizeType, DistanceType>::operator-() const
+  {
+    return matrix_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1));
+  }
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  void matrix_base<SCALARTYPE, SizeType, DistanceType>::clear() { viennacl::linalg::matrix_assign(*this, SCALARTYPE(0), true); }
+
+
+  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  void matrix_base<SCALARTYPE, SizeType, DistanceType>::resize(size_type rows, size_type columns, bool preserve)
+  {
+    assert( (rows > 0 && columns > 0) && bool("Check failed in matrix::resize(): Number of rows and columns must be positive!"));
+
+    if (preserve && internal_size() > 0)
+    {
+      //get old entries:
+      std::vector< SCALARTYPE > old_entries(internal_size());
+      viennacl::backend::memory_read(elements_, 0, sizeof(SCALARTYPE)*internal_size(), &(old_entries[0]));
+
+      //set up entries of new matrix:
+      std::vector< SCALARTYPE > new_entries(  viennacl::tools::align_to_multiple<vcl_size_t>(rows,    alignment)
+                                            * viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment));
+      for (size_type i=0; i<rows; ++i)
+      {
+        if (i >= size1_)
+          continue;
+
+        for (size_type j=0; j<columns; ++j)
         {
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size());
-          rand::buffer_dumper<SCALARTYPE, DISTRIBUTION>::dump(elements_,m.distribution,0,internal_size());
-        }
-      }*/
-
-
-
-      /** @brief Implementation of the operation m1 = m2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
-      *
-      * @param proxy  An expression template proxy class.
-      */
-      template <typename LHS, typename RHS, typename OP>
-      self_type & operator=(const matrix_expression<const LHS, const RHS, OP> & proxy)
-      {
-        assert(  (viennacl::traits::size1(proxy) == size1() || size1() == 0)
-              && (viennacl::traits::size2(proxy) == size2() || size2() == 0)
-              && bool("Incompatible matrix sizes!"));
-
-        if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
-        {
-          size1_ = viennacl::traits::size1(proxy);
-          size2_ = viennacl::traits::size2(proxy);
-          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
-          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
-          if (!row_major_fixed_)
-            row_major_ = viennacl::traits::row_major(proxy);
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
-          if (size1_ != internal_size1_ || size2_ != internal_size2_)
-            clear();
-        }
-
-        if (internal_size() > 0)
-          linalg::detail::op_executor<self_type, op_assign, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
-
-        return *this;
-      }
-
-
-      // A = trans(B). Currently achieved in CPU memory
-      self_type & operator=(const matrix_expression< const self_type,
-                                                     const self_type,
-                                                     op_trans> & proxy)
-      {
-        assert( (handle() != proxy.lhs().handle()) && bool("Self-assignment of matrix transpose not implemented"));
-        assert( ( (proxy.lhs().size1() == size2()) || (size2() == 0) ) && bool("Matrix dimensions do not match!"));
-        assert( ( (proxy.lhs().size2() == size1()) || (size1() == 0) ) && bool("Matrix dimensions do not match!"));
-
-        if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
-        {
-          size1_ = viennacl::traits::size1(proxy);
-          size2_ = viennacl::traits::size2(proxy);
-          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
-          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
-          if (!row_major_fixed_)
-            row_major_ = viennacl::traits::row_major(proxy);
-        }
-
-        std::vector<SCALARTYPE> temp(proxy.lhs().internal_size());
-
-        viennacl::backend::memory_read(proxy.lhs().handle(), 0, sizeof(SCALARTYPE)*proxy.lhs().internal_size(), &(temp[0]));
-
-        // now transpose it
-        std::vector<SCALARTYPE> temp_trans(internal_size());
-
-        if (row_major_)
-        {
-          for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
-            for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
-              temp_trans[row_major::mem_index(start2() + stride2() * j,
-                                              start1() + stride1() * i,
-                                              internal_size1(), internal_size2())]
-                = temp[row_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
-                                            proxy.lhs().start2() + proxy.lhs().stride2() * j,
-                                            proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
-        }
-        else
-        {
-          for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
-            for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
-              temp_trans[column_major::mem_index(start2() + stride2() * j,
-                                                 start1() + stride1() * i,
-                                                 internal_size1(), internal_size2())]
-                = temp[column_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
-                                               proxy.lhs().start2() + proxy.lhs().stride2() * j,
-                                               proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
-        }
-
-        // write back
-        viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy), &(temp_trans[0]));
-
-        return *this;
-      }
-
-      template <typename LHS, typename RHS, typename OP>
-      self_type & operator+=(const matrix_expression<const LHS, const RHS, OP> & proxy)
-      {
-        assert(  (viennacl::traits::size1(proxy) == size1())
-              && (viennacl::traits::size2(proxy) == size2())
-              && bool("Incompatible matrix sizes!"));
-        assert( (size1() > 0) && bool("Vector not yet initialized!") );
-        assert( (size2() > 0) && bool("Vector not yet initialized!") );
-
-        linalg::detail::op_executor<self_type, op_inplace_add, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
-
-        return *this;
-      }
-
-      template <typename LHS, typename RHS, typename OP>
-      self_type & operator-=(const matrix_expression<const LHS, const RHS, OP> & proxy)
-      {
-        assert(  (viennacl::traits::size1(proxy) == size1())
-              && (viennacl::traits::size2(proxy) == size2())
-              && bool("Incompatible matrix sizes!"));
-        assert( (size1() > 0) && bool("Vector not yet initialized!") );
-        assert( (size2() > 0) && bool("Vector not yet initialized!") );
-
-        linalg::detail::op_executor<self_type, op_inplace_sub, matrix_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
-
-        return *this;
-      }
-
-      /** @brief Assigns the supplied identity matrix to the matrix. */
-      self_type & operator = (identity_matrix<SCALARTYPE> const & m)
-      {
-        assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
-        assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
-
-        if (internal_size() == 0)
-        {
-          size1_ = m.size1();
-          size2_ = m.size2();
-          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
-          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
-          if (internal_size() > 0)
-          {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
-            clear();
-          }
-        }
-        else
-          viennacl::linalg::matrix_assign(*this, SCALARTYPE(0));
-
-        if (internal_size() > 0)
-          viennacl::linalg::matrix_diagonal_assign(*this, m(0,0));
-
-        return *this;
-      }
-
-      /** @brief Assigns the supplied zero matrix to the matrix. */
-      self_type & operator = (zero_matrix<SCALARTYPE> const & m)
-      {
-        assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
-        assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
-
-        if (internal_size() == 0)
-        {
-          size1_ = m.size1();
-          size2_ = m.size2();
-          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
-          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
-          if (internal_size() > 0)
-          {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
-            clear();
-          }
-        }
-        else
-          viennacl::linalg::matrix_assign(*this, SCALARTYPE(0));
-
-        return *this;
-      }
-
-      /** @brief Assigns the supplied scalar vector to the matrix. */
-      self_type & operator = (scalar_matrix<SCALARTYPE> const & m)
-      {
-        assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
-        assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
-
-        if (internal_size() == 0)
-        {
-          size1_ = m.size1();
-          size2_ = m.size2();
-          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
-          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
-          if (internal_size() > 0)
-          {
-            viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), m.context());
-            clear();
-          }
-        }
-
-        if (internal_size() > 0)
-        {
-          viennacl::linalg::matrix_assign(*this, m(0,0));
-        }
-
-        return *this;
-      }
-
-
-      //read-write access to an element of the matrix/matrix_range/matrix_slice
-      /** @brief Read-write access to a single element of the matrix/matrix_range/matrix_slice
-      */
-      entry_proxy<SCALARTYPE> operator()(size_type row_index, size_type col_index)
-      {
-        if (row_major_)
-          return entry_proxy<SCALARTYPE>(row_major::mem_index(start1_ + stride1() * row_index, start2_ + stride2() * col_index, internal_size1(), internal_size2()), elements_);
-        return entry_proxy<SCALARTYPE>(column_major::mem_index(start1_ + stride1() * row_index, start2_ + stride2() * col_index, internal_size1(), internal_size2()), elements_);
-      }
-
-      /** @brief Read access to a single element of the matrix/matrix_range/matrix_slice
-      */
-      const_entry_proxy<SCALARTYPE> operator()(size_type row_index, size_type col_index) const
-      {
-        if (row_major_)
-          return const_entry_proxy<SCALARTYPE>(row_major::mem_index(start1_ + stride1() * row_index, start2_ + stride2() * col_index, internal_size1(), internal_size2()), elements_);
-        return const_entry_proxy<SCALARTYPE>(column_major::mem_index(start1_ + stride1() * row_index, start2_ + stride2() * col_index, internal_size1(), internal_size2()), elements_);
-      }
-
-      //
-      // Operator overloads for enabling implicit conversions:
-      //
-      self_type & operator += (const self_type & other)
-      {
-        viennacl::linalg::ambm(*this,
-                                *this, SCALARTYPE(1.0), 1, false, false,
-                                other, SCALARTYPE(1.0), 1, false, false);
-        return *this;
-      }
-
-      self_type & operator -= (const self_type & other)
-      {
-        viennacl::linalg::ambm(*this,
-                                *this, SCALARTYPE(1.0), 1, false, false,
-                                other, SCALARTYPE(1.0), 1, false, true);
-        return *this;
-      }
-
-      /** @brief Scales a matrix by a CPU scalar value
-      */
-      self_type & operator *= (SCALARTYPE val)
-      {
-        //viennacl::linalg::inplace_mult(*this, val);
-        viennacl::linalg::am(*this,
-                              *this, val, 1, false, false);
-        return *this;
-      }
-
-      /** @brief Scales this matrix by a CPU scalar value
-      */
-      self_type & operator /= (SCALARTYPE val)
-      {
-        //viennacl::linalg::inplace_mult(*this, static_cast<SCALARTYPE>(1) / val);
-        viennacl::linalg::am(*this,
-                              *this, val, 1, true, false);
-        return *this;
-      }
-
-
-      /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
-      matrix_expression<const self_type, const SCALARTYPE, op_mult> operator-() const
-      {
-        return matrix_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1));
-      }
-
-      /** @brief Returns the number of rows */
-      size_type size1() const { return size1_;}
-      /** @brief Returns the number of columns */
-      size_type size2() const { return size2_; }
-
-      /** @brief Returns the number of rows */
-      size_type start1() const { return start1_;}
-      /** @brief Returns the number of columns */
-      size_type start2() const { return start2_; }
-
-      /** @brief Returns the number of rows */
-      size_type stride1() const { return static_cast<size_type>(stride1_);}
-      /** @brief Returns the number of columns */
-      size_type stride2() const { return static_cast<size_type>(stride2_); }
-
-      /** @brief Resets all entries to zero */
-      void clear()
-      {
-        viennacl::linalg::matrix_assign(*this, SCALARTYPE(0), true);
-      }
-
-
-      /** @brief Returns the internal number of rows. Usually required for launching OpenCL kernels only */
-      size_type internal_size1() const { return internal_size1_; }
-      /** @brief Returns the internal number of columns. Usually required for launching OpenCL kernels only */
-      size_type internal_size2() const { return internal_size2_; }
-      /** @brief Returns the total amount of allocated memory in multiples of sizeof(SCALARTYPE) */
-      size_type internal_size() const { return internal_size1() * internal_size2(); }
-
-      /** @brief Returns the OpenCL handle, non-const-version */
-            handle_type & handle()       { return elements_; }
-      /** @brief Returns the OpenCL handle, const-version */
-      const handle_type & handle() const { return elements_; }
-
-
-      viennacl::memory_types memory_domain() const
-      {
-        return elements_.get_active_handle_id();
-      }
-
-      bool row_major() const { return row_major_; }
-
-    protected:
-
-      void set_handle(viennacl::backend::mem_handle const & h)
-      {
-        elements_ = h;
-      }
-
-      void switch_memory_context(viennacl::context new_ctx)
-      {
-        viennacl::backend::switch_memory_context<SCALARTYPE>(elements_, new_ctx);
-      }
-
-
-      /** @brief Resizes the matrix.
-      *   Existing entries can be preserved, but
-      *
-      * @param rows       New number of rows
-      * @param columns    New number of columns
-      * @param preserve   If true, existing values are preserved.
-      */
-      void resize(size_type rows, size_type columns, bool preserve = true)
-      {
-        assert( (rows > 0 && columns > 0) && bool("Check failed in matrix::resize(): Number of rows and columns must be positive!"));
-
-        if (preserve && internal_size() > 0)
-        {
-          //get old entries:
-          std::vector< SCALARTYPE > old_entries(internal_size());
-          viennacl::backend::memory_read(elements_, 0, sizeof(SCALARTYPE)*internal_size(), &(old_entries[0]));
-
-          //set up entries of new matrix:
-          std::vector< SCALARTYPE > new_entries(  viennacl::tools::align_to_multiple<vcl_size_t>(rows,    alignment)
-                                                * viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment));
-          for (size_type i=0; i<rows; ++i)
-          {
-            if (i >= size1_)
-              continue;
-
-            for (size_type j=0; j<columns; ++j)
-            {
-              if (j >= size2_)
-                continue;
-              if (row_major_)
-                new_entries[row_major::mem_index(i, j, viennacl::tools::align_to_multiple<vcl_size_t>(rows, alignment), viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment))]
-                    = old_entries[row_major::mem_index(i, j, internal_size1(), internal_size2())];
-              else
-                new_entries[column_major::mem_index(i, j, viennacl::tools::align_to_multiple<vcl_size_t>(rows, alignment), viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment))]
-                    = old_entries[column_major::mem_index(i, j, internal_size1(), internal_size2())];
-            }
-          }
-
-          //copy new entries to GPU:
-          size1_ = rows;
-          size2_ = columns;
-          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
-          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_entries.size(), viennacl::traits::context(elements_), &(new_entries[0]));
-        }
-        else //discard old entries:
-        {
-          size1_ = rows;
-          size2_ = columns;
-          internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
-          internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
-
-          viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(elements_));
-          clear();
+          if (j >= size2_)
+            continue;
+          if (row_major_)
+            new_entries[row_major::mem_index(i, j, viennacl::tools::align_to_multiple<vcl_size_t>(rows, alignment), viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment))]
+                = old_entries[row_major::mem_index(i, j, internal_size1(), internal_size2())];
+          else
+            new_entries[column_major::mem_index(i, j, viennacl::tools::align_to_multiple<vcl_size_t>(rows, alignment), viennacl::tools::align_to_multiple<vcl_size_t>(columns, alignment))]
+                = old_entries[column_major::mem_index(i, j, internal_size1(), internal_size2())];
         }
       }
 
-    private:
-      size_type size1_;
-      size_type size2_;
-      size_type start1_;
-      size_type start2_;
-      difference_type stride1_;
-      difference_type stride2_;
-      size_type internal_size1_;
-      size_type internal_size2_;
-      bool row_major_fixed_; //helper flag to make layout of matrix<T, row_major> A; persistent
-      bool row_major_;
-      handle_type elements_;
-  }; //matrix
+      //copy new entries to GPU:
+      size1_ = rows;
+      size2_ = columns;
+      internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+      internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*new_entries.size(), viennacl::traits::context(elements_), &(new_entries[0]));
+    }
+    else //discard old entries:
+    {
+      size1_ = rows;
+      size2_ = columns;
+      internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, alignment);
+      internal_size2_ = viennacl::tools::align_to_multiple<size_type>(size2_, alignment);
 
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(elements_));
+      clear();
+    }
+  }
 
 
   /** @brief A dense matrix class
