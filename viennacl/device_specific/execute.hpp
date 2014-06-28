@@ -62,11 +62,11 @@ namespace viennacl{
         src+="#elif defined(cl_amd_fp64)\n";
         src+="#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
         src+="#endif\n";
-        src +=tplt.generate(statements);
+        src +=tplt.generate(statements, "kernel");
         ctx.add_program(src, program_name);
       }
 
-      tplt.enqueue(program_name, statements);
+      tplt.enqueue(program_name, statements, "kernel");
     }
 
   }

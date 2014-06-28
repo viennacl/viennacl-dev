@@ -121,12 +121,12 @@ namespace viennacl
       template_base(template_base::parameters const & parameters, binding_policy_t binding_policy) : parameters_(parameters), binding_policy_(binding_policy){ }
 
       /** @brief Generates the code associated with this profile onto the provided stream */
-      std::string generate(statements_container const & statements)
+      std::string generate(statements_container const & statements, std::string kernel_prefix = "")
       {
-        utils::kernel_generation_stream stream;
+        if(kernel_prefix.empty())
+          kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
 
-        //Kernel Prefix
-        std::string kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
+        utils::kernel_generation_stream stream;
 
         //Create mapping
         std::vector<mapping_type> mapping(statements.data().size());
@@ -156,15 +156,17 @@ namespace viennacl
         return stream.str();
       }
 
-      void enqueue(std::string const & program_name, statements_container const & statements)
+      void enqueue(std::string const & program_name, statements_container const & statements, std::string kernel_prefix = "")
       {
+        if(kernel_prefix.empty())
+          kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
+
         viennacl::ocl::program & program = viennacl::ocl::current_context().get_program(program_name);
-        std::string prefix = tree_parsing::statements_representation(statements, binding_policy_);
 
         //Get the kernels
         std::vector<viennacl::ocl::kernel*> kernels(parameters_.num_kernels());
         for(std::vector<viennacl::ocl::kernel*> ::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
-           *it = &program.get_kernel(prefix+tools::to_string(std::distance(kernels.begin(), it)));
+           *it = &program.get_kernel(kernel_prefix+tools::to_string(std::distance(kernels.begin(), it)));
 
         //Configure
         for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
@@ -182,6 +184,7 @@ namespace viennacl
         for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
           viennacl::ocl::enqueue(**it);
       }
+
 
     protected:
       template_base::parameters const & parameters_;
