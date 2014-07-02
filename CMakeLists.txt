@@ -127,7 +127,7 @@ if(ENABLE_DIST)
 
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${DISTDIR}/build"
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-         "${PROJECT_SOURCE_DIR}/build/README" "${DISTDIR}/build/README"
+         "${PROJECT_SOURCE_DIR}/cmake/README.txt" "${DISTDIR}/build/README.txt"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
          "${PROJECT_SOURCE_DIR}/CL" "${DISTDIR}/CL"
@@ -200,7 +200,7 @@ if(ENABLE_DIST)
              cmake/ViennaCLCommon.cmake
              cmake/ViennaCLConfig.cmake.in
              cmake/ViennaCLConfigVersion.cmake.in
-             build/README)
+             cmake/README.txt)
       configure_file(${f} "${DIST_SOURCES_DIR}/${f}" COPYONLY)
    endforeach()
 
