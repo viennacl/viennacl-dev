@@ -110,7 +110,7 @@ namespace viennacl{
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
           result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
-            kernel_.arg(current_arg_++, mat.value());
+            kernel_.arg(current_arg_++, typename viennacl::result_of::cl_type<ScalarType>::type(mat.value()));
           }
 
           /** @brief Traversal functor: */
