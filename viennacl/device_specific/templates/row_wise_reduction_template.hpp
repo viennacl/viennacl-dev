@@ -50,7 +50,7 @@ namespace viennacl{
       row_wise_reduction_template(const char * scalartype, char A_trans, unsigned int simd_width,
                                   unsigned int local_size_0, unsigned int local_size_1, unsigned int num_groups_0) : template_base(scalartype, simd_width, local_size_0, local_size_1, 1), A_trans_(A_trans),  num_groups_0_(num_groups_0){ }
 
-      void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
+      void configure_impl(vcl_size_t kernel_id, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const{
         configure_local_sizes(kernel, kernel_id);
         kernel.global_work_size(0,local_size_0_*num_groups_0_);
         kernel.global_work_size(1,local_size_1_);
@@ -176,12 +176,12 @@ namespace viennacl{
               for(unsigned int k = 0 ; k < N ; ++k)
               {
                 viennacl::scheduler::statement const & statement = exprs[k]->statement();
-                unsigned int root_idx = exprs[k]->root_idx();
+                vcl_size_t root_idx = exprs[k]->root_idx();
                 std::string value;
-                tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("",""),-1,value,exprs[k]->mapping());
+                tree_parsing::generate_all_lhs(statement,root_idx,index_tuple("",""),0,value,exprs[k]->mapping());
                 if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE){
                   value += "*";
-                  tree_parsing::generate_all_rhs(statement,root_node,index_tuple("",""),-1,value,exprs[k]->mapping());
+                  tree_parsing::generate_all_rhs(statement,root_node,index_tuple("",""),0,value,exprs[k]->mapping());
                 }
                 compute_reduction(stream,accs[k],value,rops[k]);
               }
@@ -220,7 +220,7 @@ namespace viennacl{
             unsigned int i = 0;
             for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
               std::string str;
-              tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(index_tuple("r",size1, "0", size2), -1, str, mapping[i++]), false);
+              tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(index_tuple("r",size1, "0", size2), 0, str, mapping[i++]), false);
               stream << str << ";" << std::endl;
             }
             stream.dec_tab();

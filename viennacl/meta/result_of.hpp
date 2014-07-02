@@ -144,6 +144,17 @@ namespace viennacl
         typedef SizeType   type;
       };
 
+      //
+      // Retrieve difference_type
+      //
+      /** @brief Generic meta-function for retrieving the difference_type associated with type T */
+      template <typename T>
+      struct difference_type
+      {
+        typedef typename T::difference_type   type;
+      };
+
+
       #ifdef VIENNACL_WITH_EIGEN
       template <class T, int a, int b, int c, int d, int e>
       struct size_type< Eigen::Matrix<T, a, b, c, d, e> >

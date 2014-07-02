@@ -141,13 +141,13 @@ namespace viennacl
        * @param vec_start  The offset from the beginning of the buffer identified by 'h'
        * @param vec_stride Increment between two elements in the original buffer (in multiples of SCALARTYPE)
       */
-      explicit vector_base(viennacl::backend::mem_handle & h, size_type vec_size, size_type vec_start, difference_type vec_stride);
+      explicit vector_base(viennacl::backend::mem_handle & h, size_type vec_size, size_type vec_start, size_type vec_stride);
 
       /** @brief Creates a vector and allocates the necessary memory */
       explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context());
 
       // CUDA or host memory:
-      explicit vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start = 0, difference_type stride = 1);
+      explicit vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start = 0, size_type stride = 1);
 
 #ifdef VIENNACL_WITH_OPENCL
       /** @brief Create a vector from existing OpenCL memory
@@ -158,7 +158,7 @@ namespace viennacl
       * @param existing_mem   An OpenCL handle representing the memory
       * @param vec_size       The size of the vector.
       */
-      explicit vector_base(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1, viennacl::context ctx = viennacl::context());
+      explicit vector_base(cl_mem existing_mem, size_type vec_size, size_type start = 0, size_type stride = 1, viennacl::context ctx = viennacl::context());
 #endif
 
       template <typename LHS, typename RHS, typename OP>
@@ -274,7 +274,7 @@ namespace viennacl
 
       size_type       size_;
       size_type       start_;
-      difference_type stride_;
+      size_type       stride_;
       size_type       internal_size_;
       handle_type elements_;
   }; //vector_base

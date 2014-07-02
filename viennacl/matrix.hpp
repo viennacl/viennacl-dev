@@ -150,8 +150,8 @@ namespace viennacl
   /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(viennacl::backend::mem_handle & h,
-                       size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                       size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                       size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
+                       size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                        bool is_row_major)
     : size1_(mat_size1), size2_(mat_size2),
       start1_(mat_start1), start2_(mat_start2),
@@ -180,8 +180,8 @@ namespace viennacl
   // CUDA or host memory:
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type,
-                       size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                       size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                       size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
+                       size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                        bool is_row_major)
     : size1_(mat_size1), size2_(mat_size2),
       start1_(mat_start1), start2_(mat_start2),
@@ -227,8 +227,8 @@ namespace viennacl
 
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(cl_mem mem, viennacl::context ctx,
-                       size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                       size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                       size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
+                       size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                        bool is_row_major)
     : size1_(mat_size1), size2_(mat_size2),
       start1_(mat_start1), start2_(mat_start2),

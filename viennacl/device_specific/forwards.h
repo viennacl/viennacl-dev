@@ -134,15 +134,15 @@ namespace viennacl{
     }
     class mapped_object;
 
-    typedef std::map<std::pair<unsigned int, tree_parsing::node_type>, tools::shared_ptr<mapped_object> > mapping_type;
+    typedef std::map<std::pair<vcl_size_t, tree_parsing::node_type>, tools::shared_ptr<mapped_object> > mapping_type;
 
 
     namespace tree_parsing{
 
       template<class Fun>
-      inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool inspect);
+      inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect);
 
-      inline std::string evaluate_expression(scheduler::statement const & statement, unsigned int root_idx, index_tuple const & index, int simd_element, mapping_type const & mapping, node_type initial_leaf);
+      inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, index_tuple const & index, unsigned int simd_element, mapping_type const & mapping, node_type initial_leaf);
 
       class map_functor;
 

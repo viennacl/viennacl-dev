@@ -398,7 +398,7 @@ namespace viennacl
         device_specific::reduction_template(device_specific::database::get<T>(device_specific::database::reduction))
                                         .enqueue(linalg::opencl::kernels::vector<T>::program_name(), scheduler::preset::index_norm_inf(&result, &vec));
         T host_result = result;
-        return host_result;
+        return static_cast<cl_uint>(host_result);
       }
 
       //TODO: Special case vec1 == vec2 allows improvement!!

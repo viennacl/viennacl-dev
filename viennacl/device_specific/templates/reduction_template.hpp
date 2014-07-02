@@ -77,7 +77,7 @@ namespace viennacl
         return parameters_.local_size_0()*scalartype_size;
       }
 
-      void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
+      void configure_impl(vcl_size_t kernel_id, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
       {
         //configure ND range
         if(kernel_id==0)
@@ -92,7 +92,7 @@ namespace viennacl
         }
 
         //set arguments
-        cl_uint size = get_vector_size(statements.data().front());
+        vcl_size_t size = get_vector_size(statements.data().front());
         kernel.arg(n_arg++, size/parameters_.simd_width());
 
         std::vector<scheduler::statement_node const *> reductions;
@@ -135,7 +135,7 @@ namespace viennacl
 
       void core_0(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, statements_container const & /*statements*/, std::vector<mapping_type> const & /*mapping*/) const
       {
-        unsigned int N = exprs.size();
+        std::size_t N = exprs.size();
 
         std::vector<scheduler::op_element> rops(N);
         std::vector<std::string> accs(N);
@@ -194,7 +194,7 @@ namespace viennacl
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
           {
             viennacl::scheduler::statement const & statement = exprs[k]->statement();
-            unsigned int root_idx = exprs[k]->root_idx();
+            vcl_size_t root_idx = exprs[k]->root_idx();
             mapping_type const & mapping = exprs[k]->mapping();
             index_tuple idx("i","N");
             if(parameters_.simd_width() > 1){
@@ -208,10 +208,10 @@ namespace viennacl
               }
             }
             else{
-              std::string value = tree_parsing::evaluate_expression(statement,root_idx,idx,-1,mapping,tree_parsing::LHS_NODE_TYPE);
+              std::string value = tree_parsing::evaluate_expression(statement,root_idx,idx,0,mapping,tree_parsing::LHS_NODE_TYPE);
               if(statement.array()[root_idx].op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                 value += "*";
-                value += tree_parsing::evaluate_expression(statement,root_idx,idx,-1,mapping,tree_parsing::RHS_NODE_TYPE);
+                value += tree_parsing::evaluate_expression(statement,root_idx,idx,0,mapping,tree_parsing::RHS_NODE_TYPE);
               }
               compute_reduction(stream,accsidx[k],"i",accs[k],value,rops[k]);
             }
@@ -253,7 +253,7 @@ namespace viennacl
 
       void core_1(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
-        unsigned int N = exprs.size();
+        std::size_t N = exprs.size();
         std::vector<scheduler::op_element> rops(N);
         std::vector<std::string> accs(N);
         std::vector<std::string> accsidx(N);
@@ -315,13 +315,13 @@ namespace viennacl
         stream.inc_tab();
         unsigned int i = 0;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          stream << tree_parsing::evaluate_expression(*it, it->root(), index_tuple("0", "N"), -1, mapping[i++], tree_parsing::PARENT_NODE_TYPE) << ";" << std::endl;
+          stream << tree_parsing::evaluate_expression(*it, it->root(), index_tuple("0", "N"), 0, mapping[i++], tree_parsing::PARENT_NODE_TYPE) << ";" << std::endl;
 
         stream.dec_tab();
         stream << "}" << std::endl;
       }
 
-      cl_uint get_vector_size(viennacl::scheduler::statement const & s) const
+      vcl_size_t get_vector_size(viennacl::scheduler::statement const & s) const
       {
         scheduler::statement::container_type exprs = s.array();
         for(scheduler::statement::container_type::iterator it = exprs.begin() ; it != exprs.end() ; ++it)

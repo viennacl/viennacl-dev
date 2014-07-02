@@ -43,13 +43,13 @@ namespace viennacl{
       /** @brief base functor class for traversing a statement */
       class traversal_functor{
         public:
-          void call_before_expansion(scheduler::statement const &, unsigned int) const { }
-          void call_after_expansion(scheduler::statement const &, unsigned int) const { }
+          void call_before_expansion(scheduler::statement const &, vcl_size_t) const { }
+          void call_after_expansion(scheduler::statement const &, vcl_size_t) const { }
       };
 
       /** @brief Recursively execute a functor on a statement */
       template<class Fun>
-      inline void traverse(scheduler::statement const & statement, unsigned int root_idx, Fun const & fun, bool inspect){
+      inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect){
         scheduler::statement_node const & root_node = statement.array()[root_idx];
         bool recurse = utils::node_leaf(root_node.op)?inspect:true;
 

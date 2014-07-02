@@ -66,6 +66,9 @@ namespace viennacl
     private:
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::const_iterator mit;
+
         stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
@@ -77,21 +80,20 @@ namespace viennacl
         std::string rhs_suffix = "reg";
         std::string lhs_suffix = statements.order()==statements_container::INDEPENDENT?"tmp":rhs_suffix;
 
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), lhs_suffix, cache, *it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), rhs_suffix, cache, *it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::RHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::RHS_NODE_TYPE);
         }
 
         //Generates all the expression, in order
-        unsigned int i = 0;
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          stream << tree_parsing::evaluate_expression(*it, it->root(), index_tuple("i", "N"), -1, mapping[i++], tree_parsing::PARENT_NODE_TYPE) << ";" << std::endl;
+        for(statements_container::data_type::const_iterator sit = statements.data().begin() ; sit != statements.data().end() ; ++sit)
+          stream << tree_parsing::evaluate_expression(*sit, sit->root(), index_tuple("i", "N"), 0, *mit, tree_parsing::PARENT_NODE_TYPE) << ";" << std::endl;
 
         //Write back
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width(), lhs_suffix, cache,*it, it->root(), index_tuple("i", "N"), stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width(), lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
         }
 
         stream.dec_tab();
@@ -103,13 +105,13 @@ namespace viennacl
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
-      void configure_impl(unsigned int /*kernel_id*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+      void configure_impl(vcl_size_t /*kernel_id*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
         k.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups());
         k.global_work_size(1,1);
 
         scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
-        cl_uint size;
+        vcl_size_t size;
         if(up_to_internal_size_)
           size = utils::call_on_vector(root.lhs, utils::internal_size_fun());
         else

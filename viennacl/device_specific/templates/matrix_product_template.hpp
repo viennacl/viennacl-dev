@@ -57,7 +57,7 @@ public:
     , use_A_local_(use_A_local), use_B_local_(use_B_local), local_fetch_0_(local_fetch_0), local_fetch_1_(local_fetch_1)
     , mL_(ms*local_size_0), nL_(ns*local_size_1){ }
 
-    void configure_impl(unsigned int kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const
+    void configure_impl(vcl_size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const
     {
         assert(kernel_id==0);
 
@@ -411,7 +411,7 @@ private:
                     std::string j = tools::to_string((n/simd_width_)*(local_size_1_*simd_width_) + n%simd_width_);
                     prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;
-                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::evaluate_expression_traversal(index_tuple("0", "M", j, "N"), -1, str, mapping[0]), false);
+                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::evaluate_expression_traversal(index_tuple("0", "M", j, "N"), 0, str, mapping[0]), false);
                     stream << str << ";" << std::endl;
                 }
                 if((m+1)%simd_width_>0)
@@ -430,7 +430,7 @@ private:
                     std::string j = tools::to_string((m/simd_width_)*(local_size_0_*simd_width_) + m%simd_width_);
                     prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;
-                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::evaluate_expression_traversal(index_tuple("0", "N", j, "M"), -1, str, mapping[0]), false);
+                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::evaluate_expression_traversal(index_tuple("0", "N", j, "M"), 0, str, mapping[0]), false);
                     stream << str << ";" << std::endl;
                 }
                 if((n+1)%simd_width_>0)

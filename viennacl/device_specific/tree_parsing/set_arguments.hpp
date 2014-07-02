@@ -114,7 +114,7 @@ namespace viennacl{
           }
 
           /** @brief Traversal functor: */
-          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type node_type) const {
             scheduler::statement_node const & root_node = statement.array()[root_idx];
             if(node_type==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node.lhs, *this);
