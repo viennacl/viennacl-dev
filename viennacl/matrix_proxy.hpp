@@ -58,8 +58,8 @@ namespace viennacl
                                                         viennacl::is_row_major<MatrixType>::value) {}
 
       matrix_range(self_type const & other) : base_type(const_cast<handle_type &>(other.handle()),
-                                                        other.size1(), other.start1(), difference_type(other.stride1()), other.internal_size1(),
-                                                        other.size2(), other.start2(), difference_type(other.stride2()), other.internal_size2(),
+                                                        other.size1(), other.start1(), other.stride1(), other.internal_size1(),
+                                                        other.size2(), other.start2(), other.stride2(), other.internal_size2(),
                                                         other.row_major()) {}
 
       using base_type::operator=;
@@ -314,8 +314,8 @@ namespace viennacl
                                                         viennacl::is_row_major<MatrixType>::value) {}
 
       matrix_slice(self_type const & other) : base_type(const_cast<handle_type &>(other.handle()),
-                                                        other.size1(), other.start1(), difference_type(other.stride1()), other.internal_size1(),
-                                                        other.size2(), other.start2(), difference_type(other.stride2()), other.internal_size2(),
+                                                        other.size1(), other.start1(), other.stride1(), other.internal_size1(),
+                                                        other.size2(), other.start2(), other.stride2(), other.internal_size2(),
                                                         other.row_major()) {}
 
       using base_type::operator=;
