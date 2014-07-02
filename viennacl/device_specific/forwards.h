@@ -163,22 +163,30 @@ namespace viennacl{
     class database_type
     {
     public:
-      typedef std::map<scheduler::statement_node_numeric_type, ParamT> expression_map;
-      typedef std::map<device_name_type, expression_map> device_name_map;
-      typedef std::map<ocl::device_architecture_family, device_name_map> device_architecture_map;
-      typedef std::map<device_type, device_architecture_map> device_type_map;
-      typedef std::map<vendor_id_type, device_type_map> map_type;
-      map_type map;
+
+      //Because it would be too easy to use nested maps directly.
+      //THANKS, VISUAL STUDIO.
+      struct expression_t{ typedef std::map<scheduler::statement_node_numeric_type, ParamT> map_t; map_t d; };
+      struct device_name_t{ typedef std::map<device_name_type, expression_t> map_t; map_t d; };
+      struct device_architecture_t{ typedef std::map<ocl::device_architecture_family, device_name_t> map_t; map_t d; };
+      struct device_type_t{ typedef std::map<device_type, device_architecture_t> map_t; map_t d; };
+      struct type{ typedef std::map<vendor_id_type, device_type_t> map_t; map_t d; };
+      type map;
 
       database_type(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4, ParamT const & p5)
       {
-        map[p0][p1][p2][p3].insert(std::make_pair(p4, p5));
+        map.d[p0].d[p1].d[p2].d[p3].d.insert(std::make_pair(p4, p5));
       }
 
       database_type<ParamT> & operator()(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4, ParamT const & p5)
       {
-        map[p0][p1][p2][p3].insert(std::make_pair(p4, p5));
+        map.d[p0].d[p1].d[p2].d[p3].d.insert(std::make_pair(p4, p5));
          return *this;
+      }
+
+      ParamT const & at(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4) const
+      {
+        return map.d.at(p0).d.at(p1).d.at(p2).d.at(p3).d.at(p4);
       }
     };
 

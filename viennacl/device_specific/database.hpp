@@ -56,7 +56,7 @@ namespace viennacl{
       {
         //Returns default if the profile is invalid
         if(params.is_invalid())
-          return database.map.at(ocl::unknown_id).at(device.type()).at(ocl::UNKNOWN).at("").at(numeric_type);
+          return database.at(ocl::unknown_id, device.type(), ocl::UNKNOWN, "", numeric_type);
         return params;
       }
 
@@ -74,41 +74,41 @@ namespace viennacl{
 
         //std::cout << "Looking up vendor ID..." << std::endl;
         /*-Vendor ID-*/
-        typename database_type<ParamT>::map_type::const_iterator vendor_it = database.map.find(vendor_id);
+        typename database_type<ParamT>::type::map_t::const_iterator vendor_it = database.map.d.find(vendor_id);
         //Vendor not recognized => global default:
-        if(vendor_it==database.map.end())
-          return handle_failure(database, device, numeric_type, database.map.at(ocl::unknown_id).at(dev_type).at(ocl::UNKNOWN).at("").at(numeric_type));
+        if(vendor_it==database.map.d.end())
+          return handle_failure(database, device, numeric_type, database.at(ocl::unknown_id, dev_type, ocl::UNKNOWN, "", numeric_type));
 
         /*-Device Type-*/
         //std::cout << "Looking up device type..." << std::endl;
-        typename database_type<ParamT>::device_type_map::const_iterator device_type_it = vendor_it->second.find(dev_type);
+        typename database_type<ParamT>::device_type_t::map_t::const_iterator device_type_it = vendor_it->second.d.find(dev_type);
         //Device type not recognized for this vendor => global default
-        if(device_type_it==vendor_it->second.end())
-          return handle_failure(database, device, numeric_type, database.map.at(ocl::unknown_id).at(dev_type).at(ocl::UNKNOWN).at("").at(numeric_type));
+        if(device_type_it==vendor_it->second.d.end())
+          return handle_failure(database, device, numeric_type, database.at(ocl::unknown_id, dev_type, ocl::UNKNOWN, "", numeric_type));
 
         /*-Device Architecture-*/
         //std::cout << "Looking up device architecture..." << std::endl;
-        typename database_type<ParamT>::device_architecture_map::const_iterator architecture_it = device_type_it->second.find(device_architecture);
-        if(architecture_it==device_type_it->second.end())
-          return handle_failure(database, device, numeric_type, database.map.at(ocl::unknown_id).at(dev_type).at(ocl::UNKNOWN).at("").at(numeric_type));
+        typename database_type<ParamT>::device_architecture_t::map_t::const_iterator architecture_it = device_type_it->second.d.find(device_architecture);
+        if(architecture_it==device_type_it->second.d.end())
+          return handle_failure(database, device, numeric_type, database.at(ocl::unknown_id, dev_type, ocl::UNKNOWN, "", numeric_type));
 
         /*-Device Name-*/
         //std::cout << "Looking up device name..." << std::endl;
-        typename database_type<ParamT>::device_name_map::const_iterator device_name_it = architecture_it->second.find(device_name);
+        typename database_type<ParamT>::device_name_t::map_t::const_iterator device_name_it = architecture_it->second.d.find(device_name);
         //Name not found => Vendor default
-        if(device_name_it==architecture_it->second.end())
-          return handle_failure(database, device, numeric_type, database.map.at(vendor_id).at(dev_type).at(device_architecture).at("").at(numeric_type));
+        if(device_name_it==architecture_it->second.d.end())
+          return handle_failure(database, device, numeric_type, database.at(vendor_id, dev_type, device_architecture, "", numeric_type));
 
         //std::cout << "Looking up expression name.." << std::endl;
         /*-Expression-*/
-        typename database_type<ParamT>::expression_map::const_iterator expression_it = device_name_it->second.find(numeric_type);
+        typename database_type<ParamT>::expression_t::map_t::const_iterator expression_it = device_name_it->second.d.find(numeric_type);
         //Expression not found => Vendor default
-        if(expression_it==device_name_it->second.end())
-          return handle_failure(database, device, numeric_type, database.map.at(vendor_id).at(dev_type).at(device_architecture).at("").at(numeric_type));
+        if(expression_it==device_name_it->second.d.end())
+          return handle_failure(database, device, numeric_type, database.at(vendor_id, dev_type, device_architecture, "", numeric_type));
 
         //std::cout << "Device found in the database! Getting profile..." << std::endl;
         //Everything okay. Return specific profile//
-        return handle_failure(database, device, numeric_type, database.map.at(vendor_id).at(dev_type).at(device_architecture).at(device_name).at(numeric_type));
+        return handle_failure(database, device, numeric_type, database.at(vendor_id, dev_type, device_architecture, device_name, numeric_type));
       }
 
 
