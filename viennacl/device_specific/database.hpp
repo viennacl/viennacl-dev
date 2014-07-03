@@ -6,6 +6,7 @@
 #include "viennacl/device_specific/templates/vector_axpy_template.hpp"
 #include "viennacl/device_specific/templates/matrix_axpy_template.hpp"
 #include "viennacl/device_specific/templates/reduction_template.hpp"
+#include "viennacl/device_specific/templates/row_wise_reduction_template.hpp"
 #include "viennacl/scheduler/forwards.h"
 
 namespace viennacl{
@@ -49,6 +50,23 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_axpy_template::parameters("float",1,8,8,8,8,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_axpy_template::parameters("double",1,8,8,8,8,true));
 
+      /////////////////////
+      /// Row-wise Reduction
+      ////////////////////
+      static database_type<row_wise_reduction_template::parameters> row_wise_reduction = database_type<row_wise_reduction_template::parameters>
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, row_wise_reduction_template::parameters("uint",'N',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, row_wise_reduction_template::parameters("int",'N',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, row_wise_reduction_template::parameters("ulong",'N',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters("long",'N',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'N',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'N',1,8,8,1))
+
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, row_wise_reduction_template::parameters("uint",'T',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, row_wise_reduction_template::parameters("int",'T',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, row_wise_reduction_template::parameters("ulong",'T',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters("long",'T',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'T',1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'T',1,8,8,1));
 
       /** @brief If the fallback is too harsh, use a very conservative profile */
       template<class ParamT>

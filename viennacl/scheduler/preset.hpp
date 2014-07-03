@@ -125,6 +125,25 @@ namespace viennacl{
         return scheduler::statement(array);
       }
 
+      template<typename T>
+      scheduler::statement diagonal_assign_cpu(matrix_base<T> const * x, implicit_vector_base<T> const * y)
+      {
+        vcl_size_t dummy = 0;
+        statement::container_type array(2);
+        array[0].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
+        array[0].lhs.node_index = 1;
+        array[0].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+        array[0].op.type = OPERATION_BINARY_ASSIGN_TYPE;
+        statement::add_element(dummy, array[0].rhs, *y);
+
+        statement::add_element(dummy, array[1].lhs, *x);
+        array[1].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+        array[1].op.type = OPERATION_BINARY_MATRIX_DIAG_TYPE;
+        statement::add_element(dummy, array[1].rhs, 0);
+
+        return scheduler::statement(array);
+      }
+
       template<typename ScalarType, typename T>
       scheduler::statement reduction_inner_prod(ScalarType const * s, vector_base<T> const * x, vector_base<T> const * y,
                                       scheduler::operation_node_type ROP, bool use_sqrt, bool x_abs)

@@ -105,18 +105,33 @@ namespace viennacl
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
+
+      vcl_size_t get_vector_size(scheduler::statement const & statement) const
+      {
+        scheduler::statement_node const & root = statement.array()[statement.root()];
+        if(root.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+        {
+          scheduler::statement_node lhs = statement.array()[root.lhs.node_index];
+          if(lhs.op.type==scheduler::OPERATION_BINARY_MATRIX_DIAG_TYPE)
+          {
+            vcl_size_t size1 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size1_fun()):
+                                                    utils::call_on_matrix(lhs.lhs, utils::size1_fun());
+            vcl_size_t size2 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size2_fun()):
+                                                    utils::call_on_matrix(lhs.lhs, utils::size2_fun());
+            return std::min(size1, size2);
+          }
+          throw generator_not_supported_exception("Vector AXPY : Unimplemented LHS size deduction");
+        }
+        return up_to_internal_size_?utils::call_on_vector(root.lhs, utils::internal_size_fun()):
+                                      utils::call_on_vector(root.lhs, utils::size_fun());
+      }
+
       void configure_impl(vcl_size_t /*kernel_id*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
         k.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups());
         k.global_work_size(1,1);
-
-        scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
-        vcl_size_t size;
-        if(up_to_internal_size_)
-          size = utils::call_on_vector(root.lhs, utils::internal_size_fun());
-        else
-          size = utils::call_on_vector(root.lhs, utils::size_fun());
-        k.arg(n_arg++, cl_uint(size)/parameters_.simd_width());
+        cl_uint size = static_cast<cl_uint>(get_vector_size(statements.data().front()));
+        k.arg(n_arg++, size/parameters_.simd_width());
       }
 
     public:

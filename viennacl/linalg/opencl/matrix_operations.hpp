@@ -115,19 +115,9 @@ namespace viennacl
       template <typename NumericT>
       void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
       {
-        typedef NumericT        value_type;
-
-        value_type alpha = static_cast<value_type>(s);
-
-        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat, "diagonal_assign_cpu");
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
-                                 cl_uint(viennacl::traits::start1(mat)),           cl_uint(viennacl::traits::start2(mat)),
-                                 cl_uint(viennacl::traits::stride1(mat)),          cl_uint(viennacl::traits::stride2(mat)),
-                                 cl_uint(viennacl::traits::size1(mat)),            cl_uint(viennacl::traits::size2(mat)),
-                                 cl_uint(viennacl::traits::internal_size1(mat)),   cl_uint(viennacl::traits::internal_size2(mat)),
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha))
-                                )
-                              );
+        viennacl::scalar_vector<NumericT> sx(std::min(viennacl::traits::size1(mat), viennacl::traits::size2(mat)), s);
+        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
+                                        .enqueue(detail::program_for_matrix(mat).name(), scheduler::preset::diagonal_assign_cpu(&mat, &sx));
       }
 
       template <typename NumericT>

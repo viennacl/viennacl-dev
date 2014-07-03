@@ -188,6 +188,9 @@ namespace viennacl
       {
       public:
           mapped_reduction(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info){ }
+          vcl_size_t root_idx() const { return info_.root_idx; }
+          scheduler::statement const & statement() const { return *info_.statement; }
+          scheduler::statement_node root_node() const { return statement().array()[root_idx()]; }
       };
 
       /** @brief Mapping of a scalar reduction (based on inner product) */
