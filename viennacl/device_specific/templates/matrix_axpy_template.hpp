@@ -64,8 +64,11 @@ namespace viennacl{
       };
 
     private:
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
+      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::const_iterator mit;
+
         stream << "for(unsigned int i = get_global_id(0) ; i < M ; i += get_global_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
@@ -77,19 +80,19 @@ namespace viennacl{
 
         //Fetches entries to registers
         std::set<std::string>  cache;
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), "reg", cache,*it, it->root(), idx, stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::PARENT_NODE_TYPE);
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), "reg", cache,*sit, sit->root(), idx, stream, *mit, tree_parsing::PARENT_NODE_TYPE);
 
         unsigned int i = 0;
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit){
           std::string str;
-          tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(idx, -1, str, mapping[i++]), false);
+          tree_parsing::traverse(*sit, sit->root(), tree_parsing::evaluate_expression_traversal(idx, 0, str, mappings[i++]), false);
           stream << str << ";" << std::endl;
         }
 
         //Write back
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width(), "reg", cache,*it, it->root(), idx, stream,mapping[std::distance(statements.data().begin(),it)], tree_parsing::LHS_NODE_TYPE);
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width(), "reg", cache,*sit, sit->root(), idx, stream, *mit, tree_parsing::LHS_NODE_TYPE);
 
 
         stream.dec_tab();
@@ -104,7 +107,7 @@ namespace viennacl{
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
-      void configure_impl(unsigned int /*kernel_id*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+      void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
         k.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups_0());
         k.global_work_size(1,parameters_.local_size_1()*parameters_.num_groups_1());
@@ -125,10 +128,10 @@ namespace viennacl{
     public:
       matrix_axpy_template(matrix_axpy_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), parameters_(parameters){ }
 
-      void enqueue(std::string const & program_name, statements_container const & statements, bool up_to_internal_size = false)
+      void enqueue(viennacl::ocl::program & program, statements_container const & statements, bool up_to_internal_size = false, std::string kernel_prefix = "")
       {
         up_to_internal_size_ = up_to_internal_size;
-        template_base::enqueue(program_name, statements);
+        template_base::enqueue(program, statements, kernel_prefix);
       }
 
     private:

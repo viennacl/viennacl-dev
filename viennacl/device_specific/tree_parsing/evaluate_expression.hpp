@@ -158,14 +158,14 @@ namespace viennacl{
       class evaluate_expression_traversal: public traversal_functor{
         private:
           index_tuple index_;
-          int simd_element_;
+          unsigned int simd_element_;
           std::string & str_;
           mapping_type const & mapping_;
 
         public:
-          evaluate_expression_traversal(index_tuple const & index, int simd_element, std::string & str, mapping_type const & mapping) : index_(index), simd_element_(simd_element), str_(str), mapping_(mapping){ }
+          evaluate_expression_traversal(index_tuple const & index, unsigned int simd_element, std::string & str, mapping_type const & mapping) : index_(index), simd_element_(simd_element), str_(str), mapping_(mapping){ }
 
-          void call_before_expansion(scheduler::statement const & statement, unsigned int root_idx) const
+          void call_before_expansion(scheduler::statement const & statement, vcl_size_t root_idx) const
           {
               scheduler::statement_node const & root_node = statement.array()[root_idx];
               if((root_node.op.type_family==scheduler::OPERATION_UNARY_TYPE_FAMILY || utils::elementwise_function(root_node.op))
@@ -174,12 +174,12 @@ namespace viennacl{
               str_+="(";
 
           }
-          void call_after_expansion(scheduler::statement const & /*statement*/, unsigned int /*root_idx*/) const
+          void call_after_expansion(scheduler::statement const & /*statement*/, vcl_size_t /*root_idx*/) const
           {
             str_+=")";
           }
 
-          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type leaf) const
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type leaf) const
           {
             scheduler::statement_node const & root_node = statement.array()[root_idx];
             mapping_type::key_type key = std::make_pair(root_idx, leaf);
@@ -209,8 +209,8 @@ namespace viennacl{
           }
       };
 
-      inline std::string evaluate_expression(scheduler::statement const & statement, unsigned int root_idx, index_tuple const & index,
-                                             int simd_element, mapping_type const & mapping, node_type leaf)
+      inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, index_tuple const & index,
+                                             unsigned int simd_element, mapping_type const & mapping, node_type leaf)
       {
         std::string res;
         evaluate_expression_traversal traversal_functor(index, simd_element, res, mapping);

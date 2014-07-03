@@ -54,7 +54,7 @@ namespace viennacl
       static const int alignment = VectorType::alignment;
 
       vector_range(VectorType & v, range const & entry_range)
-       : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), static_cast<difference_type>(v.stride())) {}
+       : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
 
 
       using base_type::operator=;
@@ -180,7 +180,7 @@ namespace viennacl
       static const int alignment = VectorType::alignment;
 
       vector_slice(VectorType & v, slice const & entry_slice)
-          : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), static_cast<difference_type>(v.stride()) * entry_slice.stride()) {}
+          : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
 
 
       using base_type::operator=;

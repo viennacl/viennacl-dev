@@ -47,12 +47,12 @@ namespace viennacl
 
       basic_slice() : start_(0), stride_(1), size_(0) {}
       basic_slice(size_type start_index,
-                  difference_type stride_arg,
+                  size_type stride_arg,
                   size_type size_arg) : start_(start_index), stride_(stride_arg), size_(size_arg) {}
 
 
       size_type       start() const { return start_; }
-      difference_type stride() const { return stride_; }
+      size_type       stride() const { return stride_; }
       size_type       size() const { return size_; }
 
       const_reference operator()(size_type i) const
@@ -67,7 +67,7 @@ namespace viennacl
 
     private:
       size_type start_;
-      difference_type stride_;
+      size_type stride_;
       size_type size_;
   };
 

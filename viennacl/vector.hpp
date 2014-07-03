@@ -111,6 +111,7 @@ namespace viennacl
       typedef const_vector_iterator<SCALARTYPE, ALIGNMENT>    self_type;
     public:
       typedef scalar<SCALARTYPE>            value_type;
+      typedef vcl_size_t                size_type;
       typedef vcl_ptrdiff_t                 difference_type;
       typedef viennacl::backend::mem_handle handle_type;
 
@@ -123,9 +124,9 @@ namespace viennacl
       *   @param stride Stride for the support of vector_slice
       */
       const_vector_iterator(vector_base<SCALARTYPE> const & vec,
-                            vcl_size_t index,
-                            vcl_size_t start = 0,
-                            vcl_ptrdiff_t stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {}
+                            size_type index,
+                            size_type start = 0,
+                            size_type stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {}
 
       /** @brief Constructor for vector-like treatment of arbitrary buffers
       *   @param elements  The buffer over which to iterate
@@ -134,9 +135,9 @@ namespace viennacl
       *   @param stride    Stride for the support of vector_slice
       */
       const_vector_iterator(handle_type const & elements,
-                            vcl_size_t index,
-                            vcl_size_t start = 0,
-                            vcl_ptrdiff_t stride = 1) : elements_(elements), index_(index), start_(start), stride_(stride) {}
+                            size_type index,
+                            size_type start = 0,
+                            size_type stride = 1) : elements_(elements), index_(index), start_(start), stride_(stride) {}
 
       /** @brief Dereferences the iterator and returns the value of the element. For convenience only, performance is poor due to OpenCL overhead! */
       value_type operator*(void) const
@@ -167,18 +168,18 @@ namespace viennacl
 
       //vcl_size_t index() const { return index_; }
       /** @brief Offset of the current element index with respect to the beginning of the buffer */
-      vcl_size_t offset() const { return start_ + index_ * stride(); }
+      size_type offset() const { return start_ + index_ * stride(); }
 
       /** @brief Index increment in the underlying buffer when incrementing the iterator to the next element */
-      vcl_size_t stride() const { return static_cast<vcl_size_t>(stride_); }
+      size_type stride() const { return stride_; }
       handle_type const & handle() const { return elements_; }
 
     protected:
       /** @brief  The index of the entry the iterator is currently pointing to */
       handle_type const & elements_;
-      vcl_size_t index_;  //offset from the beginning of elements_
-      vcl_size_t start_;
-      vcl_ptrdiff_t stride_;
+      size_type index_;  //offset from the beginning of elements_
+      size_type start_;
+      size_type stride_;
   };
 
 
@@ -208,13 +209,14 @@ namespace viennacl
       typedef vector_iterator<SCALARTYPE, ALIGNMENT>        self_type;
     public:
       typedef typename base_type::handle_type               handle_type;
+      typedef typename base_type::size_type             size_type;
       typedef typename base_type::difference_type           difference_type;
 
       vector_iterator() : base_type(), elements_(NULL) {}
       vector_iterator(handle_type & elements,
-                      vcl_size_t index,
-                      vcl_size_t start = 0,
-                      vcl_ptrdiff_t stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {}
+                      size_type index,
+                      size_type start = 0,
+                      size_type stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {}
       /** @brief Constructor
       *   @param vec    The vector over which to iterate
       *   @param index  The starting index of the iterator
@@ -222,9 +224,9 @@ namespace viennacl
       *   @param stride Stride for slices
       */
       vector_iterator(vector_base<SCALARTYPE> & vec,
-                      vcl_size_t index,
-                      vcl_size_t start = 0,
-                      vcl_ptrdiff_t stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {}
+                      size_type index,
+                      size_type start = 0,
+                      size_type stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {}
       //vector_iterator(base_type const & b) : base_type(b) {}
 
       entry_proxy<SCALARTYPE> operator*(void)
@@ -252,7 +254,7 @@ namespace viennacl
 
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(viennacl::backend::mem_handle & h,
-                       size_type vec_size, size_type vec_start, difference_type vec_stride)
+                       size_type vec_size, size_type vec_start, size_type vec_stride)
     : size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
 
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
@@ -268,7 +270,7 @@ namespace viennacl
 
   // CUDA or host memory:
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start, difference_type stride)
+  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start, size_type stride)
     : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
   {
     if (mem_type == viennacl::CUDA_MEMORY)
@@ -294,7 +296,7 @@ namespace viennacl
 
 #ifdef VIENNACL_WITH_OPENCL
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(cl_mem existing_mem, size_type vec_size, size_type start, difference_type stride, viennacl::context ctx)
+  vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(cl_mem existing_mem, size_type vec_size, size_type start, size_type stride, viennacl::context ctx)
     : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
   {
     elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
@@ -779,7 +781,7 @@ namespace viennacl
 
     explicit vector(size_type vec_size, viennacl::context ctx) : base_type(vec_size, ctx) {}
 
-    explicit vector(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, size_type start = 0, difference_type stride = 1)
+    explicit vector(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, size_type start = 0, size_type stride = 1)
         : base_type(ptr_to_mem, mem_type, vec_size, start, stride) {}
 
 #ifdef VIENNACL_WITH_OPENCL
@@ -791,7 +793,7 @@ namespace viennacl
     * @param existing_mem   An OpenCL handle representing the memory
     * @param vec_size       The size of the vector.
     */
-    explicit vector(cl_mem existing_mem, size_type vec_size, size_type start = 0, difference_type stride = 1) : base_type(existing_mem, vec_size, start, stride) {}
+    explicit vector(cl_mem existing_mem, size_type vec_size, size_type start = 0, size_type stride = 1) : base_type(existing_mem, vec_size, start, stride) {}
 
     /** @brief An explicit constructor for the vector, allocating the given amount of memory (plus a padding specified by 'ALIGNMENT') and the OpenCL context provided
     *

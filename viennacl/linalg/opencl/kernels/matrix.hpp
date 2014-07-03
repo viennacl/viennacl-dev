@@ -951,6 +951,7 @@ namespace viennacl
               viennacl::matrix<NumericT, F> B;
               viennacl::matrix<NumericT, F> C;
               viennacl::scalar_matrix<NumericT> M(0,0,0);
+              viennacl::scalar_vector<NumericT> sx(0,0);
               viennacl::scalar<NumericT> da;
               viennacl::scalar<NumericT> db;
               NumericT ha;
@@ -966,11 +967,10 @@ namespace viennacl
               source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::matrix_row(&x, &A, hi)));
               source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::matrix_column(&x, &A, hi)));
               source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::matrix_diag_to_vector(&x, &A, hi)));
-//              generate_ambm(source, numeric_string, is_row_major);
+              source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::diagonal_assign_cpu(&A, &sx)));
 
               // kernels with mostly predetermined skeleton:
-//              generate_assign_cpu(source, numeric_string, is_row_major);
-              generate_diagonal_assign_cpu(source, numeric_string, is_row_major);
+//              generate_diagonal_assign_cpu(source, numeric_string, is_row_major);
               generate_element_op(source, numeric_string, is_row_major);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, true);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, false);

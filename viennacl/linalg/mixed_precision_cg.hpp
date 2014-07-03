@@ -85,7 +85,7 @@ namespace viennacl
     };
 
 
-    const char * double_float_conversion_program =
+    static const char * double_float_conversion_program =
     "#if defined(cl_khr_fp64)\n"
     "#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n"
     "#elif defined(cl_amd_fp64)\n"

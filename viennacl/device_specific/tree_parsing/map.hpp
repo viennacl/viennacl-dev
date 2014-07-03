@@ -49,7 +49,7 @@ namespace viennacl{
       /** @brief Functor to map the statements to the types defined in mapped_objects.hpp */
       class map_functor : public traversal_functor{
 
-          scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, unsigned int root_idx) const
+          scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, vcl_size_t root_idx) const
           {
               scheduler::statement_node const * root_node = &statement->array()[root_idx];
               while(root_node->lhs.numeric_type==scheduler::INVALID_NUMERIC_TYPE)
@@ -64,7 +64,7 @@ namespace viennacl{
 
           /** @brief Binary leaf */
           template<class T>
-          result_type binary_leaf(scheduler::statement const * statement, unsigned int root_idx, mapping_type const * mapping) const
+          result_type binary_leaf(scheduler::statement const * statement, vcl_size_t root_idx, mapping_type const * mapping) const
           {
             return result_type(new T(utils::numeric_type_to_string(numeric_type(statement,root_idx)), binder_.get(NULL), mapped_object::node_info(mapping, statement, root_idx)));
           }
@@ -112,7 +112,7 @@ namespace viennacl{
           }
 
           /** @brief Traversal functor */
-          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type node_type) const {
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type node_type) const {
             mapping_type::key_type key(root_idx, node_type);
             scheduler::statement_node const & root_node = statement.array()[root_idx];
 

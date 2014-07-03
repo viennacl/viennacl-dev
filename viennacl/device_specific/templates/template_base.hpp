@@ -114,32 +114,35 @@ namespace viennacl
       /** @brief generates the arguments that are global to the kernel (different from the object-specific arguments) */
       virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
 
-      virtual void configure_impl(unsigned int kernel_id, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
+      virtual void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
 
     public:
       /** @brief The constructor */
       template_base(template_base::parameters const & parameters, binding_policy_t binding_policy) : parameters_(parameters), binding_policy_(binding_policy){ }
 
       /** @brief Generates the code associated with this profile onto the provided stream */
-      std::string generate(statements_container const & statements)
+      std::string generate(statements_container const & statements, std::string kernel_prefix = "")
       {
-        utils::kernel_generation_stream stream;
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::iterator mit;
 
-        //Kernel Prefix
-        std::string kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
+        if(kernel_prefix.empty())
+          kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
+
+        utils::kernel_generation_stream stream;
 
         //Create mapping
         std::vector<mapping_type> mapping(statements.data().size());
         tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::traverse(*it, it->root(), tree_parsing::map_functor(*binder,mapping[std::distance(statements.data().begin(), it)]), true);
+        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          tree_parsing::traverse(*sit, sit->root(), tree_parsing::map_functor(*binder,*mit), true);
 
         //Generate Prototype
         std::string prototype;
         std::set<std::string> already_generated;
         add_kernel_arguments(statements, prototype);
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::traverse(*it, it->root(), tree_parsing::prototype_generation_traversal(parameters_.simd_width(), already_generated, prototype, mapping[std::distance(statements.data().begin(), it)]), true);
+        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          tree_parsing::traverse(*sit, sit->root(), tree_parsing::prototype_generation_traversal(parameters_.simd_width(), already_generated, prototype, *mit), true);
         prototype.erase(prototype.size()-1); //Last comma pruned
 
         for(unsigned int i = 0 ; i < parameters_.num_kernels() ; ++i)
@@ -156,32 +159,36 @@ namespace viennacl
         return stream.str();
       }
 
-      void enqueue(std::string const & program_name, statements_container const & statements)
+      void enqueue(viennacl::ocl::program & program, statements_container const & statements, std::string kernel_prefix = "")
       {
-        viennacl::ocl::program & program = viennacl::ocl::current_context().get_program(program_name);
-        std::string prefix = tree_parsing::statements_representation(statements, binding_policy_);
+        std::vector<viennacl::ocl::kernel*> ::iterator kit;
+        vcl_size_t current_idx;
+
+        if(kernel_prefix.empty())
+          kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
 
         //Get the kernels
         std::vector<viennacl::ocl::kernel*> kernels(parameters_.num_kernels());
-        for(std::vector<viennacl::ocl::kernel*> ::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
-           *it = &program.get_kernel(prefix+tools::to_string(std::distance(kernels.begin(), it)));
+        for(current_idx=0, kit = kernels.begin() ; kit != kernels.end() ; ++kit, ++current_idx)
+           *kit = &program.get_kernel(kernel_prefix+tools::to_string(current_idx));
 
         //Configure
-        for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
+        for(current_idx=0, kit = kernels.begin() ; kit != kernels.end() ; ++kit, ++current_idx)
         {
           unsigned int current_arg = 0;
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-          (*it)->local_work_size(0,parameters_.local_size_0());
-          (*it)->local_work_size(1,parameters_.local_size_1());
-          configure_impl(std::distance(kernels.begin(), it), statements, **it, current_arg);
+          (*kit)->local_work_size(0,parameters_.local_size_0());
+          (*kit)->local_work_size(1,parameters_.local_size_1());
+          configure_impl(current_idx, const_cast<viennacl::ocl::context &>(*program.p_context()), statements, **kit, current_arg);
           for(statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
-            tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**it), true);
+            tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**kit), true);
         }
 
         //Enqueue
         for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
           viennacl::ocl::enqueue(**it);
       }
+
 
     protected:
       template_base::parameters const & parameters_;

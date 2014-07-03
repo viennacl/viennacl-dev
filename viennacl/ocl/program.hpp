@@ -57,6 +57,8 @@ namespace viennacl
         return *this;
       }
 
+      viennacl::ocl::context const * p_context() const { return p_context_; }
+
       std::string const & name() const { return name_; }
 
       /** @brief Adds a kernel to the program */

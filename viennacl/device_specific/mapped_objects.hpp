@@ -48,11 +48,11 @@ namespace viennacl
         public:
           struct node_info
           {
-              node_info(mapping_type const * _mapping, scheduler::statement const * _statement, unsigned int _root_idx) :
+              node_info(mapping_type const * _mapping, scheduler::statement const * _statement, vcl_size_t _root_idx) :
                   mapping(_mapping), statement(_statement), root_idx(_root_idx) { }
               mapping_type const * mapping;
               scheduler::statement const * statement;
-              unsigned int root_idx;
+              vcl_size_t root_idx;
           };
 
           mapped_object(std::string const & scalartype, unsigned int id) : scalartype_(scalartype), name_("obj"+tools::to_string(id)) {}
@@ -67,7 +67,7 @@ namespace viennacl
             return str;
           }
 
-          virtual std::string evaluate(index_tuple const & index, int) const
+          virtual std::string evaluate(index_tuple const & index, unsigned int /*simd_element*/) const
           {
             if(!access_name_.empty())
               return access_name_;
@@ -115,7 +115,7 @@ namespace viennacl
           mapped_binary_leaf(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), info_(info){ }
           mapping_type const & mapping() const { return *info_.mapping; }
           scheduler::statement const & statement() const { return *info_.statement; }
-          unsigned int root_idx() const { return info_.root_idx; }
+          vcl_size_t root_idx() const { return info_.root_idx; }
           std::string generate_default(index_tuple const &) const { return "";}
         protected:
           node_info info_;
@@ -126,11 +126,11 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, -1, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
+          std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
           std::string new_i = index.i + "+ ((" + rhs + "<0)?" + rhs + ":0)";
           std::string new_j = index.j + "- ((" + rhs + ">0)?" + rhs + ":0)";
           index_tuple new_index("min("+index.i+","+index.j+")", index.bound0);
-          std::string lhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, -1, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          std::string lhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
           return "((" + new_i + ")!=(" + new_j + "))?0:"+lhs;
         }
       public:
@@ -142,11 +142,11 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, -1, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
+          std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
           std::string new_i = index.i + "- ((" + rhs + "<0)?" + rhs + ":0)";
           std::string new_j = index.i + "+ ((" + rhs + ">0)?" + rhs + ":0)";
           index_tuple new_index(new_i,index.bound0,new_j ,index.bound0);
-          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, -1, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
         }
       public:
         mapped_matrix_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
@@ -157,8 +157,8 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, -1, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
-          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(idx,index.bound0, index.i, index.bound0), -1, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(idx,index.bound0, index.i, index.bound0), 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
         }
       public:
         mapped_matrix_row(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
@@ -169,8 +169,8 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, -1, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
-          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.i,index.bound0, idx, index.bound1), -1, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.i,index.bound0, idx, index.bound1), 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
         }
       public:
         mapped_matrix_column(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
@@ -188,6 +188,9 @@ namespace viennacl
       {
       public:
           mapped_reduction(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info){ }
+          vcl_size_t root_idx() const { return info_.root_idx; }
+          scheduler::statement const & statement() const { return *info_.statement; }
+          scheduler::statement_node root_node() const { return statement().array()[root_idx()]; }
       };
 
       /** @brief Mapping of a scalar reduction (based on inner product) */
@@ -266,9 +269,9 @@ namespace viennacl
         public:
           mapped_buffer(std::string const & scalartype, unsigned int id) : mapped_handle(scalartype, id){ }
 
-          virtual std::string evaluate(index_tuple const & index, int vector_element) const
+          virtual std::string evaluate(index_tuple const & index, unsigned int vector_element) const
           {
-            if(vector_element>-1)
+            if(vector_element>0)
               return mapped_object::evaluate(index, vector_element)+".s"+tools::to_string(vector_element);
             return mapped_object::evaluate(index, vector_element);
           }

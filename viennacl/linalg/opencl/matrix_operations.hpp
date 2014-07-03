@@ -71,7 +71,7 @@ namespace viennacl
       {
         assert(mat1.row_major() == mat2.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat1).name(),
+                                        .enqueue(detail::program_for_matrix(mat1),
                                                 scheduler::preset::av(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha));
       }
 
@@ -84,7 +84,7 @@ namespace viennacl
       {
         assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat1).name(),
+                                        .enqueue(detail::program_for_matrix(mat1),
                                                 scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha, &mat3, &beta, flip_sign_beta, reciprocal_beta));
       }
 
@@ -97,7 +97,7 @@ namespace viennacl
       {
         assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat1).name(),
+                                        .enqueue(detail::program_for_matrix(mat1),
                                                 scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha, &mat3, &beta, flip_sign_beta, reciprocal_beta));
       }
 
@@ -109,53 +109,43 @@ namespace viennacl
 
         scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat),viennacl::traits::size2(mat),s);
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat).name(), scheduler::preset::assign_cpu(&mat, &mat2), up_to_internal_size);
+                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::assign_cpu(&mat, &mat2), up_to_internal_size);
       }
 
       template <typename NumericT>
       void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
       {
-        typedef NumericT        value_type;
-
-        value_type alpha = static_cast<value_type>(s);
-
-        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat, "diagonal_assign_cpu");
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
-                                 cl_uint(viennacl::traits::start1(mat)),           cl_uint(viennacl::traits::start2(mat)),
-                                 cl_uint(viennacl::traits::stride1(mat)),          cl_uint(viennacl::traits::stride2(mat)),
-                                 cl_uint(viennacl::traits::size1(mat)),            cl_uint(viennacl::traits::size2(mat)),
-                                 cl_uint(viennacl::traits::internal_size1(mat)),   cl_uint(viennacl::traits::internal_size2(mat)),
-                                 viennacl::traits::opencl_handle(viennacl::tools::promote_if_host_scalar<value_type>(alpha))
-                                )
-                              );
+        viennacl::scalar_vector<NumericT> sx(std::min(viennacl::traits::size1(mat), viennacl::traits::size2(mat)), s);
+        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
+                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::diagonal_assign_cpu(&mat, &sx));
       }
 
       template <typename NumericT>
       void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & mat)
       {
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat).name(), scheduler::preset::matrix_diag_from_vector(&vec, &mat, k));
+                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::matrix_diag_from_vector(&vec, &mat, k));
       }
 
       template <typename NumericT>
       void matrix_diag_to_vector(const matrix_base<NumericT> & mat, int k, vector_base<NumericT> & vec)
       {
         device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat).name(), scheduler::preset::matrix_diag_to_vector(&vec, &mat, k));
+                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::matrix_diag_to_vector(&vec, &mat, k));
       }
 
       template <typename NumericT>
       void matrix_row(const matrix_base<NumericT> & mat, unsigned int i, vector_base<NumericT> & vec)
       {
         device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat).name(), scheduler::preset::matrix_row(&vec, &mat, i));
+                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::matrix_row(&vec, &mat, i));
       }
 
       template <typename NumericT>
       void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_base<NumericT> & vec)
       {
         device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat).name(), scheduler::preset::matrix_column(&vec, &mat, j));
+                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::matrix_column(&vec, &mat, j));
       }
 
 

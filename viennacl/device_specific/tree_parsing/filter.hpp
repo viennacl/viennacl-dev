@@ -33,7 +33,7 @@ namespace viennacl{
 
           filter(pred_t pred, std::vector<scheduler::statement_node const *> & out) : pred_(pred), out_(out){ }
 
-          void operator()(scheduler::statement const & statement, unsigned int root_idx, node_type) const
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type) const
           {
              scheduler::statement_node const * root_node = &statement.array()[root_idx];
              if(pred_(*root_node))

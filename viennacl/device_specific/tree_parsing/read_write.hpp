@@ -45,7 +45,7 @@ namespace viennacl{
                                index_tuple const & index, utils::kernel_generation_stream & stream, mapping_type const & mapping)
             : mode_(mode), simd_width_(simd_width), suffix_(suffix), cache_(cache), index_(index), stream_(stream), mapping_(mapping){ }
 
-          void operator()(scheduler::statement const & /*statement*/, unsigned int root_idx, node_type leaf) const {
+          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, node_type leaf) const {
              mapping_type::const_iterator it = mapping_.find(std::make_pair(root_idx, leaf));
              if(it!=mapping_.end())
              {
@@ -74,7 +74,7 @@ namespace viennacl{
 
 
       inline void read_write(read_write_traversal::mode_t mode, unsigned int simd_width, std::string const & suffix,
-                                  std::set<std::string> & cache, scheduler::statement const & statement,unsigned int root_idx
+                                  std::set<std::string> & cache, scheduler::statement const & statement,vcl_size_t root_idx
                                   ,index_tuple const & index,utils::kernel_generation_stream & stream, mapping_type const & mapping, node_type leaf)
       {
         read_write_traversal traversal_functor(mode, simd_width, suffix, cache, index, stream, mapping);

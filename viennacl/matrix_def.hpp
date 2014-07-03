@@ -130,23 +130,23 @@ namespace viennacl
 
       /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
       explicit matrix_base(viennacl::backend::mem_handle & h,
-                           size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                           size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                           size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
+                           size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                            bool is_row_major);
       template <typename LHS, typename RHS, typename OP>
       explicit matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy);
 
       // CUDA or host memory:
       explicit matrix_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type,
-                           size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                           size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                           size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
+                           size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                            bool is_row_major);
 
 #ifdef VIENNACL_WITH_OPENCL
       explicit matrix_base(cl_mem mem, size_type rows, size_type columns, bool is_row_major, viennacl::context ctx = viennacl::context());
       explicit matrix_base(cl_mem mem, viennacl::context ctx,
-                           size_type mat_size1, size_type mat_start1, difference_type mat_stride1, size_type mat_internal_size1,
-                           size_type mat_size2, size_type mat_start2, difference_type mat_stride2, size_type mat_internal_size2,
+                           size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
+                           size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                            bool is_row_major);
 #endif
 
@@ -216,8 +216,8 @@ namespace viennacl
       size_type size2_;
       size_type start1_;
       size_type start2_;
-      difference_type stride1_;
-      difference_type stride2_;
+      size_type stride1_;
+      size_type stride2_;
       size_type internal_size1_;
       size_type internal_size2_;
       bool row_major_fixed_; //helper flag to make layout of matrix<T, row_major> A; persistent
