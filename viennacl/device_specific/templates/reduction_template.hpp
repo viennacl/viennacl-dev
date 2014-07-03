@@ -77,7 +77,7 @@ namespace viennacl
         return parameters_.local_size_0()*scalartype_size;
       }
 
-      void configure_impl(vcl_size_t kernel_id, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
+      void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
       {
         //configure ND range
         if(kernel_id==0)
@@ -104,14 +104,14 @@ namespace viennacl
         for(std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it)
         {
           if(tmp_.size() <= i)
-            tmp_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, parameters_.num_groups()*utils::scalartype_size(parameters_.scalartype())));
+            tmp_.push_back(context.create_memory(CL_MEM_READ_WRITE, parameters_.num_groups()*utils::scalartype_size(parameters_.scalartype())));
           kernel.arg(n_arg++, tmp_[i]);
           i++;
 
           if(utils::is_index_reduction((*it)->op))
           {
             if(tmpidx_.size() <= j)
-              tmpidx_.push_back(viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, parameters_.num_groups()*4));
+              tmpidx_.push_back(context.create_memory(CL_MEM_READ_WRITE, parameters_.num_groups()*4));
             kernel.arg(n_arg++, tmpidx_[j]);
             j++;
           }

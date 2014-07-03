@@ -3,7 +3,7 @@
 
 #include "viennacl/tools/tools.hpp"
 
-#include "viennacl/range.hpp"
+#include "viennacl/vector_proxy.hpp"
 
 #include "viennacl/device_specific/database.hpp"
 #include "viennacl/device_specific/generate.hpp"

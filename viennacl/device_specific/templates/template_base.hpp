@@ -114,7 +114,7 @@ namespace viennacl
       /** @brief generates the arguments that are global to the kernel (different from the object-specific arguments) */
       virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
 
-      virtual void configure_impl(vcl_size_t kernel_id, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
+      virtual void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
 
     public:
       /** @brief The constructor */
@@ -159,15 +159,13 @@ namespace viennacl
         return stream.str();
       }
 
-      void enqueue(std::string const & program_name, statements_container const & statements, std::string kernel_prefix = "")
+      void enqueue(viennacl::ocl::program & program, statements_container const & statements, std::string kernel_prefix = "")
       {
         std::vector<viennacl::ocl::kernel*> ::iterator kit;
         vcl_size_t current_idx;
 
         if(kernel_prefix.empty())
           kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
-
-        viennacl::ocl::program & program = viennacl::ocl::current_context().get_program(program_name);
 
         //Get the kernels
         std::vector<viennacl::ocl::kernel*> kernels(parameters_.num_kernels());
@@ -181,7 +179,7 @@ namespace viennacl
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
           (*kit)->local_work_size(0,parameters_.local_size_0());
           (*kit)->local_work_size(1,parameters_.local_size_1());
-          configure_impl(current_idx, statements, **kit, current_arg);
+          configure_impl(current_idx, const_cast<viennacl::ocl::context &>(*program.p_context()), statements, **kit, current_arg);
           for(statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
             tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**kit), true);
         }

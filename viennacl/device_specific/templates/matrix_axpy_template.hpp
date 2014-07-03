@@ -107,7 +107,7 @@ namespace viennacl{
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
-      void configure_impl(vcl_size_t /*kernel_id*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+      void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
         k.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups_0());
         k.global_work_size(1,parameters_.local_size_1()*parameters_.num_groups_1());
@@ -128,10 +128,10 @@ namespace viennacl{
     public:
       matrix_axpy_template(matrix_axpy_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), parameters_(parameters){ }
 
-      void enqueue(std::string const & program_name, statements_container const & statements, bool up_to_internal_size = false, std::string kernel_prefix = "")
+      void enqueue(viennacl::ocl::program & program, statements_container const & statements, bool up_to_internal_size = false, std::string kernel_prefix = "")
       {
         up_to_internal_size_ = up_to_internal_size;
-        template_base::enqueue(program_name, statements, kernel_prefix);
+        template_base::enqueue(program, statements, kernel_prefix);
       }
 
     private:

@@ -6,6 +6,8 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
+#include "viennacl/scheduler/preset.hpp"
+
 #include "viennacl/device_specific/database.hpp"
 
 /** @file viennacl/linalg/opencl/kernels/vector_element.hpp
@@ -31,6 +33,8 @@ namespace viennacl
 
           static void init(viennacl::ocl::context & ctx)
           {
+            using namespace device_specific;
+
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
             std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
 

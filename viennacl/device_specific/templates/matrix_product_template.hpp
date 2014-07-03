@@ -57,7 +57,7 @@ public:
     , use_A_local_(use_A_local), use_B_local_(use_B_local), local_fetch_0_(local_fetch_0), local_fetch_1_(local_fetch_1)
     , mL_(ms*local_size_0), nL_(ns*local_size_1){ }
 
-    void configure_impl(vcl_size_t kernel_id, viennacl::ocl::kernel & k, unsigned int & n_arg) const
+    void configure_impl(vcl_size_t kernel_id, , viennacl::ocl::context & /*context*/, viennacl::ocl::kernel & k, unsigned int & n_arg) const
     {
         assert(kernel_id==0);
 

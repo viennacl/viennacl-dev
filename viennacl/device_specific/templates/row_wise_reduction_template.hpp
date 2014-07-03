@@ -69,7 +69,7 @@ namespace viennacl{
         return parameters_.local_size_0()*(parameters_.local_size_1()+1)*scalartype_size;
       }
 
-      void configure_impl(vcl_size_t /*kernel_id*/, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
+      void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
       {
         kernel.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups_0());
         kernel.global_work_size(1,parameters_.local_size_1());

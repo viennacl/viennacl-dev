@@ -43,7 +43,7 @@ namespace viennacl{
   namespace device_specific{
 
     template<class TemplateT>
-    inline void execute(typename TemplateT::parameters const & params, statements_container const & statements, bool force_compilation = false)
+    inline void execute(typename TemplateT::parameters const & params, statements_container const & statements, viennacl::ocl::context & ctx = viennacl::ocl::current_context(), bool force_compilation = false)
     {
       TemplateT tplt(params, BIND_TO_HANDLE);
 
@@ -51,7 +51,6 @@ namespace viennacl{
       std::string program_name = tree_parsing::statements_representation(statements, BIND_TO_HANDLE);
 
       //Retrieve/Compile program
-      viennacl::ocl::context & ctx = viennacl::ocl::current_context();
       if(force_compilation)
         ctx.delete_program(program_name);
       if(!ctx.has_program(program_name)){
@@ -66,7 +65,7 @@ namespace viennacl{
         ctx.add_program(src, program_name);
       }
 
-      tplt.enqueue(program_name, statements, "kernel");
+      tplt.enqueue(ctx.get_program(program_name), statements, "kernel");
     }
 
   }
