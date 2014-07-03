@@ -454,11 +454,19 @@ namespace viennacl
             prog.add_kernel(kernels[i], std::string(kernel_name));
           }
 
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Stored program '" << programs_.back().name() << "' in context " << h_ << std::endl;
+          std::cout << "ViennaCL: There is/are " << programs_.size() << " program(s)" << std::endl;
+          #endif
+
           return prog;
         }
 
         /** @brief Delete the program with the provided name */
         void delete_program(std::string const & name){
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Deleting program '" << name << "' from context " << h_ << std::endl;
+          #endif
           for (ProgramContainer::iterator it = programs_.begin();
                 it != programs_.end();
                 ++it)
@@ -475,11 +483,13 @@ namespace viennacl
         {
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Getting program '" << name << "' from context " << h_ << std::endl;
+          std::cout << "ViennaCL: There are " << programs_.size() << " programs" << std::endl;
           #endif
           for (ProgramContainer::iterator it = programs_.begin();
                 it != programs_.end();
                 ++it)
           {
+            //std::cout << "Name: " << it->name() << std::endl;
             if (it->name() == name)
               return *it;
           }
@@ -492,11 +502,13 @@ namespace viennacl
         {
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Getting program '" << name << "' from context " << h_ << std::endl;
+          std::cout << "ViennaCL: There are " << programs_.size() << " programs" << std::endl;
           #endif
           for (ProgramContainer::const_iterator it = programs_.begin();
                 it != programs_.end();
                 ++it)
           {
+            //std::cout << "Name: " << it->name() << std::endl;
             if (it->name() == name)
               return *it;
           }
