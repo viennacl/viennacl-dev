@@ -87,7 +87,7 @@ namespace viennacl
         }
 
         //Generates all the expression, in order
-        for(statements_container::data_type::const_iterator sit = statements.data().begin() ; sit != statements.data().end() ; ++sit)
+        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
           stream << tree_parsing::evaluate_expression(*sit, sit->root(), index_tuple("i", "N"), 0, *mit, tree_parsing::PARENT_NODE_TYPE) << ";" << std::endl;
 
         //Write back
@@ -116,7 +116,7 @@ namespace viennacl
           size = utils::call_on_vector(root.lhs, utils::internal_size_fun());
         else
           size = utils::call_on_vector(root.lhs, utils::size_fun());
-        k.arg(n_arg++, size/parameters_.simd_width());
+        k.arg(n_arg++, cl_uint(size)/parameters_.simd_width());
       }
 
     public:

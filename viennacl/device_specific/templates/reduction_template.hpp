@@ -93,7 +93,7 @@ namespace viennacl
 
         //set arguments
         vcl_size_t size = get_vector_size(statements.data().front());
-        kernel.arg(n_arg++, size/parameters_.simd_width());
+        kernel.arg(n_arg++, cl_uint(size)/parameters_.simd_width());
 
         std::vector<scheduler::statement_node const *> reductions;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
