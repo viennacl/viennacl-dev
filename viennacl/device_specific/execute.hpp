@@ -53,7 +53,8 @@ namespace viennacl{
       //Retrieve/Compile program
       if(force_compilation)
         ctx.delete_program(program_name);
-      if(!ctx.has_program(program_name)){
+      if(!ctx.has_program(program_name))
+      {
         std::string src;
         //Headers generation
         src+="#if defined(cl_khr_fp64)\n";

@@ -136,11 +136,8 @@ namespace viennacl{
                   mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_reduction>(&statement, root_idx, &mapping_)));
                 else if(root_node.op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
                   mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_product>(&statement, root_idx, &mapping_)));
-                else if(root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE){
-                  key.second = tree_parsing::LHS_NODE_TYPE;
-                  mapping_type::iterator it = mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this))).first;
-                  ((mapped_matrix *)it->second.get())->flip_transpose();
-                }
+                else if(root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_trans>(&statement, root_idx, &mapping_)));
            }
           }
 

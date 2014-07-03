@@ -68,7 +68,7 @@ namespace viennacl{
         fun(statement, root_idx, PARENT_NODE_TYPE);
 
         //Rhs:
-        if(recurse && root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY)
+        if(recurse && root_node.rhs.type_family!=scheduler::INVALID_TYPE_FAMILY)
         {
           if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
             traverse(statement, root_node.rhs.node_index, fun, inspect);

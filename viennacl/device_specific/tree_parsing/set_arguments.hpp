@@ -77,7 +77,8 @@ namespace viennacl{
 
           /** @brief Implicit vector mapping */
           template<class ScalarType>
-          result_type operator()(implicit_vector_base<ScalarType> const & vec) const {
+          result_type operator()(implicit_vector_base<ScalarType> const & vec) const
+          {
             typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
             kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
             if(vec.has_index())
@@ -86,35 +87,32 @@ namespace viennacl{
 
           /** @brief Matrix mapping */
           template<class ScalarType>
-          result_type operator()(matrix_base<ScalarType> const & mat) const {
+          result_type operator()(matrix_base<ScalarType> const & mat) const
+          {
             if(binder_.bind(&viennacl::traits::handle(mat)))
             {
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
-              if(mat.row_major()){
+              if(mat.row_major())
                 kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size2(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
-              }
-              else{
+              else
                 kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size1(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
-              }
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
             }
           }
 
           /** @brief Implicit matrix mapping */
           template<class ScalarType>
-          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const {
+          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const
+          {
             kernel_.arg(current_arg_++, typename viennacl::result_of::cl_type<ScalarType>::type(mat.value()));
           }
 
           /** @brief Traversal functor: */
-          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type node_type) const {
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type node_type) const
+          {
             scheduler::statement_node const & root_node = statement.array()[root_idx];
             if(node_type==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node.lhs, *this);

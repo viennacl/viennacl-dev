@@ -265,26 +265,12 @@ namespace viennacl
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
         //result.resize(mat.size1());
-
-        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat, trans_mat ? "trans_vec_mul" : "vec_mul");
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
-                                cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)),
-                                cl_uint(viennacl::traits::stride1(mat)),        cl_uint(viennacl::traits::stride2(mat)),
-                                cl_uint(viennacl::traits::size1(mat)),          cl_uint(viennacl::traits::size2(mat)),
-                                cl_uint(viennacl::traits::internal_size1(mat)), cl_uint(viennacl::traits::internal_size2(mat)),
-
-                                viennacl::traits::opencl_handle(vec),
-                                cl_uint(viennacl::traits::start(vec)),
-                                cl_uint(viennacl::traits::stride(vec)),
-                                cl_uint(viennacl::traits::size(vec)),
-
-                                viennacl::traits::opencl_handle(result),
-                                cl_uint(viennacl::traits::start(result)),
-                                cl_uint(viennacl::traits::stride(result)),
-                                cl_uint(viennacl::traits::size(result)),
-
-                                viennacl::ocl::local_mem(sizeof(value_type) * k.local_work_size())
-                              ) );
+        device_specific::row_wise_reduction_template::parameters const * parameters;
+        if(trans_mat)
+          parameters = &device_specific::database::get<NumericT>(device_specific::database::trans_row_wise_reduction);
+        else
+          parameters = &device_specific::database::get<NumericT>(device_specific::database::row_wise_reduction);
+        device_specific::row_wise_reduction_template(*parameters).enqueue(detail::program_for_matrix(mat),scheduler::preset::mat_vec_prod(&mat, trans_mat, &vec, &result));
       }
 
       //
