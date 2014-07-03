@@ -251,17 +251,45 @@ namespace viennacl
         //get queue for default device:
         viennacl::ocl::command_queue & get_queue()
         {
-          return queues_[devices_[current_device_id_].id()][current_queue_id_];
+          typedef std::map< cl_device_id, std::vector<viennacl::ocl::command_queue> >    QueueContainer;
+
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Getting queue for device " << devices_[current_device_id_].name() << " in context " << h_ << std::endl;
+          std::cout << "ViennaCL: Current queue id " << current_queue_id_ << std::endl;
+          #endif
+
+          // find queue:
+          QueueContainer::iterator it = queues_.find(devices_[current_device_id_].id());
+          if (it != queues_.end()) {
+            #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+            std::cout << "ViennaCL: Queue handle " << (it->second)[current_queue_id_].handle() << std::endl;
+            #endif
+            return (it->second)[current_queue_id_];
+          }
+
+          std::cerr << "ViennaCL: FATAL ERROR: Could not obtain current command queue!" << std::endl;
+          std::cout << "Number of queues in context: " << queues_.size() << std::endl;
+          std::cout << "Number of devices in context: " << devices_.size() << std::endl;
+          throw "queue not found!";
         }
 
         viennacl::ocl::command_queue const & get_queue() const
         {
           typedef std::map< cl_device_id, std::vector<viennacl::ocl::command_queue> >    QueueContainer;
 
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Getting const queue for device " << devices_[current_device_id_].name() << " in context " << h_ << std::endl;
+          std::cout << "ViennaCL: Current queue id " << current_queue_id_ << std::endl;
+          #endif
+
           // find queue:
           QueueContainer::const_iterator it = queues_.find(devices_[current_device_id_].id());
-          if (it != queues_.end())
+          if (it != queues_.end()) {
+            #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+            std::cout << "ViennaCL: Queue handle " << (it->second)[current_queue_id_].handle() << std::endl;
+            #endif
             return (it->second)[current_queue_id_];
+          }
 
           std::cerr << "ViennaCL: FATAL ERROR: Could not obtain current command queue!" << std::endl;
           std::cout << "Number of queues in context: " << queues_.size() << std::endl;
