@@ -49,30 +49,27 @@ namespace viennacl{
       class parameters : public template_base::parameters
       {
       public:
-        parameters(const char * scalartype, char A_trans, unsigned int simd_width,
-                   unsigned int local_size_0, unsigned int local_size_1,
-                   unsigned int num_groups_0): template_base::parameters(scalartype, simd_width, local_size_0, local_size_1, 1),
-                                               num_groups_0_(num_groups_0), A_trans_(A_trans){ }
+        parameters(const char * _scalartype, char _A_trans, unsigned int _simd_width,
+                   unsigned int _local_size_0, unsigned int _local_size_1,
+                   unsigned int _num_groups_0): template_base::parameters(_scalartype, _simd_width, _local_size_0, _local_size_1, 1),
+                                               num_groups_0(_num_groups_0), A_trans(_A_trans){ }
 
-        char A_trans() const { return A_trans_; }
-        unsigned int num_groups_0() const { return num_groups_0_; }
 
-      private:
-        unsigned int num_groups_0_;
-        char A_trans_;
+        unsigned int num_groups_0;
+        char A_trans;
       };
 
     private:
 
       unsigned int lmem_used(unsigned int scalartype_size) const
       {
-        return parameters_.local_size_0()*(parameters_.local_size_1()+1)*scalartype_size;
+        return parameters_.local_size_0*(parameters_.local_size_1+1)*scalartype_size;
       }
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
       {
-        kernel.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups_0());
-        kernel.global_work_size(1,parameters_.local_size_1());
+        kernel.global_work_size(0,parameters_.local_size_0*parameters_.num_groups_0);
+        kernel.global_work_size(1,parameters_.local_size_1);
 
         scheduler::statement::container_type const & array = statements.data().begin()->array();
         vcl_size_t root = statements.data().begin()->root();
@@ -123,12 +120,12 @@ namespace viennacl{
 
 
 
-        unsigned int lsize0 = parameters_.local_size_0();
-        unsigned int lsize1 = parameters_.local_size_1()+1;
+        unsigned int lsize0 = parameters_.local_size_0;
+        unsigned int lsize1 = parameters_.local_size_1+1;
 
         std::string size1 = "M";
         std::string size2 = "N";
-        if(parameters_.A_trans()=='T')
+        if(parameters_.A_trans=='T')
           std::swap(size1, size2);
 
         for(std::vector<mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
@@ -154,10 +151,10 @@ namespace viennacl{
             {
               viennacl::scheduler::statement const & statement = exprs[k]->statement();
               viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
-              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size1, "c", size2),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
+              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size1, "c", size2),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
 
               if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size1), stream,exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
+                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size1), stream,exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
             }
 
 
@@ -184,7 +181,7 @@ namespace viennacl{
             stream << "buf" << k << "[lid0*" << lsize1 << "+ lid1] = " << accs[k] << ";" << std::endl;
           }
 
-          for(unsigned int stride = parameters_.local_size_1()/2 ; stride>0 ; stride /=2){
+          for(unsigned int stride = parameters_.local_size_1/2 ; stride>0 ; stride /=2){
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream <<  "if(lid1 < " << stride << ")" ;
             stream << "{" << std::endl;

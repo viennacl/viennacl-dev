@@ -47,6 +47,10 @@ namespace viennacl
     template <typename KernelType>
     void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue)
     {
+      #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+      cl_event event;
+      #endif
+
       // 1D kernel:
       if (k.local_work_size(1) == 0)
       {
@@ -61,9 +65,17 @@ namespace viennacl
 
         cl_int err;
         if (tmp_global == 1 && tmp_local == 1)
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+          err = clEnqueueTask(queue.handle().get(), k.handle().get(), 0, NULL, &event);
+          #else
           err = clEnqueueTask(queue.handle().get(), k.handle().get(), 0, NULL, NULL);
+          #endif
         else
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+          err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), 1, NULL, &tmp_global, &tmp_local, 0, NULL, &event);
+          #else
           err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), 1, NULL, &tmp_global, &tmp_local, 0, NULL, NULL);
+          #endif
 
         if (err != CL_SUCCESS)
         {
@@ -90,8 +102,11 @@ namespace viennacl
         tmp_local[1] = k.local_work_size(1);
         tmp_local[2] = k.local_work_size(2);
 
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+        cl_int err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), (tmp_global[2] == 0) ? 2 : 3, NULL, tmp_global, tmp_local, 0, NULL, &event);
+        #else
         cl_int err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), (tmp_global[2] == 0) ? 2 : 3, NULL, tmp_global, tmp_local, 0, NULL, NULL);
-
+        #endif
         if (err != CL_SUCCESS)
         {
           //could not start kernel with any parameters
@@ -102,7 +117,9 @@ namespace viennacl
 
       #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
       queue.finish();
-      std::cout << "ViennaCL: Kernel " << k.name() << " finished!" << std::endl;
+      cl_int execution_status;
+      clGetEventInfo(event, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &execution_status, NULL);
+      std::cout << "ViennaCL: Kernel " << k.name() << " finished with status " << execution_status << "!" << std::endl;
       #endif
     } //enqueue()
 

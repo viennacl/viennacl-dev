@@ -46,6 +46,41 @@ namespace device_specific{
 class matrix_product_template : public template_base{
 
 public:
+    class parameters : public template_base::parameters
+    {
+    public:
+      parameters(const char * scalartype, char A_trans, char B_trans
+                 , unsigned int simd_width
+                 , unsigned int local_size_0, unsigned int KL, unsigned int local_size_1
+                 , unsigned int ms, unsigned int ks, unsigned int ns
+                 , bool use_A_local, bool use_B_local
+                 , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters(scalartype, simd_width, local_size_0, local_size_1, 1),
+                                             A_trans_(A_trans), B_trans_(B_trans), kL_(KL), mS_(ms), kS_(ks), nS_(ns), use_A_local_(use_A_local), use_B_local_(use_B_local),
+                                             local_fetch_0_(local_fetch_0), local_fetch_1_(local_fetch_1),
+                                              mL_(ms*local_size_0), nL_(ns*local_fetch_1){ }
+
+    private:
+      const char A_trans_;
+      const char B_trans_;
+
+      unsigned int kL_;
+
+      unsigned int mS_;
+      unsigned int kS_;
+      unsigned int nS_;
+
+      bool use_A_local_;
+      bool use_B_local_;
+
+      unsigned int local_fetch_0_;
+      unsigned int local_fetch_1_;
+
+      unsigned int mL_;
+      unsigned int nL_;
+    };
+
+public:
+
     /** @brief The user constructor */
     matrix_product_template(const char * scalartype, char A_trans, char B_trans
                    , unsigned int simd_width
@@ -218,26 +253,30 @@ private:
         }
         stream << std::endl;
 
-        if(use_A_local_){
+        if(use_A_local_)
+        {
             if(A_trans_=='N')
                 stream << A->name() << " +=  gidx*" << mL_/simd_width_ << "+ idxT + idyT*" << A->ld()  << ";" << std::endl;
             else
                 stream << A->name() << " +=  gidx*" << mL_/simd_width_ << "*" << A->ld() << "+ idxT + idyT*" << A->ld()  << ";" << std::endl;
         }
-        else{
+        else
+        {
             if(A_trans_=='N')
                 stream << A->name() << " += gidx*" << mL_/simd_width_ << "+ idx" << ";" << std::endl;
             else
                 stream << A->name() << " += (gidx*" << mL_/simd_width_ << "+ idx)*" << A->ld() << ";" << std::endl;
         }
 
-        if(use_B_local_){
+        if(use_B_local_)
+        {
             if(B_trans_=='T')
                 stream << B->name() << " +=  gidy*" << nL_/simd_width_ << "+ idxT + idyT*" << B->ld()  << ";" << std::endl;
             else
                 stream << B->name() << " +=  gidy*" << nL_/simd_width_ << "*" << B->ld() << "+ idxT + idyT*" << B->ld()  << ";" << std::endl;
         }
-        else{
+        else
+        {
             if(B_trans_=='T')
                 stream << B->name() << " +=  gidy*" << nL_/simd_width_ << "+ idy;" << std::endl;
             else
@@ -257,12 +296,12 @@ private:
         }
 
 
-        if(use_B_local_){
+        if(use_B_local_)
+        {
             if(B_trans_=='T')
                 stream << "__local " << B->scalartype() << "* plB = lB + idyT*" << nL_+1 << "+" << simd_width_ << "*idxT;" << std::endl;
             else
                 stream << "__local " << B->scalartype() << "* plB = lB + idxT*" << nL_+1 << "+ idyT;" << std::endl;
-
         }
 
 
@@ -359,9 +398,10 @@ private:
                 stream << B->name() << " += " << kS_ << ";" << std::endl;
 
 
-        for(unsigned int kk = 0 ; kk < kS_ ; ++kk){
-            for(unsigned int nn=0 ; nn < nS_ ; ++nn){
-                for(unsigned int mm=0 ; mm < mS_ ; ++mm){
+        for(unsigned int kk = 0 ; kk < kS_ ; ++kk)
+            for(unsigned int nn=0 ; nn < nS_ ; ++nn)
+                for(unsigned int mm=0 ; mm < mS_ ; ++mm)
+                {
                     std::string res_str, lhs_str, rhs_str;
                     res_str = "rC[" + tools::to_string(mm) + "][" + tools::to_string(nn) + "]";
                     if(use_A_local_ || simd_width_==1)
@@ -374,10 +414,6 @@ private:
                         rhs_str = "rB[" + tools::to_string(kk) + "]["+tools::to_string(nn/simd_width_)+"].s"+tools::to_string(nn%simd_width_);
                     stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
                 }
-            }
-        }
-
-
 
 
         stream.dec_tab();
@@ -401,13 +437,16 @@ private:
         stream << "}" << std::endl;
 
 
-        if(C->interpret_as_transposed()==false){
+        if(C->interpret_as_transposed()==false)
+        {
             stream << C->name() << "+= gidx*" << mL_ << ";" << std::endl;
             stream << C->name() << "+= idx*" << simd_width_ << ";" << std::endl;
             stream << C->name() << "+= gidy*" << nL_ << "*" << C->ld() << ";" << std::endl;
             stream << C->name() << "+= idy*" << simd_width_ << "*" << C->ld() << ";" << std::endl;
-            for(unsigned int m=0 ; m < mS_ ; ++m){
-                for(unsigned int n=0 ; n < nS_ ; ++n){
+            for(unsigned int m=0 ; m < mS_ ; ++m)
+            {
+                for(unsigned int n=0 ; n < nS_ ; ++n)
+                {
                     std::string j = tools::to_string((n/simd_width_)*(local_size_1_*simd_width_) + n%simd_width_);
                     prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
                     std::string str;

@@ -54,14 +54,15 @@ namespace viennacl
         virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const { return false; }
         virtual unsigned int lmem_used(unsigned int /*scalartype_size*/) const { return 0; }
       public:
-        parameters(const char * scalartype, unsigned int simd_width, unsigned int local_size_1, unsigned int local_size_2, unsigned int num_kernels) :
-          scalartype_(scalartype), simd_width_(simd_width), local_size_0_(local_size_1), local_size_1_(local_size_2), num_kernels_(num_kernels){ }
+        parameters(const char * _scalartype, unsigned int _simd_width, unsigned int _local_size_1, unsigned int _local_size_2, unsigned int _num_kernels) :
+          scalartype(_scalartype), simd_width(_simd_width), local_size_0(_local_size_1), local_size_1(_local_size_2), num_kernels(_num_kernels){ }
 
-        unsigned int num_kernels() const  { return num_kernels_; }
-        std::string const & scalartype() const { return scalartype_; }
-        unsigned int local_size_0() const { return local_size_0_; }
-        unsigned int local_size_1() const { return local_size_1_; }
-        unsigned int simd_width() const { return simd_width_; }
+        const std::string scalartype;
+
+        const unsigned int simd_width;
+        const unsigned int local_size_0;
+        const unsigned int local_size_1;
+        const unsigned int num_kernels;
 
         /** @brief returns whether or not the profile has undefined behavior on particular device */
         bool is_invalid() const
@@ -71,15 +72,15 @@ namespace viennacl
 
           //Query device informations
           size_t lmem_available = static_cast<size_t>(dev.local_mem_size());
-          unsigned int scalartype_size = utils::scalartype_size(scalartype_);
+          unsigned int scalartype_size = utils::scalartype_size(scalartype);
           invalid |= (lmem_used(scalartype_size)>lmem_available);
 
           //Invalid work group size
           size_t max_workgroup_size = dev.max_work_group_size();
           std::vector<size_t> max_work_item_sizes = dev.max_work_item_sizes();
-          invalid |= local_size_0_*local_size_1_ > max_workgroup_size
-              || local_size_0_ > max_work_item_sizes[0]
-              || local_size_1_ > max_work_item_sizes[1]; // uses too much resources
+          invalid |= local_size_0*local_size_1 > max_workgroup_size
+              || local_size_0 > max_work_item_sizes[0]
+              || local_size_1 > max_work_item_sizes[1]; // uses too much resources
 
 
           //Not warp multiple
@@ -87,23 +88,16 @@ namespace viennacl
             unsigned int warp_size = 32;
             if(dev.vendor_id()==4098)
               warp_size = 64;
-            invalid |= (((local_size_0_*local_size_1_)%warp_size)>0);
+            invalid |= (((local_size_0*local_size_1)%warp_size)>0);
           }
 
           //Invalid SIMD Width
-          invalid |= (simd_width_!=1 && simd_width_!=2 &&
-                      simd_width_!=4 && simd_width_!=8 &&
-                      simd_width_!=16);
+          invalid |= (simd_width!=1 && simd_width!=2 &&
+                      simd_width!=4 && simd_width!=8 &&
+                      simd_width!=16);
 
           return  invalid || invalid_impl(dev, scalartype_size);
         }
-      protected:
-        std::string scalartype_;
-
-        unsigned int simd_width_;
-        unsigned int local_size_0_;
-        unsigned int local_size_1_;
-        unsigned int num_kernels_;
       };
 
     private:
@@ -142,12 +136,12 @@ namespace viennacl
         std::set<std::string> already_generated;
         add_kernel_arguments(statements, prototype);
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::traverse(*sit, sit->root(), tree_parsing::prototype_generation_traversal(parameters_.simd_width(), already_generated, prototype, *mit), true);
+          tree_parsing::traverse(*sit, sit->root(), tree_parsing::prototype_generation_traversal(parameters_.simd_width, already_generated, prototype, *mit), true);
         prototype.erase(prototype.size()-1); //Last comma pruned
 
-        for(unsigned int i = 0 ; i < parameters_.num_kernels() ; ++i)
+        for(unsigned int i = 0 ; i < parameters_.num_kernels ; ++i)
         {
-          stream << " __attribute__((reqd_work_group_size(" << parameters_.local_size_0() << "," << parameters_.local_size_1() << "," << 1 << ")))" << std::endl;
+          stream << " __attribute__((reqd_work_group_size(" << parameters_.local_size_0 << "," << parameters_.local_size_1 << "," << 1 << ")))" << std::endl;
           stream << "__kernel " << "void " << kernel_prefix << i << "(" << prototype << ")" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
@@ -168,7 +162,7 @@ namespace viennacl
           kernel_prefix = tree_parsing::statements_representation(statements, binding_policy_);
 
         //Get the kernels
-        std::vector<viennacl::ocl::kernel*> kernels(parameters_.num_kernels());
+        std::vector<viennacl::ocl::kernel*> kernels(parameters_.num_kernels);
         for(current_idx=0, kit = kernels.begin() ; kit != kernels.end() ; ++kit, ++current_idx)
            *kit = &program.get_kernel(kernel_prefix+tools::to_string(current_idx));
 
@@ -177,8 +171,8 @@ namespace viennacl
         {
           unsigned int current_arg = 0;
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-          (*kit)->local_work_size(0,parameters_.local_size_0());
-          (*kit)->local_work_size(1,parameters_.local_size_1());
+          (*kit)->local_work_size(0,parameters_.local_size_0);
+          (*kit)->local_work_size(1,parameters_.local_size_1);
           configure_impl(current_idx, const_cast<viennacl::ocl::context &>(*program.p_context()), statements, **kit, current_arg);
           for(statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
             tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**kit), true);

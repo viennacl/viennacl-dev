@@ -51,16 +51,13 @@ namespace viennacl
       class parameters : public template_base::parameters
       {
       public:
-        parameters(const char * scalartype, unsigned int simd_width,
-                   unsigned int group_size, unsigned int num_groups,
-                   unsigned int decomposition) : template_base::parameters(scalartype, simd_width, group_size, 1, 1), num_groups_(num_groups), decomposition_(decomposition){ }
+        parameters(const char * _scalartype, unsigned int _simd_width,
+                   unsigned int _group_size, unsigned int _num_groups,
+                   unsigned int _decomposition) : template_base::parameters(_scalartype, _simd_width, _group_size, 1, 1), num_groups(_num_groups), decomposition(_decomposition){ }
 
-        unsigned int num_groups() const { return num_groups_; }
-        unsigned int decomposition() const { return decomposition_; }
 
-      private:
-        unsigned int num_groups_;
-        unsigned int decomposition_;
+        const unsigned int num_groups;
+        const unsigned int decomposition;
       };
 
     private:
@@ -82,8 +79,8 @@ namespace viennacl
 
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::RHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::RHS_NODE_TYPE);
         }
 
         //Generates all the expression, in order
@@ -93,7 +90,7 @@ namespace viennacl
         //Write back
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width(), lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width, lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
         }
 
         stream.dec_tab();
@@ -125,10 +122,10 @@ namespace viennacl
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
-        k.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups());
+        k.global_work_size(0,parameters_.local_size_0*parameters_.num_groups);
         k.global_work_size(1,1);
         cl_uint size = static_cast<cl_uint>(get_vector_size(statements.data().front()));
-        k.arg(n_arg++, size/parameters_.simd_width());
+        k.arg(n_arg++, size/parameters_.simd_width);
       }
 
     public:

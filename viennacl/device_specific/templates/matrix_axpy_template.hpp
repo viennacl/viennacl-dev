@@ -48,19 +48,14 @@ namespace viennacl{
       class parameters : public template_base::parameters
       {
       public:
-        parameters(const char * scalartype, unsigned int simd_width,
-                   unsigned int local_size_0, unsigned int local_size_1,
-                   unsigned int num_groups_0, unsigned int num_groups_1,
-                   unsigned int decomposition) : template_base::parameters(scalartype, simd_width, local_size_0, local_size_1, 1), num_groups_0_(num_groups_0), num_groups_1_(num_groups_1), decomposition_(decomposition){ }
+        parameters(const char * _scalartype, unsigned int _simd_width,
+                   unsigned int _local_size_0, unsigned int _local_size_1,
+                   unsigned int _num_groups_0, unsigned int _num_groups_1,
+                   unsigned int _decomposition) : template_base::parameters(_scalartype, _simd_width, _local_size_0, _local_size_1, 1), num_groups_0(_num_groups_0), num_groups_1(_num_groups_1), decomposition(_decomposition){ }
 
-        unsigned int num_groups_0() const { return num_groups_0_; }
-        unsigned int num_groups_1() const { return num_groups_1_; }
-        unsigned int decomposition() const { return decomposition_; }
-
-      private:
-        unsigned int num_groups_0_;
-        unsigned int num_groups_1_;
-        unsigned int decomposition_;
+        unsigned int num_groups_0;
+        unsigned int num_groups_1;
+        unsigned int decomposition;
       };
 
     private:
@@ -81,7 +76,7 @@ namespace viennacl{
         //Fetches entries to registers
         std::set<std::string>  cache;
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width(), "reg", cache,*sit, sit->root(), idx, stream, *mit, tree_parsing::PARENT_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, tree_parsing::PARENT_NODE_TYPE);
 
         unsigned int i = 0;
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit){
@@ -92,7 +87,7 @@ namespace viennacl{
 
         //Write back
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width(), "reg", cache,*sit, sit->root(), idx, stream, *mit, tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, tree_parsing::LHS_NODE_TYPE);
 
 
         stream.dec_tab();
@@ -109,8 +104,8 @@ namespace viennacl{
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
-        k.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups_0());
-        k.global_work_size(1,parameters_.local_size_1()*parameters_.num_groups_1());
+        k.global_work_size(0,parameters_.local_size_0*parameters_.num_groups_0);
+        k.global_work_size(1,parameters_.local_size_1*parameters_.num_groups_1);
 
         scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
         if(up_to_internal_size_)
