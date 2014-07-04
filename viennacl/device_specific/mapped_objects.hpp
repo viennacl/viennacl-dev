@@ -152,6 +152,18 @@ namespace viennacl
         mapped_matrix_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
       };
 
+      class mapped_trans: public mapped_binary_leaf, public writable
+      {
+      private:
+        std::string generate_default(index_tuple const & index) const
+        {
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.j, index.bound1, index.i, index.bound0), 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+        }
+      public:
+        mapped_trans(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
+      };
+
+
       class mapped_matrix_row : public mapped_binary_leaf, public writable
       {
       private:
@@ -331,12 +343,12 @@ namespace viennacl
 
           std::string offset(index_tuple const & index) const
           {
-            index_tuple iidx(index);
-            if(interpret_as_transposed_)
-              std::swap(iidx.i, iidx.j);
+            std::string i = "(" + start1_name_ + "+(" + index.i + ")*" + stride1_name_ + ")";
+            std::string j = "(" + start2_name_ + "+(" + index.j + ")*" + stride2_name_ + ")";
 
-            std::string i = "(" + start1_name_ + "+(" + iidx.i + ")*" + stride1_name_ + ")";
-            std::string j = "(" + start2_name_ + "+(" + iidx.j + ")*" + stride2_name_ + ")";
+            if(interpret_as_transposed_)
+              std::swap(i,j);
+
             return i + "+" + j + '*' + ld_name_;
           }
 

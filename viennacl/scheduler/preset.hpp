@@ -270,8 +270,8 @@ namespace viennacl{
         return binary_element_op(x, y, static_cast<T const *>(NULL), TYPE);
       }
 
-      template<typename T>
-      statement matrix_row_column_diag(viennacl::vector_base<T> const * x, viennacl::matrix_base<T> const * A, int id, int op)
+      template<typename T, typename IDT>
+      statement matrix_row_column_diag(viennacl::vector_base<T> const * x, viennacl::matrix_base<T> const * A, IDT id, unsigned int op)
       {
         vcl_size_t dummy = 0;
         statement::container_type array(2);
@@ -304,13 +304,13 @@ namespace viennacl{
       }
 
       template<typename T>
-      statement matrix_row(viennacl::vector_base<T> const * x, viennacl::matrix_base<T> const * A, int id)
+      statement matrix_row(viennacl::vector_base<T> const * x, viennacl::matrix_base<T> const * A, unsigned int id)
       {
         return matrix_row_column_diag(x, A, id, 0);
       }
 
       template<typename T>
-      statement matrix_column(viennacl::vector_base<T> const * x, viennacl::matrix_base<T> const * A, int id)
+      statement matrix_column(viennacl::vector_base<T> const * x, viennacl::matrix_base<T> const * A, unsigned int id)
       {
         return matrix_row_column_diag(x, A, id, 1);
       }
@@ -328,7 +328,55 @@ namespace viennacl{
         return matrix_row_column_diag(x, A, id, 3);
       }
 
+      template<typename T>
+      statement row_reduction_mat_vec_prod(viennacl::matrix_base<T> const * A, bool A_trans, viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, scheduler::operation_node_type ROP)
+      {
+        vcl_size_t dummy = 0;
+        statement::container_type array(3);
+
+        scheduler::statement::add_element(dummy, array[0].lhs, *y);
+        array[0].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+        array[0].op.type = OPERATION_BINARY_ASSIGN_TYPE;
+        array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
+        array[0].rhs.node_index = 1;
+
+        if(A_trans)
+        {
+          array[1].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
+          array[1].lhs.node_index = 2;
+
+          statement::add_element(dummy, array[2].lhs, *A);
+          array[2].op.type_family = OPERATION_UNARY_TYPE_FAMILY;
+          array[2].op.type = OPERATION_UNARY_TRANS_TYPE;
+        }
+        else
+        {
+          statement::add_element(dummy, array[1].lhs, *A);
+        }
+
+        if(x)
+        {
+          array[1].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+          array[1].op.type = OPERATION_BINARY_MAT_VEC_PROD_TYPE;
+          statement::add_element(dummy, array[1].rhs, *x);
+        }
+        else
+        {
+          array[1].op.type_family = OPERATION_ROWS_REDUCTION_TYPE_FAMILY;
+          array[1].op.type = ROP;
+        }
+
+        return statement(array);
+     }
+
+      template<typename T>
+      statement mat_vec_prod(viennacl::matrix_base<T> const * A, bool A_trans, viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y)
+      {
+        return row_reduction_mat_vec_prod(A, A_trans, x, y, OPERATION_INVALID_TYPE);
+      }
+
     }
+
   }
 
 }

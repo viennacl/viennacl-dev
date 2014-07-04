@@ -74,42 +74,19 @@ namespace viennacl{
         kernel.global_work_size(0,parameters_.local_size_0()*parameters_.num_groups_0());
         kernel.global_work_size(1,parameters_.local_size_1());
 
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
-          scheduler::statement::container_type exprs = it->array();
-          for(scheduler::statement::container_type::iterator iit = exprs.begin() ; iit != exprs.end() ; ++iit){
-            if(is_vector_reduction(*iit)){
-              scheduler::statement_node const * current_node = &(*iit);
-              //The LHS of the prod is a matrix
-              if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
-              {
-                kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
-                kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
-                return;
-              }
-              else
-              {
-                //The LHS of the prod is a matrix expression
-                current_node = &exprs[current_node->lhs.node_index];
-                if(current_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
-                {
-                  kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
-                  kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
-                  return;
-                }
-                else if(current_node->rhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
-                {
-                  kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size1_fun())));
-                  kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(current_node->lhs, utils::internal_size2_fun())));
-                  return;
-                }
-                else
-                  throw generator_not_supported_exception("Unexpected expression tree");
-              }
-              return;
-            }
-          }
+        scheduler::statement::container_type const & array = statements.data().begin()->array();
+        vcl_size_t root = statements.data().begin()->root();
+        scheduler::statement_node const * node = &array[array[root].rhs.node_index];
+        bool trans = false;
+        while(node->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+        {
+          if(node->op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
+            trans = !trans;
+          node = &array[node->lhs.node_index];
         }
 
+        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::size1_fun())));
+        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::size2_fun())));
       }
 
       void add_kernel_arguments(statements_container const & /*statements*/, std::string & arguments_string) const
@@ -151,6 +128,8 @@ namespace viennacl{
 
         std::string size1 = "M";
         std::string size2 = "N";
+        if(parameters_.A_trans()=='T')
+          std::swap(size1, size2);
 
         for(std::vector<mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           stream << "__local " <<  (*it)->scalartype() << " buf" << std::distance(exprs.begin(), it) << '[' << lsize0*lsize1 << "];" << std::endl;

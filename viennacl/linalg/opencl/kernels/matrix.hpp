@@ -43,220 +43,6 @@ namespace viennacl
           ambm_scalar_type b;
         };
 
-//        // just returns the for-loop
-//        template <typename StringType>
-//        void generate_ambm_impl2(StringType & source, ambm_config const & cfg, bool mult_alpha, bool mult_beta)
-//        {
-//          if (cfg.is_row_major)
-//          {
-//            source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0);\n");
-//            source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0);\n");
-//            source.append("  for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
-//            source.append("    for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0))\n");
-//          }
-//          else
-//          {
-//            source.append("  unsigned int col_gid = get_global_id(0) / get_local_size(0);\n");
-//            source.append("  unsigned int row_gid = get_global_id(0) % get_local_size(0);\n");
-//            source.append("  for (unsigned int col = col_gid; col < A_size2; col += get_num_groups(0))\n");
-//            source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_local_size(0))\n");
-//          }
-
-//          if (cfg.with_stride_and_range)
-//          {
-//            if (cfg.is_row_major)
-//              source.append("      A[(row * A_inc1 + A_start1) * A_internal_size2 + (col * A_inc2 + A_start2)] ");
-//            else
-//              source.append("      A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) *  A_internal_size1] ");
-//            source.append(cfg.assign_op);
-//            if (cfg.is_row_major)
-//              source.append(" B[(row * B_inc1 + B_start1) * B_internal_size2 + (col * B_inc2 + B_start2)] ");
-//            else
-//              source.append(" B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1] ");
-
-//            if (mult_alpha)
-//              source.append("* alpha ");
-//            else
-//              source.append("/ alpha ");
-//            if (cfg.b != VIENNACL_AMBM_NONE)
-//            {
-//              if (cfg.is_row_major)
-//                source.append("+ C[(row * C_inc1 + C_start1) * C_internal_size2 + (col * C_inc2 + C_start2)] ");
-//              else
-//                source.append("+ C[(row * C_inc1 + C_start1) + (col * C_inc2 + C_start2) * C_internal_size1] ");
-//              if (mult_beta)
-//                source.append("* beta");
-//              else
-//                source.append("/ beta");
-//            }
-//          }
-//          else
-//          {
-//            if (cfg.is_row_major)
-//              source.append("    A[row * A_internal_size2 + col] ");
-//            else
-//              source.append("    A[row + col * A_internal_size1] ");
-//            source.append(cfg.assign_op);
-//            if (cfg.is_row_major)
-//              source.append(" B[row * B_internal_size2 + col] ");
-//            else
-//              source.append(" B[row + col * B_internal_size1] ");
-
-//            if (mult_alpha)
-//              source.append("* alpha ");
-//            else
-//              source.append("/ alpha ");
-//            if (cfg.b != VIENNACL_AMBM_NONE)
-//            {
-//              if (cfg.is_row_major)
-//                source.append("+ C[row * C_internal_size2 + col] ");
-//              else
-//                source.append("+ C[row + col * C_internal_size2] ");
-//              if (mult_beta)
-//                source.append("* beta");
-//              else
-//                source.append("/ beta");
-//            }
-//          }
-//          source.append("; \n");
-//        }
-
-//        template <typename StringType>
-//        void generate_ambm_impl(StringType & source, std::string const & numeric_string, ambm_config const & cfg)
-//        {
-//          source.append("__kernel void am");
-//          if (cfg.b != VIENNACL_AMBM_NONE)
-//            source.append("bm");
-//          if (cfg.assign_op != "=")
-//            source.append("_m");
-
-//          if (cfg.a == VIENNACL_AMBM_CPU)
-//            source.append("_cpu");
-//          else if (cfg.a == VIENNACL_AMBM_GPU)
-//            source.append("_gpu");
-
-//          if (cfg.b == VIENNACL_AMBM_CPU)
-//            source.append("_cpu");
-//          else if (cfg.b == VIENNACL_AMBM_GPU)
-//            source.append("_gpu");
-//          source.append("( \n");
-//          source.append("  __global "); source.append(numeric_string); source.append(" * A, \n");
-//          source.append("  unsigned int A_start1, unsigned int A_start2, \n");
-//          source.append("  unsigned int A_inc1,   unsigned int A_inc2, \n");
-//          source.append("  unsigned int A_size1,  unsigned int A_size2, \n");
-//          source.append("  unsigned int A_internal_size1,  unsigned int A_internal_size2, \n");
-//          if (cfg.a == VIENNACL_AMBM_CPU)
-//          {
-//            source.append("  "); source.append(numeric_string); source.append(" fac2, \n");
-//          }
-//          else if (cfg.a == VIENNACL_AMBM_GPU)
-//          {
-//            source.append("  __global "); source.append(numeric_string); source.append(" * fac2, \n");
-//          }
-//          source.append("  unsigned int options2, \n");  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
-//          source.append("  __global const "); source.append(numeric_string); source.append(" * B, \n");
-//          source.append("  unsigned int B_start1, unsigned int B_start2, \n");
-//          source.append("  unsigned int B_inc1,   unsigned int B_inc2, \n");
-//          source.append("  unsigned int B_internal_size1,  unsigned int B_internal_size2");
-
-//          if (cfg.b != VIENNACL_AMBM_NONE)
-//          {
-//            source.append(", \n\n");
-//            if (cfg.b == VIENNACL_AMBM_CPU)
-//            {
-//              source.append("  "); source.append(numeric_string); source.append(" fac3, \n");
-//            }
-//            else if (cfg.b == VIENNACL_AMBM_GPU)
-//            {
-//              source.append("  __global "); source.append(numeric_string); source.append(" * fac3, \n");
-//            }
-//            source.append("  unsigned int options3, \n");  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
-//            source.append("  __global const "); source.append(numeric_string); source.append(" * C, \n");
-//            source.append("  unsigned int C_start1, unsigned int C_start2, \n");
-//            source.append("  unsigned int C_inc1,   unsigned int C_inc2, \n");
-//            source.append("  unsigned int C_internal_size1,  unsigned int C_internal_size2 \n");
-//          }
-//          source.append(") { \n");
-
-//          if (cfg.a == VIENNACL_AMBM_CPU)
-//          {
-//            source.append("  "); source.append(numeric_string); source.append(" alpha = fac2; \n");
-//          }
-//          else if (cfg.a == VIENNACL_AMBM_GPU)
-//          {
-//            source.append("  "); source.append(numeric_string); source.append(" alpha = fac2[0]; \n");
-//          }
-//          source.append("  if (options2 & (1 << 0)) \n");
-//          source.append("    alpha = -alpha; \n");
-//          source.append(" \n");
-
-//          if (cfg.b == VIENNACL_AMBM_CPU)
-//          {
-//            source.append("  "); source.append(numeric_string); source.append(" beta = fac3; \n");
-//          }
-//          else if (cfg.b == VIENNACL_AMBM_GPU)
-//          {
-//            source.append("  "); source.append(numeric_string); source.append(" beta = fac3[0]; \n");
-//          }
-//          if (cfg.b != VIENNACL_AMBM_NONE)
-//          {
-//            source.append("  if (options3 & (1 << 0)) \n");
-//            source.append("    beta = -beta; \n");
-//            source.append(" \n");
-//          }
-//          source.append("  if (options2 & (1 << 1)) { \n");
-//          if (cfg.b != VIENNACL_AMBM_NONE)
-//          {
-//            source.append("    if (options3 & (1 << 1)) {\n");
-//            generate_ambm_impl2(source, cfg, false, false);
-//            source.append("    } else {\n");
-//            generate_ambm_impl2(source, cfg, false, true);
-//            source.append("    } \n");
-//          }
-//          else
-//            generate_ambm_impl2(source, cfg, false, true);
-//          source.append("  } else { \n");
-//          if (cfg.b != VIENNACL_AMBM_NONE)
-//          {
-//            source.append("    if (options3 & (1 << 1)) {\n");
-//            generate_ambm_impl2(source, cfg, true, false);
-//            source.append("    } else {\n");
-//            generate_ambm_impl2(source, cfg, true, true);
-//            source.append("    } \n");
-//          }
-//          else
-//            generate_ambm_impl2(source, cfg, true, true);
-//          source.append("  } \n");
-//          source.append("} \n");
-//        }
-
-//        template <typename StringType>
-//        void generate_ambm(StringType & source, std::string const & numeric_string, bool is_row_major)
-//        {
-//          ambm_config cfg;
-//          cfg.assign_op = "=";
-//          cfg.with_stride_and_range = true;
-//          cfg.is_row_major = is_row_major;
-
-//          // am
-//          cfg.b = VIENNACL_AMBM_NONE; cfg.a = VIENNACL_AMBM_CPU; generate_ambm_impl(source, numeric_string, cfg);
-//          cfg.b = VIENNACL_AMBM_NONE; cfg.a = VIENNACL_AMBM_GPU; generate_ambm_impl(source, numeric_string, cfg);
-
-//          // ambm
-//          cfg.a = VIENNACL_AMBM_CPU; cfg.b = VIENNACL_AMBM_CPU; generate_ambm_impl(source, numeric_string, cfg);
-//          cfg.a = VIENNACL_AMBM_CPU; cfg.b = VIENNACL_AMBM_GPU; generate_ambm_impl(source, numeric_string, cfg);
-//          cfg.a = VIENNACL_AMBM_GPU; cfg.b = VIENNACL_AMBM_CPU; generate_ambm_impl(source, numeric_string, cfg);
-//          cfg.a = VIENNACL_AMBM_GPU; cfg.b = VIENNACL_AMBM_GPU; generate_ambm_impl(source, numeric_string, cfg);
-
-//          // ambm_m
-//          cfg.assign_op = "+=";
-
-//          cfg.a = VIENNACL_AMBM_CPU; cfg.b = VIENNACL_AMBM_CPU; generate_ambm_impl(source, numeric_string, cfg);
-//          cfg.a = VIENNACL_AMBM_CPU; cfg.b = VIENNACL_AMBM_GPU; generate_ambm_impl(source, numeric_string, cfg);
-//          cfg.a = VIENNACL_AMBM_GPU; cfg.b = VIENNACL_AMBM_CPU; generate_ambm_impl(source, numeric_string, cfg);
-//          cfg.a = VIENNACL_AMBM_GPU; cfg.b = VIENNACL_AMBM_GPU; generate_ambm_impl(source, numeric_string, cfg);
-//        }
-
         template<typename T, typename ScalarType1, typename ScalarType2>
         inline void generate_ambm_impl2(std::string & source, matrix_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType1 const * a,
@@ -301,54 +87,6 @@ namespace viennacl
           generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, z, db);
         }
 
-        template <typename StringType>
-        void generate_assign_cpu(StringType & source, std::string const & numeric_string, bool is_row_major)
-        {
-          source.append("__kernel void assign_cpu( \n");
-          source.append("  __global "); source.append(numeric_string); source.append(" * A, \n");
-          source.append("  unsigned int A_start1, unsigned int A_start2, \n");
-          source.append("  unsigned int A_inc1,   unsigned int A_inc2, \n");
-          source.append("  unsigned int A_size1,  unsigned int A_size2, \n");
-          source.append("  unsigned int A_internal_size1,  unsigned int A_internal_size2, \n");
-          source.append("  "); source.append(numeric_string); source.append(" alpha) \n");
-          source.append("{ \n");
-          if (is_row_major)
-          {
-            source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0);\n");
-            source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0);\n");
-            source.append("  for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
-            source.append("    for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0))\n");
-            source.append("      A[(row * A_inc1 + A_start1) * A_internal_size2 + (col * A_inc2 + A_start2)] = alpha; \n");
-          }
-          else
-          {
-            source.append("  unsigned int row_gid = get_global_id(0) % get_local_size(0);\n");
-            source.append("  unsigned int col_gid = get_global_id(0) / get_local_size(0);\n");
-            source.append("  for (unsigned int col = col_gid; col < A_size2; col += get_num_groups(0))\n");
-            source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_local_size(0))\n");
-            source.append("      A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) *  A_internal_size1] = alpha; \n");
-          }
-          source.append("} \n");
-        }
-
-        template <typename StringType>
-        void generate_diagonal_assign_cpu(StringType & source, std::string const & numeric_string, bool is_row_major)
-        {
-          source.append("__kernel void diagonal_assign_cpu( \n");
-          source.append("  __global "); source.append(numeric_string); source.append(" * A, \n");
-          source.append("  unsigned int A_start1, unsigned int A_start2, \n");
-          source.append("  unsigned int A_inc1,   unsigned int A_inc2, \n");
-          source.append("  unsigned int A_size1,  unsigned int A_size2, \n");
-          source.append("  unsigned int A_internal_size1,  unsigned int A_internal_size2, \n");
-          source.append("  "); source.append(numeric_string); source.append(" alpha) \n");
-          source.append("{ \n");
-          source.append("  for (unsigned int idx = get_global_id(0); idx < min(A_size1, A_size2); idx += get_global_size(0))\n");
-          if (is_row_major)
-            source.append("    A[(idx * A_inc1 + A_start1) * A_internal_size2 + (idx * A_inc2 + A_start2)] = alpha; \n");
-          else
-            source.append("    A[(idx * A_inc1 + A_start1) + (idx * A_inc2 + A_start2) *  A_internal_size1] = alpha; \n");
-          source.append("} \n");
-        }
 
         template <typename StringType>
         void generate_element_op(StringType & source, std::string const & numeric_string, bool is_row_major)
@@ -757,56 +495,6 @@ namespace viennacl
         }
 
         template <typename StringType>
-        void generate_trans_vec_mul(StringType & source, std::string const & numeric_string, bool is_row_major)
-        {
-          source.append("__kernel void trans_vec_mul( \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * A, \n");
-          source.append("          unsigned int A_row_start, unsigned int A_col_start, \n");
-          source.append("          unsigned int A_row_inc, unsigned int A_col_inc, \n");
-          source.append("          unsigned int A_row_size, unsigned int A_col_size, \n");
-          source.append("          unsigned int A_internal_rows, unsigned int A_internal_cols, \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * v, \n");
-          source.append("          unsigned int v_start, unsigned int v_inc, unsigned int v_size, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
-          source.append("          unsigned int result_start, unsigned int result_inc, unsigned int result_size, \n");
-          source.append("          __local "); source.append(numeric_string); source.append(" * work) \n");
-          source.append("{ \n");
-          if (is_row_major)
-          {
-            source.append("  for (unsigned int row = get_global_id(0); row < A_col_size; row += get_global_size(0)) \n");
-            source.append("  { \n");
-            source.append("    "); source.append(numeric_string); source.append(" dot_prod = 0; \n");
-            source.append("    for (unsigned int col = 0; col < A_row_size; ++col) \n");
-            source.append("      dot_prod += A[(row * A_col_inc + A_col_start) + (col * A_row_inc + A_row_start) * A_internal_cols] * v[v_start + v_inc * col]; \n");
-            source.append("    result[row * result_inc + result_start] = dot_prod; \n");
-          }
-          else
-          {
-            source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0); \n");
-            source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0); \n");
-            source.append("  unsigned int lid = get_local_id(0); \n");
-
-            source.append("  for (unsigned int row = row_gid; row < A_col_size; row += get_num_groups(0)) \n");
-            source.append("  { \n");
-            source.append("    "); source.append(numeric_string); source.append(" dot_prod = 0; \n");
-            source.append("    for (unsigned int col = col_gid; col < A_row_size; col+=get_local_size(0)) \n");
-            source.append("      dot_prod += A[(row * A_col_inc + A_col_start) * A_internal_rows + col * A_row_inc + A_row_start] * v[v_start + v_inc * col]; \n");
-            source.append("    work[lid] = dot_prod; \n");
-
-            source.append("    for(unsigned int stride=get_local_size(0)/2 ; stride>0 ; stride>>=1){ \n");
-            source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
-            source.append("      if(lid < stride) \n");
-            source.append("        work[lid] += work[lid+stride]; \n");
-            source.append("    } \n");
-
-            source.append("    if(lid == 0) \n");
-            source.append("      result[row * result_inc + result_start] = work[0]; \n");
-          }
-          source.append("  } \n");
-          source.append("} \n");
-        }
-
-        template <typename StringType>
         void generate_triangular_substitute_inplace(StringType & source, std::string const & numeric_string, bool is_row_major)
         {
           source.append("__kernel void triangular_substitute_inplace( \n");
@@ -860,57 +548,6 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
-        void generate_vec_mul(StringType & source, std::string const & numeric_string, bool is_row_major)
-        {
-          source.append("__kernel void vec_mul( \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * A, \n");
-          source.append("          unsigned int A_row_start, unsigned int A_col_start, \n");
-          source.append("          unsigned int A_row_inc, unsigned int A_col_inc, \n");
-          source.append("          unsigned int A_row_size, unsigned int A_col_size, \n");
-          source.append("          unsigned int A_internal_rows, unsigned int A_internal_cols, \n");
-          source.append("          __global const "); source.append(numeric_string); source.append(" * v, \n");
-          source.append("          unsigned int v_start, unsigned int v_inc, unsigned int v_size, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
-          source.append("          unsigned int result_start, unsigned int result_inc, unsigned int result_size, \n");
-          source.append("          __local "); source.append(numeric_string); source.append(" * work) \n");
-          source.append("{ \n");
-          if (is_row_major)
-          {
-            source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0); \n");
-            source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0); \n");
-            source.append("  unsigned int lid = get_local_id(0); \n");
-
-            source.append("  for (unsigned int row = row_gid; row < A_row_size; row += get_num_groups(0)) \n");
-            source.append("  { \n");
-            source.append("    "); source.append(numeric_string); source.append(" dot_prod = 0; \n");
-            source.append("    for (unsigned int col = col_gid; col < A_col_size; col+=get_local_size(0)) \n");
-            source.append("      dot_prod += A[(row * A_row_inc + A_row_start) * A_internal_cols + col * A_col_inc + A_col_start] * v[v_start + v_inc * col]; \n");
-            source.append("    work[lid] = dot_prod; \n");
-
-            source.append("    for(unsigned int stride=get_local_size(0)/2 ; stride>0 ; stride>>=1){ \n");
-            source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
-            source.append("      if(lid < stride) \n");
-            source.append("        work[lid] += work[lid+stride]; \n");
-            source.append("    } \n");
-
-            source.append("    if(lid == 0) \n");
-            source.append("      result[row * result_inc + result_start] = work[0]; \n");
-
-          }
-          else
-          {
-            source.append("    for (unsigned int row = get_global_id(0); row < A_row_size; row += get_global_size(0)) \n");
-            source.append("    { \n");
-            source.append("      "); source.append(numeric_string); source.append(" dot_prod = 0; \n");
-            source.append("      for (unsigned int col = 0; col < A_col_size; ++col) \n");
-            source.append("        dot_prod += A[(row * A_row_inc + A_row_start) + (col * A_col_inc + A_col_start) * A_internal_rows] * v[v_start + v_inc * col]; \n");
-            source.append("      result[row * result_inc + result_start] = dot_prod; \n");
-          }
-          source.append("  } \n");
-          source.append("} \n");
-        }
-
         namespace detail
         {
           inline std::string type_to_string(viennacl::row_major)    { return "row"; }
@@ -940,6 +577,8 @@ namespace viennacl
             {
               matrix_axpy_template::parameters const & matrix_axpy_parameters = device_specific::database::get<NumericT>(database::matrix_axpy);
               vector_axpy_template::parameters const & vector_axpy_parameters = device_specific::database::get<NumericT>(database::vector_axpy);
+              row_wise_reduction_template::parameters const & row_wise_reduction_parameters = device_specific::database::get<NumericT>(database::row_wise_reduction);
+              row_wise_reduction_template::parameters const & trans_row_wise_reduction_parameters = device_specific::database::get<NumericT>(database::trans_row_wise_reduction);
 
               std::string source;
               source.reserve(8192);
@@ -947,6 +586,7 @@ namespace viennacl
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
               viennacl::vector<NumericT> x;
+              viennacl::vector<NumericT> y;
               viennacl::matrix<NumericT, F> A;
               viennacl::matrix<NumericT, F> B;
               viennacl::matrix<NumericT, F> C;
@@ -957,6 +597,7 @@ namespace viennacl
               NumericT ha;
               NumericT hb;
               int hi = 0;
+              unsigned int hui = 0;
 
               // fully parametrized kernels:
               generate_ambm_impl(source, matrix_axpy_parameters, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &ha, &da, &C, &hb, &db);
@@ -964,18 +605,18 @@ namespace viennacl
 
               source.append(matrix_axpy_template(matrix_axpy_parameters).generate(scheduler::preset::assign_cpu(&A, &M)));
               source.append(matrix_axpy_template(matrix_axpy_parameters).generate(scheduler::preset::matrix_diag_from_vector(&x, &A, hi)));
-              source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::matrix_row(&x, &A, hi)));
-              source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::matrix_column(&x, &A, hi)));
+              source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::matrix_row(&x, &A, hui)));
+              source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::matrix_column(&x, &A, hui)));
               source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::matrix_diag_to_vector(&x, &A, hi)));
               source.append(vector_axpy_template(vector_axpy_parameters).generate(scheduler::preset::diagonal_assign_cpu(&A, &sx)));
 
               // kernels with mostly predetermined skeleton:
-//              generate_diagonal_assign_cpu(source, numeric_string, is_row_major);
               generate_element_op(source, numeric_string, is_row_major);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, true);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, false);
-              generate_trans_vec_mul(source, numeric_string, is_row_major);
-              generate_vec_mul(source, numeric_string, is_row_major);
+
+              source.append(row_wise_reduction_template(trans_row_wise_reduction_parameters).generate(scheduler::preset::mat_vec_prod(&A, true, &x, &y)));
+              source.append(row_wise_reduction_template(row_wise_reduction_parameters).generate(scheduler::preset::mat_vec_prod(&A, false, &x, &y)));
 
               if (numeric_string == "float" || numeric_string == "double")
               {

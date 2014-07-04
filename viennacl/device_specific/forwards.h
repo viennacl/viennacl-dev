@@ -47,11 +47,13 @@ namespace viennacl{
       std::string bound1;
     };
 
-    inline bool is_scalar_reduction(scheduler::statement_node const & node){
+    inline bool is_scalar_reduction(scheduler::statement_node const & node)
+    {
       return node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE || node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY;
     }
 
-    inline bool is_vector_reduction(scheduler::statement_node const & node){
+    inline bool is_vector_reduction(scheduler::statement_node const & node)
+    {
       return node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE
           || node.op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY
           || node.op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY;

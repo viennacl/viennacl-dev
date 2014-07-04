@@ -114,16 +114,13 @@ namespace viennacl
           scheduler::statement_node lhs = statement.array()[root.lhs.node_index];
           if(lhs.op.type==scheduler::OPERATION_BINARY_MATRIX_DIAG_TYPE)
           {
-            vcl_size_t size1 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size1_fun()):
-                                                    utils::call_on_matrix(lhs.lhs, utils::size1_fun());
-            vcl_size_t size2 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size2_fun()):
-                                                    utils::call_on_matrix(lhs.lhs, utils::size2_fun());
+            vcl_size_t size1 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size1_fun()): utils::call_on_matrix(lhs.lhs, utils::size1_fun());
+            vcl_size_t size2 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size2_fun()): utils::call_on_matrix(lhs.lhs, utils::size2_fun());
             return std::min(size1, size2);
           }
           throw generator_not_supported_exception("Vector AXPY : Unimplemented LHS size deduction");
         }
-        return up_to_internal_size_?utils::call_on_vector(root.lhs, utils::internal_size_fun()):
-                                      utils::call_on_vector(root.lhs, utils::size_fun());
+        return up_to_internal_size_?utils::call_on_vector(root.lhs, utils::internal_size_fun()): utils::call_on_vector(root.lhs, utils::size_fun());
       }
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
