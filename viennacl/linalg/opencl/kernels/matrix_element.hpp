@@ -7,6 +7,10 @@
 #include "viennacl/ocl/utils.hpp"
 #include "viennacl/linalg/opencl/kernels/matrix.hpp"
 
+#include "viennacl/scheduler/preset.hpp"
+
+#include "viennacl/device_specific/database.hpp"
+
 /** @file viennacl/linalg/opencl/kernels/matrix_element.hpp
  *  @brief OpenCL kernel file for element-wise matrix operations */
 namespace viennacl
@@ -83,6 +87,9 @@ namespace viennacl
 
           static void init(viennacl::ocl::context & ctx)
           {
+            using namespace device_specific;
+            using namespace scheduler;
+
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
             std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
 
@@ -91,34 +98,46 @@ namespace viennacl
             {
               std::string source;
               source.reserve(8192);
-              bool is_row_major = viennacl::is_row_major<F>::value;
 
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
+
+              matrix_axpy_template mtemplate = matrix_axpy_template(database::get<NumericT>(database::matrix_axpy));
+
+              viennacl::matrix<NumericT, F> A;
+              viennacl::matrix<NumericT, F> B;
+              viennacl::matrix<NumericT, F> C;
 
               // unary operations
               if (numeric_string == "float" || numeric_string == "double")
               {
-                generate_matrix_unary_element_ops(source, numeric_string, "acos",  is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "asin",  is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "atan",  is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "ceil",  is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "cos",   is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "cosh",  is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "exp",   is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "fabs",  is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "floor", is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "log",   is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "log10", is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "sin",   is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "sinh",  is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "sqrt",  is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "tan",   is_row_major);
-                generate_matrix_unary_element_ops(source, numeric_string, "tanh",  is_row_major);
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_ACOS_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_ASIN_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_ATAN_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_CEIL_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_COS_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_COSH_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_EXP_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_FABS_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_FLOOR_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_LOG_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_LOG10_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_SIN_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_SINH_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_SQRT_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_TAN_TYPE)));
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_TANH_TYPE)));
               }
               else
               {
-                generate_matrix_unary_element_ops(source, numeric_string, "abs", is_row_major);
+                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_ABS_TYPE)));
               }
+
+              // binary operations
+              source.append(mtemplate.generate(scheduler::preset::binary_element_op(&A, &B, &C, OPERATION_BINARY_ELEMENT_DIV_TYPE)));
+              source.append(mtemplate.generate(scheduler::preset::binary_element_op(&A, &B, &C, OPERATION_BINARY_ELEMENT_PROD_TYPE)));
+              if (numeric_string == "float" || numeric_string == "double")
+                source.append(mtemplate.generate(scheduler::preset::binary_element_op(&A, &B, &C, OPERATION_BINARY_ELEMENT_POW_TYPE)));
+
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

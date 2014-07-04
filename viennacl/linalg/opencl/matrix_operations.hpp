@@ -60,6 +60,50 @@ namespace viennacl
     namespace opencl
     {
 
+      namespace detail
+      {
+        template <typename NumericT>
+        viennacl::ocl::program & program_for_matrix(matrix_base<NumericT> const & A, unsigned int id)
+        {
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+
+          if (A.row_major())
+          {
+            if(id==0)
+            {
+              typedef viennacl::linalg::opencl::kernels::matrix<NumericT, row_major>  KernelClass;
+              KernelClass::init(ctx);
+              return ctx.get_program(KernelClass::program_name());
+            }
+            else
+            {
+              typedef viennacl::linalg::opencl::kernels::matrix_element<NumericT, row_major>  KernelClass;
+              KernelClass::init(ctx);
+              return ctx.get_program(KernelClass::program_name());
+            }
+          }
+
+          if(id==0)
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix<NumericT, column_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_program(KernelClass::program_name());
+          }
+          else
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_element<NumericT, column_major>  KernelClass;
+            KernelClass::init(ctx);
+            return ctx.get_program(KernelClass::program_name());
+          }
+        }
+
+        template <typename NumericT>
+        viennacl::ocl::kernel & kernel_for_matrix(matrix_base<NumericT> const & A, std::string kernel_name)
+        {
+          return program_for_matrix(A,0).get_kernel(kernel_name);
+        }
+      }
+
       //
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
@@ -71,7 +115,7 @@ namespace viennacl
       {
         assert(mat1.row_major() == mat2.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat1),
+                                        .enqueue(detail::program_for_matrix(mat1,0),
                                                 scheduler::preset::av(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha));
       }
 
@@ -84,7 +128,7 @@ namespace viennacl
       {
         assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat1),
+                                        .enqueue(detail::program_for_matrix(mat1,0),
                                                 scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha, &mat3, &beta, flip_sign_beta, reciprocal_beta));
       }
 
@@ -97,7 +141,7 @@ namespace viennacl
       {
         assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat1),
+                                        .enqueue(detail::program_for_matrix(mat1,0),
                                                 scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha, &mat3, &beta, flip_sign_beta, reciprocal_beta));
       }
 
@@ -109,7 +153,7 @@ namespace viennacl
 
         scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat),viennacl::traits::size2(mat),s);
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::assign_cpu(&mat, &mat2), up_to_internal_size);
+                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::assign_cpu(&mat, &mat2), up_to_internal_size);
       }
 
       template <typename NumericT>
@@ -117,35 +161,35 @@ namespace viennacl
       {
         viennacl::scalar_vector<NumericT> sx(std::min(viennacl::traits::size1(mat), viennacl::traits::size2(mat)), s);
         device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::diagonal_assign_cpu(&mat, &sx));
+                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::diagonal_assign_cpu(&mat, &sx));
       }
 
       template <typename NumericT>
       void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & mat)
       {
         device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::matrix_diag_from_vector(&vec, &mat, k));
+                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::matrix_diag_from_vector(&vec, &mat, k));
       }
 
       template <typename NumericT>
       void matrix_diag_to_vector(const matrix_base<NumericT> & mat, int k, vector_base<NumericT> & vec)
       {
         device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::matrix_diag_to_vector(&vec, &mat, k));
+                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::matrix_diag_to_vector(&vec, &mat, k));
       }
 
       template <typename NumericT>
       void matrix_row(const matrix_base<NumericT> & mat, unsigned int i, vector_base<NumericT> & vec)
       {
         device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::matrix_row(&vec, &mat, i));
+                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::matrix_row(&vec, &mat, i));
       }
 
       template <typename NumericT>
       void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_base<NumericT> & vec)
       {
         device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat), scheduler::preset::matrix_column(&vec, &mat, j));
+                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::matrix_column(&vec, &mat, j));
       }
 
 
@@ -168,31 +212,9 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
         assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        cl_uint op_type = 2; //0: product, 1: division, 2: power
-        if (viennacl::is_division<OP>::value)
-          op_type = 1;
-        else if (viennacl::is_product<OP>::value)
-          op_type = 0;
-
-        viennacl::ocl::kernel & k = detail::kernel_for_matrix(A, "element_op");
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
-                                cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
-                                cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
-                                cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
-                                cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
-
-                                viennacl::traits::opencl_handle(proxy.lhs()),
-                                cl_uint(viennacl::traits::start1(proxy.lhs())),           cl_uint(viennacl::traits::start2(proxy.lhs())),
-                                cl_uint(viennacl::traits::stride1(proxy.lhs())),          cl_uint(viennacl::traits::stride2(proxy.lhs())),
-                                cl_uint(viennacl::traits::internal_size1(proxy.lhs())),   cl_uint(viennacl::traits::internal_size2(proxy.lhs())),
-
-                                viennacl::traits::opencl_handle(proxy.rhs()),
-                                cl_uint(viennacl::traits::start1(proxy.rhs())),           cl_uint(viennacl::traits::start2(proxy.rhs())),
-                                cl_uint(viennacl::traits::stride1(proxy.rhs())),          cl_uint(viennacl::traits::stride2(proxy.rhs())),
-                                cl_uint(viennacl::traits::internal_size1(proxy.rhs())),   cl_uint(viennacl::traits::internal_size2(proxy.rhs())),
-
-                                op_type)
-                              );
+        scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_binary<OP> >::id);
+        device_specific::matrix_axpy_template(device_specific::database::get<T>(device_specific::database::matrix_axpy))
+                                        .enqueue(detail::program_for_matrix(A,1),scheduler::preset::binary_element_op(&A, &proxy.lhs(), &proxy.rhs(),TYPE));
       }
 
 
@@ -210,34 +232,12 @@ namespace viennacl
         assert(A.row_major() == proxy.lhs().row_major() && bool("Elementwise operations on mixed matrix layouts not supported yet!"));
         assert(A.row_major() == proxy.rhs().row_major() && bool("Elementwise operations on mixed matrix layouts not supported yet!"));
 
-        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+        assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-
-        viennacl::ocl::kernel *k = NULL;
-        if (A.row_major())
-        {
-          viennacl::linalg::opencl::kernels::matrix_element<T, row_major>::init(ctx);
-          k = &(ctx.get_kernel(viennacl::linalg::opencl::kernels::matrix_element<T, row_major>::program_name(), detail::op_to_string(OP()) + "_assign"));
-        }
-        else
-        {
-          viennacl::linalg::opencl::kernels::matrix_element<T, column_major>::init(ctx);
-          k = &(ctx.get_kernel(viennacl::linalg::opencl::kernels::matrix_element<T, column_major>::program_name(), detail::op_to_string(OP()) + "_assign"));
-        }
-
-        viennacl::ocl::enqueue((*k)(viennacl::traits::opencl_handle(A),
-                                 cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
-                                 cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
-                                 cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
-                                 cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
-
-                                 viennacl::traits::opencl_handle(proxy.lhs()),
-                                 cl_uint(viennacl::traits::start1(proxy.lhs())),           cl_uint(viennacl::traits::start2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::stride1(proxy.lhs())),          cl_uint(viennacl::traits::stride2(proxy.lhs())),
-                                 cl_uint(viennacl::traits::internal_size1(proxy.lhs())),   cl_uint(viennacl::traits::internal_size2(proxy.lhs())))
-                              );
+        scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_unary<OP> >::id);
+        device_specific::matrix_axpy_template(device_specific::database::get<T>(device_specific::database::matrix_axpy))
+                                        .enqueue(detail::program_for_matrix(A,1),scheduler::preset::unary_element_op(&A, &proxy.lhs(),TYPE));
       }
 
 
@@ -270,7 +270,7 @@ namespace viennacl
           parameters = &device_specific::database::get<NumericT>(device_specific::database::trans_row_wise_reduction);
         else
           parameters = &device_specific::database::get<NumericT>(device_specific::database::row_wise_reduction);
-        device_specific::row_wise_reduction_template(*parameters).enqueue(detail::program_for_matrix(mat),scheduler::preset::mat_vec_prod(&mat, trans_mat, &vec, &result));
+        device_specific::row_wise_reduction_template(*parameters).enqueue(detail::program_for_matrix(mat,0),scheduler::preset::mat_vec_prod(&mat, trans_mat, &vec, &result));
       }
 
       //
