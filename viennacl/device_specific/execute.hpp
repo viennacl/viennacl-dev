@@ -63,7 +63,6 @@ namespace viennacl{
         src+="#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
         src+="#endif\n";
         src +=tplt.generate(statements, "kernel");
-        std::cout << src << std::endl;
         ctx.add_program(src, program_name);
       }
       tplt.enqueue(ctx.get_program(program_name), statements, "kernel");
