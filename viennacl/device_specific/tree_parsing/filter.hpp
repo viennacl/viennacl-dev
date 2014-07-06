@@ -31,17 +31,17 @@ namespace viennacl{
         public:
           typedef bool (*pred_t)(scheduler::statement_node const & node);
 
-          filter(pred_t pred, std::vector<scheduler::statement_node const *> & out) : pred_(pred), out_(out){ }
+          filter(pred_t pred, std::vector<vcl_size_t> & out) : pred_(pred), out_(out){ }
 
-          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type) const
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t) const
           {
              scheduler::statement_node const * root_node = &statement.array()[root_idx];
              if(pred_(*root_node))
-               out_.push_back(root_node);
+               out_.push_back(root_idx);
           }
       private:
           pred_t pred_;
-          std::vector<scheduler::statement_node const *> & out_;
+          std::vector<vcl_size_t> & out_;
       };
 
 

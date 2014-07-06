@@ -35,6 +35,7 @@
 
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/handle.hpp"
+#include "viennacl/traits/row_major.hpp"
 
 #include "viennacl/tools/tools.hpp"
 
@@ -272,6 +273,12 @@ namespace viennacl{
         typedef vcl_size_t result_type;
         template<class T>
         result_type operator()(T const &t) const { return viennacl::traits::internal_size1(t); }
+      };
+
+      struct row_major_fun{
+        typedef bool result_type;
+        template<class T>
+        result_type operator()(T const &t) const { return viennacl::traits::row_major(t); }
       };
 
       struct internal_size2_fun{

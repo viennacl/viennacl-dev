@@ -27,8 +27,8 @@
 
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
-#include "viennacl/device_specific/forwards.h"
 
+#include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/tree_parsing/traverse.hpp"
 
 
@@ -38,24 +38,6 @@ namespace viennacl{
   namespace device_specific{
 
     namespace tree_parsing{
-
-      /** @brief functor for generating the prototype of a statement */
-      class prototype_generation_traversal : public traversal_functor{
-        private:
-          unsigned int simd_width_;
-          std::set<std::string> & already_generated_;
-          std::string & str_;
-          mapping_type const & mapping_;
-        public:
-          prototype_generation_traversal(unsigned int simd_width, std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping) : simd_width_(simd_width), already_generated_(already_generated), str_(str),  mapping_(mapping){ }
-
-          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type node_type) const {
-              scheduler::statement_node const & root_node = statement.array()[root_idx];
-              if( (node_type==LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                ||(node_type==RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
-                  mapping_.at(std::make_pair(root_idx,node_type))->append_kernel_arguments(simd_width_, already_generated_, str_);
-          }
-      };
 
     }
 

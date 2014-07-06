@@ -29,10 +29,10 @@ License:         MIT (X11), see file LICENSE in the base directory
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/templates/template_base.hpp"
-
 #include "viennacl/device_specific/mapped_objects.hpp"
 #include "viennacl/device_specific/utils.hpp"
 #include "viennacl/device_specific/tree_parsing/read_write.hpp"
+#include "viennacl/device_specific/tree_parsing/filter.hpp"
 #include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
 #include "viennacl/forwards.h"
 
@@ -55,55 +55,46 @@ public:
                  , unsigned int ms, unsigned int ks, unsigned int ns
                  , bool use_A_local, bool use_B_local
                  , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters(scalartype, simd_width, local_size_0, local_size_1, 1),
-                                             A_trans_(A_trans), B_trans_(B_trans), kL_(KL), mS_(ms), kS_(ks), nS_(ns), use_A_local_(use_A_local), use_B_local_(use_B_local),
-                                             local_fetch_0_(local_fetch_0), local_fetch_1_(local_fetch_1),
-                                              mL_(ms*local_size_0), nL_(ns*local_fetch_1){ }
+                                             A_trans(A_trans), B_trans(B_trans), kL(KL), mS(ms), kS(ks), nS(ns), use_A_local(use_A_local), use_B_local(use_B_local),
+                                             local_fetch_0(local_fetch_0), local_fetch_1(local_fetch_1),
+                                              mL(ms*local_size_0), nL(ns*local_fetch_1){ }
 
-    private:
-      const char A_trans_;
-      const char B_trans_;
+      const char A_trans;
+      const char B_trans;
 
-      unsigned int kL_;
+      unsigned int kL;
 
-      unsigned int mS_;
-      unsigned int kS_;
-      unsigned int nS_;
+      unsigned int mS;
+      unsigned int kS;
+      unsigned int nS;
 
-      bool use_A_local_;
-      bool use_B_local_;
+      bool use_A_local;
+      bool use_B_local;
 
-      unsigned int local_fetch_0_;
-      unsigned int local_fetch_1_;
+      unsigned int local_fetch_0;
+      unsigned int local_fetch_1;
 
-      unsigned int mL_;
-      unsigned int nL_;
+      unsigned int mL;
+      unsigned int nL;
     };
 
-public:
+private:
 
-    /** @brief The user constructor */
-    matrix_product_template(const char * scalartype, char A_trans, char B_trans
-                   , unsigned int simd_width
-                   , unsigned int local_size_0, unsigned int KL, unsigned int local_size_1
-                   , unsigned int ms, unsigned int ks, unsigned int ns
-                   , bool use_A_local, bool use_B_local
-                   , unsigned int local_fetch_0, unsigned int local_fetch_1) : template_base(scalartype, simd_width,local_size_0, local_size_1,1)
-    , A_trans_(A_trans), B_trans_(B_trans), kL_(KL), mS_(ms), kS_(ks), nS_(ns)
-    , use_A_local_(use_A_local), use_B_local_(use_B_local), local_fetch_0_(local_fetch_0), local_fetch_1_(local_fetch_1)
-    , mL_(ms*local_size_0), nL_(ns*local_size_1){ }
-
-    void configure_impl(vcl_size_t kernel_id, , viennacl::ocl::context & /*context*/, viennacl::ocl::kernel & k, unsigned int & n_arg) const
+    void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const
     {
-        assert(kernel_id==0);
+        using namespace device_specific::utils;
+
+        scheduler::statement::container_type const & array = statements.data().front().array();
+        vcl_size_t root_idx = statements.data().front().root();
 
         //set M, N
-        scheduler::statement_node const & root = statements.front().first.array()[statements.front().second];
-        unsigned int M = utils::call_on_matrix(root.lhs, utils::internal_size1_fun());
-        unsigned int N = utils::call_on_matrix(root.lhs, utils::internal_size2_fun());
+        scheduler::statement_node const & root = array[root_idx];
+        vcl_size_t M = call_on_matrix(root.lhs, internal_size1_fun());
+        vcl_size_t N = call_on_matrix(root.lhs, internal_size2_fun());
 
         //set ND range
-        k.global_work_size(0, M/mS_);
-        k.global_work_size(1, N/nS_);
+        k.global_work_size(0, M/p_.mS);
+        k.global_work_size(1, N/p_.nS);
 
         //set arguments
         //M,N
@@ -111,39 +102,56 @@ public:
         k.arg(n_arg++, cl_uint(N));
 
         //K
-        scheduler::statement::container_type const & exprs = statements.back().first.array();
+        vcl_size_t A1, A2, B1, B2;
+        std::vector<vcl_size_t> idx;
+        traverse(statements.data().front(), root_idx, tree_parsing::filter(&is_matrix_product, idx), false);
+        scheduler::statement_node const * A = &array[idx[0]];
+        while(A->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          A = &array[A->lhs.node_index];
+        A1 = call_on_matrix(A->lhs,internal_size1_fun());
+        A2 = call_on_matrix(A->lhs,internal_size2_fun());
 
-        scheduler::statement_node const * prod_node = NULL;
-        for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
-            if(it->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                prod_node = &(*it);
 
-        if(prod_node->lhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
-            k.arg(n_arg++, cl_uint(utils::call_on_matrix(prod_node->lhs, utils::internal_size2_fun())));
-        else if(prod_node->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY
-
-                &&exprs[prod_node->lhs.node_index].op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
-            k.arg(n_arg++, cl_uint(utils::call_on_matrix(exprs[prod_node->lhs.node_index].lhs, utils::internal_size1_fun())));
+        scheduler::statement_node const * B = &array[idx[0]];
+        if(B->rhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
+        {
+          B1 = call_on_matrix(B->rhs,internal_size1_fun());
+          B2 = call_on_matrix(B->rhs,internal_size2_fun());
+        }
         else
-            assert(false && bool("unexpected expression tree"));
+        {
+          B = &array[B->rhs.node_index];
+          while(B->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+            B = &array[B->lhs.node_index];
+          B1 = call_on_matrix(B->lhs,internal_size1_fun());
+          B2 = call_on_matrix(B->lhs,internal_size2_fun());
+        }
+
+        if(A1==B1 || A1==B2)
+           k.arg(n_arg++, cl_uint(A1));
+        else
+           k.arg(n_arg++, cl_uint(A2));
+
+
+
+
     }
 
-    void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const
+    void add_kernel_arguments(statements_container const & /*statements*/, std::string & arguments_string) const
     {
         arguments_string += generate_value_kernel_argument("unsigned int", "M");
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
         arguments_string += generate_value_kernel_argument("unsigned int", "K");
     }
 
-private:
 
     unsigned int lmem_used(unsigned int scalartype_size) const
     {
         unsigned int lmem_used = 0;
-        if(use_A_local_)
-            lmem_used += kL_ * (mL_+1) * scalartype_size;
-        if(use_B_local_)
-            lmem_used += nL_ * (kL_ + 1) * scalartype_size;
+        if(p_.use_A_local)
+            lmem_used += p_.kL * (p_.mL+1) * scalartype_size;
+        if(p_.use_B_local)
+            lmem_used += p_.nL * (p_.kL + 1) * scalartype_size;
         return lmem_used;
     }
 
@@ -151,78 +159,86 @@ private:
     {
         static const unsigned int alignment = 128;
         bool res = false;
-        res |= alignment % mL_ > 0;
-        res |= alignment % kL_ > 0;
-        res |= alignment % nL_ > 0;
-        res |= (mS_ % simd_width_) > 0;
-        res |= (nS_ % simd_width_) > 0;
-        res |= (!(A_trans_=='N' && B_trans_=='T') && simd_width_>1);
-        if(use_A_local_)
+        res |= alignment % p_.mL > 0;
+        res |= alignment % p_.kL > 0;
+        res |= alignment % p_.nL > 0;
+        res |= (p_.mS % p_.simd_width) > 0;
+        res |= (p_.nS % p_.simd_width) > 0;
+        res |= (!(p_.A_trans=='N' && p_.B_trans=='T') && p_.simd_width>1);
+        if(p_.use_A_local)
         {
-            unsigned int bound1 = (A_trans_=='N')?kL_:mL_;
-            unsigned int bound0 = (A_trans_=='N')?mL_:kL_;
+            unsigned int bound1 = (p_.A_trans=='N')?p_.kL:p_.mL;
+            unsigned int bound0 = (p_.A_trans=='N')?p_.mL:p_.kL;
 
-            res |= local_fetch_1_>0 && (bound1 % local_fetch_1_)> 0;
-            res |= local_fetch_0_>0 && (bound0 % (local_fetch_0_*simd_width_)) > 0;
+            res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
+            res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
         }
-        if(use_B_local_)
+        if(p_.use_B_local)
         {
-            unsigned int bound1 = (B_trans_=='T')?kL_:nL_;
-            unsigned int bound0 = (B_trans_=='T')?nL_:kL_;
+            unsigned int bound1 = (p_.B_trans=='T')?p_.kL:p_.nL;
+            unsigned int bound0 = (p_.B_trans=='T')?p_.nL:p_.kL;
 
-            res |= local_fetch_1_>0 && (bound1 % local_fetch_1_)> 0;
-            res |= local_fetch_0_>0 && (bound0 % (local_fetch_0_*simd_width_)) > 0;
+            res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
+            res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
         }
 
-        if(use_A_local_ || use_B_local_)
-            res |= ((local_fetch_0_*local_fetch_1_) !=(local_size_0_*local_size_1_));
+        if(p_.use_A_local || p_.use_B_local)
+            res |= ((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1));
         return res;
     }
 
-    void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
+    static bool is_matrix_product(scheduler::statement_node const & node) { return node.op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE; }
+
+    void set_simd_widths(scheduler::statement const & s, mapping_type const & m)
     {
+      std::vector<vcl_size_t> idx;
+      tree_parsing::traverse(s, s.root(), tree_parsing::filter(&is_matrix_product, idx), false);
+      tree_parsing::traverse(s, idx[0], set_simd_width_traversal<mapped_matrix>(p_.simd_width, m), true);
+
+    }
+
+    void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings) const
+    {
+        using namespace tree_parsing;
+
         //////////////////
         /// INIT
         /// //////////////
+        scheduler::statement const & s = statements.data().front();
+        mapping_type const & mapping = mappings.front();
 
-        scheduler::statement_node const & root_node = statement.array()[statement.root()];
-        scheduler::statement::container_type const & exprs = statement.array();
-        scheduler::statement_node const * prod_node = NULL;
-        for(scheduler::statement::container_type::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
-            if(it->op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-                prod_node = &(*it);
+        std::vector<vcl_size_t> idx;
+        traverse(s, s.root(), filter(&is_matrix_product, idx), false);
+        vcl_size_t prod_idx = idx[0];
+        scheduler::statement_node const * prod_node = &s.array()[prod_idx];
 
-
-        mapped_matrix * C = (mapped_matrix*)(mapping.at(std::make_pair(&root_node,tree_parsing::LHS_NODE_TYPE)).get());
+        mapped_matrix * C = (mapped_matrix*)(mapping.at(std::make_pair(s.root(),LHS_NODE_TYPE)).get());
 
         mapped_matrix * A;
         if(prod_node->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY)
-            A = (mapped_matrix *)mapping.at(std::make_pair(&exprs[prod_node->lhs.node_index],tree_parsing::LHS_NODE_TYPE)).get();
+            A = (mapped_matrix *)mapping.at(std::make_pair(prod_node->lhs.node_index,LHS_NODE_TYPE)).get();
         else
-            A = (mapped_matrix *)mapping.at(std::make_pair(prod_node, tree_parsing::LHS_NODE_TYPE)).get();
+            A = (mapped_matrix *)mapping.at(std::make_pair(prod_idx, LHS_NODE_TYPE)).get();
 
         mapped_matrix * B;
         if(prod_node->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY)
-            B = (mapped_matrix *)mapping.at(std::make_pair(&exprs[prod_node->rhs.node_index], tree_parsing::LHS_NODE_TYPE)).get();
+            B = (mapped_matrix *)mapping.at(std::make_pair(prod_node->rhs.node_index, LHS_NODE_TYPE)).get();
         else
-            B = (mapped_matrix *)mapping.at(std::make_pair(prod_node,tree_parsing::RHS_NODE_TYPE)).get();
+            B = (mapped_matrix *)mapping.at(std::make_pair(prod_idx,RHS_NODE_TYPE)).get();
 
 
-        mapped_matrix_product * prod = (mapped_matrix_product *)mapping.at(std::make_pair(prod_node, tree_parsing::PARENT_NODE_TYPE)).get();
+        mapped_matrix_product * prod = (mapped_matrix_product *)mapping.at(std::make_pair(prod_idx, PARENT_NODE_TYPE)).get();
 
-        C->set_simd_width(1);
-        A->set_simd_width(simd_width_);
-        B->set_simd_width(simd_width_);
-
-        if(simd_width_>1){
-            stream << A->ld() << "/=" << simd_width_ << ";" << std::endl;
-            stream << B->ld() << "/=" << simd_width_ << ";" << std::endl;
+        if(p_.simd_width>1)
+        {
+            stream << A->ld() << "/=" << p_.simd_width << ";" << std::endl;
+            stream << B->ld() << "/=" << p_.simd_width << ";" << std::endl;
         }
 
 
         std::string C_scalartype = C->scalartype();
-        std::string A_scalartype = use_A_local_?A->scalartype():A->simd_scalartype();
-        std::string B_scalartype = use_B_local_?B->scalartype():B->simd_scalartype();
+        std::string A_scalartype = p_.use_A_local?A->scalartype():utils::simd_scalartype(A->scalartype(), p_.simd_width);
+        std::string B_scalartype = p_.use_B_local?B->scalartype():utils::simd_scalartype(B->scalartype(), p_.simd_width);
 
         //////////////////
         /// DECLARATIONS
@@ -230,188 +246,188 @@ private:
 
 
         ///Result Values
-        stream << C_scalartype << " " << "rC[" << mS_ << "][" << nS_ <<"]  = {(" << C->scalartype() << ")0};" << std::endl;
-        stream << A_scalartype << " " << "rA[" << kS_ << "][" << (use_A_local_?mS_:mS_/simd_width_) << "];" << std::endl;
-        stream << B_scalartype << " " << "rB[" << kS_ << "][" << (use_B_local_?nS_:nS_/simd_width_) <<"];" << std::endl;
+        stream << C_scalartype << " " << "rC[" << p_.mS << "][" << p_.nS <<"]  = {(" << C->scalartype() << ")0};" << std::endl;
+        stream << A_scalartype << " " << "rA[" << p_.kS << "][" << (p_.use_A_local?p_.mS:p_.mS/p_.simd_width) << "];" << std::endl;
+        stream << B_scalartype << " " << "rB[" << p_.kS << "][" << (p_.use_B_local?p_.nS:p_.nS/p_.simd_width) <<"];" << std::endl;
         stream << std::endl;
 
-        if(use_A_local_)
-            stream << "__local " << A->scalartype() << " lA[" << kL_ * (mL_ + 1) << "];" << std::endl;
-        if(use_B_local_)
-            stream << "__local " << B->scalartype() << " lB[" << kL_ * (nL_ + 1) << "];" << std::endl;
+        if(p_.use_A_local)
+            stream << "__local " << A->scalartype() << " lA[" << p_.kL * (p_.mL + 1) << "];" << std::endl;
+        if(p_.use_B_local)
+            stream << "__local " << B->scalartype() << " lB[" << p_.kL * (p_.nL + 1) << "];" << std::endl;
         stream << std::endl;
 
         stream << "uint gidx = get_group_id(0);" << std::endl;
         stream << "uint gidy = get_group_id(1);" << std::endl;
         stream << "uint idx = get_local_id(0);" << std::endl;
         stream << "uint idy = get_local_id(1);" << std::endl;
-        if(use_A_local_ || use_B_local_){
+        if(p_.use_A_local || p_.use_B_local){
             stream << std::endl;
-            stream << "uint idt = " << local_size_0_ << "*idy + idx;" << std::endl;
-            stream << "uint idxT = idt % " << local_fetch_0_ << ";" << std::endl;
-            stream << "uint idyT = idt / " << local_fetch_0_ << ";" << std::endl;
+            stream << "uint idt = " << p_.local_size_0 << "*idy + idx;" << std::endl;
+            stream << "uint idxT = idt % " << p_.local_fetch_0 << ";" << std::endl;
+            stream << "uint idyT = idt / " << p_.local_fetch_0 << ";" << std::endl;
         }
         stream << std::endl;
 
-        if(use_A_local_)
+        if(p_.use_A_local)
         {
-            if(A_trans_=='N')
-                stream << A->name() << " +=  gidx*" << mL_/simd_width_ << "+ idxT + idyT*" << A->ld()  << ";" << std::endl;
+            if(p_.A_trans=='N')
+                stream << A->name() << " +=  gidx*" << p_.mL/p_.simd_width << "+ idxT + idyT*" << A->ld()  << ";" << std::endl;
             else
-                stream << A->name() << " +=  gidx*" << mL_/simd_width_ << "*" << A->ld() << "+ idxT + idyT*" << A->ld()  << ";" << std::endl;
+                stream << A->name() << " +=  gidx*" << p_.mL/p_.simd_width << "*" << A->ld() << "+ idxT + idyT*" << A->ld()  << ";" << std::endl;
         }
         else
         {
-            if(A_trans_=='N')
-                stream << A->name() << " += gidx*" << mL_/simd_width_ << "+ idx" << ";" << std::endl;
+            if(p_.A_trans=='N')
+                stream << A->name() << " += gidx*" << p_.mL/p_.simd_width << "+ idx" << ";" << std::endl;
             else
-                stream << A->name() << " += (gidx*" << mL_/simd_width_ << "+ idx)*" << A->ld() << ";" << std::endl;
+                stream << A->name() << " += (gidx*" << p_.mL/p_.simd_width << "+ idx)*" << A->ld() << ";" << std::endl;
         }
 
-        if(use_B_local_)
+        if(p_.use_B_local)
         {
-            if(B_trans_=='T')
-                stream << B->name() << " +=  gidy*" << nL_/simd_width_ << "+ idxT + idyT*" << B->ld()  << ";" << std::endl;
+            if(p_.B_trans=='T')
+                stream << B->name() << " +=  gidy*" << p_.nL/p_.simd_width << "+ idxT + idyT*" << B->ld()  << ";" << std::endl;
             else
-                stream << B->name() << " +=  gidy*" << nL_/simd_width_ << "*" << B->ld() << "+ idxT + idyT*" << B->ld()  << ";" << std::endl;
+                stream << B->name() << " +=  gidy*" << p_.nL/p_.simd_width << "*" << B->ld() << "+ idxT + idyT*" << B->ld()  << ";" << std::endl;
         }
         else
         {
-            if(B_trans_=='T')
-                stream << B->name() << " +=  gidy*" << nL_/simd_width_ << "+ idy;" << std::endl;
+            if(p_.B_trans=='T')
+                stream << B->name() << " +=  gidy*" << p_.nL/p_.simd_width << "+ idy;" << std::endl;
             else
-                stream << B->name() << " += (gidy*" << nL_/simd_width_ << "+ idy)*" << B->ld() << ";" << std::endl;
+                stream << B->name() << " += (gidy*" << p_.nL/p_.simd_width << "+ idy)*" << B->ld() << ";" << std::endl;
         }
 
         stream << std::endl;
 
-        stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << kL_ << "){" << std::endl;
+        stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << p_.kL << "){" << std::endl;
         stream.inc_tab();
 
-        if(use_A_local_){
-            if(A_trans_=='N')
-                stream << "__local " << A->scalartype() << "* plA = lA + idyT*" << mL_+1 << "+" << simd_width_ << "*idxT;" << std::endl;
+        if(p_.use_A_local){
+            if(p_.A_trans=='N')
+                stream << "__local " << A->scalartype() << "* plA = lA + idyT*" << p_.mL+1 << "+" << p_.simd_width << "*idxT;" << std::endl;
             else
-                stream << "__local " << A->scalartype() << "* plA = lA + idxT*" << mL_+1 << "+ idyT;" << std::endl;
+                stream << "__local " << A->scalartype() << "* plA = lA + idxT*" << p_.mL+1 << "+ idyT;" << std::endl;
         }
 
 
-        if(use_B_local_)
+        if(p_.use_B_local)
         {
-            if(B_trans_=='T')
-                stream << "__local " << B->scalartype() << "* plB = lB + idyT*" << nL_+1 << "+" << simd_width_ << "*idxT;" << std::endl;
+            if(p_.B_trans=='T')
+                stream << "__local " << B->scalartype() << "* plB = lB + idyT*" << p_.nL+1 << "+" << p_.simd_width << "*idxT;" << std::endl;
             else
-                stream << "__local " << B->scalartype() << "* plB = lB + idxT*" << nL_+1 << "+ idyT;" << std::endl;
+                stream << "__local " << B->scalartype() << "* plB = lB + idxT*" << p_.nL+1 << "+ idyT;" << std::endl;
         }
 
 
-        if(use_A_local_ || use_B_local_)
+        if(p_.use_A_local || p_.use_B_local)
             stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
         ///Fetch LHS to Local Memory
-        if(use_A_local_)
+        if(p_.use_A_local)
         {
-            unsigned int bound1 = (A_trans_=='N')?kL_:mL_;
-            unsigned int bound0 = (A_trans_=='N')?mL_:kL_;
-            for(unsigned int k = 0 ; k < bound1 ; k += local_fetch_1_){
-                for(unsigned int m = 0 ; m < bound0 ; m += local_fetch_0_*simd_width_){
-                    unsigned int offset = (A_trans_=='N')?(k*(mL_+1)+m):(m*(mL_+1)+k);
-                    if(simd_width_==1)
-                        stream << "plA[" << offset << "] = " << A->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << A->ld() << "];" << std::endl;
+            unsigned int bound1 = (p_.A_trans=='N')?p_.kL:p_.mL;
+            unsigned int bound0 = (p_.A_trans=='N')?p_.mL:p_.kL;
+            for(unsigned int k = 0 ; k < bound1 ; k += p_.local_fetch_1){
+                for(unsigned int m = 0 ; m < bound0 ; m += p_.local_fetch_0*p_.simd_width){
+                    unsigned int offset = (p_.A_trans=='N')?(k*(p_.mL+1)+m):(m*(p_.mL+1)+k);
+                    if(p_.simd_width==1)
+                        stream << "plA[" << offset << "] = " << A->name() << "[" << m/p_.simd_width <<  "+"  << k << "*" << A->ld() << "];" << std::endl;
                     else
-                        stream << "vstore" << simd_width_ << "(" <<  A->name() << "[" << m/simd_width_ <<  "+"  << k << "*" << A->ld() << "],0,plA+" << offset << ");" << std::endl;
+                        stream << "vstore" << p_.simd_width << "(" <<  A->name() << "[" << m/p_.simd_width <<  "+"  << k << "*" << A->ld() << "],0,plA+" << offset << ");" << std::endl;
                 }
             }
         }
 
         ///Fetch RHS to Local Memory
-        if(use_B_local_)
+        if(p_.use_B_local)
         {
-            unsigned int bound1 = (B_trans_=='T')?kL_:nL_;
-            unsigned int bound0 = (B_trans_=='T')?nL_:kL_;
-            for(unsigned int k = 0 ; k < bound1 ; k += local_fetch_1_){
-                for(unsigned int n = 0 ; n < bound0 ; n += local_fetch_0_*simd_width_){
-                    unsigned int offset = (B_trans_=='T')?k*(nL_+1) + n:n*(nL_+1) + k;
-                    if(simd_width_==1)
-                        stream << "plB[" << offset << "] = " << B->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << B->ld() << "];" << std::endl;
+            unsigned int bound1 = (p_.B_trans=='T')?p_.kL:p_.nL;
+            unsigned int bound0 = (p_.B_trans=='T')?p_.nL:p_.kL;
+            for(unsigned int k = 0 ; k < bound1 ; k += p_.local_fetch_1){
+                for(unsigned int n = 0 ; n < bound0 ; n += p_.local_fetch_0*p_.simd_width){
+                    unsigned int offset = (p_.B_trans=='T')?k*(p_.nL+1) + n:n*(p_.nL+1) + k;
+                    if(p_.simd_width==1)
+                        stream << "plB[" << offset << "] = " << B->name() << "[" << n/p_.simd_width <<  "+"  << k << "*" << B->ld() << "];" << std::endl;
                     else
-                        stream << "vstore"  << simd_width_ << "(" <<  B->name() << "[" << n/simd_width_ <<  "+"  << k << "*" << B->ld() << "],0,plB+" << offset << ");" << std::endl;
+                        stream << "vstore"  << p_.simd_width << "(" <<  B->name() << "[" << n/p_.simd_width <<  "+"  << k << "*" << B->ld() << "],0,plB+" << offset << ");" << std::endl;
                 }
             }
         }
 
-        if(use_A_local_ || use_B_local_)
+        if(p_.use_A_local || p_.use_B_local)
             stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
-        stream << "uint offA = " << simd_width_ << "*idx;" << std::endl;
-        stream << "uint offB = " << simd_width_ << "*idy;" << std::endl;
+        stream << "uint offA = " << p_.simd_width << "*idx;" << std::endl;
+        stream << "uint offB = " << p_.simd_width << "*idy;" << std::endl;
 
         //stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int k = 0 ; k < " << kL_ << "; k+=" << kS_ << "){" << std::endl;
+        stream << "for(unsigned int k = 0 ; k < " << p_.kL << "; k+=" << p_.kS << "){" << std::endl;
         stream.inc_tab();
 
         ///Fetch LHS to registers
-        for(unsigned int kk = 0 ; kk < kS_ ; ++kk){
-            for(unsigned int mm = 0 ; mm < mS_/simd_width_ ; ++mm){
-                if(use_A_local_)
-                    for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                        stream << "rA[" << kk << "][" << mm*simd_width_ + ss << "] = lA[offA + " << mm*local_size_0_*simd_width_ + ss + kk*(mL_+1) << "];" << std::endl;
+        for(unsigned int kk = 0 ; kk < p_.kS ; ++kk){
+            for(unsigned int mm = 0 ; mm < p_.mS/p_.simd_width ; ++mm){
+                if(p_.use_A_local)
+                    for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
+                        stream << "rA[" << kk << "][" << mm*p_.simd_width + ss << "] = lA[offA + " << mm*p_.local_size_0*p_.simd_width + ss + kk*(p_.mL+1) << "];" << std::endl;
                 else
-                    if(A_trans_=='N')
-                        stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << mm*local_size_0_ << "+" << kk << "*" << A->ld() << "];" << std::endl;
+                    if(p_.A_trans=='N')
+                        stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << mm*p_.local_size_0 << "+" << kk << "*" << A->ld() << "];" << std::endl;
                     else
-                        stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << kk << "+" << mm*local_size_0_ << "*" << A->ld() << "];" << std::endl;
+                        stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << kk << "+" << mm*p_.local_size_0 << "*" << A->ld() << "];" << std::endl;
             }
         }
 
 
             ///Fetch RHS to registers
-        for(unsigned int kk = 0 ; kk < kS_ ; ++kk){
-            for(unsigned int nn=0 ; nn < nS_/simd_width_ ; ++nn){
-                if(use_B_local_)
-                    for(unsigned int ss = 0 ; ss < simd_width_ ; ++ss)
-                        stream << "rB[" << kk << "][" << nn*simd_width_ + ss << "] = lB[offB + " << nn*local_size_1_*simd_width_ + ss + kk*(nL_+1) << "];" << std::endl;
+        for(unsigned int kk = 0 ; kk < p_.kS ; ++kk){
+            for(unsigned int nn=0 ; nn < p_.nS/p_.simd_width ; ++nn){
+                if(p_.use_B_local)
+                    for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
+                        stream << "rB[" << kk << "][" << nn*p_.simd_width + ss << "] = lB[offB + " << nn*p_.local_size_1*p_.simd_width + ss + kk*(p_.nL+1) << "];" << std::endl;
                 else
-                    if(B_trans_=='T')
-                        stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << nn*local_size_1_ << " + " << kk << "*" << B->ld() << "];" << std::endl;
+                    if(p_.B_trans=='T')
+                        stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << nn*p_.local_size_1 << " + " << kk << "*" << B->ld() << "];" << std::endl;
                     else
-                        stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << kk << "+" << nn*local_size_1_ << "*" << B->ld() << "];" << std::endl;
+                        stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << kk << "+" << nn*p_.local_size_1 << "*" << B->ld() << "];" << std::endl;
 
             }
         }
 
         ///Increment pointers
-        if(use_A_local_)
-            stream << "offA += " << kS_*(mL_+1) << ";" << std::endl;
+        if(p_.use_A_local)
+            stream << "offA += " << p_.kS*(p_.mL+1) << ";" << std::endl;
         else
-            if(A_trans_=='N')
-                stream << A->name() << " += " << kS_ << "*" << A->ld() << ";" << std::endl;
+            if(p_.A_trans=='N')
+                stream << A->name() << " += " << p_.kS << "*" << A->ld() << ";" << std::endl;
             else
-                stream << A->name() << " += " << kS_ << ";" << std::endl;
+                stream << A->name() << " += " << p_.kS << ";" << std::endl;
 
-        if(use_B_local_)
-            stream << "offB += " << kS_*(nL_+1) << ";" << std::endl;
+        if(p_.use_B_local)
+            stream << "offB += " << p_.kS*(p_.nL+1) << ";" << std::endl;
         else
-            if(B_trans_=='T')
-                stream << B->name() << " += " << kS_ << "*" << B->ld() << ";" << std::endl;
+            if(p_.B_trans=='T')
+                stream << B->name() << " += " << p_.kS << "*" << B->ld() << ";" << std::endl;
             else
-                stream << B->name() << " += " << kS_ << ";" << std::endl;
+                stream << B->name() << " += " << p_.kS << ";" << std::endl;
 
 
-        for(unsigned int kk = 0 ; kk < kS_ ; ++kk)
-            for(unsigned int nn=0 ; nn < nS_ ; ++nn)
-                for(unsigned int mm=0 ; mm < mS_ ; ++mm)
+        for(unsigned int kk = 0 ; kk < p_.kS ; ++kk)
+            for(unsigned int nn=0 ; nn < p_.nS ; ++nn)
+                for(unsigned int mm=0 ; mm < p_.mS ; ++mm)
                 {
                     std::string res_str, lhs_str, rhs_str;
                     res_str = "rC[" + tools::to_string(mm) + "][" + tools::to_string(nn) + "]";
-                    if(use_A_local_ || simd_width_==1)
+                    if(p_.use_A_local || p_.simd_width==1)
                         lhs_str = "rA[" + tools::to_string(kk) + "][" + tools::to_string(mm) + "]";
                     else
-                        lhs_str = "rA[" + tools::to_string(kk) + "][" + tools::to_string(mm/simd_width_) + "].s" + tools::to_string(mm%simd_width_);
-                    if(use_B_local_ || simd_width_==1)
+                        lhs_str = "rA[" + tools::to_string(kk) + "][" + tools::to_string(mm/p_.simd_width) + "].s" + tools::to_string(mm%p_.simd_width);
+                    if(p_.use_B_local || p_.simd_width==1)
                         rhs_str = "rB[" + tools::to_string(kk) + "]["+tools::to_string(nn)+"]";
                     else
-                        rhs_str = "rB[" + tools::to_string(kk) + "]["+tools::to_string(nn/simd_width_)+"].s"+tools::to_string(nn%simd_width_);
+                        rhs_str = "rB[" + tools::to_string(kk) + "]["+tools::to_string(nn/p_.simd_width)+"].s"+tools::to_string(nn%p_.simd_width);
                     stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
                 }
 
@@ -419,87 +435,76 @@ private:
         stream.dec_tab();
         stream << "}" << std::endl;
 
-        if(use_A_local_){
-            if(A_trans_=='N')
-                stream << A->name() << " += " << kL_ << "*" << A->ld() << ";" << std::endl;
+        if(p_.use_A_local){
+            if(p_.A_trans=='N')
+                stream << A->name() << " += " << p_.kL << "*" << A->ld() << ";" << std::endl;
             else
-                stream << A->name() << " += " << kL_ << ";" << std::endl;
+                stream << A->name() << " += " << p_.kL << ";" << std::endl;
         }
 
-        if(use_B_local_){
-            if(B_trans_=='T')
-                stream << B->name() << " += " << kL_ << "*" << B->ld() << ";" << std::endl;
+        if(p_.use_B_local){
+            if(p_.B_trans=='T')
+                stream << B->name() << " += " << p_.kL << "*" << B->ld() << ";" << std::endl;
             else
-                stream << B->name() << " += " << kL_ << ";" << std::endl;
+                stream << B->name() << " += " << p_.kL << ";" << std::endl;
         }
 
         stream.dec_tab();
         stream << "}" << std::endl;
 
 
-        if(C->interpret_as_transposed()==false)
+        if(C->row_major())
         {
-            stream << C->name() << "+= gidx*" << mL_ << ";" << std::endl;
-            stream << C->name() << "+= idx*" << simd_width_ << ";" << std::endl;
-            stream << C->name() << "+= gidy*" << nL_ << "*" << C->ld() << ";" << std::endl;
-            stream << C->name() << "+= idy*" << simd_width_ << "*" << C->ld() << ";" << std::endl;
-            for(unsigned int m=0 ; m < mS_ ; ++m)
-            {
-                for(unsigned int n=0 ; n < nS_ ; ++n)
-                {
-                    std::string j = tools::to_string((n/simd_width_)*(local_size_1_*simd_width_) + n%simd_width_);
-                    prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
-                    std::string str;
-                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::evaluate_expression_traversal(index_tuple("0", "M", j, "N"), 0, str, mapping[0]), false);
-                    stream << str << ";" << std::endl;
-                }
-                if((m+1)%simd_width_>0)
-                    stream << C->name() << "+=1;" << std::endl;
-                else
-                    stream << C->name() << "+=" << (local_size_0_*simd_width_) - (simd_width_-1) << ";" << std::endl;
-            }
+          stream << C->name() << "+= gidx*" << p_.mL << "*" << C->ld() << ";" << std::endl;
+          stream << C->name() << "+= idx*" << p_.simd_width << "*" << C->ld() << ";" << std::endl;
+          stream << C->name() << "+= gidy*" << p_.nL << ";" << std::endl;
+          stream << C->name() << "+= idy*" << p_.simd_width << ";" << std::endl;
+          for(unsigned int n=0 ; n < p_.nS ; ++n){
+              for(unsigned int m=0 ; m < p_.mS ; ++m){
+                  std::string j = tools::to_string((m/p_.simd_width)*(p_.local_size_0*p_.simd_width) + m%p_.simd_width);
+                  prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
+                  std::string str;
+                  traverse(s, s.root(), evaluate_expression_traversal(index_tuple(j, "N", "0", "M"), 0, str, mapping), false);
+                  stream << str << ";" << std::endl;
+              }
+              if((n+1)%p_.simd_width>0)
+                  stream << C->name() << "+=1;" << std::endl;
+              else
+                  stream << C->name() << "+=" << (p_.local_size_1*p_.simd_width) - (p_.simd_width-1) << ";" << std::endl;
+          }
+
         }
-        else{
-            stream << C->name() << "+= gidx*" << mL_ << "*" << C->ld() << ";" << std::endl;
-            stream << C->name() << "+= idx*" << simd_width_ << "*" << C->ld() << ";" << std::endl;
-            stream << C->name() << "+= gidy*" << nL_ << ";" << std::endl;
-            stream << C->name() << "+= idy*" << simd_width_ << ";" << std::endl;
-            for(unsigned int n=0 ; n < nS_ ; ++n){
-                for(unsigned int m=0 ; m < mS_ ; ++m){
-                    std::string j = tools::to_string((m/simd_width_)*(local_size_0_*simd_width_) + m%simd_width_);
-                    prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
-                    std::string str;
-                    tree_parsing::traverse(statements.front().first, statements.front().second, tree_parsing::evaluate_expression_traversal(index_tuple("0", "N", j, "M"), 0, str, mapping[0]), false);
-                    stream << str << ";" << std::endl;
-                }
-                if((n+1)%simd_width_>0)
-                    stream << C->name() << "+=1;" << std::endl;
-                else
-                    stream << C->name() << "+=" << (local_size_1_*simd_width_) - (simd_width_-1) << ";" << std::endl;
-            }
+        else
+        {
+          stream << C->name() << "+= gidx*" << p_.mL << ";" << std::endl;
+          stream << C->name() << "+= idx*" << p_.simd_width << ";" << std::endl;
+          stream << C->name() << "+= gidy*" << p_.nL << "*" << C->ld() << ";" << std::endl;
+          stream << C->name() << "+= idy*" << p_.simd_width << "*" << C->ld() << ";" << std::endl;
+          for(unsigned int m=0 ; m < p_.mS ; ++m)
+          {
+              for(unsigned int n=0 ; n < p_.nS ; ++n)
+              {
+                  std::string j = tools::to_string((n/p_.simd_width)*(p_.local_size_1*p_.simd_width) + n%p_.simd_width);
+                  prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
+                  std::string str;
+                  traverse(s, s.root(), evaluate_expression_traversal(index_tuple("0", "M", j, "N"), 0, str, mapping), false);
+                  stream << str << ";" << std::endl;
+              }
+              if((m+1)%p_.simd_width>0)
+                  stream << C->name() << "+=1;" << std::endl;
+              else
+                  stream << C->name() << "+=" << (p_.local_size_0*p_.simd_width) - (p_.simd_width-1) << ";" << std::endl;
+          }
         }
 
 
     }
 
+public:
+    matrix_product_template(matrix_product_template::parameters const & parameters) : template_base(parameters, BIND_TO_HANDLE), p_(parameters){ }
+
 private:
-    const char A_trans_;
-    const char B_trans_;
-
-    unsigned int kL_;
-
-    unsigned int mS_;
-    unsigned int kS_;
-    unsigned int nS_;
-
-    bool use_A_local_;
-    bool use_B_local_;
-
-    unsigned int local_fetch_0_;
-    unsigned int local_fetch_1_;
-
-    unsigned int mL_;
-    unsigned int nL_;
+    matrix_product_template::parameters const & p_;
 };
 
 }

@@ -55,14 +55,14 @@ namespace viennacl
               vcl_size_t root_idx;
           };
 
-          mapped_object(std::string const & scalartype, unsigned int id) : scalartype_(scalartype), name_("obj"+tools::to_string(id)) {}
+          mapped_object(std::string const & scalartype, unsigned int id) : scalartype_(scalartype), name_("obj"+tools::to_string(id)), simd_width_(1) {}
           virtual ~mapped_object(){ }
 
           std::string const & scalartype() const { return scalartype_; }
           void access_name(std::string const & str) { access_name_ = str; }
           std::string const & access_name() const { return access_name_; }
 
-          virtual std::string & append_kernel_arguments(unsigned int /*simd_width*/, std::set<std::string> &, std::string & str) const
+          virtual std::string & append_kernel_arguments(std::set<std::string> &, std::string & str) const
           {
             return str;
           }
@@ -79,6 +79,7 @@ namespace viennacl
           std::string access_name_;
           std::string scalartype_;
           std::string const name_;
+          unsigned int simd_width_;
       };
 
       class fetchable
@@ -86,11 +87,11 @@ namespace viennacl
       public:
         fetchable(mapped_object * obj): obj_(obj){ }
 
-        void fetch(unsigned int simd_width, std::string const & suffix, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
+        void fetch(std::string const & suffix, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
         {
           obj_->access_name_ = obj_->name_ + suffix;
           if(fetched.insert(obj_->access_name_).second)
-            stream << utils::simd_scalartype(obj_->scalartype_, simd_width) << " " << obj_->access_name_ << " = " << obj_->generate_default(index) << ';' << std::endl;
+            stream << utils::simd_scalartype(obj_->scalartype_, obj_->simd_width_) << " " << obj_->access_name_ << " = " << obj_->generate_default(index) << ';' << std::endl;
         }
       protected:
         mapped_object * obj_;
@@ -100,7 +101,7 @@ namespace viennacl
       {
       public:
         writable(mapped_object * obj): fetchable(obj){ }
-        void write_back(unsigned int /*simd_width*/, std::string const &, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
+        void write_back(std::string const &, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
         {
           if(fetched.find(obj_->access_name_)!=fetched.end())
             stream << obj_->generate_default(index) << " = " << obj_->access_name_ << ';' << std::endl;
@@ -228,7 +229,7 @@ namespace viennacl
           std::string generate_default(index_tuple const &) const{ return name_;  }
         public:
           mapped_host_scalar(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id){ }
-          std::string & append_kernel_arguments(unsigned int /*simd_width*/, std::set<std::string> & already_generated, std::string & str) const
+          std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
           {
             if(already_generated.insert(name_).second)
               str += generate_value_kernel_argument(scalartype_, name_);
@@ -254,11 +255,11 @@ namespace viennacl
             return name_;
           }
 
-          std::string & append_kernel_arguments(unsigned int simd_width, std::set<std::string> & already_generated, std::string & str) const
+          std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
           {
             if(already_generated.insert(name_).second)
             {
-              str += generate_pointer_kernel_argument("__global", utils::simd_scalartype(scalartype_, simd_width), name_);
+              str += generate_pointer_kernel_argument("__global", utils::simd_scalartype(scalartype_, simd_width_), name_);
               append_optional_arguments(str);
             }
             return str;
@@ -288,6 +289,10 @@ namespace viennacl
             return mapped_object::evaluate(index, vector_element);
           }
 
+          void set_simd_width(unsigned int v)
+          {
+            simd_width_ = v;
+          }
       };
 
       /** @brief Mapping of a vector to a generator class */
@@ -328,7 +333,7 @@ namespace viennacl
             str += generate_value_kernel_argument("unsigned int", stride2_name_);
           }
         public:
-          mapped_matrix(std::string const & scalartype, unsigned int id, bool row_major) : mapped_buffer(scalartype, id), interpret_as_transposed_(row_major)
+          mapped_matrix(std::string const & scalartype, unsigned int id, bool row_major) : mapped_buffer(scalartype, id), row_major_(row_major)
           {
               start1_name_ = name_ + "start1";
               start2_name_ = name_ + "start2";
@@ -337,8 +342,8 @@ namespace viennacl
               ld_name_ = name_ + "ld";
           }
 
-          bool interpret_as_transposed() const { return interpret_as_transposed_; }
-          void flip_transpose() { interpret_as_transposed_ = !interpret_as_transposed_; }
+          bool row_major() const { return row_major_; }
+
           std::string const & ld() const{ return ld_name_; }
 
           std::string offset(index_tuple const & index) const
@@ -346,7 +351,7 @@ namespace viennacl
             std::string i = "(" + start1_name_ + "+(" + index.i + ")*" + stride1_name_ + ")";
             std::string j = "(" + start2_name_ + "+(" + index.j + ")*" + stride2_name_ + ")";
 
-            if(interpret_as_transposed_)
+            if(row_major_)
               std::swap(i,j);
 
             return i + "+" + j + '*' + ld_name_;
@@ -360,7 +365,7 @@ namespace viennacl
           std::string stride2_name_;
 
           mutable std::string ld_name_;
-          bool interpret_as_transposed_;
+          bool row_major_;
       };
 
       /** @brief Mapping of a implicit vector to a generator class */
@@ -369,7 +374,7 @@ namespace viennacl
         public:
           mapped_implicit_vector(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id){ }
           std::string generate_default(index_tuple const &) const { return name_; }
-          std::string & append_kernel_arguments(unsigned int /*simd_width*/, std::set<std::string> & /*already_generated*/, std::string & str) const
+          std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str) const
           {
             str += generate_value_kernel_argument(scalartype_, name_);
             return str;
@@ -382,7 +387,7 @@ namespace viennacl
         public:
           mapped_implicit_matrix(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id){ }
           std::string generate_default(index_tuple const &) const { return name_; }
-          std::string & append_kernel_arguments(unsigned int /*simd_width*/, std::set<std::string> & /*already_generated*/, std::string & str) const
+          std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str) const
           {
             str += generate_value_kernel_argument(scalartype_, name_);
             return str;

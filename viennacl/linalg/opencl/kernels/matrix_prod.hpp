@@ -443,6 +443,11 @@ namespace viennacl
             bool row_major_B = viennacl::is_row_major<F_B>::value;
             bool row_major_C = viennacl::is_row_major<F_C>::value;
 
+            matrix_product_template::parameters const & mmNN= device_specific::database::get<NumericT>(database::matrix_product_NN);
+            matrix_product_template::parameters const & mmTN= device_specific::database::get<NumericT>(database::matrix_product_TN);
+            matrix_product_template::parameters const & mmNT= device_specific::database::get<NumericT>(database::matrix_product_NT);
+            matrix_product_template::parameters const & mmTT= device_specific::database::get<NumericT>(database::matrix_product_TT);
+
 
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
@@ -459,13 +464,18 @@ namespace viennacl
                 generate_matrix_prod_blas3(source, numeric_string, row_major_A, row_major_B, row_major_C, false, true);
                 generate_matrix_prod_blas3(source, numeric_string, row_major_A, row_major_B, row_major_C, true, false);
                 generate_matrix_prod_blas3(source, numeric_string, row_major_A, row_major_B, row_major_C, true, true);
-
-                generate_matrix_prod16_blas3(source, numeric_string, row_major_A, row_major_B, row_major_C, false, false);
-                generate_matrix_prod16_blas3(source, numeric_string, row_major_A, row_major_B, row_major_C, false, true);
-                generate_matrix_prod16_blas3(source, numeric_string, row_major_A, row_major_B, row_major_C, true, false);
-                generate_matrix_prod16_blas3(source, numeric_string, row_major_A, row_major_B, row_major_C, true, true);
-
               }
+
+              viennacl::matrix<NumericT, viennacl::column_major> A;
+              viennacl::matrix<NumericT, viennacl::column_major> B;
+              viennacl::matrix<NumericT, F_C> C;
+              NumericT alpha = 0;
+              NumericT beta = 0;
+
+              source.append(matrix_product_template(mmNN).generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C), "prodopt_NN"));
+              source.append(matrix_product_template(mmTN).generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C), "prodopt_TN"));
+              source.append(matrix_product_template(mmNT).generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C), "prodopt_NT"));
+              source.append(matrix_product_template(mmTT).generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C), "prodopt_TT"));
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

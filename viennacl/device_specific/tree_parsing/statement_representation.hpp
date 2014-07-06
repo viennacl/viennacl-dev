@@ -100,6 +100,7 @@ namespace viennacl{
           inline result_type operator()(matrix_base<ScalarType> const & mat) const
           {
             *ptr_++='m'; //Matrix
+            *ptr_++=mat.row_major()?'r':'c';
             *ptr_++=utils::first_letter_of_type<ScalarType>::value();
             append_id(ptr_, binder_.get(&traits::handle(mat)));
           }
@@ -120,14 +121,14 @@ namespace viennacl{
             p+=n;
           }
 
-          inline void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type node_type) const
+          inline void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf_t) const
           {
             scheduler::statement_node const & root_node = statement.array()[root_idx];
-            if(node_type==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+            if(leaf_t==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node.lhs, *this);
-            else if(root_node.op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY && node_type==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+            else if(root_node.op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY && leaf_t==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node.rhs, *this);
-            else if(node_type==PARENT_NODE_TYPE)
+            else if(leaf_t==PARENT_NODE_TYPE)
               append_id(ptr_,root_node.op.type);
           }
 

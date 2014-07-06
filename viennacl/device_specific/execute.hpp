@@ -45,7 +45,7 @@ namespace viennacl{
     template<class TemplateT>
     inline void execute(typename TemplateT::parameters const & params, statements_container const & statements, viennacl::ocl::context & ctx = viennacl::ocl::current_context(), bool force_compilation = false)
     {
-      TemplateT tplt(params, BIND_TO_HANDLE);
+      TemplateT tplt(params);
 
       //Generate program name
       std::string program_name = tree_parsing::statements_representation(statements, BIND_TO_HANDLE);

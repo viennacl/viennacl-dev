@@ -69,31 +69,45 @@ namespace viennacl
 
           if (A.row_major())
           {
-            if(id==0)
+            switch(id)
             {
-              typedef viennacl::linalg::opencl::kernels::matrix<NumericT, row_major>  KernelClass;
-              KernelClass::init(ctx);
-              return ctx.get_program(KernelClass::program_name());
+              case 0:{
+                typedef viennacl::linalg::opencl::kernels::matrix<NumericT, row_major>  KernelClass;
+                KernelClass::init(ctx);
+                return ctx.get_program(KernelClass::program_name());
+              }
+               case 1:{
+                typedef viennacl::linalg::opencl::kernels::matrix_element<NumericT, row_major>  KernelClass;
+                KernelClass::init(ctx);
+                return ctx.get_program(KernelClass::program_name());
+              }
+              default:{
+                typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, column_major, column_major, row_major>  KernelClass;
+                KernelClass::init(ctx);
+                return ctx.get_program(KernelClass::program_name());
+              }
             }
-            else
-            {
-              typedef viennacl::linalg::opencl::kernels::matrix_element<NumericT, row_major>  KernelClass;
-              KernelClass::init(ctx);
-              return ctx.get_program(KernelClass::program_name());
-            }
-          }
-
-          if(id==0)
-          {
-            typedef viennacl::linalg::opencl::kernels::matrix<NumericT, column_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_program(KernelClass::program_name());
           }
           else
           {
-            typedef viennacl::linalg::opencl::kernels::matrix_element<NumericT, column_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_program(KernelClass::program_name());
+            switch(id)
+            {
+              case 0:{
+                typedef viennacl::linalg::opencl::kernels::matrix<NumericT, column_major>  KernelClass;
+                KernelClass::init(ctx);
+                return ctx.get_program(KernelClass::program_name());
+              }
+               case 1:{
+                typedef viennacl::linalg::opencl::kernels::matrix_element<NumericT, column_major>  KernelClass;
+                KernelClass::init(ctx);
+                return ctx.get_program(KernelClass::program_name());
+              }
+              default:{
+                typedef viennacl::linalg::opencl::kernels::matrix_prod<NumericT, column_major, column_major, column_major>  KernelClass;
+                KernelClass::init(ctx);
+                return ctx.get_program(KernelClass::program_name());
+              }
+            }
           }
         }
 
@@ -264,9 +278,8 @@ namespace viennacl
 
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
-        //result.resize(mat.size1());
         device_specific::row_wise_reduction_template::parameters const * parameters;
-        if(trans_mat)
+        if(trans_mat ^ mat.row_major())
           parameters = &device_specific::database::get<NumericT>(device_specific::database::trans_row_wise_reduction);
         else
           parameters = &device_specific::database::get<NumericT>(device_specific::database::row_wise_reduction);
@@ -377,80 +390,80 @@ namespace viennacl
                                 );
         }
 
-        // C = A * B, using fast kernel for NVIDIA
-        template <typename T1, typename T2, typename T3, typename ScalarType >
-        void prod_fast_kernel(const T1 & A,
-                              const T2 & B,
-                              T3 & C,
-                              ScalarType alpha,
-                              ScalarType beta,
-                              std::string kernel_name)
-        {
-          typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
+//        // C = A * B, using fast kernel for NVIDIA
+//        template <typename T1, typename T2, typename T3, typename ScalarType >
+//        void prod_fast_kernel(const T1 & A,
+//                              const T2 & B,
+//                              T3 & C,
+//                              ScalarType alpha,
+//                              ScalarType beta,
+//                              std::string kernel_name)
+//        {
+//          typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
 
-          viennacl::ocl::kernel & k = kernel_for_matrix_prod(A, B, C, kernel_name);
+//          viennacl::ocl::kernel & k = kernel_for_matrix_prod(A, B, C, kernel_name);
 
-          k.global_work_size(0, viennacl::traits::size2(C) / 4); //column blocks
-          k.global_work_size(1, viennacl::traits::size1(C) / 4); //row blocks
-          k.local_work_size(0, 16);  //columns
-          k.local_work_size(1, 4);   //rows
+//          k.global_work_size(0, viennacl::traits::size2(C) / 4); //column blocks
+//          k.global_work_size(1, viennacl::traits::size1(C) / 4); //row blocks
+//          k.local_work_size(0, 16);  //columns
+//          k.local_work_size(1, 4);   //rows
 
-          cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
-          cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
+//          cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
+//          cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
 
-          viennacl::ocl::enqueue(k(cl_alpha,
-                                  viennacl::traits::opencl_handle(A),
-                                  cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
-                                  cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
-                                  cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
-                                  cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
+//          viennacl::ocl::enqueue(k(cl_alpha,
+//                                  viennacl::traits::opencl_handle(A),
+//                                  cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
+//                                  cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
+//                                  cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
+//                                  cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
 
-                                  viennacl::traits::opencl_handle(B),
-                                  cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)),
-                                  cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
-                                  cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
-                                  cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
+//                                  viennacl::traits::opencl_handle(B),
+//                                  cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)),
+//                                  cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
+//                                  cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
+//                                  cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
 
-                                  cl_beta,
-                                  viennacl::traits::opencl_handle(C),
-                                  cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)),
-                                  cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
-                                  cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
-                                  cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
-                                  )
-                                );
-        }
+//                                  cl_beta,
+//                                  viennacl::traits::opencl_handle(C),
+//                                  cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)),
+//                                  cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
+//                                  cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
+//                                  cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
+//                                  )
+//                                );
+//        }
 
-        template <typename T1, typename T2, typename T3, typename ScalarType >
-        void prod(const T1 & A,
-                  const T2 & B,
-                  T3 & C,
-                  ScalarType alpha,
-                  ScalarType beta,
-                  std::string fast_kernel_name,
-                  std::string slow_kernel_name)
-        {
-          if (   (viennacl::traits::size1(A) < 64)
-              || (viennacl::traits::size2(A) < 64)
-              || (viennacl::traits::size1(B) < 64)
-              || (viennacl::traits::size2(B) < 64) )   //there is most likely not enough to compute, rendering kernel launch overhead considerable
-          {
-            prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
-          }
-          else if (   (viennacl::traits::size1(A) % 64 == 0)
-                   && (viennacl::traits::size2(A) % 64 == 0)
-                   && (viennacl::traits::size1(B) % 64 == 0)
-                   && (viennacl::traits::size2(B) % 64 == 0) )   // allows the use of the fast NVIDIA kernel
-          {
-            prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
-            //prod_slow_kernel(A, B, C, slow_kernel_name);
-          }
-          else //TODO: use four kernels
-          {
-            prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
-          }
+//        template <typename T1, typename T2, typename T3, typename ScalarType >
+//        void prod(const T1 & A,
+//                  const T2 & B,
+//                  T3 & C,
+//                  ScalarType alpha,
+//                  ScalarType beta,
+//                  std::string fast_kernel_name,
+//                  std::string slow_kernel_name)
+//        {
+//          if (   (viennacl::traits::size1(A) < 64)
+//              || (viennacl::traits::size2(A) < 64)
+//              || (viennacl::traits::size1(B) < 64)
+//              || (viennacl::traits::size2(B) < 64) )   //there is most likely not enough to compute, rendering kernel launch overhead considerable
+//          {
+//            prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
+//          }
+//          else if (   (viennacl::traits::size1(A) % 64 == 0)
+//                   && (viennacl::traits::size2(A) % 64 == 0)
+//                   && (viennacl::traits::size1(B) % 64 == 0)
+//                   && (viennacl::traits::size2(B) % 64 == 0) )   // allows the use of the fast NVIDIA kernel
+//          {
+//            prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
+//            //prod_slow_kernel(A, B, C, slow_kernel_name);
+//          }
+//          else //TODO: use four kernels
+//          {
+//            prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
+//          }
 
-        }
+//        }
       } // namespace detail
 
 
@@ -460,8 +473,8 @@ namespace viennacl
       *
       */
       template <typename NumericT, typename ScalarType >
-      void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
-                     const matrix_base<NumericT> & B, bool trans_B,
+      void prod_impl(const matrix_base<NumericT> & A, bool A_trans,
+                     const matrix_base<NumericT> & B, bool B_trans,
                            matrix_base<NumericT> & C,
                      ScalarType alpha,
                      ScalarType beta)
@@ -471,16 +484,35 @@ namespace viennacl
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
               && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
-        std::string string_prod16("prod16_");
-        std::string string_prod("prod_");
+        using namespace viennacl::traits;
+        if (start1(A) > 0 || start2(A) > 0 || stride1(A) > 1 || stride2(A) > 1 ||
+            start1(B) > 0 || start2(B) > 0 || stride1(B) > 1 || stride2(B) > 1 ||
+            start1(C) > 0 || start2(C) > 0 || stride1(C) > 1 || stride2(C) > 1)
+        {
+          std::string string_prod("prod_");
+          string_prod.append(A_trans ? "T" : "A");
+          string_prod.append(B_trans ? "T" : "A");
+          detail::prod_slow_kernel(A, B, C, alpha, beta, string_prod);
+        }
+        else
+        {
+          using namespace viennacl::device_specific::database;
+          device_specific::matrix_product_template::parameters const * parameters;
 
-        string_prod16.append(trans_A ? "T" : "A");
-        string_prod.append(trans_A ? "T" : "A");
+          bool effective_A_trans = A_trans ^ A.row_major();
+          bool effective_B_trans = B_trans ^ B.row_major();
 
-        string_prod16.append(trans_B ? "T" : "A");
-        string_prod.append(trans_B ? "T" : "A");
+          if(!effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_NN);
+          else if(effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_TN);
+          else if(!effective_A_trans && effective_B_trans) parameters = &get<NumericT>(matrix_product_NT);
+          else  parameters = &get<NumericT>(matrix_product_TT);
 
-         detail::prod(A, B, C, alpha, beta, string_prod16, string_prod);
+          std::string kernel_prefix("prodopt_");
+          kernel_prefix.append(effective_A_trans ? "T" : "N");
+          kernel_prefix.append(effective_B_trans ? "T" : "N");
+          device_specific::matrix_product_template(*parameters).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C), kernel_prefix);
+
+        }
       }
 
       //

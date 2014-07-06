@@ -47,7 +47,8 @@ namespace viennacl{
     namespace tree_parsing{
 
       /** @brief Functor to map the statements to the types defined in mapped_objects.hpp */
-      class map_functor : public traversal_functor{
+      class map_functor : public traversal_functor
+      {
 
           scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, vcl_size_t root_idx) const
           {
@@ -112,15 +113,15 @@ namespace viennacl{
           }
 
           /** @brief Traversal functor */
-          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type node_type) const {
-            mapping_type::key_type key(root_idx, node_type);
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf_t) const {
+            mapping_type::key_type key(root_idx, leaf_t);
             scheduler::statement_node const & root_node = statement.array()[root_idx];
 
-            if(node_type == LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+            if(leaf_t == LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                  mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this)));
-            else if(node_type == RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+            else if(leaf_t == RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                  mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node.rhs, *this)));
-            else if( node_type== PARENT_NODE_TYPE)
+            else if( leaf_t== PARENT_NODE_TYPE)
             {
                 if(root_node.op.type==scheduler::OPERATION_BINARY_VECTOR_DIAG_TYPE)
                   mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_diag>(&statement, root_idx, &mapping_)));

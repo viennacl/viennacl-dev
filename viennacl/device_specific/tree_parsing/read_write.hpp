@@ -41,30 +41,25 @@ namespace viennacl{
         public:
           enum mode_t { FETCH, WRITE_BACK };
 
-          read_write_traversal(mode_t mode, unsigned int simd_width, std::string suffix, std::set<std::string> & cache,
+          read_write_traversal(mode_t mode, std::string suffix, std::set<std::string> & cache,
                                index_tuple const & index, utils::kernel_generation_stream & stream, mapping_type const & mapping)
-            : mode_(mode), simd_width_(simd_width), suffix_(suffix), cache_(cache), index_(index), stream_(stream), mapping_(mapping){ }
+            : mode_(mode), suffix_(suffix), cache_(cache), index_(index), stream_(stream), mapping_(mapping){ }
 
-          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, node_type leaf) const {
+          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, leaf_t leaf) const {
              mapping_type::const_iterator it = mapping_.find(std::make_pair(root_idx, leaf));
              if(it!=mapping_.end())
              {
                if(mode_==FETCH)
-               {
-                 if(fetchable * p = dynamic_cast<fetchable *>(it->second.get()))
-                   p->fetch(simd_width_, suffix_, index_, cache_, stream_);
-               }
+                if(fetchable * p = dynamic_cast<fetchable *>(it->second.get()))
+                  p->fetch(suffix_, index_, cache_, stream_);
 
                if(mode_==WRITE_BACK)
-               {
-                 if(writable * p = dynamic_cast<writable *>(it->second.get()))
-                   p->write_back(simd_width_, suffix_, index_, cache_, stream_);
-               }
+                if(writable * p = dynamic_cast<writable *>(it->second.get()))
+                  p->write_back(suffix_, index_, cache_, stream_);
              }
           }
       private:
         mode_t mode_;
-        unsigned int simd_width_;
         std::string suffix_;
         std::set<std::string> & cache_;
         index_tuple index_;
@@ -73,11 +68,11 @@ namespace viennacl{
       };
 
 
-      inline void read_write(read_write_traversal::mode_t mode, unsigned int simd_width, std::string const & suffix,
+      inline void read_write(read_write_traversal::mode_t mode, std::string const & suffix,
                                   std::set<std::string> & cache, scheduler::statement const & statement,vcl_size_t root_idx
-                                  ,index_tuple const & index,utils::kernel_generation_stream & stream, mapping_type const & mapping, node_type leaf)
+                                  ,index_tuple const & index,utils::kernel_generation_stream & stream, mapping_type const & mapping, leaf_t leaf)
       {
-        read_write_traversal traversal_functor(mode, simd_width, suffix, cache, index, stream, mapping);
+        read_write_traversal traversal_functor(mode, suffix, cache, index, stream, mapping);
         scheduler::statement_node const & root_node = statement.array()[root_idx];
 
 

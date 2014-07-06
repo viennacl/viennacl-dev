@@ -79,8 +79,8 @@ namespace viennacl
 
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::RHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::RHS_NODE_TYPE);
         }
 
         //Generates all the expression, in order
@@ -90,7 +90,7 @@ namespace viennacl
         //Write back
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, parameters_.simd_width, lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
         }
 
         stream.dec_tab();
@@ -122,14 +122,14 @@ namespace viennacl
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
-        k.global_work_size(0,parameters_.local_size_0*parameters_.num_groups);
+        k.global_work_size(0,p_.local_size_0*p_.num_groups);
         k.global_work_size(1,1);
         cl_uint size = static_cast<cl_uint>(get_vector_size(statements.data().front()));
-        k.arg(n_arg++, size/parameters_.simd_width);
+        k.arg(n_arg++, size/p_.simd_width);
       }
 
     public:
-      vector_axpy_template(vector_axpy_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), parameters_(parameters){ }
+      vector_axpy_template(vector_axpy_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), p_(parameters){ }
 
       void enqueue(viennacl::ocl::program & program, statements_container const & statements, bool up_to_internal_size = false)
       {
@@ -138,7 +138,7 @@ namespace viennacl
       }
 
     private:
-      vector_axpy_template::parameters const & parameters_;
+      vector_axpy_template::parameters const & p_;
       bool up_to_internal_size_;
     };
 

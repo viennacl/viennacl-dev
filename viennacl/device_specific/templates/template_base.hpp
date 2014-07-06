@@ -34,9 +34,9 @@
 
 #include "viennacl/scheduler/forwards.h"
 
+#include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/tree_parsing/traverse.hpp"
 #include "viennacl/device_specific/tree_parsing/map.hpp"
-#include "viennacl/device_specific/tree_parsing/prototype_generation.hpp"
 #include "viennacl/device_specific/tree_parsing/set_arguments.hpp"
 #include "viennacl/device_specific/tree_parsing/statement_representation.hpp"
 
@@ -48,8 +48,52 @@ namespace viennacl
 
     class template_base
     {
+    protected:
+
+      /** @brief functor for generating the prototype of a statement */
+      class prototype_generation_traversal : public tree_parsing::traversal_functor
+      {
+        private:
+          std::set<std::string> & already_generated_;
+          std::string & str_;
+          mapping_type const & mapping_;
+        public:
+          prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping) : already_generated_(already_generated), str_(str),  mapping_(mapping){ }
+
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, tree_parsing::leaf_t leaf) const
+          {
+              scheduler::statement_node const & root_node = statement.array()[root_idx];
+              if( (leaf==tree_parsing::LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                ||(leaf==tree_parsing::RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
+              {
+                mapped_object * obj = mapping_.at(std::make_pair(root_idx,leaf)).get();
+                obj->append_kernel_arguments(already_generated_, str_);
+              }
+          }
+      };
+
+      /** @brief functor for generating the prototype of a statement */
+      template<class T>
+      class set_simd_width_traversal : public tree_parsing::traversal_functor
+      {
+        private:
+          unsigned int simd_width_;
+          mapping_type const & mapping_;
+        public:
+          set_simd_width_traversal(unsigned int simd_width, mapping_type const & mapping) : simd_width_(simd_width), mapping_(mapping) { }
+
+          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, tree_parsing::leaf_t leaf) const
+          {
+            mapping_type::const_iterator it = mapping_.find(std::make_pair(root_idx, leaf));
+            if(it!=mapping_.end())
+              if(T * p = dynamic_cast<T*>(mapping_.at(std::make_pair(root_idx, leaf)).get()))
+                p->set_simd_width(simd_width_);
+          }
+      };
+
     public:
-      class parameters{
+      class parameters
+      {
       private:
         virtual bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const { return false; }
         virtual unsigned int lmem_used(unsigned int /*scalartype_size*/) const { return 0; }
@@ -104,11 +148,15 @@ namespace viennacl
 
       /** @brief Generates the body of the associated kernel function */
       virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
-
       /** @brief generates the arguments that are global to the kernel (different from the object-specific arguments) */
       virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
-
+      /** @brief configure the local sizes and enqueue the arguments of the kernel */
       virtual void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
+      /** @brief Returns the effective simd width for a given mapped_object */
+      virtual void set_simd_widths(scheduler::statement const & s, mapping_type const & m)
+      {
+        tree_parsing::traverse(s, s.root(), set_simd_width_traversal<mapped_buffer>(parameters_.simd_width, m), true);
+      }
 
     public:
       /** @brief The constructor */
@@ -134,9 +182,11 @@ namespace viennacl
         //Generate Prototype
         std::string prototype;
         std::set<std::string> already_generated;
+        for(sit = statements.data().begin(), mit = mapping.begin() ; mit != mapping.end() ; ++sit, ++mit)
+          set_simd_widths(*sit, *mit);
         add_kernel_arguments(statements, prototype);
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::traverse(*sit, sit->root(), tree_parsing::prototype_generation_traversal(parameters_.simd_width, already_generated, prototype, *mit), true);
+          tree_parsing::traverse(*sit, sit->root(), prototype_generation_traversal(already_generated, prototype, *mit), true);
         prototype.erase(prototype.size()-1); //Last comma pruned
 
         for(unsigned int i = 0 ; i < parameters_.num_kernels ; ++i)

@@ -63,13 +63,13 @@ namespace viennacl{
 
       unsigned int lmem_used(unsigned int scalartype_size) const
       {
-        return parameters_.local_size_0*(parameters_.local_size_1+1)*scalartype_size;
+        return p_.local_size_0*(p_.local_size_1+1)*scalartype_size;
       }
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
       {
-        kernel.global_work_size(0,parameters_.local_size_0*parameters_.num_groups_0);
-        kernel.global_work_size(1,parameters_.local_size_1);
+        kernel.global_work_size(0,p_.local_size_0*p_.num_groups_0);
+        kernel.global_work_size(1,p_.local_size_1);
 
         scheduler::statement::container_type const & array = statements.data().begin()->array();
         vcl_size_t root = statements.data().begin()->root();
@@ -120,12 +120,12 @@ namespace viennacl{
 
 
 
-        unsigned int lsize0 = parameters_.local_size_0;
-        unsigned int lsize1 = parameters_.local_size_1+1;
+        unsigned int lsize0 = p_.local_size_0;
+        unsigned int lsize1 = p_.local_size_1+1;
 
         std::string size1 = "M";
         std::string size2 = "N";
-        if(parameters_.A_trans=='T')
+        if(p_.A_trans=='T')
           std::swap(size1, size2);
 
         for(std::vector<mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
@@ -151,10 +151,10 @@ namespace viennacl{
             {
               viennacl::scheduler::statement const & statement = exprs[k]->statement();
               viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
-              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size1, "c", size2),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
+              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size1, "c", size2),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
 
               if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size1), stream,exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
+                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size1), stream,exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
             }
 
 
@@ -181,7 +181,7 @@ namespace viennacl{
             stream << "buf" << k << "[lid0*" << lsize1 << "+ lid1] = " << accs[k] << ";" << std::endl;
           }
 
-          for(unsigned int stride = parameters_.local_size_1/2 ; stride>0 ; stride /=2){
+          for(unsigned int stride = p_.local_size_1/2 ; stride>0 ; stride /=2){
             stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
             stream <<  "if(lid1 < " << stride << ")" ;
             stream << "{" << std::endl;
@@ -219,10 +219,10 @@ namespace viennacl{
       }
 
     public:
-      row_wise_reduction_template(row_wise_reduction_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), parameters_(parameters){ }
+      row_wise_reduction_template(row_wise_reduction_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), p_(parameters){ }
 
     private:
-      row_wise_reduction_template::parameters const & parameters_;
+      row_wise_reduction_template::parameters const & p_;
     };
 
   }

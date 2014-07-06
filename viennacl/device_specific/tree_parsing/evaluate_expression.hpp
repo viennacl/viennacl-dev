@@ -179,7 +179,7 @@ namespace viennacl{
             str_+=")";
           }
 
-          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, node_type leaf) const
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf) const
           {
             scheduler::statement_node const & root_node = statement.array()[root_idx];
             mapping_type::key_type key = std::make_pair(root_idx, leaf);
@@ -210,7 +210,7 @@ namespace viennacl{
       };
 
       inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, index_tuple const & index,
-                                             unsigned int simd_element, mapping_type const & mapping, node_type leaf)
+                                             unsigned int simd_element, mapping_type const & mapping, leaf_t leaf)
       {
         std::string res;
         evaluate_expression_traversal traversal_functor(index, simd_element, res, mapping);

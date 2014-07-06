@@ -70,7 +70,7 @@ namespace viennacl
 
       unsigned int lmem_used(unsigned int scalartype_size) const
       {
-        return parameters_.local_size_0*scalartype_size;
+        return p_.local_size_0*scalartype_size;
       }
 
       void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
@@ -78,36 +78,41 @@ namespace viennacl
         //configure ND range
         if(kernel_id==0)
         {
-          kernel.global_work_size(0,parameters_.local_size_0*parameters_.num_groups);
+          kernel.global_work_size(0,p_.local_size_0*p_.num_groups);
           kernel.global_work_size(1,1);
         }
         else
         {
-          kernel.global_work_size(0,parameters_.local_size_0);
+          kernel.global_work_size(0,p_.local_size_0);
           kernel.global_work_size(1,1);
         }
 
         //set arguments
         vcl_size_t size = get_vector_size(statements.data().front());
-        kernel.arg(n_arg++, cl_uint(size)/parameters_.simd_width);
+        kernel.arg(n_arg++, cl_uint(size)/p_.simd_width);
 
         std::vector<scheduler::statement_node const *> reductions;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions), false);
+        {
+          std::vector<vcl_size_t> reductions_idx;
+          tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions_idx), false);
+          for(std::vector<vcl_size_t>::iterator itt = reductions_idx.begin() ; itt != reductions_idx.end() ; ++itt)
+            reductions.push_back(&it->array()[*itt]);
+        }
 
         unsigned int i = 0;
         unsigned int j = 0;
         for(std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it)
         {
           if(tmp_.size() <= i)
-            tmp_.push_back(context.create_memory(CL_MEM_READ_WRITE, parameters_.num_groups*utils::scalartype_size(parameters_.scalartype)));
+            tmp_.push_back(context.create_memory(CL_MEM_READ_WRITE, p_.num_groups*utils::scalartype_size(p_.scalartype)));
           kernel.arg(n_arg++, tmp_[i]);
           i++;
 
           if(utils::is_index_reduction((*it)->op))
           {
             if(tmpidx_.size() <= j)
-              tmpidx_.push_back(context.create_memory(CL_MEM_READ_WRITE, parameters_.num_groups*4));
+              tmpidx_.push_back(context.create_memory(CL_MEM_READ_WRITE, p_.num_groups*4));
             kernel.arg(n_arg++, tmpidx_[j]);
             j++;
           }
@@ -119,11 +124,16 @@ namespace viennacl
 
         std::vector<scheduler::statement_node const *> reductions;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions), false);
+        {
+          std::vector<vcl_size_t> reductions_idx;
+          tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions_idx), false);
+          for(std::vector<vcl_size_t>::iterator itt = reductions_idx.begin() ; itt != reductions_idx.end() ; ++itt)
+            reductions.push_back(&it->array()[*itt]);
+        }
 
         for(std::vector<scheduler::statement_node const *>::iterator it = reductions.begin() ; it != reductions.end() ; ++it)
         {
-          arguments_string += generate_pointer_kernel_argument("__global", parameters_.scalartype,  "temp" + tools::to_string(std::distance(reductions.begin(), it)));
+          arguments_string += generate_pointer_kernel_argument("__global", p_.scalartype,  "temp" + tools::to_string(std::distance(reductions.begin(), it)));
           if(utils::is_index_reduction((*it)->op))
             arguments_string += generate_pointer_kernel_argument("__global", "unsigned int",  "temp" + tools::to_string(std::distance(reductions.begin(), it)) + "idx");
         }
@@ -155,7 +165,7 @@ namespace viennacl
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
         for(unsigned int k = 0 ; k < N ; ++k){
-          stream << parameters_.scalartype << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
+          stream << p_.scalartype << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
           if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
             stream << "unsigned int " << accsidx[k] << " = " << 0 << ";" << std::endl;
         }
@@ -163,7 +173,7 @@ namespace viennacl
         std::string init;
         std::string upper_bound;
         std::string inc;
-        if(parameters_.decomposition){
+        if(p_.decomposition){
           init = "get_global_id(0)";
           upper_bound = "N";
           inc = "get_global_size(0)";
@@ -184,7 +194,7 @@ namespace viennacl
           std::set<std::string>  cache;
           for(std::vector<mapped_scalar_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           {
-            tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, parameters_.simd_width, "reg", cache, (*it)->statement(), (*it)->root_idx(), index_tuple("i", "N"),stream,(*it)->mapping(), tree_parsing::PARENT_NODE_TYPE);
+            tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, (*it)->statement(), (*it)->root_idx(), index_tuple("i", "N"),stream,(*it)->mapping(), tree_parsing::PARENT_NODE_TYPE);
           }
           //Update accs;
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
@@ -193,8 +203,8 @@ namespace viennacl
             vcl_size_t root_idx = exprs[k]->root_idx();
             mapping_type const & mapping = exprs[k]->mapping();
             index_tuple idx("i","N");
-            if(parameters_.simd_width > 1){
-              for(unsigned int a = 0 ; a < parameters_.simd_width ; ++a){
+            if(p_.simd_width > 1){
+              for(unsigned int a = 0 ; a < p_.simd_width ; ++a){
                 std::string value = tree_parsing::evaluate_expression(statement,root_idx,idx,a,mapping,tree_parsing::LHS_NODE_TYPE);
                 if(statement.array()[root_idx].op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE){
                   value += "*";
@@ -219,9 +229,9 @@ namespace viennacl
 
         //Declare and fill local memory
         for(unsigned int k = 0 ; k < N ; ++k){
-          stream << "__local " << parameters_.scalartype << " " << local_buffers_names[k] << "[" << parameters_.local_size_0 << "];" << std::endl;
+          stream << "__local " << p_.scalartype << " " << local_buffers_names[k] << "[" << p_.local_size_0 << "];" << std::endl;
           if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
-            stream << "__local " << "unsigned int" << " " << local_buffers_names[k] << "idx[" << parameters_.local_size_0 << "];" << std::endl;
+            stream << "__local " << "unsigned int" << " " << local_buffers_names[k] << "idx[" << p_.local_size_0 << "];" << std::endl;
         }
 
 
@@ -232,7 +242,7 @@ namespace viennacl
         }
 
         //Reduce and write to temporary buffers
-        reduce_1d_local_memory(stream, parameters_.local_size_0,local_buffers_names,rops);
+        reduce_1d_local_memory(stream, p_.local_size_0,local_buffers_names,rops);
 
         stream << "if(lid==0){" << std::endl;
         stream.inc_tab();
@@ -271,18 +281,18 @@ namespace viennacl
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
         for(unsigned int k = 0 ; k < exprs.size() ; ++k){
-          stream << "__local " << parameters_.scalartype << " " << local_buffers_names[k] << "[" << parameters_.local_size_0 << "];" << std::endl;
+          stream << "__local " << p_.scalartype << " " << local_buffers_names[k] << "[" << p_.local_size_0 << "];" << std::endl;
           if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
-            stream << "__local " << "unsigned int" << " " << local_buffers_names[k] << "idx[" << parameters_.local_size_0 << "];" << std::endl;
+            stream << "__local " << "unsigned int" << " " << local_buffers_names[k] << "idx[" << p_.local_size_0 << "];" << std::endl;
         }
 
         for(unsigned int k = 0 ; k < local_buffers_names.size() ; ++k){
-          stream << parameters_.scalartype << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
+          stream << p_.scalartype << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
           if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
             stream << "unsigned int" << " " << accsidx[k] << " = " << 0 << ";" << std::endl;
         }
 
-        stream << "for(unsigned int i = lid ; i < " << parameters_.num_groups << " ; i += get_local_size(0)){" << std::endl;
+        stream << "for(unsigned int i = lid ; i < " << p_.num_groups << " ; i += get_local_size(0)){" << std::endl;
         stream.inc_tab();
         for(unsigned int k = 0 ; k < N ; ++k)
           compute_reduction(stream,accsidx[k],"temp"+tools::to_string(k)+"idx[i]",accs[k],"temp"+tools::to_string(k)+"[i]",rops[k]);
@@ -298,7 +308,7 @@ namespace viennacl
 
 
         //Reduce and write final result
-        reduce_1d_local_memory(stream, parameters_.local_size_0,local_buffers_names,rops);
+        reduce_1d_local_memory(stream, p_.local_size_0,local_buffers_names,rops);
         for(unsigned int k = 0 ; k < N ; ++k)
         {
           std::string suffix = "";
@@ -350,10 +360,10 @@ namespace viennacl
 
 
     public:
-      reduction_template(reduction_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), parameters_(parameters){ }
+      reduction_template(reduction_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), p_(parameters){ }
 
     private:
-      reduction_template::parameters const & parameters_;
+      reduction_template::parameters const & p_;
       mutable std::vector< viennacl::ocl::handle<cl_mem> > tmp_;
       mutable std::vector< viennacl::ocl::handle<cl_mem> > tmpidx_;
     };

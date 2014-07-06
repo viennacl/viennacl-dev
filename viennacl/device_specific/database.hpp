@@ -7,6 +7,7 @@
 #include "viennacl/device_specific/templates/matrix_axpy_template.hpp"
 #include "viennacl/device_specific/templates/reduction_template.hpp"
 #include "viennacl/device_specific/templates/row_wise_reduction_template.hpp"
+#include "viennacl/device_specific/templates/matrix_product_template.hpp"
 #include "viennacl/scheduler/forwards.h"
 
 namespace viennacl{
@@ -68,6 +69,42 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters("long",'T',1,8,8,1))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'T',1,8,8,1))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'T',1,8,8,1));
+
+     /////////////////////
+     /// Matrix-Matrix Product
+     ////////////////////
+     static database_type<matrix_product_template::parameters> matrix_product_NN = database_type<matrix_product_template::parameters>
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters("uint",'N','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters("int",'N','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'N','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'N','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','N',1,8,8,8,4,4,4,true,false,8,8));
+
+
+     static database_type<matrix_product_template::parameters> matrix_product_NT = database_type<matrix_product_template::parameters>
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters("uint",'N','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters("int",'N','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'N','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'N','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','T',1,8,8,8,4,4,4,true,false,8,8));
+
+     static database_type<matrix_product_template::parameters> matrix_product_TN = database_type<matrix_product_template::parameters>
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters("uint",'T','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters("int",'T','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'T','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'T','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','N',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','N',1,8,8,8,4,4,4,true,false,8,8));
+
+     static database_type<matrix_product_template::parameters> matrix_product_TT = database_type<matrix_product_template::parameters>
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters("uint",'T','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters("int",'T','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'T','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'T','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','T',1,8,8,8,4,4,4,true,false,8,8));
 
       /** @brief If the fallback is too harsh, use a very conservative profile */
       template<class ParamT>
