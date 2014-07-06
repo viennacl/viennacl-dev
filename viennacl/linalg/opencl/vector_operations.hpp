@@ -136,8 +136,9 @@ namespace viennacl
       void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
       {
         scalar_vector<T> vec2(viennacl::traits::size(vec1),alpha);
-        device_specific::vector_axpy_template(device_specific::database::get<T>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_vector(vec1,0), scheduler::preset::assign_cpu(&vec1, &vec2), up_to_internal_size);
+        device_specific::vector_axpy_template tplt(device_specific::database::get<T>(device_specific::database::vector_axpy));
+        tplt.up_to_internal_size(up_to_internal_size);
+        tplt.enqueue(detail::program_for_vector(vec1,0), scheduler::preset::assign_cpu(&vec1, &vec2));
       }
 
 

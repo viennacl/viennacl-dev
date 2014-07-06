@@ -166,8 +166,9 @@ namespace viennacl
       {
 
         scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat),viennacl::traits::size2(mat),s);
-        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::assign_cpu(&mat, &mat2), up_to_internal_size);
+        device_specific::matrix_axpy_template tplt(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy));
+        tplt.up_to_internal_size(up_to_internal_size);
+        tplt.enqueue(detail::program_for_matrix(mat,0), scheduler::preset::assign_cpu(&mat, &mat2));
       }
 
       template <typename NumericT>
