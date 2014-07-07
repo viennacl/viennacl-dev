@@ -51,6 +51,12 @@ namespace viennacl
     public:
       class parameters : public template_base::parameters
       {
+      private:
+        unsigned int lmem_used(unsigned int scalartype_size) const
+        {
+          return local_size_0*scalartype_size;
+        }
+
       public:
         parameters(const char * _scalartype, unsigned int _simd_width,
                    unsigned int _group_size, unsigned int _num_groups,
@@ -68,10 +74,7 @@ namespace viennacl
             || node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE;
       }
 
-      unsigned int lmem_used(unsigned int scalartype_size) const
-      {
-        return p_.local_size_0*scalartype_size;
-      }
+
 
       void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
       {

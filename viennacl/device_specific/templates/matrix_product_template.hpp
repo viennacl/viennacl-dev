@@ -48,6 +48,39 @@ class matrix_product_template : public template_base{
 public:
     class parameters : public template_base::parameters
     {
+    private:
+      bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const
+      {
+          static const unsigned int alignment = 128;
+          bool res = false;
+          res |= alignment % mL > 0;
+          res |= alignment % kL > 0;
+          res |= alignment % nL > 0;
+          res |= (mS % simd_width) > 0;
+          res |= (nS % simd_width) > 0;
+          res |= (!(A_trans=='N' && B_trans=='T') && simd_width>1);
+          if(use_A_local)
+          {
+              unsigned int bound1 = (A_trans=='N')?kL:mL;
+              unsigned int bound0 = (A_trans=='N')?mL:kL;
+
+              res |= local_fetch_1>0 && (bound1 % local_fetch_1)> 0;
+              res |= local_fetch_0>0 && (bound0 % (local_fetch_0*simd_width)) > 0;
+          }
+          if(use_B_local)
+          {
+              unsigned int bound1 = (B_trans=='T')?kL:nL;
+              unsigned int bound0 = (B_trans=='T')?nL:kL;
+
+              res |= local_fetch_1>0 && (bound1 % local_fetch_1)> 0;
+              res |= local_fetch_0>0 && (bound0 % (local_fetch_0*simd_width)) > 0;
+          }
+
+          if(use_A_local || use_B_local)
+              res |= ((local_fetch_0*local_fetch_1) !=(local_size_0*local_size_1));
+          return res;
+      }
+
     public:
       parameters(const char * scalartype, char A_trans, char B_trans
                  , unsigned int simd_width
@@ -153,38 +186,6 @@ private:
         if(p_.use_B_local)
             lmem_used += p_.nL * (p_.kL + 1) * scalartype_size;
         return lmem_used;
-    }
-
-    bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const
-    {
-        static const unsigned int alignment = 128;
-        bool res = false;
-        res |= alignment % p_.mL > 0;
-        res |= alignment % p_.kL > 0;
-        res |= alignment % p_.nL > 0;
-        res |= (p_.mS % p_.simd_width) > 0;
-        res |= (p_.nS % p_.simd_width) > 0;
-        res |= (!(p_.A_trans=='N' && p_.B_trans=='T') && p_.simd_width>1);
-        if(p_.use_A_local)
-        {
-            unsigned int bound1 = (p_.A_trans=='N')?p_.kL:p_.mL;
-            unsigned int bound0 = (p_.A_trans=='N')?p_.mL:p_.kL;
-
-            res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
-            res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
-        }
-        if(p_.use_B_local)
-        {
-            unsigned int bound1 = (p_.B_trans=='T')?p_.kL:p_.nL;
-            unsigned int bound0 = (p_.B_trans=='T')?p_.nL:p_.kL;
-
-            res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
-            res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
-        }
-
-        if(p_.use_A_local || p_.use_B_local)
-            res |= ((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1));
-        return res;
     }
 
     static bool is_matrix_product(scheduler::statement_node const & node) { return node.op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE; }

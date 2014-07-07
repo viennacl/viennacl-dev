@@ -48,6 +48,11 @@ namespace viennacl{
     public:
       class parameters : public template_base::parameters
       {
+        unsigned int lmem_used(unsigned int scalartype_size) const
+        {
+          return local_size_0*(local_size_1+1)*scalartype_size;
+        }
+
       public:
         parameters(const char * _scalartype, char _A_trans, unsigned int _simd_width,
                    unsigned int _local_size_0, unsigned int _local_size_1,
@@ -60,11 +65,6 @@ namespace viennacl{
       };
 
     private:
-
-      unsigned int lmem_used(unsigned int scalartype_size) const
-      {
-        return p_.local_size_0*(p_.local_size_1+1)*scalartype_size;
-      }
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
       {

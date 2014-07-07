@@ -87,7 +87,7 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters("int",'N','T',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'N','T',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'N','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',1,8,8,8,4,4,4,true,true,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','T',1,8,8,8,4,4,4,true,false,8,8));
 
      static database_type<matrix_product_template::parameters> matrix_product_TN = database_type<matrix_product_template::parameters>
