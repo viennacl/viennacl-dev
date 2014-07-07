@@ -58,6 +58,9 @@ public:
           res |= alignment % nL > 0;
           res |= (mS % simd_width) > 0;
           res |= (nS % simd_width) > 0;
+          res |= mS > mL;
+          res |= nS > nL;
+          res |= kS > kL;
           res |= (!(A_trans=='N' && B_trans=='T') && simd_width>1);
           if(use_A_local)
           {
@@ -90,7 +93,7 @@ public:
                  , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters(scalartype, simd_width, local_size_0, local_size_1, 1),
                                              A_trans(A_trans), B_trans(B_trans), kL(KL), mS(ms), kS(ks), nS(ns), use_A_local(use_A_local), use_B_local(use_B_local),
                                              local_fetch_0(local_fetch_0), local_fetch_1(local_fetch_1),
-                                              mL(ms*local_size_0), nL(ns*local_fetch_1){ }
+                                              mL(ms*local_size_0), nL(ns*local_size_1){}
 
       const char A_trans;
       const char B_trans;
