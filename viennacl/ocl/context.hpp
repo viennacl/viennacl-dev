@@ -395,8 +395,8 @@ namespace viennacl
           err = clBuildProgram(temp, 0, NULL, options, NULL, NULL);
 #ifndef VIENNACL_DEBUG_BUILD
           if (err != CL_SUCCESS)
-          {
 #endif
+          {
             cl_build_status status;
             clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
             std::size_t len;
@@ -406,9 +406,7 @@ namespace viennacl
             std::cout << "Build Scalar: Err = " << err << " Status = " << status << std::endl;
             std::cout << "Log: " << log << std::endl;
             std::cout << "Sources: " << source << std::endl;
-#ifndef VIENNACL_DEBUG_BUILD
           }
-#endif
           VIENNACL_ERR_CHECK(err);
 
           if(_cache_path){
