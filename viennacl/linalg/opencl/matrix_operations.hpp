@@ -485,35 +485,35 @@ namespace viennacl
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
               && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
-        using namespace viennacl::traits;
-        if (start1(A) > 0 || start2(A) > 0 || stride1(A) > 1 || stride2(A) > 1 ||
-            start1(B) > 0 || start2(B) > 0 || stride1(B) > 1 || stride2(B) > 1 ||
-            start1(C) > 0 || start2(C) > 0 || stride1(C) > 1 || stride2(C) > 1)
-        {
+//        using namespace viennacl::traits;
+//        if (start1(A) > 0 || start2(A) > 0 || stride1(A) > 1 || stride2(A) > 1 ||
+//            start1(B) > 0 || start2(B) > 0 || stride1(B) > 1 || stride2(B) > 1 ||
+//            start1(C) > 0 || start2(C) > 0 || stride1(C) > 1 || stride2(C) > 1)
+//        {
           std::string string_prod("prod_");
           string_prod.append(A_trans ? "T" : "A");
           string_prod.append(B_trans ? "T" : "A");
           detail::prod_slow_kernel(A, B, C, alpha, beta, string_prod);
-        }
-        else
-        {
-          using namespace viennacl::device_specific::database;
-          device_specific::matrix_product_template::parameters const * parameters;
+//        }
+//        else
+//        {
+//          using namespace viennacl::device_specific::database;
+//          device_specific::matrix_product_template::parameters const * parameters;
 
-          bool effective_A_trans = A_trans ^ A.row_major();
-          bool effective_B_trans = B_trans ^ B.row_major();
+//          bool effective_A_trans = A_trans ^ A.row_major();
+//          bool effective_B_trans = B_trans ^ B.row_major();
 
-          if(!effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_NN);
-          else if(effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_TN);
-          else if(!effective_A_trans && effective_B_trans) parameters = &get<NumericT>(matrix_product_NT);
-          else  parameters = &get<NumericT>(matrix_product_TT);
+//          if(!effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_NN);
+//          else if(effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_TN);
+//          else if(!effective_A_trans && effective_B_trans) parameters = &get<NumericT>(matrix_product_NT);
+//          else  parameters = &get<NumericT>(matrix_product_TT);
 
-          std::string kernel_prefix("prodopt_");
-          kernel_prefix.append(effective_A_trans ? "T" : "N");
-          kernel_prefix.append(effective_B_trans ? "T" : "N");
-          device_specific::matrix_product_template(*parameters).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C), kernel_prefix);
+//          std::string kernel_prefix("prodopt_");
+//          kernel_prefix.append(effective_A_trans ? "T" : "N");
+//          kernel_prefix.append(effective_B_trans ? "T" : "N");
+//          device_specific::matrix_product_template(*parameters).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C), kernel_prefix);
 
-        }
+//        }
       }
 
       //
