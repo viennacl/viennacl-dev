@@ -100,8 +100,13 @@ namespace viennacl
                         const void * ptr,
                         bool async = false)
       {
-        //std::cout << "Writing data (" << bytes_to_copy << " bytes, offset " << dst_offset << ") to OpenCL buffer" << std::endl;
+
         viennacl::ocl::context & memory_context = const_cast<viennacl::ocl::context &>(dst_buffer.context());
+
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_DEVICE)
+        std::cout << "Writing data (" << bytes_to_copy << " bytes, offset " << dst_offset << ") to OpenCL buffer " << dst_buffer.get() << " with queue " << memory_context.get_queue().handle().get() << " from " << ptr << std::endl;
+        #endif
+
         cl_int err = clEnqueueWriteBuffer(memory_context.get_queue().handle().get(),
                                           dst_buffer.get(),
                                           async ? CL_FALSE : CL_TRUE,             //blocking

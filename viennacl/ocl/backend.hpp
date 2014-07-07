@@ -50,7 +50,7 @@ namespace viennacl
         {
           if (!initialized_[id])
           {
-            //std::cout << "Initializing context no. " << current_context_id_ << std::endl;
+            //std::cout << "Initializing context no. " << id << std::endl;
             contexts_[id].init();
             //create one queue per device:
             std::vector<viennacl::ocl::device> devices = contexts_[id].devices();
@@ -58,9 +58,8 @@ namespace viennacl
               contexts_[id].add_queue(devices[j]);
             initialized_[id] = true;
             /*
-            std::cout << "Context no. " << current_context_id_ << " initialized with " << devices.size() << " devices" << std::endl;
-            std::cout << "Device id: " << devices[0].id() << std::endl;
-            std::cout << "Current device id: " << contexts_[current_context_id_].current_device().id() << std::endl; */
+            std::cout << "Context no. " << id << " initialized with " << devices.size() << " devices" << std::endl;
+            std::cout << "Device id: " << devices[0].id() << std::endl; */
           }
           return contexts_[id];
         }
@@ -152,6 +151,17 @@ namespace viennacl
             queues_map[devices[j]].push_back(queue[j]);
 
           setup_context(i, c, devices, queues_map);
+        }
+
+        /** @brief Add an existing context object to the backend */
+        static void add_context(long i, viennacl::ocl::context& c)
+        {
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Adding context '" << c.handle() << "' as id " << i << std::endl;
+          std::cout << "ViennaCL: There are " << c.program_num() << " programs" << std::endl;
+          #endif
+          contexts_[i] = c;
+          initialized_[i] = true;
         }
 
         /** @brief Sets the context device type */

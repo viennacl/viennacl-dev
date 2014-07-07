@@ -139,11 +139,19 @@ namespace viennacl
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO
-              std::cout << "Creating program " << prog_name << std::endl;
+              std::cerr << "Creating program " << prog_name << std::endl;
               #endif
               ctx.add_program(source, prog_name);
+              #ifdef VIENNACL_BUILD_INFO
+              std::cerr << "Done creating program " << prog_name << std::endl;
+              #endif
               init_done[ctx.handle().get()] = true;
             } //if
+            #ifdef VIENNACL_BUILD_INFO
+            else {
+            std::cerr << "init done for context " << ctx.handle().get() << std::endl;
+            }
+            #endif
           } //init
         };
 
