@@ -28,7 +28,8 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, vector_axpy_template::parameters("float",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, vector_axpy_template::parameters("double",1,128,128,true))
 
-          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, vector_axpy_template::parameters("float",1,128,512,0));
+          (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, vector_axpy_template::parameters("float",1,1024,2048,1))
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, vector_axpy_template::parameters("float",1,128,512,0));
 
       /////////////////////
       /// Reduction
@@ -39,9 +40,8 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, reduction_template::parameters("ulong",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, reduction_template::parameters("long",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, reduction_template::parameters("float",1,128,128,true))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, reduction_template::parameters("double",1,128,128,true))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, reduction_template::parameters("double",1,128,128,true));
 
-          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, reduction_template::parameters("float",1,128,2048,false));
 
       /////////////////////
       /// Matrix AXPY
@@ -65,7 +65,8 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'N',1,8,8,1))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'N',1,8,8,1))
 
-           (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'N',1,2,128,256));
+          (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",,'N',1,1,256,2048))
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'N',1,2,128,256));
 
 
      static database_type<row_wise_reduction_template::parameters> trans_row_wise_reduction = database_type<row_wise_reduction_template::parameters>
@@ -76,7 +77,8 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'T',1,8,8,1))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'T',1,8,8,1))
 
-          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'T',1,1,64,1024));
+          (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'T',1,1,256,2048))
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'T',1,1,64,1024));
 
      /////////////////////
      /// Matrix-Matrix Product
@@ -89,7 +91,8 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','N',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','N',1,8,8,8,4,4,4,true,false,8,8))
 
-         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, matrix_product_template::parameters("float",'N','N',1,8,16,16,8,1,4,true,true,16,8));
+         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','N',1,16,16,8,4,1,8,true,true,16,8))
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','N',1,8,16,16,8,1,4,true,true,16,8));
 
 
      static database_type<matrix_product_template::parameters> matrix_product_NT = database_type<matrix_product_template::parameters>
@@ -100,7 +103,8 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',1,8,8,8,4,4,4,true,true,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','T',1,8,8,8,4,4,4,true,false,8,8))
 
-         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',4,8,8,8,4,1,8,true,true,8,8));
+         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',1,16,16,8,4,1,8,True,True,32,4))
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',4,8,8,8,4,1,8,true,true,8,8));
 
      static database_type<matrix_product_template::parameters> matrix_product_TN = database_type<matrix_product_template::parameters>
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters("uint",'T','N',1,8,8,8,4,4,4,true,false,8,8))
@@ -110,7 +114,8 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','N',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','N',1,8,8,8,4,4,4,true,false,8,8))
 
-         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, matrix_product_template::parameters("float",'T','N',1,16,16,16,8,1,4,true,true,16,16));
+         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','N',1,16,16,8,4,1,8,true,true,16,8))
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','N',1,16,16,16,8,1,4,true,true,16,16));
 
      static database_type<matrix_product_template::parameters> matrix_product_TT = database_type<matrix_product_template::parameters>
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters("uint",'T','T',1,8,8,8,4,4,4,true,false,8,8))
@@ -120,7 +125,8 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','T',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','T',1,8,8,8,4,4,4,true,false,8,8))
 
-         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, matrix_product_template::parameters("float",'T','T',1,16,16,16,4,1,8,true,true,16,16));
+         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','T',1,16,16,16,4,1,8,true,true,16,16))
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','T',1,16,16,16,4,1,8,true,true,16,16));
 
       /** @brief If the fallback is too harsh, use a very conservative profile */
       template<class ParamT>
