@@ -443,10 +443,12 @@ namespace viennacl
             bool row_major_B = viennacl::is_row_major<F_B>::value;
             bool row_major_C = viennacl::is_row_major<F_C>::value;
 
-            matrix_product_template::parameters const & mmNN= device_specific::database::get<NumericT>(database::matrix_product_NN);
-            matrix_product_template::parameters const & mmTN= device_specific::database::get<NumericT>(database::matrix_product_TN);
-            matrix_product_template::parameters const & mmNT= device_specific::database::get<NumericT>(database::matrix_product_NT);
-            matrix_product_template::parameters const & mmTT= device_specific::database::get<NumericT>(database::matrix_product_TT);
+            viennacl::ocl::device const & device = ctx.current_device();
+
+            matrix_product_template::parameters const & mmNN= device_specific::database::get<NumericT>(database::matrix_product_NN, device);
+            matrix_product_template::parameters const & mmTN= device_specific::database::get<NumericT>(database::matrix_product_TN, device);
+            matrix_product_template::parameters const & mmNT= device_specific::database::get<NumericT>(database::matrix_product_NT, device);
+            matrix_product_template::parameters const & mmTT= device_specific::database::get<NumericT>(database::matrix_product_TT, device);
 
 
             static std::map<cl_context, bool> init_done;

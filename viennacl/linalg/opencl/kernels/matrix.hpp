@@ -498,10 +498,12 @@ namespace viennacl
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
-              matrix_axpy_template::parameters const & mAXPY = device_specific::database::get<NumericT>(database::matrix_axpy);
-              vector_axpy_template::parameters const & xAXPY = device_specific::database::get<NumericT>(database::vector_axpy);
-              row_wise_reduction_template::parameters const & redN = device_specific::database::get<NumericT>(database::row_wise_reduction);
-              row_wise_reduction_template::parameters const & redT = device_specific::database::get<NumericT>(database::trans_row_wise_reduction);
+              viennacl::ocl::device const & device = ctx.current_device();
+
+              matrix_axpy_template::parameters const & mAXPY = device_specific::database::get<NumericT>(database::matrix_axpy, device);
+              vector_axpy_template::parameters const & xAXPY = device_specific::database::get<NumericT>(database::vector_axpy, device);
+              row_wise_reduction_template::parameters const & redN = device_specific::database::get<NumericT>(database::row_wise_reduction, device);
+              row_wise_reduction_template::parameters const & redT = device_specific::database::get<NumericT>(database::trans_row_wise_reduction, device);
 
               std::string source;
               source.reserve(8192);

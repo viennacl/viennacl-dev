@@ -26,8 +26,10 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, vector_axpy_template::parameters("ulong",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, vector_axpy_template::parameters("long",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, vector_axpy_template::parameters("float",1,128,128,true))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, vector_axpy_template::parameters("double",1,128,128,true));
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, vector_axpy_template::parameters("double",1,128,128,true))
 
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, vector_axpy_template::parameters("float",1,128,2048,0))
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", DOUBLE_TYPE, vector_axpy_template::parameters("double",1,64,1024,0));
 
       /////////////////////
       /// Reduction
@@ -38,7 +40,10 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, reduction_template::parameters("ulong",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, reduction_template::parameters("long",1,128,128,true))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, reduction_template::parameters("float",1,128,128,true))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, reduction_template::parameters("double",1,128,128,true));
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, reduction_template::parameters("double",1,128,128,true))
+
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, reduction_template::parameters("float",1,128,2048,false))
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", DOUBLE_TYPE, reduction_template::parameters("double",1,64,1024,false));
 
       /////////////////////
       /// Matrix AXPY
@@ -60,7 +65,11 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, row_wise_reduction_template::parameters("ulong",'N',1,8,8,1))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters("long",'N',1,8,8,1))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'N',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'N',1,8,8,1));
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'N',1,8,8,1))
+
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'N',1,1,256,2048))
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'N',1,1,128,256));
+
 
      static database_type<row_wise_reduction_template::parameters> trans_row_wise_reduction = database_type<row_wise_reduction_template::parameters>
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, row_wise_reduction_template::parameters("uint",'T',1,8,8,1))
@@ -68,7 +77,10 @@ namespace viennacl{
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, row_wise_reduction_template::parameters("ulong",'T',1,8,8,1))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters("long",'T',1,8,8,1))
           (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'T',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'T',1,8,8,1));
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'T',1,8,8,1))
+
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, row_wise_reduction_template::parameters("float",'T',1,1,256,512))
+          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", DOUBLE_TYPE, row_wise_reduction_template::parameters("double",'T',1,1,256,2048));
 
      /////////////////////
      /// Matrix-Matrix Product
@@ -79,7 +91,10 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'N','N',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'N','N',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','N',1,8,8,8,4,4,4,true,false,8,8));
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','N',1,8,8,8,4,4,4,true,false,8,8))
+
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, matrix_product_template::parameters("float",'N','N',1,16,16,8,4,1,8,true,true,16,8))
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','N',1,16,16,16,4,1,4,true,true,16,16));
 
 
      static database_type<matrix_product_template::parameters> matrix_product_NT = database_type<matrix_product_template::parameters>
@@ -88,7 +103,10 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'N','T',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'N','T',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',1,8,8,8,4,4,4,true,true,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','T',1,8,8,8,4,4,4,true,false,8,8));
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','T',1,8,8,8,4,4,4,true,false,8,8))
+
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, matrix_product_template::parameters("float",'N','T',1,16,16,8,4,1,8,true,true,32,4))
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", DOUBLE_TYPE, matrix_product_template::parameters("double",'N','T',1,8,8,8,4,4,4,true,true,8,8));
 
      static database_type<matrix_product_template::parameters> matrix_product_TN = database_type<matrix_product_template::parameters>
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters("uint",'T','N',1,8,8,8,4,4,4,true,false,8,8))
@@ -96,7 +114,10 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'T','N',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'T','N',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','N',1,8,8,8,4,4,4,true,false,8,8));
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','N',1,8,8,8,4,4,4,true,false,8,8))
+
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, matrix_product_template::parameters("float",'T','N',1,16,16,16,4,1,8,true,true,16,16))
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','N',1,16,16,16,4,1,4,true,true,16,16));
 
      static database_type<matrix_product_template::parameters> matrix_product_TT = database_type<matrix_product_template::parameters>
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters("uint",'T','T',1,8,8,8,4,4,4,true,false,8,8))
@@ -104,7 +125,10 @@ namespace viennacl{
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters("long",'T','T',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters("ulong",'T','T',1,8,8,8,4,4,4,true,false,8,8))
          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters("float",'T','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','T',1,8,8,8,4,4,4,true,false,8,8));
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','T',1,8,8,8,4,4,4,true,false,8,8))
+
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", FLOAT_TYPE, matrix_product_template::parameters("float",'T','T',1,16,16,8,4,1,8,true,true,32,4))
+         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "Hawaii", DOUBLE_TYPE, matrix_product_template::parameters("double",'T','T',1,8,8,8,4,4,4,true,true,8,8));
 
       /** @brief If the fallback is too harsh, use a very conservative profile */
       template<class ParamT>
@@ -118,9 +142,8 @@ namespace viennacl{
 
       /** @brief Get the profile for a device and a descriptor */
       template<class T, class ParamT>
-      inline ParamT const & get(database_type<ParamT> const & database)
+      inline ParamT const & get(database_type<ParamT> const & database, viennacl::ocl::device const & device)
       {
-        viennacl::ocl::device const & device = viennacl::ocl::current_device();
         scheduler::statement_node_numeric_type numeric_type = scheduler::statement_node_numeric_type(scheduler::result_of::numeric_type_id<T>::value);
 
         device_type dev_type = device.type();
@@ -129,11 +152,13 @@ namespace viennacl{
         std::string const & device_name = device.name();
 
         //std::cout << "Looking up vendor ID..." << std::endl;
+
         /*-Vendor ID-*/
         typename database_type<ParamT>::type::map_t::const_iterator vendor_it = database.map.d.find(vendor_id);
         //Vendor not recognized => global default:
         if(vendor_it==database.map.d.end())
           return handle_failure(database, device, numeric_type, database.at(ocl::unknown_id, dev_type, ocl::UNKNOWN, "", numeric_type));
+
 
         /*-Device Type-*/
         //std::cout << "Looking up device type..." << std::endl;
@@ -157,6 +182,7 @@ namespace viennacl{
 
         //std::cout << "Looking up expression name.." << std::endl;
         /*-Expression-*/
+
         typename database_type<ParamT>::expression_t::map_t::const_iterator expression_it = device_name_it->second.d.find(numeric_type);
         //Expression not found => Vendor default
         if(expression_it==device_name_it->second.d.end())

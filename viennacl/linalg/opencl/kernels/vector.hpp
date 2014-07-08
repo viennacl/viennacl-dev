@@ -104,8 +104,9 @@ namespace viennacl
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
-              vector_axpy_template::parameters const & axpy_parameters = database::get<TYPE>(database::vector_axpy);
-              reduction_template::parameters const & reduction_parameters = database::get<TYPE>(database::reduction);
+              viennacl::ocl::device const & device = ctx.current_device();
+              vector_axpy_template::parameters const & axpy_parameters = database::get<TYPE>(database::vector_axpy, device);
+              reduction_template::parameters const & reduction_parameters = database::get<TYPE>(database::reduction, device);
 
               std::string source;
               source.reserve(8192);
@@ -171,7 +172,9 @@ namespace viennacl
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
-              reduction_template::parameters const & reduction_parameters = database::get<TYPE>(database::reduction);
+              viennacl::ocl::device const & device = ctx.current_device();
+
+              reduction_template::parameters const & reduction_parameters = database::get<TYPE>(database::reduction, device);
 
               std::string source;
               source.reserve(8192);

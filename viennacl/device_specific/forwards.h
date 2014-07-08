@@ -187,10 +187,26 @@ namespace viennacl{
          return *this;
       }
 
+//      database_type<ParamT> & add_32bits(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, ParamT const & p5)
+//      {
+//          return (*this)(p0, p1, p2, p3, scheduler::INT_TYPE, p5)
+//                        (p0, p1, p2, p3, scheduler::UINT_TYPE, p5)
+//                        (p0, p1, p2, p3, scheduler::FLOAT_TYPE, p5);
+//      }
+
+//      database_type<ParamT> & add_64bits(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, ParamT const & p5)
+//      {
+//          return (*this)(p0, p1, p2, p3, scheduler::LONG_TYPE, p5)
+//                        (p0, p1, p2, p3, scheduler::ULONG_TYPE, p5)
+//                        (p0, p1, p2, p3, scheduler::DOUBLE_TYPE, p5);
+//      }
+
       ParamT const & at(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4) const
       {
         return map.d.at(p0).d.at(p1).d.at(p2).d.at(p3).d.at(p4);
       }
+
+
     };
 
     namespace database{

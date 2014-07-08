@@ -48,7 +48,8 @@ namespace viennacl
     static const cl_uint unknown_id = 0;
 
     //Architecture Family
-    enum device_architecture_family{
+    enum device_architecture_family
+    {
       //NVidia
       Tesla,
       Fermi,
@@ -58,6 +59,7 @@ namespace viennacl
       Evergreen,
       NorthernIslands,
       SouthernIslands,
+      VolcanicIslands,
 
       UNKNOWN
     };
@@ -132,6 +134,9 @@ namespace viennacl
         VIENNACL_DEVICE_MAP("Pitcaim",SouthernIslands);
         VIENNACL_DEVICE_MAP("Tahiti",SouthernIslands);
         VIENNACL_DEVICE_MAP("Malta",SouthernIslands);
+
+        //VolcanicIslands
+        VIENNACL_DEVICE_MAP("Hawaii",VolcanicIslands);
 
 #undef VIENNACL_DEVICE_MAP
 

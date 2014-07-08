@@ -128,7 +128,7 @@ namespace viennacl
               matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha)
       {
         assert(mat1.row_major() == mat2.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
-        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
+        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy, traits::opencl_handle(mat1).context().current_device()))
                                         .enqueue(detail::program_for_matrix(mat1,0),
                                                 scheduler::preset::av(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha));
       }
@@ -141,7 +141,7 @@ namespace viennacl
                 matrix_base<NumericT> const & mat3, ScalarType2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
-        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
+        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy, traits::opencl_handle(mat1).context().current_device()))
                                         .enqueue(detail::program_for_matrix(mat1,0),
                                                 scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha, &mat3, &beta, flip_sign_beta, reciprocal_beta));
       }
@@ -154,7 +154,7 @@ namespace viennacl
                   matrix_base<NumericT> const & mat3, ScalarType2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
       {
         assert(mat1.row_major() == mat2.row_major() && mat1.row_major() == mat3.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
-        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
+        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy, traits::opencl_handle(mat1).context().current_device()))
                                         .enqueue(detail::program_for_matrix(mat1,0),
                                                 scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &mat1, &mat2, &alpha, flip_sign_alpha, reciprocal_alpha, &mat3, &beta, flip_sign_beta, reciprocal_beta));
       }
@@ -162,49 +162,49 @@ namespace viennacl
 
 
       template <typename NumericT>
-      void matrix_assign(matrix_base<NumericT> & mat, NumericT s, bool up_to_internal_size = false)
+      void matrix_assign(matrix_base<NumericT> & mat1, NumericT s, bool up_to_internal_size = false)
       {
 
-        scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat),viennacl::traits::size2(mat),s);
-        device_specific::matrix_axpy_template tplt(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy));
+        scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat1),viennacl::traits::size2(mat1),s);
+        device_specific::matrix_axpy_template tplt(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy, traits::opencl_handle(mat1).context().current_device()));
         tplt.up_to_internal_size(up_to_internal_size);
-        tplt.enqueue(detail::program_for_matrix(mat,0), scheduler::preset::assign_cpu(&mat, &mat2));
+        tplt.enqueue(detail::program_for_matrix(mat1,0), scheduler::preset::assign_cpu(&mat1, &mat2));
       }
 
       template <typename NumericT>
-      void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
+      void matrix_diagonal_assign(matrix_base<NumericT> & mat1, NumericT s)
       {
-        viennacl::scalar_vector<NumericT> sx(std::min(viennacl::traits::size1(mat), viennacl::traits::size2(mat)), s);
-        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::diagonal_assign_cpu(&mat, &sx));
+        viennacl::scalar_vector<NumericT> sx(std::min(viennacl::traits::size1(mat1), viennacl::traits::size2(mat1)), s);
+        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy, traits::opencl_handle(mat1).context().current_device()))
+                                        .enqueue(detail::program_for_matrix(mat1,0), scheduler::preset::diagonal_assign_cpu(&mat1, &sx));
       }
 
       template <typename NumericT>
-      void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & mat)
+      void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & mat1)
       {
-        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy))
-                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::matrix_diag_from_vector(&vec, &mat, k));
+        device_specific::matrix_axpy_template(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy, traits::opencl_handle(mat1).context().current_device()))
+                                        .enqueue(detail::program_for_matrix(mat1,0), scheduler::preset::matrix_diag_from_vector(&vec, &mat1, k));
       }
 
       template <typename NumericT>
-      void matrix_diag_to_vector(const matrix_base<NumericT> & mat, int k, vector_base<NumericT> & vec)
+      void matrix_diag_to_vector(const matrix_base<NumericT> & mat1, int k, vector_base<NumericT> & vec)
       {
-        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::matrix_diag_to_vector(&vec, &mat, k));
+        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy, traits::opencl_handle(mat1).context().current_device()))
+                                        .enqueue(detail::program_for_matrix(mat1,0), scheduler::preset::matrix_diag_to_vector(&vec, &mat1, k));
       }
 
       template <typename NumericT>
-      void matrix_row(const matrix_base<NumericT> & mat, unsigned int i, vector_base<NumericT> & vec)
+      void matrix_row(const matrix_base<NumericT> & mat1, unsigned int i, vector_base<NumericT> & vec)
       {
-        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::matrix_row(&vec, &mat, i));
+        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy, traits::opencl_handle(mat1).context().current_device()))
+                                        .enqueue(detail::program_for_matrix(mat1,0), scheduler::preset::matrix_row(&vec, &mat1, i));
       }
 
       template <typename NumericT>
-      void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_base<NumericT> & vec)
+      void matrix_column(const matrix_base<NumericT> & mat1, unsigned int j, vector_base<NumericT> & vec)
       {
-        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy))
-                                        .enqueue(detail::program_for_matrix(mat,0), scheduler::preset::matrix_column(&vec, &mat, j));
+        device_specific::vector_axpy_template(device_specific::database::get<NumericT>(device_specific::database::vector_axpy, traits::opencl_handle(mat1).context().current_device()))
+                                        .enqueue(detail::program_for_matrix(mat1,0), scheduler::preset::matrix_column(&vec, &mat1, j));
       }
 
 
@@ -228,7 +228,7 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_binary<OP> >::id);
-        device_specific::matrix_axpy_template(device_specific::database::get<T>(device_specific::database::matrix_axpy))
+        device_specific::matrix_axpy_template(device_specific::database::get<T>(device_specific::database::matrix_axpy, traits::opencl_handle(A).context().current_device()))
                                         .enqueue(detail::program_for_matrix(A,1),scheduler::preset::binary_element_op(&A, &proxy.lhs(), &proxy.rhs(),TYPE));
       }
 
@@ -251,7 +251,7 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_unary<OP> >::id);
-        device_specific::matrix_axpy_template(device_specific::database::get<T>(device_specific::database::matrix_axpy))
+        device_specific::matrix_axpy_template(device_specific::database::get<T>(device_specific::database::matrix_axpy, traits::opencl_handle(A).context().current_device()))
                                         .enqueue(detail::program_for_matrix(A,1),scheduler::preset::unary_element_op(&A, &proxy.lhs(),TYPE));
       }
 
@@ -264,14 +264,14 @@ namespace viennacl
 
       /** @brief Carries out matrix-vector multiplication
       *
-      * Implementation of the convenience expression result = prod(mat, vec);
+      * Implementation of the convenience expression result = prod(mat1, vec);
       *
       * @param mat    The matrix
       * @param vec    The vector
       * @param result The result vector
       */
       template <typename NumericT>
-      void prod_impl(const matrix_base<NumericT> & mat, bool trans_mat,
+      void prod_impl(const matrix_base<NumericT> & mat1, bool trans_mat1,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
       {
@@ -280,11 +280,11 @@ namespace viennacl
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
         device_specific::row_wise_reduction_template::parameters const * parameters;
-        if(trans_mat ^ mat.row_major())
-          parameters = &device_specific::database::get<NumericT>(device_specific::database::trans_row_wise_reduction);
+        if(trans_mat1 ^ mat1.row_major())
+            parameters = &device_specific::database::get<NumericT>(device_specific::database::trans_row_wise_reduction, traits::opencl_handle(mat1).context().current_device());
         else
-          parameters = &device_specific::database::get<NumericT>(device_specific::database::row_wise_reduction);
-        device_specific::row_wise_reduction_template(*parameters).enqueue(detail::program_for_matrix(mat,0),scheduler::preset::mat_vec_prod(&mat, trans_mat, &vec, &result));
+          parameters = &device_specific::database::get<NumericT>(device_specific::database::row_wise_reduction, traits::opencl_handle(mat1).context().current_device());
+        device_specific::row_wise_reduction_template(*parameters).enqueue(detail::program_for_matrix(mat1,0),scheduler::preset::mat_vec_prod(&mat1, trans_mat1, &vec, &result));
       }
 
       //
@@ -485,35 +485,37 @@ namespace viennacl
               && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
               && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
 
-//        using namespace viennacl::traits;
-//        if (start1(A) > 0 || start2(A) > 0 || stride1(A) > 1 || stride2(A) > 1 ||
-//            start1(B) > 0 || start2(B) > 0 || stride1(B) > 1 || stride2(B) > 1 ||
-//            start1(C) > 0 || start2(C) > 0 || stride1(C) > 1 || stride2(C) > 1)
-//        {
+        using namespace viennacl::traits;
+        if (start1(A) > 0 || start2(A) > 0 || stride1(A) > 1 || stride2(A) > 1 ||
+            start1(B) > 0 || start2(B) > 0 || stride1(B) > 1 || stride2(B) > 1 ||
+            start1(C) > 0 || start2(C) > 0 || stride1(C) > 1 || stride2(C) > 1
+              || viennacl::traits::handle(A)==viennacl::traits::handle(B))
+        {
           std::string string_prod("prod_");
           string_prod.append(A_trans ? "T" : "A");
           string_prod.append(B_trans ? "T" : "A");
           detail::prod_slow_kernel(A, B, C, alpha, beta, string_prod);
-//        }
-//        else
-//        {
-//          using namespace viennacl::device_specific::database;
-//          device_specific::matrix_product_template::parameters const * parameters;
+        }
+        else
+        {
+          using namespace viennacl::device_specific::database;
+          device_specific::matrix_product_template::parameters const * parameters;
+          viennacl::ocl::device const & device = traits::opencl_handle(C).context().current_device();
 
-//          bool effective_A_trans = A_trans ^ A.row_major();
-//          bool effective_B_trans = B_trans ^ B.row_major();
+          bool effective_A_trans = A_trans ^ A.row_major();
+          bool effective_B_trans = B_trans ^ B.row_major();
 
-//          if(!effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_NN);
-//          else if(effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_TN);
-//          else if(!effective_A_trans && effective_B_trans) parameters = &get<NumericT>(matrix_product_NT);
-//          else  parameters = &get<NumericT>(matrix_product_TT);
+          if(!effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_NN, device);
+          else if(effective_A_trans && !effective_B_trans) parameters = &get<NumericT>(matrix_product_TN, device);
+          else if(!effective_A_trans && effective_B_trans) parameters = &get<NumericT>(matrix_product_NT, device);
+          else  parameters = &get<NumericT>(matrix_product_TT, device);
 
-//          std::string kernel_prefix("prodopt_");
-//          kernel_prefix.append(effective_A_trans ? "T" : "N");
-//          kernel_prefix.append(effective_B_trans ? "T" : "N");
-//          device_specific::matrix_product_template(*parameters).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C), kernel_prefix);
+          std::string kernel_prefix("prodopt_");
+          kernel_prefix.append(effective_A_trans ? "T" : "N");
+          kernel_prefix.append(effective_B_trans ? "T" : "N");
+          device_specific::matrix_product_template(*parameters).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C), kernel_prefix);
 
-//        }
+        }
       }
 
       //

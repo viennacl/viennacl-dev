@@ -100,8 +100,8 @@ namespace viennacl
               source.reserve(8192);
 
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
-
-              matrix_axpy_template mtemplate = matrix_axpy_template(database::get<NumericT>(database::matrix_axpy));
+              viennacl::ocl::device const & device = ctx.current_device();
+              matrix_axpy_template mtemplate = matrix_axpy_template(database::get<NumericT>(database::matrix_axpy, device));
 
               viennacl::matrix<NumericT, F> A;
               viennacl::matrix<NumericT, F> B;

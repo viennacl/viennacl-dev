@@ -49,6 +49,17 @@ public:
     class parameters : public template_base::parameters
     {
     private:
+
+        unsigned int lmem_used(unsigned int scalartype_size) const
+      {
+          unsigned int lmem_used = 0;
+          if(use_A_local)
+              lmem_used += kL * (mL+1) * scalartype_size;
+          if(use_B_local)
+              lmem_used += nL * (kL+1) * scalartype_size;
+          return lmem_used;
+      }
+
       bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const
       {
           static const unsigned int alignment = 128;
@@ -180,16 +191,6 @@ private:
         arguments_string += generate_value_kernel_argument("unsigned int", "K");
     }
 
-
-    unsigned int lmem_used(unsigned int scalartype_size) const
-    {
-        unsigned int lmem_used = 0;
-        if(p_.use_A_local)
-            lmem_used += p_.kL * (p_.mL+1) * scalartype_size;
-        if(p_.use_B_local)
-            lmem_used += p_.nL * (p_.kL + 1) * scalartype_size;
-        return lmem_used;
-    }
 
     static bool is_matrix_product(scheduler::statement_node const & node) { return node.op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE; }
 

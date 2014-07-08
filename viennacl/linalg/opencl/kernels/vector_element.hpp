@@ -46,9 +46,10 @@ namespace viennacl
               std::string source;
               source.reserve(8192);
 
+              viennacl::ocl::device const & device = ctx.current_device();
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
-              vector_axpy_template vtemplate = vector_axpy_template(database::get<TYPE>(database::vector_axpy));
+              vector_axpy_template vtemplate = vector_axpy_template(database::get<TYPE>(database::vector_axpy, device));
 
               viennacl::vector<TYPE> x;
               viennacl::vector<TYPE> y;
