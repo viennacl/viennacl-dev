@@ -396,11 +396,12 @@ namespace viennacl{
         array[1].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
         array[1].rhs.node_index = 6;
 
-        scheduler::statement::add_element(dummy, array[2].lhs, alpha);
+        array[2].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
+        array[2].lhs.node_index = 3;
         array[2].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         array[2].op.type = OPERATION_BINARY_MULT_TYPE;
-        array[2].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-        array[2].rhs.node_index = 3;
+        scheduler::statement::add_element(dummy, array[2].rhs, alpha);
+
 
         if(A_trans)
         {
@@ -433,10 +434,11 @@ namespace viennacl{
           statement::add_element(dummy, array[3].rhs, *B);
         }
 
-        scheduler::statement::add_element(dummy, array[6].lhs, beta);
+        scheduler::statement::add_element(dummy, array[6].rhs, *C);
         array[6].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         array[6].op.type = OPERATION_BINARY_MULT_TYPE;
-        scheduler::statement::add_element(dummy, array[6].rhs, *C);
+        scheduler::statement::add_element(dummy, array[6].rhs, beta);
+
 
 
         return statement(array);

@@ -510,8 +510,7 @@ namespace viennacl
         using namespace viennacl::traits;
         if (start1(A) > 0 || start2(A) > 0 || stride1(A) > 1 || stride2(A) > 1 ||
             start1(B) > 0 || start2(B) > 0 || stride1(B) > 1 || stride2(B) > 1 ||
-            start1(C) > 0 || start2(C) > 0 || stride1(C) > 1 || stride2(C) > 1
-              || viennacl::traits::handle(A)==viennacl::traits::handle(B))
+            start1(C) > 0 || start2(C) > 0 || stride1(C) > 1 || stride2(C) > 1)
         {
           std::string string_prod("prod_");
           string_prod.append(A_trans ? "T" : "A");

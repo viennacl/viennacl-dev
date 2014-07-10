@@ -58,6 +58,8 @@ namespace viennacl
           mapped_object(std::string const & scalartype, unsigned int id) : scalartype_(scalartype), name_("obj"+tools::to_string(id)), simd_width_(1) {}
           virtual ~mapped_object(){ }
 
+          std::string const & name() const { return name_; }
+
           std::string const & scalartype() const { return scalartype_; }
           void access_name(std::string const & str) { access_name_ = str; }
           std::string const & access_name() const { return access_name_; }

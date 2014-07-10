@@ -119,61 +119,40 @@ private:
             res |= ((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1));
     }
 
+
     void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const
     {
         using namespace device_specific::utils;
+        using namespace tree_parsing;
 
-        scheduler::statement::container_type const & array = statements.data().front().array();
-        vcl_size_t root_idx = statements.data().front().root();
+        scheduler::statement const & st = statements.data().front();
+
+        vcl_size_t C_idx=0, A_idx=0, B_idx=0, dummyidx=0;
+        leaf_t C_leaf=LHS_NODE_TYPE, A_leaf=LHS_NODE_TYPE, B_leaf=LHS_NODE_TYPE, dummyleaf=LHS_NODE_TYPE;
+        parse(st, C_idx, C_leaf, dummyidx, dummyleaf, A_idx, A_leaf, B_idx, B_leaf, dummyidx, dummyleaf);
 
         //set M, N
-        scheduler::statement_node const & root = array[root_idx];
-        vcl_size_t M = call_on_matrix(root.lhs, internal_size1_fun());
-        vcl_size_t N = call_on_matrix(root.lhs, internal_size2_fun());
+        vcl_size_t iM = call_on_matrix(utils::lhs_rhs_element(st, C_idx, C_leaf), internal_size1_fun());
+        vcl_size_t iN = call_on_matrix(utils::lhs_rhs_element(st, C_idx, C_leaf), internal_size2_fun());
+
+        vcl_size_t M = call_on_matrix(utils::lhs_rhs_element(st, C_idx, C_leaf), size1_fun());
+        vcl_size_t N = call_on_matrix(utils::lhs_rhs_element(st, C_idx, C_leaf), size2_fun());
+
+        vcl_size_t A1 = call_on_matrix(utils::lhs_rhs_element(st, A_idx, A_leaf), size1_fun());
+        vcl_size_t A2 = call_on_matrix(utils::lhs_rhs_element(st, A_idx, A_leaf), size2_fun());
+        vcl_size_t B1 = call_on_matrix(utils::lhs_rhs_element(st, B_idx, B_leaf), size1_fun());
+        vcl_size_t B2 = call_on_matrix(utils::lhs_rhs_element(st, B_idx, B_leaf), size2_fun());
 
         //set ND range
-        k.global_work_size(0, M/p_.mS);
-        k.global_work_size(1, N/p_.nS);
+        k.global_work_size(0, iM/p_.mS);
+        k.global_work_size(1, iN/p_.nS);
 
-        //set arguments
-        //M,N
         k.arg(n_arg++, cl_uint(M));
         k.arg(n_arg++, cl_uint(N));
-
-        //K
-        vcl_size_t A1, A2, B1, B2;
-        std::vector<vcl_size_t> idx;
-        traverse(statements.data().front(), root_idx, tree_parsing::filter(&is_matrix_product, idx), false);
-        scheduler::statement_node const * A = &array[idx[0]];
-        while(A->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          A = &array[A->lhs.node_index];
-        A1 = call_on_matrix(A->lhs,internal_size1_fun());
-        A2 = call_on_matrix(A->lhs,internal_size2_fun());
-
-
-        scheduler::statement_node const * B = &array[idx[0]];
-        if(B->rhs.type_family==scheduler::MATRIX_TYPE_FAMILY)
-        {
-          B1 = call_on_matrix(B->rhs,internal_size1_fun());
-          B2 = call_on_matrix(B->rhs,internal_size2_fun());
-        }
-        else
-        {
-          B = &array[B->rhs.node_index];
-          while(B->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            B = &array[B->lhs.node_index];
-          B1 = call_on_matrix(B->lhs,internal_size1_fun());
-          B2 = call_on_matrix(B->lhs,internal_size2_fun());
-        }
-
         if(A1==B1 || A1==B2)
            k.arg(n_arg++, cl_uint(A1));
         else
            k.arg(n_arg++, cl_uint(A2));
-
-
-
-
     }
 
     void add_kernel_arguments(statements_container const & /*statements*/, std::string & arguments_string) const
@@ -184,13 +163,52 @@ private:
     }
 
 
-    static bool is_matrix_product(scheduler::statement_node const & node) { return node.op.type==scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE; }
+    static void parse(scheduler::statement const & s,
+               vcl_size_t & C_idx, tree_parsing::leaf_t & C_leaf, vcl_size_t & alpha_idx, tree_parsing::leaf_t & alpha_leaf,
+               vcl_size_t & A_idx, tree_parsing::leaf_t & A_leaf, vcl_size_t & B_idx, tree_parsing::leaf_t & B_leaf,
+               vcl_size_t & beta_idx, tree_parsing::leaf_t & beta_leaf)
+    {
+      using namespace tree_parsing;
+      using namespace scheduler;
+
+      scheduler::statement::container_type const & array = s.array();
+      vcl_size_t root_idx = s.root();
+
+      C_idx = root_idx;
+      C_leaf = LHS_NODE_TYPE;
+
+      vcl_size_t node_add_idx = array[root_idx].rhs.node_index;
+
+      vcl_size_t node_1_idx = array[node_add_idx].lhs.node_index;
+      alpha_idx = node_1_idx;
+      alpha_leaf = RHS_NODE_TYPE;
+
+      vcl_size_t mat_prod_idx = array[node_1_idx].lhs.node_index;
+      if(array[mat_prod_idx].lhs.type_family==MATRIX_TYPE_FAMILY)
+        A_idx = mat_prod_idx;
+      else
+        A_idx = array[mat_prod_idx].lhs.node_index;
+      A_leaf = LHS_NODE_TYPE;
+
+      if(array[mat_prod_idx].rhs.type_family==MATRIX_TYPE_FAMILY)
+      {
+        B_idx = mat_prod_idx;
+        B_leaf = RHS_NODE_TYPE;
+      }
+      else
+      {
+        B_idx = array[mat_prod_idx].rhs.node_index;
+        B_leaf = LHS_NODE_TYPE;
+      }
+
+      vcl_size_t node_2_idx = array[node_add_idx].rhs.node_index;
+      beta_idx = node_2_idx;
+      beta_leaf = RHS_NODE_TYPE;
+    }
 
     void set_simd_widths(scheduler::statement const & s, mapping_type const & m)
     {
-      std::vector<vcl_size_t> idx;
-      tree_parsing::traverse(s, s.root(), tree_parsing::filter(&is_matrix_product, idx), false);
-      tree_parsing::traverse(s, idx[0], set_simd_width_traversal<mapped_matrix>(p_.simd_width, m), true);
+      tree_parsing::traverse(s, s.array()[s.array()[s.root()].rhs.node_index].lhs.node_index, set_simd_width_traversal<mapped_matrix>(p_.simd_width, m), true);
 
     }
 
@@ -201,30 +219,18 @@ private:
         //////////////////
         /// INIT
         /// //////////////
-        scheduler::statement const & s = statements.data().front();
+        scheduler::statement const & st = statements.data().front();
         mapping_type const & mapping = mappings.front();
 
-        std::vector<vcl_size_t> idx;
-        traverse(s, s.root(), filter(&is_matrix_product, idx), false);
-        vcl_size_t prod_idx = idx[0];
-        scheduler::statement_node const * prod_node = &s.array()[prod_idx];
+        vcl_size_t C_idx=0, alpha_idx=0, A_idx=0, B_idx=0, beta_idx=0;
+        leaf_t C_leaf=LHS_NODE_TYPE, alpha_leaf=LHS_NODE_TYPE, A_leaf=LHS_NODE_TYPE, B_leaf=LHS_NODE_TYPE, beta_leaf=LHS_NODE_TYPE;
+        parse(st, C_idx, C_leaf, alpha_idx, alpha_leaf, A_idx, A_leaf, B_idx, B_leaf, beta_idx, beta_leaf);
 
-        mapped_matrix * C = (mapped_matrix*)(mapping.at(std::make_pair(s.root(),LHS_NODE_TYPE)).get());
-
-        mapped_matrix * A;
-        if(prod_node->lhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY)
-            A = (mapped_matrix *)mapping.at(std::make_pair(prod_node->lhs.node_index,LHS_NODE_TYPE)).get();
-        else
-            A = (mapped_matrix *)mapping.at(std::make_pair(prod_idx, LHS_NODE_TYPE)).get();
-
-        mapped_matrix * B;
-        if(prod_node->rhs.type_family == scheduler::COMPOSITE_OPERATION_FAMILY)
-            B = (mapped_matrix *)mapping.at(std::make_pair(prod_node->rhs.node_index, LHS_NODE_TYPE)).get();
-        else
-            B = (mapped_matrix *)mapping.at(std::make_pair(prod_idx,RHS_NODE_TYPE)).get();
-
-
-        mapped_matrix_product * prod = (mapped_matrix_product *)mapping.at(std::make_pair(prod_idx, PARENT_NODE_TYPE)).get();
+        mapped_matrix * C = (mapped_matrix*)mapping.at(mapping_key(C_idx, C_leaf)).get();
+        mapped_host_scalar * alpha = (mapped_host_scalar*)mapping.at(mapping_key(alpha_idx, alpha_leaf)).get();
+        mapped_matrix * A = (mapped_matrix*)mapping.at(mapping_key(A_idx, A_leaf)).get();
+        mapped_matrix * B = (mapped_matrix*)mapping.at(mapping_key(B_idx, B_leaf)).get();
+        mapped_host_scalar * beta = (mapped_host_scalar*)mapping.at(mapping_key(beta_idx, beta_leaf)).get();
 
         if(p_.simd_width>1)
         {
@@ -459,10 +465,8 @@ private:
           for(unsigned int n=0 ; n < p_.nS ; ++n){
               for(unsigned int m=0 ; m < p_.mS ; ++m){
                   std::string j = tools::to_string((m/p_.simd_width)*(p_.local_size_0*p_.simd_width) + m%p_.simd_width);
-                  prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
-                  std::string str;
-                  traverse(s, s.root(), evaluate_expression_traversal(index_tuple(j, "N", "0", "M"), 0, str, mapping), false);
-                  stream << str << ";" << std::endl;
+                  stream << C->name() << "[" << j << "*" << C->ld() << "]"
+                            << "= rC[" << m <<"][" << n << "]*" << alpha->name() << "+ " << C->name() << "[" << j << "*" << C->ld() << "]*" << beta->name() << ";" << std::endl;
               }
               if((n+1)%p_.simd_width>0)
                   stream << C->name() << "+=1;" << std::endl;
@@ -482,11 +486,10 @@ private:
               for(unsigned int n=0 ; n < p_.nS ; ++n)
               {
                   std::string j = tools::to_string((n/p_.simd_width)*(p_.local_size_1*p_.simd_width) + n%p_.simd_width);
-                  prod->access_name("rC["+tools::to_string(m)+"]["+tools::to_string(n)+"]");
-                  std::string str;
-                  traverse(s, s.root(), evaluate_expression_traversal(index_tuple("0", "M", j, "N"), 0, str, mapping), false);
-                  stream << str << ";" << std::endl;
+                  stream << C->name() << "[" << j << "*" << C->ld() << "]"
+                            << "= rC[" << m <<"][" << n << "]*" << alpha->name() << "+ " << C->name() << "[" << j << "*" << C->ld() << "]*" << beta->name() << ";" << std::endl;
               }
+
               if((m+1)%p_.simd_width>0)
                   stream << C->name() << "+=1;" << std::endl;
               else
@@ -498,7 +501,7 @@ private:
     }
 
 public:
-    matrix_product_template(matrix_product_template::parameters const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(parameters, kernel_prefix, BIND_TO_HANDLE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
+    matrix_product_template(matrix_product_template::parameters const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(parameters, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
 
 private:
     const char A_trans_;

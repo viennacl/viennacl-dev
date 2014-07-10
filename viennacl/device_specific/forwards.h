@@ -137,7 +137,8 @@ namespace viennacl{
     class mapped_object;
     class template_base;
 
-    typedef std::map<std::pair<vcl_size_t, tree_parsing::leaf_t>, tools::shared_ptr<mapped_object> > mapping_type;
+    typedef std::pair<vcl_size_t, tree_parsing::leaf_t> mapping_key;
+    typedef std::map<mapping_key, tools::shared_ptr<mapped_object> > mapping_type;
 
 
     namespace tree_parsing{
