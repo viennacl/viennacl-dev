@@ -302,7 +302,10 @@ namespace viennacl
 
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
-        device_specific::row_wise_reduction_template(detail::row_wise_reduction_params<NumericT>(detail::current_device(mat1), trans_mat1^mat1.row_major()), trans_mat1?"mat_vec_T":"mat_vec_N")
+        char cAt = trans_mat1?'T':'N';
+        std::string kernel_name = "mat_vec_";
+        kernel_name+=cAt;
+        device_specific::row_wise_reduction_template(detail::row_wise_reduction_params<NumericT>(detail::current_device(mat1), trans_mat1^mat1.row_major()), cAt, kernel_name)
             .enqueue(detail::program_for_matrix(mat1,0),scheduler::preset::mat_vec_prod(&mat1, trans_mat1, &vec, &result));
       }
 
@@ -529,10 +532,14 @@ namespace viennacl
           else if(!effective_A_trans && effective_B_trans) parameters = &get<NumericT>(matrix_product_NT, device);
           else  parameters = &get<NumericT>(matrix_product_TT, device);
 
+          char cAt = effective_A_trans ? 'T' : 'N';
+          char cBt = effective_B_trans ? 'T' : 'N';
+
           std::string kernel_prefix("prodopt_");
-          kernel_prefix.append(effective_A_trans ? "T" : "N");
-          kernel_prefix.append(effective_B_trans ? "T" : "N");
-          device_specific::matrix_product_template(*parameters, kernel_prefix).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C));
+          kernel_prefix+=cAt;
+          kernel_prefix+=cBt;
+
+          device_specific::matrix_product_template(*parameters, cAt, cBt, kernel_prefix).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C));
 
         }
       }

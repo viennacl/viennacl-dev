@@ -271,10 +271,10 @@ namespace viennacl
               NumericT alpha = 0;
               NumericT beta = 0;
 
-              source.append(matrix_product_template(mmNN, "prodopt_NN").generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C), device));
-              source.append(matrix_product_template(mmTN, "prodopt_TN").generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C), device));
-              source.append(matrix_product_template(mmNT, "prodopt_NT").generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C), device));
-              source.append(matrix_product_template(mmTT, "prodopt_TT").generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C), device));
+              source.append(matrix_product_template(mmNN, 'N', 'N', "prodopt_NN").generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C), device));
+              source.append(matrix_product_template(mmTN, 'T', 'N', "prodopt_TN").generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C), device));
+              source.append(matrix_product_template(mmNT, 'N', 'T', "prodopt_NT").generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C), device));
+              source.append(matrix_product_template(mmTT, 'T', 'T', "prodopt_TT").generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C), device));
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

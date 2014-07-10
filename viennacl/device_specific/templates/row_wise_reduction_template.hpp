@@ -48,14 +48,13 @@ namespace viennacl{
     public:
       struct parameters : public template_base::parameters
       {
-        parameters(char _A_trans, unsigned int _simd_width,
+        parameters(unsigned int _simd_width,
                    unsigned int _local_size_0, unsigned int _local_size_1,
                    unsigned int _num_groups_0): template_base::parameters(_simd_width, _local_size_0, _local_size_1, 1),
-                                               num_groups_0(_num_groups_0), A_trans(_A_trans){ }
+                                               num_groups_0(_num_groups_0) { }
 
 
         unsigned int num_groups_0;
-        char A_trans;
       };
 
     private:
@@ -124,7 +123,7 @@ namespace viennacl{
 
         std::string size1 = "M";
         std::string size2 = "N";
-        if(p_.A_trans=='T')
+        if(A_trans_=='T')
           std::swap(size1, size2);
 
         for(std::vector<mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
@@ -218,9 +217,10 @@ namespace viennacl{
       }
 
     public:
-      row_wise_reduction_template(row_wise_reduction_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, kernel_prefix, binding_policy), p_(parameters){ }
+      row_wise_reduction_template(row_wise_reduction_template::parameters const & parameters, char A_trans, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, kernel_prefix, binding_policy), A_trans_(A_trans), p_(parameters){ }
 
     private:
+      const char A_trans_;
       row_wise_reduction_template::parameters const & p_;
     };
 

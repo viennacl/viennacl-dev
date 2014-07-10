@@ -58,75 +58,75 @@ namespace viennacl{
       /// Row-wise Reduction
       ////////////////////
       static database_type<row_wise_reduction_template::parameters> row_wise_reduction = database_type<row_wise_reduction_template::parameters>
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, row_wise_reduction_template::parameters('N',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, row_wise_reduction_template::parameters('N',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, row_wise_reduction_template::parameters('N',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters('N',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters('N',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters('N',1,8,8,1));
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters(1,8,8,1));
 
-//          (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, row_wise_reduction_template::parameters('N',1,1,256,2048))
-//          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, row_wise_reduction_template::parameters('N',1,2,128,256));
+//          (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, row_wise_reduction_template::parameters(1,1,256,2048))
+//          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, row_wise_reduction_template::parameters(1,2,128,256));
 
 
      static database_type<row_wise_reduction_template::parameters> trans_row_wise_reduction = database_type<row_wise_reduction_template::parameters>
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, row_wise_reduction_template::parameters('T',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, row_wise_reduction_template::parameters('T',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, row_wise_reduction_template::parameters('T',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters('T',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters('T',1,8,8,1))
-          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters('T',1,8,8,1));
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, row_wise_reduction_template::parameters(1,8,8,1))
+          (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, row_wise_reduction_template::parameters(1,8,8,1));
 
-//          (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, row_wise_reduction_template::parameters('T',1,1,256,2048))
-//          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, row_wise_reduction_template::parameters('T',1,1,64,1024));
+//          (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, row_wise_reduction_template::parameters(1,1,256,2048))
+//          (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, row_wise_reduction_template::parameters(1,1,64,1024));
 
      /////////////////////
      /// Matrix-Matrix Product
      ////////////////////
      static database_type<matrix_product_template::parameters> matrix_product_NN = database_type<matrix_product_template::parameters>
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters('N','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters('N','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters('N','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters('N','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters('N','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters('N','N',1,8,8,8,4,4,4,true,false,8,8));
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8));
 
-//         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters('N','N',1,16,16,8,4,1,8,true,true,16,8))
-//         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters('N','N',1,8,16,16,8,1,4,true,true,16,8));
+//         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters(1,16,16,8,4,1,8,true,true,16,8))
+//         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters(1,8,16,16,8,1,4,true,true,16,8));
 
 
      static database_type<matrix_product_template::parameters> matrix_product_NT = database_type<matrix_product_template::parameters>
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters('N','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters('N','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters('N','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters('N','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters('N','T',1,8,8,8,4,4,4,true,true,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters('N','T',1,8,8,8,4,4,4,true,false,8,8));
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,true,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8));
 
-//         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters('N','T',1,16,16,8,4,1,8,true,true,32,4))
-//         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters('N','T',4,8,8,8,4,1,8,true,true,8,8));
+//         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters(1,16,16,8,4,1,8,true,true,32,4))
+//         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters(4,8,8,8,4,1,8,true,true,8,8));
 
      static database_type<matrix_product_template::parameters> matrix_product_TN = database_type<matrix_product_template::parameters>
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters('T','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters('T','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters('T','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters('T','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters('T','N',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters('T','N',1,8,8,8,4,4,4,true,false,8,8));
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8));
 
-//         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters('T','N',1,16,16,8,4,1,8,true,true,16,8))
-//         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters('T','N',1,16,16,16,8,1,4,true,true,16,16))
+//         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters(1,16,16,8,4,1,8,true,true,16,8))
+//         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters(1,16,16,16,8,1,4,true,true,16,16))
 
      static database_type<matrix_product_template::parameters> matrix_product_TT = database_type<matrix_product_template::parameters>
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters('T','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters('T','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters('T','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters('T','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters('T','T',1,8,8,8,4,4,4,true,false,8,8))
-         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters('T','T',1,8,8,8,4,4,4,true,false,8,8));
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", UINT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", INT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", LONG_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", ULONG_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", FLOAT_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8))
+         (unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", DOUBLE_TYPE, matrix_product_template::parameters(1,8,8,8,4,4,4,true,false,8,8));
 
-//         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters('T','T',1,16,16,16,4,1,8,true,true,16,16))
-//         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters('T','T',1,16,16,16,4,1,8,true,true,16,16));
+//         (nvidia_id, CL_DEVICE_TYPE_GPU, Fermi, "", FLOAT_TYPE, matrix_product_template::parameters(1,16,16,16,4,1,8,true,true,16,16))
+//         (amd_id, CL_DEVICE_TYPE_GPU, VolcanicIslands, "", FLOAT_TYPE, matrix_product_template::parameters(1,16,16,16,4,1,8,true,true,16,16));
 
 
       /** @brief Get the profile for a device and a descriptor */

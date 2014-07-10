@@ -48,18 +48,14 @@ class matrix_product_template : public template_base{
 public:
     struct parameters : public template_base::parameters
     {
-      parameters(char A_trans, char B_trans
-                 , unsigned int simd_width
+      parameters(unsigned int simd_width
                  , unsigned int local_size_0, unsigned int KL, unsigned int local_size_1
                  , unsigned int ms, unsigned int ks, unsigned int ns
                  , bool use_A_local, bool use_B_local
                  , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters(simd_width, local_size_0, local_size_1, 1),
-                                             A_trans(A_trans), B_trans(B_trans), kL(KL), mS(ms), kS(ks), nS(ns), use_A_local(use_A_local), use_B_local(use_B_local),
+                                             kL(KL), mS(ms), kS(ks), nS(ns), use_A_local(use_A_local), use_B_local(use_B_local),
                                              local_fetch_0(local_fetch_0), local_fetch_1(local_fetch_1),
                                               mL(ms*local_size_0), nL(ns*local_size_1){}
-
-      const char A_trans;
-      const char B_trans;
 
       unsigned int kL;
 
@@ -101,19 +97,19 @@ private:
         res |= p_.mS > p_.mL;
         res |= p_.nS > p_.nL;
         res |= p_.kS > p_.kL;
-        res |= (!(p_.A_trans=='N' && p_.B_trans=='T') && p_.simd_width>1);
+        res |= (!(A_trans_=='N' && B_trans_=='T') && p_.simd_width>1);
         if(p_.use_A_local)
         {
-            unsigned int bound1 = (p_.A_trans=='N')?p_.kL:p_.mL;
-            unsigned int bound0 = (p_.A_trans=='N')?p_.mL:p_.kL;
+            unsigned int bound1 = (A_trans_=='N')?p_.kL:p_.mL;
+            unsigned int bound0 = (A_trans_=='N')?p_.mL:p_.kL;
 
             res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
             res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
         }
         if(p_.use_B_local)
         {
-            unsigned int bound1 = (p_.B_trans=='T')?p_.kL:p_.nL;
-            unsigned int bound0 = (p_.B_trans=='T')?p_.nL:p_.kL;
+            unsigned int bound1 = (B_trans_=='T')?p_.kL:p_.nL;
+            unsigned int bound0 = (B_trans_=='T')?p_.nL:p_.kL;
 
             res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
             res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
@@ -272,14 +268,14 @@ private:
 
         if(p_.use_A_local)
         {
-            if(p_.A_trans=='N')
+            if(A_trans_=='N')
                 stream << A->name() << " +=  gidx*" << p_.mL/p_.simd_width << "+ idxT + idyT*" << A->ld()  << ";" << std::endl;
             else
                 stream << A->name() << " +=  gidx*" << p_.mL/p_.simd_width << "*" << A->ld() << "+ idxT + idyT*" << A->ld()  << ";" << std::endl;
         }
         else
         {
-            if(p_.A_trans=='N')
+            if(A_trans_=='N')
                 stream << A->name() << " += gidx*" << p_.mL/p_.simd_width << "+ idx" << ";" << std::endl;
             else
                 stream << A->name() << " += (gidx*" << p_.mL/p_.simd_width << "+ idx)*" << A->ld() << ";" << std::endl;
@@ -287,14 +283,14 @@ private:
 
         if(p_.use_B_local)
         {
-            if(p_.B_trans=='T')
+            if(B_trans_=='T')
                 stream << B->name() << " +=  gidy*" << p_.nL/p_.simd_width << "+ idxT + idyT*" << B->ld()  << ";" << std::endl;
             else
                 stream << B->name() << " +=  gidy*" << p_.nL/p_.simd_width << "*" << B->ld() << "+ idxT + idyT*" << B->ld()  << ";" << std::endl;
         }
         else
         {
-            if(p_.B_trans=='T')
+            if(B_trans_=='T')
                 stream << B->name() << " +=  gidy*" << p_.nL/p_.simd_width << "+ idy;" << std::endl;
             else
                 stream << B->name() << " += (gidy*" << p_.nL/p_.simd_width << "+ idy)*" << B->ld() << ";" << std::endl;
@@ -306,7 +302,7 @@ private:
         stream.inc_tab();
 
         if(p_.use_A_local){
-            if(p_.A_trans=='N')
+            if(A_trans_=='N')
                 stream << "__local " << A->scalartype() << "* plA = lA + idyT*" << p_.mL+1 << "+" << p_.simd_width << "*idxT;" << std::endl;
             else
                 stream << "__local " << A->scalartype() << "* plA = lA + idxT*" << p_.mL+1 << "+ idyT;" << std::endl;
@@ -315,7 +311,7 @@ private:
 
         if(p_.use_B_local)
         {
-            if(p_.B_trans=='T')
+            if(B_trans_=='T')
                 stream << "__local " << B->scalartype() << "* plB = lB + idyT*" << p_.nL+1 << "+" << p_.simd_width << "*idxT;" << std::endl;
             else
                 stream << "__local " << B->scalartype() << "* plB = lB + idxT*" << p_.nL+1 << "+ idyT;" << std::endl;
@@ -328,11 +324,11 @@ private:
         ///Fetch LHS to Local Memory
         if(p_.use_A_local)
         {
-            unsigned int bound1 = (p_.A_trans=='N')?p_.kL:p_.mL;
-            unsigned int bound0 = (p_.A_trans=='N')?p_.mL:p_.kL;
+            unsigned int bound1 = (A_trans_=='N')?p_.kL:p_.mL;
+            unsigned int bound0 = (A_trans_=='N')?p_.mL:p_.kL;
             for(unsigned int k = 0 ; k < bound1 ; k += p_.local_fetch_1){
                 for(unsigned int m = 0 ; m < bound0 ; m += p_.local_fetch_0*p_.simd_width){
-                    unsigned int offset = (p_.A_trans=='N')?(k*(p_.mL+1)+m):(m*(p_.mL+1)+k);
+                    unsigned int offset = (A_trans_=='N')?(k*(p_.mL+1)+m):(m*(p_.mL+1)+k);
                     if(p_.simd_width==1)
                         stream << "plA[" << offset << "] = " << A->name() << "[" << m/p_.simd_width <<  "+"  << k << "*" << A->ld() << "];" << std::endl;
                     else
@@ -344,11 +340,11 @@ private:
         ///Fetch RHS to Local Memory
         if(p_.use_B_local)
         {
-            unsigned int bound1 = (p_.B_trans=='T')?p_.kL:p_.nL;
-            unsigned int bound0 = (p_.B_trans=='T')?p_.nL:p_.kL;
+            unsigned int bound1 = (B_trans_=='T')?p_.kL:p_.nL;
+            unsigned int bound0 = (B_trans_=='T')?p_.nL:p_.kL;
             for(unsigned int k = 0 ; k < bound1 ; k += p_.local_fetch_1){
                 for(unsigned int n = 0 ; n < bound0 ; n += p_.local_fetch_0*p_.simd_width){
-                    unsigned int offset = (p_.B_trans=='T')?k*(p_.nL+1) + n:n*(p_.nL+1) + k;
+                    unsigned int offset = (B_trans_=='T')?k*(p_.nL+1) + n:n*(p_.nL+1) + k;
                     if(p_.simd_width==1)
                         stream << "plB[" << offset << "] = " << B->name() << "[" << n/p_.simd_width <<  "+"  << k << "*" << B->ld() << "];" << std::endl;
                     else
@@ -374,7 +370,7 @@ private:
                     for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
                         stream << "rA[" << kk << "][" << mm*p_.simd_width + ss << "] = lA[offA + " << mm*p_.local_size_0*p_.simd_width + ss + kk*(p_.mL+1) << "];" << std::endl;
                 else
-                    if(p_.A_trans=='N')
+                    if(A_trans_=='N')
                         stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << mm*p_.local_size_0 << "+" << kk << "*" << A->ld() << "];" << std::endl;
                     else
                         stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << kk << "+" << mm*p_.local_size_0 << "*" << A->ld() << "];" << std::endl;
@@ -389,7 +385,7 @@ private:
                     for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
                         stream << "rB[" << kk << "][" << nn*p_.simd_width + ss << "] = lB[offB + " << nn*p_.local_size_1*p_.simd_width + ss + kk*(p_.nL+1) << "];" << std::endl;
                 else
-                    if(p_.B_trans=='T')
+                    if(B_trans_=='T')
                         stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << nn*p_.local_size_1 << " + " << kk << "*" << B->ld() << "];" << std::endl;
                     else
                         stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << kk << "+" << nn*p_.local_size_1 << "*" << B->ld() << "];" << std::endl;
@@ -401,7 +397,7 @@ private:
         if(p_.use_A_local)
             stream << "offA += " << p_.kS*(p_.mL+1) << ";" << std::endl;
         else
-            if(p_.A_trans=='N')
+            if(A_trans_=='N')
                 stream << A->name() << " += " << p_.kS << "*" << A->ld() << ";" << std::endl;
             else
                 stream << A->name() << " += " << p_.kS << ";" << std::endl;
@@ -409,7 +405,7 @@ private:
         if(p_.use_B_local)
             stream << "offB += " << p_.kS*(p_.nL+1) << ";" << std::endl;
         else
-            if(p_.B_trans=='T')
+            if(B_trans_=='T')
                 stream << B->name() << " += " << p_.kS << "*" << B->ld() << ";" << std::endl;
             else
                 stream << B->name() << " += " << p_.kS << ";" << std::endl;
@@ -437,14 +433,14 @@ private:
         stream << "}" << std::endl;
 
         if(p_.use_A_local){
-            if(p_.A_trans=='N')
+            if(A_trans_=='N')
                 stream << A->name() << " += " << p_.kL << "*" << A->ld() << ";" << std::endl;
             else
                 stream << A->name() << " += " << p_.kL << ";" << std::endl;
         }
 
         if(p_.use_B_local){
-            if(p_.B_trans=='T')
+            if(B_trans_=='T')
                 stream << B->name() << " += " << p_.kL << "*" << B->ld() << ";" << std::endl;
             else
                 stream << B->name() << " += " << p_.kL << ";" << std::endl;
@@ -502,9 +498,11 @@ private:
     }
 
 public:
-    matrix_product_template(matrix_product_template::parameters const & parameters, std::string const & kernel_prefix) : template_base(parameters, kernel_prefix, BIND_TO_HANDLE), p_(parameters){ }
+    matrix_product_template(matrix_product_template::parameters const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(parameters, kernel_prefix, BIND_TO_HANDLE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
 
 private:
+    const char A_trans_;
+    const char B_trans_;
     matrix_product_template::parameters const & p_;
 };
 
