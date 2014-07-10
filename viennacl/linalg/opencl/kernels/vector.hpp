@@ -33,56 +33,59 @@ namespace viennacl
 
         template<typename T, typename ScalarType>
         void generate_inner_prod_impl(std::string & source, reduction_template::parameters const & parameters, vcl_size_t vector_num,
-                                       viennacl::vector<T> const * x, viennacl::vector<T> const * y, ScalarType const* s)
+                                       viennacl::vector<T> const * x, viennacl::vector<T> const * y, ScalarType const* s,
+                                      std::string const & prefix, viennacl::ocl::device const & device)
         {
           statements_container::data_type statements;
           for(unsigned int i = 0 ; i < vector_num ; ++i)
             statements.push_back(scheduler::preset::inner_prod(s, x, y));
-          source.append(reduction_template(parameters).generate(statements_container(statements,statements_container::INDEPENDENT)));
+          source.append(reduction_template(parameters, prefix).generate(statements_container(statements,statements_container::INDEPENDENT), device));
         }
 
         template<typename T, typename ScalarType1, typename ScalarType2>
         inline void generate_avbv_impl2(std::string & source, vector_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType1 const * a,
-                                       viennacl::vector_base<T> const * z, ScalarType2 const * b)
+                                       viennacl::vector_base<T> const * z, ScalarType2 const * b,
+                                        std::string const & prefix, viennacl::ocl::device const & device)
         {
-          source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false)));
-          source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false)));
-          source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false)));
-          source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false)));
+          source.append(vector_axpy_template(parameters, prefix + "0000").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false), device));
+          source.append(vector_axpy_template(parameters, prefix + "1000").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false), device));
+          source.append(vector_axpy_template(parameters ,prefix + "0100").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false), device));
+          source.append(vector_axpy_template(parameters, prefix + "1100").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false), device));
           if(b)
           {
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false)));
+            source.append(vector_axpy_template(parameters, prefix + "0010").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false), device));
+            source.append(vector_axpy_template(parameters, prefix + "1010").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false), device));
+            source.append(vector_axpy_template(parameters ,prefix + "0110").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false), device));
+            source.append(vector_axpy_template(parameters, prefix + "1110").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false), device));
 
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true)));
+            source.append(vector_axpy_template(parameters, prefix + "0001").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true), device));
+            source.append(vector_axpy_template(parameters, prefix + "1001").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true), device));
+            source.append(vector_axpy_template(parameters ,prefix + "0101").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true), device));
+            source.append(vector_axpy_template(parameters, prefix + "1101").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true), device));
 
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true)));
-            source.append(vector_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true)));
+            source.append(vector_axpy_template(parameters, prefix + "0011").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true), device));
+            source.append(vector_axpy_template(parameters, prefix + "1011").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true), device));
+            source.append(vector_axpy_template(parameters ,prefix + "0111").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true), device));
+            source.append(vector_axpy_template(parameters, prefix + "1111").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true), device));
           }
         }
 
         template<typename T, typename ScalarType>
         inline void generate_avbv_impl(std::string & source, vector_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType const * ha, viennacl::scalar<ScalarType> const * da,
-                                       viennacl::vector_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db)
+                                       viennacl::vector_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db,
+                                       std::string const & prefix, viennacl::ocl::device const & device)
         {
           //x ASSIGN_OP a*y
-          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, (viennacl::vector<T>*)NULL, (T*)NULL);
-          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, (viennacl::vector<T>*)NULL, (T*)NULL);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, (viennacl::vector<T>*)NULL, (T*)NULL, prefix + "hv_", device);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, (viennacl::vector<T>*)NULL, (T*)NULL, prefix + "dv_", device);
 
           //x ASSIGN_OP a*y + b*z
-          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, hb);
-          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, z, hb);
-          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, db);
-          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, z, db);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, hb, prefix + "hvhv_", device);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, z, hb, prefix + "dvhv_", device);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, db, prefix + "hvdv_", device);
+          generate_avbv_impl2(source, parameters, ASSIGN_OP, x, y, da, z, db, prefix + "dvdv_", device);
         }
 
 
@@ -122,21 +125,21 @@ namespace viennacl
               TYPE ha;
               TYPE hb;
 
-              generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
-              generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
+              generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db, "assign_", device);
+              generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db, "ip_add_", device);
 
-              source.append(vector_axpy_template(axpy_parameters).generate(scheduler::preset::plane_rotation(&x, &y, &ha, &hb)));
-              source.append(vector_axpy_template(axpy_parameters).generate(scheduler::preset::swap(&x, &y)));
-              source.append(vector_axpy_template(axpy_parameters).generate(scheduler::preset::assign_cpu(&x, &scalary)));
+              source.append(vector_axpy_template(axpy_parameters, "plane_rotation").generate(scheduler::preset::plane_rotation(&x, &y, &ha, &hb), device));
+              source.append(vector_axpy_template(axpy_parameters, "swap").generate(scheduler::preset::swap(&x, &y), device));
+              source.append(vector_axpy_template(axpy_parameters, "assign_cpu").generate(scheduler::preset::assign_cpu(&x, &scalary), device));
 
-              generate_inner_prod_impl(source, reduction_parameters, 1, &x, &y, &da);
+              generate_inner_prod_impl(source, reduction_parameters, 1, &x, &y, &da, "inner_prod", device);
 
-              source.append(reduction_template(reduction_parameters).generate(scheduler::preset::norm_1(&da, &x)));
+              source.append(reduction_template(reduction_parameters, "norm_1").generate(scheduler::preset::norm_1(&da, &x), device));
               if(is_floating_point<TYPE>::value)
-                source.append(reduction_template(reduction_parameters, BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&da, &x))); //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
-              source.append(reduction_template(reduction_parameters).generate(scheduler::preset::norm_inf(&da, &x)));
-              source.append(reduction_template(reduction_parameters).generate(scheduler::preset::index_norm_inf(&da, &x)));
-              source.append(reduction_template(reduction_parameters).generate(scheduler::preset::sum(&da, &x)));
+                source.append(reduction_template(reduction_parameters, "norm_2", BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&da, &x), device)); //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
+              source.append(reduction_template(reduction_parameters, "norm_inf").generate(scheduler::preset::norm_inf(&da, &x), device));
+              source.append(reduction_template(reduction_parameters, "index_norm_inf").generate(scheduler::preset::index_norm_inf(&da, &x), device));
+              source.append(reduction_template(reduction_parameters, "sum").generate(scheduler::preset::sum(&da, &x), device));
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO
@@ -187,11 +190,11 @@ namespace viennacl
               viennacl::vector<TYPE> res;
               viennacl::vector_range< viennacl::vector_base<TYPE> > da(res, viennacl::range(0,1));
 
-              generate_inner_prod_impl(source, reduction_parameters, 1, &x, &y, &da);
-              generate_inner_prod_impl(source, reduction_parameters, 2, &x, &y, &da);
-              generate_inner_prod_impl(source, reduction_parameters, 3, &x, &y, &da);
-              generate_inner_prod_impl(source, reduction_parameters, 4, &x, &y, &da);
-              generate_inner_prod_impl(source, reduction_parameters, 8, &x, &y, &da);
+              generate_inner_prod_impl(source, reduction_parameters, 1, &x, &y, &da, "inner_prod_1", device);
+              generate_inner_prod_impl(source, reduction_parameters, 2, &x, &y, &da, "inner_prod_2", device);
+              generate_inner_prod_impl(source, reduction_parameters, 3, &x, &y, &da, "inner_prod_3", device);
+              generate_inner_prod_impl(source, reduction_parameters, 4, &x, &y, &da, "inner_prod_4", device);
+              generate_inner_prod_impl(source, reduction_parameters, 8, &x, &y, &da, "inner_prod_8", device);
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

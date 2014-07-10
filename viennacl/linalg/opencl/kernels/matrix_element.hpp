@@ -22,56 +22,6 @@ namespace viennacl
       namespace kernels
       {
 
-        //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
-
-
-        //generate code for C = op1(A) * op2(B), where A, B, C can have different storage layouts and opX(D) = D or trans(D)
-        template <typename StringType>
-        void generate_matrix_unary_element_ops(StringType & source, std::string const & numeric_string,
-                                               std::string const & funcname, std::string const & op, std::string const & op_name, bool is_row_major)
-        {
-          source.append("__kernel void "); source.append(funcname); source.append("_"); source.append(op_name); source.append("(\n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * A, \n");
-          source.append("          unsigned int A_start1, unsigned int A_start2, \n");
-          source.append("          unsigned int A_inc1,   unsigned int A_inc2, \n");
-          source.append("          unsigned int A_size1,  unsigned int A_size2, \n");
-          source.append("          unsigned int A_internal_size1,  unsigned int A_internal_size2, \n");
-
-          source.append("          __global const "); source.append(numeric_string); source.append(" * B, \n");
-          source.append("          unsigned int B_start1, unsigned int B_start2, \n");
-          source.append("          unsigned int B_inc1,   unsigned int B_inc2, \n");
-          source.append("          unsigned int B_internal_size1,  unsigned int B_internal_size2) { \n");
-
-          if (is_row_major)
-          {
-            source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0); \n");
-            source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0); \n");
-
-            source.append("  for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0)) \n");
-            source.append("    for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0)) \n");
-            source.append("      A[(row * A_inc1 + A_start1) * A_internal_size2 + col * A_inc2 + A_start2] \n");
-            source.append("        "); source.append(op); source.append(" "); source.append(funcname); source.append("(B[(row * B_inc1 + B_start1) * B_internal_size2 + col * B_inc2 + B_start2]); \n");
-          }
-          else
-          {
-            source.append("  unsigned int row_gid = get_global_id(0) % get_local_size(0); \n");
-            source.append("  unsigned int col_gid = get_global_id(0) / get_local_size(0); \n");
-
-            source.append("  for (unsigned int col = col_gid; col < A_size2; col += get_num_groups(0)) \n");
-            source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_local_size(0)) \n");
-            source.append("      A[(row * A_inc1 + A_start1) + (col * A_inc2 + A_start2) * A_internal_size1] \n");
-            source.append("        "); source.append(op); source.append(" "); source.append(funcname); source.append("(B[(row * B_inc1 + B_start1) + (col * B_inc2 + B_start2) * B_internal_size1]); \n");
-          }
-          source.append("} \n");
-        }
-
-        template <typename StringType>
-        void generate_matrix_unary_element_ops(StringType & source, std::string const & numeric_string, std::string const & funcname, bool is_row_major)
-        {
-          generate_matrix_unary_element_ops(source, numeric_string, funcname, "=", "assign", is_row_major);
-          //generate_matrix_unary_element_ops(source, numeric_string, funcname, "+=", "plus", is_row_major);
-          //generate_matrix_unary_element_ops(source, numeric_string, funcname, "-=", "minus", is_row_major);
-        }
 
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
@@ -89,6 +39,8 @@ namespace viennacl
           {
             using namespace device_specific;
             using namespace scheduler;
+            using device_specific::tree_parsing::operator_string;
+
 
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
             std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
@@ -101,43 +53,47 @@ namespace viennacl
 
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
               viennacl::ocl::device const & device = ctx.current_device();
-              matrix_axpy_template mtemplate = matrix_axpy_template(database::get<NumericT>(database::matrix_axpy, device));
+              matrix_axpy_template::parameters params = database::get<NumericT>(database::matrix_axpy, device);
 
               viennacl::matrix<NumericT, F> A;
               viennacl::matrix<NumericT, F> B;
               viennacl::matrix<NumericT, F> C;
 
-              // unary operations
+#define ADD_UNARY(TYPE) source.append(matrix_axpy_template(params,operator_string(TYPE)).generate(scheduler::preset::unary_element_op(&A, &B, TYPE), device))
               if (numeric_string == "float" || numeric_string == "double")
               {
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_ACOS_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_ASIN_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_ATAN_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_CEIL_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_COS_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_COSH_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_EXP_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_FABS_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_FLOOR_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_LOG_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_LOG10_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_SIN_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_SINH_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_SQRT_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_TAN_TYPE)));
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_TANH_TYPE)));
+                ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_ASIN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_ATAN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_CEIL_TYPE);
+                ADD_UNARY(OPERATION_UNARY_COS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_COSH_TYPE);
+                ADD_UNARY(OPERATION_UNARY_EXP_TYPE);
+                ADD_UNARY(OPERATION_UNARY_FABS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_FLOOR_TYPE);
+                ADD_UNARY(OPERATION_UNARY_LOG_TYPE);
+                ADD_UNARY(OPERATION_UNARY_LOG10_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SIN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SINH_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SQRT_TYPE);
+                ADD_UNARY(OPERATION_UNARY_TAN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_TANH_TYPE);
               }
               else
               {
-                source.append(mtemplate.generate(scheduler::preset::unary_element_op(&A, &B, OPERATION_UNARY_ABS_TYPE)));
+                ADD_UNARY(OPERATION_UNARY_ABS_TYPE);
               }
+#undef ADD_UNARY
 
               // binary operations
-              source.append(mtemplate.generate(scheduler::preset::binary_element_op(&A, &B, &C, OPERATION_BINARY_ELEMENT_DIV_TYPE)));
-              source.append(mtemplate.generate(scheduler::preset::binary_element_op(&A, &B, &C, OPERATION_BINARY_ELEMENT_PROD_TYPE)));
+#define ADD_BINARY(TYPE) source.append(matrix_axpy_template(params,operator_string(TYPE)).generate(scheduler::preset::binary_element_op(&A, &B, &C, TYPE), device))
+              ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
+              ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
               if (numeric_string == "float" || numeric_string == "double")
-                source.append(mtemplate.generate(scheduler::preset::binary_element_op(&A, &B, &C, OPERATION_BINARY_ELEMENT_POW_TYPE)));
-
+              {
+                ADD_BINARY(OPERATION_BINARY_ELEMENT_POW_TYPE);
+              }
+#undef ADD_BINARY
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

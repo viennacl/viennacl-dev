@@ -123,7 +123,7 @@ namespace viennacl{
         }
       }
 
-      inline const char * evaluate_str(scheduler::operation_node_type type){
+      inline const char * operator_string(scheduler::operation_node_type type){
         using namespace scheduler;
         switch(type){
         case OPERATION_UNARY_CAST_CHAR_TYPE : return "char";
@@ -138,17 +138,17 @@ namespace viennacl{
         case OPERATION_UNARY_CAST_FLOAT_TYPE : return "float";
         case OPERATION_UNARY_CAST_DOUBLE_TYPE : return "double";
 
-        case OPERATION_UNARY_MINUS_TYPE : return "mi";
-        case OPERATION_BINARY_ASSIGN_TYPE : return "as";
-        case OPERATION_BINARY_INPLACE_ADD_TYPE : return "iad";
-        case OPERATION_BINARY_INPLACE_SUB_TYPE : return "isu";
-        case OPERATION_BINARY_ADD_TYPE : return "ad";
-        case OPERATION_BINARY_SUB_TYPE : return "su";
-        case OPERATION_BINARY_MULT_TYPE : return "mu";
-        case OPERATION_BINARY_ELEMENT_PROD_TYPE : return "epr";
-        case OPERATION_BINARY_DIV_TYPE : return "di";
-        case OPERATION_BINARY_ELEMENT_DIV_TYPE : return "edi";
-        case OPERATION_BINARY_ACCESS_TYPE : return "ac";
+        case OPERATION_UNARY_MINUS_TYPE : return "umin";
+        case OPERATION_BINARY_ASSIGN_TYPE : return "assign";
+        case OPERATION_BINARY_INPLACE_ADD_TYPE : return "ip_add";
+        case OPERATION_BINARY_INPLACE_SUB_TYPE : return "ip_sub";
+        case OPERATION_BINARY_ADD_TYPE : return "add";
+        case OPERATION_BINARY_SUB_TYPE : return "sub";
+        case OPERATION_BINARY_MULT_TYPE : return "mult";
+        case OPERATION_BINARY_ELEMENT_PROD_TYPE : return "eprod";
+        case OPERATION_BINARY_DIV_TYPE : return "div";
+        case OPERATION_BINARY_ELEMENT_DIV_TYPE : return "ediv";
+        case OPERATION_BINARY_ACCESS_TYPE : return "acc";
           default : return evaluate(type);
         }
       }

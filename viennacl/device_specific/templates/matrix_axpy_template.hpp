@@ -48,10 +48,10 @@ namespace viennacl{
       class parameters : public template_base::parameters
       {
       public:
-        parameters(const char * _scalartype, unsigned int _simd_width,
+        parameters(unsigned int _simd_width,
                    unsigned int _local_size_0, unsigned int _local_size_1,
                    unsigned int _num_groups_0, unsigned int _num_groups_1,
-                   unsigned int _decomposition) : template_base::parameters(_scalartype, _simd_width, _local_size_0, _local_size_1, 1), num_groups_0(_num_groups_0), num_groups_1(_num_groups_1), decomposition(_decomposition){ }
+                   unsigned int _decomposition) : template_base::parameters(_simd_width, _local_size_0, _local_size_1, 1), num_groups_0(_num_groups_0), num_groups_1(_num_groups_1), decomposition(_decomposition){ }
 
         unsigned int num_groups_0;
         unsigned int num_groups_1;
@@ -104,8 +104,8 @@ namespace viennacl{
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
       {
-        k.global_work_size(0,parameters_.local_size_0*parameters_.num_groups_0);
-        k.global_work_size(1,parameters_.local_size_1*parameters_.num_groups_1);
+        k.global_work_size(0,p_.local_size_0*p_.num_groups_0);
+        k.global_work_size(1,p_.local_size_1*p_.num_groups_1);
 
         scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
         if(up_to_internal_size_)
@@ -120,13 +120,14 @@ namespace viennacl{
         }
       }
 
+
     public:
-      matrix_axpy_template(matrix_axpy_template::parameters const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, binding_policy), up_to_internal_size_(false), parameters_(parameters){ }
+      matrix_axpy_template(matrix_axpy_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, kernel_prefix, binding_policy), up_to_internal_size_(false), p_(parameters){ }
 
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
     private:
       bool up_to_internal_size_;
-      matrix_axpy_template::parameters const & parameters_;
+      matrix_axpy_template::parameters const & p_;
     };
 
   }

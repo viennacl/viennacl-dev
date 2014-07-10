@@ -46,62 +46,14 @@ namespace device_specific{
 class matrix_product_template : public template_base{
 
 public:
-    class parameters : public template_base::parameters
+    struct parameters : public template_base::parameters
     {
-    private:
-
-        unsigned int lmem_used(unsigned int scalartype_size) const
-      {
-          unsigned int lmem_used = 0;
-          if(use_A_local)
-              lmem_used += kL * (mL+1) * scalartype_size;
-          if(use_B_local)
-              lmem_used += nL * (kL+1) * scalartype_size;
-          return lmem_used;
-      }
-
-      bool invalid_impl(viennacl::ocl::device const & /*dev*/, size_t /*scalartype_size*/) const
-      {
-          static const unsigned int alignment = 128;
-          bool res = false;
-          res |= alignment % mL > 0;
-          res |= alignment % kL > 0;
-          res |= alignment % nL > 0;
-          res |= (mS % simd_width) > 0;
-          res |= (nS % simd_width) > 0;
-          res |= mS > mL;
-          res |= nS > nL;
-          res |= kS > kL;
-          res |= (!(A_trans=='N' && B_trans=='T') && simd_width>1);
-          if(use_A_local)
-          {
-              unsigned int bound1 = (A_trans=='N')?kL:mL;
-              unsigned int bound0 = (A_trans=='N')?mL:kL;
-
-              res |= local_fetch_1>0 && (bound1 % local_fetch_1)> 0;
-              res |= local_fetch_0>0 && (bound0 % (local_fetch_0*simd_width)) > 0;
-          }
-          if(use_B_local)
-          {
-              unsigned int bound1 = (B_trans=='T')?kL:nL;
-              unsigned int bound0 = (B_trans=='T')?nL:kL;
-
-              res |= local_fetch_1>0 && (bound1 % local_fetch_1)> 0;
-              res |= local_fetch_0>0 && (bound0 % (local_fetch_0*simd_width)) > 0;
-          }
-
-          if(use_A_local || use_B_local)
-              res |= ((local_fetch_0*local_fetch_1) !=(local_size_0*local_size_1));
-          return res;
-      }
-
-    public:
-      parameters(const char * scalartype, char A_trans, char B_trans
+      parameters(char A_trans, char B_trans
                  , unsigned int simd_width
                  , unsigned int local_size_0, unsigned int KL, unsigned int local_size_1
                  , unsigned int ms, unsigned int ks, unsigned int ns
                  , bool use_A_local, bool use_B_local
-                 , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters(scalartype, simd_width, local_size_0, local_size_1, 1),
+                 , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters(simd_width, local_size_0, local_size_1, 1),
                                              A_trans(A_trans), B_trans(B_trans), kL(KL), mS(ms), kS(ks), nS(ns), use_A_local(use_A_local), use_B_local(use_B_local),
                                              local_fetch_0(local_fetch_0), local_fetch_1(local_fetch_1),
                                               mL(ms*local_size_0), nL(ns*local_size_1){}
@@ -126,6 +78,50 @@ public:
     };
 
 private:
+
+    unsigned int n_lmem_elements() const
+    {
+        unsigned int N = 0;
+        if(p_.use_A_local)
+            N += p_.kL * (p_.mL+1);
+        if(p_.use_B_local)
+            N += p_.nL * (p_.kL+1);
+        return N;
+    }
+
+    void check_invalid_impl(viennacl::ocl::device const & /*device*/) const
+    {
+        static const unsigned int alignment = 128;
+        bool res = false;
+        res |= alignment % p_.mL > 0;
+        res |= alignment % p_.kL > 0;
+        res |= alignment % p_.nL > 0;
+        res |= (p_.mS % p_.simd_width) > 0;
+        res |= (p_.nS % p_.simd_width) > 0;
+        res |= p_.mS > p_.mL;
+        res |= p_.nS > p_.nL;
+        res |= p_.kS > p_.kL;
+        res |= (!(p_.A_trans=='N' && p_.B_trans=='T') && p_.simd_width>1);
+        if(p_.use_A_local)
+        {
+            unsigned int bound1 = (p_.A_trans=='N')?p_.kL:p_.mL;
+            unsigned int bound0 = (p_.A_trans=='N')?p_.mL:p_.kL;
+
+            res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
+            res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
+        }
+        if(p_.use_B_local)
+        {
+            unsigned int bound1 = (p_.B_trans=='T')?p_.kL:p_.nL;
+            unsigned int bound0 = (p_.B_trans=='T')?p_.nL:p_.kL;
+
+            res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
+            res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
+        }
+
+        if(p_.use_A_local || p_.use_B_local)
+            res |= ((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1));
+    }
 
     void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg) const
     {
@@ -506,7 +502,7 @@ private:
     }
 
 public:
-    matrix_product_template(matrix_product_template::parameters const & parameters) : template_base(parameters, BIND_TO_HANDLE), p_(parameters){ }
+    matrix_product_template(matrix_product_template::parameters const & parameters, std::string const & kernel_prefix) : template_base(parameters, kernel_prefix, BIND_TO_HANDLE), p_(parameters){ }
 
 private:
     matrix_product_template::parameters const & p_;

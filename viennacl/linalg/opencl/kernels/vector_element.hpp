@@ -42,49 +42,55 @@ namespace viennacl
             if (!init_done[ctx.handle().get()])
             {
               using namespace scheduler;
-
+              using device_specific::tree_parsing::operator_string;
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::device const & device = ctx.current_device();
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
-              vector_axpy_template vtemplate = vector_axpy_template(database::get<TYPE>(database::vector_axpy, device));
+              vector_axpy_template::parameters vparams = database::get<TYPE>(database::vector_axpy, device);
 
               viennacl::vector<TYPE> x;
               viennacl::vector<TYPE> y;
               viennacl::vector<TYPE> z;
 
               // unary operations
+#define ADD_UNARY(TYPE) source.append(vector_axpy_template(vparams,operator_string(TYPE)).generate(scheduler::preset::unary_element_op(&x, &y, TYPE), device))
               if (numeric_string == "float" || numeric_string == "double")
               {
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_ACOS_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_ASIN_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_ATAN_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_CEIL_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_COS_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_COSH_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_EXP_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_FABS_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_FLOOR_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_LOG_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_LOG10_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_SIN_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_SINH_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_SQRT_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_TAN_TYPE)));
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_TANH_TYPE)));
+                ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_ASIN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_ATAN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_CEIL_TYPE);
+                ADD_UNARY(OPERATION_UNARY_COS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_COSH_TYPE);
+                ADD_UNARY(OPERATION_UNARY_EXP_TYPE);
+                ADD_UNARY(OPERATION_UNARY_FABS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_FLOOR_TYPE);
+                ADD_UNARY(OPERATION_UNARY_LOG_TYPE);
+                ADD_UNARY(OPERATION_UNARY_LOG10_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SIN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SINH_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SQRT_TYPE);
+                ADD_UNARY(OPERATION_UNARY_TAN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_TANH_TYPE);
               }
               else
               {
-                source.append(vtemplate.generate(scheduler::preset::unary_element_op(&x, &y, OPERATION_UNARY_ABS_TYPE)));
+                ADD_UNARY(OPERATION_UNARY_ABS_TYPE);
               }
+#undef ADD_UNARY
 
               // binary operations
-              source.append(vtemplate.generate(scheduler::preset::binary_element_op(&x, &y, &z, OPERATION_BINARY_ELEMENT_DIV_TYPE)));
-              source.append(vtemplate.generate(scheduler::preset::binary_element_op(&x, &y, &z, OPERATION_BINARY_ELEMENT_PROD_TYPE)));
+#define ADD_BINARY(TYPE) source.append(vector_axpy_template(vparams,operator_string(TYPE)).generate(scheduler::preset::binary_element_op(&x, &y, &z, TYPE), device))
+              ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
+              ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
               if (numeric_string == "float" || numeric_string == "double")
-                source.append(vtemplate.generate(scheduler::preset::binary_element_op(&x, &y, &z, OPERATION_BINARY_ELEMENT_POW_TYPE)));
+              {
+                ADD_BINARY(OPERATION_BINARY_ELEMENT_POW_TYPE);
+              }
+#undef ADD_BINARY
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

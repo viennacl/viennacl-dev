@@ -46,45 +46,47 @@ namespace viennacl
         template<typename T, typename ScalarType1, typename ScalarType2>
         inline void generate_ambm_impl2(std::string & source, matrix_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType1 const * a,
-                                       viennacl::matrix_base<T> const * z, ScalarType2 const * b)
+                                       viennacl::matrix_base<T> const * z, ScalarType2 const * b,
+                                        std::string const & prefix, viennacl::ocl::device const & device)
         {
-          source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false)));
-          source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false)));
-          source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false)));
-          source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false)));
+          source.append(matrix_axpy_template(parameters, prefix + "0000").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false),device));
+          source.append(matrix_axpy_template(parameters, prefix + "1000").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false),device));
+          source.append(matrix_axpy_template(parameters, prefix + "0100").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false),device));
+          source.append(matrix_axpy_template(parameters, prefix + "1100").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false),device));
           if(b)
           {
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false)));
+            source.append(matrix_axpy_template(parameters, prefix + "0010").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false),device));
+            source.append(matrix_axpy_template(parameters, prefix + "1010").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false),device));
+            source.append(matrix_axpy_template(parameters, prefix + "0110").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false),device));
+            source.append(matrix_axpy_template(parameters, prefix + "1110").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false),device));
 
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true)));
+            source.append(matrix_axpy_template(parameters, prefix + "0001").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true),device));
+            source.append(matrix_axpy_template(parameters, prefix + "1001").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true),device));
+            source.append(matrix_axpy_template(parameters, prefix + "0101").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true),device));
+            source.append(matrix_axpy_template(parameters, prefix + "1101").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true),device));
 
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true)));
-            source.append(matrix_axpy_template(parameters).generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true)));
+            source.append(matrix_axpy_template(parameters, prefix + "0011").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true),device));
+            source.append(matrix_axpy_template(parameters, prefix + "1011").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true),device));
+            source.append(matrix_axpy_template(parameters, prefix + "0111").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true),device));
+            source.append(matrix_axpy_template(parameters, prefix + "1111").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true),device));
           }
         }
 
         template<typename T, typename ScalarType>
         inline void generate_ambm_impl(std::string & source, matrix_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType const * ha, viennacl::scalar<ScalarType> const * da,
-                                       viennacl::matrix_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db)
+                                       viennacl::matrix_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db,
+                                       std::string const & prefix, viennacl::ocl::device const & device)
         {
           //x ASSIGN_OP a*y
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, (viennacl::matrix_base<T>*)NULL, (T*)NULL);
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, (viennacl::matrix_base<T>*)NULL, (T*)NULL);
+          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, (viennacl::matrix_base<T>*)NULL, (T*)NULL, prefix + "hm_", device);
+          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, (viennacl::matrix_base<T>*)NULL, (T*)NULL, prefix + "dm_", device);
 
           //x ASSIGN_OP a*y + b*z
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, hb);
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, z, hb);
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, db);
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, z, db);
+          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, hb, prefix + "hmhm_", device);
+          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, z, hb, prefix + "dmhm_", device);
+          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, db, prefix + "hmdm_", device);
+          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, z, db, prefix + "dmdm_", device);
         }
 
 
@@ -525,22 +527,22 @@ namespace viennacl
               unsigned int hui = 0;
 
               // fully parametrized kernels:
-              generate_ambm_impl(source, mAXPY, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &ha, &da, &C, &hb, &db);
-              generate_ambm_impl(source, mAXPY, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &ha, &da, &C, &hb, &db);
+              generate_ambm_impl(source, mAXPY, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "assign_",device);
+              generate_ambm_impl(source, mAXPY, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "ip_add_",device);
 
-              source.append(matrix_axpy_template(mAXPY).generate(scheduler::preset::assign_cpu(&A, &M)));
-              source.append(matrix_axpy_template(mAXPY).generate(scheduler::preset::matrix_diag_from_vector(&x, &A, hi)));
-              source.append(vector_axpy_template(xAXPY).generate(scheduler::preset::matrix_row(&x, &A, hui)));
-              source.append(vector_axpy_template(xAXPY).generate(scheduler::preset::matrix_column(&x, &A, hui)));
-              source.append(vector_axpy_template(xAXPY).generate(scheduler::preset::matrix_diag_to_vector(&x, &A, hi)));
-              source.append(vector_axpy_template(xAXPY).generate(scheduler::preset::diagonal_assign_cpu(&A, &sx)));
+              source.append(matrix_axpy_template(mAXPY, "assign_cpu").generate(scheduler::preset::assign_cpu(&A, &M),device));
+              source.append(matrix_axpy_template(mAXPY, "diag_from_vector").generate(scheduler::preset::matrix_diag_from_vector(&x, &A, hi),device));
+              source.append(vector_axpy_template(xAXPY, "matrix_row").generate(scheduler::preset::matrix_row(&x, &A, hui),device));
+              source.append(vector_axpy_template(xAXPY, "matrix_column").generate(scheduler::preset::matrix_column(&x, &A, hui),device));
+              source.append(vector_axpy_template(xAXPY, "matrix_diag_to_vector").generate(scheduler::preset::matrix_diag_to_vector(&x, &A, hi),device));
+              source.append(vector_axpy_template(xAXPY, "diagonal_assign_cpu").generate(scheduler::preset::diagonal_assign_cpu(&A, &sx),device));
 
               // kernels with mostly predetermined skeleton:
               generate_scaled_rank1_update(source, numeric_string, is_row_major, true);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, false);
 
-              source.append(row_wise_reduction_template(redT).generate(scheduler::preset::mat_vec_prod(&A, true, &x, &y)));
-              source.append(row_wise_reduction_template(redN).generate(scheduler::preset::mat_vec_prod(&A, false, &x, &y)));
+              source.append(row_wise_reduction_template(redT, "mat_vec_T").generate(scheduler::preset::mat_vec_prod(&A, true, &x, &y), device));
+              source.append(row_wise_reduction_template(redN, "mat_vec_N").generate(scheduler::preset::mat_vec_prod(&A, false, &x, &y), device));
 
               if (numeric_string == "float" || numeric_string == "double")
               {

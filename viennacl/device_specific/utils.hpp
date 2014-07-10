@@ -453,12 +453,28 @@ namespace viennacl{
 
       }
 
-      inline unsigned int scalartype_size(std::string scalartype)
+      inline unsigned int size_of(scheduler::statement_node_numeric_type type)
       {
-        if(scalartype=="float")
-         return 4;
-        else
-         return 8;
+        using namespace scheduler;
+        switch(type)
+        {
+          case UCHAR_TYPE:
+          case CHAR_TYPE: return 1;
+
+          case USHORT_TYPE:
+          case SHORT_TYPE:
+          case HALF_TYPE: return 2;
+
+          case UINT_TYPE:
+          case INT_TYPE:
+          case FLOAT_TYPE: return 4;
+
+          case ULONG_TYPE:
+          case LONG_TYPE:
+          case DOUBLE_TYPE: return 8;
+
+        default: throw generator_not_supported_exception("Unsupported scalartype");
+        }
       }
 
       inline std::string simd_scalartype(std::string const & scalartype, unsigned int width)
