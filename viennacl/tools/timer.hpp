@@ -66,7 +66,7 @@ namespace viennacl{
     private:
       LARGE_INTEGER freq;
       LARGE_INTEGER start_time;
-	  LARGE_INTERGET end_time;
+      LARGE_INTEGER end_time;
     };
 
   }
