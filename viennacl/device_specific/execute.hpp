@@ -42,11 +42,8 @@ namespace viennacl{
 
   namespace device_specific{
 
-    template<class TemplateT>
-    inline void execute(typename TemplateT::parameters const & params, statements_container const & statements, viennacl::ocl::context & ctx = viennacl::ocl::current_context(), bool force_compilation = false)
+    inline void execute(template_base & tplt, statements_container const & statements, viennacl::ocl::context & ctx = viennacl::ocl::current_context(), bool force_compilation = false)
     {
-      TemplateT tplt(params);
-
       //Generate program name
       std::string program_name = tree_parsing::statements_representation(statements, BIND_TO_HANDLE);
 
@@ -62,10 +59,10 @@ namespace viennacl{
         src+="#elif defined(cl_amd_fp64)\n";
         src+="#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
         src+="#endif\n";
-        src +=tplt.generate(statements, "kernel");
+        src +=tplt.generate(statements, ctx.current_device());
         ctx.add_program(src, program_name);
       }
-      tplt.enqueue(ctx.get_program(program_name), statements, "kernel");
+      tplt.enqueue(ctx.get_program(program_name), statements);
     }
 
   }
