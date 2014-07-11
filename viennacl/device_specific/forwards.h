@@ -127,17 +127,17 @@ namespace viennacl{
     }
 
 
-    namespace tree_parsing{
-        enum leaf_t{
-          LHS_NODE_TYPE,
-          PARENT_NODE_TYPE,
-          RHS_NODE_TYPE
-        };
-    }
+    enum leaf_t
+    {
+      LHS_NODE_TYPE,
+      PARENT_NODE_TYPE,
+      RHS_NODE_TYPE
+    };
+
     class mapped_object;
     class template_base;
 
-    typedef std::pair<vcl_size_t, tree_parsing::leaf_t> mapping_key;
+    typedef std::pair<vcl_size_t, leaf_t> mapping_key;
     typedef std::map<mapping_key, tools::shared_ptr<mapped_object> > mapping_type;
 
 
@@ -147,9 +147,6 @@ namespace viennacl{
       inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect);
 
       inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, index_tuple const & index, unsigned int simd_element, mapping_type const & mapping, leaf_t initial_leaf);
-
-      class map_functor;
-
     }
 
     using scheduler::INT_TYPE;

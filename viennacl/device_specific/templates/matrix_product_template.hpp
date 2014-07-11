@@ -31,9 +31,7 @@ License:         MIT (X11), see file LICENSE in the base directory
 #include "viennacl/device_specific/templates/template_base.hpp"
 #include "viennacl/device_specific/mapped_objects.hpp"
 #include "viennacl/device_specific/utils.hpp"
-#include "viennacl/device_specific/tree_parsing/read_write.hpp"
-#include "viennacl/device_specific/tree_parsing/filter.hpp"
-#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
+#include "viennacl/device_specific/tree_parsing.hpp"
 #include "viennacl/forwards.h"
 
 #include "viennacl/tools/tools.hpp"
@@ -178,9 +176,9 @@ private:
 
 
     static void parse(scheduler::statement const & s,
-               vcl_size_t & C_idx, tree_parsing::leaf_t & C_leaf, vcl_size_t & alpha_idx, tree_parsing::leaf_t & alpha_leaf,
-               vcl_size_t & A_idx, tree_parsing::leaf_t & A_leaf, vcl_size_t & B_idx, tree_parsing::leaf_t & B_leaf,
-               vcl_size_t & beta_idx, tree_parsing::leaf_t & beta_leaf)
+               vcl_size_t & C_idx, leaf_t & C_leaf, vcl_size_t & alpha_idx, leaf_t & alpha_leaf,
+               vcl_size_t & A_idx, leaf_t & A_leaf, vcl_size_t & B_idx, leaf_t & B_leaf,
+               vcl_size_t & beta_idx, leaf_t & beta_leaf)
     {
       using namespace tree_parsing;
       using namespace scheduler;

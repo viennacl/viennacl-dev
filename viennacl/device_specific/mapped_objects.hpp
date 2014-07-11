@@ -129,11 +129,11 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
+          std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, RHS_NODE_TYPE);
           std::string new_i = index.i + "+ ((" + rhs + "<0)?" + rhs + ":0)";
           std::string new_j = index.j + "- ((" + rhs + ">0)?" + rhs + ":0)";
           index_tuple new_index("min("+index.i+","+index.j+")", index.bound0);
-          std::string lhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          std::string lhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, 0, *info_.mapping, LHS_NODE_TYPE);
           return "((" + new_i + ")!=(" + new_j + "))?0:"+lhs;
         }
       public:
@@ -145,11 +145,11 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
+          std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, RHS_NODE_TYPE);
           std::string new_i = index.i + "- ((" + rhs + "<0)?" + rhs + ":0)";
           std::string new_j = index.i + "+ ((" + rhs + ">0)?" + rhs + ":0)";
           index_tuple new_index(new_i,index.bound0,new_j ,index.bound0);
-          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, 0, *info_.mapping, LHS_NODE_TYPE);
         }
       public:
         mapped_matrix_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
@@ -160,7 +160,7 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.j, index.bound1, index.i, index.bound0), 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.j, index.bound1, index.i, index.bound0), 0, *info_.mapping, LHS_NODE_TYPE);
         }
       public:
         mapped_trans(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
@@ -172,8 +172,8 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
-          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(idx,index.bound0, index.i, index.bound0), 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, RHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(idx,index.bound0, index.i, index.bound0), 0, *info_.mapping, LHS_NODE_TYPE);
         }
       public:
         mapped_matrix_row(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
@@ -184,8 +184,8 @@ namespace viennacl
       private:
         std::string generate_default(index_tuple const & index) const
         {
-          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, tree_parsing::RHS_NODE_TYPE);
-          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.i,index.bound0, idx, index.bound1), 0, *info_.mapping, tree_parsing::LHS_NODE_TYPE);
+          std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index, 0, *info_.mapping, RHS_NODE_TYPE);
+          return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.i,index.bound0, idx, index.bound1), 0, *info_.mapping, LHS_NODE_TYPE);
         }
       public:
         mapped_matrix_column(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }

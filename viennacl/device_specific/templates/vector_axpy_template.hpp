@@ -29,8 +29,7 @@
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/mapped_objects.hpp"
-#include "viennacl/device_specific/tree_parsing/read_write.hpp"
-#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
+#include "viennacl/device_specific/tree_parsing.hpp"
 #include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/utils.hpp"
 
@@ -79,18 +78,18 @@ namespace viennacl
 
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::RHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, RHS_NODE_TYPE);
         }
 
         //Generates all the expression, in order
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          stream << tree_parsing::evaluate_expression(*sit, sit->root(), index_tuple("i", "N"), 0, *mit, tree_parsing::PARENT_NODE_TYPE) << ";" << std::endl;
+          stream << tree_parsing::evaluate_expression(*sit, sit->root(), index_tuple("i", "N"), 0, *mit, PARENT_NODE_TYPE) << ";" << std::endl;
 
         //Write back
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, tree_parsing::LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, LHS_NODE_TYPE);
         }
 
         stream.dec_tab();

@@ -29,8 +29,7 @@
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/mapped_objects.hpp"
-#include "viennacl/device_specific/tree_parsing/read_write.hpp"
-#include "viennacl/device_specific/tree_parsing/evaluate_expression.hpp"
+#include "viennacl/device_specific/tree_parsing.hpp"
 #include "viennacl/device_specific/utils.hpp"
 
 #include "viennacl/device_specific/templates/template_base.hpp"
@@ -149,10 +148,10 @@ namespace viennacl{
             {
               viennacl::scheduler::statement const & statement = exprs[k]->statement();
               viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
-              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size1, "c", size2),stream,exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
+              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size1, "c", size2),stream,exprs[k]->mapping(), LHS_NODE_TYPE);
 
               if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size1), stream,exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
+                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size1), stream,exprs[k]->mapping(), RHS_NODE_TYPE);
             }
 
 
@@ -162,11 +161,11 @@ namespace viennacl{
               viennacl::scheduler::statement const & statement = exprs[k]->statement();
               vcl_size_t root_idx = exprs[k]->root_idx();
               scheduler::statement_node const & root_node = exprs[k]->root_node();
-              std::string value = tree_parsing::evaluate_expression(statement, root_idx, index_tuple("",""), 0, exprs[k]->mapping(), tree_parsing::LHS_NODE_TYPE);
+              std::string value = tree_parsing::evaluate_expression(statement, root_idx, index_tuple("",""), 0, exprs[k]->mapping(), LHS_NODE_TYPE);
               if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
               {
                 value += "*";
-                value += tree_parsing::evaluate_expression(statement, root_idx, index_tuple("",""), 0, exprs[k]->mapping(), tree_parsing::RHS_NODE_TYPE);
+                value += tree_parsing::evaluate_expression(statement, root_idx, index_tuple("",""), 0, exprs[k]->mapping(), RHS_NODE_TYPE);
               }
               compute_reduction(stream,"","",accs[k],value,rops[k]);
             }

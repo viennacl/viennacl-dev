@@ -35,10 +35,7 @@
 #include "viennacl/scheduler/forwards.h"
 
 #include "viennacl/device_specific/forwards.h"
-#include "viennacl/device_specific/tree_parsing/traverse.hpp"
-#include "viennacl/device_specific/tree_parsing/map.hpp"
-#include "viennacl/device_specific/tree_parsing/set_arguments.hpp"
-#include "viennacl/device_specific/tree_parsing/statement_representation.hpp"
+#include "viennacl/device_specific/tree_parsing.hpp"
 
 namespace viennacl
 {
@@ -48,7 +45,107 @@ namespace viennacl
 
     class template_base
     {
-    protected:
+
+      /** @brief Functor to map the statements to the types defined in mapped_objects.hpp */
+      class map_functor : public tree_parsing::traversal_functor
+      {
+
+          scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, vcl_size_t root_idx) const
+          {
+              scheduler::statement_node const * root_node = &statement->array()[root_idx];
+              while(root_node->lhs.numeric_type==scheduler::INVALID_NUMERIC_TYPE)
+                  root_node = &statement->array()[root_node->lhs.node_index];
+              return root_node->lhs.numeric_type;
+          }
+
+        public:
+          typedef tools::shared_ptr<mapped_object> result_type;
+
+          map_functor(symbolic_binder & binder, mapping_type & mapping) : binder_(binder), mapping_(mapping){ }
+
+          /** @brief Binary leaf */
+          template<class T>
+          result_type binary_leaf(scheduler::statement const * statement, vcl_size_t root_idx, mapping_type const * mapping) const
+          {
+            return result_type(new T(utils::numeric_type_to_string(numeric_type(statement,root_idx)), binder_.get(NULL), mapped_object::node_info(mapping, statement, root_idx)));
+          }
+
+          template<class ScalarType>
+          result_type operator()(ScalarType const & /*sca*l*/) const
+          {
+            return result_type(new mapped_host_scalar(utils::type_to_string<ScalarType>::value(), binder_.get(NULL)));
+          }
+
+          /** @brief Scalar mapping */
+          template<class ScalarType>
+          result_type operator()(scalar<ScalarType> const & scal) const
+          {
+            return result_type(new mapped_scalar(utils::type_to_string<ScalarType>::value(), binder_.get(&viennacl::traits::handle(scal))));
+          }
+
+          /** @brief Vector mapping */
+          template<class ScalarType>
+          result_type operator()(vector_base<ScalarType> const & vec) const
+          {
+            return result_type(new mapped_vector(utils::type_to_string<ScalarType>::value(), binder_.get(&viennacl::traits::handle(vec))));
+          }
+
+          /** @brief Implicit vector mapping */
+          template<class ScalarType>
+          result_type operator()(implicit_vector_base<ScalarType> const & /*vec*/) const
+          {
+            return result_type(new mapped_implicit_vector(utils::type_to_string<ScalarType>::value(), binder_.get(NULL)));
+          }
+
+          /** @brief Matrix mapping */
+          template<class ScalarType>
+          result_type operator()(matrix_base<ScalarType> const & mat) const
+          {
+            return result_type(new mapped_matrix(utils::type_to_string<ScalarType>::value(), binder_.get(&viennacl::traits::handle(mat)),
+                                                  viennacl::traits::row_major(mat)));
+          }
+
+          /** @brief Implicit matrix mapping */
+          template<class ScalarType>
+          result_type operator()(implicit_matrix_base<ScalarType> const & /*mat*/) const
+          {
+            return result_type(new mapped_implicit_matrix(utils::type_to_string<ScalarType>::value(), binder_.get(NULL)));
+          }
+
+          /** @brief Traversal functor */
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf_t) const {
+            mapping_type::key_type key(root_idx, leaf_t);
+            scheduler::statement_node const & root_node = statement.array()[root_idx];
+
+            if(leaf_t == LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+                 mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this)));
+            else if(leaf_t == RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+                 mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node.rhs, *this)));
+            else if( leaf_t== PARENT_NODE_TYPE)
+            {
+                if(root_node.op.type==scheduler::OPERATION_BINARY_VECTOR_DIAG_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_diag>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_DIAG_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_diag>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_ROW_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_row>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_COLUMN_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_column>(&statement, root_idx, &mapping_)));
+                else if(is_scalar_reduction(root_node))
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_scalar_reduction>(&statement, root_idx, &mapping_)));
+                else if(is_vector_reduction(root_node))
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_reduction>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_product>(&statement, root_idx, &mapping_)));
+                else if(root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE)
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_trans>(&statement, root_idx, &mapping_)));
+           }
+          }
+
+        private:
+          symbolic_binder & binder_;
+          mapping_type & mapping_;
+      };
 
       /** @brief functor for generating the prototype of a statement */
       class prototype_generation_traversal : public tree_parsing::traversal_functor
@@ -60,17 +157,104 @@ namespace viennacl
         public:
           prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping) : already_generated_(already_generated), str_(str),  mapping_(mapping){ }
 
-          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, tree_parsing::leaf_t leaf) const
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf) const
           {
               scheduler::statement_node const & root_node = statement.array()[root_idx];
-              if( (leaf==tree_parsing::LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                ||(leaf==tree_parsing::RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
+              if( (leaf==LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                ||(leaf==RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
               {
                 mapped_object * obj = mapping_.at(std::make_pair(root_idx,leaf)).get();
                 obj->append_kernel_arguments(already_generated_, str_);
               }
           }
       };
+
+      /** @brief functor for setting the arguments of a kernel */
+      class set_arguments_functor : public tree_parsing::traversal_functor
+      {
+        public:
+          typedef void result_type;
+
+          set_arguments_functor(symbolic_binder & binder, unsigned int & current_arg, viennacl::ocl::kernel & kernel) : binder_(binder), current_arg_(current_arg), kernel_(kernel){ }
+
+          template<class ScalarType>
+          result_type operator()(ScalarType const & scal) const {
+            typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
+            kernel_.arg(current_arg_++, cl_scalartype(scal));
+          }
+
+          /** @brief Scalar mapping */
+          template<class ScalarType>
+          result_type operator()(scalar<ScalarType> const & scal) const {
+            if(binder_.bind(&viennacl::traits::handle(scal)))
+              kernel_.arg(current_arg_++, scal.handle().opencl_handle());
+          }
+
+          /** @brief Vector mapping */
+          template<class ScalarType>
+          result_type operator()(vector_base<ScalarType> const & vec) const {
+            if(binder_.bind(&viennacl::traits::handle(vec)))
+            {
+              kernel_.arg(current_arg_++, vec.handle().opencl_handle());
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start(vec)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride(vec)));
+            }
+          }
+
+          /** @brief Implicit vector mapping */
+          template<class ScalarType>
+          result_type operator()(implicit_vector_base<ScalarType> const & vec) const
+          {
+            typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
+            kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
+            if(vec.has_index())
+              kernel_.arg(current_arg_++, cl_uint(vec.index()));
+          }
+
+          /** @brief Matrix mapping */
+          template<class ScalarType>
+          result_type operator()(matrix_base<ScalarType> const & mat) const
+          {
+            if(binder_.bind(&viennacl::traits::handle(mat)))
+            {
+              kernel_.arg(current_arg_++, mat.handle().opencl_handle());
+              if(mat.row_major())
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size2(mat)));
+              else
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size1(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+            }
+          }
+
+          /** @brief Implicit matrix mapping */
+          template<class ScalarType>
+          result_type operator()(implicit_matrix_base<ScalarType> const & mat) const
+          {
+            kernel_.arg(current_arg_++, typename viennacl::result_of::cl_type<ScalarType>::type(mat.value()));
+          }
+
+          /** @brief Traversal functor: */
+          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf_t) const
+          {
+            scheduler::statement_node const & root_node = statement.array()[root_idx];
+            if(leaf_t==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              utils::call_on_element(root_node.lhs, *this);
+            else if(leaf_t==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              utils::call_on_element(root_node.rhs, *this);
+          }
+
+        private:
+          symbolic_binder & binder_;
+          unsigned int & current_arg_;
+          viennacl::ocl::kernel & kernel_;
+      };
+
+
+
+    protected:
 
       /** @brief functor for generating the prototype of a statement */
       template<class T>
@@ -82,7 +266,7 @@ namespace viennacl
         public:
           set_simd_width_traversal(unsigned int simd_width, mapping_type const & mapping) : simd_width_(simd_width), mapping_(mapping) { }
 
-          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, tree_parsing::leaf_t leaf) const
+          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, leaf_t leaf) const
           {
             mapping_type::const_iterator it = mapping_.find(std::make_pair(root_idx, leaf));
             if(it!=mapping_.end())
@@ -104,6 +288,7 @@ namespace viennacl
       private:
         std::string message_;
       };
+
 
     public:
 
@@ -218,7 +403,7 @@ namespace viennacl
         std::vector<mapping_type> mapping(statements.data().size());
         tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::traverse(*sit, sit->root(), tree_parsing::map_functor(*binder,*mit), true);
+          tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
 
         //Generate Prototype
         std::string prototype;
@@ -263,7 +448,7 @@ namespace viennacl
           (*kit)->local_work_size(1,p_.local_size_1);
           configure_impl(current_idx, const_cast<viennacl::ocl::context &>(*program.p_context()), statements, **kit, current_arg);
           for(statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
-            tree_parsing::traverse(*itt, itt->root(), tree_parsing::set_arguments_functor(*binder,current_arg,**kit), true);
+            tree_parsing::traverse(*itt, itt->root(), set_arguments_functor(*binder,current_arg,**kit), true);
         }
 
         //Enqueue
