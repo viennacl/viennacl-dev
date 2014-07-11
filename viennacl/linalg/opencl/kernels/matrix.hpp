@@ -531,7 +531,7 @@ namespace viennacl
               generate_ambm_impl(source, mAXPY, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "ip_add_",device);
 
               source.append(matrix_axpy_template(mAXPY, "assign_cpu").generate(scheduler::preset::assign_cpu(&A, &M),device));
-              source.append(matrix_axpy_template(mAXPY, "diag_from_vector").generate(scheduler::preset::matrix_diag_from_vector(&x, &A, hi),device));
+              source.append(matrix_axpy_template(mAXPY, "matrix_diag_from_vector").generate(scheduler::preset::matrix_diag_from_vector(&x, &A, hi),device));
               source.append(vector_axpy_template(xAXPY, "matrix_row").generate(scheduler::preset::matrix_row(&x, &A, hui),device));
               source.append(vector_axpy_template(xAXPY, "matrix_column").generate(scheduler::preset::matrix_column(&x, &A, hui),device));
               source.append(vector_axpy_template(xAXPY, "matrix_diag_to_vector").generate(scheduler::preset::matrix_diag_to_vector(&x, &A, hi),device));
