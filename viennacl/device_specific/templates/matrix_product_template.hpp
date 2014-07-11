@@ -88,35 +88,49 @@ private:
     void check_invalid_impl(viennacl::ocl::device const & /*device*/) const
     {
         static const unsigned int alignment = 128;
-        bool res = false;
-        res |= alignment % p_.mL > 0;
-        res |= alignment % p_.kL > 0;
-        res |= alignment % p_.nL > 0;
-        res |= (p_.mS % p_.simd_width) > 0;
-        res |= (p_.nS % p_.simd_width) > 0;
-        res |= p_.mS > p_.mL;
-        res |= p_.nS > p_.nL;
-        res |= p_.kS > p_.kL;
-        res |= (!(A_trans_=='N' && B_trans_=='T') && p_.simd_width>1);
+
+        if(alignment % p_.mL > 0 || alignment % p_.kL > 0 || alignment % p_.nL > 0)
+          throw invalid_template_exception("Alignment must be a multiple of all mL, kL and nL");
+
+        if((p_.mS % p_.simd_width) > 0 || (p_.nS % p_.simd_width) > 0)
+          throw invalid_template_exception("mS and nS must both be multiples of simd_width");
+
+        if(p_.mS > p_.mL ||  p_.nS > p_.nL || p_.kS > p_.kL)
+          throw invalid_template_exception("mS, nS and kS must all be smaller than mL, nL and kL respectively");
+
+        if(!(A_trans_=='N' && B_trans_=='T') && p_.simd_width>1)
+          throw invalid_template_exception("simd_width > 1 is only supported for the NT layout");
+
         if(p_.use_A_local)
         {
             unsigned int bound1 = (A_trans_=='N')?p_.kL:p_.mL;
             unsigned int bound0 = (A_trans_=='N')?p_.mL:p_.kL;
 
-            res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
-            res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
+            if(p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0)
+              throw invalid_template_exception("Local fetch 1 must be a multiple of " + std::string((A_trans_=='N')?"kL":"mL") + "!\n");
+
+            if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
+              throw invalid_template_exception("Local fetch 0 must be a multiple of " + std::string((B_trans_=='N')?"mL":"kL") + "!\n");
+
         }
         if(p_.use_B_local)
         {
             unsigned int bound1 = (B_trans_=='T')?p_.kL:p_.nL;
             unsigned int bound0 = (B_trans_=='T')?p_.nL:p_.kL;
 
-            res |= p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0;
-            res |= p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0;
+            if(p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0)
+              throw invalid_template_exception("Local fetch 1 must be a multiple of " + std::string((B_trans_=='T')?"kL":"nL") + "!\n");
+
+            if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
+              throw invalid_template_exception("Local fetch 0 must be a multiple of " + std::string((B_trans_=='T')?"nL":"kL") + "!\n");
+
         }
 
         if(p_.use_A_local || p_.use_B_local)
-            res |= ((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1));
+        {
+            if((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1))
+             throw invalid_template_exception("The products of the local fetch sizes must be equal to the product of the local sizes!\n");
+        }
     }
 
 
@@ -501,12 +515,12 @@ private:
     }
 
 public:
-    matrix_product_template(matrix_product_template::parameters const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(parameters, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
+    matrix_product_template(matrix_product_template::parameters const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(p_, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
 
 private:
     const char A_trans_;
     const char B_trans_;
-    matrix_product_template::parameters const & p_;
+    matrix_product_template::parameters p_;
 };
 
 }

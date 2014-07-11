@@ -91,6 +91,20 @@ namespace viennacl
           }
       };
 
+      class invalid_template_exception : public std::exception
+      {
+      public:
+        invalid_template_exception() : message_() {}
+        invalid_template_exception(std::string message) :
+          message_("ViennaCL: Internal error: The generator cannot apply the given template to the given statement: " + message + "\n"
+                   "If you are using a builtin template, please report on viennacl-support@lists.sourceforge.net! We will provide a fix as soon as possible\n"
+                   "If you are using your own template, please try using other parameters") {}
+        virtual const char* what() const throw() { return message_.c_str(); }
+        virtual ~invalid_template_exception() throw() {}
+      private:
+        std::string message_;
+      };
+
     public:
 
       struct parameters
@@ -105,25 +119,46 @@ namespace viennacl
 
     private:
 
-      class invalid_template_exception : public std::exception
-      {
-      public:
-        invalid_template_exception() : message_() {}
-        invalid_template_exception(std::string message) : message_("ViennaCL: Internal error: The generator cannot apply the given template to the given statement: " + message) {}
-        virtual const char* what() const throw() { return message_.c_str(); }
-        virtual ~invalid_template_exception() throw() {}
-      private:
-        std::string message_;
-      };
+
 
       virtual void check_invalid_impl(viennacl::ocl::device const & /*dev*/) const { }
 
       virtual unsigned int n_lmem_elements() const { return 0; }
 
+
+      /** @brief Generates the body of the associated kernel function */
+      virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
+      /** @brief generates the arguments that are global to the kernel (different from the object-specific arguments) */
+      virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
+      /** @brief configure the local sizes and enqueue the arguments of the kernel */
+      virtual void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
+      /** @brief Returns the effective simd width for a given mapped_object */
+      virtual void set_simd_widths(scheduler::statement const & s, mapping_type const & m)
+      {
+        tree_parsing::traverse(s, s.root(), set_simd_width_traversal<mapped_buffer>(p_.simd_width, m), true);
+      }
+
+    protected:
+
+      static scheduler::lhs_rhs_element const & lhs_most(scheduler::statement const & statement)
+      {
+        scheduler::statement::container_type const & array = statement.array();
+        scheduler::statement_node const * current = &array[statement.root()];
+        while(current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          current = &array[current->lhs.node_index];
+        return current->lhs;
+      }
+
+    public:
+      /** @brief The constructor */
+      template_base(template_base::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : p_(parameters), kernel_prefix_(kernel_prefix), binding_policy_(binding_policy){ }
+
       /** @brief returns whether or not the profile has undefined behavior on particular device */
-      void check_invalid(viennacl::ocl::device const & device, unsigned int scalartype_size) const
+      void check_statements(statements_container const & statements, viennacl::ocl::device const & device) const
       {
         using namespace viennacl::tools;
+
+        unsigned int scalartype_size = utils::size_of(lhs_most(statements.data().front()).numeric_type);
 
         //Query device informations
         size_t lmem_available = static_cast<size_t>(device.local_mem_size());
@@ -168,32 +203,6 @@ namespace viennacl
         check_invalid_impl(device);
       }
 
-      /** @brief Generates the body of the associated kernel function */
-      virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
-      /** @brief generates the arguments that are global to the kernel (different from the object-specific arguments) */
-      virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
-      /** @brief configure the local sizes and enqueue the arguments of the kernel */
-      virtual void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
-      /** @brief Returns the effective simd width for a given mapped_object */
-      virtual void set_simd_widths(scheduler::statement const & s, mapping_type const & m)
-      {
-        tree_parsing::traverse(s, s.root(), set_simd_width_traversal<mapped_buffer>(p_.simd_width, m), true);
-      }
-
-    protected:
-
-      static scheduler::lhs_rhs_element const & lhs_most(scheduler::statement const & statement)
-      {
-        scheduler::statement::container_type const & array = statement.array();
-        scheduler::statement_node const * current = &array[statement.root()];
-        while(current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          current = &array[current->lhs.node_index];
-        return current->lhs;
-      }
-
-    public:
-      /** @brief The constructor */
-      template_base(template_base::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : p_(parameters), kernel_prefix_(kernel_prefix), binding_policy_(binding_policy){ }
 
       /** @brief Generates the code associated with this profile onto the provided stream */
       std::string generate(statements_container const & statements, viennacl::ocl::device const & device)
@@ -201,7 +210,7 @@ namespace viennacl
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::iterator mit;
 
-        check_invalid(device, utils::size_of(lhs_most(statements.data().front()).numeric_type));
+        check_statements(statements, device);
 
         utils::kernel_generation_stream stream;
 

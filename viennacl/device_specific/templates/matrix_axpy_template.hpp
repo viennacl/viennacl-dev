@@ -122,12 +122,12 @@ namespace viennacl{
 
 
     public:
-      matrix_axpy_template(matrix_axpy_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, kernel_prefix, binding_policy), up_to_internal_size_(false), p_(parameters){ }
+      matrix_axpy_template(matrix_axpy_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), up_to_internal_size_(false), p_(parameters){ }
 
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
     private:
       bool up_to_internal_size_;
-      matrix_axpy_template::parameters const & p_;
+      matrix_axpy_template::parameters p_;
     };
 
   }

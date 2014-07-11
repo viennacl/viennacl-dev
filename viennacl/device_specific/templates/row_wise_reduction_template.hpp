@@ -217,11 +217,11 @@ namespace viennacl{
       }
 
     public:
-      row_wise_reduction_template(row_wise_reduction_template::parameters const & parameters, char A_trans, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, kernel_prefix, binding_policy), A_trans_(A_trans), p_(parameters){ }
+      row_wise_reduction_template(row_wise_reduction_template::parameters const & parameters, char A_trans, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), A_trans_(A_trans), p_(parameters){ }
 
     private:
       const char A_trans_;
-      row_wise_reduction_template::parameters const & p_;
+      row_wise_reduction_template::parameters p_;
     };
 
   }

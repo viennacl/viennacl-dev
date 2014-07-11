@@ -369,10 +369,10 @@ namespace viennacl
 
 
     public:
-      reduction_template(reduction_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(parameters, kernel_prefix, binding_policy), p_(parameters){ }
+      reduction_template(reduction_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), p_(parameters){ }
 
     private:
-      reduction_template::parameters const & p_;
+      reduction_template::parameters p_;
       mutable std::vector< viennacl::ocl::handle<cl_mem> > tmp_;
       mutable std::vector< viennacl::ocl::handle<cl_mem> > tmpidx_;
     };
