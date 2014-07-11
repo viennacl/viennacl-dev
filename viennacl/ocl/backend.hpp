@@ -50,16 +50,21 @@ namespace viennacl
         {
           if (!initialized_[id])
           {
-            //std::cout << "Initializing context no. " << id << std::endl;
+            #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+            std::cout << "ViennaCL: Initializing context no. " << id << std::endl;
+            #endif
+
             contexts_[id].init();
             //create one queue per device:
             std::vector<viennacl::ocl::device> devices = contexts_[id].devices();
             for (vcl_size_t j = 0; j<devices.size(); ++j)
               contexts_[id].add_queue(devices[j]);
             initialized_[id] = true;
-            /*
-            std::cout << "Context no. " << id << " initialized with " << devices.size() << " devices" << std::endl;
-            std::cout << "Device id: " << devices[0].id() << std::endl; */
+
+            #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+            std::cout << "ViennaCL: Context no. " << id << " initialized with " << devices.size() << " devices" << std::endl;
+            std::cout << "ViennaCL: Device id: " << devices[0].id() << std::endl;
+            #endif
           }
           return contexts_[id];
         }
@@ -67,6 +72,9 @@ namespace viennacl
         /** @brief Returns the current active context */
         static viennacl::ocl::context & current_context()
         {
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Getting current_context with id " << current_context_id_ << std::endl;
+          #endif
           return backend<dummy>::context(current_context_id_);
         }
 
