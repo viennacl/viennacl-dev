@@ -359,6 +359,9 @@ namespace viennacl
         viennacl::ocl::program & add_program(cl_program p, std::string const & prog_name)
         {
           programs_.push_back(viennacl::ocl::program(p, *this, prog_name));
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Adding program '" << prog_name << "' with cl_program to context " << h_ << std::endl;
+          #endif
           return programs_.back();
         }
 
@@ -371,7 +374,7 @@ namespace viennacl
           cl_int err;
 
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
-          std::cout << "ViennaCL: Adding program '" << prog_name << "' to context " << h_ << std::endl;
+          std::cout << "ViennaCL: Adding program '" << prog_name << "' with source to context " << h_ << std::endl;
           #endif
 
           cl_program temp = 0;
@@ -509,7 +512,7 @@ namespace viennacl
             if (it->name() == name)
               return *it;
           }
-          std::cerr << "Could not find program '" << name << "'" << std::endl;
+          std::cerr << "ViennaCL: Could not find program '" << name << "'" << std::endl;
           throw "In class 'context': name invalid in get_program()";
           //return programs_[0];  //return a defined object
         }
@@ -528,7 +531,7 @@ namespace viennacl
             if (it->name() == name)
               return *it;
           }
-          std::cerr << "Could not find program '" << name << "'" << std::endl;
+          std::cerr << "ViennaCL: Could not find program '" << name << "'" << std::endl;
           throw "In class 'context': name invalid in get_program()";
           //return programs_[0];  //return a defined object
         }
@@ -547,7 +550,14 @@ namespace viennacl
         /** @brief Returns the program with the provided id */
         viennacl::ocl::program & get_program(vcl_size_t id)
         {
-          assert(id < programs_.size() && bool("In class 'context': id invalid in get_program()"));
+          #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+          std::cout << "ViennaCL: Getting program '" << id << "' from context " << h_ << std::endl;
+          std::cout << "ViennaCL: There are " << programs_.size() << " programs" << std::endl;
+          #endif
+
+          if(id >= programs_.size())
+            throw invalid_program();
+
           return programs_[id];
         }
 

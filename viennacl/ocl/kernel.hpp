@@ -74,7 +74,7 @@ namespace viennacl
       kernel() : handle_(), p_program_(NULL), p_context_(NULL), name_()
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Creating kernel object (default CTOR)" << std::endl;
+        std::cout << "ViennaCL: Creating kernel object (default CTOR): " << name_ << std::endl;
         #endif
       }
 
@@ -82,7 +82,7 @@ namespace viennacl
         : handle_(kernel_handle, kernel_context), p_program_(&kernel_program), p_context_(&kernel_context), name_(name)
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Creating kernel object (full CTOR)" << std::endl;
+        std::cout << "ViennaCL: Creating kernel object (full CTOR): " << name_ << std::endl;
         #endif
         set_work_size_defaults();
       }
@@ -91,7 +91,7 @@ namespace viennacl
         : handle_(other.handle_), p_program_(other.p_program_), p_context_(other.p_context_), name_(other.name_)
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Creating kernel object (Copy CTOR)" << std::endl;
+        std::cout << "ViennaCL: Creating kernel object (Copy CTOR): " << name_ << std::endl;
         #endif
         local_work_size_[0] = other.local_work_size_[0];
         local_work_size_[1] = other.local_work_size_[1];
@@ -105,7 +105,7 @@ namespace viennacl
       viennacl::ocl::kernel & operator=(const kernel & other)
       {
         #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Assigning kernel object" << std::endl;
+        std::cout << "ViennaCL: Assigning kernel object: " << other.name_ << std::endl;
         #endif
         handle_ = other.handle_;
         p_program_ = other.p_program_;
