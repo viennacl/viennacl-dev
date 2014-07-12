@@ -5,9 +5,6 @@
 
 #include "viennacl/vector_proxy.hpp"
 
-#include "viennacl/device_specific/database.hpp"
-#include "viennacl/device_specific/generate.hpp"
-
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/scheduler/io.hpp"
 #include "viennacl/scheduler/preset.hpp"
@@ -15,6 +12,9 @@
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
+
+#include "viennacl/device_specific/builtin_database/vector_axpy.hpp"
+#include "viennacl/device_specific/builtin_database/reduction.hpp"
 
 /** @file viennacl/linalg/opencl/kernels/vector.hpp
  *  @brief OpenCL kernel file for vector operations */
@@ -24,6 +24,7 @@ namespace viennacl
   {
     namespace opencl
     {
+
       namespace kernels
       {
 
@@ -101,15 +102,21 @@ namespace viennacl
             return viennacl::ocl::type_to_string<TYPE>::apply() + "_vector";
           }
 
+
           static void init(viennacl::ocl::context & ctx)
           {
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
+              using namespace device_specific::builtin_database;
+
+
               viennacl::ocl::device const & device = ctx.current_device();
-              vector_axpy_template::parameters const & axpy_parameters = database::get<TYPE>(database::vector_axpy, device);
-              reduction_template::parameters const & reduction_parameters = database::get<TYPE>(database::reduction, device);
+
+              vector_axpy_template::parameters vector_axpy_params = device_specific::builtin_database::vector_axpy_params<TYPE>(device);
+              reduction_template::parameters reduction_params = device_specific::builtin_database::reduction_params<TYPE>(device);
+
 
               std::string source;
               source.reserve(8192);
@@ -125,21 +132,21 @@ namespace viennacl
               TYPE ha;
               TYPE hb;
 
-              generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db, "assign_", device);
-              generate_avbv_impl(source, axpy_parameters, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db, "ip_add_", device);
+              generate_avbv_impl(source, vector_axpy_params, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db, "assign_", device);
+              generate_avbv_impl(source, vector_axpy_params, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db, "ip_add_", device);
 
-              source.append(vector_axpy_template(axpy_parameters, "plane_rotation").generate(scheduler::preset::plane_rotation(&x, &y, &ha, &hb), device));
-              source.append(vector_axpy_template(axpy_parameters, "swap").generate(scheduler::preset::swap(&x, &y), device));
-              source.append(vector_axpy_template(axpy_parameters, "assign_cpu").generate(scheduler::preset::assign_cpu(&x, &scalary), device));
+              source.append(vector_axpy_template(vector_axpy_params, "plane_rotation").generate(scheduler::preset::plane_rotation(&x, &y, &ha, &hb), device));
+              source.append(vector_axpy_template(vector_axpy_params, "swap").generate(scheduler::preset::swap(&x, &y), device));
+              source.append(vector_axpy_template(vector_axpy_params, "assign_cpu").generate(scheduler::preset::assign_cpu(&x, &scalary), device));
 
-              generate_inner_prod_impl(source, reduction_parameters, 1, &x, &y, &da, "inner_prod", device);
+              generate_inner_prod_impl(source, reduction_params, 1, &x, &y, &da, "inner_prod", device);
 
-              source.append(reduction_template(reduction_parameters, "norm_1").generate(scheduler::preset::norm_1(&da, &x), device));
+              source.append(reduction_template(reduction_params, "norm_1").generate(scheduler::preset::norm_1(&da, &x), device));
               if(is_floating_point<TYPE>::value)
-                source.append(reduction_template(reduction_parameters, "norm_2", BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&da, &x), device)); //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
-              source.append(reduction_template(reduction_parameters, "norm_inf").generate(scheduler::preset::norm_inf(&da, &x), device));
-              source.append(reduction_template(reduction_parameters, "index_norm_inf").generate(scheduler::preset::index_norm_inf(&da, &x), device));
-              source.append(reduction_template(reduction_parameters, "sum").generate(scheduler::preset::sum(&da, &x), device));
+                source.append(reduction_template(reduction_params, "norm_2", BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&da, &x), device)); //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
+              source.append(reduction_template(reduction_params, "norm_inf").generate(scheduler::preset::norm_inf(&da, &x), device));
+              source.append(reduction_template(reduction_params, "index_norm_inf").generate(scheduler::preset::index_norm_inf(&da, &x), device));
+              source.append(reduction_template(reduction_params, "sum").generate(scheduler::preset::sum(&da, &x), device));
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO
@@ -177,7 +184,7 @@ namespace viennacl
             {
               viennacl::ocl::device const & device = ctx.current_device();
 
-              reduction_template::parameters const & reduction_parameters = database::get<TYPE>(database::reduction, device);
+              reduction_template::parameters reduction_params = device_specific::builtin_database::reduction_params<TYPE>(device);
 
               std::string source;
               source.reserve(8192);
@@ -190,11 +197,11 @@ namespace viennacl
               viennacl::vector<TYPE> res;
               viennacl::vector_range< viennacl::vector_base<TYPE> > da(res, viennacl::range(0,1));
 
-              generate_inner_prod_impl(source, reduction_parameters, 1, &x, &y, &da, "inner_prod_1", device);
-              generate_inner_prod_impl(source, reduction_parameters, 2, &x, &y, &da, "inner_prod_2", device);
-              generate_inner_prod_impl(source, reduction_parameters, 3, &x, &y, &da, "inner_prod_3", device);
-              generate_inner_prod_impl(source, reduction_parameters, 4, &x, &y, &da, "inner_prod_4", device);
-              generate_inner_prod_impl(source, reduction_parameters, 8, &x, &y, &da, "inner_prod_8", device);
+              generate_inner_prod_impl(source, reduction_params, 1, &x, &y, &da, "inner_prod_1", device);
+              generate_inner_prod_impl(source, reduction_params, 2, &x, &y, &da, "inner_prod_2", device);
+              generate_inner_prod_impl(source, reduction_params, 3, &x, &y, &da, "inner_prod_3", device);
+              generate_inner_prod_impl(source, reduction_params, 4, &x, &y, &da, "inner_prod_4", device);
+              generate_inner_prod_impl(source, reduction_params, 8, &x, &y, &da, "inner_prod_8", device);
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

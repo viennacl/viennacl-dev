@@ -74,27 +74,6 @@ namespace viennacl
         ocl::device const & current_device(T const & t)
         {  return traits::opencl_handle(t).context().current_device(); }
 
-        template<class T>
-        device_specific::vector_axpy_template::parameters vector_axpy_params(ocl::device const & device)
-        { return device_specific::database::get<T>(device_specific::database::vector_axpy, device); }
-
-        template<class T>
-        device_specific::reduction_template::parameters reduction_params(ocl::device const & device)
-        { return device_specific::database::get<T>(device_specific::database::reduction, device); }
-
-        template<class T>
-        device_specific::matrix_axpy_template::parameters matrix_axpy_params(ocl::device const & device)
-        { return device_specific::database::get<T>(device_specific::database::matrix_axpy, device); }
-
-        template<class T>
-        device_specific::row_wise_reduction_template::parameters row_wise_reduction_params(ocl::device const & device, bool A_trans)
-        {
-          if(A_trans)
-            return device_specific::database::get<T>(device_specific::database::row_wise_reduction, device);
-          else
-            return device_specific::database::get<T>(device_specific::database::trans_row_wise_reduction, device);
-        }
-
         inline std::string op_to_string(op_abs)   { return "abs";   }
         inline std::string op_to_string(op_acos)  { return "acos";  }
         inline std::string op_to_string(op_asin)  { return "asin";  }

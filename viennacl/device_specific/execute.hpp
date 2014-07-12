@@ -29,7 +29,7 @@
 
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/device_specific/forwards.h"
-#include "viennacl/device_specific/database.hpp"
+#include "viennacl/device_specific/templates/template_base.hpp"
 #include "viennacl/device_specific/tree_parsing.hpp"
 
 

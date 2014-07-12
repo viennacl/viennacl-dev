@@ -1,13 +1,15 @@
 #ifndef VIENNACL_LINALG_OPENCL_KERNELS_MATRIX_HPP
 #define VIENNACL_LINALG_OPENCL_KERNELS_MATRIX_HPP
 
-#include "viennacl/device_specific/templates/matrix_axpy_template.hpp"
-#include "viennacl/device_specific/database.hpp"
 #include "viennacl/scheduler/preset.hpp"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
+
+#include "viennacl/device_specific/builtin_database/vector_axpy.hpp"
+#include "viennacl/device_specific/builtin_database/matrix_axpy.hpp"
+#include "viennacl/device_specific/builtin_database/row_wise_reduction.hpp"
 
 /** @file viennacl/linalg/opencl/kernels/matrix.hpp
  *  @brief Runtime generation of OpenCL kernels for matrix operations */
@@ -493,6 +495,8 @@ namespace viennacl
 
           static void init(viennacl::ocl::context & ctx)
           {
+            using namespace device_specific::builtin_database;
+
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
             std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
             bool is_row_major = viennacl::is_row_major<F>::value;
@@ -502,15 +506,15 @@ namespace viennacl
             {
               viennacl::ocl::device const & device = ctx.current_device();
 
-              matrix_axpy_template::parameters const & mAXPY = device_specific::database::get<NumericT>(database::matrix_axpy, device);
-              vector_axpy_template::parameters const & xAXPY = device_specific::database::get<NumericT>(database::vector_axpy, device);
-              row_wise_reduction_template::parameters const & redN = device_specific::database::get<NumericT>(database::row_wise_reduction, device);
-              row_wise_reduction_template::parameters const & redT = device_specific::database::get<NumericT>(database::trans_row_wise_reduction, device);
-
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
+
+              matrix_axpy_template::parameters matrix_axpy_params = device_specific::builtin_database::matrix_axpy_params<NumericT>(device);
+              row_wise_reduction_template::parameters row_wise_reduction_params_N = device_specific::builtin_database::row_wise_reduction_params<NumericT>(device, 'N');
+              row_wise_reduction_template::parameters row_wise_reduction_params_T = device_specific::builtin_database::row_wise_reduction_params<NumericT>(device, 'T');
+              vector_axpy_template::parameters vector_axpy_params = device_specific::builtin_database::vector_axpy_params<NumericT>(device);
 
               viennacl::vector<NumericT> x;
               viennacl::vector<NumericT> y;
@@ -527,22 +531,22 @@ namespace viennacl
               unsigned int hui = 0;
 
               // fully parametrized kernels:
-              generate_ambm_impl(source, mAXPY, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "assign_",device);
-              generate_ambm_impl(source, mAXPY, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "ip_add_",device);
+              generate_ambm_impl(source, matrix_axpy_params, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "assign_",device);
+              generate_ambm_impl(source, matrix_axpy_params, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "ip_add_",device);
 
-              source.append(matrix_axpy_template(mAXPY, "assign_cpu").generate(scheduler::preset::assign_cpu(&A, &M),device));
-              source.append(matrix_axpy_template(mAXPY, "matrix_diag_from_vector").generate(scheduler::preset::matrix_diag_from_vector(&x, &A, hi),device));
-              source.append(vector_axpy_template(xAXPY, "matrix_row").generate(scheduler::preset::matrix_row(&x, &A, hui),device));
-              source.append(vector_axpy_template(xAXPY, "matrix_column").generate(scheduler::preset::matrix_column(&x, &A, hui),device));
-              source.append(vector_axpy_template(xAXPY, "matrix_diag_to_vector").generate(scheduler::preset::matrix_diag_to_vector(&x, &A, hi),device));
-              source.append(vector_axpy_template(xAXPY, "diagonal_assign_cpu").generate(scheduler::preset::diagonal_assign_cpu(&A, &sx),device));
+              source.append(matrix_axpy_template(matrix_axpy_params, "assign_cpu").generate(scheduler::preset::assign_cpu(&A, &M),device));
+              source.append(matrix_axpy_template(matrix_axpy_params, "matrix_diag_from_vector").generate(scheduler::preset::matrix_diag_from_vector(&x, &A, hi),device));
+              source.append(vector_axpy_template(vector_axpy_params, "matrix_row").generate(scheduler::preset::matrix_row(&x, &A, hui),device));
+              source.append(vector_axpy_template(vector_axpy_params, "matrix_column").generate(scheduler::preset::matrix_column(&x, &A, hui),device));
+              source.append(vector_axpy_template(vector_axpy_params, "matrix_diag_to_vector").generate(scheduler::preset::matrix_diag_to_vector(&x, &A, hi),device));
+              source.append(vector_axpy_template(vector_axpy_params, "diagonal_assign_cpu").generate(scheduler::preset::diagonal_assign_cpu(&A, &sx),device));
 
               // kernels with mostly predetermined skeleton:
               generate_scaled_rank1_update(source, numeric_string, is_row_major, true);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, false);
 
-              source.append(row_wise_reduction_template(redT, 'T', "mat_vec_T").generate(scheduler::preset::mat_vec_prod(&A, true, &x, &y), device));
-              source.append(row_wise_reduction_template(redN, 'N', "mat_vec_N").generate(scheduler::preset::mat_vec_prod(&A, false, &x, &y), device));
+              source.append(row_wise_reduction_template(row_wise_reduction_params_T, 'N', "mat_vec_T").generate(scheduler::preset::mat_vec_prod(&A, true, &x, &y), device));
+              source.append(row_wise_reduction_template(row_wise_reduction_params_N, 'T', "mat_vec_N").generate(scheduler::preset::mat_vec_prod(&A, false, &x, &y), device));
 
               if (numeric_string == "float" || numeric_string == "double")
               {
