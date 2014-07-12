@@ -37,7 +37,6 @@ namespace viennacl
 
           static void init(viennacl::ocl::context & ctx)
           {
-            using namespace device_specific;
             using namespace scheduler;
             using device_specific::tree_parsing::operator_string;
 
@@ -48,13 +47,15 @@ namespace viennacl
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
+              using namespace device_specific;
+
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
               viennacl::ocl::device const & device = ctx.current_device();
 
-              matrix_axpy_template::parameters matrix_axpy_params = device_specific::builtin_database::matrix_axpy_params<NumericT>(device);
+              matrix_axpy_template::parameters matrix_axpy_params = builtin_database::matrix_axpy_params<NumericT>(device);
 
               viennacl::matrix<NumericT, F> A;
               viennacl::matrix<NumericT, F> B;

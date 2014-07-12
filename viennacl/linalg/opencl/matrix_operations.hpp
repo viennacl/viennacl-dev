@@ -516,8 +516,6 @@ namespace viennacl
         }
         else
         {
-          using namespace viennacl::device_specific::builtin_database;
-
           viennacl::ocl::device const & device = traits::opencl_handle(C).context().current_device();
 
           bool effective_A_trans = A_trans ^ A.row_major();

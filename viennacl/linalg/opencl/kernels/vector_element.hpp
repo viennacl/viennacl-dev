@@ -33,8 +33,6 @@ namespace viennacl
 
           static void init(viennacl::ocl::context & ctx)
           {
-            using namespace device_specific;
-
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
             std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
 
@@ -42,13 +40,14 @@ namespace viennacl
             if (!init_done[ctx.handle().get()])
             {
               using namespace scheduler;
+              using namespace device_specific;
               using device_specific::tree_parsing::operator_string;
 
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::device const & device = ctx.current_device();
-              vector_axpy_template::parameters vector_axpy_params = device_specific::builtin_database::vector_axpy_params<TYPE>(device);
+              vector_axpy_template::parameters vector_axpy_params = builtin_database::vector_axpy_params<TYPE>(device);
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
               viennacl::vector<TYPE> x;
