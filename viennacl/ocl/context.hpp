@@ -63,23 +63,6 @@ namespace viennacl
                     pf_index_(0),
                     current_queue_id_(0) {}
 
-      context(const context& other) : initialized_(other.initialized_),
-                                      device_type_(other.device_type_),
-                                      h_(other.h_),
-                                      devices_(other.devices_),
-                                      current_device_id_(other.current_device_id_),
-                                      default_device_num_(other.default_device_num_),
-                                      programs_(other.programs_),
-                                      queues_(other.queues_),
-                                      build_options_(other.build_options_),
-          pf_index_(other.pf_index_), current_queue_id_(other.current_queue_id_)
-      {
-      #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
-      std::cout<< "ViennaCL: Creating new context (copy CTOR) with handle " << h_ << std::endl;
-      #endif
-      };
-
-
         //////// Get and set default number of devices per context */
         /** @brief Returns the maximum number of devices to be set up for the context */
         vcl_size_t default_device_num() const { return default_device_num_; }
