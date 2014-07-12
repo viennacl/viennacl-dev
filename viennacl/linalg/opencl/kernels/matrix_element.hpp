@@ -9,7 +9,7 @@
 
 #include "viennacl/scheduler/preset.hpp"
 
-#include "viennacl/device_specific/database.hpp"
+#include "viennacl/device_specific/builtin_database/matrix_axpy.hpp"
 
 /** @file viennacl/linalg/opencl/kernels/matrix_element.hpp
  *  @brief OpenCL kernel file for element-wise matrix operations */
@@ -37,7 +37,6 @@ namespace viennacl
 
           static void init(viennacl::ocl::context & ctx)
           {
-            using namespace device_specific;
             using namespace scheduler;
             using device_specific::tree_parsing::operator_string;
 
@@ -48,18 +47,21 @@ namespace viennacl
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
+              using namespace device_specific;
+
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
               viennacl::ocl::device const & device = ctx.current_device();
-              matrix_axpy_template::parameters params = database::get<NumericT>(database::matrix_axpy, device);
+
+              matrix_axpy_template::parameters matrix_axpy_params = builtin_database::matrix_axpy_params<NumericT>(device);
 
               viennacl::matrix<NumericT, F> A;
               viennacl::matrix<NumericT, F> B;
               viennacl::matrix<NumericT, F> C;
 
-#define ADD_UNARY(TYPE) source.append(matrix_axpy_template(params,operator_string(TYPE)).generate(scheduler::preset::unary_element_op(&A, &B, TYPE), device))
+#define ADD_UNARY(TYPE) source.append(matrix_axpy_template(matrix_axpy_params,operator_string(TYPE)).generate(scheduler::preset::unary_element_op(&A, &B, TYPE), device))
               if (numeric_string == "float" || numeric_string == "double")
               {
                 ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
@@ -86,7 +88,7 @@ namespace viennacl
 #undef ADD_UNARY
 
               // binary operations
-#define ADD_BINARY(TYPE) source.append(matrix_axpy_template(params,operator_string(TYPE)).generate(scheduler::preset::binary_element_op(&A, &B, &C, TYPE), device))
+#define ADD_BINARY(TYPE) source.append(matrix_axpy_template(matrix_axpy_params,operator_string(TYPE)).generate(scheduler::preset::binary_element_op(&A, &B, &C, TYPE), device))
               ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
               ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
               if (numeric_string == "float" || numeric_string == "double")

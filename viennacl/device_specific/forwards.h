@@ -127,17 +127,17 @@ namespace viennacl{
     }
 
 
-    namespace tree_parsing{
-        enum leaf_t{
-          LHS_NODE_TYPE,
-          PARENT_NODE_TYPE,
-          RHS_NODE_TYPE
-        };
-    }
+    enum leaf_t
+    {
+      LHS_NODE_TYPE,
+      PARENT_NODE_TYPE,
+      RHS_NODE_TYPE
+    };
+
     class mapped_object;
     class template_base;
 
-    typedef std::pair<vcl_size_t, tree_parsing::leaf_t> mapping_key;
+    typedef std::pair<vcl_size_t, leaf_t> mapping_key;
     typedef std::map<mapping_key, tools::shared_ptr<mapped_object> > mapping_type;
 
 
@@ -147,9 +147,6 @@ namespace viennacl{
       inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect);
 
       inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, index_tuple const & index, unsigned int simd_element, mapping_type const & mapping, leaf_t initial_leaf);
-
-      class map_functor;
-
     }
 
     using scheduler::INT_TYPE;
@@ -162,59 +159,6 @@ namespace viennacl{
     typedef cl_uint vendor_id_type;
     typedef cl_device_type device_type;
     typedef std::string device_name_type;
-
-    template<class ParamT>
-    class database_type
-    {
-    public:
-
-      //Because it would be too easy to use nested maps directly.
-      //THANKS, VISUAL STUDIO.
-      struct expression_t{ typedef std::map<scheduler::statement_node_numeric_type, ParamT> map_t; map_t d; };
-      struct device_name_t{ typedef std::map<device_name_type, expression_t> map_t; map_t d; };
-      struct device_architecture_t{ typedef std::map<ocl::device_architecture_family, device_name_t> map_t; map_t d; };
-      struct device_type_t{ typedef std::map<device_type, device_architecture_t> map_t; map_t d; };
-      struct type{ typedef std::map<vendor_id_type, device_type_t> map_t; map_t d; };
-      type map;
-
-      database_type(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4, ParamT const & p5)
-      {
-        map.d[p0].d[p1].d[p2].d[p3].d.insert(std::make_pair(p4, p5));
-      }
-
-      database_type<ParamT> & operator()(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4, ParamT const & p5)
-      {
-        map.d[p0].d[p1].d[p2].d[p3].d.insert(std::make_pair(p4, p5));
-         return *this;
-      }
-
-//      database_type<ParamT> & add_32bits(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, ParamT const & p5)
-//      {
-//          return (*this)(p0, p1, p2, p3, scheduler::INT_TYPE, p5)
-//                        (p0, p1, p2, p3, scheduler::UINT_TYPE, p5)
-//                        (p0, p1, p2, p3, scheduler::FLOAT_TYPE, p5);
-//      }
-
-//      database_type<ParamT> & add_64bits(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, ParamT const & p5)
-//      {
-//          return (*this)(p0, p1, p2, p3, scheduler::LONG_TYPE, p5)
-//                        (p0, p1, p2, p3, scheduler::ULONG_TYPE, p5)
-//                        (p0, p1, p2, p3, scheduler::DOUBLE_TYPE, p5);
-//      }
-
-      ParamT const & at(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4) const
-      {
-        return map.d.at(p0).d.at(p1).d.at(p2).d.at(p3).d.at(p4);
-      }
-
-
-    };
-
-    namespace database{
-      using scheduler::FLOAT_TYPE;
-      using scheduler::DOUBLE_TYPE;
-      using namespace viennacl::ocl;
-    }
 
     class symbolic_binder{
     public:
@@ -255,6 +199,9 @@ namespace viennacl{
       else
         return tools::shared_ptr<symbolic_binder>(new bind_all_unique());
     }
+
+    template<char C>
+    struct char_to_type{ };
 
     class statements_container
     {

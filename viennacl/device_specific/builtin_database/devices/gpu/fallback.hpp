@@ -1,0 +1,73 @@
+#ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_DEVICES_GPU_DEFAULT_HPP_
+#define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_DEVICES_GPU_DEFAULT_HPP_
+
+#include "viennacl/device_specific/forwards.h"
+#include "viennacl/device_specific/builtin_database/common.hpp"
+
+#include "viennacl/device_specific/templates/vector_axpy_template.hpp"
+#include "viennacl/device_specific/templates/reduction_template.hpp"
+#include "viennacl/device_specific/templates/matrix_axpy_template.hpp"
+#include "viennacl/device_specific/templates/row_wise_reduction_template.hpp"
+#include "viennacl/device_specific/templates/matrix_product_template.hpp"
+
+namespace viennacl{
+namespace device_specific{
+namespace builtin_database{
+namespace devices{
+namespace gpu{
+namespace fallback{
+
+  inline void add_4B(database_type<vector_axpy_template::parameters> & db)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", vector_axpy_template::parameters(1,128,128,1));
+  }
+
+  inline void add_4B(database_type<reduction_template::parameters> & db)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", reduction_template::parameters(1,128,128,1));
+  }
+
+  inline void add_4B(database_type<matrix_axpy_template::parameters> & db)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_axpy_template::parameters(1,8,8,8,8,1));
+  }
+
+  inline void add_4B(database_type<row_wise_reduction_template::parameters> & db, char_to_type<'N'>)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", row_wise_reduction_template::parameters(1,1,128,128));
+  }
+
+  inline void add_4B(database_type<row_wise_reduction_template::parameters> & db, char_to_type<'T'>)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", row_wise_reduction_template::parameters(1,1,128,128));
+  }
+
+  inline void add_4B(database_type<matrix_product_template::parameters> & db, char_to_type<'N'>, char_to_type<'N'>)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
+  }
+
+  inline void add_4B(database_type<matrix_product_template::parameters> & db, char_to_type<'T'>, char_to_type<'N'>)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
+  }
+
+  inline void add_4B(database_type<matrix_product_template::parameters> & db, char_to_type<'N'>, char_to_type<'T'>)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
+  }
+
+  inline void add_4B(database_type<matrix_product_template::parameters> & db, char_to_type<'T'>, char_to_type<'T'>)
+  {
+    db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
+  }
+
+}
+}
+}
+}
+}
+}
+
+
+#endif

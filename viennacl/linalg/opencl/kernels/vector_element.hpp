@@ -8,7 +8,7 @@
 
 #include "viennacl/scheduler/preset.hpp"
 
-#include "viennacl/device_specific/database.hpp"
+#include "viennacl/device_specific/builtin_database/vector_axpy.hpp"
 
 /** @file viennacl/linalg/opencl/kernels/vector_element.hpp
  *  @brief OpenCL kernel file for element-wise vector operations */
@@ -33,8 +33,6 @@ namespace viennacl
 
           static void init(viennacl::ocl::context & ctx)
           {
-            using namespace device_specific;
-
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
             std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
 
@@ -42,21 +40,22 @@ namespace viennacl
             if (!init_done[ctx.handle().get()])
             {
               using namespace scheduler;
+              using namespace device_specific;
               using device_specific::tree_parsing::operator_string;
+
               std::string source;
               source.reserve(8192);
 
               viennacl::ocl::device const & device = ctx.current_device();
+              vector_axpy_template::parameters vector_axpy_params = builtin_database::vector_axpy_params<TYPE>(device);
               viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
-
-              vector_axpy_template::parameters vparams = database::get<TYPE>(database::vector_axpy, device);
 
               viennacl::vector<TYPE> x;
               viennacl::vector<TYPE> y;
               viennacl::vector<TYPE> z;
 
               // unary operations
-#define ADD_UNARY(TYPE) source.append(vector_axpy_template(vparams,operator_string(TYPE)).generate(scheduler::preset::unary_element_op(&x, &y, TYPE), device))
+#define ADD_UNARY(TYPE) source.append(vector_axpy_template(vector_axpy_params,operator_string(TYPE)).generate(scheduler::preset::unary_element_op(&x, &y, TYPE), device))
               if (numeric_string == "float" || numeric_string == "double")
               {
                 ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
@@ -83,7 +82,7 @@ namespace viennacl
 #undef ADD_UNARY
 
               // binary operations
-#define ADD_BINARY(TYPE) source.append(vector_axpy_template(vparams,operator_string(TYPE)).generate(scheduler::preset::binary_element_op(&x, &y, &z, TYPE), device))
+#define ADD_BINARY(TYPE) source.append(vector_axpy_template(vector_axpy_params,operator_string(TYPE)).generate(scheduler::preset::binary_element_op(&x, &y, &z, TYPE), device))
               ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
               ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
               if (numeric_string == "float" || numeric_string == "double")

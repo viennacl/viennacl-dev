@@ -29,11 +29,9 @@
 
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/device_specific/forwards.h"
-#include "viennacl/device_specific/database.hpp"
+#include "viennacl/device_specific/templates/template_base.hpp"
+#include "viennacl/device_specific/tree_parsing.hpp"
 
-#include "viennacl/device_specific/tree_parsing/statement_representation.hpp"
-#include "viennacl/device_specific/tree_parsing/set_arguments.hpp"
-#include "viennacl/device_specific/tree_parsing/map.hpp"
 
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/timer.hpp"

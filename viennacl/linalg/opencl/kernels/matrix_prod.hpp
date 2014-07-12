@@ -8,6 +8,8 @@
 
 #include "viennacl/linalg/opencl/kernels/matrix.hpp"
 
+#include "viennacl/device_specific/builtin_database/matrix_product.hpp"
+
 /** @file viennacl/linalg/opencl/kernels/matrix_prod.hpp
  *  @brief Runtime generation of OpenCL kernels for dense matrix-matrix products */
 namespace viennacl
@@ -242,15 +244,16 @@ namespace viennacl
 
             viennacl::ocl::device const & device = ctx.current_device();
 
-            matrix_product_template::parameters const & mmNN= device_specific::database::get<NumericT>(database::matrix_product_NN, device);
-            matrix_product_template::parameters const & mmTN= device_specific::database::get<NumericT>(database::matrix_product_TN, device);
-            matrix_product_template::parameters const & mmNT= device_specific::database::get<NumericT>(database::matrix_product_NT, device);
-            matrix_product_template::parameters const & mmTT= device_specific::database::get<NumericT>(database::matrix_product_TT, device);
-
-
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
+              using namespace device_specific;
+
+              matrix_product_template::parameters matrix_product_params_NN = builtin_database::matrix_product_params<NumericT>(device, 'N', 'N');
+              matrix_product_template::parameters matrix_product_params_TN = builtin_database::matrix_product_params<NumericT>(device, 'T', 'N');
+              matrix_product_template::parameters matrix_product_params_NT = builtin_database::matrix_product_params<NumericT>(device, 'N', 'T');
+              matrix_product_template::parameters matrix_product_params_TT = builtin_database::matrix_product_params<NumericT>(device, 'T', 'T');
+
               std::string source;
               source.reserve(8192);
 
@@ -271,10 +274,10 @@ namespace viennacl
               NumericT alpha = 0;
               NumericT beta = 0;
 
-              source.append(matrix_product_template(mmNN, 'N', 'N', "prodopt_NN").generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C), device));
-              source.append(matrix_product_template(mmTN, 'T', 'N', "prodopt_TN").generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C), device));
-              source.append(matrix_product_template(mmNT, 'N', 'T', "prodopt_NT").generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C), device));
-              source.append(matrix_product_template(mmTT, 'T', 'T', "prodopt_TT").generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C), device));
+              source.append(matrix_product_template(matrix_product_params_NN, 'N', 'N', "prodopt_NN").generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C), device));
+              source.append(matrix_product_template(matrix_product_params_TN, 'T', 'N', "prodopt_TN").generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C), device));
+              source.append(matrix_product_template(matrix_product_params_NT, 'N', 'T', "prodopt_NT").generate(scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C), device));
+              source.append(matrix_product_template(matrix_product_params_TT, 'T', 'T', "prodopt_TT").generate(scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C), device));
 
               std::string prog_name = program_name();
               #ifdef VIENNACL_BUILD_INFO

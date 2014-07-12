@@ -453,7 +453,7 @@ namespace viennacl{
 
       }
 
-      inline scheduler::lhs_rhs_element lhs_rhs_element(scheduler::statement const & st, vcl_size_t idx, tree_parsing::leaf_t leaf)
+      inline scheduler::lhs_rhs_element lhs_rhs_element(scheduler::statement const & st, vcl_size_t idx, leaf_t leaf)
       {
         using namespace tree_parsing;
         assert(leaf==LHS_NODE_TYPE || leaf==RHS_NODE_TYPE);
@@ -492,7 +492,6 @@ namespace viennacl{
           return scalartype;
         return scalartype + tools::to_string(width);
       }
-
 
     }
 
