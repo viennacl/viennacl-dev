@@ -111,10 +111,10 @@ namespace viennacl
           switch (new_elem.numeric_type)
           {
             case FLOAT_TYPE:
-              new_elem.scalar_float = new viennacl::scalar<float>();
+              new_elem.scalar_float = new viennacl::scalar<float>(0, viennacl::traits::context(*(old_element.scalar_float)));
               return;
             case DOUBLE_TYPE:
-              new_elem.scalar_double = new viennacl::scalar<double>();
+              new_elem.scalar_double = new viennacl::scalar<double>(0, viennacl::traits::context(*(old_element.scalar_double)));
               return;
             default:
               throw statement_not_supported_exception("Invalid vector type for vector construction");
@@ -127,10 +127,10 @@ namespace viennacl
           switch (new_elem.numeric_type)
           {
             case FLOAT_TYPE:
-              new_elem.vector_float = new viennacl::vector<float>((old_element.vector_float)->size());
+              new_elem.vector_float = new viennacl::vector<float>((old_element.vector_float)->size(), viennacl::traits::context(*(old_element.vector_float)));
               return;
             case DOUBLE_TYPE:
-              new_elem.vector_double = new viennacl::vector<double>((old_element.vector_float)->size());
+              new_elem.vector_double = new viennacl::vector<double>((old_element.vector_float)->size(), viennacl::traits::context(*(old_element.vector_double)));
               return;
             default:
               throw statement_not_supported_exception("Invalid vector type for vector construction");
@@ -145,10 +145,10 @@ namespace viennacl
             switch (new_elem.numeric_type)
             {
               case FLOAT_TYPE:
-                new_elem.matrix_float = new viennacl::matrix_base<float>((old_element.matrix_float)->size1(), (old_element.matrix_float)->size2(), (old_element.matrix_float)->row_major());
+                new_elem.matrix_float = new viennacl::matrix_base<float>((old_element.matrix_float)->size1(), (old_element.matrix_float)->size2(), (old_element.matrix_float)->row_major(), viennacl::traits::context(*(old_element.matrix_float)));
                 return;
               case DOUBLE_TYPE:
-                new_elem.matrix_double = new viennacl::matrix_base<double>((old_element.matrix_double)->size1(), (old_element.matrix_double)->size2(), (old_element.matrix_double)->row_major());
+                new_elem.matrix_double = new viennacl::matrix_base<double>((old_element.matrix_double)->size1(), (old_element.matrix_double)->size2(), (old_element.matrix_double)->row_major(), viennacl::traits::context(*(old_element.matrix_double)));
                 return;
               default:
                 throw statement_not_supported_exception("Invalid vector type for vector construction");
