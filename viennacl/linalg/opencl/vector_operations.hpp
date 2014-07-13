@@ -94,7 +94,7 @@ namespace viennacl
         kernel_name[7] = is_cpu_scalar<ScalarType1>::value?'h':'d';
         kernel_name[10] = flip_sign_alpha?'1':'0';
         kernel_name[11] = reciprocal_alpha?'1':'0';
-        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(detail::current_device(vec1)), kernel_name)
+        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), kernel_name)
                                         .enqueue(detail::program_for_vector(vec1,0),scheduler::preset::av(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha));
       }
 
@@ -115,7 +115,7 @@ namespace viennacl
         kernel_name[14] = flip_sign_beta?'1':'0';
         kernel_name[15] = reciprocal_beta?'1':'0';
 
-        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(detail::current_device(vec1)), kernel_name)
+        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), kernel_name)
                                         .enqueue(detail::program_for_vector(vec1,0),
                                         scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta));
       }
@@ -137,7 +137,7 @@ namespace viennacl
         kernel_name[14] = flip_sign_beta?'1':'0';
         kernel_name[15] = reciprocal_beta?'1':'0';
 
-        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(detail::current_device(vec1)), kernel_name)
+        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), kernel_name)
                                         .enqueue(detail::program_for_vector(vec1,0),
                                          scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta));
       }
@@ -153,7 +153,7 @@ namespace viennacl
       void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
       {
         scalar_vector<T> vec2(viennacl::traits::size(vec1),alpha);
-        device_specific::vector_axpy_template tplt(device_specific::builtin_database::vector_axpy_params<T>(detail::current_device(vec1)), "assign_cpu");
+        device_specific::vector_axpy_template tplt(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), "assign_cpu");
         tplt.up_to_internal_size(up_to_internal_size);
         tplt.enqueue(detail::program_for_vector(vec1,0), scheduler::preset::assign_cpu(&vec1, &vec2));
       }
@@ -168,7 +168,7 @@ namespace viennacl
       void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(detail::current_device(vec1)) , "swap").enqueue(detail::program_for_vector(vec1,0), scheduler::preset::swap(&vec1, &vec2));
+        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)) , "swap").enqueue(detail::program_for_vector(vec1,0), scheduler::preset::swap(&vec1, &vec2));
       }
 
       ///////////////////////// Binary Elementwise operations /////////////
@@ -186,7 +186,7 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_binary<OP> >::id);
-        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(detail::current_device(vec1)), device_specific::tree_parsing::operator_string(TYPE))
+        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), device_specific::tree_parsing::operator_string(TYPE))
                                         .enqueue(detail::program_for_vector(vec1,1),scheduler::preset::binary_element_op(&vec1, &proxy.lhs(), &proxy.rhs(),TYPE));
       }
 
@@ -205,7 +205,7 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
         scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_unary<OP> >::id);
-        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(detail::current_device(vec1)), device_specific::tree_parsing::operator_string(TYPE))
+        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), device_specific::tree_parsing::operator_string(TYPE))
                                         .enqueue(detail::program_for_vector(vec1,1),scheduler::preset::unary_element_op(&vec1, &proxy.lhs(),TYPE));
 
       }
@@ -226,7 +226,7 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(detail::current_device(vec1)), "inner_prod").enqueue(detail::program_for_vector(vec1,0), scheduler::preset::inner_prod(&result, &vec1, &vec2));
+        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(opencl::detail::current_device(vec1)), "inner_prod").enqueue(detail::program_for_vector(vec1,0), scheduler::preset::inner_prod(&result, &vec1, &vec2));
       }
 
       namespace detail
@@ -280,7 +280,7 @@ namespace viennacl
             statements.push_back(scheduler::preset::inner_prod(&ranges[i], &x, &vec_tuple.const_at(current_index+i)));
 
 
-          device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(detail::current_device(x)), kernel_prefix)
+          device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(opencl::detail::current_device(x)), kernel_prefix)
                                           .enqueue(detail::program_for_vector(x, 2), device_specific::statements_container(statements,device_specific::statements_container::INDEPENDENT));
           current_index += upper_bound;
         }
@@ -311,7 +311,7 @@ namespace viennacl
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(detail::current_device(vec1)), "norm_1")
+        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(opencl::detail::current_device(vec1)), "norm_1")
                                         .enqueue(detail::program_for_vector(vec1,0), scheduler::preset::norm_1(&result, &vec1));
       }
 
@@ -345,7 +345,7 @@ namespace viennacl
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(detail::current_device(vec1)), "norm_2", device_specific::BIND_TO_HANDLE)
+        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(opencl::detail::current_device(vec1)), "norm_2", device_specific::BIND_TO_HANDLE)
                                         .enqueue(detail::program_for_vector(vec1,0), scheduler::preset::norm_2(&result, &vec1));
       }
 
@@ -378,7 +378,7 @@ namespace viennacl
       {
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(detail::current_device(vec1)), "norm_inf")
+        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(opencl::detail::current_device(vec1)), "norm_inf")
                                         .enqueue(detail::program_for_vector(vec1,0), scheduler::preset::norm_inf(&result, &vec1));
       }
 
@@ -412,7 +412,7 @@ namespace viennacl
       {
         viennacl::scalar<T> result(0);
 
-        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(detail::current_device(vec1)), "index_norm_inf")
+        device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(opencl::detail::current_device(vec1)), "index_norm_inf")
                                         .enqueue(detail::program_for_vector(vec1,0), scheduler::preset::index_norm_inf(&result, &vec1));
         T host_result = result;
         return static_cast<cl_uint>(host_result);
@@ -436,7 +436,7 @@ namespace viennacl
         assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
         assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2));
 
-        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(detail::current_device(vec1)), "plane_rotation").enqueue(detail::program_for_vector(vec1,0), scheduler::preset::plane_rotation(&vec1, &vec2, &alpha, &beta));
+        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), "plane_rotation").enqueue(detail::program_for_vector(vec1,0), scheduler::preset::plane_rotation(&vec1, &vec2, &alpha, &beta));
       }
 
     } //namespace opencl
