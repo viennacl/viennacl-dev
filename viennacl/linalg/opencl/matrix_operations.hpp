@@ -188,7 +188,7 @@ namespace viennacl
       void matrix_assign(matrix_base<NumericT> & mat1, NumericT s, bool up_to_internal_size = false)
       {
 
-        scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat1),viennacl::traits::size2(mat1),s);
+        scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat1),viennacl::traits::size2(mat1),s,mat1.context());
         device_specific::matrix_axpy_template tplt(detail::matrix_axpy_params<NumericT>(detail::current_device(mat1)),"assign_cpu");
         tplt.up_to_internal_size(up_to_internal_size);
         tplt.enqueue(detail::program_for_matrix(mat1,0), scheduler::preset::assign_cpu(&mat1, &mat2));

@@ -118,7 +118,7 @@ namespace viennacl
 
               viennacl::vector<TYPE> x;
               viennacl::vector<TYPE> y;
-              viennacl::scalar_vector<TYPE> scalary(0,0);
+              viennacl::scalar_vector<TYPE> scalary(0,0,viennacl::context(ctx));
               viennacl::vector<TYPE> z;
               viennacl::scalar<TYPE> da;
               viennacl::scalar<TYPE> db;
