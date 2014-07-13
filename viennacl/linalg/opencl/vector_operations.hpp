@@ -152,7 +152,7 @@ namespace viennacl
       template <typename T>
       void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
       {
-        scalar_vector<T> vec2(viennacl::traits::size(vec1),alpha);
+        scalar_vector<T> vec2(viennacl::traits::size(vec1),alpha,viennacl::traits::context(vec1));
         device_specific::vector_axpy_template tplt(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), "assign_cpu");
         tplt.up_to_internal_size(up_to_internal_size);
         tplt.enqueue(detail::program_for_vector(vec1,0), scheduler::preset::assign_cpu(&vec1, &vec2));

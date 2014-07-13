@@ -522,8 +522,8 @@ namespace viennacl
               viennacl::matrix<NumericT, F> A;
               viennacl::matrix<NumericT, F> B;
               viennacl::matrix<NumericT, F> C;
-              viennacl::scalar_matrix<NumericT> M(0,0,0);
-              viennacl::scalar_vector<NumericT> sx(0,0);
+              viennacl::scalar_matrix<NumericT> M(0,0,0,viennacl::context(ctx));
+              viennacl::scalar_vector<NumericT> sx(0,0,viennacl::context(ctx));
               viennacl::scalar<NumericT> da;
               viennacl::scalar<NumericT> db;
               NumericT ha;

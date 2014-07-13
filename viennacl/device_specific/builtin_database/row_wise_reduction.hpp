@@ -34,7 +34,7 @@ static database_type<row_wise_reduction_template::parameters> row_wise_reduction
 static database_type<row_wise_reduction_template::parameters> row_wise_reduction_T = init_row_wise_reduction_T();
 
 template<class T>
-device_specific::row_wise_reduction_template::parameters const & row_wise_reduction_params(ocl::device const & device, bool A_trans)
+device_specific::row_wise_reduction_template::parameters const & row_wise_reduction_params(ocl::device const & device, char A_trans)
 {
   assert(A_trans=='N' || A_trans=='T');
   database_type<row_wise_reduction_template::parameters> * db;

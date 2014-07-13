@@ -185,7 +185,7 @@ namespace viennacl
       void matrix_assign(matrix_base<NumericT> & mat1, NumericT s, bool up_to_internal_size = false)
       {
 
-        scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat1),viennacl::traits::size2(mat1),s);
+        scalar_matrix<NumericT> mat2(viennacl::traits::size1(mat1),viennacl::traits::size2(mat1),s,viennacl::traits::context(mat1));
         device_specific::matrix_axpy_template tplt(device_specific::builtin_database::matrix_axpy_params<NumericT>(opencl::detail::current_device(mat1)),"assign_cpu");
         tplt.up_to_internal_size(up_to_internal_size);
         tplt.enqueue(detail::program_for_matrix(mat1,0), scheduler::preset::assign_cpu(&mat1, &mat2));
@@ -300,9 +300,11 @@ namespace viennacl
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
         char cAt = trans_mat1?'T':'N';
+        bool effective_trans = trans_mat1^mat1.row_major();
+        char ceffective_trans = effective_trans?'T':'N';
         std::string kernel_name = "mat_vec_";
         kernel_name+=cAt;
-        device_specific::row_wise_reduction_template(device_specific::builtin_database::row_wise_reduction_params<NumericT>(opencl::detail::current_device(mat1), trans_mat1^mat1.row_major()), cAt, kernel_name)
+        device_specific::row_wise_reduction_template(device_specific::builtin_database::row_wise_reduction_params<NumericT>(opencl::detail::current_device(mat1), ceffective_trans), cAt, kernel_name)
             .enqueue(detail::program_for_matrix(mat1,0),scheduler::preset::mat_vec_prod(&mat1, trans_mat1, &vec, &result));
       }
 
