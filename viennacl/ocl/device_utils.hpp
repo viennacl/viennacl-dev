@@ -42,10 +42,13 @@ namespace viennacl
   namespace ocl
   {
 
-    static const cl_uint intel_id = 32902;
-    static const cl_uint nvidia_id = 4318;
-    static const cl_uint amd_id = 4098;
-    static const cl_uint unknown_id = 0;
+    enum vendor_id
+    {
+      intel_id = 32902,
+      nvidia_id = 4318,
+      amd_id = 4098,
+      unknown_id = 0
+    };
 
     //Architecture Family
     enum device_architecture_family
@@ -64,15 +67,19 @@ namespace viennacl
       UNKNOWN
     };
 
-    static device_architecture_family get_device_architecture(cl_uint vendor_id, std::string const & name){
-
+    inline device_architecture_family get_device_architecture(cl_uint vendor_id, std::string const & name)
+    {
       /*-NVidia-*/
-      if(vendor_id==nvidia_id){
+      if(vendor_id==nvidia_id)
+      {
         //GeForce
         vcl_size_t found=0;
-        if((found= name.find("GeForce",0)) != std::string::npos){
-          if((found = name.find_first_of("123456789", found)) != std::string::npos){
-            switch (name[found]) {
+        if((found= name.find("GeForce",0)) != std::string::npos)
+        {
+          if((found = name.find_first_of("123456789", found)) != std::string::npos)
+          {
+            switch (name[found])
+            {
               case '2' : return Tesla;
               case '3' : return Tesla;
 
@@ -90,12 +97,14 @@ namespace viennacl
         }
 
         //Tesla
-        else if((found = name.find("Tesla",0)) != std::string::npos){
-          if((found = name.find("CMK", found)) != std::string::npos){
-            switch(name[found]){
+        else if((found = name.find("Tesla",0)) != std::string::npos)
+        {
+          if((found = name.find("CMK", found)) != std::string::npos)
+          {
+            switch(name[found])
+            {
               case 'C' : return Fermi;
               case 'M' : return Fermi;
-
               case 'K' : return Kepler;
 
               default : return UNKNOWN;
@@ -110,7 +119,8 @@ namespace viennacl
       }
 
       /*-AMD-*/
-      else if(vendor_id==amd_id){
+      else if(vendor_id==amd_id)
+      {
 
 #define VIENNACL_DEVICE_MAP(device,arch)if(name.find(device,0)!=std::string::npos) return arch;
 
