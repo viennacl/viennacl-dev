@@ -17,6 +17,7 @@ inline database_type<matrix_product_template::parameters> init_matrix_product_NN
   database_type<matrix_product_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
+  devices::gpu::fallback::add_8B(result, char_to_type<'N'>(), char_to_type<'N'>());
 
   return result;
 }
@@ -26,6 +27,7 @@ inline database_type<matrix_product_template::parameters> init_matrix_product_TN
   database_type<matrix_product_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
+  devices::gpu::fallback::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
 
   return result;
 }
@@ -35,6 +37,7 @@ inline database_type<matrix_product_template::parameters> init_matrix_product_NT
   database_type<matrix_product_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
+  devices::gpu::fallback::add_8B(result, char_to_type<'N'>(), char_to_type<'T'>());
 
   return result;
 }
@@ -44,6 +47,7 @@ inline database_type<matrix_product_template::parameters> init_matrix_product_TT
   database_type<matrix_product_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
+  devices::gpu::fallback::add_8B(result, char_to_type<'T'>(), char_to_type<'T'>());
 
   return result;
 }

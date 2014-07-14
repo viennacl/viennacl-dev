@@ -17,6 +17,7 @@ inline database_type<row_wise_reduction_template::parameters> init_row_wise_redu
   database_type<row_wise_reduction_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result, char_to_type<'N'>());
+  devices::gpu::fallback::add_8B(result, char_to_type<'N'>());
 
   return result;
 }
@@ -26,6 +27,7 @@ inline database_type<row_wise_reduction_template::parameters> init_row_wise_redu
   database_type<row_wise_reduction_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result, char_to_type<'T'>());
+  devices::gpu::fallback::add_8B(result, char_to_type<'T'>());
 
   return result;
 }

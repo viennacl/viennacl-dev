@@ -19,6 +19,7 @@ inline database_type<matrix_axpy_template::parameters> init_matrix_axpy()
   database_type<matrix_axpy_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result);
+  devices::gpu::fallback::add_8B(result);
 
   return result;
 }

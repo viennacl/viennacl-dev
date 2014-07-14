@@ -62,6 +62,53 @@ namespace fallback{
     db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
   }
 
+
+  inline void add_8B(database_type<vector_axpy_template::parameters> & db)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", vector_axpy_template::parameters(1,128,128,1));
+  }
+
+  inline void add_8B(database_type<reduction_template::parameters> & db)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", reduction_template::parameters(1,128,128,1));
+  }
+
+  inline void add_8B(database_type<matrix_axpy_template::parameters> & db)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_axpy_template::parameters(1,8,8,8,8,1));
+  }
+
+  inline void add_8B(database_type<row_wise_reduction_template::parameters> & db, char_to_type<'N'>)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", row_wise_reduction_template::parameters(1,1,128,128));
+  }
+
+  inline void add_8B(database_type<row_wise_reduction_template::parameters> & db, char_to_type<'T'>)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", row_wise_reduction_template::parameters(1,1,128,128));
+  }
+
+  inline void add_8B(database_type<matrix_product_template::parameters> & db, char_to_type<'N'>, char_to_type<'N'>)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
+  }
+
+  inline void add_8B(database_type<matrix_product_template::parameters> & db, char_to_type<'T'>, char_to_type<'N'>)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
+  }
+
+  inline void add_8B(database_type<matrix_product_template::parameters> & db, char_to_type<'N'>, char_to_type<'T'>)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
+  }
+
+  inline void add_8B(database_type<matrix_product_template::parameters> & db, char_to_type<'T'>, char_to_type<'T'>)
+  {
+    db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, UNKNOWN, "", matrix_product_template::parameters(1,8,8,8,4,4,4,1,1,8,8));
+  }
+
+
 }
 }
 }

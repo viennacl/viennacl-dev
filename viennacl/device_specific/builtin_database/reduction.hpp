@@ -19,6 +19,7 @@ inline database_type<reduction_template::parameters> init_reduction()
   database_type<reduction_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result);
+  devices::gpu::fallback::add_8B(result);
 
   return result;
 }

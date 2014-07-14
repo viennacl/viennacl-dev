@@ -546,8 +546,8 @@ namespace viennacl
               generate_scaled_rank1_update(source, numeric_string, is_row_major, true);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, false);
 
-              source.append(row_wise_reduction_template(row_wise_reduction_params_T, 'N', "mat_vec_T").generate(scheduler::preset::mat_vec_prod(&A, true, &x, &y), device));
-              source.append(row_wise_reduction_template(row_wise_reduction_params_N, 'T', "mat_vec_N").generate(scheduler::preset::mat_vec_prod(&A, false, &x, &y), device));
+              source.append(row_wise_reduction_template(row_wise_reduction_params_T, 'T', "mat_vec_T").generate(scheduler::preset::mat_vec_prod(&A, true, &x, &y), device));
+              source.append(row_wise_reduction_template(row_wise_reduction_params_N, 'N', "mat_vec_N").generate(scheduler::preset::mat_vec_prod(&A, false, &x, &y), device));
 
               if (numeric_string == "float" || numeric_string == "double")
               {

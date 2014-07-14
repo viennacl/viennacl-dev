@@ -19,6 +19,7 @@ inline database_type<vector_axpy_template::parameters> init_vector_axpy()
   database_type<vector_axpy_template::parameters> result;
 
   devices::gpu::fallback::add_4B(result);
+  devices::gpu::fallback::add_8B(result);
 
   return result;
 }

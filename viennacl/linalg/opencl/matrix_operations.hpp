@@ -304,7 +304,7 @@ namespace viennacl
         char ceffective_trans = effective_trans?'T':'N';
         std::string kernel_name = "mat_vec_";
         kernel_name+=cAt;
-        device_specific::row_wise_reduction_template(device_specific::builtin_database::row_wise_reduction_params<NumericT>(opencl::detail::current_device(mat1), ceffective_trans), cAt, kernel_name)
+        device_specific::row_wise_reduction_template(device_specific::builtin_database::row_wise_reduction_params<NumericT>(opencl::detail::current_device(mat1), ceffective_trans), trans_mat1, kernel_name)
             .enqueue(detail::program_for_matrix(mat1,0),scheduler::preset::mat_vec_prod(&mat1, trans_mat1, &vec, &result));
       }
 
@@ -530,7 +530,7 @@ namespace viennacl
           kernel_prefix+=cAt;
           kernel_prefix+=cBt;
 
-          device_specific::matrix_product_template(device_specific::builtin_database::matrix_product_params<NumericT>(device, effective_A_trans, effective_B_trans), cAt, cBt, kernel_prefix).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C));
+          device_specific::matrix_product_template(device_specific::builtin_database::matrix_product_params<NumericT>(device, cAt, cBt), cAt, cBt, kernel_prefix).enqueue(detail::program_for_matrix(C,2),scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C));
 
         }
       }
