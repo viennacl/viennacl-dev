@@ -99,6 +99,12 @@ private:
         if(!(A_trans_=='N' && B_trans_=='T') && p_.simd_width>1)
           throw invalid_template_exception("simd_width > 1 is only supported for the NT layout");
 
+        if(p_.use_A_local || p_.use_B_local)
+        {
+            if((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1))
+             throw invalid_template_exception("The products of the local fetch sizes must be equal to the product of the local sizes!\n");
+        }
+
         if(p_.use_A_local)
         {
             unsigned int bound1 = (A_trans_=='N')?p_.kL:p_.mL;
@@ -108,7 +114,7 @@ private:
               throw invalid_template_exception("Local fetch 1 must be a multiple of " + std::string((A_trans_=='N')?"kL":"mL") + "!\n");
 
             if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
-              throw invalid_template_exception("Local fetch 0 must be a multiple of " + std::string((B_trans_=='N')?"mL":"kL") + "!\n");
+              throw invalid_template_exception("(Local fetch 0 * simd_width) must be a multiple of " + std::string((A_trans_=='N')?"mL":"kL") + "!\n");
 
         }
         if(p_.use_B_local)
@@ -120,14 +126,8 @@ private:
               throw invalid_template_exception("Local fetch 1 must be a multiple of " + std::string((B_trans_=='T')?"kL":"nL") + "!\n");
 
             if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
-              throw invalid_template_exception("Local fetch 0 must be a multiple of " + std::string((B_trans_=='T')?"nL":"kL") + "!\n");
+              throw invalid_template_exception("(Local fetch 0*simd_width) must be a multiple of " + std::string((B_trans_=='T')?"nL":"kL") + "!\n");
 
-        }
-
-        if(p_.use_A_local || p_.use_B_local)
-        {
-            if((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1))
-             throw invalid_template_exception("The products of the local fetch sizes must be equal to the product of the local sizes!\n");
         }
     }
 

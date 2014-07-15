@@ -88,7 +88,7 @@ inline ParamT const & get_parameters(database_type<ParamT> const & database, vie
   typename database_type<ParamT>::type::map_t::const_iterator vendor_it = database.map.d.find(vendor_id);
   //Vendor not recognized => global default:
   if(vendor_it==database.map.d.end())
-    return database.at(ocl::unknown_id, dev_type, ocl::UNKNOWN, "", numeric_type);
+    return database.at(ocl::unknown_id, dev_type, ocl::unknown, "", numeric_type);
 
 
   /*-Device Type-*/
@@ -96,13 +96,13 @@ inline ParamT const & get_parameters(database_type<ParamT> const & database, vie
   typename database_type<ParamT>::device_type_t::map_t::const_iterator device_type_it = vendor_it->second.d.find(dev_type);
   //Device type not recognized for this vendor => global default
   if(device_type_it==vendor_it->second.d.end())
-    return database.at(ocl::unknown_id, dev_type, ocl::UNKNOWN, "", numeric_type);
+    return database.at(ocl::unknown_id, dev_type, ocl::unknown, "", numeric_type);
 
   /*-Device Architecture-*/
   //std::cout << "Looking up device architecture..." << std::endl;
   typename database_type<ParamT>::device_architecture_t::map_t::const_iterator architecture_it = device_type_it->second.d.find(device_architecture);
   if(architecture_it==device_type_it->second.d.end())
-    return database.at(ocl::unknown_id, dev_type, ocl::UNKNOWN, "", numeric_type);
+    return database.at(ocl::unknown_id, dev_type, ocl::unknown, "", numeric_type);
 
   /*-Device Name-*/
   //std::cout << "Looking up device name..." << std::endl;

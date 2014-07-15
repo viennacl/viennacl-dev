@@ -54,20 +54,20 @@ namespace viennacl
     enum device_architecture_family
     {
       //NVidia
-      Tesla,
-      Fermi,
-      Kepler,
+      tesla,
+      fermi,
+      kepler,
 
       //AMD
-      Evergreen,
-      NorthernIslands,
-      SouthernIslands,
-      VolcanicIslands,
+      evergreen,
+      northern_islands,
+      southern_islands,
+      volcanic_islands,
 
-      UNKNOWN
+      unknown
     };
 
-    inline device_architecture_family get_device_architecture(cl_uint vendor_id, std::string const & name)
+    inline device_architecture_family get_architecture_family(cl_uint vendor_id, std::string const & name)
     {
       /*-NVidia-*/
       if(vendor_id==nvidia_id)
@@ -80,20 +80,20 @@ namespace viennacl
           {
             switch (name[found])
             {
-              case '2' : return Tesla;
-              case '3' : return Tesla;
+              case '2' : return tesla;
+              case '3' : return tesla;
 
-              case '4' : return Fermi;
-              case '5' : return Fermi;
+              case '4' : return fermi;
+              case '5' : return fermi;
 
-              case '6' : return Kepler;
-              case '7' : return Kepler;
+              case '6' : return kepler;
+              case '7' : return kepler;
 
-              default: return UNKNOWN;
+              default: return unknown;
             }
           }
           else
-            return UNKNOWN;
+            return unknown;
         }
 
         //Tesla
@@ -103,19 +103,19 @@ namespace viennacl
           {
             switch(name[found])
             {
-              case 'C' : return Fermi;
-              case 'M' : return Fermi;
-              case 'K' : return Kepler;
+              case 'C' : return fermi;
+              case 'M' : return fermi;
+              case 'K' : return kepler;
 
-              default : return UNKNOWN;
+              default : return unknown;
             }
           }
           else
-            return UNKNOWN;
+            return unknown;
         }
 
         else
-          return UNKNOWN;
+          return unknown;
       }
 
       /*-AMD-*/
@@ -125,38 +125,38 @@ namespace viennacl
 #define VIENNACL_DEVICE_MAP(device,arch)if(name.find(device,0)!=std::string::npos) return arch;
 
         //Evergreen
-        VIENNACL_DEVICE_MAP("Cedar",Evergreen);
-        VIENNACL_DEVICE_MAP("Redwood",Evergreen);
-        VIENNACL_DEVICE_MAP("Juniper",Evergreen);
-        VIENNACL_DEVICE_MAP("Cypress",Evergreen);
-        VIENNACL_DEVICE_MAP("Hemlock",Evergreen);
+        VIENNACL_DEVICE_MAP("Cedar",evergreen);
+        VIENNACL_DEVICE_MAP("Redwood",evergreen);
+        VIENNACL_DEVICE_MAP("Juniper",evergreen);
+        VIENNACL_DEVICE_MAP("Cypress",evergreen);
+        VIENNACL_DEVICE_MAP("Hemlock",evergreen);
 
         //NorthernIslands
-        VIENNACL_DEVICE_MAP("Caicos",NorthernIslands);
-        VIENNACL_DEVICE_MAP("Turks",NorthernIslands);
-        VIENNACL_DEVICE_MAP("Barts",NorthernIslands);
-        VIENNACL_DEVICE_MAP("Cayman",NorthernIslands);
-        VIENNACL_DEVICE_MAP("Antilles",NorthernIslands);
+        VIENNACL_DEVICE_MAP("Caicos",northern_islands);
+        VIENNACL_DEVICE_MAP("Turks",northern_islands);
+        VIENNACL_DEVICE_MAP("Barts",northern_islands);
+        VIENNACL_DEVICE_MAP("Cayman",northern_islands);
+        VIENNACL_DEVICE_MAP("Antilles",northern_islands);
 
         //SouthernIslands
-        VIENNACL_DEVICE_MAP("Cape",SouthernIslands);
-        VIENNACL_DEVICE_MAP("Bonaire",SouthernIslands);
-        VIENNACL_DEVICE_MAP("Pitcaim",SouthernIslands);
-        VIENNACL_DEVICE_MAP("Tahiti",SouthernIslands);
-        VIENNACL_DEVICE_MAP("Malta",SouthernIslands);
+        VIENNACL_DEVICE_MAP("Cape",southern_islands);
+        VIENNACL_DEVICE_MAP("Bonaire",southern_islands);
+        VIENNACL_DEVICE_MAP("Pitcaim",southern_islands);
+        VIENNACL_DEVICE_MAP("Tahiti",southern_islands);
+        VIENNACL_DEVICE_MAP("Malta",southern_islands);
 
         //VolcanicIslands
-        VIENNACL_DEVICE_MAP("Hawaii",VolcanicIslands);
+        VIENNACL_DEVICE_MAP("Hawaii",volcanic_islands);
 
 #undef VIENNACL_DEVICE_MAP
 
-        return UNKNOWN;
+        return unknown;
 
       }
 
       /*-Other-*/
       else{
-        return UNKNOWN;
+        return unknown;
       }
 
     }

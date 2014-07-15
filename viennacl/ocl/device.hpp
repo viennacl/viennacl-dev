@@ -579,7 +579,7 @@ namespace viennacl
         {
           if( !architecture_family_valid_)
           {
-            architecture_family_ = get_device_architecture(vendor_id(), name());
+            architecture_family_ = get_architecture_family(vendor_id(), name());
             architecture_family_valid_ = true;
           }
           return architecture_family_;

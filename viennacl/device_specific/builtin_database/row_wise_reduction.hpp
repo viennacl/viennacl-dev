@@ -1,10 +1,13 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_ROW_WISE_REDUCTION_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_ROW_WISE_REDUCTION_HPP_
 
+
 #include "viennacl/ocl/device_utils.hpp"
 
 #include "viennacl/scheduler/forwards.h"
 
+#include "viennacl/device_specific/builtin_database/devices/accelerator/fallback.hpp"
+#include "viennacl/device_specific/builtin_database/devices/cpu/fallback.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/fallback.hpp"
 
 namespace viennacl{
@@ -16,6 +19,12 @@ inline database_type<row_wise_reduction_template::parameters> init_row_wise_redu
 {
   database_type<row_wise_reduction_template::parameters> result;
 
+  devices::accelerator::fallback::add_4B(result, char_to_type<'N'>());
+  devices::accelerator::fallback::add_8B(result, char_to_type<'N'>());
+
+  devices::cpu::fallback::add_4B(result, char_to_type<'N'>());
+  devices::cpu::fallback::add_8B(result, char_to_type<'N'>());
+
   devices::gpu::fallback::add_4B(result, char_to_type<'N'>());
   devices::gpu::fallback::add_8B(result, char_to_type<'N'>());
 
@@ -25,6 +34,12 @@ inline database_type<row_wise_reduction_template::parameters> init_row_wise_redu
 inline database_type<row_wise_reduction_template::parameters> init_row_wise_reduction_T()
 {
   database_type<row_wise_reduction_template::parameters> result;
+
+  devices::accelerator::fallback::add_4B(result, char_to_type<'T'>());
+  devices::accelerator::fallback::add_8B(result, char_to_type<'T'>());
+
+  devices::cpu::fallback::add_4B(result, char_to_type<'T'>());
+  devices::cpu::fallback::add_8B(result, char_to_type<'T'>());
 
   devices::gpu::fallback::add_4B(result, char_to_type<'T'>());
   devices::gpu::fallback::add_8B(result, char_to_type<'T'>());
@@ -51,4 +66,5 @@ device_specific::row_wise_reduction_template::parameters const & row_wise_reduct
 }
 }
 }
+
 #endif
