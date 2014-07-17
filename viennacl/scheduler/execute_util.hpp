@@ -97,9 +97,56 @@ namespace viennacl
         throw statement_not_supported_exception("Cannot convert to double");
       }
 
+      /** @brief Helper routine for extracting the context in which a statement is executed.
+        *
+        * As all statements are of the type x = EXPR, it is sufficient to extract the context from x.
+        */
+      inline viennacl::context extract_context(statement_node const & root_node)
+      {
+        if (root_node.lhs.type_family == SCALAR_TYPE_FAMILY)
+        {
+          switch (root_node.lhs.numeric_type)
+          {
+            case FLOAT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_float);
+            case DOUBLE_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_double);
+            default:
+            throw statement_not_supported_exception("Invalid numeric type for extraction of context from scalar");
+          }
+        }
+        else if (root_node.lhs.type_family == VECTOR_TYPE_FAMILY)
+        {
+          switch (root_node.lhs.numeric_type)
+          {
+            case FLOAT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_float);
+            case DOUBLE_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_double);
+            default:
+            throw statement_not_supported_exception("Invalid numeric type for extraction of context from vector");
+          }
+        }
+        else if (root_node.lhs.type_family == MATRIX_TYPE_FAMILY)
+        {
+          switch (root_node.lhs.numeric_type)
+          {
+            case FLOAT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_float);
+            case DOUBLE_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_double);
+            default:
+              throw statement_not_supported_exception("Invalid numeric type for extraction of context from matrix");
+          }
+        }
+
+        throw statement_not_supported_exception("Invalid type for context extraction");
+      }
+
+
       /////////////////// Create/Destory temporary vector ///////////////////////
 
-      inline void new_element(lhs_rhs_element & new_elem, lhs_rhs_element const & old_element)
+      inline void new_element(lhs_rhs_element & new_elem, lhs_rhs_element const & old_element, viennacl::context const & ctx)
       {
         new_elem.type_family  = old_element.type_family;
         new_elem.subtype      = old_element.subtype;
@@ -111,10 +158,10 @@ namespace viennacl
           switch (new_elem.numeric_type)
           {
             case FLOAT_TYPE:
-              new_elem.scalar_float = new viennacl::scalar<float>(0, viennacl::traits::context(*(old_element.scalar_float)));
+              new_elem.scalar_float = new viennacl::scalar<float>(0, ctx);
               return;
             case DOUBLE_TYPE:
-              new_elem.scalar_double = new viennacl::scalar<double>(0, viennacl::traits::context(*(old_element.scalar_double)));
+              new_elem.scalar_double = new viennacl::scalar<double>(0, ctx);
               return;
             default:
               throw statement_not_supported_exception("Invalid vector type for vector construction");
@@ -127,10 +174,10 @@ namespace viennacl
           switch (new_elem.numeric_type)
           {
             case FLOAT_TYPE:
-              new_elem.vector_float = new viennacl::vector<float>((old_element.vector_float)->size(), viennacl::traits::context(*(old_element.vector_float)));
+              new_elem.vector_float = new viennacl::vector<float>((old_element.vector_float)->size(), ctx);
               return;
             case DOUBLE_TYPE:
-              new_elem.vector_double = new viennacl::vector<double>((old_element.vector_float)->size(), viennacl::traits::context(*(old_element.vector_double)));
+              new_elem.vector_double = new viennacl::vector<double>((old_element.vector_float)->size(), ctx);
               return;
             default:
               throw statement_not_supported_exception("Invalid vector type for vector construction");
@@ -145,10 +192,10 @@ namespace viennacl
             switch (new_elem.numeric_type)
             {
               case FLOAT_TYPE:
-                new_elem.matrix_float = new viennacl::matrix_base<float>((old_element.matrix_float)->size1(), (old_element.matrix_float)->size2(), (old_element.matrix_float)->row_major(), viennacl::traits::context(*(old_element.matrix_float)));
+                new_elem.matrix_float = new viennacl::matrix_base<float>((old_element.matrix_float)->size1(), (old_element.matrix_float)->size2(), (old_element.matrix_float)->row_major(), ctx);
                 return;
               case DOUBLE_TYPE:
-                new_elem.matrix_double = new viennacl::matrix_base<double>((old_element.matrix_double)->size1(), (old_element.matrix_double)->size2(), (old_element.matrix_double)->row_major(), viennacl::traits::context(*(old_element.matrix_double)));
+                new_elem.matrix_double = new viennacl::matrix_base<double>((old_element.matrix_double)->size1(), (old_element.matrix_double)->size2(), (old_element.matrix_double)->row_major(), ctx);
                 return;
               default:
                 throw statement_not_supported_exception("Invalid vector type for vector construction");

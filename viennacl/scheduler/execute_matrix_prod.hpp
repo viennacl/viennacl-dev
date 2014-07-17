@@ -300,6 +300,7 @@ namespace viennacl
     inline void execute_matrix_prod(statement const & s, statement_node const & root_node)
     {
       statement_node const & leaf = s.array()[root_node.rhs.node_index];
+      viennacl::context ctx = detail::extract_context(root_node);
 
       // Part 1: Check whether temporaries are required //
 
@@ -313,7 +314,7 @@ namespace viennacl
       if (lhs_needs_temporary)
       {
         std::cout << "Temporary for LHS!" << std::endl;
-        detail::new_element(new_root_lhs.lhs, root_node.lhs);
+        detail::new_element(new_root_lhs.lhs, root_node.lhs, ctx);
 
         new_root_lhs.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         new_root_lhs.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -331,7 +332,7 @@ namespace viennacl
       // check for temporary on rhs:
       if (rhs_needs_temporary)
       {
-        detail::new_element(new_root_rhs.lhs, root_node.lhs);
+        detail::new_element(new_root_rhs.lhs, root_node.lhs, ctx);
 
         new_root_rhs.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         new_root_rhs.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -357,7 +358,7 @@ namespace viennacl
         {
           //split y += A*x
           statement_node new_root_z;
-          detail::new_element(new_root_z.lhs, root_node.lhs);
+          detail::new_element(new_root_z.lhs, root_node.lhs, ctx);
 
           // compute z = A * x
           detail::matrix_vector_prod(s, new_root_z.lhs, x, y);

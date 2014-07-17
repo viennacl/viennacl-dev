@@ -30,6 +30,7 @@
 #include "viennacl/scheduler/execute_axbx.hpp"
 #include "viennacl/scheduler/execute_elementwise.hpp"
 #include "viennacl/scheduler/execute_matrix_prod.hpp"
+#include "viennacl/scheduler/execute_util.hpp"
 
 namespace viennacl
 {
@@ -41,6 +42,7 @@ namespace viennacl
       void execute_composite(statement const & s, statement_node const & root_node)
       {
         statement::container_type const & expr = s.array();
+        viennacl::context ctx = extract_context(root_node);
 
         statement_node const & leaf = expr[root_node.rhs.node_index];
 
@@ -59,7 +61,7 @@ namespace viennacl
             temp.type_family  = SCALAR_TYPE_FAMILY;
             temp.subtype      = DEVICE_SCALAR_TYPE;
             temp.numeric_type = root_node.lhs.numeric_type;
-            detail::new_element(scalar_temp_node.lhs, temp);
+            detail::new_element(scalar_temp_node.lhs, temp, ctx);
 
             scalar_temp_node.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
             scalar_temp_node.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -81,7 +83,7 @@ namespace viennacl
             new_root_y.lhs.type_family  = root_node.lhs.type_family;
             new_root_y.lhs.subtype      = root_node.lhs.subtype;
             new_root_y.lhs.numeric_type = root_node.lhs.numeric_type;
-            detail::new_element(new_root_y.lhs, root_node.lhs);
+            detail::new_element(new_root_y.lhs, root_node.lhs, ctx);
 
             new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
             new_root_y.op.type        = OPERATION_BINARY_ASSIGN_TYPE;

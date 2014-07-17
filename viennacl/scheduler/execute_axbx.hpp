@@ -39,6 +39,7 @@ namespace viennacl
       inline void execute_axbx(statement const & s, statement_node const & root_node)
       {
         statement::container_type const & expr = s.array();
+        viennacl::context ctx = detail::extract_context(root_node);
 
         statement_node const & leaf = expr[root_node.rhs.node_index];
 
@@ -116,7 +117,7 @@ namespace viennacl
               {
                 statement_node new_root_y;
 
-                detail::new_element(new_root_y.lhs, root_node.lhs);
+                detail::new_element(new_root_y.lhs, root_node.lhs, ctx);
 
                 new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
                 new_root_y.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -205,7 +206,7 @@ namespace viennacl
               {
                 statement_node new_root_z;
 
-                detail::new_element(new_root_z.lhs, root_node.lhs);
+                detail::new_element(new_root_z.lhs, root_node.lhs, ctx);
 
                 new_root_z.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
                 new_root_z.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -301,7 +302,7 @@ namespace viennacl
               {
                 statement_node new_root_y;
 
-                detail::new_element(new_root_y.lhs, root_node.lhs);
+                detail::new_element(new_root_y.lhs, root_node.lhs, ctx);
 
                 new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
                 new_root_y.op.type   = OPERATION_BINARY_ASSIGN_TYPE;
@@ -317,7 +318,7 @@ namespace viennacl
 
                 statement_node new_root_z;
 
-                detail::new_element(new_root_z.lhs, root_node.lhs);
+                detail::new_element(new_root_z.lhs, root_node.lhs, ctx);
 
                 new_root_z.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
                 new_root_z.op.type        = OPERATION_BINARY_ASSIGN_TYPE;

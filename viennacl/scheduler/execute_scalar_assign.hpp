@@ -26,6 +26,7 @@
 #include "viennacl/forwards.h"
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/scheduler/execute_vector_dispatcher.hpp"
+#include "viennacl/scheduler/execute_util.hpp"
 
 namespace viennacl
 {
@@ -35,6 +36,7 @@ namespace viennacl
     inline void execute_scalar_assign_composite(statement const & s, statement_node const & root_node)
     {
       statement_node const & leaf = s.array()[root_node.rhs.node_index];
+      viennacl::context ctx = detail::extract_context(root_node);
 
       if (leaf.op.type  == OPERATION_BINARY_INNER_PROD_TYPE) // alpha = inner_prod( (x), (y) ) with x, y being either vectors or expressions
       {
@@ -51,7 +53,7 @@ namespace viennacl
         {
           statement_node new_root_x;
 
-          detail::new_element(new_root_x.lhs, leaf.rhs);
+          detail::new_element(new_root_x.lhs, leaf.rhs, ctx);
 
           new_root_x.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
           new_root_x.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -74,7 +76,7 @@ namespace viennacl
         {
           statement_node new_root_y;
 
-          detail::new_element(new_root_y.lhs, leaf.lhs);
+          detail::new_element(new_root_y.lhs, leaf.lhs, ctx);
 
           new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
           new_root_y.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -100,7 +102,7 @@ namespace viennacl
 
           // temporary for (x)
           statement_node new_root_x;
-          detail::new_element(new_root_x.lhs, temp_node);
+          detail::new_element(new_root_x.lhs, temp_node, ctx);
 
           new_root_x.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
           new_root_x.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -116,7 +118,7 @@ namespace viennacl
 
           // temporary for (y)
           statement_node new_root_y;
-          detail::new_element(new_root_y.lhs, temp_node);
+          detail::new_element(new_root_y.lhs, temp_node, ctx);
 
           new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
           new_root_y.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -155,7 +157,7 @@ namespace viennacl
 
           statement_node new_root_y;
 
-          detail::new_element(new_root_y.lhs, temp_node);
+          detail::new_element(new_root_y.lhs, temp_node, ctx);
 
           new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
           new_root_y.op.type        = OPERATION_BINARY_ASSIGN_TYPE;

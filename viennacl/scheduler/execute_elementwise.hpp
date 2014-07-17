@@ -287,6 +287,7 @@ namespace viennacl
     inline void execute_element_composite(statement const & s, statement_node const & root_node)
     {
       statement_node const & leaf = s.array()[root_node.rhs.node_index];
+      viennacl::context ctx = detail::extract_context(root_node);
 
       statement_node new_root_lhs;
       statement_node new_root_rhs;
@@ -294,7 +295,7 @@ namespace viennacl
       // check for temporary on lhs:
       if (leaf.lhs.type_family == COMPOSITE_OPERATION_FAMILY)
       {
-        detail::new_element(new_root_lhs.lhs, root_node.lhs);
+        detail::new_element(new_root_lhs.lhs, root_node.lhs, ctx);
 
         new_root_lhs.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         new_root_lhs.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
@@ -314,7 +315,7 @@ namespace viennacl
         // check for temporary on rhs:
         if (leaf.rhs.type_family == COMPOSITE_OPERATION_FAMILY)
         {
-          detail::new_element(new_root_rhs.lhs, root_node.lhs);
+          detail::new_element(new_root_rhs.lhs, root_node.lhs, ctx);
 
           new_root_rhs.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
           new_root_rhs.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
