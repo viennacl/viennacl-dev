@@ -87,7 +87,7 @@ private:
     {
         static const unsigned int alignment = 128;
 
-        if(!p_.use_A_local && !p_.use_B_local&& p_.local_fetch_0!=0 && p_.local_fetch_1!=0)
+        if(!p_.use_A_local && !p_.use_B_local&& (p_.local_fetch_0!=0 || p_.local_fetch_1!=0))
           throw invalid_template_exception("Using global memory for both A and B require local_fetch_0==local_fetch_1==0)");
 
         if(alignment % p_.mL > 0 || alignment % p_.kL > 0 || alignment % p_.nL > 0)
