@@ -44,6 +44,7 @@ namespace viennacl
 
     enum vendor_id
     {
+      beignet_id = 358,
       intel_id = 32902,
       nvidia_id = 4318,
       amd_id = 4098,
