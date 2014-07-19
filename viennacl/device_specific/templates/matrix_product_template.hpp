@@ -264,7 +264,7 @@ private:
 
 
         ///Result Values
-        stream << C_scalartype << " " << "rC[" << p_.mS << "][" << p_.nS <<"]  = {(" << C->scalartype() << ")0};" << std::endl;
+        stream << C_scalartype << " " << "rC[" << p_.mS << "][" << p_.nS <<"]  = { {(" << C->scalartype() << ")0} };" << std::endl;
         stream << A_scalartype << " " << "rA[" << p_.kS << "][" << (p_.use_A_local?p_.mS:p_.mS/p_.simd_width) << "];" << std::endl;
         stream << B_scalartype << " " << "rB[" << p_.kS << "][" << (p_.use_B_local?p_.nS:p_.nS/p_.simd_width) <<"];" << std::endl;
         stream << std::endl;
