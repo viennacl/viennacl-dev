@@ -416,12 +416,17 @@ namespace viennacl
           {
             cl_build_status status;
             clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
-            std::size_t len;
-            err = clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_LOG, 0, NULL, &len);
-            std::string log(len,0);
-            err = clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_LOG, sizeof(char)*len, (void*)log.data(), NULL);
             std::cout << "Build Scalar: Err = " << err << " Status = " << status << std::endl;
-            std::cout << "Log: " << log << std::endl;
+
+            char *build_log;
+            size_t ret_val_size;
+            err = clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_LOG, 0, NULL, &ret_val_size);
+            build_log = new char[ret_val_size+1];
+            err = clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_LOG, ret_val_size, build_log, NULL);
+            build_log[ret_val_size] = '\0';
+            std::cout << "Log: " << build_log << std::endl;
+            delete[] build_log;
+
             std::cout << "Sources: " << source << std::endl;
           }
           VIENNACL_ERR_CHECK(err);
