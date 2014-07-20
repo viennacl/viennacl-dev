@@ -79,8 +79,8 @@ namespace viennacl{
           node = &array[node->lhs.node_index];
         }
 
-        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::size1_fun())));
-        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::size2_fun())));
+        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::internal_size1_fun())));
+        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::internal_size2_fun())));
       }
 
       void add_kernel_arguments(statements_container const & /*statements*/, std::string & arguments_string) const
