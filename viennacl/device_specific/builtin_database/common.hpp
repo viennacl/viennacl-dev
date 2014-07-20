@@ -71,7 +71,10 @@ public:
 };
 
 
-/** @brief Get the profile for a device and a descriptor */
+/** @brief Get the profile for a device and a descriptor
+*
+* There are built-in defaults for CPUs, Accelerators, GPUs.
+*/
 template<class T, class ParamT>
 inline ParamT const & get_parameters(database_type<ParamT> const & database, viennacl::ocl::device const & device)
 {
@@ -82,46 +85,61 @@ inline ParamT const & get_parameters(database_type<ParamT> const & database, vie
   ocl::device_architecture_family device_architecture = device.architecture_family();
   std::string const & device_name = device.name();
 
-  //std::cout << "Looking up vendor ID..." << std::endl;
 
   /*-Vendor ID-*/
+//  std::cout << "Looking up vendor ID..." << std::endl;
   typename database_type<ParamT>::type::map_t::const_iterator vendor_it = database.map.d.find(vendor_id);
-  //Vendor not recognized => global default:
+  //Vendor not recognized =>  device type default
   if(vendor_it==database.map.d.end())
     return database.at(ocl::unknown_id, dev_type, ocl::unknown, "", numeric_type);
 
-
   /*-Device Type-*/
-  //std::cout << "Looking up device type..." << std::endl;
+//  std::cout << "Looking up device type..." << std::endl;
   typename database_type<ParamT>::device_type_t::map_t::const_iterator device_type_it = vendor_it->second.d.find(dev_type);
-  //Device type not recognized for this vendor => global default
+  //Device type not recognized for this vendor => device type default
   if(device_type_it==vendor_it->second.d.end())
     return database.at(ocl::unknown_id, dev_type, ocl::unknown, "", numeric_type);
 
   /*-Device Architecture-*/
-  //std::cout << "Looking up device architecture..." << std::endl;
+//  std::cout << "Looking up device architecture..." << std::endl;
   typename database_type<ParamT>::device_architecture_t::map_t::const_iterator architecture_it = device_type_it->second.d.find(device_architecture);
+  //Architecture not found. We try to find the closest architecture available.
   if(architecture_it==device_type_it->second.d.end())
-    return database.at(ocl::unknown_id, dev_type, ocl::unknown, "", numeric_type);
+  {
+    typename database_type<ParamT>::device_architecture_t::map_t::const_iterator current_it = device_type_it->second.d.begin();
+    architecture_it = current_it;
+    int closest_arch = current_it->first - device_architecture;
+    while(current_it!=device_type_it->second.d.end())
+    {
+      int arch_diff = std::abs(static_cast<int>(current_it->first) - static_cast<int>(device_architecture));
+      if(arch_diff < closest_arch)
+      {
+        architecture_it = current_it;
+        closest_arch = arch_diff;
+      }
+      current_it++;
+    }
+  }
 
   /*-Device Name-*/
-  //std::cout << "Looking up device name..." << std::endl;
+//  std::cout << "Looking up device name..." << std::endl;
   typename database_type<ParamT>::device_name_t::map_t::const_iterator device_name_it = architecture_it->second.d.find(device_name);
-  //Name not found => Vendor default
+  //Name not found. We just take the first device for the architecture
   if(device_name_it==architecture_it->second.d.end())
-    return database.at(vendor_id, dev_type, device_architecture, "", numeric_type);
+  {
+    device_name_it = architecture_it->second.d.begin();
+  }
 
-  //std::cout << "Looking up expression name.." << std::endl;
+//  std::cout << "Looking up expression name.." << std::endl;
   /*-Expression-*/
-
   typename database_type<ParamT>::expression_t::map_t::const_iterator expression_it = device_name_it->second.d.find(numeric_type);
   //Expression not found => Vendor default
   if(expression_it==device_name_it->second.d.end())
-    return database.at(vendor_id, dev_type, device_architecture, "", numeric_type);
+    return database.at(ocl::unknown_id, dev_type, ocl::unknown, "", numeric_type);
 
-  //std::cout << "Device found in the database! Getting profile..." << std::endl;
+//  std::cout << "Device found in the database! Getting profile..." << std::endl;
   //Everything okay. Return specific profile//
-  return database.at(vendor_id, dev_type, device_architecture, device_name, numeric_type);
+  return expression_it->second;
 }
 
 
