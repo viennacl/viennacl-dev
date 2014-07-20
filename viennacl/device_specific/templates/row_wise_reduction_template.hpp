@@ -89,6 +89,12 @@ namespace viennacl{
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
+      void check_invalid_impl(viennacl::ocl::device const & /*device*/) const
+      {
+          static const unsigned int alignment = 128;
+          if(alignment%p_.local_size_0>0)
+              throw invalid_template_exception("Local_size_0 must be a multiple of ViennaCl's padding size : 128 !");
+      }
 
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
