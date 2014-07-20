@@ -79,8 +79,8 @@ namespace viennacl{
           node = &array[node->lhs.node_index];
         }
 
-        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::internal_size1_fun())));
-        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::internal_size2_fun())));
+        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::size1_fun())));
+        kernel.arg(n_arg++, cl_uint(utils::call_on_matrix(node->lhs, utils::size2_fun())));
       }
 
       void add_kernel_arguments(statements_container const & /*statements*/, std::string & arguments_string) const
@@ -126,10 +126,10 @@ namespace viennacl{
         unsigned int lsize0 = p_.local_size_0;
         unsigned int lsize1 = p_.local_size_1+1;
 
-        std::string size1 = "M";
-        std::string size2 = "N";
+        std::string size0 = "M";
+        std::string size1 = "N";
         if(A_trans_=='T')
-          std::swap(size1, size2);
+          std::swap(size0, size1);
 
         for(std::vector<mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           stream << "__local " <<  (*it)->scalartype() << " buf" << std::distance(exprs.begin(), it) << '[' << lsize0*lsize1 << "];" << std::endl;
@@ -138,13 +138,14 @@ namespace viennacl{
         stream << "unsigned int lid1 = get_local_id(1);" << std::endl;
 
 
-        stream << "for(unsigned int r = get_global_id(0) ; r < " << size1 << " ; r += get_global_size(0)){" << std::endl;
+        stream << "unsigned int upper_bound_0 = (" << size0  << "+" << p_.local_size_0 - 1 << ")/" << p_.local_size_0 << ";" << std::endl;
+        stream << "for(unsigned int r = get_global_id(0) ; r < upper_bound_0; r += get_global_size(0)){" << std::endl;
         stream.inc_tab();
         {
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
             stream << exprs[k]->scalartype() << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
 
-          stream << "for( unsigned int c = get_local_id(1) ; c < " << size2 << " ; c += get_local_size(1)){" << std::endl;
+          stream << "for( unsigned int c = get_local_id(1) ; c < " << size1 << " ; c += get_local_size(1)){" << std::endl;
           stream.inc_tab();
           {
             std::set<std::string>  cache;
@@ -154,10 +155,10 @@ namespace viennacl{
             {
               viennacl::scheduler::statement const & statement = exprs[k]->statement();
               viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
-              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size1, "c", size2),stream,exprs[k]->mapping(), LHS_NODE_TYPE);
+              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size0, "c", size1),stream,exprs[k]->mapping(), LHS_NODE_TYPE);
 
               if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size1), stream,exprs[k]->mapping(), RHS_NODE_TYPE);
+                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size0), stream,exprs[k]->mapping(), RHS_NODE_TYPE);
             }
 
 
@@ -201,7 +202,7 @@ namespace viennacl{
           }
 
 
-          stream <<  "if(lid1 == 0)" ;
+          stream <<  "if(lid1 == 0 && r <" << size0 << ")" ;
           stream << "{" << std::endl;
           stream.inc_tab();
           for(unsigned int k = 0 ; k < N ; ++k)
@@ -210,7 +211,7 @@ namespace viennacl{
           unsigned int i = 0;
           for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it){
             std::string str;
-            tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(index_tuple("r",size1, "0", size2), 0, str, mapping[i++]), false);
+            tree_parsing::traverse(*it, it->root(), tree_parsing::evaluate_expression_traversal(index_tuple("r",size0, "0", size1), 0, str, mapping[i++]), false);
             stream << str << ";" << std::endl;
           }
           stream.dec_tab();
