@@ -416,7 +416,7 @@ namespace viennacl
           {
             cl_build_status status;
             clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
-            std::cout << "Build Scalar: Err = " << err << " Status = " << status << std::endl;
+            std::cout << "Build Status = " << status << " ( Err = " << err << " )" << std::endl;
 
             char *build_log;
             size_t ret_val_size;
