@@ -58,6 +58,7 @@ namespace viennacl
       tesla,
       fermi,
       kepler,
+      maxwell,
 
       //AMD
       evergreen,
@@ -89,6 +90,8 @@ namespace viennacl
 
               case '6' : return kepler;
               case '7' : return kepler;
+
+              case '8' : return maxwell;
 
               default: return unknown;
             }
