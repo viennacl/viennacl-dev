@@ -410,7 +410,7 @@ namespace viennacl
 
           const char * options = build_options_.c_str();
           err = clBuildProgram(temp, 0, NULL, options, NULL, NULL);
-#ifndef VIENNACL_DEBUG_BUILD
+#ifndef VIENNACL_BUILD_INFO
           if (err != CL_SUCCESS)
 #endif
           {
