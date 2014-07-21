@@ -89,11 +89,12 @@ namespace viennacl{
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
-      void check_invalid_impl(viennacl::ocl::device const & /*device*/) const
+      int check_invalid_impl(viennacl::ocl::device const & /*device*/) const
       {
-          static const unsigned int alignment = 128;
-          if(alignment%p_.local_size_0>0)
-              throw invalid_template_exception("Local_size_0 must be a multiple of ViennaCl's padding size : 128 !");
+          if(matrix_base<float>::alignment%p_.local_size_0>0)
+              return ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE;
+
+          return TEMPLATE_VALID;
       }
 
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
@@ -136,8 +137,6 @@ namespace viennacl{
 
         stream << "unsigned int lid0 = get_local_id(0);" << std::endl;
         stream << "unsigned int lid1 = get_local_id(1);" << std::endl;
-
-
         stream << "unsigned int upper_bound_0 = (" << size0  << "+" << p_.local_size_0 - 1 << ")/" << p_.local_size_0 << ";" << std::endl;
         stream << "for(unsigned int r = get_global_id(0) ; r < upper_bound_0; r += get_global_size(0)){" << std::endl;
         stream.inc_tab();

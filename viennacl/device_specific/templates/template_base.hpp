@@ -293,6 +293,17 @@ namespace viennacl
 
     public:
 
+      //Global
+      static const int TEMPLATE_VALID = 0;
+      static const int LOCAL_MEMORY_OVERFLOW = -1;
+      static const int WORK_GROUP_SIZE_OVERFLOW = -2;
+      static const int LOCAL_SIZE_0_OVERFLOW = -3;
+      static const int LOCAL_SIZE_1_OVERFLOW = -4;
+      static const int LOCAL_SIZE_2_OVERFLOW = -5;
+      static const int LOCAL_SIZE_NOT_WARP_MULTIPLE = -6;
+      static const int INVALID_SIMD_WIDTH = -7;
+      static const int ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE = -8;
+
       struct parameters
       {
         parameters(unsigned int _simd_width, unsigned int _local_size_1, unsigned int _local_size_2, unsigned int _num_kernels) : simd_width(_simd_width), local_size_0(_local_size_1), local_size_1(_local_size_2), num_kernels(_num_kernels){ }
@@ -305,12 +316,8 @@ namespace viennacl
 
     private:
 
-
-
-      virtual void check_invalid_impl(viennacl::ocl::device const & /*dev*/) const { }
-
+      virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const { return TEMPLATE_VALID; }
       virtual unsigned int n_lmem_elements() const { return 0; }
-
 
       /** @brief Generates the body of the associated kernel function */
       virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
@@ -340,7 +347,7 @@ namespace viennacl
       template_base(template_base::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : p_(parameters), kernel_prefix_(kernel_prefix), binding_policy_(binding_policy){ }
 
       /** @brief returns whether or not the profile has undefined behavior on particular device */
-      void check_statements(statements_container const & statements, viennacl::ocl::device const & device) const
+      int check_invalid(statements_container const & statements, viennacl::ocl::device const & device) const
       {
         using namespace viennacl::tools;
 
@@ -350,24 +357,18 @@ namespace viennacl
         size_t lmem_available = static_cast<size_t>(device.local_mem_size());
         size_t lmem_usage = scalartype_size*n_lmem_elements();
         if(lmem_usage>lmem_available)
-          throw invalid_template_exception("Uses too much local memory!\n"
-                                           "Using (Bytes) = " + to_string(lmem_usage) + "; Available = " + to_string(lmem_available));
+          return LOCAL_MEMORY_OVERFLOW;
 
         //Invalid work group size
         size_t max_workgroup_size = device.max_work_group_size();
         std::vector<size_t> max_work_item_sizes = device.max_work_item_sizes();
         if(p_.local_size_0*p_.local_size_1 > max_workgroup_size)
-          throw invalid_template_exception("The total number of work items is too high!\n"
-                                           "Using:" + to_string(p_.local_size_0*p_.local_size_1) + "; Max = " + to_string(max_workgroup_size));
-
+          return WORK_GROUP_SIZE_OVERFLOW;
         if(p_.local_size_0 > max_work_item_sizes[0])
-          throw invalid_template_exception("The number of work items in dimension 0 is too high!\n"
-                                           "Using:" + to_string(p_.local_size_0) + "; Max = " + to_string(max_work_item_sizes[0]));
+          return LOCAL_SIZE_0_OVERFLOW;
 
         if(p_.local_size_1 > max_work_item_sizes[1])
-          throw invalid_template_exception("The number of work items in dimension 1 is too high!\n"
-                                           "Using:" + to_string(p_.local_size_1) + "; Max = " + to_string(max_work_item_sizes[1]));
-
+          return LOCAL_SIZE_1_OVERFLOW;
 
         //Not warp multiple
         if(device.type()==CL_DEVICE_TYPE_GPU)
@@ -376,27 +377,24 @@ namespace viennacl
           if(device.vendor_id()==4098)
             warp_size = 64;
           if(((p_.local_size_0*p_.local_size_1)%warp_size)>0)
-            throw invalid_template_exception("The number of work items is not a multiple of the warp size!\n"
-                                             "Using:" + to_string(p_.local_size_0*p_.local_size_1) + " ; Warp size = " + to_string(warp_size));
+            return LOCAL_SIZE_NOT_WARP_MULTIPLE;
         }
 
         //Invalid SIMD Width
         if(p_.simd_width!=1 && p_.simd_width!=2 &&
                     p_.simd_width!=4 && p_.simd_width!=8 &&
                     p_.simd_width!=16)
-          throw invalid_template_exception("The SIMD width provided (" + to_string(p_.simd_width) + ") is not in {1, 2, 4, 8, 16}!");
+          return INVALID_SIMD_WIDTH;
 
-        check_invalid_impl(device);
+        return check_invalid_impl(device);
       }
 
 
       /** @brief Generates the code associated with this profile onto the provided stream */
-      std::string generate(statements_container const & statements, viennacl::ocl::device const & device)
+      std::string generate(statements_container const & statements, viennacl::ocl::device const & /*device*/)
       {
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::iterator mit;
-
-        check_statements(statements, device);
 
         utils::kernel_generation_stream stream;
 

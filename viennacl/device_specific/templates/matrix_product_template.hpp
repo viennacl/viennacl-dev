@@ -73,6 +73,16 @@ public:
 
 private:
 
+    static const int GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH = -10;
+    static const int MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE = -11;
+    static const int KS_MUST_BE_SMALLER_THAN_KL = -12;
+    static const int SIMD_WIDTH_MUST_BE_ONE = -13;
+    static const int LOCAL_FETCH_PRODUCT_MUST_MATCH_LOCAL_SIZE_PRODUCT = -14;
+    static const int LOCAL_FETCH_0_MUST_BE_KL_MULTIPLE = -15;
+    static const int LOCAL_FETCH_0_MUST_BE_NL_MULTIPLE = -16;
+    static const int LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE = -17;
+    static const int LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE = -18;
+
     unsigned int n_lmem_elements() const
     {
         unsigned int N = 0;
@@ -83,29 +93,27 @@ private:
         return N;
     }
 
-    void check_invalid_impl(viennacl::ocl::device const & /*device*/) const
+    int check_invalid_impl(viennacl::ocl::device const & /*device*/) const
     {
-        static const unsigned int alignment = 128;
-
         if(!p_.use_A_local && !p_.use_B_local&& (p_.local_fetch_0!=0 || p_.local_fetch_1!=0))
-          throw invalid_template_exception("Using global memory for both A and B require local_fetch_0==local_fetch_1==0)");
+          return GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH;
 
-        if(alignment % p_.mL > 0 || alignment % p_.kL > 0 || alignment % p_.nL > 0)
-          throw invalid_template_exception("Alignment must be a multiple of all mL, kL and nL");
+        if(matrix_base<float>::alignment % p_.mL > 0 || matrix_base<float>::alignment % p_.kL > 0 || matrix_base<float>::alignment % p_.nL > 0)
+          return ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE;
 
         if((p_.mS % p_.simd_width) > 0 || (p_.nS % p_.simd_width) > 0)
-          throw invalid_template_exception("mS and nS must both be multiples of simd_width");
+          return MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE;
 
-        if(p_.mS > p_.mL ||  p_.nS > p_.nL || p_.kS > p_.kL)
-          throw invalid_template_exception("mS, nS and kS must all be smaller than mL, nL and kL respectively");
+        if(p_.kS > p_.kL)
+          return KS_MUST_BE_SMALLER_THAN_KL;
 
         if(!(A_trans_=='N' && B_trans_=='T') && p_.simd_width>1)
-          throw invalid_template_exception("simd_width > 1 is only supported for the NT layout");
+          return SIMD_WIDTH_MUST_BE_ONE;
 
         if(p_.use_A_local || p_.use_B_local)
         {
             if((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1))
-             throw invalid_template_exception("The products of the local fetch sizes must be equal to the product of the local sizes!\n");
+             return LOCAL_FETCH_PRODUCT_MUST_MATCH_LOCAL_SIZE_PRODUCT;
         }
 
         if(p_.use_A_local)
@@ -114,10 +122,10 @@ private:
             unsigned int bound0 = (A_trans_=='N')?p_.mL:p_.kL;
 
             if(p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0)
-              throw invalid_template_exception("Local fetch 1 must be a multiple of " + std::string((A_trans_=='N')?"kL":"mL") + "!\n");
+              return A_trans_=='N'?LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
             if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
-              throw invalid_template_exception("(Local fetch 0 * simd_width) must be a multiple of " + std::string((A_trans_=='N')?"mL":"kL") + "!\n");
+              return A_trans_=='N'?LOCAL_FETCH_0_MUST_BE_NL_MULTIPLE:LOCAL_FETCH_0_MUST_BE_KL_MULTIPLE;
 
         }
         if(p_.use_B_local)
@@ -126,12 +134,14 @@ private:
             unsigned int bound0 = (B_trans_=='T')?p_.nL:p_.kL;
 
             if(p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0)
-              throw invalid_template_exception("Local fetch 1 must be a multiple of " + std::string((B_trans_=='T')?"kL":"nL") + "!\n");
+              return B_trans_=='T'?LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
             if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
-              throw invalid_template_exception("(Local fetch 0*simd_width) must be a multiple of " + std::string((B_trans_=='T')?"nL":"kL") + "!\n");
+              return B_trans_=='T'?LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
         }
+
+        return TEMPLATE_VALID;
     }
 
 
