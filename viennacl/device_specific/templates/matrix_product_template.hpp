@@ -98,7 +98,7 @@ private:
         if(!p_.use_A_local && !p_.use_B_local&& (p_.local_fetch_0!=0 || p_.local_fetch_1!=0))
           return GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH;
 
-        if(matrix_base<float>::alignment % p_.mL > 0 || matrix_base<float>::alignment % p_.kL > 0 || matrix_base<float>::alignment % p_.nL > 0)
+        if(viennacl::dense_padding_size % p_.mL > 0 || viennacl::dense_padding_size % p_.kL > 0 || viennacl::dense_padding_size % p_.nL > 0)
           return ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE;
 
         if((p_.mS % p_.simd_width) > 0 || (p_.nS % p_.simd_width) > 0)

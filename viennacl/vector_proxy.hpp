@@ -51,8 +51,6 @@ namespace viennacl
 
       typedef typename VectorType::cpu_value_type    cpu_value_type;
 
-      static const int alignment = VectorType::alignment;
-
       vector_range(VectorType & v, range const & entry_range)
        : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
 
@@ -176,8 +174,6 @@ namespace viennacl
       typedef typename VectorType::iterator        iterator;
 
       typedef typename VectorType::cpu_value_type  cpu_value_type;
-
-      static const int alignment = VectorType::alignment;
 
       vector_slice(VectorType & v, slice const & entry_slice)
           : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}

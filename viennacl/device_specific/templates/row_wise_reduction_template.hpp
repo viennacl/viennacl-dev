@@ -89,14 +89,6 @@ namespace viennacl{
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
 
-      int check_invalid_impl(viennacl::ocl::device const & /*device*/) const
-      {
-          if(matrix_base<float>::alignment%p_.local_size_0>0)
-              return ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE;
-
-          return TEMPLATE_VALID;
-      }
-
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
         std::vector<mapped_vector_reduction*> exprs;

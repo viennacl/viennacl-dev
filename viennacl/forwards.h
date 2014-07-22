@@ -338,6 +338,8 @@ namespace viennacl
   //
   // Matrix types:
   //
+  static const std::size_t dense_padding_size = 128;
+
   /** @brief A dense matrix class
   *
   * @tparam SCALARTYPE   The underlying scalar type (either float or double)

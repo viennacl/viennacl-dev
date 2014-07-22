@@ -259,7 +259,7 @@ namespace viennacl
 
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(size_type vec_size, viennacl::context ctx)
-    : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
+    : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
   {
     if (size_ > 0)
     {
@@ -311,7 +311,7 @@ namespace viennacl
   template <class SCALARTYPE, typename SizeType, typename DistanceType>
   template <typename LHS, typename RHS, typename OP>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(vector_expression<const LHS, const RHS, OP> const & proxy)
-    : size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, alignment))
+    : size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
   {
     if (size_ > 0)
     {
@@ -335,7 +335,7 @@ namespace viennacl
       if (size_ == 0)
       {
         size_ = vec.size();
-        internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+        internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
         elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(vec));
         pad();
@@ -364,7 +364,7 @@ namespace viennacl
     if (size() == 0)
     {
       size_ = viennacl::traits::size(proxy);
-      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
       viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy));
       pad();
     }
@@ -387,7 +387,7 @@ namespace viennacl
       size_ = v1.size();
       if (size_ > 0)
       {
-        internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+        internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(v1));
         pad();
       }
@@ -409,7 +409,7 @@ namespace viennacl
     if (size() == 0)
     {
       size_ = v.size();
-      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
       if (size_ > 0)
       {
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
@@ -435,7 +435,7 @@ namespace viennacl
     if (size() == 0)
     {
       size_ = v.size();
-      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
       if (size_ > 0)
       {
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
@@ -458,7 +458,7 @@ namespace viennacl
     if (size() == 0)
     {
       size_ = v.size();
-      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
       if (size_ > 0)
       {
         viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), v.context());
@@ -737,7 +737,7 @@ namespace viennacl
 
     if (new_size != size_)
     {
-      vcl_size_t new_internal_size = viennacl::tools::align_to_multiple<vcl_size_t>(new_size, alignment);
+      vcl_size_t new_internal_size = viennacl::tools::align_to_multiple<vcl_size_t>(new_size, dense_padding_size);
 
       std::vector<SCALARTYPE> temp(size_);
       if (preserve && size_ > 0)
@@ -752,7 +752,7 @@ namespace viennacl
 
       fast_copy(temp, *this);
       size_ = new_size;
-      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, alignment);
+      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
       pad();
     }
 

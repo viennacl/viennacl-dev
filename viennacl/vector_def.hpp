@@ -112,8 +112,6 @@ namespace viennacl
       typedef const_vector_iterator<SCALARTYPE, 1>              const_iterator;
       typedef vector_iterator<SCALARTYPE, 1>                    iterator;
 
-      static const size_type alignment = 128;
-
       /** @brief Returns the length of the vector (cf. std::vector)  */
       size_type size() const { return size_; }
       /** @brief Returns the internal length of the vector, which is given by size() plus the extra memory due to padding the memory with zeros up to a multiple of 'ALIGNMENT' */
