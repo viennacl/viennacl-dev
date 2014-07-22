@@ -293,17 +293,6 @@ namespace viennacl
 
     public:
 
-      //Global
-      static const int TEMPLATE_VALID = 0;
-      static const int LOCAL_MEMORY_OVERFLOW = -1;
-      static const int WORK_GROUP_SIZE_OVERFLOW = -2;
-      static const int LOCAL_SIZE_0_OVERFLOW = -3;
-      static const int LOCAL_SIZE_1_OVERFLOW = -4;
-      static const int LOCAL_SIZE_2_OVERFLOW = -5;
-      static const int LOCAL_SIZE_NOT_WARP_MULTIPLE = -6;
-      static const int INVALID_SIMD_WIDTH = -7;
-      static const int ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE = -8;
-
       struct parameters
       {
         parameters(unsigned int _simd_width, unsigned int _local_size_1, unsigned int _local_size_2, unsigned int _num_kernels) : simd_width(_simd_width), local_size_0(_local_size_1), local_size_1(_local_size_2), num_kernels(_num_kernels){ }
@@ -357,18 +346,18 @@ namespace viennacl
         size_t lmem_available = static_cast<size_t>(device.local_mem_size());
         size_t lmem_usage = scalartype_size*n_lmem_elements();
         if(lmem_usage>lmem_available)
-          return LOCAL_MEMORY_OVERFLOW;
+          return TEMPLATE_LOCAL_MEMORY_OVERFLOW;
 
         //Invalid work group size
         size_t max_workgroup_size = device.max_work_group_size();
         std::vector<size_t> max_work_item_sizes = device.max_work_item_sizes();
         if(p_.local_size_0*p_.local_size_1 > max_workgroup_size)
-          return WORK_GROUP_SIZE_OVERFLOW;
+          return TEMPLATE_WORK_GROUP_SIZE_OVERFLOW;
         if(p_.local_size_0 > max_work_item_sizes[0])
-          return LOCAL_SIZE_0_OVERFLOW;
+          return TEMPLATE_LOCAL_SIZE_0_OVERFLOW;
 
         if(p_.local_size_1 > max_work_item_sizes[1])
-          return LOCAL_SIZE_1_OVERFLOW;
+          return TEMPLATE_LOCAL_SIZE_1_OVERFLOW;
 
         //Not warp multiple
         if(device.type()==CL_DEVICE_TYPE_GPU)
@@ -377,14 +366,14 @@ namespace viennacl
           if(device.vendor_id()==4098)
             warp_size = 64;
           if(((p_.local_size_0*p_.local_size_1)%warp_size)>0)
-            return LOCAL_SIZE_NOT_WARP_MULTIPLE;
+            return TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE;
         }
 
         //Invalid SIMD Width
         if(p_.simd_width!=1 && p_.simd_width!=2 &&
                     p_.simd_width!=4 && p_.simd_width!=8 &&
                     p_.simd_width!=16)
-          return INVALID_SIMD_WIDTH;
+          return TEMPLATE_INVALID_SIMD_WIDTH;
 
         return check_invalid_impl(device);
       }

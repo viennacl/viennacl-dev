@@ -38,6 +38,27 @@ namespace viennacl{
 
   namespace device_specific{
 
+    //Error codes
+    static const int TEMPLATE_VALID = 0;
+    static const int TEMPLATE_LOCAL_MEMORY_OVERFLOW = -1;
+    static const int TEMPLATE_WORK_GROUP_SIZE_OVERFLOW = -2;
+    static const int TEMPLATE_LOCAL_SIZE_0_OVERFLOW = -3;
+    static const int TEMPLATE_LOCAL_SIZE_1_OVERFLOW = -4;
+    static const int TEMPLATE_LOCAL_SIZE_2_OVERFLOW = -5;
+    static const int TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE = -6;
+    static const int TEMPLATE_INVALID_SIMD_WIDTH = -7;
+    static const int TEMPLATE_ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE = -8;
+
+    static const int TEMPLATE_GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH = -10;
+    static const int TEMPLATE_MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE = -11;
+    static const int TEMPLATE_KS_MUST_BE_SMALLER_THAN_KL = -12;
+    static const int TEMPLATE_SIMD_WIDTH_MUST_BE_ONE = -13;
+    static const int TEMPLATE_LOCAL_FETCH_PRODUCT_MUST_MATCH_LOCAL_SIZE_PRODUCT = -14;
+    static const int TEMPLATE_LOCAL_FETCH_0_MUST_BE_KL_MULTIPLE = -15;
+    static const int TEMPLATE_LOCAL_FETCH_0_MUST_BE_NL_MULTIPLE = -16;
+    static const int TEMPLATE_LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE = -17;
+    static const int TEMPLATE_LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE = -18;
+
     struct index_tuple{
       index_tuple(std::string const & _i, std::string const & _bound0) : i(_i), bound0(_bound0), j(""), bound1(""){ }
       index_tuple(std::string const & _i, std::string const & _bound0, std::string const & _j, std::string const & _bound1) : i(_i), bound0(_bound0), j(_j), bound1(_bound1){ }
@@ -228,8 +249,6 @@ namespace viennacl{
       std::list<scheduler::statement> data_;
       order_type order_;
     };
-
-
 
   }
 

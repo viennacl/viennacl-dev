@@ -73,16 +73,6 @@ public:
 
 private:
 
-    static const int GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH = -10;
-    static const int MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE = -11;
-    static const int KS_MUST_BE_SMALLER_THAN_KL = -12;
-    static const int SIMD_WIDTH_MUST_BE_ONE = -13;
-    static const int LOCAL_FETCH_PRODUCT_MUST_MATCH_LOCAL_SIZE_PRODUCT = -14;
-    static const int LOCAL_FETCH_0_MUST_BE_KL_MULTIPLE = -15;
-    static const int LOCAL_FETCH_0_MUST_BE_NL_MULTIPLE = -16;
-    static const int LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE = -17;
-    static const int LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE = -18;
-
     unsigned int n_lmem_elements() const
     {
         unsigned int N = 0;
@@ -96,24 +86,24 @@ private:
     int check_invalid_impl(viennacl::ocl::device const & /*device*/) const
     {
         if(!p_.use_A_local && !p_.use_B_local&& (p_.local_fetch_0!=0 || p_.local_fetch_1!=0))
-          return GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH;
+          return TEMPLATE_GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH;
 
         if(viennacl::dense_padding_size % p_.mL > 0 || viennacl::dense_padding_size % p_.kL > 0 || viennacl::dense_padding_size % p_.nL > 0)
-          return ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE;
+          return TEMPLATE_ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE;
 
         if((p_.mS % p_.simd_width) > 0 || (p_.nS % p_.simd_width) > 0)
-          return MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE;
+          return TEMPLATE_MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE;
 
         if(p_.kS > p_.kL)
-          return KS_MUST_BE_SMALLER_THAN_KL;
+          return TEMPLATE_KS_MUST_BE_SMALLER_THAN_KL;
 
         if(!(A_trans_=='N' && B_trans_=='T') && p_.simd_width>1)
-          return SIMD_WIDTH_MUST_BE_ONE;
+          return TEMPLATE_SIMD_WIDTH_MUST_BE_ONE;
 
         if(p_.use_A_local || p_.use_B_local)
         {
             if((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1))
-             return LOCAL_FETCH_PRODUCT_MUST_MATCH_LOCAL_SIZE_PRODUCT;
+             return TEMPLATE_LOCAL_FETCH_PRODUCT_MUST_MATCH_LOCAL_SIZE_PRODUCT;
         }
 
         if(p_.use_A_local)
@@ -122,10 +112,10 @@ private:
             unsigned int bound0 = (A_trans_=='N')?p_.mL:p_.kL;
 
             if(p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0)
-              return A_trans_=='N'?LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
+              return A_trans_=='N'?TEMPLATE_LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:TEMPLATE_LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
             if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
-              return A_trans_=='N'?LOCAL_FETCH_0_MUST_BE_NL_MULTIPLE:LOCAL_FETCH_0_MUST_BE_KL_MULTIPLE;
+              return A_trans_=='N'?TEMPLATE_LOCAL_FETCH_0_MUST_BE_NL_MULTIPLE:TEMPLATE_LOCAL_FETCH_0_MUST_BE_KL_MULTIPLE;
 
         }
         if(p_.use_B_local)
@@ -134,10 +124,10 @@ private:
             unsigned int bound0 = (B_trans_=='T')?p_.nL:p_.kL;
 
             if(p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0)
-              return B_trans_=='T'?LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
+              return B_trans_=='T'?TEMPLATE_LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:TEMPLATE_LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
             if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
-              return B_trans_=='T'?LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
+              return B_trans_=='T'?TEMPLATE_LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:TEMPLATE_LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
         }
 
