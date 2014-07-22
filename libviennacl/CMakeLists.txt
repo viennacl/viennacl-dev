@@ -33,3 +33,8 @@ else(ENABLE_CUDA)
                                 src/blas3.cpp src/blas3_host.cpp)
   endif(ENABLE_OPENCL)
 endif(ENABLE_CUDA)
+
+# Special linkage for OpenMP under MinGW:
+if(ENABLE_OPENMP AND MINGW)
+   target_link_libraries(viennacl gomp)
+endif(ENABLE_OPENMP)
