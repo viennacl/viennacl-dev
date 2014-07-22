@@ -129,7 +129,7 @@ namespace viennacl{
 
         stream << "unsigned int lid0 = get_local_id(0);" << std::endl;
         stream << "unsigned int lid1 = get_local_id(1);" << std::endl;
-        stream << "unsigned int upper_bound_0 = (" << size0  << "+" << p_.local_size_0 - 1 << ")/" << p_.local_size_0 << ";" << std::endl;
+        stream << "unsigned int upper_bound_0 = (" << size0  << "+" << p_.local_size_0 - 1 << ")/" << p_.local_size_0 << "*" << p_.local_size_0 << ";" << std::endl;
         stream << "for(unsigned int r = get_global_id(0) ; r < upper_bound_0; r += get_global_size(0)){" << std::endl;
         stream.inc_tab();
         {
