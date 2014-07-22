@@ -136,6 +136,8 @@ namespace viennacl{
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
             stream << exprs[k]->scalartype() << " " << accs[k] << " = " << neutral_element(rops[k]) << ";" << std::endl;
 
+          stream << "if(r < " << size0 << ")" << std::endl;
+          stream.inc_tab();
           stream << "for( unsigned int c = get_local_id(1) ; c < " << size1 << " ; c += get_local_size(1)){" << std::endl;
           stream.inc_tab();
           {
@@ -168,6 +170,7 @@ namespace viennacl{
               compute_reduction(stream,"","",accs[k],value,rops[k]);
             }
           }
+          stream.dec_tab();
           stream.dec_tab();
           stream << "}" << std::endl;
 
