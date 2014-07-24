@@ -37,4 +37,4 @@ endif(ENABLE_CUDA)
 # Special linkage for OpenMP under MinGW:
 if(ENABLE_OPENMP AND MINGW)
    target_link_libraries(viennacl gomp)
-endif(ENABLE_OPENMP)
+endif(ENABLE_OPENMP AND MINGW)
