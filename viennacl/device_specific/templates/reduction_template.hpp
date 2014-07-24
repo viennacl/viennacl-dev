@@ -47,11 +47,11 @@ namespace viennacl
     {
 
     public:
-      struct parameters : public template_base::parameters
+      struct parameters_type : public template_base::parameters_type
       {
-        parameters(unsigned int _simd_width,
+        parameters_type(unsigned int _simd_width,
                    unsigned int _group_size, unsigned int _num_groups,
-                   unsigned int _decomposition) : template_base::parameters(_simd_width, _group_size, 1, 2), num_groups(_num_groups), decomposition(_decomposition){ }
+                   unsigned int _decomposition) : template_base::parameters_type(_simd_width, _group_size, 1, 2), num_groups(_num_groups), decomposition(_decomposition){ }
 
         unsigned int num_groups;
         unsigned int decomposition;
@@ -367,10 +367,11 @@ namespace viennacl
 
 
     public:
-      reduction_template(reduction_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), p_(parameters){ }
+      reduction_template(reduction_template::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), p_(parameters){ }
+      reduction_template::parameters_type const & parameters() const { return p_; }
 
     private:
-      reduction_template::parameters p_;
+      reduction_template::parameters_type p_;
       mutable std::vector< viennacl::ocl::handle<cl_mem> > tmp_;
       mutable std::vector< viennacl::ocl::handle<cl_mem> > tmpidx_;
     };

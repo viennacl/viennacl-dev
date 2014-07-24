@@ -293,14 +293,14 @@ namespace viennacl
 
     public:
 
-      struct parameters
+      struct parameters_type
       {
-        parameters(unsigned int _simd_width, unsigned int _local_size_1, unsigned int _local_size_2, unsigned int _num_kernels) : simd_width(_simd_width), local_size_0(_local_size_1), local_size_1(_local_size_2), num_kernels(_num_kernels){ }
+        parameters_type(unsigned int _simd_width, unsigned int _local_size_1, unsigned int _local_size_2, unsigned int _num_kernels) : simd_width(_simd_width), local_size_0(_local_size_1), local_size_1(_local_size_2), num_kernels(_num_kernels){ }
 
-        const unsigned int simd_width;
-        const unsigned int local_size_0;
-        const unsigned int local_size_1;
-        const unsigned int num_kernels;
+        unsigned int simd_width;
+        unsigned int local_size_0;
+        unsigned int local_size_1;
+        unsigned int num_kernels;
       };
 
     private:
@@ -333,7 +333,7 @@ namespace viennacl
 
     public:
       /** @brief The constructor */
-      template_base(template_base::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : p_(parameters), kernel_prefix_(kernel_prefix), binding_policy_(binding_policy){ }
+      template_base(template_base::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : p_(parameters), kernel_prefix_(kernel_prefix), binding_policy_(binding_policy){ }
 
       /** @brief returns whether or not the profile has undefined behavior on particular device */
       int check_invalid(statements_container const & statements, viennacl::ocl::device const & device) const
@@ -446,7 +446,7 @@ namespace viennacl
 
 
     protected:
-      template_base::parameters const & p_;
+      template_base::parameters_type const & p_;
       std::string kernel_prefix_;
       binding_policy_t binding_policy_;
     };

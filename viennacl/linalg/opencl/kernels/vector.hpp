@@ -31,7 +31,7 @@ namespace viennacl
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
         template<typename T, typename ScalarType>
-        void generate_inner_prod_impl(std::string & source, device_specific::reduction_template::parameters const & parameters, vcl_size_t vector_num,
+        void generate_inner_prod_impl(std::string & source, device_specific::reduction_template::parameters_type const & parameters, vcl_size_t vector_num,
                                        viennacl::vector<T> const * x, viennacl::vector<T> const * y, ScalarType const* s,
                                       std::string const & prefix, viennacl::ocl::device const & device)
         {
@@ -43,7 +43,7 @@ namespace viennacl
         }
 
         template<typename T, typename ScalarType1, typename ScalarType2>
-        inline void generate_avbv_impl2(std::string & source, device_specific::vector_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
+        inline void generate_avbv_impl2(std::string & source, device_specific::vector_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType1 const * a,
                                        viennacl::vector_base<T> const * z, ScalarType2 const * b,
                                         std::string const & prefix, viennacl::ocl::device const & device)
@@ -74,7 +74,7 @@ namespace viennacl
         }
 
         template<typename T, typename ScalarType>
-        inline void generate_avbv_impl(std::string & source, device_specific::vector_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
+        inline void generate_avbv_impl(std::string & source, device_specific::vector_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType const * ha, viennacl::scalar<ScalarType> const * da,
                                        viennacl::vector_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db,
                                        std::string const & prefix, viennacl::ocl::device const & device)
@@ -114,8 +114,8 @@ namespace viennacl
 
               viennacl::ocl::device const & device = ctx.current_device();
 
-              vector_axpy_template::parameters vector_axpy_params = builtin_database::vector_axpy_params<TYPE>(device);
-              reduction_template::parameters reduction_params = builtin_database::reduction_params<TYPE>(device);
+              vector_axpy_template::parameters_type vector_axpy_params = builtin_database::vector_axpy_params<TYPE>(device);
+              reduction_template::parameters_type reduction_params = builtin_database::reduction_params<TYPE>(device);
 
 
               std::string source;
@@ -186,7 +186,7 @@ namespace viennacl
 
               viennacl::ocl::device const & device = ctx.current_device();
 
-              reduction_template::parameters reduction_params = builtin_database::reduction_params<TYPE>(device);
+              reduction_template::parameters_type reduction_params = builtin_database::reduction_params<TYPE>(device);
 
               std::string source;
               source.reserve(8192);

@@ -45,7 +45,7 @@ namespace viennacl
         };
 
         template<typename T, typename ScalarType1, typename ScalarType2>
-        inline void generate_ambm_impl2(std::string & source, device_specific::matrix_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
+        inline void generate_ambm_impl2(std::string & source, device_specific::matrix_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType1 const * a,
                                        viennacl::matrix_base<T> const * z, ScalarType2 const * b,
                                         std::string const & prefix, viennacl::ocl::device const & device)
@@ -76,7 +76,7 @@ namespace viennacl
         }
 
         template<typename T, typename ScalarType>
-        inline void generate_ambm_impl(std::string & source, device_specific::matrix_axpy_template::parameters const & parameters, scheduler::operation_node_type ASSIGN_OP,
+        inline void generate_ambm_impl(std::string & source, device_specific::matrix_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
                                        viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType const * ha, viennacl::scalar<ScalarType> const * da,
                                        viennacl::matrix_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db,
                                        std::string const & prefix, viennacl::ocl::device const & device)
@@ -512,10 +512,10 @@ namespace viennacl
 
               viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
-              matrix_axpy_template::parameters matrix_axpy_params = builtin_database::matrix_axpy_params<NumericT>(device);
-              row_wise_reduction_template::parameters row_wise_reduction_params_N = builtin_database::row_wise_reduction_params<NumericT>(device, 'N');
-              row_wise_reduction_template::parameters row_wise_reduction_params_T = builtin_database::row_wise_reduction_params<NumericT>(device, 'T');
-              vector_axpy_template::parameters vector_axpy_params = builtin_database::vector_axpy_params<NumericT>(device);
+              matrix_axpy_template::parameters_type matrix_axpy_params = builtin_database::matrix_axpy_params<NumericT>(device);
+              row_wise_reduction_template::parameters_type row_wise_reduction_params_N = builtin_database::row_wise_reduction_params<NumericT>(device, 'N');
+              row_wise_reduction_template::parameters_type row_wise_reduction_params_T = builtin_database::row_wise_reduction_params<NumericT>(device, 'T');
+              vector_axpy_template::parameters_type vector_axpy_params = builtin_database::vector_axpy_params<NumericT>(device);
 
               viennacl::vector<NumericT> x;
               viennacl::vector<NumericT> y;

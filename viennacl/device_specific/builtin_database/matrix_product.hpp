@@ -17,9 +17,9 @@ namespace device_specific{
 namespace builtin_database{
 
 
-inline database_type<matrix_product_template::parameters> init_matrix_product_N_N()
+inline database_type<matrix_product_template::parameters_type> init_matrix_product_N_N()
 {
-  database_type<matrix_product_template::parameters> result;
+  database_type<matrix_product_template::parameters_type> result;
 
   devices::accelerator::fallback::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
   devices::accelerator::fallback::add_8B(result, char_to_type<'N'>(), char_to_type<'N'>());
@@ -34,9 +34,9 @@ inline database_type<matrix_product_template::parameters> init_matrix_product_N_
   return result;
 }
 
-inline database_type<matrix_product_template::parameters> init_matrix_product_T_N()
+inline database_type<matrix_product_template::parameters_type> init_matrix_product_T_N()
 {
-  database_type<matrix_product_template::parameters> result;
+  database_type<matrix_product_template::parameters_type> result;
 
   devices::accelerator::fallback::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
   devices::accelerator::fallback::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
@@ -51,9 +51,9 @@ inline database_type<matrix_product_template::parameters> init_matrix_product_T_
   return result;
 }
 
-inline database_type<matrix_product_template::parameters> init_matrix_product_N_T()
+inline database_type<matrix_product_template::parameters_type> init_matrix_product_N_T()
 {
-  database_type<matrix_product_template::parameters> result;
+  database_type<matrix_product_template::parameters_type> result;
 
   devices::accelerator::fallback::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
   devices::accelerator::fallback::add_8B(result, char_to_type<'N'>(), char_to_type<'T'>());
@@ -69,9 +69,9 @@ inline database_type<matrix_product_template::parameters> init_matrix_product_N_
   return result;
 }
 
-inline database_type<matrix_product_template::parameters> init_matrix_product_T_T()
+inline database_type<matrix_product_template::parameters_type> init_matrix_product_T_T()
 {
-  database_type<matrix_product_template::parameters> result;
+  database_type<matrix_product_template::parameters_type> result;
 
   devices::accelerator::fallback::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
   devices::accelerator::fallback::add_8B(result, char_to_type<'T'>(), char_to_type<'T'>());
@@ -85,17 +85,17 @@ inline database_type<matrix_product_template::parameters> init_matrix_product_T_
   return result;
 }
 
-static database_type<matrix_product_template::parameters> matrix_product_N_N = init_matrix_product_N_N();
-static database_type<matrix_product_template::parameters> matrix_product_T_N = init_matrix_product_T_N();
-static database_type<matrix_product_template::parameters> matrix_product_N_T = init_matrix_product_N_T();
-static database_type<matrix_product_template::parameters> matrix_product_T_T = init_matrix_product_T_T();
+static database_type<matrix_product_template::parameters_type> matrix_product_N_N = init_matrix_product_N_N();
+static database_type<matrix_product_template::parameters_type> matrix_product_T_N = init_matrix_product_T_N();
+static database_type<matrix_product_template::parameters_type> matrix_product_N_T = init_matrix_product_N_T();
+static database_type<matrix_product_template::parameters_type> matrix_product_T_T = init_matrix_product_T_T();
 
 template<class T>
-matrix_product_template::parameters const & matrix_product_params(ocl::device const & device, char A_trans, char B_trans)
+matrix_product_template::parameters_type const & matrix_product_params(ocl::device const & device, char A_trans, char B_trans)
 {
   assert(A_trans=='N' || A_trans=='T');
   assert(B_trans=='N' || B_trans=='T');
-  database_type<matrix_product_template::parameters> * db;
+  database_type<matrix_product_template::parameters_type> * db;
   if(A_trans=='N' && B_trans=='N')
     db = &matrix_product_N_N;
   else if(A_trans=='T' && B_trans=='N')

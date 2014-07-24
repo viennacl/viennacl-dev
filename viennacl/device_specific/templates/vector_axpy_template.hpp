@@ -47,16 +47,16 @@ namespace viennacl
     {
 
     public:
-      class parameters : public template_base::parameters
+      class parameters_type : public template_base::parameters_type
       {
       public:
-        parameters(unsigned int _simd_width,
+        parameters_type(unsigned int _simd_width,
                    unsigned int _group_size, unsigned int _num_groups,
-                   unsigned int _decomposition) : template_base::parameters(_simd_width, _group_size, 1, 1), num_groups(_num_groups), decomposition(_decomposition){ }
+                   unsigned int _decomposition) : template_base::parameters_type(_simd_width, _group_size, 1, 1), num_groups(_num_groups), decomposition(_decomposition){ }
 
 
-        const unsigned int num_groups;
-        const unsigned int decomposition;
+        unsigned int num_groups;
+        unsigned int decomposition;
       };
 
     private:
@@ -128,12 +128,14 @@ namespace viennacl
       }
 
     public:
-      vector_axpy_template(vector_axpy_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), up_to_internal_size_(false), p_(parameters){ }
+      vector_axpy_template(vector_axpy_template::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), up_to_internal_size_(false), p_(parameters){ }
+
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
+      vector_axpy_template::parameters_type const & parameters() const { return p_; }
 
     private:
       bool up_to_internal_size_;
-      vector_axpy_template::parameters p_;
+      vector_axpy_template::parameters_type p_;
     };
 
   }

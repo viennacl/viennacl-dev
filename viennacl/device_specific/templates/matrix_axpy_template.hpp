@@ -44,13 +44,13 @@ namespace viennacl{
     {
 
     public:
-      class parameters : public template_base::parameters
+      class parameters_type : public template_base::parameters_type
       {
       public:
-        parameters(unsigned int _simd_width,
+        parameters_type(unsigned int _simd_width,
                    unsigned int _local_size_0, unsigned int _local_size_1,
                    unsigned int _num_groups_0, unsigned int _num_groups_1,
-                   unsigned int _decomposition) : template_base::parameters(_simd_width, _local_size_0, _local_size_1, 1), num_groups_0(_num_groups_0), num_groups_1(_num_groups_1), decomposition(_decomposition){ }
+                   unsigned int _decomposition) : template_base::parameters_type(_simd_width, _local_size_0, _local_size_1, 1), num_groups_0(_num_groups_0), num_groups_1(_num_groups_1), decomposition(_decomposition){ }
 
         unsigned int num_groups_0;
         unsigned int num_groups_1;
@@ -121,12 +121,14 @@ namespace viennacl{
 
 
     public:
-      matrix_axpy_template(matrix_axpy_template::parameters const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), up_to_internal_size_(false), p_(parameters){ }
+      matrix_axpy_template(matrix_axpy_template::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), up_to_internal_size_(false), p_(parameters){ }
 
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
+      matrix_axpy_template::parameters_type const & parameters() const { return p_; }
+
     private:
       bool up_to_internal_size_;
-      matrix_axpy_template::parameters p_;
+      matrix_axpy_template::parameters_type p_;
     };
 
   }

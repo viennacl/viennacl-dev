@@ -17,9 +17,9 @@ namespace device_specific{
 namespace builtin_database{
 
 
-inline database_type<row_wise_reduction_template::parameters> init_row_wise_reduction_N()
+inline database_type<row_wise_reduction_template::parameters_type> init_row_wise_reduction_N()
 {
-  database_type<row_wise_reduction_template::parameters> result;
+  database_type<row_wise_reduction_template::parameters_type> result;
 
   devices::accelerator::fallback::add_4B(result, char_to_type<'N'>());
   devices::accelerator::fallback::add_8B(result, char_to_type<'N'>());
@@ -35,9 +35,9 @@ inline database_type<row_wise_reduction_template::parameters> init_row_wise_redu
   return result;
 }
 
-inline database_type<row_wise_reduction_template::parameters> init_row_wise_reduction_T()
+inline database_type<row_wise_reduction_template::parameters_type> init_row_wise_reduction_T()
 {
-  database_type<row_wise_reduction_template::parameters> result;
+  database_type<row_wise_reduction_template::parameters_type> result;
 
   devices::accelerator::fallback::add_4B(result, char_to_type<'T'>());
   devices::accelerator::fallback::add_8B(result, char_to_type<'T'>());
@@ -52,14 +52,14 @@ inline database_type<row_wise_reduction_template::parameters> init_row_wise_redu
   return result;
 }
 
-static database_type<row_wise_reduction_template::parameters> row_wise_reduction_N = init_row_wise_reduction_N();
-static database_type<row_wise_reduction_template::parameters> row_wise_reduction_T = init_row_wise_reduction_T();
+static database_type<row_wise_reduction_template::parameters_type> row_wise_reduction_N = init_row_wise_reduction_N();
+static database_type<row_wise_reduction_template::parameters_type> row_wise_reduction_T = init_row_wise_reduction_T();
 
 template<class T>
-device_specific::row_wise_reduction_template::parameters const & row_wise_reduction_params(ocl::device const & device, char A_trans)
+device_specific::row_wise_reduction_template::parameters_type const & row_wise_reduction_params(ocl::device const & device, char A_trans)
 {
   assert(A_trans=='N' || A_trans=='T');
-  database_type<row_wise_reduction_template::parameters> * db;
+  database_type<row_wise_reduction_template::parameters_type> * db;
   if(A_trans)
     db = &row_wise_reduction_T;
   else

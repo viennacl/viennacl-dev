@@ -16,9 +16,9 @@ namespace viennacl{
 namespace device_specific{
 namespace builtin_database{
 
-inline database_type<reduction_template::parameters> init_reduction()
+inline database_type<reduction_template::parameters_type> init_reduction()
 {
-  database_type<reduction_template::parameters> result;
+  database_type<reduction_template::parameters_type> result;
 
   devices::accelerator::fallback::add_4B(result);
   devices::accelerator::fallback::add_8B(result);
@@ -32,10 +32,10 @@ inline database_type<reduction_template::parameters> init_reduction()
   return result;
 }
 
-static database_type<reduction_template::parameters> reduction = init_reduction();
+static database_type<reduction_template::parameters_type> reduction = init_reduction();
 
 template<class T>
-reduction_template::parameters const & reduction_params(ocl::device const & device)
+reduction_template::parameters_type const & reduction_params(ocl::device const & device)
 {
   return get_parameters<T>(reduction, device);
 }

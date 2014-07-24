@@ -45,11 +45,11 @@ namespace viennacl{
 
     class row_wise_reduction_template : public template_base{
     public:
-      struct parameters : public template_base::parameters
+      struct parameters_type : public template_base::parameters_type
       {
-        parameters(unsigned int _simd_width,
+        parameters_type(unsigned int _simd_width,
                    unsigned int _local_size_0, unsigned int _local_size_1,
-                   unsigned int _num_groups_0): template_base::parameters(_simd_width, _local_size_0, _local_size_1, 1),
+                   unsigned int _num_groups_0): template_base::parameters_type(_simd_width, _local_size_0, _local_size_1, 1),
                                                num_groups_0(_num_groups_0) { }
 
 
@@ -217,11 +217,12 @@ namespace viennacl{
       }
 
     public:
-      row_wise_reduction_template(row_wise_reduction_template::parameters const & parameters, char A_trans, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), A_trans_(A_trans), p_(parameters){ }
+      row_wise_reduction_template(row_wise_reduction_template::parameters_type const & parameters, char A_trans, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), A_trans_(A_trans), p_(parameters){ }
+      row_wise_reduction_template::parameters_type const & parameters() const { return p_; }
 
     private:
       const char A_trans_;
-      row_wise_reduction_template::parameters p_;
+      row_wise_reduction_template::parameters_type p_;
     };
 
   }

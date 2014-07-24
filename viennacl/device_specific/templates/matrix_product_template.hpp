@@ -44,13 +44,13 @@ namespace device_specific{
 class matrix_product_template : public template_base{
 
 public:
-    struct parameters : public template_base::parameters
+    struct parameters_type : public template_base::parameters_type
     {
-      parameters(unsigned int simd_width
+      parameters_type(unsigned int simd_width
                  , unsigned int local_size_0, unsigned int KL, unsigned int local_size_1
                  , unsigned int ms, unsigned int ks, unsigned int ns
                  , bool use_A_local, bool use_B_local
-                 , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters(simd_width, local_size_0, local_size_1, 1),
+                 , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters_type(simd_width, local_size_0, local_size_1, 1),
                                              kL(KL), mS(ms), kS(ks), nS(ns), use_A_local(use_A_local), use_B_local(use_B_local),
                                              local_fetch_0(local_fetch_0), local_fetch_1(local_fetch_1),
                                               mL(ms*local_size_0), nL(ns*local_size_1){}
@@ -516,12 +516,13 @@ private:
     }
 
 public:
-    matrix_product_template(matrix_product_template::parameters const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(p_, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
+    matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(p_, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
+    matrix_product_template::parameters_type const & parameters() const { return p_; }
 
 private:
     const char A_trans_;
     const char B_trans_;
-    matrix_product_template::parameters p_;
+    matrix_product_template::parameters_type p_;
 };
 
 }

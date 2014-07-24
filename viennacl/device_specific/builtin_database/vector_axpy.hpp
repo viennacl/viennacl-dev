@@ -18,9 +18,9 @@ namespace viennacl{
 namespace device_specific{
 namespace builtin_database{
 
-inline database_type<vector_axpy_template::parameters> init_vector_axpy()
+inline database_type<vector_axpy_template::parameters_type> init_vector_axpy()
 {
-  database_type<vector_axpy_template::parameters> result;
+  database_type<vector_axpy_template::parameters_type> result;
 
   devices::cpu::fallback::add_4B(result);
   devices::cpu::fallback::add_8B(result);
@@ -33,10 +33,10 @@ inline database_type<vector_axpy_template::parameters> init_vector_axpy()
   return result;
 }
 
-static database_type<vector_axpy_template::parameters> vector_axpy = init_vector_axpy();
+static database_type<vector_axpy_template::parameters_type> vector_axpy = init_vector_axpy();
 
 template<class T>
-vector_axpy_template::parameters const & vector_axpy_params(ocl::device const & device)
+vector_axpy_template::parameters_type const & vector_axpy_params(ocl::device const & device)
 {
   return get_parameters<T>(vector_axpy, device);
 }

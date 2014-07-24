@@ -249,10 +249,10 @@ namespace viennacl
             {
               using namespace device_specific;
 
-              matrix_product_template::parameters matrix_product_params_NN = builtin_database::matrix_product_params<NumericT>(device, 'N', 'N');
-              matrix_product_template::parameters matrix_product_params_TN = builtin_database::matrix_product_params<NumericT>(device, 'T', 'N');
-              matrix_product_template::parameters matrix_product_params_NT = builtin_database::matrix_product_params<NumericT>(device, 'N', 'T');
-              matrix_product_template::parameters matrix_product_params_TT = builtin_database::matrix_product_params<NumericT>(device, 'T', 'T');
+              matrix_product_template::parameters_type matrix_product_params_NN = builtin_database::matrix_product_params<NumericT>(device, 'N', 'N');
+              matrix_product_template::parameters_type matrix_product_params_TN = builtin_database::matrix_product_params<NumericT>(device, 'T', 'N');
+              matrix_product_template::parameters_type matrix_product_params_NT = builtin_database::matrix_product_params<NumericT>(device, 'N', 'T');
+              matrix_product_template::parameters_type matrix_product_params_TT = builtin_database::matrix_product_params<NumericT>(device, 'T', 'T');
 
               std::string source;
               source.reserve(8192);
