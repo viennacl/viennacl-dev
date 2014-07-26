@@ -44,22 +44,22 @@ inline void add_4B(database_type<row_wise_reduction_template::parameters_type> &
 
 inline void add_4B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'N'>, char_to_type<'N'>)
 {
-  db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,1,1,8,8));
+  db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,FETCH_LOCAL,FETCH_LOCAL,8,8));
 }
 
 inline void add_4B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'T'>, char_to_type<'N'>)
 {
-  db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,1,1,8,8));
+  db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,FETCH_LOCAL,FETCH_LOCAL,8,8));
 }
 
 inline void add_4B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'N'>, char_to_type<'T'>)
 {
-  db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,1,1,8,8));
+  db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,FETCH_LOCAL,FETCH_LOCAL,8,8));
 }
 
 inline void add_4B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'T'>, char_to_type<'T'>)
 {
-  db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,1,1,8,8));
+  db.add_4B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,FETCH_LOCAL,FETCH_LOCAL,8,8));
 }
 
 
@@ -90,22 +90,22 @@ inline void add_8B(database_type<row_wise_reduction_template::parameters_type> &
 
 inline void add_8B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'N'>, char_to_type<'N'>)
 {
-  db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,1,1,8,8));
+  db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,FETCH_LOCAL,FETCH_LOCAL,8,8));
 }
 
 inline void add_8B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'T'>, char_to_type<'N'>)
 {
-  db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,1,1,8,8));
+  db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,FETCH_LOCAL,FETCH_LOCAL,8,8));
 }
 
 inline void add_8B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'N'>, char_to_type<'T'>)
 {
-  db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,1,1,8,8));
+  db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,FETCH_LOCAL,FETCH_LOCAL,8,8));
 }
 
 inline void add_8B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'T'>, char_to_type<'T'>)
 {
-  db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,1,1,8,8));
+  db.add_8B(unknown_id, CL_DEVICE_TYPE_GPU, unknown, "", matrix_product_template::parameters_type(1,8,8,8,4,4,4,FETCH_LOCAL,FETCH_LOCAL,8,8));
 }
 
 

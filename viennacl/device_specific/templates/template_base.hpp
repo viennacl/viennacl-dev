@@ -44,6 +44,13 @@ namespace viennacl
   namespace device_specific
   {
 
+    enum fetching_policy_type
+    {
+      FETCH_LOCAL,
+      FETCH_GLOBAL_STRIDED,
+      FETCH_GLOBAL_CONTIGUOUS
+    };
+
     class template_base
     {
 
