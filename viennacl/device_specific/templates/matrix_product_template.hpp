@@ -298,9 +298,9 @@ private:
 
           case FETCH_GLOBAL_CONTIGUOUS:
             if(A_trans_=='N')
-                stream << A->name() << " += gidx*" << p_.mL/p_.simd_width << "+ idx*" << p_.mS << ";" << std::endl;
+                stream << A->name() << " += gidx*" << p_.mL/p_.simd_width << "+ idx*" << p_.mS/p_.simd_width << ";" << std::endl;
             else
-                stream << A->name() << " += (gidx*" << p_.mL/p_.simd_width << "+ idx*" << p_.mS << ")*" << A->ld() << ";" << std::endl;
+                stream << A->name() << " += (gidx*" << p_.mL/p_.simd_width << "+ idx*" << p_.mS/p_.simd_width << ")*" << A->ld() << ";" << std::endl;
             break;
 
           case FETCH_GLOBAL_STRIDED:
@@ -324,9 +324,9 @@ private:
 
           case FETCH_GLOBAL_CONTIGUOUS:
             if(B_trans_=='T')
-                stream << B->name() << " +=  gidy*" << p_.nL/p_.simd_width << "+ idy*" << p_.nS << ";" << std::endl;
+                stream << B->name() << " +=  gidy*" << p_.nL/p_.simd_width << "+ idy*" << p_.nS/p_.simd_width << ";" << std::endl;
             else
-                stream << B->name() << " += (gidy*" << p_.nL/p_.simd_width << "+ idy*" << p_.nS << ")*" << B->ld() << ";" << std::endl;
+                stream << B->name() << " += (gidy*" << p_.nL/p_.simd_width << "+ idy*" << p_.nS/p_.simd_width << ")*" << B->ld() << ";" << std::endl;
             break;
 
           case FETCH_GLOBAL_STRIDED:
@@ -398,10 +398,11 @@ private:
         }
 
         if(p_.A_fetching_policy==FETCH_LOCAL || p_.B_fetching_policy == FETCH_LOCAL)
-            stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-
-        stream << "uint offA = " << p_.simd_width << "*idx;" << std::endl;
-        stream << "uint offB = " << p_.simd_width << "*idy;" << std::endl;
+        {
+          stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+          stream << "uint offA = " << p_.simd_width << "*idx;" << std::endl;
+          stream << "uint offB = " << p_.simd_width << "*idy;" << std::endl;
+        }
 
         //stream << "#pragma unroll" << std::endl;
         stream << "for(unsigned int k = 0 ; k < " << p_.kL << "; k+=" << p_.kS << "){" << std::endl;
@@ -546,13 +547,13 @@ private:
 
         if(C->row_major())
         {
-          unsigned int ministartstride0 = p_.A_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?p_.mS:1;
-          unsigned int ministartstride1 = p_.B_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?p_.nS:1;
+          unsigned int ministartstride0 = p_.A_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?p_.mS:p_.simd_width;
+          unsigned int ministartstride1 = p_.B_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?p_.nS:p_.simd_width;
 
           stream << C->name() << "+= gidx*" << p_.mL << "*" << C->ld() << ";" << std::endl;
-          stream << C->name() << "+= idx*" << p_.simd_width*ministartstride0 << "*" << C->ld() << ";" << std::endl;
+          stream << C->name() << "+= idx*" << ministartstride0 << "*" << C->ld() << ";" << std::endl;
           stream << C->name() << "+= gidy*" << p_.nL << ";" << std::endl;
-          stream << C->name() << "+= idy*" << p_.simd_width*ministartstride1 << ";" << std::endl;
+          stream << C->name() << "+= idy*" << ministartstride1 << ";" << std::endl;
           for(unsigned int n=0 ; n < p_.nS ; ++n){
               for(unsigned int m=0 ; m < p_.mS ; ++m){
                   unsigned int ministride1 = p_.A_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?1:p_.local_size_0;
@@ -568,13 +569,13 @@ private:
         }
         else
         {
-          unsigned int ministartstride0 = p_.A_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?p_.mS:1;
-          unsigned int ministartstride1 = p_.B_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?p_.nS:1;
+          unsigned int ministartstride0 = p_.A_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?p_.mS:p_.simd_width;
+          unsigned int ministartstride1 = p_.B_fetching_policy==FETCH_GLOBAL_CONTIGUOUS?p_.nS:p_.simd_width;
 
           stream << C->name() << "+= gidx*" << p_.mL << ";" << std::endl;
-          stream << C->name() << "+= idx*" << p_.simd_width * ministartstride0 << ";" << std::endl;
+          stream << C->name() << "+= idx*" <<  ministartstride0 << ";" << std::endl;
           stream << C->name() << "+= gidy*" << p_.nL << "*" << C->ld() << ";" << std::endl;
-          stream << C->name() << "+= idy*" << p_.simd_width*ministartstride1 << "*" << C->ld() << ";" << std::endl;
+          stream << C->name() << "+= idy*" <<  ministartstride1 << "*" << C->ld() << ";" << std::endl;
 
           for(unsigned int m=0 ; m < p_.mS ; ++m)
           {
