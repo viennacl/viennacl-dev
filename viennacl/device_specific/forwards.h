@@ -48,6 +48,7 @@ namespace viennacl{
     static const int TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE = -6;
     static const int TEMPLATE_INVALID_SIMD_WIDTH = -7;
     static const int TEMPLATE_ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE = -8;
+    static const int TEMPLATE_INVALID_FETCHING_POLICY_TYPE= -9;
 
     static const int TEMPLATE_GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH = -10;
     static const int TEMPLATE_MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE = -11;

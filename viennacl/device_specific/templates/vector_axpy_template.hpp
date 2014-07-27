@@ -53,20 +53,30 @@ namespace viennacl
       public:
         parameters_type(unsigned int _simd_width,
                    unsigned int _group_size, unsigned int _num_groups,
-                   unsigned int _decomposition) : template_base::parameters_type(_simd_width, _group_size, 1, 1), num_groups(_num_groups), decomposition(_decomposition){ }
+                   fetching_policy_type _fetching_policy) : template_base::parameters_type(_simd_width, _group_size, 1, 1), num_groups(_num_groups), fetching_policy(_fetching_policy){ }
 
 
         unsigned int num_groups;
-        unsigned int decomposition;
+        fetching_policy_type fetching_policy;
       };
 
     private:
+      virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
+      {
+          if(p_.fetching_policy==FETCH_LOCAL)
+            return TEMPLATE_INVALID_FETCHING_POLICY_TYPE;
+          return TEMPLATE_VALID;
+      }
+
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
 
-        stream << "for(unsigned int i = get_global_id(0) ; i < N ; i += get_global_size(0))" << std::endl;
+        std::string init, upper_bound, inc;
+        fetching_loop_info(p_.fetching_policy, "N", 0, stream, init, upper_bound, inc);
+
+        stream << "for(unsigned int i = " << init << "; i < " << upper_bound << " ; i += " << inc << ")" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
 

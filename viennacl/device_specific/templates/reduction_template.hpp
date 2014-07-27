@@ -51,13 +51,20 @@ namespace viennacl
       {
         parameters_type(unsigned int _simd_width,
                    unsigned int _group_size, unsigned int _num_groups,
-                   unsigned int _decomposition) : template_base::parameters_type(_simd_width, _group_size, 1, 2), num_groups(_num_groups), decomposition(_decomposition){ }
+                   fetching_policy_type _fetching_policy) : template_base::parameters_type(_simd_width, _group_size, 1, 2), num_groups(_num_groups), fetching_policy(_fetching_policy){ }
 
         unsigned int num_groups;
-        unsigned int decomposition;
+        fetching_policy_type fetching_policy;
       };
 
     private:
+
+      virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
+      {
+          if(p_.fetching_policy==FETCH_LOCAL)
+            return TEMPLATE_INVALID_FETCHING_POLICY_TYPE;
+          return TEMPLATE_VALID;
+      }
 
       unsigned int n_lmem_elements() const
       {
@@ -174,22 +181,8 @@ namespace viennacl
             stream << "unsigned int " << accsidx[k] << " = " << 0 << ";" << std::endl;
         }
 
-        std::string init;
-        std::string upper_bound;
-        std::string inc;
-        if(p_.decomposition){
-          init = "get_global_id(0)";
-          upper_bound = "N";
-          inc = "get_global_size(0)";
-        }
-        else{
-          stream << "unsigned int chunk_size = (N + get_num_groups(0)-1)/get_num_groups(0);" << std::endl;
-          stream << "unsigned int chunk_start = get_group_id(0)*chunk_size;" << std::endl;
-          stream << "unsigned int chunk_end = min(chunk_start+chunk_size, N);" << std::endl;
-          init = "chunk_start + get_local_id(0)";
-          upper_bound = "chunk_end";
-          inc = "get_local_size(0)";
-        }
+        std::string init, upper_bound, inc;
+        fetching_loop_info(p_.fetching_policy, "N", 0, stream, init, upper_bound, inc);
 
         stream << "for(unsigned int i = " << init << "; i < " << upper_bound << " ; i += " << inc << "){" << std::endl;
         stream.inc_tab();

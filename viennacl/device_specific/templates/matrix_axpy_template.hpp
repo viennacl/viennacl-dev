@@ -50,23 +50,36 @@ namespace viennacl{
         parameters_type(unsigned int _simd_width,
                    unsigned int _local_size_0, unsigned int _local_size_1,
                    unsigned int _num_groups_0, unsigned int _num_groups_1,
-                   unsigned int _decomposition) : template_base::parameters_type(_simd_width, _local_size_0, _local_size_1, 1), num_groups_0(_num_groups_0), num_groups_1(_num_groups_1), decomposition(_decomposition){ }
+                   fetching_policy_type _fetching_policy) : template_base::parameters_type(_simd_width, _local_size_0, _local_size_1, 1), num_groups_0(_num_groups_0), num_groups_1(_num_groups_1), fetching_policy(_fetching_policy){ }
 
         unsigned int num_groups_0;
         unsigned int num_groups_1;
-        unsigned int decomposition;
+        fetching_policy_type fetching_policy;
       };
 
     private:
+      virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
+      {
+          if(p_.simd_width>1)
+            return TEMPLATE_INVALID_SIMD_WIDTH;
+          return TEMPLATE_VALID;
+      }
+
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
 
-        stream << "for(unsigned int i = get_global_id(0) ; i < M ; i += get_global_size(0))" << std::endl;
+        std::string init0, upper_bound0, inc0, init1, upper_bound1, inc1;
+        fetching_loop_info(p_.fetching_policy, "M", 0, stream, init0, upper_bound0, inc0);
+        fetching_loop_info(p_.fetching_policy, "N", 1, stream, init1, upper_bound1, inc1);
+
+
+
+        stream << "for(unsigned int i = " << init0 << "; i < " << upper_bound0 << " ; i += " << inc0 << ")" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        stream << "for(unsigned int j = get_global_id(1) ; j < N ; j += get_global_size(1))" << std::endl;
+        stream << "for(unsigned int j = " << init1 << "; j < " << upper_bound1 << " ; j += " << inc1 << ")" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
 

@@ -297,6 +297,31 @@ namespace viennacl
         std::string message_;
       };
 
+      static void fetching_loop_info(fetching_policy_type policy, std::string const & bound, unsigned int id, utils::kernel_generation_stream & stream, std::string & init, std::string & upper_bound, std::string & inc)
+      {
+        std::string strid = viennacl::tools::to_string(id);
+        if(policy==FETCH_GLOBAL_STRIDED)
+        {
+          init = "get_global_id(" + strid + ")";
+          upper_bound = bound;
+          inc = "get_global_size(0)";
+        }
+        else if(policy==FETCH_GLOBAL_CONTIGUOUS)
+        {
+          std::string chunk_size = "chunk_size" + strid;
+          std::string chunk_start = "chunk_start" + strid;
+          std::string chunk_end = "chunk_end" + strid;
+
+          stream << "unsigned int " << chunk_size << " = (" + bound + " + get_num_groups(" + strid + ")-1)/get_num_groups(" + strid + ");" << std::endl;
+          stream << "unsigned int " << chunk_start << " = get_group_id(" + strid + ")*" << chunk_size << ";" << std::endl;
+          stream << "unsigned int " << chunk_end << " = min(" << chunk_start << "+" << chunk_size << ", " << bound << ");" << std::endl;
+          init = "chunk_start" + strid + " + get_local_id(" + strid + ")";
+          upper_bound = "chunk_end" + strid;
+          inc = "get_local_size(" + strid + ")";
+        }
+      }
+
+
 
     public:
 

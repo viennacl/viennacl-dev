@@ -58,6 +58,13 @@ namespace viennacl{
 
     private:
 
+      virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
+      {
+          if(p_.simd_width>1)
+            return TEMPLATE_INVALID_SIMD_WIDTH;
+          return TEMPLATE_VALID;
+      }
+
       unsigned int n_lmem_elements() const
       {
         return p_.local_size_0*(p_.local_size_1+1);
