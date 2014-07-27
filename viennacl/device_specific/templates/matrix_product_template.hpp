@@ -409,66 +409,71 @@ private:
         stream.inc_tab();
 
         ///Fetch LHS to registers
-        for(unsigned int kk = 0 ; kk < p_.kS ; ++kk)
-            for(unsigned int mm = 0 ; mm < p_.mS/p_.simd_width ; ++mm)
-            {
-                switch(p_.A_fetching_policy)
-                {
-                  case FETCH_LOCAL:
-                    for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
-                        stream << "rA[" << kk << "][" << mm*p_.simd_width + ss << "] = lA[offA + " << mm*p_.local_size_0*p_.simd_width + ss + kk*(p_.mL+1) << "];" << std::endl;
-                    break;
+        stream << "#pragma unroll" << std::endl;
+        stream << "for(unsigned int kk = 0 ; kk < " << p_.kS << "; kk++)" << std::endl;
+        stream << "#pragma unroll" << std::endl;
+        stream << "for(unsigned int mm = 0 ; mm < " << p_.mS/p_.simd_width << "; mm++)" << std::endl;
+        stream << "{" << std::endl;
+        stream.inc_tab();
+        switch(p_.A_fetching_policy)
+        {
+          case FETCH_LOCAL:
+            for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
+                stream << "rA[kk][mm*" << p_.simd_width << "+" << ss << "] = lA[offA + mm*" << p_.local_size_0*p_.simd_width << "+" << ss << "+ kk*" << (p_.mL+1) << "];" << std::endl;
+            break;
 
-                  case FETCH_GLOBAL_CONTIGUOUS:
-                    if(A_trans_=='N')
-                        stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << mm << "+" << kk << "*" << A->ld() << "];" << std::endl;
-                    else
-                        stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << kk << "+" << mm << "*" << A->ld() << "];" << std::endl;
-                    break;
+          case FETCH_GLOBAL_CONTIGUOUS:
+            if(A_trans_=='N')
+                stream << "rA[kk][mm] = " << A->name() << "[mm+kk*" << A->ld() << "];" << std::endl;
+            else
+                stream << "rA[kk][mm] = " << A->name() << "[kk+mm*" << A->ld() << "];" << std::endl;
+            break;
 
-                  case FETCH_GLOBAL_STRIDED:
-                    if(A_trans_=='N')
-                        stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << mm*p_.local_size_0 << "+" << kk << "*" << A->ld() << "];" << std::endl;
-                    else
-                        stream << "rA[" << kk << "][" << mm << "] = " << A->name() << "[" << kk << "+" << mm*p_.local_size_0 << "*" << A->ld() << "];" << std::endl;
-                    break;
+          case FETCH_GLOBAL_STRIDED:
+            if(A_trans_=='N')
+                stream << "rA[kk][mm] = " << A->name() << "[mm*" << p_.local_size_0 << "+kk*" << A->ld() << "];" << std::endl;
+            else
+                stream << "rA[kk][mm] = " << A->name() << "[kk+mm*" << p_.local_size_0 << "*" << A->ld() << "];" << std::endl;
+            break;
 
-                  default:
-                    break;
+          default:
+            break;
 
-                }
-            }
+        }
+        stream.dec_tab();
+        stream << "}" << std::endl;
 
+        stream << "#pragma unroll" << std::endl;
+        stream << "for(unsigned int kk = 0 ; kk < " << p_.kS << "; kk++)" << std::endl;
+        stream << "#pragma unroll" << std::endl;
+        stream << "for(unsigned int nn = 0 ; nn < " << p_.nS/p_.simd_width << "; nn++)" << std::endl;
+        stream << "{" << std::endl;
+        stream.inc_tab();
+        switch(p_.B_fetching_policy)
+        {
+          case FETCH_LOCAL:
+            for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
+                stream << "rB[kk][nn*" << p_.simd_width << "+" << ss << "] = lB[offB + nn*" << p_.local_size_1*p_.simd_width << "+" << ss  << "+ kk*" << (p_.nL+1) << "];" << std::endl;
+            break;
 
+          case FETCH_GLOBAL_CONTIGUOUS:
+            if(B_trans_=='T')
+                stream << "rB[kk][nn] = " << B->name() << "[nn + kk*" << B->ld() << "];" << std::endl;
+            else
+                stream << "rB[kk][nn] = " << B->name() << "[kk+nn*" << B->ld() << "];" << std::endl;
+            break;
 
-        ///Fetch RHS to registers
-        for(unsigned int kk = 0 ; kk < p_.kS ; ++kk)
-            for(unsigned int nn=0 ; nn < p_.nS/p_.simd_width ; ++nn)
-            {
-                switch(p_.B_fetching_policy)
-                {
-                  case FETCH_LOCAL:
-                    for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
-                        stream << "rB[" << kk << "][" << nn*p_.simd_width + ss << "] = lB[offB + " << nn*p_.local_size_1*p_.simd_width + ss + kk*(p_.nL+1) << "];" << std::endl;
-                    break;
+          case FETCH_GLOBAL_STRIDED:
+            if(B_trans_=='T')
+                stream << "rB[kk][nn] = " << B->name() << "[nn*" << p_.local_size_1 << " + kk*" << B->ld() << "];" << std::endl;
+            else
+                stream << "rB[kk][nn] = " << B->name() << "[kk+nn*" << p_.local_size_1 << "*" << B->ld() << "];" << std::endl;
+            break;
 
-                  case FETCH_GLOBAL_CONTIGUOUS:
-                    if(B_trans_=='T')
-                        stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << nn << " + " << kk << "*" << B->ld() << "];" << std::endl;
-                    else
-                        stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << kk << "+" << nn << "*" << B->ld() << "];" << std::endl;
-                    break;
-
-                  case FETCH_GLOBAL_STRIDED:
-                    if(B_trans_=='T')
-                        stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << nn*p_.local_size_1 << " + " << kk << "*" << B->ld() << "];" << std::endl;
-                    else
-                        stream << "rB[" << kk << "][" << nn << "] = " << B->name() << "[" << kk << "+" << nn*p_.local_size_1 << "*" << B->ld() << "];" << std::endl;
-                    break;
-
-                  default: break;
-                }
-            }
+          default: break;
+        }
+        stream.dec_tab();
+        stream << "}" << std::endl;
 
 
         ///Increment pointers
@@ -502,22 +507,29 @@ private:
         }
 
 
-        for(unsigned int kk = 0 ; kk < p_.kS ; ++kk)
-            for(unsigned int nn=0 ; nn < p_.nS ; ++nn)
-                for(unsigned int mm=0 ; mm < p_.mS ; ++mm)
-                {
-                    std::string res_str, lhs_str, rhs_str;
-                    res_str = "rC[" + tools::to_string(mm) + "][" + tools::to_string(nn) + "]";
-                    if(p_.A_fetching_policy==FETCH_LOCAL || p_.simd_width==1)
-                        lhs_str = "rA[" + tools::to_string(kk) + "][" + tools::to_string(mm) + "]";
-                    else
-                        lhs_str = "rA[" + tools::to_string(kk) + "][" + tools::to_string(mm/p_.simd_width) + "].s" + tools::to_string(mm%p_.simd_width);
-                    if(p_.B_fetching_policy==FETCH_LOCAL || p_.simd_width==1)
-                        rhs_str = "rB[" + tools::to_string(kk) + "]["+tools::to_string(nn)+"]";
-                    else
-                        rhs_str = "rB[" + tools::to_string(kk) + "]["+tools::to_string(nn/p_.simd_width)+"].s"+tools::to_string(nn%p_.simd_width);
-                    stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
-                }
+        stream << "#pragma unroll" << std::endl;
+        stream << "for(unsigned int kk = 0 ; kk <" << p_.kS << " ; ++kk)" << std::endl;
+        stream << "{" << std::endl;
+        stream.inc_tab();
+        for(unsigned int nn=0 ; nn < p_.nS ; ++nn)
+        for(unsigned int mm=0 ; mm < p_.mS ; ++mm)
+        {
+            std::string res_str, lhs_str, rhs_str;
+            res_str = "rC[" + tools::to_string(mm) + "][" + tools::to_string(nn) + "]";
+            if(p_.A_fetching_policy==FETCH_LOCAL || p_.simd_width==1)
+                lhs_str = "rA[kk][" + tools::to_string(mm) + "]";
+            else
+                lhs_str = "rA[kk][" + tools::to_string(mm/p_.simd_width) + "].s" + tools::to_string(mm%p_.simd_width);
+            if(p_.B_fetching_policy==FETCH_LOCAL || p_.simd_width==1)
+                rhs_str = "rB[kk]["+tools::to_string(nn)+"]";
+            else
+                rhs_str = "rB[kk]["+tools::to_string(nn/p_.simd_width)+"].s"+tools::to_string(nn%p_.simd_width);
+            stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
+        }
+        stream.dec_tab();
+        stream << "}" << std::endl;
+        
+
 
 
         stream.dec_tab();
