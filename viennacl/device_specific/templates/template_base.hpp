@@ -366,16 +366,19 @@ namespace viennacl
         if(p_.local_size_1 > max_work_item_sizes[1])
           return TEMPLATE_LOCAL_SIZE_1_OVERFLOW;
 
-        //Not warp multiple
+        //Advice from the Intel guide
+        unsigned int warp_size = 8;
         if(device.type()==CL_DEVICE_TYPE_GPU)
         {
-          unsigned int warp_size = 32;
+          //Advice from the nvidia guide
+          warp_size = 32;
+          //Advice from the AMD guide
           if(device.vendor_id()==4098)
             warp_size = 64;
-          if(((p_.local_size_0*p_.local_size_1)%warp_size)>0)
-            return TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE;
         }
-
+        if(((p_.local_size_0*p_.local_size_1)%warp_size)>0)
+          return TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE;
+          
         //Invalid SIMD Width
         if(p_.simd_width!=1 && p_.simd_width!=2 &&
                     p_.simd_width!=4 && p_.simd_width!=8 &&
