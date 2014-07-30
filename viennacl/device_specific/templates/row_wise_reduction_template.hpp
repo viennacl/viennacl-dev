@@ -98,10 +98,10 @@ namespace viennacl{
 
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
-        std::vector<mapped_vector_reduction*> exprs;
+        std::vector<mapped_row_wise_reduction*> exprs;
         for(std::vector<mapping_type>::const_iterator it = mapping.begin() ; it != mapping.end() ; ++it)
           for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit)
-            if(mapped_vector_reduction * p = dynamic_cast<mapped_vector_reduction*>(iit->second.get()))
+            if(mapped_row_wise_reduction * p = dynamic_cast<mapped_row_wise_reduction*>(iit->second.get()))
               exprs.push_back(p);
         std::size_t N = exprs.size();
 
@@ -131,7 +131,7 @@ namespace viennacl{
         if(A_trans_=='T')
           std::swap(size0, size1);
 
-        for(std::vector<mapped_vector_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+        for(std::vector<mapped_row_wise_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           stream << "__local " <<  (*it)->scalartype() << " buf" << std::distance(exprs.begin(), it) << '[' << lsize0*lsize1 << "];" << std::endl;
 
         stream << "unsigned int lid0 = get_local_id(0);" << std::endl;

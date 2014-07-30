@@ -1,4 +1,4 @@
-#ifndef VIENNACL_DEVICE_SPECIFIC_MAPPED_TYPE_HPP
+﻿#ifndef VIENNACL_DEVICE_SPECIFIC_MAPPED_TYPE_HPP
 #define VIENNACL_DEVICE_SPECIFIC_MAPPED_TYPE_HPP
 
 /* =========================================================================
@@ -35,7 +35,10 @@ namespace viennacl
   namespace device_specific
   {
 
-      /** @brief Base class for mapping viennacl datastructure to generator-friendly structures
+      /** @brief Mapped Object
+       *
+       * This object populates the symbolic mapping associated with a statement. (root_id, LHS|RHS|PARENT) => mapped_object
+       * The tree can then be reconstructed in its symbolic form
        */
       class mapped_object
       {
@@ -43,7 +46,7 @@ namespace viennacl
         friend class writable;
 
         protected:
-          virtual std::string generate_default(index_tuple const & index) const = 0;
+          virtual std::string generate_default(index_tuple const & index) const { return ""; }
 
         public:
           struct node_info
@@ -84,6 +87,10 @@ namespace viennacl
           unsigned int simd_width_;
       };
 
+      /** @brief Fetchable interface
+       *
+       *  This interface indicates that an object is fetchable which is the case when it was passed by pointer
+       */
       class fetchable
       {
       public:
@@ -99,10 +106,15 @@ namespace viennacl
         mapped_object * obj_;
       };
 
+      /** @brief Writable interface
+       *
+       *  This interface indicates that an object is an lvalue. It can be write back to some location in the device's memory
+       */
       class writable : public fetchable
       {
       public:
         writable(mapped_object * obj): fetchable(obj){ }
+
         void write_back(std::string const &, index_tuple const & index, std::set<std::string> & fetched, utils::kernel_generation_stream & stream)
         {
           if(fetched.find(obj_->access_name_)!=fetched.end())
@@ -110,21 +122,27 @@ namespace viennacl
         }
       };
 
-      /** @brief Base class for mapping binary leaves (inner product-based, matrix vector product-base, matrix-matrix product based...)
+      /** @brief Binary leaf interface
+       *
+       *  Some subtrees have to be interpret at leaves when reconstructing the final expression. It is the case of trans(), diag(), prod(), etc...
+       *  This interface stores basic infos about the sub-trees
        */
-      class mapped_binary_leaf : public mapped_object
+      class binary_leaf
       {
         public:
-          mapped_binary_leaf(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), info_(info){ }
+          binary_leaf(mapped_object::node_info info) : info_(info){ }
           mapping_type const & mapping() const { return *info_.mapping; }
           scheduler::statement const & statement() const { return *info_.statement; }
           vcl_size_t root_idx() const { return info_.root_idx; }
-          std::string generate_default(index_tuple const &) const { return "";}
         protected:
-          node_info info_;
+          mapped_object::node_info info_;
       };
 
-      class mapped_vector_diag : public mapped_binary_leaf, public fetchable
+      /** @brief Vector diag
+       *
+       *  Maps a diag(vector_expression) node into a diagonal matrix
+       */
+      class mapped_vector_diag : public mapped_object, public binary_leaf, public fetchable
       {
       private:
         std::string generate_default(index_tuple const & index) const
@@ -137,10 +155,14 @@ namespace viennacl
           return "((" + new_i + ")!=(" + new_j + "))?0:"+lhs;
         }
       public:
-        mapped_vector_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), fetchable(this){ }
+        mapped_vector_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), binary_leaf(info), fetchable(this){ }
       };
 
-      class mapped_matrix_diag : public mapped_binary_leaf, public writable
+      /** @brief Matrix diag
+       *
+       *  Maps a diag(matrix_expression) node into the vector of its diagonal elements
+       */
+      class mapped_matrix_diag : public mapped_object, public binary_leaf, public writable
       {
       private:
         std::string generate_default(index_tuple const & index) const
@@ -152,10 +174,14 @@ namespace viennacl
           return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, new_index, 0, *info_.mapping, LHS_NODE_TYPE);
         }
       public:
-        mapped_matrix_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
+        mapped_matrix_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), binary_leaf(info), writable(this){ }
       };
 
-      class mapped_trans: public mapped_binary_leaf, public writable
+      /** @brief Trans
+       *
+       *  Maps trans(matrix_expression) into the transposed of matrix_expression
+       */
+      class mapped_trans: public mapped_object, public binary_leaf, public writable
       {
       private:
         std::string generate_default(index_tuple const & index) const
@@ -163,11 +189,15 @@ namespace viennacl
           return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.j, index.bound1, index.i, index.bound0), 0, *info_.mapping, LHS_NODE_TYPE);
         }
       public:
-        mapped_trans(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
+        mapped_trans(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), binary_leaf(info), writable(this){ }
       };
 
 
-      class mapped_matrix_row : public mapped_binary_leaf, public writable
+      /** @brief Matrix row
+       *
+       *  Maps row(matrix_expression, scalar_expression) into the scalar_expression's row of matrix_expression
+       */
+      class mapped_matrix_row : public mapped_object, public binary_leaf, public writable
       {
       private:
         std::string generate_default(index_tuple const & index) const
@@ -176,10 +206,14 @@ namespace viennacl
           return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(idx,index.bound0, index.i, index.bound0), 0, *info_.mapping, LHS_NODE_TYPE);
         }
       public:
-        mapped_matrix_row(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
+        mapped_matrix_row(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), binary_leaf(info), writable(this){ }
       };
 
-      class mapped_matrix_column : public mapped_binary_leaf, public writable
+      /** @brief Matrix column
+       *
+       *  Maps column(matrix_expression, scalar_expression) into the scalar_expression's column of matrix_expression
+       */
+      class mapped_matrix_column : public mapped_object, public binary_leaf, public writable
       {
       private:
         std::string generate_default(index_tuple const & index) const
@@ -188,27 +222,36 @@ namespace viennacl
           return tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, index_tuple(index.i,index.bound0, idx, index.bound1), 0, *info_.mapping, LHS_NODE_TYPE);
         }
       public:
-        mapped_matrix_column(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info), writable(this){ }
+        mapped_matrix_column(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), binary_leaf(info), writable(this){ }
       };
 
-      /** @brief Mapping of a matrix product */
-      class mapped_matrix_product : public mapped_binary_leaf
+      /** @brief Matrix product
+      *
+      * Maps prod(matrix_expression, matrix_expression)
+      */
+      class mapped_matrix_product : public mapped_object, public binary_leaf
       {
       public:
-          mapped_matrix_product(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info){ }
+          mapped_matrix_product(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), binary_leaf(info){ }
       };
 
-      /** @brief Base class for mapping a reduction */
-      class mapped_reduction : public mapped_binary_leaf
+      /** @brief Reduction
+       *
+       * Base class for mapping a reduction
+       */
+      class mapped_reduction : public mapped_object, public binary_leaf
       {
       public:
-          mapped_reduction(std::string const & scalartype, unsigned int id, node_info info) : mapped_binary_leaf(scalartype, id, info){ }
+          mapped_reduction(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id), binary_leaf(info){ }
           vcl_size_t root_idx() const { return info_.root_idx; }
           scheduler::statement const & statement() const { return *info_.statement; }
           scheduler::statement_node root_node() const { return statement().array()[root_idx()]; }
       };
 
-      /** @brief Mapping of a scalar reduction (based on inner product) */
+      /** @brief Scalar reduction
+       *
+       * Maps a scalar reduction (max, min, argmax, inner_prod, etc..)
+       */
       class mapped_scalar_reduction : public mapped_reduction
       {
 
@@ -216,15 +259,21 @@ namespace viennacl
           mapped_scalar_reduction(std::string const & scalartype, unsigned int id, node_info info) : mapped_reduction(scalartype, id, info){ }
       };
 
-      /** @brief Mapping of a vector reduction (based on matrix-vector product) */
-      class mapped_vector_reduction : public mapped_reduction
+      /** @brief Vector reduction
+       *
+       * Maps a row-wise reduction (max, min, argmax, matrix-vector product, etc..)
+       */
+      class mapped_row_wise_reduction : public mapped_reduction
       {
 
         public:
-          mapped_vector_reduction(std::string const & scalartype, unsigned int id, node_info info) : mapped_reduction(scalartype, id, info){ }
+          mapped_row_wise_reduction(std::string const & scalartype, unsigned int id, node_info info) : mapped_reduction(scalartype, id, info){ }
       };
 
-      /** @brief Mapping of a host scalar to a generator class */
+      /** @brief Host scalar
+        *
+        * Maps a host scalar (passed by value)
+        */
       class mapped_host_scalar : public mapped_object
       {
 
@@ -239,7 +288,10 @@ namespace viennacl
           }
       };
 
-      /** @brief Base class for datastructures passed by pointer */
+      /** @brief Handle
+       *
+       * Maps an object passed by pointer
+       */
       class mapped_handle : public mapped_object, public writable
       {
           virtual std::string offset(index_tuple const & index) const = 0;
@@ -268,7 +320,11 @@ namespace viennacl
           }
       };
 
-      /** @brief Mapping of a scalar to a generator class */
+
+      /** @brief Scalar
+        *
+        * Maps a scalar passed by pointer
+        */
       class mapped_scalar : public mapped_handle
       {
         private:
@@ -278,11 +334,14 @@ namespace viennacl
       };
 
 
-      /** @brief Base class for mapping buffer-based objects to a generator class */
-      class mapped_buffer : public mapped_handle
+      /** @brief Buffered
+        *
+        * Maps a buffered object (vector, matrix)
+        */
+      class mapped_buffered : public mapped_handle
       {
         public:
-          mapped_buffer(std::string const & scalartype, unsigned int id) : mapped_handle(scalartype, id){ }
+          mapped_buffered(std::string const & scalartype, unsigned int id) : mapped_handle(scalartype, id){ }
 
           virtual std::string evaluate(index_tuple const & index, unsigned int vector_element) const
           {
@@ -297,8 +356,12 @@ namespace viennacl
           }
       };
 
-      /** @brief Mapping of a vector to a generator class */
-      class mapped_vector : public mapped_buffer
+
+      /** @brief Vector
+        *
+        * Maps a vector
+        */
+      class mapped_vector : public mapped_buffered
       {
           std::string offset(index_tuple const & index) const
           {
@@ -311,7 +374,7 @@ namespace viennacl
             str += generate_value_kernel_argument("unsigned int", stride_name_);
           }
         public:
-          mapped_vector(std::string const & scalartype, unsigned int id) : mapped_buffer(scalartype, id)
+          mapped_vector(std::string const & scalartype, unsigned int id) : mapped_buffered(scalartype, id)
           {
               start_name_ = name_ + "start";
               stride_name_ = name_ + "stride";
@@ -321,8 +384,11 @@ namespace viennacl
           std::string stride_name_;
       };
 
-      /** @brief Mapping of a matrix to a generator class */
-      class mapped_matrix : public mapped_buffer
+      /** @brief Matrix
+        *
+        * Maps a matrix
+        */
+      class mapped_matrix : public mapped_buffered
       {
 
 
@@ -335,7 +401,7 @@ namespace viennacl
             str += generate_value_kernel_argument("unsigned int", stride2_name_);
           }
         public:
-          mapped_matrix(std::string const & scalartype, unsigned int id, bool row_major) : mapped_buffer(scalartype, id), row_major_(row_major)
+          mapped_matrix(std::string const & scalartype, unsigned int id, bool row_major) : mapped_buffered(scalartype, id), row_major_(row_major)
           {
               start1_name_ = name_ + "start1";
               start2_name_ = name_ + "start2";
@@ -370,7 +436,10 @@ namespace viennacl
           bool row_major_;
       };
 
-      /** @brief Mapping of a implicit vector to a generator class */
+      /** @brief Implicit vector
+        *
+        * Maps an implicit vector
+        */
       class mapped_implicit_vector : public mapped_object
       {
         public:
@@ -383,7 +452,10 @@ namespace viennacl
           }
       };
 
-      /** @brief Mapping of a implicit matrix to a generator class */
+      /** @brief Implicit matrix
+        *
+        * Maps an implicit matrix
+        */
       class mapped_implicit_matrix : public mapped_object
       {
         public:

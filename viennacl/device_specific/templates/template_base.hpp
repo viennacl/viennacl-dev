@@ -142,7 +142,7 @@ namespace viennacl
                 else if(is_scalar_reduction(root_node))
                   mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_scalar_reduction>(&statement, root_idx, &mapping_)));
                 else if(is_vector_reduction(root_node))
-                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_reduction>(&statement, root_idx, &mapping_)));
+                  mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_row_wise_reduction>(&statement, root_idx, &mapping_)));
                 else if(root_node.op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
                   mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_product>(&statement, root_idx, &mapping_)));
                 else if(root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE)
@@ -349,7 +349,7 @@ namespace viennacl
       /** @brief Returns the effective simd width for a given mapped_object */
       virtual void set_simd_widths(scheduler::statement const & s, mapping_type const & m)
       {
-        tree_parsing::traverse(s, s.root(), set_simd_width_traversal<mapped_buffer>(p_.simd_width, m), true);
+        tree_parsing::traverse(s, s.root(), set_simd_width_traversal<mapped_buffered>(p_.simd_width, m), true);
       }
 
     protected:
