@@ -46,9 +46,9 @@ namespace viennacl
 
     enum fetching_policy_type
     {
-      FETCH_LOCAL,
-      FETCH_GLOBAL_STRIDED,
-      FETCH_GLOBAL_CONTIGUOUS
+      FETCH_FROM_LOCAL,
+      FETCH_FROM_GLOBAL_STRIDED,
+      FETCH_FROM_GLOBAL_CONTIGUOUS
     };
 
     class template_base
@@ -299,25 +299,25 @@ namespace viennacl
 
       static void fetching_loop_info(fetching_policy_type policy, std::string const & bound, unsigned int id, utils::kernel_generation_stream & stream, std::string & init, std::string & upper_bound, std::string & inc)
       {
-        std::string strid = viennacl::tools::to_string(id);
-        if(policy==FETCH_GLOBAL_STRIDED)
+        std::string idstr = viennacl::tools::to_string(id);
+        if(policy==FETCH_FROM_GLOBAL_STRIDED)
         {
-          init = "get_global_id(" + strid + ")";
+          init = "get_global_id(" + idstr + ")";
           upper_bound = bound;
-          inc = "get_global_size(0)";
+          inc = "get_global_size(" + idstr + ")";
         }
-        else if(policy==FETCH_GLOBAL_CONTIGUOUS)
+        else if(policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
         {
-          std::string chunk_size = "chunk_size" + strid;
-          std::string chunk_start = "chunk_start" + strid;
-          std::string chunk_end = "chunk_end" + strid;
+          std::string chunk_size = "chunk_size" + idstr;
+          std::string chunk_start = "chunk_start" + idstr;
+          std::string chunk_end = "chunk_end" + idstr;
 
-          stream << "unsigned int " << chunk_size << " = (" + bound + " + get_num_groups(" + strid + ")-1)/get_num_groups(" + strid + ");" << std::endl;
-          stream << "unsigned int " << chunk_start << " = get_group_id(" + strid + ")*" << chunk_size << ";" << std::endl;
+          stream << "unsigned int " << chunk_size << " = (" + bound + " + get_global_size(" + idstr + ")-1)/get_global_size(" + idstr + ");" << std::endl;
+          stream << "unsigned int " << chunk_start << " = get_global_id(" + idstr + ")*" << chunk_size << ";" << std::endl;
           stream << "unsigned int " << chunk_end << " = min(" << chunk_start << "+" << chunk_size << ", " << bound << ");" << std::endl;
-          init = "chunk_start" + strid + " + get_local_id(" + strid + ")";
-          upper_bound = "chunk_end" + strid;
-          inc = "get_local_size(" + strid + ")";
+          init = chunk_start;
+          upper_bound = chunk_end;
+          inc = "1";
         }
       }
 

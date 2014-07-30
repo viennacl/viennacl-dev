@@ -61,7 +61,7 @@ namespace viennacl
 
       virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
-          if(p_.fetching_policy==FETCH_LOCAL)
+          if(p_.fetching_policy==FETCH_FROM_LOCAL)
             return TEMPLATE_INVALID_FETCHING_POLICY_TYPE;
           return TEMPLATE_VALID;
       }
