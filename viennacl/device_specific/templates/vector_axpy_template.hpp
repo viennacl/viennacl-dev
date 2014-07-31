@@ -68,17 +68,10 @@ namespace viennacl
           return TEMPLATE_VALID;
       }
 
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
+      void for_loop_impl(utils::kernel_generation_stream& stream, unsigned int simd_width, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
-
-        std::string init, upper_bound, inc;
-        fetching_loop_info(p_.fetching_policy, "N", 0, stream, init, upper_bound, inc);
-
-        stream << "for(unsigned int i = " << init << "; i < " << upper_bound << " ; i += " << inc << ")" << std::endl;
-        stream << "{" << std::endl;
-        stream.inc_tab();
 
         //Registers already allocated
         std::set<std::string>  cache;
@@ -89,8 +82,8 @@ namespace viennacl
 
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, LHS_NODE_TYPE);
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, RHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, simd_width, lhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, simd_width, rhs_suffix, cache, *sit, sit->root(), index_tuple("i", "N"), stream, *mit, RHS_NODE_TYPE);
         }
 
         //Generates all the expression, in order
@@ -100,9 +93,19 @@ namespace viennacl
         //Write back
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, simd_width, lhs_suffix, cache,*sit, sit->root(), index_tuple("i", "N"), stream, *mit, LHS_NODE_TYPE);
         }
+      }
 
+      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
+      {
+        std::string init, upper_bound, inc;
+        fetching_loop_info(p_.fetching_policy, "N/"+tools::to_string(p_.simd_width), 0, stream, init, upper_bound, inc);
+
+        stream << "for(unsigned int i = " << init << "; i < " << upper_bound << " ; i += " << inc << ")" << std::endl;
+        stream << "{" << std::endl;
+        stream.inc_tab();
+        for_loop_impl(stream, p_.simd_width, statements, mapping);
         stream.dec_tab();
         stream << "}" << std::endl;
       }
@@ -111,7 +114,6 @@ namespace viennacl
       {
         arguments_string += generate_value_kernel_argument("unsigned int", "N");
       }
-
 
       vcl_size_t get_vector_size(scheduler::statement const & statement) const
       {
@@ -135,7 +137,7 @@ namespace viennacl
         k.global_work_size(0,p_.local_size_0*p_.num_groups);
         k.global_work_size(1,1);
         cl_uint size = static_cast<cl_uint>(get_vector_size(statements.data().front()));
-        k.arg(n_arg++, size/p_.simd_width);
+        k.arg(n_arg++, size);
       }
 
     public:

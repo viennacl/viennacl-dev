@@ -191,7 +191,7 @@ namespace viennacl
           std::set<std::string>  cache;
           for(std::vector<mapped_scalar_reduction*>::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           {
-            tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, (*it)->statement(), (*it)->root_idx(), index_tuple("i", "N"),stream,(*it)->mapping(), PARENT_NODE_TYPE);
+            tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, p_.simd_width, "reg", cache, (*it)->statement(), (*it)->root_idx(), index_tuple("i", "N"),stream,(*it)->mapping(), PARENT_NODE_TYPE);
           }
           //Update accs;
           for(unsigned int k = 0 ; k < exprs.size() ; ++k)
@@ -256,6 +256,9 @@ namespace viennacl
 
       void core_1(utils::kernel_generation_stream& stream, std::vector<mapped_scalar_reduction*> exprs, statements_container const & statements, std::vector<mapping_type> const & mapping) const
       {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::const_iterator mit;
+
         std::size_t N = exprs.size();
         scheduler::statement_node_numeric_type numeric_type = lhs_most(statements.data().front()).numeric_type;
         std::string numeric_type_string = utils::numeric_type_to_string(numeric_type);
@@ -319,9 +322,12 @@ namespace viennacl
 
         stream << "if(lid==0){" << std::endl;
         stream.inc_tab();
-        unsigned int i = 0;
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
-          stream << tree_parsing::evaluate_expression(*it, it->root(), index_tuple("0", "N"), 0, mapping[i++], PARENT_NODE_TYPE) << ";" << std::endl;
+        for(sit = statements.data().begin(), mit = mapping.begin() ; sit != statements.data().end() ; ++sit, ++mit)
+        {
+          index_tuple idx("0", "N");
+          std::string lhs = tree_parsing::evaluate_expression(*sit, sit->root(), idx, 0, *mit, RHS_NODE_TYPE);
+          dynamic_cast<mapped_handle*>(mit->at(mapping_key(sit->root(), LHS_NODE_TYPE)).get())->write(1, stream, idx, lhs);
+        }
 
         stream.dec_tab();
         stream << "}" << std::endl;

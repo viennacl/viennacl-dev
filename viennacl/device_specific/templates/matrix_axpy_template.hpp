@@ -88,7 +88,7 @@ namespace viennacl{
         //Fetches entries to registers
         std::set<std::string>  cache;
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache,*sit, sit->root(), idx, stream, *mit, PARENT_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, p_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, PARENT_NODE_TYPE);
 
         unsigned int i = 0;
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit){
@@ -99,7 +99,7 @@ namespace viennacl{
 
         //Write back
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, "reg", cache,*sit, sit->root(), idx, stream, *mit, LHS_NODE_TYPE);
+          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, p_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, LHS_NODE_TYPE);
 
 
         stream.dec_tab();

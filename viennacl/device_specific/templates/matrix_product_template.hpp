@@ -220,12 +220,6 @@ private:
       beta_leaf = RHS_NODE_TYPE;
     }
 
-    void set_simd_widths(scheduler::statement const & s, mapping_type const & m)
-    {
-      tree_parsing::traverse(s, s.array()[s.array()[s.root()].rhs.node_index].lhs.node_index, set_simd_width_traversal<mapped_matrix>(p_.simd_width, m), true);
-
-    }
-
     void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings) const
     {
         using namespace tree_parsing;

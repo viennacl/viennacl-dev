@@ -155,10 +155,10 @@ namespace viennacl{
             {
               viennacl::scheduler::statement const & statement = exprs[k]->statement();
               viennacl::scheduler::statement_node const & root_node = exprs[k]->root_node();
-              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size0, "c", size1),stream,exprs[k]->mapping(), LHS_NODE_TYPE);
+              tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, p_.simd_width, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("r", size0, "c", size1),stream,exprs[k]->mapping(), LHS_NODE_TYPE);
 
               if(root_node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size0), stream,exprs[k]->mapping(), RHS_NODE_TYPE);
+                tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, p_.simd_width, "reg", cache, statement, exprs[k]->root_idx(), index_tuple("c", size0), stream,exprs[k]->mapping(), RHS_NODE_TYPE);
             }
 
 

@@ -264,25 +264,6 @@ namespace viennacl
 
     protected:
 
-      /** @brief functor for generating the prototype of a statement */
-      template<class T>
-      class set_simd_width_traversal : public tree_parsing::traversal_functor
-      {
-        private:
-          unsigned int simd_width_;
-          mapping_type const & mapping_;
-        public:
-          set_simd_width_traversal(unsigned int simd_width, mapping_type const & mapping) : simd_width_(simd_width), mapping_(mapping) { }
-
-          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, leaf_t leaf) const
-          {
-            mapping_type::const_iterator it = mapping_.find(std::make_pair(root_idx, leaf));
-            if(it!=mapping_.end())
-              if(T * p = dynamic_cast<T*>(mapping_.at(std::make_pair(root_idx, leaf)).get()))
-                p->set_simd_width(simd_width_);
-          }
-      };
-
       class invalid_template_exception : public std::exception
       {
       public:
@@ -346,11 +327,7 @@ namespace viennacl
       virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
       /** @brief configure the local sizes and enqueue the arguments of the kernel */
       virtual void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
-      /** @brief Returns the effective simd width for a given mapped_object */
-      virtual void set_simd_widths(scheduler::statement const & s, mapping_type const & m)
-      {
-        tree_parsing::traverse(s, s.root(), set_simd_width_traversal<mapped_buffered>(p_.simd_width, m), true);
-      }
+
 
     protected:
 
@@ -431,8 +408,7 @@ namespace viennacl
         //Generate Prototype
         std::string prototype;
         std::set<std::string> already_generated;
-        for(sit = statements.data().begin(), mit = mapping.begin() ; mit != mapping.end() ; ++sit, ++mit)
-          set_simd_widths(*sit, *mit);
+
         add_kernel_arguments(statements, prototype);
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
           tree_parsing::traverse(*sit, sit->root(), prototype_generation_traversal(already_generated, prototype, *mit), true);
