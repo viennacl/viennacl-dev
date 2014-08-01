@@ -292,7 +292,7 @@ namespace viennacl
                           vector_base<T> const & vec2,
                           T & result)
       {
-        scalar<T> tmp(0);
+        scalar<T> tmp(0, viennacl::traits::context(vec1));
         inner_prod_impl(vec1, vec2, tmp);
         result = tmp;
       }
@@ -324,7 +324,7 @@ namespace viennacl
       void norm_1_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        scalar<T> tmp(0);
+        scalar<T> tmp(0, viennacl::traits::context(vec));
         norm_1_impl(vec, tmp);
         result = tmp;
       }
@@ -358,7 +358,7 @@ namespace viennacl
       void norm_2_cpu(vector_base<T> const & vec,
                       T & result)
       {
-        scalar<T> tmp(0);
+        scalar<T> tmp(0, viennacl::traits::context(vec));
         norm_2_impl(vec, tmp);
         result = tmp;
       }
@@ -391,7 +391,7 @@ namespace viennacl
       void norm_inf_cpu(vector_base<T> const & vec,
                         T & result)
       {
-        scalar<T> tmp(0);
+        scalar<T> tmp(0, viennacl::traits::context(vec));
         norm_inf_impl(vec, tmp);
         result = tmp;
       }
@@ -410,7 +410,7 @@ namespace viennacl
       template <typename T>
       cl_uint index_norm_inf(vector_base<T> const & vec1)
       {
-        viennacl::scalar<T> result(0);
+        viennacl::scalar<T> result(0, viennacl::traits::context(vec1));
 
         device_specific::reduction_template(device_specific::builtin_database::reduction_params<T>(opencl::detail::current_device(vec1)), "index_norm_inf")
                                         .enqueue(detail::program_for_vector(vec1,0), scheduler::preset::index_norm_inf(&result, &vec1));
