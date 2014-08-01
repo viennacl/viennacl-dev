@@ -277,6 +277,53 @@ namespace viennacl
           else
             throw statement_not_supported_exception("Invalid operand type for binary elementwise division");
           break;
+
+
+        case OPERATION_BINARY_ELEMENT_POW_TYPE:
+          if (x.subtype == DENSE_VECTOR_TYPE)
+          {
+            switch (x.numeric_type)
+            {
+              case FLOAT_TYPE:
+                viennacl::linalg::element_op(*result.vector_float,
+                                             vector_expression<const vector_base<float>,
+                                                               const vector_base<float>,
+                                                               op_element_binary<op_pow> >(*x.vector_float, *y.vector_float));
+                break;
+              case DOUBLE_TYPE:
+                viennacl::linalg::element_op(*result.vector_double,
+                                             vector_expression<const vector_base<double>,
+                                                               const vector_base<double>,
+                                                               op_element_binary<op_pow> >(*x.vector_double, *y.vector_double));
+                break;
+              default:
+                throw statement_not_supported_exception("Invalid numeric type for binary elementwise division");
+            }
+          }
+          else if (x.subtype == DENSE_MATRIX_TYPE)
+          {
+            switch (x.numeric_type)
+            {
+              case FLOAT_TYPE:
+                viennacl::linalg::element_op(*result.matrix_float,
+                                             matrix_expression< const matrix_base<float>,
+                                                                const matrix_base<float>,
+                                                                op_element_binary<op_pow> >(*x.matrix_float, *y.matrix_float));
+                break;
+              case DOUBLE_TYPE:
+                viennacl::linalg::element_op(*result.matrix_double,
+                                             matrix_expression< const matrix_base<double>,
+                                                                const matrix_base<double>,
+                                                                op_element_binary<op_pow> >(*x.matrix_double, *y.matrix_double));
+                break;
+              default:
+                throw statement_not_supported_exception("Invalid numeric type for binary elementwise power");
+            }
+          }
+          else
+            throw statement_not_supported_exception("Invalid operand type for binary elementwise power");
+          break;
+
         default:
           throw statement_not_supported_exception("Invalid operation type for binary elementwise operations");
         }
@@ -310,7 +357,7 @@ namespace viennacl
         detail::execute_composite(s, new_root_lhs);
       }
 
-      if (leaf.op.type == OPERATION_BINARY_ELEMENT_PROD_TYPE || leaf.op.type == OPERATION_BINARY_ELEMENT_DIV_TYPE)
+      if (leaf.op.type == OPERATION_BINARY_ELEMENT_PROD_TYPE || leaf.op.type == OPERATION_BINARY_ELEMENT_DIV_TYPE || leaf.op.type == OPERATION_BINARY_ELEMENT_POW_TYPE)
       {
         // check for temporary on rhs:
         if (leaf.rhs.type_family == COMPOSITE_OPERATION_FAMILY)

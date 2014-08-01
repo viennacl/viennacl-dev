@@ -415,6 +415,83 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
 
+
+  std::cout << "x = element_pow(x, y)... ";
+  {
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  {
+    ublas_v1[i] = NumericT(2.0) + random<NumericT>();
+    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+  }
+  viennacl::copy(ublas_v1, vcl_v1);
+  viennacl::copy(ublas_v2, vcl_v2);
+
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    ublas_v1[i] = std::pow(ublas_v1[i], ublas_v2[i]);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_pow(vcl_v1, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_pow(x + y, y)... ";
+  {
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  {
+    ublas_v1[i] = NumericT(2.0) + random<NumericT>();
+    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+  }
+  viennacl::copy(ublas_v1, vcl_v1);
+  viennacl::copy(ublas_v2, vcl_v2);
+
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    ublas_v1[i] = std::pow(ublas_v1[i]  + ublas_v2[i], ublas_v2[i]);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_pow(vcl_v1 + vcl_v2, vcl_v2));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_pow(x, x + y)... ";
+  {
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  {
+    ublas_v1[i] = NumericT(2.0) + random<NumericT>();
+    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+  }
+  viennacl::copy(ublas_v1, vcl_v1);
+  viennacl::copy(ublas_v2, vcl_v2);
+
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    ublas_v1[i] = std::pow(ublas_v1[i], ublas_v1[i] + ublas_v2[i]);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_pow(vcl_v1, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
+  std::cout << "x = element_pow(x - y, y + x)... ";
+  {
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  {
+    ublas_v1[i] = NumericT(2.0) + random<NumericT>();
+    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+  }
+  viennacl::copy(ublas_v1, vcl_v1);
+  viennacl::copy(ublas_v2, vcl_v2);
+
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    ublas_v1[i] = std::pow(ublas_v1[i] - ublas_v2[i], ublas_v2[i] + ublas_v1[i]);
+  viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_pow(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1));
+  viennacl::scheduler::execute(my_statement);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  }
+
   std::cout << "--- Testing elementwise operations (unary) ---" << std::endl;
 #define GENERATE_UNARY_OP_TEST(OPNAME) \
   ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), NumericT(0.21)); \

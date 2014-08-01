@@ -168,7 +168,8 @@ namespace viennacl
         }
         else if (   (leaf.op.type_family == OPERATION_UNARY_TYPE_FAMILY && leaf.op.type != OPERATION_UNARY_TRANS_TYPE)
                  || leaf.op.type == OPERATION_BINARY_ELEMENT_PROD_TYPE
-                 || leaf.op.type == OPERATION_BINARY_ELEMENT_DIV_TYPE) // element-wise operations
+                 || leaf.op.type == OPERATION_BINARY_ELEMENT_DIV_TYPE
+                 || leaf.op.type == OPERATION_BINARY_ELEMENT_POW_TYPE) // element-wise operations
         {
           execute_element_composite(s, root_node);
         }
