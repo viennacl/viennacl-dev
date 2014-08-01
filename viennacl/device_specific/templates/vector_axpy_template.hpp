@@ -25,6 +25,7 @@
 */
 
 #include <vector>
+#include <cmath>
 
 #include "viennacl/scheduler/forwards.h"
 
@@ -112,7 +113,7 @@ namespace viennacl
           {
             vcl_size_t size1 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size1_fun()): utils::call_on_matrix(lhs.lhs, utils::size1_fun());
             vcl_size_t size2 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size2_fun()): utils::call_on_matrix(lhs.lhs, utils::size2_fun());
-            return std::min(size1, size2);
+            return std::min<vcl_size_t>(size1, size2);
           }
           throw generator_not_supported_exception("Vector AXPY : Unimplemented LHS size deduction");
         }
