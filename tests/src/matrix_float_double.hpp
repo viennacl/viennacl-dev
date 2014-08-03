@@ -142,6 +142,16 @@ int run_test(double epsilon,
   if (!check_for_equality(ublas_A, vcl_A, epsilon))
     return EXIT_FAILURE;
 
+  if (ublas_A.size1() == ublas_A.size2())
+  {
+    std::cout << "Testing matrix assignment (transposed)... ";
+    ublas_A = trans(ublas_B);
+    vcl_A   = viennacl::trans(vcl_B);
+
+    if (!check_for_equality(ublas_A, vcl_A, epsilon))
+      return EXIT_FAILURE;
+  }
+
 
 
   //std::cout << std::endl;
@@ -189,6 +199,16 @@ int run_test(double epsilon,
 
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
+
+  if (ublas_C.size1() == ublas_C.size2())
+  {
+    std::cout << "Inplace add (transposed): ";
+    ublas_C += trans(ublas_C);
+    vcl_C   += viennacl::trans(vcl_C);
+
+    if (!check_for_equality(ublas_C, vcl_C, epsilon))
+      return EXIT_FAILURE;
+  }
 
   std::cout << "Scaled inplace add: ";
   ublas_C += beta * ublas_A;
@@ -259,6 +279,16 @@ int run_test(double epsilon,
   std::cout << "Inplace sub: ";
   ublas_C -= ublas_B;
   vcl_C -= vcl_B;
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  if (ublas_C.size1() == ublas_C.size2())
+  {
+    std::cout << "Inplace add (transposed): ";
+    ublas_C -= trans(ublas_C);
+    vcl_C   -= viennacl::trans(vcl_C);
+  }
 
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;

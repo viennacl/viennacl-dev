@@ -322,8 +322,10 @@ namespace viennacl
     assert( ( (proxy.lhs().size1() == size2()) || (size2() == 0) ) && bool("Matrix dimensions do not match!"));
     assert( ( (proxy.lhs().size2() == size1()) || (size1() == 0) ) && bool("Matrix dimensions do not match!"));
 
+    bool copy_of_current_data_needed = true;
     if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
     {
+      copy_of_current_data_needed = false;
       size1_ = viennacl::traits::size1(proxy);
       size2_ = viennacl::traits::size2(proxy);
       internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size);
@@ -338,6 +340,8 @@ namespace viennacl
 
     // now transpose it
     std::vector<SCALARTYPE> temp_trans(internal_size());
+    if (copy_of_current_data_needed)
+      viennacl::backend::memory_read(handle(), 0, sizeof(SCALARTYPE)*internal_size(), &(temp_trans[0]));
 
     if (row_major_)
     {
@@ -363,7 +367,10 @@ namespace viennacl
     }
 
     // write back
-    viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy), &(temp_trans[0]));
+    if (copy_of_current_data_needed)
+      viennacl::backend::memory_write(elements_, 0, sizeof(SCALARTYPE)*internal_size(), &(temp_trans[0]));
+    else
+      viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE)*internal_size(), viennacl::traits::context(proxy), &(temp_trans[0]));
 
     return *this;
   }
@@ -1406,6 +1413,18 @@ namespace viennacl
         }
       };
 
+      // x = trans(y)
+      template <typename T>
+      struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> >
+      {
+        static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> const & rhs)
+        {
+          matrix_base<T> temp(rhs);
+          viennacl::linalg::am(lhs, temp, T(1), 1, false, false);
+        }
+      };
+
+
       // x += y
       template <typename T>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_base<T> >
@@ -1416,6 +1435,17 @@ namespace viennacl
         }
       };
 
+      // x += trans(y)
+      template <typename T>
+      struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> >
+      {
+        static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> const & rhs)
+        {
+          matrix_base<T> temp(rhs);
+          viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, temp, T(1), 1, false, false);
+        }
+      };
+
       // x -= y
       template <typename T>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_base<T> >
@@ -1423,6 +1453,17 @@ namespace viennacl
         static void apply(matrix_base<T> & lhs, matrix_base<T> const & rhs)
         {
           viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, rhs, T(1), 1, false, true);
+        }
+      };
+
+      // x -= trans(y)
+      template <typename T>
+      struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> >
+      {
+        static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> const & rhs)
+        {
+          matrix_base<T> temp(rhs);
+          viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, temp, T(1), 1, false, true);
         }
       };
 
