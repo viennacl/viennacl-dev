@@ -47,6 +47,7 @@
 #include "viennacl/compressed_compressed_matrix.hpp"
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
+#include "viennacl/sliced_ell_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/vector_proxy.hpp"
@@ -406,6 +407,7 @@ int test(Epsilon const& epsilon)
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;
   }
+
   //unsigned int cg_mat_size = cg_mat.size();
   std::cout << "done reading matrix" << std::endl;
 
@@ -442,6 +444,7 @@ int test(Epsilon const& epsilon)
   viennacl::compressed_compressed_matrix<NumericT> vcl_compressed_compressed_matrix(rhs.size(), rhs.size());
   viennacl::coordinate_matrix<NumericT> vcl_coordinate_matrix(rhs.size(), rhs.size());
   viennacl::ell_matrix<NumericT> vcl_ell_matrix;
+  viennacl::sliced_ell_matrix<NumericT> vcl_sliced_ell_matrix;
   viennacl::hyb_matrix<NumericT> vcl_hyb_matrix;
 
   viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
@@ -737,6 +740,29 @@ int test(Epsilon const& epsilon)
 
   std::cout << "Testing products: ell_matrix, strided vectors" << std::endl;
   retval = strided_matrix_vector_product_test<NumericT, viennacl::ell_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
+  if (retval != EXIT_SUCCESS)
+    return retval;
+
+  //std::cout << "Copying sliced_ell_matrix" << std::endl;
+  viennacl::copy(ublas_matrix, vcl_sliced_ell_matrix);
+  //ublas_matrix.clear();
+  //viennacl::copy(vcl_hyb_matrix, ublas_matrix);// just to check that it's works
+  //viennacl::copy(ublas_matrix, vcl_hyb_matrix);
+
+  std::cout << "Testing products: sliced_ell_matrix" << std::endl;
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  vcl_result.clear();
+  vcl_result = viennacl::linalg::prod(vcl_sliced_ell_matrix, vcl_rhs);
+
+  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with sliced_ell_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  std::cout << "Testing products: sliced_ell_matrix, strided vectors" << std::endl;
+  retval = strided_matrix_vector_product_test<NumericT, viennacl::sliced_ell_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
   if (retval != EXIT_SUCCESS)
     return retval;
 

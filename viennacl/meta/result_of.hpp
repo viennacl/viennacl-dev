@@ -411,6 +411,12 @@ namespace viennacl
         typedef typename cpu_value_type<T>::type    type;
       };
 
+      template <typename T, typename IndexT>
+      struct cpu_value_type<viennacl::sliced_ell_matrix<T, IndexT> >
+      {
+        typedef typename cpu_value_type<T>::type    type;
+      };
+
       template <typename T, unsigned int ALIGNMENT>
       struct cpu_value_type<viennacl::hyb_matrix<T, ALIGNMENT> >
       {

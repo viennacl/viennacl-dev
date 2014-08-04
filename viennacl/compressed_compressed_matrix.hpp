@@ -426,8 +426,8 @@ namespace viennacl
           assert( (nonzeros > 0)     && bool("Error in compressed_compressed_matrix::set(): Number of nonzeros must be larger than zero!"));
           //std::cout << "Setting memory: " << cols + 1 << ", " << nonzeros << std::endl;
 
-          viennacl::backend::memory_create(row_buffer_,  viennacl::backend::typesafe_host_array<unsigned int>(row_buffer_).element_size() * (rows + 1),  viennacl::traits::context(row_buffer_),  row_jumper);
-          viennacl::backend::memory_create(row_indices_, viennacl::backend::typesafe_host_array<unsigned int>(row_indices_).element_size() * (rows + 1), viennacl::traits::context(row_indices_), row_indices);
+          viennacl::backend::memory_create(row_buffer_,  viennacl::backend::typesafe_host_array<unsigned int>(row_buffer_).element_size() * (nonzero_rows + 1),  viennacl::traits::context(row_buffer_),  row_jumper);
+          viennacl::backend::memory_create(row_indices_, viennacl::backend::typesafe_host_array<unsigned int>(row_indices_).element_size() * nonzero_rows, viennacl::traits::context(row_indices_), row_indices);
           viennacl::backend::memory_create(col_buffer_,  viennacl::backend::typesafe_host_array<unsigned int>(col_buffer_).element_size() * nonzeros,    viennacl::traits::context(col_buffer_),  col_buffer);
           viennacl::backend::memory_create(elements_, sizeof(SCALARTYPE) * nonzeros, viennacl::traits::context(elements_), elements);
 

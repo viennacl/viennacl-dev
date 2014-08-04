@@ -32,6 +32,7 @@
 #include "viennacl/linalg/opencl/kernels/compressed_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/coordinate_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/ell_matrix.hpp"
+#include "viennacl/linalg/opencl/kernels/sliced_ell_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/hyb_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/compressed_compressed_matrix.hpp"
 #include "viennacl/linalg/opencl/common.hpp"
@@ -798,6 +799,58 @@ namespace viennacl
                                 )
                               );
       }
+
+      //
+      // SELL-C-\sigma Matrix
+      //
+
+      template <typename ScalarT, typename IndexT>
+      void prod_impl( const viennacl::sliced_ell_matrix<ScalarT, IndexT> & mat,
+                      const viennacl::vector_base<ScalarT> & vec,
+                      viennacl::vector_base<ScalarT> & result)
+      {
+        assert(mat.size1() == result.size());
+        assert(mat.size2() == vec.size());
+
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+        viennacl::linalg::opencl::kernels::sliced_ell_matrix<ScalarT, unsigned int>::init(ctx);
+        result.clear();
+
+        viennacl::ocl::packed_cl_uint layout_vec;
+        layout_vec.start  = cl_uint(viennacl::traits::start(vec));
+        layout_vec.stride = cl_uint(viennacl::traits::stride(vec));
+        layout_vec.size   = cl_uint(viennacl::traits::size(vec));
+        layout_vec.internal_size   = cl_uint(viennacl::traits::internal_size(vec));
+
+        viennacl::ocl::packed_cl_uint layout_result;
+        layout_result.start  = cl_uint(viennacl::traits::start(result));
+        layout_result.stride = cl_uint(viennacl::traits::stride(result));
+        layout_result.size   = cl_uint(viennacl::traits::size(result));
+        layout_result.internal_size   = cl_uint(viennacl::traits::internal_size(result));
+
+        std::stringstream ss;
+        ss << "vec_mul_" << 1;//(ALIGNMENT != 1?4:1);
+        viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::sliced_ell_matrix<ScalarT, IndexT>::program_name(), "vec_mul");
+
+        unsigned int thread_num = mat.rows_per_block();
+        unsigned int group_num = 256;
+
+        k.local_work_size(0, thread_num);
+        k.global_work_size(0, thread_num * group_num);
+
+        viennacl::ocl::enqueue(k(mat.handle1().opencl_handle(),
+                                 mat.handle2().opencl_handle(),
+                                 mat.handle3().opencl_handle(),
+                                 mat.handle().opencl_handle(),
+                                 viennacl::traits::opencl_handle(vec),
+                                 layout_vec,
+                                 viennacl::traits::opencl_handle(result),
+                                 layout_result)
+        );
+
+
+      }
+
 
       //
       // Hybrid Matrix

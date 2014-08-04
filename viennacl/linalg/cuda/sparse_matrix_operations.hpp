@@ -1922,6 +1922,78 @@ namespace viennacl
       }
 
       //
+      // SELL-C-\sigma Matrix
+      //
+
+      template <typename T>
+      __global__ void sliced_ell_matrix_vec_mul_kernel(const unsigned int * columns_per_block,
+                                                       const unsigned int * column_indices,
+                                                       const unsigned int * block_start,
+                                                       const T * elements,
+                                                       const T * x,
+                                                       unsigned int start_x,
+                                                       unsigned int inc_x,
+                                                       unsigned int size_x,
+                                                       T * result,
+                                                       unsigned int start_result,
+                                                       unsigned int inc_result,
+                                                       unsigned int size_result)
+      {
+        unsigned int local_id = threadIdx.x;
+        unsigned int local_size = blockDim.x;
+        unsigned int num_rows = size_result;
+
+        for(unsigned int block_idx = blockIdx.x; block_idx <= num_rows / local_size; block_idx += gridDim.x)
+        {
+          unsigned int row         = block_idx * local_size + local_id;
+          unsigned int offset      = block_start[block_idx];
+          unsigned int num_columns = columns_per_block[block_idx];
+
+          T sum = 0;
+          for(unsigned int item_id = 0; item_id < num_columns; item_id++)
+          {
+            unsigned int index = offset + item_id * local_size + local_id;
+            T val = elements[index];
+
+            sum += val ? (x[column_indices[index] * inc_x + start_x] * val) : 0;
+          }
+
+          if (row < num_rows)
+            result[row * inc_result + start_result] = sum;
+        }
+      }
+
+      /** @brief Carries out matrix-vector multiplication with a sliced_ell_matrix
+      *
+      * Implementation of the convenience expression result = prod(mat, vec);
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<class ScalarType, typename IndexT>
+      void prod_impl(const viennacl::sliced_ell_matrix<ScalarType, IndexT> & mat,
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
+      {
+        sliced_ell_matrix_vec_mul_kernel<<<128, mat.rows_per_block()>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                                        detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                                        detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+                                                                        detail::cuda_arg<ScalarType>(mat.handle().cuda_handle()),
+                                                                        detail::cuda_arg<ScalarType>(vec),
+                                                                        static_cast<unsigned int>(vec.start()),
+                                                                        static_cast<unsigned int>(vec.stride()),
+                                                                        static_cast<unsigned int>(vec.size()),
+                                                                        detail::cuda_arg<ScalarType>(result),
+                                                                        static_cast<unsigned int>(result.start()),
+                                                                        static_cast<unsigned int>(result.stride()),
+                                                                        static_cast<unsigned int>(result.size())
+                                                                       );
+        VIENNACL_CUDA_LAST_ERROR_CHECK("sliced_ell_matrix_vec_mul_kernel");
+      }
+
+
+      //
       // Hybrid Matrix
       //
 
