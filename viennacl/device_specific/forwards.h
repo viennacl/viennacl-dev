@@ -168,7 +168,7 @@ namespace viennacl{
       template<class Fun>
       inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect);
 
-      inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, index_tuple const & index, unsigned int simd_element, mapping_type const & mapping, leaf_t initial_leaf);
+      inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, std::map<std::string, std::string> const & accessors, mapping_type const & mapping, leaf_t initial_leaf);
     }
 
     using scheduler::INT_TYPE;

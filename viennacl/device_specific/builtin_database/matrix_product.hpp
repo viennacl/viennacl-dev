@@ -41,7 +41,7 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::accelerator::fallback::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
   devices::accelerator::fallback::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
 
-  devices::cpu::fallback::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
+  devices::cpu::fallback::add_4B(result, c&har_to_type<'T'>(), char_to_type<'N'>());
   devices::cpu::fallback::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
 
   devices::gpu::fallback::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());

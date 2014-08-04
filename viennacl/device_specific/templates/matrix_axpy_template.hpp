@@ -67,45 +67,45 @@ namespace viennacl{
 
       void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
-        statements_container::data_type::const_iterator sit;
-        std::vector<mapping_type>::const_iterator mit;
+//        statements_container::data_type::const_iterator sit;
+//        std::vector<mapping_type>::const_iterator mit;
 
-        std::string init0, upper_bound0, inc0, init1, upper_bound1, inc1;
-        fetching_loop_info(p_.fetching_policy, "M", 0, stream, init0, upper_bound0, inc0);
-        fetching_loop_info(p_.fetching_policy, "N", 1, stream, init1, upper_bound1, inc1);
-
-
-
-        stream << "for(unsigned int i = " << init0 << "; i < " << upper_bound0 << " ; i += " << inc0 << ")" << std::endl;
-        stream << "{" << std::endl;
-        stream.inc_tab();
-        stream << "for(unsigned int j = " << init1 << "; j < " << upper_bound1 << " ; j += " << inc1 << ")" << std::endl;
-        stream << "{" << std::endl;
-        stream.inc_tab();
-
-        index_tuple idx("i","M","j","N");
-
-        //Fetches entries to registers
-        std::set<std::string>  cache;
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, p_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, PARENT_NODE_TYPE);
-
-        unsigned int i = 0;
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit){
-          std::string str;
-          tree_parsing::traverse(*sit, sit->root(), tree_parsing::evaluate_expression_traversal(idx, 0, str, mappings[i++]), false);
-          stream << str << ";" << std::endl;
-        }
-
-        //Write back
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, p_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, LHS_NODE_TYPE);
+//        std::string init0, upper_bound0, inc0, init1, upper_bound1, inc1;
+//        fetching_loop_info(p_.fetching_policy, "M", 0, stream, init0, upper_bound0, inc0);
+//        fetching_loop_info(p_.fetching_policy, "N", 1, stream, init1, upper_bound1, inc1);
 
 
-        stream.dec_tab();
-        stream << "}" << std::endl;
-        stream.dec_tab();
-        stream << "}" << std::endl;
+
+//        stream << "for(unsigned int i = " << init0 << "; i < " << upper_bound0 << " ; i += " << inc0 << ")" << std::endl;
+//        stream << "{" << std::endl;
+//        stream.inc_tab();
+//        stream << "for(unsigned int j = " << init1 << "; j < " << upper_bound1 << " ; j += " << inc1 << ")" << std::endl;
+//        stream << "{" << std::endl;
+//        stream.inc_tab();
+
+//        index_tuple idx("i","M","j","N");
+
+//        //Fetches entries to registers
+//        std::set<std::string>  cache;
+//        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+//          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, p_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, PARENT_NODE_TYPE);
+
+//        unsigned int i = 0;
+//        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit){
+//          std::string str;
+//          tree_parsing::traverse(*sit, sit->root(), tree_parsing::evaluate_expression_traversal(idx, 0, str, mappings[i++]), false);
+//          stream << str << ";" << std::endl;
+//        }
+
+//        //Write back
+//        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+//          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, p_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, LHS_NODE_TYPE);
+
+
+//        stream.dec_tab();
+//        stream << "}" << std::endl;
+//        stream.dec_tab();
+//        stream << "}" << std::endl;
       }
 
       void add_kernel_arguments(statements_container const & /*statements*/, std::string & arguments_string) const
