@@ -25,6 +25,8 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <numeric>
+
 #include "viennacl/forwards.h"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/ilu.hpp"
@@ -34,6 +36,7 @@
 #include "viennacl/traits/clear.hpp"
 #include "viennacl/traits/size.hpp"
 #include "viennacl/meta/result_of.hpp"
+#include "viennacl/linalg/iterative_operations.hpp"
 
 namespace viennacl
 {
@@ -99,8 +102,72 @@ namespace viennacl
 
     }
 
+    /** @brief Implementation of the standard conjugate gradient algorithm (no preconditioner), specialized for ViennaCL types.
+    *
+    * Pipelined version from A. T. Chronopoulos and C. W. Gear, J. Comput. Appl. Math. 25(2), 153–168 (1989)
+    *
+    * @param A          The system matrix
+    * @param rhs        The load vector
+    * @param tag        Solver configuration tag
+    * @param precond    A preconditioner. Precondition operation is done via member function apply()
+    * @return The result vector
+    */
+    //template <typename MatrixType, typename ScalarType>
+    template <typename MatrixType, typename ScalarType>
+    viennacl::vector<ScalarType> solve(MatrixType const & A, //MatrixType const & A,
+                                       viennacl::vector<ScalarType> const & rhs,
+                                       cg_tag const & tag,
+                                       viennacl::linalg::no_precond)
+    {
+      viennacl::vector<ScalarType> result(rhs);
+      viennacl::traits::clear(result);
 
-    /** @brief Implementation of the preconditioned conjugate gradient solver
+      viennacl::vector<ScalarType> residual(rhs);
+      viennacl::vector<ScalarType> p(rhs);
+      viennacl::vector<ScalarType> Ap = viennacl::linalg::prod(A, p);
+      viennacl::vector<ScalarType> inner_prod_buffer = viennacl::zero_vector<ScalarType>(3*256, viennacl::traits::context(rhs)); // temporary buffer
+      std::vector<ScalarType>      host_inner_prod_buffer(inner_prod_buffer.size());
+      std::size_t                  buffer_size_per_vector = inner_prod_buffer.size() / 3;
+
+      ScalarType norm_rhs_squared = viennacl::linalg::norm_2(residual); norm_rhs_squared *= norm_rhs_squared;
+
+      if (!norm_rhs_squared) //check for early convergence of A*x = 0
+        return result;
+
+      ScalarType inner_prod_rr = norm_rhs_squared;
+      ScalarType alpha = inner_prod_rr / viennacl::linalg::inner_prod(p, Ap);
+      ScalarType beta  = viennacl::linalg::norm_2(Ap); beta = (alpha * alpha * beta * beta - inner_prod_rr) / inner_prod_rr;
+      ScalarType inner_prod_ApAp = 0;
+      ScalarType inner_prod_pAp  = 0;
+
+      for (unsigned int i = 0; i < tag.max_iterations(); ++i)
+      {
+        tag.iters(i+1);
+
+        viennacl::linalg::pipelined_cg_vector_update(result, alpha, p, residual, Ap, beta, inner_prod_buffer);
+        viennacl::linalg::pipelined_cg_prod(A, p, Ap, inner_prod_buffer);
+
+        // bring back the partial results to the host:
+        viennacl::fast_copy(inner_prod_buffer.begin(), inner_prod_buffer.end(), host_inner_prod_buffer.begin());
+
+        inner_prod_rr   = std::accumulate(host_inner_prod_buffer.begin(),                              host_inner_prod_buffer.begin() +     buffer_size_per_vector, ScalarType(0));
+        inner_prod_ApAp = std::accumulate(host_inner_prod_buffer.begin() +     buffer_size_per_vector, host_inner_prod_buffer.begin() + 2 * buffer_size_per_vector, ScalarType(0));
+        inner_prod_pAp  = std::accumulate(host_inner_prod_buffer.begin() + 2 * buffer_size_per_vector, host_inner_prod_buffer.begin() + 3 * buffer_size_per_vector, ScalarType(0));
+
+        if (std::fabs(inner_prod_rr / norm_rhs_squared) < tag.tolerance() *  tag.tolerance())    //squared norms involved here
+          break;
+
+        alpha = inner_prod_rr / inner_prod_pAp;
+        beta  = (alpha*alpha*inner_prod_ApAp - inner_prod_rr) / inner_prod_rr;
+      }
+
+      //store last error estimate:
+      tag.error(std::sqrt(std::fabs(inner_prod_rr) / norm_rhs_squared));
+
+      return result;
+    }
+
+    /** @brief Implementation of the preconditioned conjugate gradient solver, generic implementation for non-ViennaCL types.
     *
     * Following Algorithm 9.1 in "Iterative Methods for Sparse Linear Systems" by Y. Saad
     *
