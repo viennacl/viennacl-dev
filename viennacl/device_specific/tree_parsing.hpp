@@ -313,7 +313,7 @@ namespace viennacl{
                if(obj->type_key()==type_key_)
                {
                  if(!cache_ || (cache_ && cache_->insert(obj->process("#name")).second))
-                  stream_ << obj->process(to_process_);
+                  stream_ << obj->process(to_process_) << std::endl;
                }
              }
           }

@@ -81,7 +81,7 @@ namespace viennacl
         std::set<std::string> already_fetched;
 
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "scalar","#scalartype #namereg = *#name;\n", stream, *mit, &already_fetched);
+          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "scalar", "#scalartype #namereg = *#name;", stream, *mit, &already_fetched);
 
         std::string init, upper_bound, inc;
         fetching_loop_info(p_.fetching_policy, "N/"+tools::to_string(p_.simd_width), 0, stream, init, upper_bound, inc);
@@ -89,7 +89,7 @@ namespace viennacl
         stream << "{" << std::endl;
         stream.inc_tab();
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector","#scalartype #namereg = #name[#start + i*#stride];\n", stream, *mit, &already_fetched);
+          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#scalartype #namereg = #name[#start + i*#stride];", stream, *mit, &already_fetched);
 
         //Generates all the expression, in order
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
@@ -101,7 +101,7 @@ namespace viennacl
         }
 
         for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          tree_parsing::process(sit->root(),LHS_NODE_TYPE, *sit, "vector","#name[#start + i*#stride] = #namereg;\n", stream, *mit, NULL);
+          tree_parsing::process(sit->root(),LHS_NODE_TYPE, *sit, "vector","#name[#start + i*#stride] = #namereg;", stream, *mit, NULL);
 
         stream.dec_tab();
         stream << "}" << std::endl;

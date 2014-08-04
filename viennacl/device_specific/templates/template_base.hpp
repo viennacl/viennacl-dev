@@ -79,7 +79,7 @@ namespace viennacl
           }
 
           template<class ScalarType>
-          result_type operator()(ScalarType const & /*sca*l*/) const
+          result_type operator()(ScalarType const & /*scalar*/) const
           {
             return result_type(new mapped_host_scalar(utils::type_to_string<ScalarType>::value(), binder_.get(NULL)));
           }
