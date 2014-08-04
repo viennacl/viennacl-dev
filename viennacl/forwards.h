@@ -379,6 +379,9 @@ namespace viennacl
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class ell_matrix;
 
+  template<typename ScalarT, typename IndexT = unsigned int>
+  class sliced_ell_matrix;
+
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
   class hyb_matrix;
 
@@ -483,6 +486,14 @@ namespace viennacl
   {
     enum { value = false };
   };
+
+  /** @brief Helper class for checking whether a matrix is a sliced_ell_matrix (SELL-C-\sigma format) */
+  template <typename T>
+  struct is_sliced_ell_matrix
+  {
+    enum { value = false };
+  };
+
 
   /** @brief Helper class for checking whether a matrix is a hyb_matrix (hybrid format: ELL plus CSR) */
   template <typename T>

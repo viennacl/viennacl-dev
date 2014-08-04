@@ -42,6 +42,7 @@
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
+#include "viennacl/sliced_ell_matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/io/matrix_market.hpp"
@@ -89,6 +90,7 @@ int run_benchmark()
 
   viennacl::ell_matrix<ScalarType, 1> vcl_ell_matrix_1;
   viennacl::hyb_matrix<ScalarType, 1> vcl_hyb_matrix_1;
+  viennacl::sliced_ell_matrix<ScalarType> vcl_sliced_ell_matrix_1;
 
   boost::numeric::ublas::compressed_matrix<ScalarType> ublas_matrix;
   if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
@@ -111,6 +113,7 @@ int run_benchmark()
   viennacl::copy(ublas_matrix, vcl_coordinate_matrix_128);
   viennacl::copy(ublas_matrix, vcl_ell_matrix_1);
   viennacl::copy(ublas_matrix, vcl_hyb_matrix_1);
+  viennacl::copy(ublas_matrix, vcl_sliced_ell_matrix_1);
   viennacl::copy(ublas_vec1, vcl_vec1);
   viennacl::copy(ublas_vec2, vcl_vec2);
 
@@ -282,6 +285,35 @@ int run_benchmark()
   std::cout << "GPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
   std::cout << vcl_vec1[0] << std::endl;
 
+
+  std::cout << "------- Matrix-Vector product with sliced_ell_matrix ----------" << std::endl;
+  vcl_vec1 = viennacl::linalg::prod(vcl_sliced_ell_matrix_1, vcl_vec2); //startup calculation
+  viennacl::backend::finish();
+
+  viennacl::copy(vcl_vec1, ublas_vec2);
+  err_cnt = 0;
+  for (std::size_t i=0; i<ublas_vec1.size(); ++i)
+  {
+    if ( fabs(ublas_vec1[i] - ublas_vec2[i]) / std::max(fabs(ublas_vec1[i]), fabs(ublas_vec2[i])) > 1e-2)
+    {
+      std::cout << "Error at index " << i << ": Should: " << ublas_vec1[i] << ", Is: " << ublas_vec2[i] << std::endl;
+      ++err_cnt;
+      if (err_cnt > 5)
+        break;
+    }
+  }
+
+  viennacl::backend::finish();
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+  {
+    vcl_vec1 = viennacl::linalg::prod(vcl_sliced_ell_matrix_1, vcl_vec2);
+  }
+  viennacl::backend::finish();
+  exec_time = timer.get();
+  std::cout << "GPU time: " << exec_time << std::endl;
+  std::cout << "GPU "; printOps(2.0 * static_cast<double>(ublas_matrix.nnz()), static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS));
+  std::cout << vcl_vec1[0] << std::endl;
 
   return EXIT_SUCCESS;
 }

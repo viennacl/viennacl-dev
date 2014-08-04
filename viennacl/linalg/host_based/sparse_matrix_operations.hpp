@@ -1515,6 +1515,68 @@ namespace viennacl
 
       }
 
+
+      //
+      // SELL-C-\sigma Matrix
+      //
+      /** @brief Carries out matrix-vector multiplication with a sliced_ell_matrix
+      *
+      * Implementation of the convenience expression result = prod(mat, vec);
+      *
+      * @param mat    The matrix
+      * @param vec    The vector
+      * @param result The result vector
+      */
+      template<class ScalarType, typename IndexT>
+      void prod_impl(const viennacl::sliced_ell_matrix<ScalarType, IndexT> & mat,
+                     const viennacl::vector_base<ScalarType> & vec,
+                           viennacl::vector_base<ScalarType> & result)
+      {
+        ScalarType       * result_buf        = detail::extract_raw_pointer<ScalarType>(result.handle());
+        ScalarType const * vec_buf           = detail::extract_raw_pointer<ScalarType>(vec.handle());
+        ScalarType const * elements          = detail::extract_raw_pointer<ScalarType>(mat.handle());
+        IndexT     const * columns_per_block = detail::extract_raw_pointer<IndexT>(mat.handle1());
+        IndexT     const * column_indices    = detail::extract_raw_pointer<IndexT>(mat.handle2());
+        IndexT     const * block_start       = detail::extract_raw_pointer<IndexT>(mat.handle3());
+
+        vcl_size_t num_blocks = mat.size1() / mat.rows_per_block() + 1;
+        std::vector<ScalarType> result_values(mat.rows_per_block());
+
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
+        for(vcl_size_t block_idx = 0; block_idx < num_blocks; ++block_idx)
+        {
+          vcl_size_t current_columns_per_block = columns_per_block[block_idx];
+
+          for (vcl_size_t i=0; i<result_values.size(); ++i)
+            result_values[i] = 0;
+
+          for (IndexT column_entry_index = 0;
+                      column_entry_index < current_columns_per_block;
+                    ++column_entry_index)
+          {
+            vcl_size_t stride_start = block_start[block_idx] + column_entry_index * mat.rows_per_block();
+            // Note: This for-loop may be unrolled by hand for exploiting vectorization
+            //       Careful benchmarking recommended first, memory channels may be saturated already!
+            for(IndexT row_in_block = 0; row_in_block < mat.rows_per_block(); ++row_in_block)
+            {
+              ScalarType val = elements[stride_start + row_in_block];
+
+              result_values[row_in_block] += val ? vec_buf[column_indices[stride_start + row_in_block] * vec.stride() + vec.start()] * val : 0;
+            }
+          }
+
+          vcl_size_t first_row_in_matrix = block_idx * mat.rows_per_block();
+          for(IndexT row_in_block = 0; row_in_block < mat.rows_per_block(); ++row_in_block)
+          {
+            if (first_row_in_matrix + row_in_block < result.size())
+              result_buf[(first_row_in_matrix + row_in_block) * result.stride() + result.start()] = result_values[row_in_block];
+          }
+        }
+      }
+
+
       //
       // Hybrid Matrix
       //

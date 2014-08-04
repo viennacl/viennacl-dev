@@ -313,6 +313,17 @@ namespace viennacl
     /** \endcond */
 
     //
+    // is_sliced_ell_matrix
+    //
+    /** \cond */
+    template <typename ScalarType, typename IndexT>
+    struct is_sliced_ell_matrix<viennacl::sliced_ell_matrix<ScalarType, IndexT> >
+    {
+      enum { value = true };
+    };
+    /** \endcond */
+
+    //
     // is_hyb_matrix
     //
     /** \cond */
@@ -354,6 +365,12 @@ namespace viennacl
 
     template <typename ScalarType, unsigned int ALIGNMENT>
     struct is_any_sparse_matrix<viennacl::ell_matrix<ScalarType, ALIGNMENT> >
+    {
+      enum { value = true };
+    };
+
+    template <typename ScalarType, typename IndexT>
+    struct is_any_sparse_matrix<viennacl::sliced_ell_matrix<ScalarType, IndexT> >
     {
       enum { value = true };
     };

@@ -247,6 +247,13 @@ namespace viennacl
       typedef viennacl::tag_viennacl  type;
     };
 
+    template< typename T, typename I>
+    struct tag_of< viennacl::sliced_ell_matrix<T,I> >
+    {
+      typedef viennacl::tag_viennacl  type;
+    };
+
+
     template< typename T, unsigned int I>
     struct tag_of< viennacl::hyb_matrix<T,I> >
     {
