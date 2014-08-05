@@ -607,6 +607,11 @@ public:
     matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(p_, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
     matrix_product_template::parameters_type const & parameters() const { return p_; }
 
+    void enqueue(viennacl::ocl::program & program, statements_container const & statements)
+    {
+
+    }
+
 private:
     const char A_trans_;
     const char B_trans_;

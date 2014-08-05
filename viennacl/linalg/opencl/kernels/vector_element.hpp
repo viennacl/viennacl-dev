@@ -55,7 +55,7 @@ namespace viennacl
               viennacl::vector<TYPE> z;
 
               // unary operations
-#define ADD_UNARY(TYPE) source.append(vector_axpy_template(vector_axpy_params,operator_string(TYPE)).generate(scheduler::preset::unary_element_op(&x, &y, TYPE), device))
+#define ADD_UNARY(TYPE) source.append(vector_axpy_template(vector_axpy_params, operator_string(TYPE)).generate(scheduler::preset::unary_element_op(&x, &y, TYPE), device))
               if (numeric_string == "float" || numeric_string == "double")
               {
                 ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);

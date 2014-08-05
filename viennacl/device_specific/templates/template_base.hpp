@@ -177,6 +177,8 @@ namespace viennacl
           }
       };
 
+
+
       /** @brief functor for setting the arguments of a kernel */
       class set_arguments_functor : public tree_parsing::traversal_functor
       {
@@ -260,9 +262,27 @@ namespace viennacl
           viennacl::ocl::kernel & kernel_;
       };
 
-
-
     protected:
+
+      static void generate_prototype(utils::kernel_generation_stream & stream, std::string const & name, std::string const & first_arguments, std::vector<mapping_type> const & mappings, statements_container statements)
+      {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::const_iterator mit;
+        std::set<std::string> already_generated;
+
+        std::string arguments = first_arguments;
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          tree_parsing::traverse(*sit, sit->root(), prototype_generation_traversal(already_generated, arguments, *mit), true);
+        arguments.erase(arguments.size()-1); //Last comma pruned
+        stream << "__kernel " << "void " << name << "(" << arguments << ")" << std::endl;
+      }
+
+      void set_arguments(statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & current_arg)
+      {
+        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
+        for(statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
+          tree_parsing::traverse(*itt, itt->root(), set_arguments_functor(*binder,current_arg,kernel), true);
+      }
 
       class invalid_template_exception : public std::exception
       {
@@ -322,34 +342,47 @@ namespace viennacl
       virtual unsigned int n_lmem_elements() const { return 0; }
 
       /** @brief Generates the body of the associated kernel function */
-      virtual void core(unsigned int kernel_id, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
-      /** @brief generates the arguments that are global to the kernel (different from the object-specific arguments) */
-      virtual void add_kernel_arguments(statements_container const & statements, std::string & arguments_string) const = 0;
-      /** @brief configure the local sizes and enqueue the arguments of the kernel */
-      virtual void configure_impl(vcl_size_t kernel_id, viennacl::ocl::context & context, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const = 0;
-
+      virtual void generate_impl(utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
 
     protected:
 
-      static scheduler::lhs_rhs_element const & lhs_most(scheduler::statement const & statement)
+      static scheduler::statement_node const & lhs_most(scheduler::statement::container_type const & array, size_t root)
       {
-        scheduler::statement::container_type const & array = statement.array();
-        scheduler::statement_node const * current = &array[statement.root()];
+        scheduler::statement_node const * current = &array[root];
         while(current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
           current = &array[current->lhs.node_index];
-        return current->lhs;
+        return *current;
+      }
+
+      vcl_size_t vector_size(scheduler::statement_node const & node, bool up_to_internal_size)
+      {
+        using namespace scheduler;
+        using namespace utils;
+        if(node.op.type==OPERATION_BINARY_MATRIX_DIAG_TYPE)
+        {
+          vcl_size_t size1 = up_to_internal_size?call_on_matrix(node.lhs, internal_size1_fun()):call_on_matrix(node.lhs, size1_fun());
+          vcl_size_t size2 = up_to_internal_size?call_on_matrix(node.lhs, internal_size2_fun()):call_on_matrix(node.lhs, size2_fun());
+          return std::min<vcl_size_t>(size1, size2);
+        }
+        else if(node.op.type==OPERATION_BINARY_MATRIX_ROW_TYPE)
+          return up_to_internal_size?call_on_matrix(node.lhs, internal_size2_fun()):call_on_matrix(node.lhs, size2_fun());
+        else if(node.op.type==OPERATION_BINARY_MATRIX_COLUMN_TYPE)
+          return up_to_internal_size?call_on_matrix(node.lhs, internal_size1_fun()):call_on_matrix(node.lhs, size1_fun());
+        else
+          return up_to_internal_size?call_on_vector(node.lhs, internal_size_fun()):call_on_vector(node.lhs, size_fun());
       }
 
     public:
       /** @brief The constructor */
-      template_base(template_base::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : p_(parameters), kernel_prefix_(kernel_prefix), binding_policy_(binding_policy){ }
+      template_base(template_base::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : p_(parameters), kernel_prefix_("_" + kernel_prefix), binding_policy_(binding_policy){ }
 
       /** @brief returns whether or not the profile has undefined behavior on particular device */
       int check_invalid(statements_container const & statements, viennacl::ocl::device const & device) const
       {
         using namespace viennacl::tools;
 
-        unsigned int scalartype_size = utils::size_of(lhs_most(statements.data().front()).numeric_type);
+        scheduler::statement const & statement = statements.data().front();
+        unsigned int scalartype_size = utils::size_of(lhs_most(statement.array(), statement.root()).lhs.numeric_type);
 
         //Query device informations
         size_t lmem_available = static_cast<size_t>(device.local_mem_size());
@@ -400,60 +433,17 @@ namespace viennacl
         utils::kernel_generation_stream stream;
 
         //Create mapping
-        std::vector<mapping_type> mapping(statements.data().size());
+        std::vector<mapping_type> mappings(statements.data().size());
         tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
           tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
 
-        //Generate Prototype
-        std::string prototype;
-        std::set<std::string> already_generated;
-
-        add_kernel_arguments(statements, prototype);
-        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::traverse(*sit, sit->root(), prototype_generation_traversal(already_generated, prototype, *mit), true);
-        prototype.erase(prototype.size()-1); //Last comma pruned
-
-        for(unsigned int i = 0 ; i < p_.num_kernels ; ++i)
-        {
-          stream << " __attribute__((reqd_work_group_size(" << p_.local_size_0 << "," << p_.local_size_1 << "," << 1 << ")))" << std::endl;
-          stream << "__kernel " << "void " << kernel_prefix_ << i << "(" << prototype << ")" << std::endl;
-          stream << "{" << std::endl;
-          stream.inc_tab();
-          core(i, stream, statements, mapping);
-          stream.dec_tab();
-          stream << "}" << std::endl;
-        }
+        generate_impl(stream, statements, mappings);
 
         return stream.str();
       }
 
-      void enqueue(viennacl::ocl::program & program, statements_container const & statements)
-      {
-        std::vector<viennacl::ocl::kernel*> ::iterator kit;
-        vcl_size_t current_idx;
-
-        //Get the kernels
-        std::vector<viennacl::ocl::kernel*> kernels(p_.num_kernels);
-        for(current_idx=0, kit = kernels.begin() ; kit != kernels.end() ; ++kit, ++current_idx)
-           *kit = &program.get_kernel(kernel_prefix_+tools::to_string(current_idx));
-
-        //Configure
-        for(current_idx=0, kit = kernels.begin() ; kit != kernels.end() ; ++kit, ++current_idx)
-        {
-          unsigned int current_arg = 0;
-          tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-          (*kit)->local_work_size(0,p_.local_size_0);
-          (*kit)->local_work_size(1,p_.local_size_1);
-          configure_impl(current_idx, const_cast<viennacl::ocl::context &>(*program.p_context()), statements, **kit, current_arg);
-          for(statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
-            tree_parsing::traverse(*itt, itt->root(), set_arguments_functor(*binder,current_arg,**kit), true);
-        }
-
-        //Enqueue
-        for(std::vector<viennacl::ocl::kernel*>::iterator it = kernels.begin() ; it != kernels.end() ; ++it)
-          viennacl::ocl::enqueue(**it);
-      }
+      virtual void enqueue(viennacl::ocl::program & program, statements_container const & statements) = 0;
 
 
     protected:

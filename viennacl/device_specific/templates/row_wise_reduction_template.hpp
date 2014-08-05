@@ -227,6 +227,11 @@ namespace viennacl{
       row_wise_reduction_template(row_wise_reduction_template::parameters_type const & parameters, char A_trans, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), A_trans_(A_trans), p_(parameters){ }
       row_wise_reduction_template::parameters_type const & parameters() const { return p_; }
 
+      void enqueue(viennacl::ocl::program & program, statements_container const & statements)
+      {
+
+      }
+
     private:
       const char A_trans_;
       row_wise_reduction_template::parameters_type p_;

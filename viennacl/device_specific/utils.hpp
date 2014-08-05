@@ -308,7 +308,9 @@ namespace viennacl{
       inline bool is_reduction(scheduler::op_element const & op){
         return op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
             || op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY
-            || op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY;
+            || op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY
+            || op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE
+            || op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE;
       }
 
       inline bool is_index_reduction(scheduler::op_element const & op)

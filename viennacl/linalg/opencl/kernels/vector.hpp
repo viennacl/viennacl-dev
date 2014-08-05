@@ -141,8 +141,6 @@ namespace viennacl
 
               generate_inner_prod_impl(source, reduction_params, 1, &x, &y, &da, "inner_prod", device);
 
-              std::cout << source << std::endl;
-
               source.append(reduction_template(reduction_params, "norm_1").generate(scheduler::preset::norm_1(&da, &x), device));
               if(is_floating_point<TYPE>::value)
                 source.append(reduction_template(reduction_params, "norm_2", BIND_TO_HANDLE).generate(scheduler::preset::norm_2(&da, &x), device)); //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)

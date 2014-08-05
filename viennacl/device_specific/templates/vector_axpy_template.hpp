@@ -69,30 +69,35 @@ namespace viennacl
           return TEMPLATE_VALID;
       }
 
-      void for_loop_impl(utils::kernel_generation_stream& stream, unsigned int simd_width, statements_container const & statements, std::vector<mapping_type> const & mapping) const
-      {
-
-      }
-
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const
+      void generate_impl(utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
         std::set<std::string> already_fetched;
 
-        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+        stream << " __attribute__((reqd_work_group_size(" << p_.local_size_0 << ",1,1)))" << std::endl;
+        generate_prototype(stream, kernel_prefix_, "unsigned int N,", mappings, statements);
+        stream << "{" << std::endl;
+        stream.inc_tab();
+
+        stream << "//Fetch the pointed scalars" << std::endl;
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
           tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "scalar", "#scalartype #namereg = *#name;", stream, *mit, &already_fetched);
+
+        stream << "//Increment vector offsets" << std::endl;
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#name += #start;", stream, *mit, NULL);
 
         std::string init, upper_bound, inc;
         fetching_loop_info(p_.fetching_policy, "N/"+tools::to_string(p_.simd_width), 0, stream, init, upper_bound, inc);
         stream << "for(unsigned int i = " << init << "; i < " << upper_bound << " ; i += " << inc << ")" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#scalartype #namereg = #name[#start + i*#stride];", stream, *mit, &already_fetched);
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#scalartype #namereg = #name[i*#stride];", stream, *mit, &already_fetched);
 
         //Generates all the expression, in order
-        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
         {
           std::map<std::string, std::string> accessors;
           accessors["vector"] = "#namereg";
@@ -100,41 +105,14 @@ namespace viennacl
           stream << tree_parsing::evaluate_expression(*sit, sit->root(), accessors, *mit, PARENT_NODE_TYPE) << ";" << std::endl;
         }
 
-        for(mit = mapping.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          tree_parsing::process(sit->root(),LHS_NODE_TYPE, *sit, "vector","#name[#start + i*#stride] = #namereg;", stream, *mit, NULL);
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+          tree_parsing::process(sit->root(),LHS_NODE_TYPE, *sit, "vector","#name[i*#stride] = #namereg;", stream, *mit, NULL);
 
         stream.dec_tab();
         stream << "}" << std::endl;
-      }
 
-      void add_kernel_arguments(statements_container const & /*statements*/, std::string & arguments_string) const
-      {
-        arguments_string += generate_value_kernel_argument("unsigned int", "N");
-      }
-
-      vcl_size_t get_vector_size(scheduler::statement const & statement) const
-      {
-        scheduler::statement_node const & root = statement.array()[statement.root()];
-        if(root.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-        {
-          scheduler::statement_node lhs = statement.array()[root.lhs.node_index];
-          if(lhs.op.type==scheduler::OPERATION_BINARY_MATRIX_DIAG_TYPE)
-          {
-            vcl_size_t size1 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size1_fun()): utils::call_on_matrix(lhs.lhs, utils::size1_fun());
-            vcl_size_t size2 = up_to_internal_size_?utils::call_on_matrix(lhs.lhs, utils::internal_size2_fun()): utils::call_on_matrix(lhs.lhs, utils::size2_fun());
-            return std::min<vcl_size_t>(size1, size2);
-          }
-          throw generator_not_supported_exception("Vector AXPY : Unimplemented LHS size deduction");
-        }
-        return up_to_internal_size_?utils::call_on_vector(root.lhs, utils::internal_size_fun()): utils::call_on_vector(root.lhs, utils::size_fun());
-      }
-
-      void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
-      {
-        k.global_work_size(0,p_.local_size_0*p_.num_groups);
-        k.global_work_size(1,1);
-        cl_uint size = static_cast<cl_uint>(get_vector_size(statements.data().front()));
-        k.arg(n_arg++, size);
+        stream.dec_tab();
+        stream << "}" << std::endl;
       }
 
     public:
@@ -142,6 +120,19 @@ namespace viennacl
 
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
       vector_axpy_template::parameters_type const & parameters() const { return p_; }
+
+      void enqueue(viennacl::ocl::program & program, statements_container const & statements)
+      {
+        viennacl::ocl::kernel & kernel = program.get_kernel(kernel_prefix_);
+        kernel.local_work_size(0, p_.local_size_0);
+        kernel.global_work_size(0, p_.local_size_0*p_.num_groups);
+        unsigned int current_arg = 0;
+        scheduler::statement const & statement = statements.data().front();
+        cl_uint size = static_cast<cl_uint>(vector_size(lhs_most(statement.array(), statement.root()), up_to_internal_size_));
+        kernel.arg(current_arg++, size);
+        set_arguments(statements, kernel, current_arg);
+        viennacl::ocl::enqueue(kernel);
+      }
 
     private:
       bool up_to_internal_size_;

@@ -139,6 +139,11 @@ namespace viennacl{
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
       matrix_axpy_template::parameters_type const & parameters() const { return p_; }
 
+      void enqueue(viennacl::ocl::program & program, statements_container const & statements)
+      {
+
+      }
+
     private:
       bool up_to_internal_size_;
       matrix_axpy_template::parameters_type p_;
