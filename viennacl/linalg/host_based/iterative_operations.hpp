@@ -18,8 +18,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/host_based/vector_operations.hpp
-    @brief Implementations of vector operations using a plain single-threaded or OpenMP-enabled execution on CPU
+/** @file viennacl/linalg/host_based/iterative_operations.hpp
+    @brief Implementations of specialized kernels for fast iterative solvers using OpenMP on the CPU
 */
 
 #include <cmath>
