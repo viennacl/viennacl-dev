@@ -488,11 +488,11 @@ namespace viennacl{
         }
       }
 
-      inline std::string simd_scalartype(std::string const & scalartype, unsigned int width)
+      inline std::string append_width(std::string const & str, unsigned int width)
       {
         if(width==1)
-          return scalartype;
-        return scalartype + tools::to_string(width);
+          return str;
+        return str + tools::to_string(width);
       }
 
     }

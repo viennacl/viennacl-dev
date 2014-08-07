@@ -75,57 +75,57 @@ private:
     unsigned int n_lmem_elements() const
     {
         unsigned int N = 0;
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL)
-            N += p_.kL * (p_.mL+1);
-        if(p_.B_fetching_policy==FETCH_FROM_LOCAL)
-            N += p_.nL * (p_.kL+1);
+        if(optimized_parameters_.A_fetching_policy==FETCH_FROM_LOCAL)
+            N += optimized_parameters_.kL * (optimized_parameters_.mL+1);
+        if(optimized_parameters_.B_fetching_policy==FETCH_FROM_LOCAL)
+            N += optimized_parameters_.nL * (optimized_parameters_.kL+1);
         return N;
     }
 
     int check_invalid_impl(viennacl::ocl::device const & /*device*/) const
     {
-        if(p_.A_fetching_policy!=FETCH_FROM_LOCAL && p_.B_fetching_policy!=FETCH_FROM_LOCAL&& (p_.local_fetch_0!=0 || p_.local_fetch_1!=0))
+        if(optimized_parameters_.A_fetching_policy!=FETCH_FROM_LOCAL && optimized_parameters_.B_fetching_policy!=FETCH_FROM_LOCAL&& (optimized_parameters_.local_fetch_0!=0 || optimized_parameters_.local_fetch_1!=0))
           return TEMPLATE_GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH;
 
-        if(viennacl::dense_padding_size % p_.mL > 0 || viennacl::dense_padding_size % p_.kL > 0 || viennacl::dense_padding_size % p_.nL > 0)
+        if(viennacl::dense_padding_size % optimized_parameters_.mL > 0 || viennacl::dense_padding_size % optimized_parameters_.kL > 0 || viennacl::dense_padding_size % optimized_parameters_.nL > 0)
           return TEMPLATE_ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE;
 
-        if((p_.mS % p_.simd_width) > 0 || (p_.nS % p_.simd_width) > 0)
+        if((optimized_parameters_.mS % optimized_parameters_.simd_width) > 0 || (optimized_parameters_.nS % optimized_parameters_.simd_width) > 0)
           return TEMPLATE_MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE;
 
-        if(p_.kS > p_.kL)
+        if(optimized_parameters_.kS > optimized_parameters_.kL)
           return TEMPLATE_KS_MUST_BE_SMALLER_THAN_KL;
 
-        if(!(A_trans_=='N' && B_trans_=='T') && p_.simd_width>1)
+        if(!(A_trans_=='N' && B_trans_=='T') && optimized_parameters_.simd_width>1)
           return TEMPLATE_SIMD_WIDTH_MUST_BE_ONE;
 
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL || p_.B_fetching_policy==FETCH_FROM_LOCAL)
+        if(optimized_parameters_.A_fetching_policy==FETCH_FROM_LOCAL || optimized_parameters_.B_fetching_policy==FETCH_FROM_LOCAL)
         {
-            if((p_.local_fetch_0*p_.local_fetch_1) !=(p_.local_size_0*p_.local_size_1))
+            if((optimized_parameters_.local_fetch_0*optimized_parameters_.local_fetch_1) !=(optimized_parameters_.local_size_0*optimized_parameters_.local_size_1))
              return TEMPLATE_LOCAL_FETCH_PRODUCT_MUST_MATCH_LOCAL_SIZE_PRODUCT;
         }
 
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL)
+        if(optimized_parameters_.A_fetching_policy==FETCH_FROM_LOCAL)
         {
-            unsigned int bound1 = (A_trans_=='N')?p_.kL:p_.mL;
-            unsigned int bound0 = (A_trans_=='N')?p_.mL:p_.kL;
+            unsigned int bound1 = (A_trans_=='N')?optimized_parameters_.kL:optimized_parameters_.mL;
+            unsigned int bound0 = (A_trans_=='N')?optimized_parameters_.mL:optimized_parameters_.kL;
 
-            if(p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0)
+            if(optimized_parameters_.local_fetch_1>0 && (bound1 % optimized_parameters_.local_fetch_1)> 0)
               return A_trans_=='N'?TEMPLATE_LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:TEMPLATE_LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
-            if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
+            if(optimized_parameters_.local_fetch_0>0 && (bound0 % (optimized_parameters_.local_fetch_0*optimized_parameters_.simd_width)) > 0)
               return A_trans_=='N'?TEMPLATE_LOCAL_FETCH_0_MUST_BE_NL_MULTIPLE:TEMPLATE_LOCAL_FETCH_0_MUST_BE_KL_MULTIPLE;
 
         }
-        if(p_.B_fetching_policy==FETCH_FROM_LOCAL)
+        if(optimized_parameters_.B_fetching_policy==FETCH_FROM_LOCAL)
         {
-            unsigned int bound1 = (B_trans_=='T')?p_.kL:p_.nL;
-            unsigned int bound0 = (B_trans_=='T')?p_.nL:p_.kL;
+            unsigned int bound1 = (B_trans_=='T')?optimized_parameters_.kL:optimized_parameters_.nL;
+            unsigned int bound0 = (B_trans_=='T')?optimized_parameters_.nL:optimized_parameters_.kL;
 
-            if(p_.local_fetch_1>0 && (bound1 % p_.local_fetch_1)> 0)
+            if(optimized_parameters_.local_fetch_1>0 && (bound1 % optimized_parameters_.local_fetch_1)> 0)
               return B_trans_=='T'?TEMPLATE_LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:TEMPLATE_LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
-            if(p_.local_fetch_0>0 && (bound0 % (p_.local_fetch_0*p_.simd_width)) > 0)
+            if(optimized_parameters_.local_fetch_0>0 && (bound0 % (optimized_parameters_.local_fetch_0*optimized_parameters_.simd_width)) > 0)
               return B_trans_=='T'?TEMPLATE_LOCAL_FETCH_1_MUST_BE_KL_MULTIPLE:TEMPLATE_LOCAL_FETCH_1_MUST_BE_ML_MULTIPLE;
 
         }
@@ -158,8 +158,8 @@ private:
         vcl_size_t B2 = call_on_matrix(utils::lhs_rhs_element(st, B_idx, B_leaf), size2_fun());
 
         //set ND range
-        k.global_work_size(0, iM/p_.mS);
-        k.global_work_size(1, iN/p_.nS);
+        k.global_work_size(0, iM/optimized_parameters_.mS);
+        k.global_work_size(1, iN/optimized_parameters_.nS);
 
         k.arg(n_arg++, cl_uint(M));
         k.arg(n_arg++, cl_uint(N));
@@ -604,10 +604,15 @@ private:
     }
 
 public:
-    matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(p_, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
-    matrix_product_template::parameters_type const & parameters() const { return p_; }
+    matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(optimized_parameters_, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), optimized_parameters_(parameters){ }
+    matrix_product_template::parameters_type const & parameters() const { return optimized_parameters_; }
 
     void enqueue(viennacl::ocl::program & program, statements_container const & statements)
+    {
+
+    }
+
+    void enqueue_fallback(viennacl::ocl::program & program_optimized, viennacl::ocl::program & program_fallback, statements_container const & statements)
     {
 
     }
@@ -615,7 +620,7 @@ public:
 private:
     const char A_trans_;
     const char B_trans_;
-    matrix_product_template::parameters_type p_;
+    matrix_product_template::parameters_type optimized_parameters_;
 };
 
 }

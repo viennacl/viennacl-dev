@@ -115,9 +115,9 @@ namespace viennacl
         kernel_name[14] = flip_sign_beta?'1':'0';
         kernel_name[15] = reciprocal_beta?'1':'0';
 
-        device_specific::vector_axpy_template(device_specific::builtin_database::vector_axpy_params<T>(opencl::detail::current_device(vec1)), kernel_name)
-                                        .enqueue(detail::program_for_vector(vec1,0),
-                                        scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta));
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+        scheduler::statement const & statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &vec1, &vec2, &alpha, flip_sign_alpha, reciprocal_alpha, &vec3, &beta, flip_sign_beta, reciprocal_beta);
+        kernels::vector_test<T>::execution_handler(ctx).execute(kernel_name, statement);
       }
 
 

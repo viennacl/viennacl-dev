@@ -342,17 +342,9 @@ namespace viennacl
       virtual unsigned int n_lmem_elements() const { return 0; }
 
       /** @brief Generates the body of the associated kernel function */
-      virtual void generate_impl(utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
+      virtual void generate_impl(utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping, bool fallback) const = 0;
 
     protected:
-
-      static scheduler::statement_node const & lhs_most(scheduler::statement::container_type const & array, size_t root)
-      {
-        scheduler::statement_node const * current = &array[root];
-        while(current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-          current = &array[current->lhs.node_index];
-        return *current;
-      }
 
       vcl_size_t vector_size(scheduler::statement_node const & node, bool up_to_internal_size)
       {
@@ -372,9 +364,28 @@ namespace viennacl
           return up_to_internal_size?call_on_vector(node.lhs, internal_size_fun()):call_on_vector(node.lhs, size_fun());
       }
 
+      /** @brief Generates the code associated with this profile onto the provided stream */
+      std::string generate(statements_container const & statements, viennacl::ocl::device const & /*device*/, bool fallback)
+      {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::iterator mit;
+
+        utils::kernel_generation_stream stream;
+
+        //Create mapping
+        std::vector<mapping_type> mappings(statements.data().size());
+        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
+
+        generate_impl(stream, statements, mappings, fallback);
+
+        return stream.str();
+      }
+
     public:
       /** @brief The constructor */
-      template_base(template_base::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : p_(parameters), kernel_prefix_("_" + kernel_prefix), binding_policy_(binding_policy){ }
+      template_base(template_base::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : parameters_(parameters), kernel_prefix_("_" + kernel_prefix), binding_policy_(binding_policy){ }
 
       /** @brief returns whether or not the profile has undefined behavior on particular device */
       int check_invalid(statements_container const & statements, viennacl::ocl::device const & device) const
@@ -393,12 +404,12 @@ namespace viennacl
         //Invalid work group size
         size_t max_workgroup_size = device.max_work_group_size();
         std::vector<size_t> max_work_item_sizes = device.max_work_item_sizes();
-        if(p_.local_size_0*p_.local_size_1 > max_workgroup_size)
+        if(parameters_.local_size_0*parameters_.local_size_1 > max_workgroup_size)
           return TEMPLATE_WORK_GROUP_SIZE_OVERFLOW;
-        if(p_.local_size_0 > max_work_item_sizes[0])
+        if(parameters_.local_size_0 > max_work_item_sizes[0])
           return TEMPLATE_LOCAL_SIZE_0_OVERFLOW;
 
-        if(p_.local_size_1 > max_work_item_sizes[1])
+        if(parameters_.local_size_1 > max_work_item_sizes[1])
           return TEMPLATE_LOCAL_SIZE_1_OVERFLOW;
 
         //Advice from the Intel guide
@@ -411,43 +422,29 @@ namespace viennacl
           if(device.vendor_id()==4098)
             warp_size = 64;
         }
-        if(((p_.local_size_0*p_.local_size_1)%warp_size)>0)
+        if(((parameters_.local_size_0*parameters_.local_size_1)%warp_size)>0)
           return TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE;
           
         //Invalid SIMD Width
-        if(p_.simd_width!=1 && p_.simd_width!=2 &&
-                    p_.simd_width!=4 && p_.simd_width!=8 &&
-                    p_.simd_width!=16)
+        if(parameters_.simd_width!=1 && parameters_.simd_width!=2 &&
+                    parameters_.simd_width!=4 && parameters_.simd_width!=8 &&
+                    parameters_.simd_width!=16)
           return TEMPLATE_INVALID_SIMD_WIDTH;
 
         return check_invalid_impl(device);
       }
 
 
-      /** @brief Generates the code associated with this profile onto the provided stream */
-      std::string generate(statements_container const & statements, viennacl::ocl::device const & /*device*/)
-      {
-        statements_container::data_type::const_iterator sit;
-        std::vector<mapping_type>::iterator mit;
 
-        utils::kernel_generation_stream stream;
-
-        //Create mapping
-        std::vector<mapping_type> mappings(statements.data().size());
-        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
-
-        generate_impl(stream, statements, mappings);
-
-        return stream.str();
-      }
-
-      virtual void enqueue(viennacl::ocl::program & program, statements_container const & statements) = 0;
+      virtual bool requires_fallback(statements_container const & statements) const { return false; }
+      std::string generate(statements_container const & statements, viennacl::ocl::device const & device) { return generate(statements, device, false); }
+      std::string generate_fallback(statements_container const & statements, viennacl::ocl::device const & device) { return generate(statements, device, true); }
+      virtual void enqueue(viennacl::ocl::program & program_optimized, statements_container const & statements) = 0;
+      virtual void enqueue_fallback(viennacl::ocl::program & program_optimized, viennacl::ocl::program & program_fallback, statements_container const & statements) = 0;
 
 
     protected:
-      template_base::parameters_type const & p_;
+      template_base::parameters_type const & parameters_;
       std::string kernel_prefix_;
       binding_policy_t binding_policy_;
     };

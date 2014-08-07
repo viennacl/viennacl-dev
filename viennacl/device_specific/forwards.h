@@ -81,6 +81,14 @@ namespace viennacl{
           || node.op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY;
     }
 
+    inline scheduler::statement_node const & lhs_most(scheduler::statement::container_type const & array, size_t root)
+    {
+      scheduler::statement_node const * current = &array[root];
+      while(current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+        current = &array[current->lhs.node_index];
+      return *current;
+    }
+
     enum expression_type{
       SCALAR_AXPY_TYPE,
       VECTOR_AXPY_TYPE,

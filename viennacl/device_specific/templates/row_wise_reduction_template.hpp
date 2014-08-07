@@ -60,20 +60,20 @@ namespace viennacl{
 
       virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
-          if(p_.simd_width>1)
+          if(optimized_parameters_.simd_width>1)
             return TEMPLATE_INVALID_SIMD_WIDTH;
           return TEMPLATE_VALID;
       }
 
       unsigned int n_lmem_elements() const
       {
-        return p_.local_size_0*(p_.local_size_1+1);
+        return optimized_parameters_.local_size_0*(optimized_parameters_.local_size_1+1);
       }
 
       void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & n_arg)  const
       {
-        kernel.global_work_size(0,p_.local_size_0*p_.num_groups_0);
-        kernel.global_work_size(1,p_.local_size_1);
+        kernel.global_work_size(0,optimized_parameters_.local_size_0*optimized_parameters_.num_groups_0);
+        kernel.global_work_size(1,optimized_parameters_.local_size_1);
 
         scheduler::statement::container_type const & array = statements.data().begin()->array();
         vcl_size_t root = statements.data().begin()->root();
@@ -224,17 +224,22 @@ namespace viennacl{
       }
 
     public:
-      row_wise_reduction_template(row_wise_reduction_template::parameters_type const & parameters, char A_trans, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, kernel_prefix, binding_policy), A_trans_(A_trans), p_(parameters){ }
-      row_wise_reduction_template::parameters_type const & parameters() const { return p_; }
+      row_wise_reduction_template(row_wise_reduction_template::parameters_type const & parameters, char A_trans, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(optimized_parameters_, kernel_prefix, binding_policy), A_trans_(A_trans), optimized_parameters_(parameters){ }
+      row_wise_reduction_template::parameters_type const & parameters() const { return optimized_parameters_; }
 
       void enqueue(viennacl::ocl::program & program, statements_container const & statements)
       {
 
       }
 
+      void enqueue_fallback(viennacl::ocl::program & program_optimized, viennacl::ocl::program & program_fallback, statements_container const & statements)
+      {
+
+      }
+
     private:
       const char A_trans_;
-      row_wise_reduction_template::parameters_type p_;
+      row_wise_reduction_template::parameters_type optimized_parameters_;
     };
 
   }
