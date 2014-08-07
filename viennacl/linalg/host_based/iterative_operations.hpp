@@ -48,6 +48,64 @@ namespace viennacl
   {
     namespace host_based
     {
+
+      namespace detail
+      {
+        /** @brief Performs a fused matrix-vector product with a compressed_matrix for an efficient pipelined CG algorithm.
+          *
+          * This routines computes for a matrix A and vectors 'p' and 'Ap':
+          *   Ap = prod(A, p);
+          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
+          */
+        template <typename T>
+        void pipelined_prod_impl(compressed_matrix<T> const & A,
+                                 vector_base<T> const & p,
+                                 vector_base<T> & Ap,
+                                 T const * r0star,
+                                 vector_base<T> & inner_prod_buffer,
+                                 vcl_size_t buffer_chunk_size,
+                                 vcl_size_t offset_r0star)
+        {
+          typedef T        value_type;
+
+          value_type         * Ap_buf      = detail::extract_raw_pointer<value_type>(Ap.handle());
+          value_type   const *  p_buf      = detail::extract_raw_pointer<value_type>(p.handle());
+          value_type   const * elements    = detail::extract_raw_pointer<value_type>(A.handle());
+          unsigned int const *  row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
+          unsigned int const *  col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
+          value_type         * data_buffer = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
+
+          value_type inner_prod_ApAp = 0;
+          value_type inner_prod_pAp = 0;
+          value_type inner_prod_Ap_r0star = 0;
+          for (long row = 0; row < static_cast<long>(A.size1()); ++row)
+          {
+            value_type dot_prod = 0;
+            value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
+
+            vcl_size_t row_end = row_buffer[row+1];
+            for (vcl_size_t i = row_buffer[row]; i < row_end; ++i)
+              dot_prod += elements[i] * p_buf[col_buffer[i]];
+
+            // update contributions for the inner products (Ap, Ap) and (p, Ap)
+            Ap_buf[static_cast<vcl_size_t>(row)] = dot_prod;
+            inner_prod_ApAp += dot_prod * dot_prod;
+            inner_prod_pAp  += val_p_diag * dot_prod;
+            inner_prod_Ap_r0star += r0star ? dot_prod * r0star[static_cast<vcl_size_t>(row)] : value_type(0);
+          }
+
+          data_buffer[    buffer_chunk_size] = inner_prod_ApAp;
+          data_buffer[2 * buffer_chunk_size] = inner_prod_pAp;
+          if (r0star)
+            data_buffer[offset_r0star] = inner_prod_Ap_r0star;
+        }
+
+
+
+      }
+
+
+
       /** @brief Performs a joint vector update operation needed for an efficient pipelined CG algorithm.
         *
         * This routines computes for vectors 'result', 'p', 'r', 'Ap':
@@ -108,37 +166,7 @@ namespace viennacl
                              vector_base<T> & Ap,
                              vector_base<T> & inner_prod_buffer)
       {
-        typedef T        value_type;
-
-        value_type         * Ap_buf      = detail::extract_raw_pointer<value_type>(Ap.handle());
-        value_type   const *  p_buf      = detail::extract_raw_pointer<value_type>(p.handle());
-        value_type   const * elements    = detail::extract_raw_pointer<value_type>(A.handle());
-        unsigned int const *  row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
-        unsigned int const *  col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
-        value_type         * data_buffer = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
-
-        std::size_t buffer_size_per_vector = inner_prod_buffer.size() / 3;
-
-
-        value_type inner_prod_ApAp = 0;
-        value_type inner_prod_pAp = 0;
-        for (long row = 0; row < static_cast<long>(A.size1()); ++row)
-        {
-          value_type dot_prod = 0;
-          value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
-
-          vcl_size_t row_end = row_buffer[row+1];
-          for (vcl_size_t i = row_buffer[row]; i < row_end; ++i)
-            dot_prod += elements[i] * p_buf[col_buffer[i]];
-
-          // update contributions for the inner products (Ap, Ap) and (p, Ap)
-          Ap_buf[static_cast<vcl_size_t>(row)] = dot_prod;
-          inner_prod_ApAp += dot_prod * dot_prod;
-          inner_prod_pAp  += val_p_diag * dot_prod;
-        }
-
-        data_buffer[    buffer_size_per_vector] = inner_prod_ApAp;
-        data_buffer[2 * buffer_size_per_vector] = inner_prod_pAp;
+        viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, NULL, inner_prod_buffer, inner_prod_buffer.size() / 3, 0);
       }
 
 
@@ -375,6 +403,128 @@ namespace viennacl
         data_buffer[2 * buffer_size_per_vector] = inner_prod_pAp;
       }
 
+      //////////////////////////
+
+
+      /** @brief Performs a joint vector update operation needed for an efficient pipelined BiCGStab algorithm.
+        *
+        * This routines computes for vectors 's', 'r', 'Ap':
+        *   s = r - alpha * Ap
+        * with alpha obtained from a reduction step on the 0th and the 3rd out of 6 chunks in inner_prod_buffer
+        * and runs the parallel reduction stage for computing inner_prod(s,s)
+        */
+      template <typename T>
+      void pipelined_bicgstab_update_s(vector_base<T> & s,
+                                       vector_base<T> & r,
+                                       vector_base<T> const & Ap,
+                                       vector_base<T> & inner_prod_buffer,
+                                       vcl_size_t buffer_chunk_size)
+      {
+        typedef T        value_type;
+
+        value_type       * data_s      = detail::extract_raw_pointer<value_type>(s);
+        value_type       * data_r      = detail::extract_raw_pointer<value_type>(r);
+        value_type const * data_Ap     = detail::extract_raw_pointer<value_type>(Ap);
+        value_type       * data_buffer = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
+
+        // Note: Due to the special setting in CG, there is no need to check for sizes and strides
+        vcl_size_t size  = viennacl::traits::size(s);
+
+        // part 1: compute alpha:
+        value_type r_in_r0 = 0;
+        value_type Ap_in_r0 = 0;
+        for (vcl_size_t i=0; i<buffer_chunk_size; ++i)
+        {
+           r_in_r0 += data_buffer[i];
+          Ap_in_r0 += data_buffer[i + 3 * buffer_chunk_size];
+        }
+        value_type alpha = r_in_r0 / Ap_in_r0;
+
+        // part 2: s = r - alpha * Ap  and first step in reduction for s:
+        value_type inner_prod_s = 0;
+        for (long i = 0; i < static_cast<long>(size); ++i)
+        {
+          value_type value_s  = data_s[static_cast<vcl_size_t>(i)];
+
+          value_s = data_r[static_cast<vcl_size_t>(i)] - alpha * data_Ap[static_cast<vcl_size_t>(i)];
+          inner_prod_s += value_s * value_s;
+
+          data_s[static_cast<vcl_size_t>(i)] = value_s;
+        }
+
+        data_buffer[5 * buffer_chunk_size] = inner_prod_s;
+      }
+
+      /** @brief Performs a joint vector update operation needed for an efficient pipelined BiCGStab algorithm.
+        *
+        * x_{j+1} = x_j + alpha * p_j + omega * s_j
+        * r_{j+1} = s_j - omega * t_j
+        * p_{j+1} = r_{j+1} + beta * (p_j - omega * q_j)
+        * and compute first stage of r_dot_r0 = <r_{j+1}, r_o^*> for use in next iteration
+        */
+       template <typename T>
+       void pipelined_bicgstab_vector_update(vector_base<T> & result, T alpha, vector_base<T> & p, T omega, vector_base<T> const & s,
+                                             vector_base<T> & residual, vector_base<T> const & As,
+                                             T beta, vector_base<T> const & Ap,
+                                             vector_base<T> const & r0star,
+                                             vector_base<T> & inner_prod_buffer)
+       {
+         typedef T        value_type;
+
+         value_type       * data_result   = detail::extract_raw_pointer<value_type>(result);
+         value_type       * data_p        = detail::extract_raw_pointer<value_type>(p);
+         value_type const * data_s        = detail::extract_raw_pointer<value_type>(s);
+         value_type       * data_residual = detail::extract_raw_pointer<value_type>(residual);
+         value_type const * data_As       = detail::extract_raw_pointer<value_type>(As);
+         value_type const * data_Ap       = detail::extract_raw_pointer<value_type>(Ap);
+         value_type const * data_r0star   = detail::extract_raw_pointer<value_type>(r0star);
+         value_type       * data_buffer   = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
+
+         vcl_size_t size = viennacl::traits::size(result);
+
+         value_type inner_prod_r_r0star = 0;
+         for (long i = 0; i < static_cast<long>(size); ++i)
+         {
+           vcl_size_t index = static_cast<vcl_size_t>(i);
+           value_type value_result   = data_result[index];
+           value_type value_p        = data_p[index];
+           value_type value_s        = data_s[index];
+           value_type value_residual = data_residual[index];
+           value_type value_As       = data_As[index];
+           value_type value_Ap       = data_Ap[index];
+           value_type value_r0star   = data_r0star[index];
+
+           value_result   += alpha * value_p + omega * value_s;
+           value_residual  = value_s - omega * value_As;
+           value_p         = value_residual + beta * (value_p - omega * value_Ap);
+           inner_prod_r_r0star += value_residual * value_r0star;
+
+           data_result[index]   = value_result;
+           data_residual[index] = value_residual;
+           data_p[index]        = value_p;
+         }
+
+         data_buffer[0] = inner_prod_r_r0star;
+       }
+
+       /** @brief Performs a fused matrix-vector product with a compressed_matrix for an efficient pipelined CG algorithm.
+         *
+         * This routines computes for a matrix A and vectors 'p' and 'Ap':
+         *   Ap = prod(A, p);
+         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
+         */
+       template <typename T>
+       void pipelined_bicgstab_prod(compressed_matrix<T> const & A,
+                                    vector_base<T> const & p,
+                                    vector_base<T> & Ap,
+                                    vector_base<T> const & r0star,
+                                    vector_base<T> & inner_prod_buffer,
+                                    vcl_size_t r0star_offset_in_buffer)
+       {
+         T const * data_r0star   = detail::extract_raw_pointer<T>(r0star);
+
+         viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, data_r0star, inner_prod_buffer, inner_prod_buffer.size() / 6, r0star_offset_in_buffer);
+       }
 
 
     } //namespace host_based
