@@ -122,16 +122,16 @@ namespace viennacl
       vcl_size_t k = W.size2();
       conf.iters_ = 0;
 
-      viennacl::matrix<ScalarType> wn(V.size1(), k);
-      viennacl::matrix<ScalarType> wd(V.size1(), k);
-      viennacl::matrix<ScalarType> wtmp(V.size1(), V.size2());
+      viennacl::matrix<ScalarType> wn(V.size1(), k, ctx);
+      viennacl::matrix<ScalarType> wd(V.size1(), k, ctx);
+      viennacl::matrix<ScalarType> wtmp(V.size1(), V.size2(), ctx);
 
-      viennacl::matrix<ScalarType> hn(k, V.size2());
-      viennacl::matrix<ScalarType> hd(k, V.size2());
-      viennacl::matrix<ScalarType> htmp(k, k);
+      viennacl::matrix<ScalarType> hn(k, V.size2(), ctx);
+      viennacl::matrix<ScalarType> hd(k, V.size2(), ctx);
+      viennacl::matrix<ScalarType> htmp(k, k, ctx);
 
-      viennacl::matrix<ScalarType> appr(V.size1(), V.size2());
-      viennacl::vector<ScalarType> diff(V.size1() * V.size2());
+      viennacl::matrix<ScalarType> appr(V.size1(), V.size2(), ctx);
+      viennacl::vector<ScalarType> diff(V.size1() * V.size2(), ctx);
 
       ScalarType last_diff = 0;
       ScalarType diff_init = 0;
@@ -173,7 +173,7 @@ namespace viennacl
             std::cout << diff_val / diff_init << std::endl;
 
           // Approximation check
-          if (diff_val / diff_init < conf.tolerance())
+          if ((diff_val / diff_init < conf.tolerance()) && (conf.iters_ != conf.check_after_steps() + 1))
             break;
 
           // Stagnation check
