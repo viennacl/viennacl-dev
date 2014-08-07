@@ -135,21 +135,22 @@ namespace viennacl
                                      vector_base<T> & r,
                                      vector_base<T> const & Ap,
                                      vector_base<T> & inner_prod_buffer,
-                                     vcl_size_t buffer_chunk_size)
+                                     vcl_size_t buffer_chunk_size,
+                                     vcl_size_t buffer_chunk_offset)
     {
       switch (viennacl::traits::handle(s).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size);
+          viennacl::linalg::host_based::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size);
+          viennacl::linalg::opencl::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size);
+          viennacl::linalg::cuda::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
@@ -171,21 +172,22 @@ namespace viennacl
                                            vector_base<T> & residual, vector_base<T> const & As,
                                            T beta, vector_base<T> const & Ap,
                                            vector_base<T> const & r0star,
-                                           vector_base<T> & inner_prod_buffer)
+                                           vector_base<T> & inner_prod_buffer,
+                                           vcl_size_t buffer_chunk_size)
      {
        switch (viennacl::traits::handle(s).get_active_handle_id())
        {
          case viennacl::MAIN_MEMORY:
-           viennacl::linalg::host_based::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer);
+           viennacl::linalg::host_based::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer, buffer_chunk_size);
            break;
  #ifdef VIENNACL_WITH_OPENCL
          case viennacl::OPENCL_MEMORY:
-           viennacl::linalg::opencl::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer);
+           viennacl::linalg::opencl::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer, buffer_chunk_size);
            break;
  #endif
  #ifdef VIENNACL_WITH_CUDA
          case viennacl::CUDA_MEMORY:
-           viennacl::linalg::cuda::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer);
+           viennacl::linalg::cuda::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer, buffer_chunk_size);
            break;
  #endif
          case viennacl::MEMORY_NOT_INITIALIZED:
@@ -208,21 +210,22 @@ namespace viennacl
                                  vector_base<T> & Ap,
                                  vector_base<T> const & r0star,
                                  vector_base<T> & inner_prod_buffer,
-                                 vcl_size_t r0star_offset_in_buffer)
+                                 vcl_size_t buffer_chunk_size,
+                                 vcl_size_t buffer_chunk_offset)
     {
       switch (viennacl::traits::handle(p).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, r0star_offset_in_buffer);
+          viennacl::linalg::host_based::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, r0star_offset_in_buffer);
+          viennacl::linalg::opencl::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, r0star_offset_in_buffer);
+          viennacl::linalg::cuda::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:

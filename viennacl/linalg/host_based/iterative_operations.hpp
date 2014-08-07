@@ -51,11 +51,11 @@ namespace viennacl
 
       namespace detail
       {
-        /** @brief Performs a fused matrix-vector product with a compressed_matrix for an efficient pipelined CG algorithm.
+        /** @brief Implementation of a fused matrix-vector product with a compressed_matrix for an efficient pipelined CG algorithm.
           *
-          * This routines computes for a matrix A and vectors 'p' and 'Ap':
+          * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
           *   Ap = prod(A, p);
-          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
+          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
           */
         template <typename T>
         void pipelined_prod_impl(compressed_matrix<T> const & A,
@@ -64,7 +64,7 @@ namespace viennacl
                                  T const * r0star,
                                  vector_base<T> & inner_prod_buffer,
                                  vcl_size_t buffer_chunk_size,
-                                 vcl_size_t offset_r0star)
+                                 vcl_size_t buffer_chunk_offset)
         {
           typedef T        value_type;
 
@@ -97,13 +97,262 @@ namespace viennacl
           data_buffer[    buffer_chunk_size] = inner_prod_ApAp;
           data_buffer[2 * buffer_chunk_size] = inner_prod_pAp;
           if (r0star)
-            data_buffer[offset_r0star] = inner_prod_Ap_r0star;
+            data_buffer[buffer_chunk_offset] = inner_prod_Ap_r0star;
         }
 
 
 
-      }
+        /** @brief Implementation of a fused matrix-vector product with a coordinate_matrix for an efficient pipelined CG algorithm.
+          *
+          * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
+          *   Ap = prod(A, p);
+          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
+          */
+        template <typename T>
+        void pipelined_prod_impl(coordinate_matrix<T> const & A,
+                                 vector_base<T> const & p,
+                                 vector_base<T> & Ap,
+                                 T const * r0star,
+                                 vector_base<T> & inner_prod_buffer,
+                                 vcl_size_t buffer_chunk_size,
+                                 vcl_size_t buffer_chunk_offset)
+        {
+          typedef T        value_type;
 
+          value_type         * Ap_buf       = detail::extract_raw_pointer<value_type>(Ap.handle());
+          value_type   const *  p_buf       = detail::extract_raw_pointer<value_type>(p.handle());
+          value_type   const * elements     = detail::extract_raw_pointer<value_type>(A.handle());
+          unsigned int const * coord_buffer = detail::extract_raw_pointer<unsigned int>(A.handle12());
+          value_type         * data_buffer  = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
+
+          // flush result buffer (cannot be expected to be zero)
+          for (vcl_size_t i = 0; i< Ap.size(); ++i)
+            Ap_buf[i] = 0;
+
+          // matrix-vector product with a general COO format
+          for (vcl_size_t i = 0; i < A.nnz(); ++i)
+            Ap_buf[coord_buffer[2*i]] += elements[i] * p_buf[coord_buffer[2*i+1]];
+
+          // computing the inner products (Ap, Ap) and (p, Ap):
+          // Note: The COO format does not allow to inject the subsequent operations into the matrix-vector product, because row and column ordering assumptions are too weak
+          value_type inner_prod_ApAp = 0;
+          value_type inner_prod_pAp = 0;
+          value_type inner_prod_Ap_r0star = 0;
+          for (vcl_size_t i = 0; i<Ap.size(); ++i)
+          {
+            T value_Ap = Ap_buf[i];
+            T value_p  =  p_buf[i];
+
+            inner_prod_ApAp += value_Ap * value_Ap;
+            inner_prod_pAp  += value_Ap * value_p;
+            inner_prod_Ap_r0star += r0star ? value_Ap * r0star[i] : value_type(0);
+          }
+
+          data_buffer[    buffer_chunk_size] = inner_prod_ApAp;
+          data_buffer[2 * buffer_chunk_size] = inner_prod_pAp;
+          if (r0star)
+            data_buffer[buffer_chunk_offset] = inner_prod_Ap_r0star;
+        }
+
+
+        /** @brief Implementation of a fused matrix-vector product with an ell_matrix for an efficient pipelined CG algorithm.
+          *
+          * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
+          *   Ap = prod(A, p);
+          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
+          */
+        template <typename T>
+        void pipelined_prod_impl(ell_matrix<T> const & A,
+                                 vector_base<T> const & p,
+                                 vector_base<T> & Ap,
+                                 T const * r0star,
+                                 vector_base<T> & inner_prod_buffer,
+                                 vcl_size_t buffer_chunk_size,
+                                 vcl_size_t buffer_chunk_offset)
+        {
+          typedef T        value_type;
+
+          value_type         * Ap_buf       = detail::extract_raw_pointer<value_type>(Ap.handle());
+          value_type   const *  p_buf       = detail::extract_raw_pointer<value_type>(p.handle());
+          value_type   const * elements     = detail::extract_raw_pointer<value_type>(A.handle());
+          unsigned int const * coords       = detail::extract_raw_pointer<unsigned int>(A.handle2());
+          value_type         * data_buffer  = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
+
+          value_type inner_prod_ApAp = 0;
+          value_type inner_prod_pAp = 0;
+          value_type inner_prod_Ap_r0star = 0;
+          for(vcl_size_t row = 0; row < A.size1(); ++row)
+          {
+            value_type sum = 0;
+            value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
+
+            for(unsigned int item_id = 0; item_id < A.internal_maxnnz(); ++item_id)
+            {
+              vcl_size_t offset = row + item_id * A.internal_size1();
+              value_type val = elements[offset];
+
+              if (val)
+                sum += (p_buf[coords[offset]] * val);
+            }
+
+            Ap_buf[row] = sum;
+            inner_prod_ApAp += sum * sum;
+            inner_prod_pAp  += val_p_diag * sum;
+            inner_prod_Ap_r0star += r0star ? sum * r0star[row] : value_type(0);
+          }
+
+          data_buffer[    buffer_chunk_size] = inner_prod_ApAp;
+          data_buffer[2 * buffer_chunk_size] = inner_prod_pAp;
+          if (r0star)
+            data_buffer[buffer_chunk_offset] = inner_prod_Ap_r0star;
+        }
+
+
+        /** @brief Implementation of a fused matrix-vector product with an sliced_ell_matrix for an efficient pipelined CG algorithm.
+          *
+          * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
+          *   Ap = prod(A, p);
+          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
+          */
+        template <typename T, typename IndexT>
+        void pipelined_prod_impl(sliced_ell_matrix<T, IndexT> const & A,
+                                 vector_base<T> const & p,
+                                 vector_base<T> & Ap,
+                                 T const * r0star,
+                                 vector_base<T> & inner_prod_buffer,
+                                 vcl_size_t buffer_chunk_size,
+                                 vcl_size_t buffer_chunk_offset)
+        {
+          typedef T        value_type;
+
+          value_type       * Ap_buf            = detail::extract_raw_pointer<value_type>(Ap.handle());
+          value_type const *  p_buf            = detail::extract_raw_pointer<value_type>(p.handle());
+          value_type const * elements          = detail::extract_raw_pointer<value_type>(A.handle());
+          IndexT     const * columns_per_block = detail::extract_raw_pointer<IndexT>(A.handle1());
+          IndexT     const * column_indices    = detail::extract_raw_pointer<IndexT>(A.handle2());
+          IndexT     const * block_start       = detail::extract_raw_pointer<IndexT>(A.handle3());
+          value_type         * data_buffer     = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
+
+          vcl_size_t num_blocks = A.size1() / A.rows_per_block() + 1;
+          std::vector<value_type> result_values(A.rows_per_block());
+
+          value_type inner_prod_ApAp = 0;
+          value_type inner_prod_pAp = 0;
+          value_type inner_prod_Ap_r0star = 0;
+          for (vcl_size_t block_idx = 0; block_idx < num_blocks; ++block_idx)
+          {
+            vcl_size_t current_columns_per_block = columns_per_block[block_idx];
+
+            for (vcl_size_t i=0; i<result_values.size(); ++i)
+              result_values[i] = 0;
+
+            for (IndexT column_entry_index = 0;
+                        column_entry_index < current_columns_per_block;
+                      ++column_entry_index)
+            {
+              vcl_size_t stride_start = block_start[block_idx] + column_entry_index * A.rows_per_block();
+              // Note: This for-loop may be unrolled by hand for exploiting vectorization
+              //       Careful benchmarking recommended first, memory channels may be saturated already!
+              for(IndexT row_in_block = 0; row_in_block < A.rows_per_block(); ++row_in_block)
+              {
+                value_type val = elements[stride_start + row_in_block];
+
+                result_values[row_in_block] += val ? p_buf[column_indices[stride_start + row_in_block]] * val : 0;
+              }
+            }
+
+            vcl_size_t first_row_in_matrix = block_idx * A.rows_per_block();
+            for(IndexT row_in_block = 0; row_in_block < A.rows_per_block(); ++row_in_block)
+            {
+              vcl_size_t row = first_row_in_matrix + row_in_block;
+              if (row < Ap.size())
+              {
+                value_type row_result = result_values[row_in_block];
+
+                Ap_buf[row] = row_result;
+                inner_prod_ApAp += row_result * row_result;
+                inner_prod_pAp  += p_buf[row] * row_result;
+                inner_prod_Ap_r0star += r0star ? row_result * r0star[row] : value_type(0);
+              }
+            }
+          }
+
+          data_buffer[    buffer_chunk_size] = inner_prod_ApAp;
+          data_buffer[2 * buffer_chunk_size] = inner_prod_pAp;
+          if (r0star)
+            data_buffer[buffer_chunk_offset] = inner_prod_Ap_r0star;
+        }
+
+
+        /** @brief Implementation of a fused matrix-vector product with an hyb_matrix for an efficient pipelined CG algorithm.
+          *
+          * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
+          *   Ap = prod(A, p);
+          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
+          */
+        template <typename T>
+        void pipelined_prod_impl(hyb_matrix<T> const & A,
+                                 vector_base<T> const & p,
+                                 vector_base<T> & Ap,
+                                 T const * r0star,
+                                 vector_base<T> & inner_prod_buffer,
+                                 vcl_size_t buffer_chunk_size,
+                                 vcl_size_t buffer_chunk_offset)
+        {
+          typedef T            value_type;
+          typedef unsigned int index_type;
+
+          value_type       * Ap_buf            = detail::extract_raw_pointer<value_type>(Ap.handle());
+          value_type const *  p_buf            = detail::extract_raw_pointer<value_type>(p.handle());
+          value_type const * elements          = detail::extract_raw_pointer<value_type>(A.handle());
+          index_type const * coords            = detail::extract_raw_pointer<index_type>(A.handle2());
+          value_type const * csr_elements      = detail::extract_raw_pointer<value_type>(A.handle5());
+          index_type const * csr_row_buffer    = detail::extract_raw_pointer<index_type>(A.handle3());
+          index_type const * csr_col_buffer    = detail::extract_raw_pointer<index_type>(A.handle4());
+          value_type         * data_buffer     = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
+
+          value_type inner_prod_ApAp = 0;
+          value_type inner_prod_pAp = 0;
+          value_type inner_prod_Ap_r0star = 0;
+          for(vcl_size_t row = 0; row < A.size1(); ++row)
+          {
+            value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
+            value_type sum = 0;
+
+            //
+            // Part 1: Process ELL part
+            //
+            for(index_type item_id = 0; item_id < A.internal_ellnnz(); ++item_id)
+            {
+              vcl_size_t offset = row + item_id * A.internal_size1();
+              value_type val = elements[offset];
+
+              if (val)
+                sum += p_buf[coords[offset]] * val;
+            }
+
+            //
+            // Part 2: Process HYB part
+            //
+            vcl_size_t col_begin = csr_row_buffer[row];
+            vcl_size_t col_end   = csr_row_buffer[row + 1];
+
+            for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
+              sum += p_buf[csr_col_buffer[item_id]] * csr_elements[item_id];
+
+            Ap_buf[row] = sum;
+            inner_prod_ApAp += sum * sum;
+            inner_prod_pAp  += val_p_diag * sum;
+            inner_prod_Ap_r0star += r0star ? sum * r0star[row] : value_type(0);
+          }
+
+          data_buffer[    buffer_chunk_size] = inner_prod_ApAp;
+          data_buffer[2 * buffer_chunk_size] = inner_prod_pAp;
+          if (r0star)
+            data_buffer[buffer_chunk_offset] = inner_prod_Ap_r0star;
+        }
+
+      } // namespace detail
 
 
       /** @brief Performs a joint vector update operation needed for an efficient pipelined CG algorithm.
@@ -166,7 +415,8 @@ namespace viennacl
                              vector_base<T> & Ap,
                              vector_base<T> & inner_prod_buffer)
       {
-        viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, NULL, inner_prod_buffer, inner_prod_buffer.size() / 3, 0);
+        typedef T const *    PtrType;
+        viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, PtrType(NULL), inner_prod_buffer, inner_prod_buffer.size() / 3, 0);
       }
 
 
@@ -183,39 +433,8 @@ namespace viennacl
                              vector_base<T> & Ap,
                              vector_base<T> & inner_prod_buffer)
       {
-        typedef T        value_type;
-
-        value_type         * Ap_buf       = detail::extract_raw_pointer<value_type>(Ap.handle());
-        value_type   const *  p_buf       = detail::extract_raw_pointer<value_type>(p.handle());
-        value_type   const * elements     = detail::extract_raw_pointer<value_type>(A.handle());
-        unsigned int const * coord_buffer = detail::extract_raw_pointer<unsigned int>(A.handle12());
-        value_type         * data_buffer  = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
-
-        std::size_t buffer_size_per_vector = inner_prod_buffer.size() / 3;
-
-        // flush result buffer (cannot be expected to be zero)
-        for (vcl_size_t i = 0; i< Ap.size(); ++i)
-          Ap_buf[i] = 0;
-
-        // matrix-vector product with a general COO format
-        for (vcl_size_t i = 0; i < A.nnz(); ++i)
-          Ap_buf[coord_buffer[2*i]] += elements[i] * p_buf[coord_buffer[2*i+1]];
-
-        // computing the inner products (Ap, Ap) and (p, Ap):
-        // Note: The COO format does not allow to inject the subsequent operations into the matrix-vector product, because row and column ordering assumptions are too weak
-        value_type inner_prod_ApAp = 0;
-        value_type inner_prod_pAp = 0;
-        for (vcl_size_t i = 0; i<Ap.size(); ++i)
-        {
-          T value_Ap = Ap_buf[i];
-          T value_p  =  p_buf[i];
-
-          inner_prod_ApAp += value_Ap * value_Ap;
-          inner_prod_pAp  += value_Ap * value_p;
-        }
-
-        data_buffer[    buffer_size_per_vector] = inner_prod_ApAp;
-        data_buffer[2 * buffer_size_per_vector] = inner_prod_pAp;
+        typedef T const *    PtrType;
+        viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, PtrType(NULL), inner_prod_buffer, inner_prod_buffer.size() / 3, 0);
       }
 
 
@@ -231,39 +450,8 @@ namespace viennacl
                              vector_base<T> & Ap,
                              vector_base<T> & inner_prod_buffer)
       {
-        typedef T        value_type;
-
-        value_type         * Ap_buf       = detail::extract_raw_pointer<value_type>(Ap.handle());
-        value_type   const *  p_buf       = detail::extract_raw_pointer<value_type>(p.handle());
-        value_type   const * elements     = detail::extract_raw_pointer<value_type>(A.handle());
-        unsigned int const * coords       = detail::extract_raw_pointer<unsigned int>(A.handle2());
-        value_type         * data_buffer  = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
-
-        std::size_t buffer_size_per_vector = inner_prod_buffer.size() / 3;
-
-        value_type inner_prod_ApAp = 0;
-        value_type inner_prod_pAp = 0;
-        for(vcl_size_t row = 0; row < A.size1(); ++row)
-        {
-          value_type sum = 0;
-          value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
-
-          for(unsigned int item_id = 0; item_id < A.internal_maxnnz(); ++item_id)
-          {
-            vcl_size_t offset = row + item_id * A.internal_size1();
-            value_type val = elements[offset];
-
-            if (val)
-              sum += (p_buf[coords[offset]] * val);
-          }
-
-          Ap_buf[row] = sum;
-          inner_prod_ApAp += sum * sum;
-          inner_prod_pAp  += val_p_diag * sum;
-        }
-
-        data_buffer[    buffer_size_per_vector] = inner_prod_ApAp;
-        data_buffer[2 * buffer_size_per_vector] = inner_prod_pAp;
+        typedef T const *    PtrType;
+        viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, PtrType(NULL), inner_prod_buffer, inner_prod_buffer.size() / 3, 0);
       }
 
 
@@ -279,62 +467,8 @@ namespace viennacl
                              vector_base<T> & Ap,
                              vector_base<T> & inner_prod_buffer)
       {
-        typedef T        value_type;
-
-        value_type       * Ap_buf            = detail::extract_raw_pointer<value_type>(Ap.handle());
-        value_type const *  p_buf            = detail::extract_raw_pointer<value_type>(p.handle());
-        value_type const * elements          = detail::extract_raw_pointer<value_type>(A.handle());
-        IndexT     const * columns_per_block = detail::extract_raw_pointer<IndexT>(A.handle1());
-        IndexT     const * column_indices    = detail::extract_raw_pointer<IndexT>(A.handle2());
-        IndexT     const * block_start       = detail::extract_raw_pointer<IndexT>(A.handle3());
-        value_type         * data_buffer     = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
-
-        std::size_t buffer_size_per_vector = inner_prod_buffer.size() / 3;
-
-        vcl_size_t num_blocks = A.size1() / A.rows_per_block() + 1;
-        std::vector<value_type> result_values(A.rows_per_block());
-
-        value_type inner_prod_ApAp = 0;
-        value_type inner_prod_pAp = 0;
-        for (vcl_size_t block_idx = 0; block_idx < num_blocks; ++block_idx)
-        {
-          vcl_size_t current_columns_per_block = columns_per_block[block_idx];
-
-          for (vcl_size_t i=0; i<result_values.size(); ++i)
-            result_values[i] = 0;
-
-          for (IndexT column_entry_index = 0;
-                      column_entry_index < current_columns_per_block;
-                    ++column_entry_index)
-          {
-            vcl_size_t stride_start = block_start[block_idx] + column_entry_index * A.rows_per_block();
-            // Note: This for-loop may be unrolled by hand for exploiting vectorization
-            //       Careful benchmarking recommended first, memory channels may be saturated already!
-            for(IndexT row_in_block = 0; row_in_block < A.rows_per_block(); ++row_in_block)
-            {
-              value_type val = elements[stride_start + row_in_block];
-
-              result_values[row_in_block] += val ? p_buf[column_indices[stride_start + row_in_block]] * val : 0;
-            }
-          }
-
-          vcl_size_t first_row_in_matrix = block_idx * A.rows_per_block();
-          for(IndexT row_in_block = 0; row_in_block < A.rows_per_block(); ++row_in_block)
-          {
-            vcl_size_t row = first_row_in_matrix + row_in_block;
-            if (row < Ap.size())
-            {
-              value_type row_result = result_values[row_in_block];
-
-              Ap_buf[row] = row_result;
-              inner_prod_ApAp += row_result * row_result;
-              inner_prod_pAp  += p_buf[row] * row_result;
-            }
-          }
-        }
-
-        data_buffer[    buffer_size_per_vector] = inner_prod_ApAp;
-        data_buffer[2 * buffer_size_per_vector] = inner_prod_pAp;
+        typedef T const *    PtrType;
+        viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, PtrType(NULL), inner_prod_buffer, inner_prod_buffer.size() / 3, 0);
       }
 
 
@@ -352,55 +486,8 @@ namespace viennacl
                              vector_base<T> & Ap,
                              vector_base<T> & inner_prod_buffer)
       {
-        typedef T            value_type;
-        typedef unsigned int index_type;
-
-        value_type       * Ap_buf            = detail::extract_raw_pointer<value_type>(Ap.handle());
-        value_type const *  p_buf            = detail::extract_raw_pointer<value_type>(p.handle());
-        value_type const * elements          = detail::extract_raw_pointer<value_type>(A.handle());
-        index_type const * coords            = detail::extract_raw_pointer<index_type>(A.handle2());
-        value_type const * csr_elements      = detail::extract_raw_pointer<value_type>(A.handle5());
-        index_type const * csr_row_buffer    = detail::extract_raw_pointer<index_type>(A.handle3());
-        index_type const * csr_col_buffer    = detail::extract_raw_pointer<index_type>(A.handle4());
-        value_type         * data_buffer     = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
-
-        std::size_t buffer_size_per_vector = inner_prod_buffer.size() / 3;
-
-        value_type inner_prod_ApAp = 0;
-        value_type inner_prod_pAp = 0;
-        for(vcl_size_t row = 0; row < A.size1(); ++row)
-        {
-          value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
-          value_type sum = 0;
-
-          //
-          // Part 1: Process ELL part
-          //
-          for(index_type item_id = 0; item_id < A.internal_ellnnz(); ++item_id)
-          {
-            vcl_size_t offset = row + item_id * A.internal_size1();
-            value_type val = elements[offset];
-
-            if (val)
-              sum += p_buf[coords[offset]] * val;
-          }
-
-          //
-          // Part 2: Process HYB part
-          //
-          vcl_size_t col_begin = csr_row_buffer[row];
-          vcl_size_t col_end   = csr_row_buffer[row + 1];
-
-          for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
-            sum += p_buf[csr_col_buffer[item_id]] * csr_elements[item_id];
-
-          Ap_buf[row] = sum;
-          inner_prod_ApAp += sum * sum;
-          inner_prod_pAp  += val_p_diag * sum;
-        }
-
-        data_buffer[    buffer_size_per_vector] = inner_prod_ApAp;
-        data_buffer[2 * buffer_size_per_vector] = inner_prod_pAp;
+        typedef T const *    PtrType;
+        viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, PtrType(NULL), inner_prod_buffer, inner_prod_buffer.size() / 3, 0);
       }
 
       //////////////////////////
@@ -418,7 +505,8 @@ namespace viennacl
                                        vector_base<T> & r,
                                        vector_base<T> const & Ap,
                                        vector_base<T> & inner_prod_buffer,
-                                       vcl_size_t buffer_chunk_size)
+                                       vcl_size_t buffer_chunk_size,
+                                       vcl_size_t buffer_chunk_offset)
       {
         typedef T        value_type;
 
@@ -452,7 +540,7 @@ namespace viennacl
           data_s[static_cast<vcl_size_t>(i)] = value_s;
         }
 
-        data_buffer[5 * buffer_chunk_size] = inner_prod_s;
+        data_buffer[buffer_chunk_offset] = inner_prod_s;
       }
 
       /** @brief Performs a joint vector update operation needed for an efficient pipelined BiCGStab algorithm.
@@ -467,7 +555,8 @@ namespace viennacl
                                              vector_base<T> & residual, vector_base<T> const & As,
                                              T beta, vector_base<T> const & Ap,
                                              vector_base<T> const & r0star,
-                                             vector_base<T> & inner_prod_buffer)
+                                             vector_base<T> & inner_prod_buffer,
+                                             vcl_size_t buffer_chunk_size)
        {
          typedef T        value_type;
 
@@ -504,14 +593,15 @@ namespace viennacl
            data_p[index]        = value_p;
          }
 
+         (void)buffer_chunk_size; // not needed here, just silence compiler warning (unused variable)
          data_buffer[0] = inner_prod_r_r0star;
        }
 
-       /** @brief Performs a fused matrix-vector product with a compressed_matrix for an efficient pipelined CG algorithm.
+       /** @brief Performs a fused matrix-vector product with a compressed_matrix for an efficient pipelined BiCGStab algorithm.
          *
-         * This routines computes for a matrix A and vectors 'p' and 'Ap':
+         * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
          *   Ap = prod(A, p);
-         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
+         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
          */
        template <typename T>
        void pipelined_bicgstab_prod(compressed_matrix<T> const & A,
@@ -519,13 +609,93 @@ namespace viennacl
                                     vector_base<T> & Ap,
                                     vector_base<T> const & r0star,
                                     vector_base<T> & inner_prod_buffer,
-                                    vcl_size_t r0star_offset_in_buffer)
+                                    vcl_size_t buffer_chunk_size,
+                                    vcl_size_t buffer_chunk_offset)
        {
          T const * data_r0star   = detail::extract_raw_pointer<T>(r0star);
 
-         viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, data_r0star, inner_prod_buffer, inner_prod_buffer.size() / 6, r0star_offset_in_buffer);
+         viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, data_r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
        }
 
+       /** @brief Performs a fused matrix-vector product with a coordinate_matrix for an efficient pipelined BiCGStab algorithm.
+         *
+         * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
+         *   Ap = prod(A, p);
+         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
+         */
+       template <typename T>
+       void pipelined_bicgstab_prod(coordinate_matrix<T> const & A,
+                                    vector_base<T> const & p,
+                                    vector_base<T> & Ap,
+                                    vector_base<T> const & r0star,
+                                    vector_base<T> & inner_prod_buffer,
+                                    vcl_size_t buffer_chunk_size,
+                                    vcl_size_t buffer_chunk_offset)
+       {
+         T const * data_r0star   = detail::extract_raw_pointer<T>(r0star);
+
+         viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, data_r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+       }
+
+       /** @brief Performs a fused matrix-vector product with an ell_matrix for an efficient pipelined BiCGStab algorithm.
+         *
+         * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
+         *   Ap = prod(A, p);
+         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
+         */
+       template <typename T>
+       void pipelined_bicgstab_prod(ell_matrix<T> const & A,
+                                    vector_base<T> const & p,
+                                    vector_base<T> & Ap,
+                                    vector_base<T> const & r0star,
+                                    vector_base<T> & inner_prod_buffer,
+                                    vcl_size_t buffer_chunk_size,
+                                    vcl_size_t buffer_chunk_offset)
+       {
+         T const * data_r0star   = detail::extract_raw_pointer<T>(r0star);
+
+         viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, data_r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+       }
+
+       /** @brief Performs a fused matrix-vector product with a sliced_ell_matrix for an efficient pipelined BiCGStab algorithm.
+         *
+         * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
+         *   Ap = prod(A, p);
+         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
+         */
+       template <typename T, typename IndexT>
+       void pipelined_bicgstab_prod(sliced_ell_matrix<T, IndexT> const & A,
+                                    vector_base<T> const & p,
+                                    vector_base<T> & Ap,
+                                    vector_base<T> const & r0star,
+                                    vector_base<T> & inner_prod_buffer,
+                                    vcl_size_t buffer_chunk_size,
+                                    vcl_size_t buffer_chunk_offset)
+       {
+         T const * data_r0star   = detail::extract_raw_pointer<T>(r0star);
+
+         viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, data_r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+       }
+
+       /** @brief Performs a fused matrix-vector product with a hyb_matrix for an efficient pipelined BiCGStab algorithm.
+         *
+         * This routines computes for a matrix A and vectors 'p', 'Ap', and 'r0':
+         *   Ap = prod(A, p);
+         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
+         */
+       template <typename T>
+       void pipelined_bicgstab_prod(hyb_matrix<T> const & A,
+                                    vector_base<T> const & p,
+                                    vector_base<T> & Ap,
+                                    vector_base<T> const & r0star,
+                                    vector_base<T> & inner_prod_buffer,
+                                    vcl_size_t buffer_chunk_size,
+                                    vcl_size_t buffer_chunk_offset)
+       {
+         T const * data_r0star   = detail::extract_raw_pointer<T>(r0star);
+
+         viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, data_r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+       }
 
     } //namespace host_based
   } //namespace linalg
