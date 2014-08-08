@@ -36,7 +36,7 @@ namespace viennacl
           source.append("          "); source.append(numeric_string); source.append(" alpha, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * p, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * r, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * Ap, \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" const * Ap, \n");
           source.append("          "); source.append(numeric_string); source.append(" beta, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
           source.append("          unsigned int size, \n");
@@ -416,8 +416,8 @@ namespace viennacl
         {
           source.append("__kernel void bicgstab_update_s( \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * s, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * r, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * Ap, \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" const * r, \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" const * Ap, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
           source.append("          unsigned int chunk_size, \n");
           source.append("          unsigned int chunk_offset, \n");
@@ -482,12 +482,12 @@ namespace viennacl
           source.append("          "); source.append(numeric_string); source.append(" alpha, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * p, \n");
           source.append("          "); source.append(numeric_string); source.append(" omega, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * s, \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" const * s, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * residual, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * As, \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" const * As, \n");
           source.append("          "); source.append(numeric_string); source.append(" beta, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * Ap, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * r0star, \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" const * Ap, \n");
+          source.append("          __global "); source.append(numeric_string); source.append(" const * r0star, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
           source.append("          unsigned int size, \n");
           source.append("         __local "); source.append(numeric_string); source.append(" * shared_array) \n");
@@ -538,7 +538,7 @@ namespace viennacl
           source.append("          __global const "); source.append(numeric_string); source.append(" * elements, \n");
           source.append("          __global const "); source.append(numeric_string); source.append(" * p, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * Ap, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * r0star, \n");
+          source.append("          __global const "); source.append(numeric_string); source.append(" * r0star, \n");
           source.append("          unsigned int size, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
           source.append("          unsigned int buffer_size, \n");
@@ -596,7 +596,7 @@ namespace viennacl
           source.append("          __global const uint  * group_boundaries, \n");
           source.append("          __global const "); source.append(numeric_string); source.append(" * p, \n");
           source.append("          __global "); source.append(numeric_string); source.append(" * Ap, \n");
-          source.append("          __global "); source.append(numeric_string); source.append(" * r0star, \n");
+          source.append("          __global const "); source.append(numeric_string); source.append(" * r0star, \n");
           source.append("          unsigned int size, \n");
           source.append("          __local unsigned int * shared_rows, \n");
           source.append("          __local "); source.append(numeric_string); source.append(" * inter_results, \n");
@@ -711,7 +711,7 @@ namespace viennacl
           source.append("  unsigned int aligned_items_per_row, \n");
           source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
           source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
-          source.append("  __global "); source.append(numeric_string); source.append(" * r0star, \n");
+          source.append("  __global const "); source.append(numeric_string); source.append(" * r0star, \n");
           source.append("  unsigned int size, \n");
           source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
           source.append("  unsigned int buffer_size, \n");
@@ -774,7 +774,7 @@ namespace viennacl
           source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
           source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
           source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
-          source.append("  __global "); source.append(numeric_string); source.append(" * r0star, \n");
+          source.append("  __global const "); source.append(numeric_string); source.append(" * r0star, \n");
           source.append("  unsigned int size, \n");
           source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
           source.append("  unsigned int buffer_size, \n");
@@ -846,7 +846,7 @@ namespace viennacl
           source.append("  unsigned int aligned_items_per_row, \n");
           source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
           source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
-          source.append("  __global "); source.append(numeric_string); source.append(" * r0star, \n");
+          source.append("  __global const "); source.append(numeric_string); source.append(" * r0star, \n");
           source.append("  unsigned int size, \n");
           source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
           source.append("  unsigned int buffer_size, \n");

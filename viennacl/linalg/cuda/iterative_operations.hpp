@@ -587,7 +587,7 @@ namespace viennacl
 
       template <typename T>
       __global__ void pipelined_bicgstab_update_s_kernel(T * s,
-                                                         T * residual,
+                                                         T const * residual,
                                                          T const * Ap,
                                                          unsigned int size,
                                                          T * inner_prod_buffer,
