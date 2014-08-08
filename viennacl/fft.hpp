@@ -237,10 +237,10 @@ namespace viennacl
           vcl_size_t size = in.size() >> 1;
           vcl_size_t ext_size = next_power_2(2 * size - 1);
 
-          viennacl::vector<SCALARTYPE, ALIGNMENT> A(ext_size << 1);
-          viennacl::vector<SCALARTYPE, ALIGNMENT> B(ext_size << 1);
+          viennacl::vector<SCALARTYPE, ALIGNMENT> A(ext_size << 1, viennacl::traits::context(in));
+          viennacl::vector<SCALARTYPE, ALIGNMENT> B(ext_size << 1, viennacl::traits::context(in));
 
-          viennacl::vector<SCALARTYPE, ALIGNMENT> Z(ext_size << 1);
+          viennacl::vector<SCALARTYPE, ALIGNMENT> Z(ext_size << 1, viennacl::traits::context(in));
 
             {
                 viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "zero2");
@@ -377,7 +377,7 @@ namespace viennacl
 
       if(!viennacl::detail::fft::is_radix2(size))
       {
-          viennacl::vector<SCALARTYPE, ALIGNMENT> output(input.size());
+          viennacl::vector<SCALARTYPE, ALIGNMENT> output(input.size(), viennacl::traits::context(input));
           viennacl::detail::fft::direct(viennacl::traits::opencl_handle(input),
                                         viennacl::traits::opencl_handle(output),
                                         size,
@@ -444,7 +444,7 @@ namespace viennacl
       }
       else
       {
-          viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> output(input.size1(), input.size2());
+          viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> output(input.size1(), input.size2(), viennacl::traits::context(input));
 
           viennacl::detail::fft::direct(viennacl::traits::opencl_handle(input),
                                         viennacl::traits::opencl_handle(output),
@@ -462,7 +462,7 @@ namespace viennacl
       if (viennacl::detail::fft::is_radix2(rows_num)) {
           viennacl::detail::fft::radix2(viennacl::traits::opencl_handle(input), rows_num, cols_int, cols_num, sign, viennacl::detail::fft::FFT_DATA_ORDER::COL_MAJOR);
       } else {
-          viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> output(input.size1(), input.size2());
+          viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> output(input.size1(), input.size2(), viennacl::traits::context(input));
 
           viennacl::detail::fft::direct(viennacl::traits::opencl_handle(input),
                                         viennacl::traits::opencl_handle(output),
@@ -519,7 +519,7 @@ namespace viennacl
       }
       else
       {
-          viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> tmp(output.size1(), output.size2());
+          viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> tmp(output.size1(), output.size2(), viennacl::traits::context(input));
           tmp = output;
 
           viennacl::detail::fft::direct(viennacl::traits::opencl_handle(tmp),
@@ -589,9 +589,9 @@ namespace viennacl
         assert(input1.size() == input2.size());
         assert(input1.size() == output.size());
         //temporal arrays
-        viennacl::vector<SCALARTYPE, ALIGNMENT> tmp1(input1.size());
-        viennacl::vector<SCALARTYPE, ALIGNMENT> tmp2(input2.size());
-        viennacl::vector<SCALARTYPE, ALIGNMENT> tmp3(output.size());
+        viennacl::vector<SCALARTYPE, ALIGNMENT> tmp1(input1.size(), viennacl::traits::context(input1));
+        viennacl::vector<SCALARTYPE, ALIGNMENT> tmp2(input2.size(), viennacl::traits::context(input1));
+        viennacl::vector<SCALARTYPE, ALIGNMENT> tmp3(output.size(), viennacl::traits::context(input1));
 
         // align input arrays to equal size
         // FFT of input data
