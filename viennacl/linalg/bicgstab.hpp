@@ -24,6 +24,8 @@
 
 #include <vector>
 #include <cmath>
+#include <numeric>
+
 #include "viennacl/forwards.h"
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/prod.hpp"
