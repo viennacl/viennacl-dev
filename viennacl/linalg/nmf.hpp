@@ -122,6 +122,12 @@ namespace viennacl
       vcl_size_t k = W.size2();
       conf.iters_ = 0;
 
+      if (viennacl::linalg::norm_frobenius(W) == 0.0)
+        W = viennacl::scalar_matrix<ScalarType>(W.size1(), W.size2(), (ScalarType) 1.0, ctx);
+
+      if (viennacl::linalg::norm_frobenius(H) == 0.0)
+        H = viennacl::scalar_matrix<ScalarType>(H.size1(), H.size2(), (ScalarType) 1.0, ctx);
+
       viennacl::matrix<ScalarType> wn(V.size1(), k, ctx);
       viennacl::matrix<ScalarType> wd(V.size1(), k, ctx);
       viennacl::matrix<ScalarType> wtmp(V.size1(), V.size2(), ctx);
@@ -173,7 +179,7 @@ namespace viennacl
             std::cout << diff_val / diff_init << std::endl;
 
           // Approximation check
-          if ((diff_val / diff_init < conf.tolerance()) && (conf.iters_ != conf.check_after_steps() + 1))
+          if (diff_val / diff_init < conf.tolerance())
             break;
 
           // Stagnation check
