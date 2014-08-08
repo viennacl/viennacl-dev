@@ -58,15 +58,17 @@ namespace viennacl
       };
 
     private:
+      unsigned int n_lmem_elements() const { return p_.local_size_0; }
 
-      unsigned int n_lmem_elements() const
+      int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
-        return p_.local_size_0;
+          if(p_.fetching_policy==FETCH_FROM_LOCAL)
+            return TEMPLATE_INVALID_FETCHING_POLICY_TYPE;
+          return TEMPLATE_VALID;
       }
 
       inline void reduce_1d_local_memory(utils::kernel_generation_stream & stream, unsigned int size, std::vector<mapped_scalar_reduction*> exprs,
-                                         std::string const & buf_str, std::string const & buf_value_str,
-                                         std::vector<scheduler::op_element> const & rops) const
+                                         std::string const & buf_str, std::string const & buf_value_str) const
       {
         stream << "#pragma unroll" << std::endl;
         stream << "for(unsigned int stride = " << size/2 << "; stride >0 ; stride /=2)" << std::endl;
@@ -78,103 +80,35 @@ namespace viennacl
         stream.inc_tab();
 
         for(unsigned int k = 0 ; k < exprs.size() ; k++)
-            if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
+            if(exprs[k]->is_index_reduction())
                 compute_index_reduction(stream, exprs[k]->process(buf_str+"[lid]"), exprs[k]->process(buf_str+"[lid+stride]")
                                     , exprs[k]->process(buf_value_str+"[lid]"), exprs[k]->process(buf_value_str+"[lid+stride]"),
-                                    rops[k]);
+                                    exprs[k]->root_op());
             else
-                compute_reduction(stream, exprs[k]->process(buf_str+"[lid]"), exprs[k]->process(buf_str+"[lid+stride]"), rops[k]);
+                compute_reduction(stream, exprs[k]->process(buf_str+"[lid]"), exprs[k]->process(buf_str+"[lid+stride]"), exprs[k]->root_op());
         stream.dec_tab();
         stream << "}" << std::endl;
         stream.dec_tab();
         stream << "}" << std::endl;
       }
 
-      virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
+      std::string generate_impl(std::string const & kernel_prefix,  statements_container const & statements, std::vector<mapping_type> const & mappings, unsigned int simd_width) const
       {
-          if(p_.fetching_policy==FETCH_FROM_LOCAL)
-            return TEMPLATE_INVALID_FETCHING_POLICY_TYPE;
-          return TEMPLATE_VALID;
-      }
+        utils::kernel_generation_stream stream;
 
-
-      static bool is_reduction(scheduler::statement_node const & node) { return utils::is_reduction(node.op); }
-
-      class loop_body
-      {
-      public:
-        loop_body(std::vector<mapped_scalar_reduction*> const & _exprs, std::vector<scheduler::op_element> const & _rops) : exprs(_exprs), rops(_rops){ }
-
-        void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const
-        {
-          std::string strwidth = tools::to_string(simd_width);
-          std::set<std::string> already_fetched;
-
-          //Fetch vector entry
-          std::string process_str = simd_width==1?"#scalartype #namereg = #name[i*#stride];":
-                                                  "#scalartype" + strwidth + " #namereg = vload" + strwidth + "(i ,#name);";
-
-          for(std::vector<mapped_scalar_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
-            tree_parsing::process((*it)->root_idx(), PARENT_NODE_TYPE, (*it)->statement(), "vector", process_str, stream, (*it)->mapping(), &already_fetched);
-
-          //Update accumulators
-          for(unsigned int k = 0 ; k < exprs.size() ; ++k)
-          {
-            for(unsigned int a = 0 ; a < simd_width ; ++a)
-            {
-              std::map<std::string, std::string> accessors;
-              std::string str = "#namereg";
-              if(simd_width > 1)
-                str += ".s" + tools::to_string(a);
-              accessors["vector"] = "#namereg";
-              accessors["scalar"] = "#namereg";
-              std::string value = tree_parsing::evaluate_expression(exprs[k]->statement(), exprs[k]->root_idx(), accessors, exprs[k]->mapping(), LHS_NODE_TYPE);
-              if(exprs[k]->statement().array()[exprs[k]->root_idx()].op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
-                value+= "*" + tree_parsing::evaluate_expression(exprs[k]->statement(), exprs[k]->root_idx(), accessors, exprs[k]->mapping(), RHS_NODE_TYPE);
-
-              if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
-                compute_index_reduction(stream, exprs[k]->process("#name_acc"), "i", exprs[k]->process("#name_acc_value"), value,rops[k]);
-              else
-                compute_reduction(stream, exprs[k]->process("#name_acc"), value,rops[k]);
-            }
-          }
-        }
-      private:
         std::vector<mapped_scalar_reduction*> exprs;
-        std::vector<scheduler::op_element> const & rops;
-      };
-
-      void generate_impl(utils::kernel_generation_stream& stream, std::string const & kernel_prefix,  statements_container const & statements, std::vector<mapping_type> const & mappings, bool fallback) const
-      {
-        std::vector<mapped_scalar_reduction*> exprs;
-        statements_container::data_type::const_iterator sit;
-        std::vector<mapping_type>::const_iterator mit;
-        std::set<std::string> already_fetched;
-
         for(std::vector<mapping_type>::const_iterator it = mappings.begin() ; it != mappings.end() ; ++it)
           for(mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit)
             if(mapped_scalar_reduction * p = dynamic_cast<mapped_scalar_reduction*>(iit->second.get()))
               exprs.push_back(p);
-
-
         std::size_t N = exprs.size();
-        std::vector<scheduler::op_element> rops(N);
-        for(unsigned int k = 0 ; k < N ; ++k)
-        {
-          scheduler::op_element root_op = exprs[k]->statement().array()[exprs[k]->root_idx()].op;
-          rops[k].type_family = scheduler::OPERATION_BINARY_TYPE_FAMILY;
-          if(root_op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
-            rops[k].type        = scheduler::OPERATION_BINARY_ADD_TYPE;
-          else
-            rops[k].type        = root_op.type;
-        }
 
         std::string arguments = generate_value_kernel_argument("unsigned int", "N");
         for(unsigned int k = 0 ; k < N ; ++k)
         {
           std::string numeric_type = utils::numeric_type_to_string(lhs_most(exprs[k]->statement().array(),
                                                                             exprs[k]->statement().root()).lhs.numeric_type);
-          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
+          if(exprs[k]->is_index_reduction())
           {
             arguments += generate_pointer_kernel_argument("__global", "unsigned int",  exprs[k]->process("#name_temp"));
             arguments += generate_pointer_kernel_argument("__global", numeric_type,  exprs[k]->process("#name_temp_value"));
@@ -191,48 +125,92 @@ namespace viennacl
         generate_prototype(stream, kernel_prefix + "_0", arguments, mappings, statements);
         stream << "{" << std::endl;
         stream.inc_tab();
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "scalar", "#scalartype #namereg = *#name;", stream, *mit, &already_fetched);
 
+        tree_parsing::process(stream, PARENT_NODE_TYPE, "scalar", "#scalartype #namereg = *#pointer;", statements, mappings);
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
-
-        //Fetch the pointed scalars
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "scalar", "#scalartype #namereg = *#name;", stream, *mit, &already_fetched);
-
-        //Increment vector offsets
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#name += #start;", stream, *mit, NULL);
-
+        tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", "#pointer += #start;", statements, mappings);
 
         for(unsigned int k = 0 ; k < N ; ++k)
         {
-          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
+          if(exprs[k]->is_index_reduction())
           {
             stream << exprs[k]->process("__local #scalartype #name_buf_value[" + tools::to_string(p_.local_size_0) + "];") << std::endl;
-            stream << exprs[k]->process("#scalartype #name_acc_value = " + neutral_element(rops[k]) + ";") << std::endl;
+            stream << exprs[k]->process("#scalartype #name_acc_value = " + neutral_element(exprs[k]->root_op()) + ";") << std::endl;
             stream << exprs[k]->process("__local unsigned int #name_buf[" + tools::to_string(p_.local_size_0) + "];") << std::endl;
             stream << exprs[k]->process("unsigned int #name_acc = 0;") << std::endl;
           }
           else
           {
             stream << exprs[k]->process("__local #scalartype #name_buf[" + tools::to_string(p_.local_size_0) + "];") << std::endl;
-            stream << exprs[k]->process("#scalartype #name_acc = " + neutral_element(rops[k]) + ";") << std::endl;
+            stream << exprs[k]->process("#scalartype #name_acc = " + neutral_element(exprs[k]->root_op()) + ";") << std::endl;
           }
         }
 
-        element_wise_loop_1D(stream, loop_body(exprs, rops), p_.fetching_policy, fallback?1:p_.simd_width, "i", "N");
+        class loop_body : public loop_body_base
+        {
+        public:
+          loop_body(std::vector<mapped_scalar_reduction*> const & _exprs) : exprs(_exprs){ }
+          void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const
+          {
+            std::string i = (simd_width==1)?"i*#stride":"i";
+            std::string process_str;
+            //Fetch vector entry
+            {
+            std::set<std::string> already_fetched;
+            process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "(" + i + ", #pointer);";
+            for(std::vector<mapped_scalar_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+            {
+              tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", process_str, (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = vload($OFFSET{#row, i}, #pointer);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = vload($OFFSET{i,#column}, #pointer);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = vload(#diag_offset<0?$OFFSET{i - #diag_offset, i}:$OFFSET{i, i + #diag_offset}, #pointer);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+            }
+            }
+
+            //Update accumulators
+            std::vector<std::string> str(simd_width);
+            if(simd_width==1)
+              str[0] = "#namereg";
+            else
+              for(unsigned int a = 0 ; a < simd_width ; ++a)
+                str[a] = "#namereg.s" + tools::to_string(a);
+
+            for(unsigned int k = 0 ; k < exprs.size() ; ++k)
+            {
+              for(unsigned int a = 0 ; a < simd_width ; ++a)
+              {
+                std::map<std::string, std::string> accessors;
+                accessors["vector"] = str[a];
+                accessors["matrix_row"] = str[a];
+                accessors["matrix_column"] = str[a];
+                accessors["matrix_diag"] = str[a];
+                accessors["scalar"] = "#namereg";
+                std::string value = tree_parsing::evaluate(LHS_NODE_TYPE, accessors, exprs[k]->statement(), exprs[k]->root_idx(),exprs[k]->mapping());
+                if(exprs[k]->root_node().op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
+                  value+= "*" + tree_parsing::evaluate(RHS_NODE_TYPE, accessors, exprs[k]->statement(), exprs[k]->root_idx(),exprs[k]->mapping());
+
+                if(exprs[k]->is_index_reduction())
+                  compute_index_reduction(stream, exprs[k]->process("#name_acc"),  "i*"+tools::to_string(simd_width) + "+" + tools::to_string(a), exprs[k]->process("#name_acc_value"), value,exprs[k]->root_op());
+                else
+                  compute_reduction(stream, exprs[k]->process("#name_acc"), value,exprs[k]->root_op());
+              }
+            }
+          }
+        private:
+          std::vector<mapped_scalar_reduction*> exprs;
+        };
+        element_wise_loop_1D(stream, loop_body(exprs), p_.fetching_policy, simd_width, "i", "N", "get_global_id(0)", "get_global_size(0)");
 
         //Fills local memory
         for(unsigned int k = 0 ; k < N ; ++k)
         {
-          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
+          if(exprs[k]->is_index_reduction())
             stream << exprs[k]->process("#name_buf_value[lid] = #name_acc_value;") << std::endl;
           stream << exprs[k]->process("#name_buf[lid] = #name_acc;") << std::endl;
         }
 
         //Reduce local memory
-        reduce_1d_local_memory(stream, p_.local_size_0, exprs, "#name_buf", "#name_buf_value", rops);
+        reduce_1d_local_memory(stream, p_.local_size_0, exprs, "#name_buf", "#name_buf_value");
 
         //Write to temporary buffers
         stream << "if(lid==0)" << std::endl;
@@ -240,7 +218,7 @@ namespace viennacl
         stream.inc_tab();
         for(unsigned int k = 0 ; k < N ; ++k)
         {
-          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
+          if(exprs[k]->is_index_reduction())
             stream << exprs[k]->process("#name_temp_value[get_group_id(0)] = #name_buf_value[0];") << std::endl;
           stream << exprs[k]->process("#name_temp[get_group_id(0)] = #name_buf[0];") << std::endl;
         }
@@ -262,17 +240,17 @@ namespace viennacl
 
         for(unsigned int k = 0 ; k < N ; ++k)
         {
-          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
+          if(exprs[k]->is_index_reduction())
           {
             stream << exprs[k]->process("__local unsigned int #name_buf[" + tools::to_string(p_.local_size_0) + "];");
             stream << exprs[k]->process("unsigned int #name_acc = 0;") << std::endl;
             stream << exprs[k]->process("__local #scalartype #name_buf_value[" + tools::to_string(p_.local_size_0) + "];") << std::endl;
-            stream << exprs[k]->process("#scalartype #name_acc_value = " + neutral_element(rops[k]) + ";");
+            stream << exprs[k]->process("#scalartype #name_acc_value = " + neutral_element(exprs[k]->root_op()) + ";");
           }
           else
           {
             stream << exprs[k]->process("__local #scalartype #name_buf[" + tools::to_string(p_.local_size_0) + "];") << std::endl;
-            stream << exprs[k]->process("#scalartype #name_acc = " + neutral_element(rops[k]) + ";");
+            stream << exprs[k]->process("#scalartype #name_acc = " + neutral_element(exprs[k]->root_op()) + ";");
           }
         }
 
@@ -280,76 +258,62 @@ namespace viennacl
         stream << "{" << std::endl;
         stream.inc_tab();
         for(unsigned int k = 0 ; k < N ; ++k)
-          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
+          if(exprs[k]->is_index_reduction())
             compute_index_reduction(stream, exprs[k]->process("#name_acc"), exprs[k]->process("#name_temp[i]"),
-                                            exprs[k]->process("#name_acc_value"),exprs[k]->process("#name_temp_value[i]"),rops[k]);
+                                            exprs[k]->process("#name_acc_value"),exprs[k]->process("#name_temp_value[i]"),exprs[k]->root_op());
           else
-            compute_reduction(stream, exprs[k]->process("#name_acc"), exprs[k]->process("#name_temp[i]"), rops[k]);
+            compute_reduction(stream, exprs[k]->process("#name_acc"), exprs[k]->process("#name_temp[i]"), exprs[k]->root_op());
 
         stream.dec_tab();
         stream << "}" << std::endl;
 
         for(unsigned int k = 0 ; k < N ; ++k)
         {
-          if(utils::is_index_reduction(exprs[k]->statement().array()[exprs[k]->root_idx()].op))
+          if(exprs[k]->is_index_reduction())
             stream << exprs[k]->process("#name_buf_value[lid] = #name_acc_value;") << std::endl;
           stream << exprs[k]->process("#name_buf[lid] = #name_acc;") << std::endl;
         }
 
 
         //Reduce and write final result
-         reduce_1d_local_memory(stream, p_.local_size_0, exprs, "#name_buf", "#name_buf_value", rops);
+        reduce_1d_local_memory(stream, p_.local_size_0, exprs, "#name_buf", "#name_buf_value");
 
         stream << "if(lid==0)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        //Generates all the expression, in order
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-        {
-          std::map<std::string, std::string> accessors;
-          accessors["scalar_reduction"] = "#name_buf[0]";
-          accessors["scalar"] = "*#name";
-          accessors["vectors"] = "#name[#start]";
-          stream << tree_parsing::evaluate_expression(*sit, sit->root(), accessors, *mit, PARENT_NODE_TYPE) << ";" << std::endl;
-        }
+        std::map<std::string, std::string> accessors;
+        accessors["scalar_reduction"] = "#name_buf[0]";
+        accessors["scalar"] = "*#pointer";
+        accessors["vectors"] = "*#pointer";
+        tree_parsing::evaluate(stream, PARENT_NODE_TYPE, accessors, statements, mappings);
         stream.dec_tab();
         stream << "}" << std::endl;
 
         stream.dec_tab();
         stream << "}" << std::endl;
+
+        return stream.str();
       }
 
-
-      vcl_size_t get_vector_size(viennacl::scheduler::statement const & s) const
+      std::vector<std::string> generate_impl(std::string const & kernel_prefix,  statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
-        scheduler::statement::container_type exprs = s.array();
-        for(scheduler::statement::container_type::iterator it = exprs.begin() ; it != exprs.end() ; ++it)
-        {
-          if(is_scalar_reduction(*it))
-          {
-            scheduler::statement_node const * current_node = &(*it);
-            //The LHS of the prod is a vector
-            while(current_node->lhs.type_family!=scheduler::VECTOR_TYPE_FAMILY)
-              current_node = &exprs[current_node->lhs.node_index];
-            return utils::call_on_vector(current_node->lhs, utils::internal_size_fun());
-          }
-        }
-        throw generator_not_supported_exception("unexpected expression tree");
+        std::vector<std::string> result;
+        result.push_back(generate_impl(kernel_prefix + "_strided", statements, mappings, 1));
+        result.push_back(generate_impl(kernel_prefix, statements, mappings, p_.simd_width));
+        return result;
       }
-
     public:
       reduction_template(reduction_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, binding_policy), p_(parameters){ }
       reduction_template::parameters_type const & parameters() const { return p_; }
 
-      void enqueue(std::string const & kernel_prefix, lazy_program_compiler & program_fallback, lazy_program_compiler & program_optimized, statements_container const & statements)
+      void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs, statements_container const & statements)
       {
-        viennacl::ocl::program & program = program_optimized.program();
         std::vector<scheduler::statement_node const *> reductions;
         cl_uint size;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
           std::vector<size_t> reductions_idx;
-          tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_reduction, reductions_idx), false);
+          tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&utils::is_reduction, reductions_idx), false);
           size = static_cast<cl_uint>(vector_size(lhs_most(it->array(), reductions_idx[0]), false));
           for(std::vector<size_t>::iterator itt = reductions_idx.begin() ; itt != reductions_idx.end() ; ++itt)
             reductions.push_back(&it->array()[*itt]);
@@ -359,7 +323,17 @@ namespace viennacl
         unsigned int scalartype_size = utils::size_of(lhs_most(statement.array(), statement.root()).lhs.numeric_type);
 
 
-        viennacl::ocl::kernel* kernels[2] = {&program.get_kernel(kernel_prefix+"_0"), &program.get_kernel(kernel_prefix+"_1")};
+        viennacl::ocl::kernel * kernels[2];
+        if(has_strided_access(statements) && p_.simd_width > 1)
+        {
+          kernels[0] = &programs[0].program().get_kernel(kernel_prefix+"_strided_0");
+          kernels[1] = &programs[0].program().get_kernel(kernel_prefix+"_strided_1");
+        }
+        else
+        {
+          kernels[0] = &programs[1].program().get_kernel(kernel_prefix+"_0");
+          kernels[1] = &programs[1].program().get_kernel(kernel_prefix+"_1");
+        }
 
         kernels[0]->local_work_size(0, p_.local_size_0);
         kernels[0]->global_work_size(0,p_.local_size_0*p_.num_groups);
@@ -370,7 +344,7 @@ namespace viennacl
         for(unsigned int k = 0 ; k < 2 ; k++)
         {
             unsigned int n_arg = 0;
-            kernels[k]->arg(n_arg++, size/p_.simd_width);
+            kernels[k]->arg(n_arg++, size);
             unsigned int i = 0;
             unsigned int j = 0;
             for(std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it)

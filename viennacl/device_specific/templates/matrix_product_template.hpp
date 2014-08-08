@@ -220,8 +220,9 @@ private:
       beta_leaf = RHS_NODE_TYPE;
     }
 
-    void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings) const
+    std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings) const
     {
+          return std::vector<std::string>();
 //        using namespace tree_parsing;
 
 //        //////////////////
@@ -607,7 +608,7 @@ public:
     matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans) : template_base(optimized_parameters_, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), optimized_parameters_(parameters){ }
     matrix_product_template::parameters_type const & parameters() const { return optimized_parameters_; }
 
-    void enqueue(std::string const & kernel_prefix, lazy_program_compiler & program_fallback, lazy_program_compiler & program_optimized, statements_container const & statements)
+    virtual void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs, statements_container const & statements)
     {
 
     }

@@ -286,6 +286,22 @@ namespace viennacl
     template <typename NumericT>
     vcl_size_t internal_size2(matrix_base<NumericT> const & mat) { return mat.internal_size2(); }
 
+    /** @brief Helper routine for obtaining the internal number of entries per row of a ViennaCL matrix  */
+    template <typename NumericT>
+    vcl_size_t ld(matrix_base<NumericT> const & mat)
+    {
+      if(mat.row_major())
+        return mat.internal_size2();
+      return mat.internal_size1();
+    }
+
+    template <typename NumericT>
+    vcl_size_t nld(matrix_base<NumericT> const & mat)
+    {
+      if(mat.row_major())
+        return mat.stride2();
+      return mat.stride1();
+    }
 
     template <typename LHS>
     vcl_size_t size(vector_expression<LHS, const int, op_matrix_diag> const & proxy)

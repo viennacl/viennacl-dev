@@ -287,8 +287,8 @@ namespace viennacl{
           }
       };
 
-      inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, std::map<std::string, std::string> const & accessors,
-                                             mapping_type const & mapping, leaf_t leaf)
+      inline std::string evaluate(leaf_t leaf, std::map<std::string, std::string> const & accessors,
+                                  scheduler::statement const & statement, vcl_size_t root_idx, mapping_type const & mapping)
       {
         std::string res;
         evaluate_expression_traversal traversal_functor(accessors, res, mapping);
@@ -314,6 +314,15 @@ namespace viennacl{
         return res;
       }
 
+      inline void evaluate(utils::kernel_generation_stream & stream, leaf_t leaf, std::map<std::string, std::string> const & accessors,
+                              statements_container const & statements, std::vector<mapping_type> const & mappings)
+      {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::const_iterator mit;
+
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+          stream << evaluate(leaf, accessors, *sit, sit->root(), *mit) << ";" << std::endl;
+      }
 
 
       /** @brief functor for fetching or writing-back the elements in a statement */
@@ -321,7 +330,7 @@ namespace viennacl{
       {
         public:
           process_traversal(std::string const & type_key, std::string const & to_process, utils::kernel_generation_stream & stream,
-                            mapping_type const & mapping, std::set<std::string> * cache) : type_key_(type_key), to_process_(to_process),  stream_(stream), mapping_(mapping), cache_(cache){ }
+                            mapping_type const & mapping, std::set<std::string> & already_processed) : type_key_(type_key), to_process_(to_process),  stream_(stream), mapping_(mapping), already_processed_(already_processed){ }
 
           void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, leaf_t leaf) const
           {
@@ -331,7 +340,7 @@ namespace viennacl{
                mapped_object * obj = it->second.get();
                if(obj->type_key()==type_key_)
                {
-                 if(!cache_ || (cache_ && cache_->insert(obj->process("#name")).second))
+                 if(already_processed_.insert(obj->process("#name")).second)
                   stream_ << obj->process(to_process_) << std::endl;
                }
              }
@@ -341,14 +350,13 @@ namespace viennacl{
         std::string const & to_process_;
         utils::kernel_generation_stream & stream_;
         mapping_type const & mapping_;
-        std::set<std::string> * cache_;
+        std::set<std::string> & already_processed_;
       };
 
-
-      inline void process(vcl_size_t root_idx, leaf_t leaf, scheduler::statement const & statement, std::string const & type_key,
-                          std::string const & to_process, utils::kernel_generation_stream & stream, mapping_type const & mapping, std::set<std::string> * cache)
+      inline void process(utils::kernel_generation_stream & stream, leaf_t leaf, std::string const & type_key, std::string const & to_process,
+                          scheduler::statement const & statement, size_t root_idx, mapping_type const & mapping, std::set<std::string> & already_processed)
       {
-        process_traversal traversal_functor(type_key, to_process, stream, mapping, cache);
+        process_traversal traversal_functor(type_key, to_process, stream, mapping, already_processed);
         scheduler::statement_node const & root_node = statement.array()[root_idx];
 
         if(leaf==RHS_NODE_TYPE)
@@ -369,6 +377,17 @@ namespace viennacl{
         {
           tree_parsing::traverse(statement, root_idx, traversal_functor, true);
         }
+      }
+
+      inline void process(utils::kernel_generation_stream & stream, leaf_t leaf, std::string const & type_key, std::string const & to_process,
+                              statements_container const & statements, std::vector<mapping_type> const & mappings)
+      {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::const_iterator mit;
+        std::set<std::string> already_processed;
+
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+          process(stream, leaf, type_key, to_process, *sit, sit->root(), *mit, already_processed);
       }
 
 

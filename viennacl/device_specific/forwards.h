@@ -28,6 +28,8 @@
 #include <set>
 #include <stdexcept>
 
+#include "viennacl/scheduler/io.hpp"
+
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/scheduler/forwards.h"
@@ -176,7 +178,7 @@ namespace viennacl{
       template<class Fun>
       inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect);
 
-      inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, std::map<std::string, std::string> const & accessors, mapping_type const & mapping, leaf_t initial_leaf);
+      inline std::string evaluate(leaf_t leaf, std::map<std::string, std::string> const & accessors, scheduler::statement const & statement, vcl_size_t root_idx,mapping_type const & mapping);
     }
 
     using scheduler::INT_TYPE;

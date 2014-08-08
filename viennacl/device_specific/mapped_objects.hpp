@@ -43,25 +43,44 @@ namespace viennacl
       class mapped_object
       {
         private:
-           virtual void preprocess(std::string & res) const { }
+           virtual void postprocess(std::string & res) const { }
 
         protected:
-          class MorphBase{ public: virtual std::string operator()(std::string const & i, std::string const & j) const = 0; };
+          struct MorphBase { virtual ~MorphBase(){} };
+          struct MorphBase1D : public MorphBase { public: virtual std::string operator()(std::string const & i) const = 0; };
+          struct MorphBase2D : public MorphBase { public: virtual std::string operator()(std::string const & i, std::string const & j) const = 0; };
 
           static void replace_offset(std::string & str, MorphBase const & morph)
           {
               size_t pos = 0;
-              while((pos=str.find("#offset", pos))!=std::string::npos)
+              while((pos=str.find("$OFFSET", pos))!=std::string::npos)
               {
+                  std::string postprocessed;
                   size_t pos_po = str.find('{', pos);
-                  size_t pos_comma = str.find(',', pos_po);
-                  size_t pos_pe = str.find('}', pos_comma);
-                  std::string i = str.substr(pos_po + 1, pos_comma - pos_po - 1);
-                  std::string j = str.substr(pos_comma + 1, pos_pe - pos_comma - 1);
-                  std::string postprocessed = morph(i, j);
+                  size_t pos_pe = str.find('}', pos_po);
+
+                  if(MorphBase2D const * p = dynamic_cast<MorphBase2D const *>(&morph))
+                  {
+                    size_t pos_comma = str.find(',', pos_po);
+                    std::string i = str.substr(pos_po + 1, pos_comma - pos_po - 1);
+                    std::string j = str.substr(pos_comma + 1, pos_pe - pos_comma - 1);
+                    postprocessed = (*p)(i, j);
+                  }
+                  else if(MorphBase1D const * p = dynamic_cast<MorphBase1D const *>(&morph))
+                  {
+                    std::string i = str.substr(pos_po + 1, pos_pe - pos_po - 1);
+                    postprocessed = (*p)(i);
+                  }
+
                   str.replace(pos, pos_pe + 1 - pos, postprocessed);
                   pos = pos_pe;
               }
+          }
+
+          void register_attribute(std::string & attribute, std::string const & key, std::string const & value)
+          {
+            attribute = value;
+            keywords_[key] = attribute;
           }
 
         public:
@@ -75,11 +94,10 @@ namespace viennacl
           };
 
         public:
-          mapped_object(std::string const & scalartype, unsigned int id, std::string const & type_key) :
-              scalartype_(scalartype), name_("obj"+tools::to_string(id)), type_key_(type_key)
+          mapped_object(std::string const & scalartype, unsigned int id, std::string const & type_key) : type_key_(type_key)
           {
-              keywords_["#name"] = name_;
-              keywords_["#scalartype"] = scalartype_;
+              register_attribute(scalartype_, "#scalartype", scalartype);
+              register_attribute(name_, "#name", "obj" + tools::to_string(id));
           }
 
           virtual ~mapped_object(){ }
@@ -89,9 +107,9 @@ namespace viennacl
           std::string process(std::string const & in) const
           {
               std::string res(in);
-              preprocess(res);
               for(std::map<std::string,std::string>::const_iterator it = keywords_.begin() ; it != keywords_.end() ; ++it)
                   tools::find_and_replace(res, it->first, it->second);
+              postprocess(res);
               return res;
           }
 
@@ -103,7 +121,7 @@ namespace viennacl
           }
 
         protected:
-          std::string const name_;
+          std::string name_;
           std::string scalartype_;
           std::string type_key_;
           std::map<std::string, std::string> keywords_;
@@ -147,6 +165,17 @@ namespace viennacl
           vcl_size_t root_idx() const { return info_.root_idx; }
           scheduler::statement const & statement() const { return *info_.statement; }
           scheduler::statement_node root_node() const { return statement().array()[root_idx()]; }
+
+          bool is_index_reduction() const { return utils::is_index_reduction(info_.statement->array()[info_.root_idx].op); }
+
+          scheduler::op_element root_op() const
+          {
+            scheduler::op_element res = info_.statement->array()[info_.root_idx].op;
+            if(res.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE
+               ||res.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
+              res.type        = scheduler::OPERATION_BINARY_ADD_TYPE;
+            return res;
+          }
       };
 
       /** @brief Scalar reduction
@@ -196,17 +225,23 @@ namespace viennacl
           virtual void append_optional_arguments(std::string &) const = 0;
 
         public:
-          mapped_handle(std::string const & scalartype, unsigned int id, std::string const & type_key) : mapped_object(scalartype, id, type_key){ }
+          mapped_handle(std::string const & scalartype, unsigned int id, std::string const & type_key) : mapped_object(scalartype, id, type_key)
+          {
+            register_attribute(pointer_, "#pointer", name_ + "_pointer");
+          }
 
           std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
           {
             if(already_generated.insert(name_).second)
             {
-              str += generate_pointer_kernel_argument("__global", scalartype_, name_);
+              str += generate_pointer_kernel_argument("__global", scalartype_, pointer_);
               append_optional_arguments(str);
             }
             return str;
           }
+
+        private:
+          std::string pointer_;
       };
 
 
@@ -240,23 +275,20 @@ namespace viennacl
       {
           void append_optional_arguments(std::string & str) const
           {
-            str += generate_value_kernel_argument("unsigned int", start_name_);
-            str += generate_value_kernel_argument("unsigned int", stride_name_);
+            str += generate_value_kernel_argument("unsigned int", start_);
+            str += generate_value_kernel_argument("unsigned int", stride_);
           }
 
         public:
           mapped_vector(std::string const & scalartype, unsigned int id) : mapped_buffer(scalartype, id, "vector")
           {
-              start_name_ = name_ + "start";
-              stride_name_ = name_ + "stride";
-
-              keywords_["#start"] = start_name_;
-              keywords_["#stride"] = stride_name_;
+              register_attribute(start_, "#start", name_ + "_start");
+              register_attribute(stride_, "#stride", name_ + "_stride");
           }
 
         private:
-          std::string start_name_;
-          std::string stride_name_;
+          std::string start_;
+          std::string stride_;
       };
 
       /** @brief Matrix
@@ -268,57 +300,58 @@ namespace viennacl
         private:
           void append_optional_arguments(std::string & str) const
           {
-            str += generate_value_kernel_argument("unsigned int", ld_name_);
-            str += generate_value_kernel_argument("unsigned int", start1_name_);
-            str += generate_value_kernel_argument("unsigned int", stride1_name_);
-            str += generate_value_kernel_argument("unsigned int", start2_name_);
-            str += generate_value_kernel_argument("unsigned int", stride2_name_);
+            str += generate_value_kernel_argument("unsigned int", ld_);
+            str += generate_value_kernel_argument("unsigned int", start1_);
+            str += generate_value_kernel_argument("unsigned int", start2_);
+            str += generate_value_kernel_argument("unsigned int", stride1_);
+            str += generate_value_kernel_argument("unsigned int", stride2_);
           }
 
-          void preprocess(std::string & str) const
+          void postprocess(std::string & str) const
           {
-            class Morph : public MorphBase
+            struct Morph : public MorphBase2D
             {
-            public:
-                Morph(bool row_major) : row_major_(row_major){ }
+                Morph(bool _is_row_major, std::string const & _ld) : is_row_major(_is_row_major), ld(_ld){ }
                 std::string operator()(std::string const & i, std::string const & j) const
                 {
-                    std::string ii = i;
-                    std::string jj = j;
-                    if(row_major_)
-                        std::swap(ii, jj);
-                    return "(" + ii + ") + (" + jj + ") * #ld"; }
+                  if(is_row_major)
+                    return "(" + i + ") * " + ld +  " + (" + j + ")";
+                  return "(" + i + ") +  (" + j + ") * " + ld ;
+                }
             private:
-                bool row_major_;
+                bool is_row_major;
+                std::string const & ld;
             };
-            replace_offset(str, Morph(row_major_));
+            replace_offset(str, Morph(row_major_, ld_));
           }
 
         public:
 
           mapped_matrix(std::string const & scalartype, unsigned int id, bool row_major) : mapped_buffer(scalartype, id, "matrix"), row_major_(row_major)
           {
-              start1_name_ = name_ + "start1";
-              start2_name_ = name_ + "start2";
-              stride1_name_ = name_ + "stride1";
-              stride2_name_ = name_ + "stride2";
-              ld_name_ = name_ + "ld";
-
-              keywords_["#ld"] = ld_name_;
-              keywords_["#start1"] = start1_name_;
-              keywords_["#start2"] = start2_name_;
-              keywords_["#stride1"] = stride1_name_;
-              keywords_["#stride2"] = stride2_name_;
+              register_attribute(ld_, "#ld", name_ + "_ld");
+              if(row_major_)
+              {
+                register_attribute(start1_, "#start2", name_ + "_start1");
+                register_attribute(start2_, "#start1", name_ + "_start2");
+                register_attribute(stride1_, "#stride2", name_ + "_stride1");
+                register_attribute(stride2_, "#stride1", name_ + "_stride2");
+              }
+              else
+              {
+                register_attribute(start1_, "#start1", name_ + "_start1");
+                register_attribute(start2_, "#start2", name_ + "_start2");
+                register_attribute(stride1_, "#stride1", name_ + "_stride1");
+                register_attribute(stride2_, "#stride2", name_ + "_stride2");
+              }
           }
 
         private:
-          std::string start1_name_;
-          std::string start2_name_;
-
-          std::string stride1_name_;
-          std::string stride2_name_;
-
-          mutable std::string ld_name_;
+          std::string ld_;
+          std::string start1_;
+          std::string start2_;
+          std::string stride1_;
+          std::string stride2_;
           bool row_major_;
       };
 
@@ -328,157 +361,89 @@ namespace viennacl
        */
       class mapped_vector_diag : public mapped_object, public binary_leaf
       {
-      private:
-         void preprocess(std::string & res) const
-         {
-             class Morph : public MorphBase
-             {
-                 std::string * new_i_;
-                 std::string * new_j_;
-                 std::string const & rhs_;
-             public:
-                 Morph(std::string * new_i, std::string * new_j, std::string const & rhs) : new_i_(new_i), new_j_(new_j), rhs_(rhs){ }
-                 std::string operator()(std::string const & i, std::string const & j) const
-                 {
-                     *new_i_ = i + "+ ((" + rhs_ + "<0)?" + rhs_ + ":0)";
-                     *new_j_ = j + "- ((" + rhs_ + ">0)?" + rhs_ + ":0)";
-                     return "#offset{min("+i+","+j+")}";
-                 }
-             };
-
-             std::map<std::string, std::string> accessors;
-             std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, accessors, *info_.mapping, RHS_NODE_TYPE);
-             std::string new_i, new_j;
-             std::string tmp = res;
-             replace_offset(tmp, Morph(&new_i, &new_j, rhs));
-             accessors["vector"] = tmp;
-             std::string lhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, accessors, *info_.mapping, LHS_NODE_TYPE);
-
-             tmp = "((" + new_i + ")!=(" + new_j + "))?0:" + lhs;
-         }
-
+        void postprocess(std::string &res) const
+        {
+          std::map<std::string, std::string> accessors;
+          tools::find_and_replace(res, "#diag_offset", tree_parsing::evaluate(RHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping));
+          accessors["vector"] = res;
+          res = tree_parsing::evaluate(LHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping);
+        }
       public:
-        mapped_vector_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id, "matrix"), binary_leaf(info){ }
+        mapped_vector_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id, "vector_diag"), binary_leaf(info){ }
       };
 
-      class writable_matrix_modifier : public mapped_object, public binary_leaf
-      {
-          virtual void replace_offset_impl(std::string & tmp, std::map<std::string, std::string> const & accessors) const = 0;
-      protected:
-          writable_matrix_modifier(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id, "matrix"), binary_leaf(info){ }
-
-          void preprocess(std::string & res) const
-          {
-              std::map<std::string, std::string> accessors;
-              std::string tmp = res;
-              replace_offset_impl(tmp, accessors);
-              accessors["matrix"] = tmp;
-              res = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, accessors, *info_.mapping, LHS_NODE_TYPE);
-          }
-
-      };
 
       /** @brief Trans
        *
        *  Maps trans(matrix_expression) into the transposed of matrix_expression
        */
-      class mapped_trans: public writable_matrix_modifier
+      class mapped_trans: public mapped_object, public binary_leaf
       {
-          virtual void replace_offset_impl(std::string & tmp, std::map<std::string, std::string> const &) const
-          {
-              struct Morph : public MorphBase
-              {
-                  std::string operator()(std::string const & i, std::string const & j) const
-                  { return "#offset{" + j + "," + i + "}"; }
-              };
-              replace_offset(tmp, Morph());
-          }
+        void postprocess(std::string &res) const
+        {
+          std::map<std::string, std::string> accessors;
+          accessors["matrix"] = res;
+          res = tree_parsing::evaluate(LHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping);
+        }
       public:
-        mapped_trans(std::string const & scalartype, unsigned int id, node_info info) : writable_matrix_modifier(scalartype, id, info){ }
+        mapped_trans(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id, "matrix_trans"), binary_leaf(info){ }
       };
-
 
       /** @brief Matrix row
        *
        *  Maps row(matrix_expression, scalar_expression) into the scalar_expression's row of matrix_expression
        */
-      class mapped_matrix_row : public writable_matrix_modifier
+      class mapped_matrix_row : public mapped_object, binary_leaf
       {
-      private:
-          virtual void replace_offset_impl(std::string & tmp, std::map<std::string, std::string> const & accessors) const
-          {
-              class Morph : public MorphBase
-              {
-              public:
-                  Morph(std::string const & idx) : idx_(idx) { }
-
-                  std::string operator()(std::string const & , std::string const & j)  const
-                  { return "#offset{" + idx_ + "," + j + "}"; }
-              private:
-                  std::string const & idx_;
-              };
-              std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, accessors, *info_.mapping, RHS_NODE_TYPE);
-              replace_offset(tmp, Morph(idx));
-          }
+        void postprocess(std::string &res) const
+        {
+          std::map<std::string, std::string> accessors;
+          tools::find_and_replace(res, "#row", tree_parsing::evaluate(RHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping));
+          accessors["matrix"] = res;
+          res = tree_parsing::evaluate(LHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping);
+        }
       public:
-        mapped_matrix_row(std::string const & scalartype, unsigned int id, node_info info) : writable_matrix_modifier(scalartype, id, info){ }
+        mapped_matrix_row(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id, "matrix_row"), binary_leaf(info)
+        { }
       };
+
 
       /** @brief Matrix column
        *
        *  Maps column(matrix_expression, scalar_expression) into the scalar_expression's column of matrix_expression
        */
-      class mapped_matrix_column : public writable_matrix_modifier
+      class mapped_matrix_column : public mapped_object, binary_leaf
       {
       private:
-          virtual void replace_offset_impl(std::string & tmp, std::map<std::string, std::string> const & accessors) const
-          {
-              class Morph : public MorphBase
-              {
-              public:
-                  Morph(std::string const & idx) : idx_(idx) { }
-
-                  std::string operator()(std::string const & i , std::string const & )  const
-                  { return "#offset{" + i + "," + idx_ + "}"; }
-              private:
-                  std::string const & idx_;
-              };
-              std::string idx = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, accessors, *info_.mapping, RHS_NODE_TYPE);
-              replace_offset(tmp, Morph(idx));
-          }
+        void postprocess(std::string &res) const
+        {
+          std::map<std::string, std::string> accessors;
+          tools::find_and_replace(res, "#column", tree_parsing::evaluate(RHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping));
+          accessors["matrix"] = res;
+          res = tree_parsing::evaluate(LHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping);
+        }
       public:
-        mapped_matrix_column(std::string const & scalartype, unsigned int id, node_info info) : writable_matrix_modifier(scalartype, id, info){ }
+        mapped_matrix_column(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id, "matrix_column"), binary_leaf(info)
+        {
+        }
       };
 
       /** @brief Matrix diag
        *
        *  Maps a diag(matrix_expression) node into the vector of its diagonal elements
        */
-      class mapped_matrix_diag : public writable_matrix_modifier
+      class mapped_matrix_diag : public mapped_object, binary_leaf
       {
       private:
-         virtual void replace_offset_impl(std::string & tmp, std::map<std::string, std::string> const & accessors) const
-         {
-             class Morph : public MorphBase
-             {
-             public:
-                Morph(std::string const & rhs) : rhs_(rhs){ }
-
-                std::string operator()(std::string const & i, std::string const & j) const
-                {
-                    std::string new_i = i + "- ((" + rhs_ + "<0)?" + rhs_ + ":0)";
-                    std::string new_j = i + "+ ((" + rhs_ + ">0)?" + rhs_ + ":0)";
-                    return "#offset{" + new_i + "," + new_j + "}";
-                }
-             private:
-                std::string const & rhs_;
-             };
-
-             std::string rhs = tree_parsing::evaluate_expression(*info_.statement, info_.root_idx, accessors, *info_.mapping, RHS_NODE_TYPE);
-             replace_offset(tmp, Morph(rhs));
-         }
+        void postprocess(std::string &res) const
+        {
+          std::map<std::string, std::string> accessors;
+          tools::find_and_replace(res, "#diag_offset", tree_parsing::evaluate(RHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping));
+          accessors["matrix"] = res;
+          res = tree_parsing::evaluate(LHS_NODE_TYPE, accessors, *info_.statement, info_.root_idx, *info_.mapping);
+        }
       public:
-        mapped_matrix_diag(std::string const & scalartype, unsigned int id, node_info info) : writable_matrix_modifier(scalartype, id, info){ }
+        mapped_matrix_diag(std::string const & scalartype, unsigned int id, node_info info) : mapped_object(scalartype, id, "matrix_diag"), binary_leaf(info){ }
       };
 
       /** @brief Implicit vector

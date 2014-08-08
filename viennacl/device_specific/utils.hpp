@@ -268,6 +268,16 @@ namespace viennacl{
         template<class T> result_type operator()(T const &t) const { return viennacl::traits::stride(t); }
       };
 
+      struct stride1_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::stride1(t); }
+      };
+
+      struct stride2_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::stride2(t); }
+      };
+
       struct handle_fun{
         typedef cl_mem result_type;
         template<class T>
@@ -310,12 +320,13 @@ namespace viennacl{
       template<class T>
       struct is_same_type<T,T> { enum { value = 1 }; };
 
-      inline bool is_reduction(scheduler::op_element const & op){
-        return op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
-            || op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY
-            || op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY
-            || op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE
-            || op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE;
+      inline bool is_reduction(scheduler::statement_node const & node)
+      {
+        return node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
+            || node.op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY
+            || node.op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY
+            || node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE
+            || node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE;
       }
 
       inline bool is_index_reduction(scheduler::op_element const & op)

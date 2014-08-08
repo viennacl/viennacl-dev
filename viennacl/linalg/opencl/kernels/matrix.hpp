@@ -7,9 +7,11 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
+#include "viennacl/device_specific/execution_handler.hpp"
 #include "viennacl/device_specific/builtin_database/vector_axpy.hpp"
 #include "viennacl/device_specific/builtin_database/matrix_axpy.hpp"
 #include "viennacl/device_specific/builtin_database/row_wise_reduction.hpp"
+#include "viennacl/device_specific/builtin_database/matrix_product.hpp"
 
 /** @file viennacl/linalg/opencl/kernels/matrix.hpp
  *  @brief Runtime generation of OpenCL kernels for matrix operations */
@@ -44,53 +46,7 @@ namespace viennacl
           ambm_scalar_type b;
         };
 
-        template<typename T, typename ScalarType1, typename ScalarType2>
-        inline void generate_ambm_impl2(std::string & source, device_specific::matrix_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
-                                       viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType1 const * a,
-                                       viennacl::matrix_base<T> const * z, ScalarType2 const * b,
-                                        std::string const & prefix, viennacl::ocl::device const & device)
-        {
-          using device_specific::matrix_axpy_template;
 
-          source.append(matrix_axpy_template(parameters, prefix + "0000").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false),device));
-          source.append(matrix_axpy_template(parameters, prefix + "1000").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false),device));
-          source.append(matrix_axpy_template(parameters, prefix + "0100").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false),device));
-          source.append(matrix_axpy_template(parameters, prefix + "1100").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false),device));
-          if(b)
-          {
-            source.append(matrix_axpy_template(parameters, prefix + "0010").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false),device));
-            source.append(matrix_axpy_template(parameters, prefix + "1010").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false),device));
-            source.append(matrix_axpy_template(parameters, prefix + "0110").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false),device));
-            source.append(matrix_axpy_template(parameters, prefix + "1110").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false),device));
-
-            source.append(matrix_axpy_template(parameters, prefix + "0001").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true),device));
-            source.append(matrix_axpy_template(parameters, prefix + "1001").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true),device));
-            source.append(matrix_axpy_template(parameters, prefix + "0101").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true),device));
-            source.append(matrix_axpy_template(parameters, prefix + "1101").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true),device));
-
-            source.append(matrix_axpy_template(parameters, prefix + "0011").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true),device));
-            source.append(matrix_axpy_template(parameters, prefix + "1011").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true),device));
-            source.append(matrix_axpy_template(parameters, prefix + "0111").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true),device));
-            source.append(matrix_axpy_template(parameters, prefix + "1111").generate(scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true),device));
-          }
-        }
-
-        template<typename T, typename ScalarType>
-        inline void generate_ambm_impl(std::string & source, device_specific::matrix_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
-                                       viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType const * ha, viennacl::scalar<ScalarType> const * da,
-                                       viennacl::matrix_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db,
-                                       std::string const & prefix, viennacl::ocl::device const & device)
-        {
-          //x ASSIGN_OP a*y
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, (viennacl::matrix_base<T>*)NULL, (T*)NULL, prefix + "hm_", device);
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, (viennacl::matrix_base<T>*)NULL, (T*)NULL, prefix + "dm_", device);
-
-          //x ASSIGN_OP a*y + b*z
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, hb, prefix + "hmhm_", device);
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, z, hb, prefix + "dmhm_", device);
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, ha, z, db, prefix + "hmdm_", device);
-          generate_ambm_impl2(source, parameters, ASSIGN_OP, x, y, da, z, db, prefix + "dmdm_", device);
-        }
 
 
         template <typename StringType>
@@ -484,70 +440,306 @@ namespace viennacl
 
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
+        /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
+        template <class TYPE>
+        class matrix
+        {
+        private:
+
+          template<typename T, typename ScalarType1, typename ScalarType2>
+          static void generate_ambm_impl2(device_specific::execution_handler & handler, std::string const & prefix, device_specific::matrix_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
+                                         viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType1 const * a,
+                                         viennacl::matrix_base<T> const * z, ScalarType2 const * b)
+          {
+            namespace ds = viennacl::device_specific;
+
+            handler.add(prefix + "0000", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false));
+            handler.add(prefix + "1000", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false));
+            handler.add(prefix + "0100", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false));
+            handler.add(prefix + "1100", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false));
+            if(b)
+            {
+              handler.add(prefix + "0010", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false));
+              handler.add(prefix + "1010", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false));
+              handler.add(prefix + "0110", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false));
+              handler.add(prefix + "1110", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false));
+
+              handler.add(prefix + "0001", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true));
+              handler.add(prefix + "1001", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true));
+              handler.add(prefix + "0101", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true));
+              handler.add(prefix + "1101", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true));
+
+              handler.add(prefix + "0011", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true));
+              handler.add(prefix + "1011", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true));
+              handler.add(prefix + "0111", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true));
+              handler.add(prefix + "1111", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true));
+            }
+          }
+
+          template<typename T, typename ScalarType>
+          static void generate_ambm_impl(device_specific::execution_handler & handler, std::string const & prefix, device_specific::matrix_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
+                                         viennacl::matrix_base<T> const * x, viennacl::matrix_base<T> const * y, ScalarType const * ha, viennacl::scalar<ScalarType> const * da,
+                                         viennacl::matrix_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db)
+          {
+            //x ASSIGN_OP a*y
+            generate_ambm_impl2(handler, prefix + "hm_", parameters, ASSIGN_OP, x, y, ha, (viennacl::matrix_base<T>*)NULL, (T*)NULL);
+            generate_ambm_impl2(handler, prefix + "dm_", parameters, ASSIGN_OP, x, y, da, (viennacl::matrix_base<T>*)NULL, (T*)NULL);
+
+            //x ASSIGN_OP a*y + b*z
+            generate_ambm_impl2(handler, prefix + "hmhm_", parameters, ASSIGN_OP, x, y, ha, z, hb);
+            generate_ambm_impl2(handler, prefix + "dmhm_", parameters, ASSIGN_OP, x, y, da, z, hb);
+            generate_ambm_impl2(handler, prefix + "hmdm_", parameters, ASSIGN_OP, x, y, ha, z, db);
+            generate_ambm_impl2(handler, prefix + "dmdm_", parameters, ASSIGN_OP, x, y, da, z, db);
+          }
+
+
+        public:
+          static device_specific::execution_handler & execution_handler(bool is_row_major, viennacl::ocl::context & ctx)
+          {
+            static std::map<std::pair<bool, cl_context>, device_specific::execution_handler> handlers_map;
+            cl_context h = ctx.handle().get();
+            std::pair<bool, cl_context> key(is_row_major, h);
+            if(handlers_map.find(key) == handlers_map.end())
+            {
+              namespace ds = viennacl::device_specific;
+              viennacl::ocl::device const & device = ctx.current_device();
+              std::string program_name = viennacl::ocl::type_to_string<TYPE>::apply() + (is_row_major?"matrix_row":"matrix_col");
+              handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
+              ds::execution_handler & handler = handlers_map.at(key);
+
+              ds::matrix_axpy_template::parameters_type matrix_axpy_params = ds::builtin_database::matrix_axpy_params<TYPE>(device);
+              ds::vector_axpy_template::parameters_type vector_axpy_params = ds::builtin_database::vector_axpy_params<TYPE>(device);
+
+              tools::shared_ptr<viennacl::matrix_base<TYPE> > pA, pB, pC;
+              if(is_row_major)
+              {
+                pA.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
+                pB.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
+                pC.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
+              }
+              else
+              {
+                pA.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+                pB.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+                pC.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+              }
+
+              viennacl::matrix_base<TYPE>& A = *pA;
+              viennacl::matrix_base<TYPE>& B = *pB;
+              viennacl::matrix_base<TYPE>& C = *pC;
+              viennacl::vector<TYPE> x;
+              viennacl::vector<TYPE> y;
+              viennacl::scalar_matrix<TYPE> M(0,0,0,viennacl::context(ctx));
+              viennacl::scalar_vector<TYPE> sx(0,0,viennacl::context(ctx));
+              viennacl::scalar<TYPE> da;
+              viennacl::scalar<TYPE> db;
+              TYPE ha;
+              TYPE hb;
+              int hi = 0;
+              unsigned int hui = 0;
+
+              // fully parametrized kernels:
+              generate_ambm_impl(handler, "assign_", matrix_axpy_params, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &ha, &da, &C, &hb, &db);
+              generate_ambm_impl(handler, "ip_add_", matrix_axpy_params, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &ha, &da, &C, &hb, &db);
+
+              handler.add("assign_cpu", new ds::matrix_axpy_template(matrix_axpy_params), scheduler::preset::assign_cpu(&A, &M));
+              handler.add("matrix_diag_from_vector", new ds::matrix_axpy_template(matrix_axpy_params), scheduler::preset::matrix_diag_from_vector(&x, &A, hi));
+              handler.add("matrix_row", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_row(&x, &A, hui));
+              handler.add("matrix_column", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_column(&x, &A, hui));
+              handler.add("matrix_diag_to_vector", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_diag_to_vector(&x, &A, hi));
+              handler.add("diagonal_assign_cpu", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::diagonal_assign_cpu(&A, &sx));
+            }
+            return handlers_map.at(key);
+          }
+        };
+
+        // main kernel class
+        /** @brief Main kernel class for generating OpenCL kernels for elementwise operations other than addition and subtraction on/with viennacl::vector<>. */
+        template <class TYPE>
+        struct matrix_element
+        {
+
+        public:
+          static device_specific::execution_handler & execution_handler(bool is_row_major, viennacl::ocl::context & ctx)
+          {
+            viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
+            static std::map<std::pair<bool, cl_context>, device_specific::execution_handler> handlers_map;
+            cl_context h = ctx.handle().get();
+            std::pair<bool, cl_context> key(is_row_major, h);
+            if(handlers_map.find(key) == handlers_map.end())
+            {
+              namespace ds = viennacl::device_specific;
+              using namespace scheduler;
+              using device_specific::tree_parsing::operator_string;
+
+              std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
+              viennacl::ocl::device const & device = ctx.current_device();
+              std::string program_name = viennacl::ocl::type_to_string<TYPE>::apply() + (is_row_major?"matrix_element_row":"matrix_element_col");
+              handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
+              ds::execution_handler & handler = handlers_map.at(key);
+              ds::matrix_axpy_template::parameters_type matrix_axpy_params = ds::builtin_database::matrix_axpy_params<TYPE>(device);
+
+              tools::shared_ptr<viennacl::matrix_base<TYPE> > pA, pB, pC;
+              if(is_row_major)
+              {
+                pA.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
+                pB.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
+                pC.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
+              }
+              else
+              {
+                pA.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+                pB.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+                pC.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+              }
+
+              viennacl::matrix_base<TYPE>& A = *pA;
+              viennacl::matrix_base<TYPE>& B = *pB;
+              viennacl::matrix_base<TYPE>& C = *pC;
+
+
+              // unary operations
+#define ADD_UNARY(OPTYPE) handler.add(operator_string(OPTYPE), new ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::unary_element_op(&A, &B, OPTYPE))
+              if (numeric_string == "float" || numeric_string == "double")
+              {
+                ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_ASIN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_ATAN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_CEIL_TYPE);
+                ADD_UNARY(OPERATION_UNARY_COS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_COSH_TYPE);
+                ADD_UNARY(OPERATION_UNARY_EXP_TYPE);
+                ADD_UNARY(OPERATION_UNARY_FABS_TYPE);
+                ADD_UNARY(OPERATION_UNARY_FLOOR_TYPE);
+                ADD_UNARY(OPERATION_UNARY_LOG_TYPE);
+                ADD_UNARY(OPERATION_UNARY_LOG10_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SIN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SINH_TYPE);
+                ADD_UNARY(OPERATION_UNARY_SQRT_TYPE);
+                ADD_UNARY(OPERATION_UNARY_TAN_TYPE);
+                ADD_UNARY(OPERATION_UNARY_TANH_TYPE);
+              }
+              else
+              {
+                ADD_UNARY(OPERATION_UNARY_ABS_TYPE);
+              }
+#undef ADD_UNARY
+
+              // binary operations
+#define ADD_BINARY(OPTYPE) handler.add(operator_string(OPTYPE), new ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::binary_element_op(&A, &B, &C, OPTYPE))
+              ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
+              ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
+              if (numeric_string == "float" || numeric_string == "double")
+              {
+                ADD_BINARY(OPERATION_BINARY_ELEMENT_POW_TYPE);
+              }
+#undef ADD_BINARY
+
+            }
+            return handlers_map.at(key);
+          }
+        };
+
+
+        /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
+        template <class TYPE>
+        class row_wise_reduction
+        {
+        public:
+          static device_specific::execution_handler & execution_handler(viennacl::ocl::context & ctx)
+          {
+            static std::map<cl_context, device_specific::execution_handler> handlers_map;
+            cl_context key = ctx.handle().get();
+            if(handlers_map.find(key) == handlers_map.end())
+            {
+              namespace ds = viennacl::device_specific;
+              viennacl::ocl::device const & device = ctx.current_device();
+              std::string program_name = viennacl::ocl::type_to_string<TYPE>::apply() + "_matrix_row_wise";
+              handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
+              ds::execution_handler & handler = handlers_map.at(key);
+
+              viennacl::matrix<TYPE, viennacl::column_major> A;
+              viennacl::vector<TYPE> x;
+              viennacl::vector<TYPE> y;
+              handler.add("mat_vec_T", new ds::row_wise_reduction_template(ds::builtin_database::row_wise_reduction_params<TYPE>(device, 'T'), 'T'), scheduler::preset::mat_vec_prod(&A, true, &x, &y));
+              handler.add("mat_vec_N", new ds::row_wise_reduction_template(ds::builtin_database::row_wise_reduction_params<TYPE>(device, 'N'), 'N'), scheduler::preset::mat_vec_prod(&A, false, &x, &y));
+
+            }
+            return handlers_map.at(key);
+          }
+        };
+
+        /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
+        template <class TYPE>
+        class matrix_prod
+        {
+        public:
+          static device_specific::execution_handler & execution_handler(bool is_row_major, viennacl::ocl::context & ctx)
+          {
+            static std::map<std::pair<bool, cl_context>, device_specific::execution_handler> handlers_map;
+            cl_context h = ctx.handle().get();
+            std::pair<bool, cl_context> key(is_row_major, h);
+            if(handlers_map.find(key) == handlers_map.end())
+            {
+              namespace ds = viennacl::device_specific;
+              viennacl::ocl::device const & device = ctx.current_device();
+              std::string program_name = viennacl::ocl::type_to_string<TYPE>::apply() + (is_row_major?"matrix_row":"matrix_col");
+              handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
+              ds::execution_handler & handler = handlers_map.at(key);
+
+              ds::matrix_product_template::parameters_type matrix_product_params_NN = ds::builtin_database::matrix_product_params<TYPE>(device, 'N', 'N');
+              ds::matrix_product_template::parameters_type matrix_product_params_TN = ds::builtin_database::matrix_product_params<TYPE>(device, 'T', 'N');
+              ds::matrix_product_template::parameters_type matrix_product_params_NT = ds::builtin_database::matrix_product_params<TYPE>(device, 'N', 'T');
+              ds::matrix_product_template::parameters_type matrix_product_params_TT = ds::builtin_database::matrix_product_params<TYPE>(device, 'T', 'T');
+
+              tools::shared_ptr<viennacl::matrix_base<TYPE> > pA;
+              if(is_row_major)
+                pA.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
+              else
+                pA.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+              viennacl::matrix_base<TYPE>& A = *pA;
+              viennacl::matrix<TYPE, viennacl::column_major> B;
+              viennacl::matrix<TYPE, viennacl::column_major> C;
+              TYPE alpha;
+              TYPE beta;
+
+              handler.add("prod_NN", new ds::matrix_product_template(matrix_product_params_NN, 'N', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C), device);
+              handler.add("prod_TN", new ds::matrix_product_template(matrix_product_params_TN, 'T', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C), device);
+              handler.add("prod_NT", new ds::matrix_product_template(matrix_product_params_NT, 'N', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C), device);
+              handler.add("prod_TT", new ds::matrix_product_template(matrix_product_params_TT, 'T', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C), device);
+
+            }
+            return handlers_map.at(key);
+          }
+        };
+
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for operations on/with dense matrix objects of type viennacl::matrix<>. */
-        template <typename NumericT, typename F>
-        struct matrix
+        template <typename TYPE, typename F>
+        struct matrix_legacy
         {
           static std::string program_name()
           {
-            return viennacl::ocl::type_to_string<NumericT>::apply() + "_matrix_" + detail::type_to_string(F());
+            return viennacl::ocl::type_to_string<TYPE>::apply() + "_matrix_" + detail::type_to_string(F());
           }
 
           static void init(viennacl::ocl::context & ctx)
           {
-            viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
-            std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
+            viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
+            std::string numeric_string = viennacl::ocl::type_to_string<TYPE>::apply();
             bool is_row_major = viennacl::is_row_major<F>::value;
 
             static std::map<cl_context, bool> init_done;
             if (!init_done[ctx.handle().get()])
             {
-              using namespace device_specific;
-
-              viennacl::ocl::device const & device = ctx.current_device();
-
               std::string source;
               source.reserve(8192);
 
-              viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
-
-              matrix_axpy_template::parameters_type matrix_axpy_params = builtin_database::matrix_axpy_params<NumericT>(device);
-              row_wise_reduction_template::parameters_type row_wise_reduction_params_N = builtin_database::row_wise_reduction_params<NumericT>(device, 'N');
-              row_wise_reduction_template::parameters_type row_wise_reduction_params_T = builtin_database::row_wise_reduction_params<NumericT>(device, 'T');
-              vector_axpy_template::parameters_type vector_axpy_params = builtin_database::vector_axpy_params<NumericT>(device);
-
-              viennacl::vector<NumericT> x;
-              viennacl::vector<NumericT> y;
-              viennacl::matrix<NumericT, F> A;
-              viennacl::matrix<NumericT, F> B;
-              viennacl::matrix<NumericT, F> C;
-              viennacl::scalar_matrix<NumericT> M(0,0,0,viennacl::context(ctx));
-              viennacl::scalar_vector<NumericT> sx(0,0,viennacl::context(ctx));
-              viennacl::scalar<NumericT> da;
-              viennacl::scalar<NumericT> db;
-              NumericT ha;
-              NumericT hb;
-              int hi = 0;
-              unsigned int hui = 0;
-
-              // fully parametrized kernels:
-              generate_ambm_impl(source, matrix_axpy_params, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "assign_",device);
-              generate_ambm_impl(source, matrix_axpy_params, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &ha, &da, &C, &hb, &db, "ip_add_",device);
-
-              source.append(matrix_axpy_template(matrix_axpy_params, "assign_cpu").generate(scheduler::preset::assign_cpu(&A, &M),device));
-              source.append(matrix_axpy_template(matrix_axpy_params, "matrix_diag_from_vector").generate(scheduler::preset::matrix_diag_from_vector(&x, &A, hi),device));
-              source.append(vector_axpy_template(vector_axpy_params, "matrix_row").generate(scheduler::preset::matrix_row(&x, &A, hui),device));
-              source.append(vector_axpy_template(vector_axpy_params, "matrix_column").generate(scheduler::preset::matrix_column(&x, &A, hui),device));
-              source.append(vector_axpy_template(vector_axpy_params, "matrix_diag_to_vector").generate(scheduler::preset::matrix_diag_to_vector(&x, &A, hi),device));
-              source.append(vector_axpy_template(vector_axpy_params, "diagonal_assign_cpu").generate(scheduler::preset::diagonal_assign_cpu(&A, &sx),device));
+              viennacl::ocl::append_double_precision_pragma<TYPE>(ctx, source);
 
               // kernels with mostly predetermined skeleton:
               generate_scaled_rank1_update(source, numeric_string, is_row_major, true);
               generate_scaled_rank1_update(source, numeric_string, is_row_major, false);
-
-              source.append(row_wise_reduction_template(row_wise_reduction_params_T, 'T', "mat_vec_T").generate(scheduler::preset::mat_vec_prod(&A, true, &x, &y), device));
-              source.append(row_wise_reduction_template(row_wise_reduction_params_N, 'N', "mat_vec_N").generate(scheduler::preset::mat_vec_prod(&A, false, &x, &y), device));
 
               if (numeric_string == "float" || numeric_string == "double")
               {

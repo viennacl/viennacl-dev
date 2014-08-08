@@ -58,95 +58,107 @@ namespace viennacl{
       };
 
     private:
-      virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
+      int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
-          if(optimized_parameters_.simd_width>1)
+          if(p_.simd_width>1)
             return TEMPLATE_INVALID_SIMD_WIDTH;
           return TEMPLATE_VALID;
       }
 
-      void core(unsigned int /*kernel_id*/, utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings) const
+      std::string generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings, unsigned int simd_width) const
       {
-//        statements_container::data_type::const_iterator sit;
-//        std::vector<mapping_type>::const_iterator mit;
+         std::string process_str;
+         utils::kernel_generation_stream stream;
 
-//        std::string init0, upper_bound0, inc0, init1, upper_bound1, inc1;
-//        fetching_loop_info(p_.fetching_policy, "M", 0, stream, init0, upper_bound0, inc0);
-//        fetching_loop_info(p_.fetching_policy, "N", 1, stream, init1, upper_bound1, inc1);
+         std::string init0, upper_bound0, inc0, init1, upper_bound1, inc1;
 
+         stream << " __attribute__((reqd_work_group_size(" << p_.local_size_0 << "," << p_.local_size_1 << ",1)))" << std::endl;
+         generate_prototype(stream, kernel_prefix, "unsigned int M, unsigned int N,", mappings, statements);
+         stream << "{" << std::endl;
+         stream.inc_tab();
 
+         tree_parsing::process(stream, PARENT_NODE_TYPE, "scalar", "#scalartype #namereg = *#pointer;", statements, mappings);
+         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#pointer += $OFFSET{#start1, #start2};", statements, mappings);
+         tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", "#pointer += #start;", statements, mappings);
 
-//        stream << "for(unsigned int i = " << init0 << "; i < " << upper_bound0 << " ; i += " << inc0 << ")" << std::endl;
-//        stream << "{" << std::endl;
-//        stream.inc_tab();
-//        stream << "for(unsigned int j = " << init1 << "; j < " << upper_bound1 << " ; j += " << inc1 << ")" << std::endl;
-//        stream << "{" << std::endl;
-//        stream.inc_tab();
+         fetching_loop_info(p_.fetching_policy, "M", stream, init0, upper_bound0, inc0, "get_global_id(0)", "get_global_size(0)");
+         stream << "for(unsigned int i = " << init0 << "; i < " << upper_bound0 << " ; i += " << inc0 << ")" << std::endl;
+         stream << "{" << std::endl;
+         stream.inc_tab();
+         fetching_loop_info(p_.fetching_policy, "N", stream, init1, upper_bound1, inc1, "get_global_id(1)", "get_global_size(1)");
+         stream << "for(unsigned int j = " << init1 << "; j < " << upper_bound1 << " ; j += " << inc1 << ")" << std::endl;
+         stream << "{" << std::endl;
+         stream.inc_tab();
 
-//        index_tuple idx("i","M","j","N");
-
-//        //Fetches entries to registers
-//        std::set<std::string>  cache;
-//        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-//          tree_parsing::read_write(tree_parsing::read_write_traversal::FETCH, p_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, PARENT_NODE_TYPE);
-
-//        unsigned int i = 0;
-//        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit){
-//          std::string str;
-//          tree_parsing::traverse(*sit, sit->root(), tree_parsing::evaluate_expression_traversal(idx, 0, str, mappings[i++]), false);
-//          stream << str << ";" << std::endl;
-//        }
-
-//        //Write back
-//        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-//          tree_parsing::read_write(tree_parsing::read_write_traversal::WRITE_BACK, p_.simd_width, "reg", cache,*sit, sit->root(), idx, stream, *mit, LHS_NODE_TYPE);
+         process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "($OFFSET{i*#stride1,j*#stride2}, #pointer);";
+         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", process_str, statements, mappings);
+         tree_parsing::process(stream, PARENT_NODE_TYPE, "vector_diag", "#scalartype #namereg = ((i + ((#diag_offset<0)?#diag_offset:0))!=(j-((#diag_offset>0)?#diag_offset:0)))?0:vload(min(i*#stride, j*#stride), #pointer);", statements, mappings);
 
 
-//        stream.dec_tab();
-//        stream << "}" << std::endl;
-//        stream.dec_tab();
-//        stream << "}" << std::endl;
+         std::map<std::string, std::string> accessors;
+         accessors["matrix"] = "#namereg";
+         accessors["vector_diag"] = "#namereg";
+         accessors["scalar"] = "#namereg";
+         tree_parsing::evaluate(stream, PARENT_NODE_TYPE, accessors, statements, mappings);
+
+         process_str = utils::append_width("vstore", simd_width) +"(#namereg, $OFFSET{i*#stride1,j*#stride2}, #pointer);";
+         tree_parsing::process(stream, LHS_NODE_TYPE, "matrix", process_str, statements, mappings);
+
+         stream.dec_tab();
+         stream << "}" << std::endl;
+         stream.dec_tab();
+         stream << "}" << std::endl;
+
+         stream.dec_tab();
+         stream << "}" << std::endl;
+
+         return stream.str();
       }
 
-      void add_kernel_arguments(statements_container const & /*statements*/, std::string & arguments_string) const
+      std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
-        arguments_string += generate_value_kernel_argument("unsigned int", "M");
-        arguments_string += generate_value_kernel_argument("unsigned int", "N");
+        std::vector<std::string> res;
+        res.push_back(generate_impl(kernel_prefix, statements, mappings, 1));
+        return res;
       }
 
-      void configure_impl(vcl_size_t /*kernel_id*/, viennacl::ocl::context & /*context*/, statements_container const & statements, viennacl::ocl::kernel & k, unsigned int & n_arg)  const
+    public:
+      matrix_axpy_template(matrix_axpy_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, binding_policy), up_to_internal_size_(false), p_(parameters){ }
+
+      void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
+      matrix_axpy_template::parameters_type const & parameters() const { return p_; }
+
+      void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs, statements_container const & statements)
       {
-        k.global_work_size(0,optimized_parameters_.local_size_0*optimized_parameters_.num_groups_0);
-        k.global_work_size(1,optimized_parameters_.local_size_1*optimized_parameters_.num_groups_1);
+        viennacl::ocl::kernel & kernel = programs[0].program().get_kernel(kernel_prefix);
+
+        kernel.local_work_size(0, p_.local_size_0);
+        kernel.local_work_size(1, p_.local_size_1);
+        kernel.global_work_size(0,p_.local_size_0*p_.num_groups_0);
+        kernel.global_work_size(1,p_.local_size_1*p_.num_groups_1);
 
         scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
+        unsigned int current_arg = 0;
         if(up_to_internal_size_)
         {
-          k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size1_fun())));
-          k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size2_fun())));
+          kernel.arg(current_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size1_fun())));
+          kernel.arg(current_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size2_fun())));
         }
         else
         {
-          k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::size1_fun())));
-          k.arg(n_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::size2_fun())));
+          kernel.arg(current_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::size1_fun())));
+          kernel.arg(current_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::size2_fun())));
         }
+
+        set_arguments(statements, kernel, current_arg);
+
+        viennacl::ocl::enqueue(kernel);
       }
 
-
-    public:
-      matrix_axpy_template(matrix_axpy_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(optimized_parameters_, binding_policy), up_to_internal_size_(false), optimized_parameters_(parameters){ }
-
-      void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
-      matrix_axpy_template::parameters_type const & parameters() const { return optimized_parameters_; }
-
-      void enqueue(std::string const & kernel_prefix, lazy_program_compiler & program_fallback, lazy_program_compiler & program_optimized, statements_container const & statements)
-      {
-
-      }
 
     private:
       bool up_to_internal_size_;
-      matrix_axpy_template::parameters_type optimized_parameters_;
+      matrix_axpy_template::parameters_type p_;
     };
 
   }

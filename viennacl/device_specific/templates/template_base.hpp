@@ -33,6 +33,7 @@
 #include "viennacl/ocl/infos.hpp"
 
 #include "viennacl/scheduler/forwards.h"
+#include "viennacl/scheduler/io.hpp"
 
 #include "viennacl/device_specific/lazy_program_compiler.hpp"
 #include "viennacl/device_specific/mapped_objects.hpp"
@@ -229,14 +230,22 @@ namespace viennacl
             if(binder_.bind(&viennacl::traits::handle(mat)))
             {
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::ld(mat)));
               if(mat.row_major())
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size2(mat)));
+              {
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+              }
               else
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::internal_size1(mat)));
-              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
-              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
-              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
-              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+              {
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
+              }
+
             }
           }
 
@@ -299,23 +308,22 @@ namespace viennacl
         std::string message_;
       };
 
-      static void fetching_loop_info(fetching_policy_type policy, std::string const & bound, unsigned int id, utils::kernel_generation_stream & stream, std::string & init, std::string & upper_bound, std::string & inc)
+      static void fetching_loop_info(fetching_policy_type policy, std::string const & bound, utils::kernel_generation_stream & stream, std::string & init, std::string & upper_bound, std::string & inc, std::string const & domain_id, std::string const & domain_size)
       {
-        std::string idstr = viennacl::tools::to_string(id);
         if(policy==FETCH_FROM_GLOBAL_STRIDED)
         {
-          init = "get_global_id(" + idstr + ")";
+          init = domain_id;
           upper_bound = bound;
-          inc = "get_global_size(" + idstr + ")";
+          inc = domain_size;
         }
         else if(policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
         {
-          std::string chunk_size = "chunk_size" + idstr;
-          std::string chunk_start = "chunk_start" + idstr;
-          std::string chunk_end = "chunk_end" + idstr;
+          std::string chunk_size = "chunk_size";
+          std::string chunk_start = "chunk_start";
+          std::string chunk_end = "chunk_end";
 
-          stream << "unsigned int " << chunk_size << " = (" + bound + " + get_global_size(" + idstr + ")-1)/get_global_size(" + idstr + ");" << std::endl;
-          stream << "unsigned int " << chunk_start << " = get_global_id(" + idstr + ")*" << chunk_size << ";" << std::endl;
+          stream << "unsigned int " << chunk_size << " = (" << domain_size << "-1)/" << domain_size << ";" << std::endl;
+          stream << "unsigned int " << chunk_start << " =" << domain_id << "*" << chunk_size << ";" << std::endl;
           stream << "unsigned int " << chunk_end << " = min(" << chunk_start << "+" << chunk_size << ", " << bound << ");" << std::endl;
           init = chunk_start;
           upper_bound = chunk_end;
@@ -323,7 +331,23 @@ namespace viennacl
         }
       }
 
-
+      static bool is_node_trans(scheduler::statement::container_type const & array, size_t root_idx, leaf_t leaf_type)
+      {
+        bool res = false;
+        scheduler::lhs_rhs_element scheduler::statement_node::*ptr;
+        if(leaf_type==LHS_NODE_TYPE)
+          ptr = &scheduler::statement_node::lhs;
+        else
+          ptr = &scheduler::statement_node::rhs;
+        scheduler::statement_node const * node = &array[root_idx];
+        while((node->*ptr).type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+        {
+          if(array[(node->*ptr).node_index].op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
+            res = !res;
+          node = &array[(node->*ptr).node_index];
+        }
+        return res;
+      }
 
     public:
 
@@ -343,11 +367,32 @@ namespace viennacl
       virtual unsigned int n_lmem_elements() const { return 0; }
 
       /** @brief Generates the body of the associated kernel function */
-      virtual void generate_impl(utils::kernel_generation_stream& stream, std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mapping, bool fallback) const = 0;
+      virtual std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mapping) const = 0;
 
     protected:
 
-      vcl_size_t vector_size(scheduler::statement_node const & node, bool up_to_internal_size)
+      static bool has_strided_access(statements_container const & statements)
+      {
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        {
+          //checks for vectors
+          std::vector<scheduler::lhs_rhs_element> vectors;
+          tree_parsing::traverse(*it, it->root(), tree_parsing::filter_elements(scheduler::DENSE_VECTOR_TYPE, vectors), true);
+          for(std::vector<scheduler::lhs_rhs_element>::iterator itt = vectors.begin() ; itt != vectors.end() ; ++itt)
+            if(utils::call_on_vector(*itt, utils::stride_fun())>1)
+              return true;
+
+          //checks for matrix
+          std::vector<scheduler::lhs_rhs_element> matrices;
+          tree_parsing::traverse(*it, it->root(), tree_parsing::filter_elements(scheduler::DENSE_MATRIX_TYPE, matrices), true);
+          for(std::vector<scheduler::lhs_rhs_element>::iterator itt = matrices.begin() ; itt != matrices.end() ; ++itt)
+            if(utils::call_on_matrix(*itt, utils::stride1_fun())>1 || utils::call_on_matrix(*itt, utils::stride2_fun())>2)
+              return true;
+        }
+        return false;
+      }
+
+      static vcl_size_t vector_size(scheduler::statement_node const & node, bool up_to_internal_size)
       {
         using namespace scheduler;
         using namespace utils;
@@ -365,15 +410,19 @@ namespace viennacl
           return up_to_internal_size?call_on_vector(node.lhs, internal_size_fun()):call_on_vector(node.lhs, size_fun());
       }
 
-      template<class LoopBodyType>
-      static void element_wise_loop_1D(utils::kernel_generation_stream & stream, LoopBodyType const & loop_body,
-                       fetching_policy_type fetch, unsigned int simd_width, std::string const & i, std::string const & bound)
+      //NB : templates are not used here because declaring a functor out of the generate() functions would be harder to read
+      struct loop_body_base
+      {
+        virtual void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const = 0;
+      };
+      static void element_wise_loop_1D(utils::kernel_generation_stream & stream, loop_body_base const & loop_body,
+                       fetching_policy_type fetch, unsigned int simd_width, std::string const & i, std::string const & bound, std::string const & domain_id, std::string const & domain_size)
       {
         std::string strwidth = tools::to_string(simd_width);
         std::string boundround = bound + "/" + strwidth;
 
         std::string init, upper_bound, inc;
-        fetching_loop_info(fetch, boundround, 0, stream, init, upper_bound, inc);
+        fetching_loop_info(fetch, boundround, stream, init, upper_bound, inc, domain_id, domain_size);
         stream << "for(unsigned int " << i << " = " << init << "; " << i << " < " << upper_bound << " ; " << i << " += " << inc << ")" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
@@ -383,32 +432,13 @@ namespace viennacl
 
         if(simd_width>1)
         {
-          stream << "for(unsigned int " << i << " = " << boundround << "*" << strwidth << " + get_global_id(0) ; " << i << " < " << bound << "; " << i << " += get_global_size(0))" << std::endl;
+          stream << "for(unsigned int " << i << " = " << boundround << "*" << strwidth << " + " << domain_id << " ; " << i << " < " << bound << "; " << i << " += " + domain_size + ")" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
           loop_body(stream, 1);
           stream.dec_tab();
           stream << "}" << std::endl;
         }
-      }
-
-      /** @brief Generates the code associated with this profile onto the provided stream */
-      std::string generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & /*device*/, bool fallback)
-      {
-        statements_container::data_type::const_iterator sit;
-        std::vector<mapping_type>::iterator mit;
-
-        utils::kernel_generation_stream stream;
-
-        //Create mapping
-        std::vector<mapping_type> mappings(statements.data().size());
-        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
-          tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
-
-        generate_impl(stream, kernel_prefix, statements, mappings, fallback);
-
-        return stream.str();
       }
 
     public:
@@ -464,9 +494,21 @@ namespace viennacl
 
 
 
-      std::string generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & device) { return generate(kernel_prefix, statements, device, false); }
-      std::string generate_fallback(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & device) { return generate(kernel_prefix, statements, device, true); }
-      virtual void enqueue(std::string const & kernel_prefix, lazy_program_compiler & program_fallback, lazy_program_compiler & program_optimized, statements_container const & statements) = 0;
+      std::vector<std::string> generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & device)
+      {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::iterator mit;
+
+        //Create mapping
+        std::vector<mapping_type> mappings(statements.data().size());
+        tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
+
+        return generate_impl(kernel_prefix, statements, mappings);
+      }
+
+      virtual void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs, statements_container const & statements) = 0;
 
     protected:
       template_base::parameters_type const & p_;
