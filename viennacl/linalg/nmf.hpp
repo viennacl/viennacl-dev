@@ -122,10 +122,10 @@ namespace viennacl
       vcl_size_t k = W.size2();
       conf.iters_ = 0;
 
-      if (viennacl::linalg::norm_frobenius(W) == 0.0)
+      if (!viennacl::linalg::norm_frobenius(W))
         W = viennacl::scalar_matrix<ScalarType>(W.size1(), W.size2(), (ScalarType) 1.0, ctx);
 
-      if (viennacl::linalg::norm_frobenius(H) == 0.0)
+      if (!viennacl::linalg::norm_frobenius(H))
         H = viennacl::scalar_matrix<ScalarType>(H.size1(), H.size2(), (ScalarType) 1.0, ctx);
 
       viennacl::matrix<ScalarType> wn(V.size1(), k, ctx);
