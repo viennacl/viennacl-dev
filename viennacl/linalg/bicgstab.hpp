@@ -31,7 +31,9 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/traits/clear.hpp"
 #include "viennacl/traits/size.hpp"
+#include "viennacl/traits/context.hpp"
 #include "viennacl/meta/result_of.hpp"
+#include "viennacl/linalg/iterative_operations.hpp"
 
 namespace viennacl
 {
