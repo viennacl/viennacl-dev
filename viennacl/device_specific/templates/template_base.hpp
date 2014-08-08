@@ -34,6 +34,7 @@
 
 #include "viennacl/scheduler/forwards.h"
 
+#include "viennacl/device_specific/lazy_program_compiler.hpp"
 #include "viennacl/device_specific/mapped_objects.hpp"
 #include "viennacl/device_specific/tree_parsing.hpp"
 #include "viennacl/device_specific/utils.hpp"
@@ -342,7 +343,7 @@ namespace viennacl
       virtual unsigned int n_lmem_elements() const { return 0; }
 
       /** @brief Generates the body of the associated kernel function */
-      virtual void generate_impl(utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mapping, bool fallback) const = 0;
+      virtual void generate_impl(utils::kernel_generation_stream& stream, std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mapping, bool fallback) const = 0;
 
     protected:
 
@@ -364,8 +365,35 @@ namespace viennacl
           return up_to_internal_size?call_on_vector(node.lhs, internal_size_fun()):call_on_vector(node.lhs, size_fun());
       }
 
+      template<class LoopBodyType>
+      static void element_wise_loop_1D(utils::kernel_generation_stream & stream, LoopBodyType const & loop_body,
+                       fetching_policy_type fetch, unsigned int simd_width, std::string const & i, std::string const & bound)
+      {
+        std::string strwidth = tools::to_string(simd_width);
+        std::string boundround = bound + "/" + strwidth;
+
+        std::string init, upper_bound, inc;
+        fetching_loop_info(fetch, boundround, 0, stream, init, upper_bound, inc);
+        stream << "for(unsigned int " << i << " = " << init << "; " << i << " < " << upper_bound << " ; " << i << " += " << inc << ")" << std::endl;
+        stream << "{" << std::endl;
+        stream.inc_tab();
+        loop_body(stream, simd_width);
+        stream.dec_tab();
+        stream << "}" << std::endl;
+
+        if(simd_width>1)
+        {
+          stream << "for(unsigned int " << i << " = " << boundround << "*" << strwidth << " + get_global_id(0) ; " << i << " < " << bound << "; " << i << " += get_global_size(0))" << std::endl;
+          stream << "{" << std::endl;
+          stream.inc_tab();
+          loop_body(stream, 1);
+          stream.dec_tab();
+          stream << "}" << std::endl;
+        }
+      }
+
       /** @brief Generates the code associated with this profile onto the provided stream */
-      std::string generate(statements_container const & statements, viennacl::ocl::device const & /*device*/, bool fallback)
+      std::string generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & /*device*/, bool fallback)
       {
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::iterator mit;
@@ -378,14 +406,14 @@ namespace viennacl
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
           tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
 
-        generate_impl(stream, statements, mappings, fallback);
+        generate_impl(stream, kernel_prefix, statements, mappings, fallback);
 
         return stream.str();
       }
 
     public:
       /** @brief The constructor */
-      template_base(template_base::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy) : parameters_(parameters), kernel_prefix_("_" + kernel_prefix), binding_policy_(binding_policy){ }
+      template_base(template_base::parameters_type const & parameters, binding_policy_t binding_policy) : p_(parameters), binding_policy_(binding_policy){ }
 
       /** @brief returns whether or not the profile has undefined behavior on particular device */
       int check_invalid(statements_container const & statements, viennacl::ocl::device const & device) const
@@ -404,12 +432,12 @@ namespace viennacl
         //Invalid work group size
         size_t max_workgroup_size = device.max_work_group_size();
         std::vector<size_t> max_work_item_sizes = device.max_work_item_sizes();
-        if(parameters_.local_size_0*parameters_.local_size_1 > max_workgroup_size)
+        if(p_.local_size_0*p_.local_size_1 > max_workgroup_size)
           return TEMPLATE_WORK_GROUP_SIZE_OVERFLOW;
-        if(parameters_.local_size_0 > max_work_item_sizes[0])
+        if(p_.local_size_0 > max_work_item_sizes[0])
           return TEMPLATE_LOCAL_SIZE_0_OVERFLOW;
 
-        if(parameters_.local_size_1 > max_work_item_sizes[1])
+        if(p_.local_size_1 > max_work_item_sizes[1])
           return TEMPLATE_LOCAL_SIZE_1_OVERFLOW;
 
         //Advice from the Intel guide
@@ -422,13 +450,13 @@ namespace viennacl
           if(device.vendor_id()==4098)
             warp_size = 64;
         }
-        if(((parameters_.local_size_0*parameters_.local_size_1)%warp_size)>0)
+        if(((p_.local_size_0*p_.local_size_1)%warp_size)>0)
           return TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE;
           
         //Invalid SIMD Width
-        if(parameters_.simd_width!=1 && parameters_.simd_width!=2 &&
-                    parameters_.simd_width!=4 && parameters_.simd_width!=8 &&
-                    parameters_.simd_width!=16)
+        if(p_.simd_width!=1 && p_.simd_width!=2 &&
+                    p_.simd_width!=4 && p_.simd_width!=8 &&
+                    p_.simd_width!=16)
           return TEMPLATE_INVALID_SIMD_WIDTH;
 
         return check_invalid_impl(device);
@@ -436,16 +464,12 @@ namespace viennacl
 
 
 
-      virtual bool requires_fallback(statements_container const & statements) const { return false; }
-      std::string generate(statements_container const & statements, viennacl::ocl::device const & device) { return generate(statements, device, false); }
-      std::string generate_fallback(statements_container const & statements, viennacl::ocl::device const & device) { return generate(statements, device, true); }
-      virtual void enqueue(viennacl::ocl::program & program_optimized, statements_container const & statements) = 0;
-      virtual void enqueue_fallback(viennacl::ocl::program & program_optimized, viennacl::ocl::program & program_fallback, statements_container const & statements) = 0;
-
+      std::string generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & device) { return generate(kernel_prefix, statements, device, false); }
+      std::string generate_fallback(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & device) { return generate(kernel_prefix, statements, device, true); }
+      virtual void enqueue(std::string const & kernel_prefix, lazy_program_compiler & program_fallback, lazy_program_compiler & program_optimized, statements_container const & statements) = 0;
 
     protected:
-      template_base::parameters_type const & parameters_;
-      std::string kernel_prefix_;
+      template_base::parameters_type const & p_;
       binding_policy_t binding_policy_;
     };
 

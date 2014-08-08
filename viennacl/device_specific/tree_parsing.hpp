@@ -86,9 +86,9 @@ namespace viennacl{
         public:
           typedef bool (*pred_t)(scheduler::statement_node const & node);
 
-          filter(pred_t pred, std::vector<vcl_size_t> & out) : pred_(pred), out_(out){ }
+          filter(pred_t pred, std::vector<size_t> & out) : pred_(pred), out_(out){ }
 
-          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t) const
+          void operator()(scheduler::statement const & statement, size_t root_idx, leaf_t) const
           {
              scheduler::statement_node const * root_node = &statement.array()[root_idx];
              if(pred_(*root_node))
@@ -96,11 +96,30 @@ namespace viennacl{
           }
       private:
           pred_t pred_;
-          std::vector<vcl_size_t> & out_;
+          std::vector<size_t> & out_;
+      };
+
+      class filter_elements : public traversal_functor
+      {
+        public:
+          filter_elements(scheduler::statement_node_subtype subtype, std::vector<scheduler::lhs_rhs_element> & out) : subtype_(subtype), out_(out) { }
+
+          void operator()(scheduler::statement const & statement, size_t root_idx, leaf_t) const
+          {
+             scheduler::statement_node const * root_node = &statement.array()[root_idx];
+             if(root_node->lhs.subtype==subtype_)
+               out_.push_back(root_node->lhs);
+             if(root_node->rhs.subtype==subtype_)
+               out_.push_back(root_node->rhs);
+          }
+      private:
+          scheduler::statement_node_subtype subtype_;
+          std::vector<scheduler::lhs_rhs_element> & out_;
       };
 
       /** @brief generate a string from an operation_node_type */
-      inline const char * evaluate(scheduler::operation_node_type type){
+      inline const char * evaluate(scheduler::operation_node_type type)
+      {
         using namespace scheduler;
         // unary expression
         switch(type){

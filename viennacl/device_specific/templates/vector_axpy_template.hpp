@@ -65,103 +65,107 @@ namespace viennacl
     private:
       virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
-          if(optimized_parameters_.fetching_policy==FETCH_FROM_LOCAL)
+          if(p_.fetching_policy==FETCH_FROM_LOCAL)
             return TEMPLATE_INVALID_FETCHING_POLICY_TYPE;
           return TEMPLATE_VALID;
       }
 
-      void loop_body(utils::kernel_generation_stream & stream, unsigned int simd_width, statements_container const & statements, std::vector<mapping_type> const & mappings) const
+      static bool has_strided_access(statements_container const & statements)
       {
-        std::string pw = tools::to_string(simd_width);
-        std::set<std::string> already_fetched;
-        statements_container::data_type::const_iterator sit;
-        std::vector<mapping_type>::const_iterator mit;
-
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          if(simd_width==1)
-            tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#scalartype #namereg = vload(i*#stride, #name);", stream, *mit, &already_fetched);
-          else
-            tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#scalartype" + pw + " #namereg = vload" + pw + "(i, #name);", stream, *mit, &already_fetched);
-
-        //Generates all the expression, in order
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
-          std::map<std::string, std::string> accessors;
-          accessors["vector"] = "#namereg";
-          accessors["scalar"] = "#namereg";
-          stream << tree_parsing::evaluate_expression(*sit, sit->root(), accessors, *mit, PARENT_NODE_TYPE) << ";" << std::endl;
+          //checks for vectors
+          std::vector<scheduler::lhs_rhs_element> vectors;
+          tree_parsing::traverse(*it, it->root(), tree_parsing::filter_elements(scheduler::DENSE_VECTOR_TYPE, vectors), false);
+          for(std::vector<scheduler::lhs_rhs_element>::iterator itt = vectors.begin() ; itt != vectors.end() ; ++itt)
+            if(utils::call_on_vector(*itt, utils::stride_fun())>1)
+              return true;
         }
-
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
-          if(simd_width==1)
-            tree_parsing::process(sit->root(),LHS_NODE_TYPE, *sit, "vector","vstore(#namereg, i*#stride, #name);", stream, *mit, NULL);
-          else
-            tree_parsing::process(sit->root(),LHS_NODE_TYPE, *sit, "vector","vstore" + pw +"(#namereg, i, #name);", stream, *mit, NULL);
-
+        return false;
       }
 
-      void generate_impl(utils::kernel_generation_stream& stream, statements_container const & statements, std::vector<mapping_type> const & mappings, bool fallback) const
+      struct loop_body
+      {
+        loop_body(statements_container const & _statements, std::vector<mapping_type> const & _mappings) : statements(_statements), mappings(_mappings) { }
+
+        void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const
+        {
+          std::string pw = tools::to_string(simd_width);
+          std::set<std::string> already_fetched;
+          statements_container::data_type::const_iterator sit;
+          std::vector<mapping_type>::const_iterator mit;
+
+          for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+            if(simd_width==1)
+              tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#scalartype #namereg = vload(i*#stride, #name);", stream, *mit, &already_fetched);
+            else
+              tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#scalartype" + pw + " #namereg = vload" + pw + "(i, #name);", stream, *mit, &already_fetched);
+
+          //Generates all the expression, in order
+          for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          {
+            std::map<std::string, std::string> accessors;
+            accessors["vector"] = "#namereg";
+            accessors["scalar"] = "#namereg";
+            stream << tree_parsing::evaluate_expression(*sit, sit->root(), accessors, *mit, PARENT_NODE_TYPE) << ";" << std::endl;
+          }
+
+          for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+            if(simd_width==1)
+              tree_parsing::process(sit->root(),LHS_NODE_TYPE, *sit, "vector","vstore(#namereg, i*#stride, #name);", stream, *mit, NULL);
+            else
+              tree_parsing::process(sit->root(),LHS_NODE_TYPE, *sit, "vector","vstore" + pw +"(#namereg, i, #name);", stream, *mit, NULL);
+
+        }
+
+      private:
+        statements_container const & statements;
+        std::vector<mapping_type> const & mappings;
+      };
+
+      void generate_impl(utils::kernel_generation_stream& stream, std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings, bool fallback) const
       {
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
-        std::string pw = tools::to_string(optimized_parameters_.simd_width);
 
-        stream << " __attribute__((reqd_work_group_size(" << optimized_parameters_.local_size_0 << ",1,1)))" << std::endl;
-        generate_prototype(stream, kernel_prefix_, "unsigned int N,", mappings, statements);
+        stream << " __attribute__((reqd_work_group_size(" << p_.local_size_0 << ",1,1)))" << std::endl;
+        generate_prototype(stream, kernel_prefix, "unsigned int N,", mappings, statements);
         stream << "{" << std::endl;
         stream.inc_tab();
 
-        stream << "//Fetch the pointed scalars" << std::endl;
+        //Fetch the pointed scalars
         std::set<std::string> already_fetched;
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
           tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "scalar", "#scalartype #namereg = *#name;", stream, *mit, &already_fetched);
 
-        stream << "//Increment vector offsets" << std::endl;
+        //Increment vector offsets
         for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
           tree_parsing::process(sit->root(),PARENT_NODE_TYPE, *sit, "vector", "#name += #start;", stream, *mit, NULL);
 
-        std::string init, upper_bound, inc;
-        fetching_loop_info(optimized_parameters_.fetching_policy, "N/"+pw, 0, stream, init, upper_bound, inc);
 
-        stream << "for(unsigned int i = " << init << "; i < " << upper_bound << " ; i += " << inc << ")" << std::endl;
-        stream << "{" << std::endl;
-        stream.inc_tab();
-        loop_body(stream, optimized_parameters_.simd_width, statements, mappings);
-        stream.dec_tab();
-        stream << "}" << std::endl;
-
-        if(optimized_parameters_.simd_width>1)
-        {
-          stream << "for(unsigned int i = N/" << pw << "*" << pw << " + get_global_id(0) ; i < N; i += get_global_size(0))" << std::endl;
-          stream << "{" << std::endl;
-          stream.inc_tab();
-          loop_body(stream, 1, statements, mappings);
-          stream.dec_tab();
-          stream << "}" << std::endl;
-        }
-
-
+        element_wise_loop_1D(stream, loop_body(statements, mappings), p_.fetching_policy, fallback?1:p_.simd_width, "i", "N");
 
         stream.dec_tab();
         stream << "}" << std::endl;
+      }
+
+      bool requires_fallback(statements_container const & statements) const
+      {
+        return has_strided_access(statements) && p_.simd_width > 1;
       }
 
     public:
-      vector_axpy_template(vector_axpy_template::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(optimized_parameters_, kernel_prefix, binding_policy), up_to_internal_size_(false), optimized_parameters_(parameters){ }
+      vector_axpy_template(vector_axpy_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, binding_policy), up_to_internal_size_(false), p_(parameters){ }
 
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
-      vector_axpy_template::parameters_type const & parameters() const { return optimized_parameters_; }
+      vector_axpy_template::parameters_type const & parameters() const { return p_; }
 
-      virtual bool requires_fallback(statements_container const & statements) const
+      void enqueue(std::string const & kernel_prefix, lazy_program_compiler & program_fallback, lazy_program_compiler & program_optimized,  statements_container const & statements)
       {
-        return false;
-      }
-
-      void enqueue(viennacl::ocl::program & program, statements_container const & statements)
-      {
-        viennacl::ocl::kernel & kernel = program.get_kernel(kernel_prefix_);
-        kernel.local_work_size(0, optimized_parameters_.local_size_0);
-        kernel.global_work_size(0, optimized_parameters_.local_size_0*optimized_parameters_.num_groups);
+        viennacl::ocl::program & program = requires_fallback(statements)?program_fallback.program():program_optimized.program();
+        viennacl::ocl::kernel & kernel = program.get_kernel(kernel_prefix);
+        kernel.local_work_size(0, p_.local_size_0);
+        kernel.global_work_size(0, p_.local_size_0*p_.num_groups);
         unsigned int current_arg = 0;
         scheduler::statement const & statement = statements.data().front();
         cl_uint size = static_cast<cl_uint>(vector_size(lhs_most(statement.array(), statement.root()), up_to_internal_size_));
@@ -170,14 +174,9 @@ namespace viennacl
         viennacl::ocl::enqueue(kernel);
       }
 
-      void enqueue_fallback(viennacl::ocl::program & program_optimized, viennacl::ocl::program & program_fallback, statements_container const & statements)
-      {
-
-      }
-
     private:
       bool up_to_internal_size_;
-      vector_axpy_template::parameters_type optimized_parameters_;
+      vector_axpy_template::parameters_type p_;
     };
 
   }

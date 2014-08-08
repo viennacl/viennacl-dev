@@ -604,15 +604,10 @@ private:
     }
 
 public:
-    matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans, std::string const & kernel_prefix) : template_base(optimized_parameters_, kernel_prefix, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), optimized_parameters_(parameters){ }
+    matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans) : template_base(optimized_parameters_, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), optimized_parameters_(parameters){ }
     matrix_product_template::parameters_type const & parameters() const { return optimized_parameters_; }
 
-    void enqueue(viennacl::ocl::program & program, statements_container const & statements)
-    {
-
-    }
-
-    void enqueue_fallback(viennacl::ocl::program & program_optimized, viennacl::ocl::program & program_fallback, statements_container const & statements)
+    void enqueue(std::string const & kernel_prefix, lazy_program_compiler & program_fallback, lazy_program_compiler & program_optimized, statements_container const & statements)
     {
 
     }

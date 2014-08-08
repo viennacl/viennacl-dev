@@ -23,7 +23,7 @@ namespace geforce_gt_540m{
 
 inline void add_4B(database_type<vector_axpy_template::parameters_type> & db)
 {
-  db.add_4B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::fermi, "GeForce GT 540M", vector_axpy_template::parameters_type(4, 512, 512, FETCH_FROM_GLOBAL_STRIDED));
+  db.add_4B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::fermi, "GeForce GT 540M", vector_axpy_template::parameters_type(1, 512, 512, FETCH_FROM_GLOBAL_STRIDED));
 }
 
 inline void add_4B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'T'>, char_to_type<'N'>)

@@ -134,20 +134,15 @@ namespace viennacl{
 
 
     public:
-      matrix_axpy_template(matrix_axpy_template::parameters_type const & parameters, std::string const & kernel_prefix, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(optimized_parameters_, kernel_prefix, binding_policy), up_to_internal_size_(false), optimized_parameters_(parameters){ }
+      matrix_axpy_template(matrix_axpy_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(optimized_parameters_, binding_policy), up_to_internal_size_(false), optimized_parameters_(parameters){ }
 
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
       matrix_axpy_template::parameters_type const & parameters() const { return optimized_parameters_; }
 
-      void enqueue(viennacl::ocl::program & program, statements_container const & statements)
+      void enqueue(std::string const & kernel_prefix, lazy_program_compiler & program_fallback, lazy_program_compiler & program_optimized, statements_container const & statements)
       {
 
       }
-
-       void enqueue_fallback(viennacl::ocl::program & program_optimized, viennacl::ocl::program & program_fallback, statements_container const & statements)
-       {
-
-       }
 
     private:
       bool up_to_internal_size_;
