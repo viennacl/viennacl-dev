@@ -121,6 +121,121 @@ namespace viennacl
       }
     }
 
+    ////////////////////////////////////////////
+
+    /** @brief Performs a joint vector update operation needed for an efficient pipelined CG algorithm.
+      *
+      * This routines computes for vectors 's', 'r', 'Ap':
+      *   s = r - alpha * Ap
+      * with alpha obtained from a reduction step on the 0th and the 3rd out of 6 chunks in inner_prod_buffer
+      * and runs the parallel reduction stage for computing inner_prod(s,s)
+      */
+    template <typename T>
+    void pipelined_bicgstab_update_s(vector_base<T> & s,
+                                     vector_base<T> & r,
+                                     vector_base<T> const & Ap,
+                                     vector_base<T> & inner_prod_buffer,
+                                     vcl_size_t buffer_chunk_size,
+                                     vcl_size_t buffer_chunk_offset)
+    {
+      switch (viennacl::traits::handle(s).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::pipelined_bicgstab_update_s(s, r, Ap, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Performs a joint vector update operation needed for an efficient pipelined BiCGStab algorithm.
+      *
+      * x_{j+1} = x_j + alpha * p_j + omega * s_j
+      * r_{j+1} = s_j - omega * t_j
+      * p_{j+1} = r_{j+1} + beta * (p_j - omega * q_j)
+      * and compute first stage of r_dot_r0 = <r_{j+1}, r_o^*> for use in next iteration
+      */
+     template <typename T>
+     void pipelined_bicgstab_vector_update(vector_base<T> & result, T alpha, vector_base<T> & p, T omega, vector_base<T> const & s,
+                                           vector_base<T> & residual, vector_base<T> const & As,
+                                           T beta, vector_base<T> const & Ap,
+                                           vector_base<T> const & r0star,
+                                           vector_base<T> & inner_prod_buffer,
+                                           vcl_size_t buffer_chunk_size)
+     {
+       switch (viennacl::traits::handle(s).get_active_handle_id())
+       {
+         case viennacl::MAIN_MEMORY:
+           viennacl::linalg::host_based::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer, buffer_chunk_size);
+           break;
+ #ifdef VIENNACL_WITH_OPENCL
+         case viennacl::OPENCL_MEMORY:
+           viennacl::linalg::opencl::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer, buffer_chunk_size);
+           break;
+ #endif
+ #ifdef VIENNACL_WITH_CUDA
+         case viennacl::CUDA_MEMORY:
+           viennacl::linalg::cuda::pipelined_bicgstab_vector_update(result, alpha, p, omega, s, residual, As, beta, Ap, r0star, inner_prod_buffer, buffer_chunk_size);
+           break;
+ #endif
+         case viennacl::MEMORY_NOT_INITIALIZED:
+           throw memory_exception("not initialised!");
+         default:
+           throw memory_exception("not implemented");
+       }
+     }
+
+
+    /** @brief Performs a joint vector update operation needed for an efficient pipelined CG algorithm.
+      *
+      * This routines computes for a matrix A and vectors 'p' and 'Ap':
+      *   Ap = prod(A, p);
+      * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
+      */
+    template <typename MatrixType, typename T>
+    void pipelined_bicgstab_prod(MatrixType const & A,
+                                 vector_base<T> const & p,
+                                 vector_base<T> & Ap,
+                                 vector_base<T> const & r0star,
+                                 vector_base<T> & inner_prod_buffer,
+                                 vcl_size_t buffer_chunk_size,
+                                 vcl_size_t buffer_chunk_offset)
+    {
+      switch (viennacl::traits::handle(p).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::pipelined_bicgstab_prod(A, p, Ap, r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+
   } //namespace linalg
 
 } //namespace viennacl
