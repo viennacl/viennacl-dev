@@ -61,7 +61,17 @@ namespace viennacl
                     current_device_id_(0),
                     default_device_num_(1),
                     pf_index_(0),
-                    current_queue_id_(0) {}
+                    current_queue_id_(0)
+      {
+        _cache_path = std::getenv("VIENNACL_CACHE_PATH");
+      }
+
+        //////// Get and set kernel cache path */
+        /** @brief Returns the compiled kernel cache path */
+        char* cache_path() const { return _cache_path; }
+
+        /** @brief Sets the compiled kernel cache path */
+        void cache_path(char* new_path) { _cache_path = new_path; }
 
         //////// Get and set default number of devices per context */
         /** @brief Returns the maximum number of devices to be set up for the context */
@@ -379,7 +389,6 @@ namespace viennacl
 
           cl_program temp = 0;
 
-          char * _cache_path = std::getenv("VIENNACL_CACHE_PATH");
           //
           // Retrieves the program in the cache
           //
@@ -719,6 +728,7 @@ namespace viennacl
 
 
         bool initialized_;
+        char * _cache_path;
         cl_device_type device_type_;
         viennacl::ocl::handle<cl_context> h_;
         std::vector< viennacl::ocl::device > devices_;
