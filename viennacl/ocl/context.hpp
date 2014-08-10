@@ -63,15 +63,18 @@ namespace viennacl
                     pf_index_(0),
                     current_queue_id_(0)
       {
-        _cache_path = std::getenv("VIENNACL_CACHE_PATH");
+        if (std::getenv("VIENNACL_CACHE_PATH"))
+          cache_path_ = std::getenv("VIENNACL_CACHE_PATH");
+        else
+          cache_path_ = "";
       }
 
         //////// Get and set kernel cache path */
         /** @brief Returns the compiled kernel cache path */
-        char* cache_path() const { return _cache_path; }
+        std::string cache_path() const { return cache_path_; }
 
         /** @brief Sets the compiled kernel cache path */
-        void cache_path(char* new_path) { _cache_path = new_path; }
+        void cache_path(std::string new_path) { cache_path_ = new_path; }
 
         //////// Get and set default number of devices per context */
         /** @brief Returns the maximum number of devices to be set up for the context */
@@ -392,10 +395,13 @@ namespace viennacl
           //
           // Retrieves the program in the cache
           //
-          if(_cache_path){
-            std::string cache_path = _cache_path;
+          if(cache_path_.size()){
+            #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
+            std::cout << "ViennaCL: Cache at " << cache_path_ << std::endl;
+            #endif
+
             std::string sha1 =  tools::sha1(source);
-            std::ifstream cached((cache_path+sha1).c_str(),std::ios::binary);
+            std::ifstream cached((cache_path_+sha1).c_str(),std::ios::binary);
             if(cached){
               size_t len;
               std::vector<unsigned char> buffer;
@@ -440,7 +446,7 @@ namespace viennacl
           }
           VIENNACL_ERR_CHECK(err);
 
-          if(_cache_path){
+          if(cache_path_.size()){
             std::size_t len;
 
             std::vector<std::size_t> sizes(devices_.size());
@@ -454,9 +460,8 @@ namespace viennacl
             clGetProgramInfo(temp,CL_PROGRAM_BINARIES,0,NULL,&len);
             clGetProgramInfo(temp,CL_PROGRAM_BINARIES,len,binaries.data(),NULL);
 
-            std::string cache_path = _cache_path;
             std::string sha1 =  tools::sha1(source);
-            std::ofstream cached((cache_path+sha1).c_str(),std::ios::binary);
+            std::ofstream cached((cache_path_+sha1).c_str(),std::ios::binary);
 
             cached.write((char*)&sizes[0], sizeof(size_t));
             cached.write((char*)binaries[0], std::streamsize(sizes[0]));
@@ -728,7 +733,7 @@ namespace viennacl
 
 
         bool initialized_;
-        char * _cache_path;
+        std::string cache_path_;
         cl_device_type device_type_;
         viennacl::ocl::handle<cl_context> h_;
         std::vector< viennacl::ocl::device > devices_;
