@@ -115,7 +115,7 @@ namespace viennacl
         std::vector<CPU_ScalarType> signs_v(n, 1);
         std::vector<CPU_ScalarType> cs1(n), ss1(n), cs2(n), ss2(n);
 
-        viennacl::vector<CPU_ScalarType> tmp1(n), tmp2(n);
+        viennacl::vector<CPU_ScalarType> tmp1(n, viennacl::traits::context(vcl_u)), tmp2(n, viennacl::traits::context(vcl_u));
 
         bool goto_test_conv = false;
 
@@ -458,7 +458,7 @@ namespace viennacl
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QL,
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QR)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(QL).context());
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(Ai).context());
 
         vcl_size_t row_num = Ai.size1();
         vcl_size_t col_num = Ai.size2();
@@ -467,10 +467,10 @@ namespace viennacl
         vcl_size_t big_to = std::max(row_num, col_num);
 
         //for storing householder vector
-        viennacl::vector<SCALARTYPE, ALIGNMENT> hh_vector(big_to);
+        viennacl::vector<SCALARTYPE, ALIGNMENT> hh_vector(big_to, viennacl::traits::context(Ai));
 
-        QL = viennacl::identity_matrix<SCALARTYPE>(QL.size1(), ctx);
-        QR = viennacl::identity_matrix<SCALARTYPE>(QR.size1(), ctx);
+        QL = viennacl::identity_matrix<SCALARTYPE>(QL.size1(), viennacl::traits::context(QL));
+        QR = viennacl::identity_matrix<SCALARTYPE>(QR.size1(), viennacl::traits::context(QR));
 
         for(vcl_size_t i = 0; i < to; i++)
         {

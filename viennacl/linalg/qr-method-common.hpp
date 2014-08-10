@@ -109,7 +109,8 @@ namespace viennacl
         typedef typename MatrixType::value_type                                   ScalarType;
         typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
 
-        viennacl::ocl::kernel & kernel = viennacl::ocl::get_kernel(viennacl::linalg::opencl::kernels::svd<CPU_ScalarType>::program_name(), SVD_MATRIX_TRANSPOSE_KERNEL);
+        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+        viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<CPU_ScalarType>::program_name(), SVD_MATRIX_TRANSPOSE_KERNEL);
 
         viennacl::ocl::enqueue(kernel(A,
                                       static_cast<cl_uint>(A.internal_size1()),
@@ -201,8 +202,8 @@ namespace viennacl
                        VectorType & sh
                       )
       {
-        viennacl::vector<SCALARTYPE, ALIGNMENT> D(dh.size());
-        viennacl::vector<SCALARTYPE, ALIGNMENT> S(sh.size());
+        viennacl::vector<SCALARTYPE, ALIGNMENT> D(dh.size(), viennacl::traits::context(A));
+        viennacl::vector<SCALARTYPE, ALIGNMENT> S(sh.size(), viennacl::traits::context(A));
 
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
         viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<SCALARTYPE>::program_name(), SVD_BIDIAG_PACK_KERNEL);
