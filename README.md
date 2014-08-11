@@ -8,14 +8,24 @@ This is the developer repository of ViennaCL including the latest features and c
 To build the developer version of ViennaCL, simply clone the repository and issue the following commands (the following steps are for Unix-based systems):
 <pre>
 $> cd viennacl-dev
-$> cd build
+$> mkdir build && cd build
 $> cmake ..
 $> make
 </pre>
 
 (Feel free to use parallel builds through `make -j4`, but keep in mind that each build might take up to one GB of RAM)
 
-Feedback from developers on Windows on the build process of the developer version are welcome.
+Follow similar steps on Windows:
+
+* Launch the CMake-GUI and point the source-directory to `viennacl-dev` and the build-directory to `viennacl-dev/build`.
+* Confirm that CMake should create the build-folder for you.
+* Click on `Configure` and select your compilation environment.
+* Provide any missing paths to Boost and/or OpenCL, or deselect `ENABLE_UBLAS` and/or `ENABLE_OPENCL`.
+* Click on `Configure` again and then on `Generate`.
+* You will now find the generated project files in the build-folder, which you process with your compiler environment.
+
+(Feedback from developers on Windows on the build process of the developer version are welcome)
+
 
 System requirements for the developer version:
 
