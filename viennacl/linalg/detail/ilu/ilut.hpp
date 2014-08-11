@@ -303,7 +303,8 @@ namespace viennacl
       typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
 
       public:
-        ilut_precond(MatrixType const & mat, ilut_tag const & tag) : tag_(tag), LU(mat.size1(), mat.size2())
+        ilut_precond(MatrixType const & mat, ilut_tag const & tag)
+          : tag_(tag), LU(mat.size1(), mat.size2(), viennacl::traits::context(mat))
         {
           //initialize preconditioner:
           //std::cout << "Start GPU precond" << std::endl;
@@ -365,7 +366,7 @@ namespace viennacl
           }
           else //we need to copy to CPU
           {
-            viennacl::compressed_matrix<ScalarType> cpu_mat(mat.size1(), mat.size2());
+            viennacl::compressed_matrix<ScalarType> cpu_mat(mat.size1(), mat.size2(), viennacl::traits::context(mat));
             viennacl::switch_memory_context(cpu_mat, host_context);
 
             cpu_mat = mat;

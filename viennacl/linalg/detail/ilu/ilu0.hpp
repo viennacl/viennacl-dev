@@ -194,7 +194,8 @@ namespace viennacl
         typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;
 
       public:
-        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag) : tag_(tag), LU(mat.size1(), mat.size2())
+        ilu0_precond(MatrixType const & mat, ilu0_tag const & tag)
+          : tag_(tag), LU(mat.size1(), mat.size2(), viennacl::traits::context(mat))
         {
           //initialize preconditioner:
           //std::cout << "Start GPU precond" << std::endl;
