@@ -1121,8 +1121,6 @@ namespace viennacl
           return device_ == other;
         }
 
-      private:
-
         /** @brief Helper function converting a floating point configuration to a string */
         std::string fp_config_to_string(cl_device_fp_config conf) const
         {
@@ -1216,6 +1214,8 @@ namespace viennacl
 
           return oss.str();
         }
+
+    private:
 
         void flush_cache()
         {
