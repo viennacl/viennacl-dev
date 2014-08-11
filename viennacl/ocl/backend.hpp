@@ -75,6 +75,9 @@ namespace viennacl
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Getting current_context with id " << current_context_id_ << std::endl;
           #endif
+          #if defined(VIENNACL_NO_CURRENT_CONTEXT)
+          assert(false && bool("ViennaCL: current_context called when disabled"));
+          #endif
           return backend<dummy>::context(current_context_id_);
         }
 
