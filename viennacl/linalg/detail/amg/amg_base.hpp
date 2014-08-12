@@ -1041,16 +1041,12 @@ namespace viennacl
               // If point is not in the list then stop.
               if (iter == pointlist.end()) return;
 
-              // Save iterator and decrement
-              ListType::iterator iter2 = iter;
-              iter2--;
-
               // Point has to be erased first as changing the value does not re-order the std::set
               pointlist.erase(iter);
               point->add_influence(add);
 
               // Insert point back into the list. Using the iterator improves performance. The new position has to be at the same position or to the right of the old.
-              pointlist.insert(iter2,point);
+              pointlist.insert(point);
             }
             // Make *point to C point and remove from sorted list
             void make_cpoint(amg_point* point)
