@@ -120,6 +120,11 @@ namespace viennacl
               return process(accessors.at(type_key_));
           }
 
+          std::string const & name() const
+          {
+            return name_;
+          }
+
         protected:
           std::string name_;
           std::string scalartype_;
@@ -344,6 +349,11 @@ namespace viennacl
                 register_attribute(stride1_, "#stride1", name_ + "_stride1");
                 register_attribute(stride2_, "#stride2", name_ + "_stride2");
               }
+          }
+
+          bool row_major() const
+          {
+            return row_major_;
           }
 
         private:

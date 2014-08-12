@@ -399,80 +399,7 @@ namespace viennacl
                                 );
         }
 
-//        // C = A * B, using fast kernel for NVIDIA
-//        template <typename T1, typename T2, typename T3, typename ScalarType >
-//        void prod_fast_kernel(const T1 & A,
-//                              const T2 & B,
-//                              T3 & C,
-//                              ScalarType alpha,
-//                              ScalarType beta,
-//                              std::string kernel_name)
-//        {
-//          typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
 
-//          viennacl::ocl::kernel & k = kernel_for_matrix_prod(A, B, C, kernel_name);
-
-//          k.global_work_size(0, viennacl::traits::size2(C) / 4); //column blocks
-//          k.global_work_size(1, viennacl::traits::size1(C) / 4); //row blocks
-//          k.local_work_size(0, 16);  //columns
-//          k.local_work_size(1, 4);   //rows
-
-//          cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
-//          cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
-
-//          viennacl::ocl::enqueue(k(cl_alpha,
-//                                  viennacl::traits::opencl_handle(A),
-//                                  cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
-//                                  cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
-//                                  cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
-//                                  cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
-
-//                                  viennacl::traits::opencl_handle(B),
-//                                  cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)),
-//                                  cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
-//                                  cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
-//                                  cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
-
-//                                  cl_beta,
-//                                  viennacl::traits::opencl_handle(C),
-//                                  cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)),
-//                                  cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
-//                                  cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
-//                                  cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
-//                                  )
-//                                );
-//        }
-
-//        template <typename T1, typename T2, typename T3, typename ScalarType >
-//        void prod(const T1 & A,
-//                  const T2 & B,
-//                  T3 & C,
-//                  ScalarType alpha,
-//                  ScalarType beta,
-//                  std::string fast_kernel_name,
-//                  std::string slow_kernel_name)
-//        {
-//          if (   (viennacl::traits::size1(A) < 64)
-//              || (viennacl::traits::size2(A) < 64)
-//              || (viennacl::traits::size1(B) < 64)
-//              || (viennacl::traits::size2(B) < 64) )   //there is most likely not enough to compute, rendering kernel launch overhead considerable
-//          {
-//            prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
-//          }
-//          else if (   (viennacl::traits::size1(A) % 64 == 0)
-//                   && (viennacl::traits::size2(A) % 64 == 0)
-//                   && (viennacl::traits::size1(B) % 64 == 0)
-//                   && (viennacl::traits::size2(B) % 64 == 0) )   // allows the use of the fast NVIDIA kernel
-//          {
-//            prod_fast_kernel(A, B, C, alpha, beta, fast_kernel_name);
-//            //prod_slow_kernel(A, B, C, slow_kernel_name);
-//          }
-//          else //TODO: use four kernels
-//          {
-//            prod_slow_kernel(A, B, C, alpha, beta, slow_kernel_name);
-//          }
-
-//        }
       } // namespace detail
 
 
@@ -516,7 +443,7 @@ namespace viennacl
           kernel_prefix+=cBt;
 
           scheduler::statement statement = scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C);
-          kernels::matrix<NumericT>::execution_handler(C.row_major(), viennacl::traits::opencl_context(C)).execute(kernel_prefix, statement);
+          kernels::matrix_prod<NumericT>::execution_handler(C.row_major(), viennacl::traits::opencl_context(C)).execute(kernel_prefix, statement);
         }
       }
 

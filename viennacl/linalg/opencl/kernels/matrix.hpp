@@ -683,7 +683,7 @@ namespace viennacl
             {
               namespace ds = viennacl::device_specific;
               viennacl::ocl::device const & device = ctx.current_device();
-              std::string program_name = viennacl::ocl::type_to_string<TYPE>::apply() + (is_row_major?"matrix_row":"matrix_col");
+              std::string program_name = viennacl::ocl::type_to_string<TYPE>::apply() + (is_row_major?"_matrix_prod_row":"_matrix_prod_col");
               handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
               ds::execution_handler & handler = handlers_map.at(key);
 
@@ -692,21 +692,21 @@ namespace viennacl
               ds::matrix_product_template::parameters_type matrix_product_params_NT = ds::builtin_database::matrix_product_params<TYPE>(device, 'N', 'T');
               ds::matrix_product_template::parameters_type matrix_product_params_TT = ds::builtin_database::matrix_product_params<TYPE>(device, 'T', 'T');
 
-              tools::shared_ptr<viennacl::matrix_base<TYPE> > pA;
+              tools::shared_ptr<viennacl::matrix_base<TYPE> > pC;
               if(is_row_major)
-                pA.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
+                pC.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
               else
-                pA.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
-              viennacl::matrix_base<TYPE>& A = *pA;
+                pC.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+              viennacl::matrix_base<TYPE>& C = *pC;
+              viennacl::matrix<TYPE, viennacl::column_major> A;
               viennacl::matrix<TYPE, viennacl::column_major> B;
-              viennacl::matrix<TYPE, viennacl::column_major> C;
               TYPE alpha;
               TYPE beta;
 
-              handler.add("prod_NN", new ds::matrix_product_template(matrix_product_params_NN, 'N', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C), device);
-              handler.add("prod_TN", new ds::matrix_product_template(matrix_product_params_TN, 'T', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C), device);
-              handler.add("prod_NT", new ds::matrix_product_template(matrix_product_params_NT, 'N', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C), device);
-              handler.add("prod_TT", new ds::matrix_product_template(matrix_product_params_TT, 'T', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C), device);
+              handler.add("prod_NN", new ds::matrix_product_template(matrix_product_params_NN, 'N', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C));
+              handler.add("prod_TN", new ds::matrix_product_template(matrix_product_params_TN, 'T', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C));
+              handler.add("prod_NT", new ds::matrix_product_template(matrix_product_params_NT, 'N', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C));
+              handler.add("prod_TT", new ds::matrix_product_template(matrix_product_params_TT, 'T', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C));
 
             }
             return handlers_map.at(key);

@@ -793,47 +793,47 @@ int test(Epsilon const& epsilon)
 {
   int ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=row, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=row, B=row, C=row ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::row_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=row, B=row, C=col ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::row_major, viennacl::row_major, viennacl::column_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=col, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=row, B=col, C=row ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::row_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=row, B=col, C=col ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::row_major, viennacl::column_major, viennacl::column_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=col, B=row, C=row ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::row_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=row, C=col ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::column_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=col, B=row, C=col ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::column_major, viennacl::row_major, viennacl::column_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
   std::cout << "///////////////////////////////////////" << std::endl;
   std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
