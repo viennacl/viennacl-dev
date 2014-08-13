@@ -458,8 +458,6 @@ namespace viennacl
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QL,
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QR)
       {
-        viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(Ai).context());
-
         vcl_size_t row_num = Ai.size1();
         vcl_size_t col_num = Ai.size2();
 
