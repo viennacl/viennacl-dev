@@ -4,7 +4,7 @@
 #
 # Part 1: Tutorials which work without OpenCL as well:
 #
-foreach(tut bandwidth-reduction blas1 scheduler wrap-host-buffer)
+foreach(tut bandwidth-reduction blas1 scheduler fft wrap-host-buffer)
    add_executable(${tut} ${tut}.cpp)
    if (ENABLE_OPENCL)
      target_link_libraries(${tut} ${OPENCL_LIBRARIES})
@@ -50,7 +50,7 @@ endif()
 # Part 2: Tutorials which work only with OpenCL enabled:
 #
 if (ENABLE_OPENCL)
-  foreach(tut custom-kernels custom-context fft viennacl-info)
+  foreach(tut custom-kernels custom-context viennacl-info)
     add_executable(${tut} ${tut}.cpp)
     target_link_libraries(${tut} ${OPENCL_LIBRARIES})
     set_target_properties(${tut} PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
@@ -75,7 +75,7 @@ endif (ENABLE_OPENCL)
 #
 
 if (ENABLE_CUDA)
-  foreach(tut blas1 wrap-cuda-buffer)
+  foreach(tut blas1 wrap-cuda-buffer fft)
     cuda_add_executable(${tut}-cuda ${tut}.cu)
   endforeach()
 
