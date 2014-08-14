@@ -103,6 +103,15 @@ namespace viennacl
           return reinterpret_cast<const ScalarType *>(h.get());
         }
 
+ 		template <typename T>
+        struct type_to_type2;
+
+        template <>
+        struct type_to_type2<float> { typedef float2  type; };
+
+        template <>
+        struct type_to_type2<double> { typedef double2  type; };
+        
         //template <typename ScalarType>
         //ScalarType cuda_arg(ScalarType const & val)  { return val; }
 
