@@ -268,6 +268,16 @@ namespace viennacl{
         template<class T> result_type operator()(T const &t) const { return viennacl::traits::stride(t); }
       };
 
+      struct start1_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::start1(t); }
+      };
+
+      struct start2_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::start2(t); }
+      };
+
       struct stride1_fun{
         typedef vcl_size_t result_type;
         template<class T> result_type operator()(T const &t) const { return viennacl::traits::stride1(t); }

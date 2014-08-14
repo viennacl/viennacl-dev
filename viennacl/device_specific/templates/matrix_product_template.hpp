@@ -224,9 +224,8 @@ private:
         if(fallback)
             stream << "if(get_global_id(0)>=M || get_global_id(1)>=N) return;" << std::endl;
 
-        stream << A->process("#pointer += #start1 + #start2*#ld;") << std::endl;
-        stream << B->process("#pointer += #start1 + #start2*#ld;") << std::endl;
-        stream << C->process("#pointer += #start1 + #start2*#ld;") << std::endl;
+        tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#pointer += #start1 + #start2*#ld;", statements, mappings);
+        tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#ld *= #stride2;", statements, mappings);
 
         ///Result Values
         stream << C->process("#scalartype rC[" + to_string(p.mS) + "][" + to_string(p.nS) + "] = {{(#scalartype)0}};") << std::endl;
@@ -250,6 +249,7 @@ private:
         stream << "uint gidy = get_group_id(1);" << std::endl;
         stream << "uint idx = get_local_id(0);" << std::endl;
         stream << "uint idy = get_local_id(1);" << std::endl;
+
         if(p.A_fetching_policy==FETCH_FROM_LOCAL || p.B_fetching_policy==FETCH_FROM_LOCAL)
         {
             stream << std::endl;
@@ -270,14 +270,14 @@ private:
 
           case FETCH_FROM_GLOBAL_CONTIGUOUS:
             if(A_trans_=='N')
-                stream << A->process("#pointer += gidx*" + to_string(p.mL) + "+ idx*" + to_string(p.mS) + ";") << std::endl;
+                stream << A->process("#pointer += (gidx*" + to_string(p.mL) + "+ idx*" + to_string(p.mS) + ")*#stride1;") << std::endl;
             else
                 stream << A->process("#pointer += (gidx*" + to_string(p.mL) + "+ idx*" + to_string(p.mS) + ")*#ld;") << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(A_trans_=='N')
-                stream << A->process("#pointer += gidx*" + to_string(p.mL) + "+ idx*" + widthstr + ";") << std::endl;
+                stream << A->process("#pointer += (gidx*" + to_string(p.mL) + "+ idx*" + widthstr + ")*#stride1;") << std::endl;
             else
                 stream << A->process("#pointer += (gidx*" + to_string(p.mL) + "+ idx)*#ld;") << std::endl;
             break;
@@ -296,14 +296,14 @@ private:
 
           case FETCH_FROM_GLOBAL_CONTIGUOUS:
             if(B_trans_=='T')
-                stream << B->process("#pointer += gidy*" + to_string(p.nL) + "+ idy*" + to_string(p.nS) + ";") << std::endl;
+                stream << B->process("#pointer += (gidy*" + to_string(p.nL) + "+ idy*" + to_string(p.nS) + ")*#stride1;") << std::endl;
             else
                 stream << B->process("#pointer += (gidy*" + to_string(p.nL) + "+ idy*" + to_string(p.nS) + ")*#ld;") << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(B_trans_=='T')
-                stream << B->process("#pointer += gidy*" + to_string(p.nL) + "+ idy*" + widthstr + ";") << std::endl;
+                stream << B->process("#pointer += (gidy*" + to_string(p.nL) + "+ idy*" + widthstr + ")*#stride1;") << std::endl;
             else
                 stream << B->process("#pointer += (gidy*" + to_string(p.nL) + "+ idy)*#ld;") << std::endl;
             break;
@@ -393,16 +393,16 @@ private:
 
           case FETCH_FROM_GLOBAL_CONTIGUOUS:
             if(A_trans_=='N')
-                stream << A->process("rA[kk][mm] = " + vload + "(mm, #pointer + kk*#ld);") << std::endl;
+                stream << A->process("rA[kk][mm] = " + vload + "(mm*#stride1, #pointer + kk*#ld);") << std::endl;
             else
-                stream << A->process("rA[kk][mm] = " + vload + "(kk, #pointer + mm*#ld);") << std::endl;
+                stream << A->process("rA[kk][mm] = " + vload + "(kk*#stride1, #pointer + mm*#ld);") << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(A_trans_=='N')
-                stream << A->process("rA[kk][mm] = " + vload + "(mm*" + to_string(p.local_size_0) + ", #pointer + kk*#ld);") << std::endl;
+                stream << A->process("rA[kk][mm] = " + vload + "(mm*" + to_string(p.local_size_0) + "*#stride1, #pointer + kk*#ld);") << std::endl;
             else
-                stream << A->process("rA[kk][mm] = " + vload + "(kk , #pointer + mm*" + to_string(p.local_size_0) + "*#ld);") << std::endl;
+                stream << A->process("rA[kk][mm] = " + vload + "(kk*#stride1 , #pointer + mm*" + to_string(p.local_size_0) + "*#ld);") << std::endl;
             break;
 
           default:
@@ -427,16 +427,16 @@ private:
 
           case FETCH_FROM_GLOBAL_CONTIGUOUS:
             if(B_trans_=='T')
-                stream << B->process("rB[kk][nn] = " + vload + "(nn, #pointer + kk*#ld);") << std::endl;
+                stream << B->process("rB[kk][nn] = " + vload + "(nn*#stride1, #pointer + kk*#ld);") << std::endl;
             else
-                stream << B->process("rB[kk][nn] = " + vload + "(kk, #pointer + nn*#ld);") << std::endl;
+                stream << B->process("rB[kk][nn] = " + vload + "(kk*#stride1, #pointer + nn*#ld);") << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(B_trans_=='T')
-                stream << B->process("rB[kk][nn] = " + vload + "(nn*" + to_string(p.local_size_1) + ", #pointer  + kk*#ld);") << std::endl;
+                stream << B->process("rB[kk][nn] = " + vload + "(nn*" + to_string(p.local_size_1) + "*#stride1, #pointer  + kk*#ld);") << std::endl;
             else
-                stream << B->process("rB[kk][nn] = " + vload + "(kk, #pointer + nn*" + to_string(p.local_size_1) + "*#ld);") << std::endl;
+                stream << B->process("rB[kk][nn] = " + vload + "(kk*#stride1, #pointer + nn*" + to_string(p.local_size_1) + "*#ld);") << std::endl;
             break;
 
           default: break;
@@ -456,7 +456,7 @@ private:
             if(A_trans_=='N')
                 stream << A->process("#pointer += " + to_string(p.kS) + "*#ld;") << std::endl;
             else
-                stream << A->process("#pointer += " + to_string(p.kS) + ";") << std::endl;
+                stream << A->process("#pointer += " + to_string(p.kS) + "*#stride1;") << std::endl;
             break;
         }
 
@@ -471,7 +471,7 @@ private:
             if(B_trans_=='T')
                 stream << B->process("#pointer += " + to_string(p.kS) + "*#ld;") << std::endl;
             else
-                stream << B->process("#pointer += " + to_string(p.kS) + ";") << std::endl;
+                stream << B->process("#pointer += " + to_string(p.kS) + "*#stride1;") << std::endl;
             break;
         }
 
@@ -511,7 +511,7 @@ private:
             if(A_trans_=='N')
                 stream << A->process("#pointer += " + to_string(p.kL) + "*#ld;") << std::endl;
             else
-                stream << A->process("#pointer += " + to_string(p.kL) + ";") << std::endl;
+                stream << A->process("#pointer += " + to_string(p.kL) + "*#stride1;") << std::endl;
         }
 
         if(p.B_fetching_policy==FETCH_FROM_LOCAL)
@@ -519,7 +519,7 @@ private:
             if(B_trans_=='T')
                 stream << B->process("#pointer += " + to_string(p.kL) + "*#ld;") << std::endl;
             else
-                stream << B->process("#pointer += " + to_string(p.kL) + ";") << std::endl;
+                stream << B->process("#pointer += " + to_string(p.kL) + "*#stride1;") << std::endl;
         }
 
         stream.dec_tab();
@@ -533,8 +533,8 @@ private:
 
           stream << C->process("#pointer += gidx*" + to_string(p.mL) + "*#ld;") << std::endl;
           stream << C->process("#pointer += idx*" + to_string(ministartstride0) + "*#ld;") << std::endl;
-          stream << C->process("#pointer += gidy*" + to_string(p.nL) + ";") << std::endl;
-          stream << C->process("#pointer += idy*" + to_string(ministartstride1) + ";") << std::endl;
+          stream << C->process("#pointer += gidy*" + to_string(p.nL) + "*#stride1;") << std::endl;
+          stream << C->process("#pointer += idy*" + to_string(ministartstride1) + "*#stride1;") << std::endl;
 
           for(unsigned int n=0 ; n < p.nS ; ++n){
               for(unsigned int m=0 ; m < p.mS ; ++m)
@@ -555,8 +555,8 @@ private:
           unsigned int ministartstride0 = p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p.mS:p.simd_width;
           unsigned int ministartstride1 = p.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p.nS:p.simd_width;
 
-          stream << C->process("#pointer += gidx*" + to_string(p.mL) + ";") << std::endl;
-          stream << C->process("#pointer += idx*" + to_string(ministartstride0) + ";") << std::endl;
+          stream << C->process("#pointer += gidx*" + to_string(p.mL) + "*#stride1;") << std::endl;
+          stream << C->process("#pointer += idx*" + to_string(ministartstride0) + "*#stride1;") << std::endl;
           stream << C->process("#pointer += gidy*" + to_string(p.nL) + "*#ld;") << std::endl;
           stream << C->process("#pointer += idy*" + to_string(ministartstride1) + "*#ld;") << std::endl;
 
@@ -570,14 +570,14 @@ private:
               }
 
               if((m+1)%p.simd_width>0 || p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
-                  stream << C->process("#pointer+=1;") << std::endl;
+                  stream << C->process("#pointer +=1 ;") << std::endl;
               else
                   stream << C->process("#pointer += " + to_string((p.local_size_0*p.simd_width) - (p.simd_width-1)) + ";") << std::endl;
           }
         }
 
-        stream << "}" << std::endl;
         stream.dec_tab();
+        stream << "}" << std::endl;
 
         return stream.str();
     }
@@ -595,6 +595,14 @@ private:
                        scheduler::lhs_rhs_element& eA, scheduler::lhs_rhs_element& eB, scheduler::lhs_rhs_element& eC, scheduler::lhs_rhs_element& ebeta,
                        matrix_base<T> const & A, matrix_base<T> const & B, matrix_base<T> const & C, T beta, bool fallback)
     {
+        if(A.size1()==0 || A.size2()==0 || B.size1()==0 || B.size2()==0 || C.size1()==0 || C.size2()==0)
+            return;
+
+//        std::cout << "-----" << std::endl;
+//        std::cout << "C[" << C.start1() << ":" << C.start1()+C.size1() << "," << C.start2() << ":" << C.start2() + C.size2() << "]" <<
+//                  "=" << "A[" << A.start1() << ":" << A.start1()+A.size1() << "," << A.start2() << ":" << A.start2() + A.size2() <<  "]" <<
+//                     "B[" << B.start1() << ":" << B.start1()+B.size1() << "," << B.start2() << ":" << B.start2() + B.size2() << "]" << std::endl;
+
         viennacl::ocl::kernel& kernel = fallback?*kernels[1]:*kernels[0];
 
         scheduler::statement::assign_element(eA, A);
@@ -602,12 +610,7 @@ private:
         scheduler::statement::assign_element(eC, C);
         scheduler::statement::assign_element(ebeta, beta);
 
-        std::cout << "----------------" << std::endl;
-        std::cout << "A - " << "[" <<  A.start1() << " " << A.start1() + A.size1() << "," << A.start2() << " " << A.start2() + A.size2()  << "]" << std::endl;
-        std::cout << "B - " << "[" <<  B.start1() << " " << B.start1() + B.size1() << "," << B.start2() << " " << B.start2() + B.size2()  << "]" << std::endl;
-        std::cout << "C - " << "[" <<  C.start1() << " " << C.start1() + C.size1() << "," << C.start2() << " " << C.start2() + C.size2()  << "]" << std::endl;
-        std::cout << "beta " << beta << std::endl;
-        std::cout << "----------------" << std::endl;
+        vcl_size_t K = A.size1()==B.size1()||A.size1()==B.size2()?A.size1():A.size2();
 
         if(fallback)
         {
@@ -622,49 +625,60 @@ private:
         unsigned int current_arg = 0;
         kernel.arg(current_arg++, cl_uint(C.size1()));
         kernel.arg(current_arg++, cl_uint(C.size2()));
-        kernel.arg(current_arg++, cl_uint(A.size2()));
+        kernel.arg(current_arg++, cl_uint(K));
         set_arguments(statement, kernel, current_arg);
         viennacl::ocl::enqueue(kernel);
 
     }
 
-    template<class T> matrix_range<viennacl::matrix_base<T> >  create_range(viennacl::matrix_base<T>* scheduler::lhs_rhs_element::*ptr, scheduler::lhs_rhs_element const & element, range const & r0, range const & r1, char trans)
+    template<class T> matrix_range<viennacl::matrix_base<T> >  create_range(viennacl::matrix_base<T>* scheduler::lhs_rhs_element::*ptr, scheduler::lhs_rhs_element const & element,
+                                                                            vcl_size_t s0_0, vcl_size_t s0_1, vcl_size_t s1_0, vcl_size_t s1_1, char trans)
     {
+        matrix_base<T> & M = *(element.*ptr);
+        vcl_size_t start1 = M.start1();
+        vcl_size_t start2 = M.start2();
         if(trans=='T')
-            return matrix_range<viennacl::matrix_base<T> >(*(element.*ptr), r1, r0);
-        return matrix_range<viennacl::matrix_base<T> >(*(element.*ptr), r0, r1);
+          std::swap(start1, start2);
+        range r0(start1 + s0_0, start1 + s0_1);
+        range r1(start2 + s1_0, start2 + s1_1);
+        if(trans=='T')
+            std::swap(r0, r1);
+        return matrix_range<viennacl::matrix_base<T> >(M, r0, r1);
     }
 
     template<class T>
-    void enqueue_impl(viennacl::matrix_base<T>* scheduler::lhs_rhs_element::*ptr, scheduler::statement & statement, ocl::kernel* kernels[], scheduler::lhs_rhs_element & A, scheduler::lhs_rhs_element & B, scheduler::lhs_rhs_element & C, scheduler::lhs_rhs_element & beta,
-                      vcl_size_t M, vcl_size_t N, vcl_size_t K)
+    void enqueue_impl(viennacl::matrix_base<T>* scheduler::lhs_rhs_element::*ptr_matrix,
+                      scheduler::statement & statement, ocl::kernel* kernels[], scheduler::lhs_rhs_element & A, scheduler::lhs_rhs_element & B, scheduler::lhs_rhs_element & C, scheduler::lhs_rhs_element & beta,
+                      T beta_value, vcl_size_t M, vcl_size_t N, vcl_size_t K)
     {
+        using namespace device_specific::utils;
+        if(M < p_.mL || N < p_.nL || K < p_.kL
+           ||call_on_matrix(A, stride1_fun()) > 1 || call_on_matrix(B, stride1_fun()) > 1 || call_on_matrix(C, stride1_fun()) > 1)
+        {
+            enqueue_block(statement, kernels, A, B, C, beta, *(A.*ptr_matrix), *(B.*ptr_matrix), *(C.*ptr_matrix), beta_value, true);
+            return;
+        }
+
+        scheduler::lhs_rhs_element Acopy = A;
+        scheduler::lhs_rhs_element Bcopy = B;
+        scheduler::lhs_rhs_element Ccopy = C;
+
         vcl_size_t lM = M / p_.mL * p_.mL;
         vcl_size_t lN = N / p_.nL * p_.nL;
         vcl_size_t lK = K / p_.kL * p_.kL;
 
-        viennacl::range r0(0, lM);
-        viennacl::range r1(lM, M);
-        viennacl::range r2(0, lN);
-        viennacl::range r3(lN, N);
-        viennacl::range r4(0, lK);
-        viennacl::range r5(lK, K);
 
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r0, r4, A_trans_), create_range<T>(ptr, B, r4, r2, B_trans_), create_range<T>(ptr, C, r0, r2, 'N'), (T)0, true);
-        if(lK!=K)
-        {
-            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r0, r5, A_trans_), create_range<T>(ptr, B, r5, r2, B_trans_), create_range<T>(ptr, C, r0, r2, 'N'), (T)1, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, 0, lM, 0, lK, A_trans_), create_range<T>(ptr_matrix, Bcopy, 0, lK, 0, lN, B_trans_), create_range<T>(ptr_matrix, Ccopy, 0, lM, 0, lN, 'N'), beta_value, false);
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, 0, lM, lK, K, A_trans_), create_range<T>(ptr_matrix, Bcopy, lK, K, 0, lN, B_trans_), create_range<T>(ptr_matrix, Ccopy, 0, lM, 0, lN, 'N'), (T)1, true);
 
-            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r0, r4, A_trans_), create_range<T>(ptr, B, r4, r3, B_trans_), create_range<T>(ptr, C, r0, r3, 'N'), (T)0, true);
-            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r0, r5, A_trans_), create_range<T>(ptr, B, r5, r3, B_trans_), create_range<T>(ptr, C, r0, r3, 'N'), (T)1, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, 0, lM, 0, lK, A_trans_), create_range<T>(ptr_matrix, Bcopy, 0, lK, lN, N, B_trans_), create_range<T>(ptr_matrix, Ccopy, 0, lM, lN, N, 'N'), beta_value, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, 0, lM, lK, K, A_trans_), create_range<T>(ptr_matrix, Bcopy, lK, K, lN, N, B_trans_), create_range<T>(ptr_matrix, Ccopy, 0, lM, lN, N, 'N'), (T)1, true);
 
-            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r1, r4, A_trans_), create_range<T>(ptr, B, r4, r2, B_trans_), create_range<T>(ptr, C, r1, r2, 'N'), (T)0, true);
-            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r1, r5, A_trans_), create_range<T>(ptr, B, r5, r2, B_trans_), create_range<T>(ptr, C, r1, r2, 'N'), (T)1, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, lM, M, 0, lK, A_trans_), create_range<T>(ptr_matrix, Bcopy, 0, lK, 0, lN, B_trans_), create_range<T>(ptr_matrix, Ccopy, lM, M, 0, lN, 'N'), beta_value, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, lM, M, lK, K, A_trans_), create_range<T>(ptr_matrix, Bcopy, lK, K, 0, lN, B_trans_), create_range<T>(ptr_matrix, Ccopy, lM, M, 0, lN, 'N'), (T)1, true);
 
-            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r1, r4, A_trans_), create_range<T>(ptr, B, r4, r3, B_trans_), create_range<T>(ptr, C, r1, r3, 'N'), (T)0, true);
-            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r1, r5, A_trans_), create_range<T>(ptr, B, r5, r3, B_trans_), create_range<T>(ptr, C, r1, r3, 'N'), (T)1, true);
-
-        }
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, lM, M, 0, lK, A_trans_), create_range<T>(ptr_matrix, Bcopy, 0, lK, lN, N, B_trans_), create_range<T>(ptr_matrix, Ccopy, lM, M, lN, N, 'N'), beta_value, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, lM, M, lK, K, A_trans_), create_range<T>(ptr_matrix, Bcopy, lK, K, lN, N, B_trans_), create_range<T>(ptr_matrix, Ccopy, lM, M, lN, N, 'N'), (T)1, true);
     }
 
 public:
@@ -712,9 +726,9 @@ public:
 
 
       if(C.numeric_type==scheduler::FLOAT_TYPE)
-        enqueue_impl<float>(&scheduler::lhs_rhs_element::matrix_float, stcopy, kernels, A, B, C, beta, M, N, K);
+        enqueue_impl<float>(&scheduler::lhs_rhs_element::matrix_float, stcopy, kernels, A, B, C, beta, beta.host_float, M, N, K);
       else if(C.numeric_type==scheduler::DOUBLE_TYPE)
-        enqueue_impl<double>(&scheduler::lhs_rhs_element::matrix_double, stcopy, kernels, A, B, C, beta, M, N, K);
+        enqueue_impl<double>(&scheduler::lhs_rhs_element::matrix_double, stcopy, kernels, A, B, C, beta, beta.host_double, M, N, K);
       else
         throw generator_not_supported_exception("GEMM only supported for float/double");
 

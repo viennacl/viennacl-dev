@@ -267,11 +267,6 @@ namespace viennacl
       }
 
 
-      //
-      /////////////////////////   matrix-vector products /////////////////////////////////
-      //
-
-      // A * x
 
       /** @brief Carries out matrix-vector multiplication
       *
@@ -296,111 +291,6 @@ namespace viennacl
       }
 
       //
-      /////////////////////////   matrix-matrix products /////////////////////////////////
-      //
-
-      namespace detail
-      {
-        template <typename NumericT>
-        viennacl::ocl::kernel & kernel_for_matrix_prod(matrix_base<NumericT> const & A, matrix_base<NumericT> const & B, matrix_base<NumericT> const & C, std::string kernel_name)
-        {
-          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-
-          if (A.row_major() && B.row_major() && C.row_major())
-          {
-            typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, row_major, row_major, row_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
-          }
-          else if (A.row_major() && B.row_major() && !C.row_major())
-          {
-            typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, row_major, row_major, column_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
-          }
-          else if (A.row_major() && !B.row_major() && C.row_major())
-          {
-            typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, row_major, column_major, row_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
-          }
-          else if (A.row_major() && !B.row_major() && !C.row_major())
-          {
-            typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, row_major, column_major, column_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
-          }
-          else if (!A.row_major() && B.row_major() && C.row_major())
-          {
-            typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, column_major, row_major, row_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
-          }
-          else if (!A.row_major() && B.row_major() && !C.row_major())
-          {
-            typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, column_major, row_major, column_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
-          }
-          else if (!A.row_major() && !B.row_major() && C.row_major())
-          {
-            typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, column_major, column_major, row_major>  KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_kernel(KernelClass::program_name(), kernel_name);
-          }
-
-          typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, column_major, column_major, column_major>  KernelClass;
-          KernelClass::init(ctx);
-          return ctx.get_kernel(KernelClass::program_name(), kernel_name);
-        }
-
-
-        // C = A * B and possibly transposed variants
-        template <typename T1, typename T2, typename T3, typename ScalarType >
-        void prod_slow_kernel(const T1 & A,
-                              const T2 & B,
-                              T3 & C,
-                              ScalarType alpha,
-                              ScalarType beta,
-                              std::string kernel_name)
-        {
-          typedef typename viennacl::result_of::cpu_value_type< typename T1::value_type >::type   cpu_value_type;
-
-          viennacl::ocl::kernel & k = kernel_for_matrix_prod(A, B, C, kernel_name);
-
-          k.global_work_size(0, viennacl::tools::align_to_multiple<unsigned int>(static_cast<unsigned int>(viennacl::traits::size1(C)), 16));
-          k.global_work_size(1, viennacl::tools::align_to_multiple<unsigned int>(static_cast<unsigned int>(viennacl::traits::size2(C)), 16));
-          k.local_work_size(0, 16);
-          k.local_work_size(1, 16);
-
-          cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
-          cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
-
-          viennacl::ocl::enqueue(k(cl_alpha,
-                                  viennacl::traits::opencl_handle(A),
-                                  cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
-                                  cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
-                                  cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
-                                  cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
-
-                                  viennacl::traits::opencl_handle(B),
-                                  cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)),
-                                  cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
-                                  cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
-                                  cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
-
-                                  cl_beta,
-                                  viennacl::traits::opencl_handle(C),
-                                  cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)),
-                                  cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
-                                  cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
-                                  cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
-                                  )
-                                );
-        }
-
-
-      } // namespace detail
 
 
       /** @brief Carries out matrix-matrix multiplication
@@ -415,23 +305,6 @@ namespace viennacl
                      ScalarType alpha,
                      ScalarType beta)
       {
-        // Inplace matrix-vector products like B = prod(A, B) are currently illegal: Introduce a temporary like C = prod(A, B); B = C; instead
-        /*assert(  (viennacl::traits::handle(C) != viennacl::traits::handle(A))
-              && (viennacl::traits::handle(C) != viennacl::traits::handle(B))
-              && bool("No direct inplace matrix-matrix product possible. Introduce a temporary!"));*/
-
-        using namespace viennacl::traits;
-        if (start1(A) > 0 || start2(A) > 0 || stride1(A) > 1 || stride2(A) > 1 ||
-            start1(B) > 0 || start2(B) > 0 || stride1(B) > 1 || stride2(B) > 1 ||
-            start1(C) > 0 || start2(C) > 0 || stride1(C) > 1 || stride2(C) > 1)
-        {
-          std::string string_prod("prod_");
-          string_prod.append(A_trans ? "T" : "A");
-          string_prod.append(B_trans ? "T" : "A");
-          detail::prod_slow_kernel(A, B, C, alpha, beta, string_prod);
-        }
-        else
-        {
           bool effective_A_trans = A_trans ^ A.row_major();
           bool effective_B_trans = B_trans ^ B.row_major();
 
@@ -444,7 +317,6 @@ namespace viennacl
 
           scheduler::statement statement = scheduler::preset::mat_mat_prod(alpha, &A, effective_A_trans, &B, effective_B_trans, beta, &C);
           kernels::matrix_prod<NumericT>::execution_handler(C.row_major(), viennacl::traits::opencl_context(C)).execute(kernel_prefix, statement);
-        }
       }
 
       //
