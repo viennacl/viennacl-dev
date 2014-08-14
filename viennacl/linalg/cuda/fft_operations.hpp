@@ -201,14 +201,14 @@ namespace viennacl
               viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
       {
         fft_direct<<<128,128>>>(
-							reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-							reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(out)),
-							static_cast<unsigned int>(size),
-							static_cast<unsigned int>(stride),
-							static_cast<unsigned int>(batch_num),
-							sign,
-							static_cast<bool>(data_order));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("fft_direct");
+			  reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			  reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(out)),
+			  static_cast<unsigned int>(size),
+			  static_cast<unsigned int>(stride),
+			  static_cast<unsigned int>(batch_num),
+			  sign,
+			  static_cast<bool>(data_order));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("fft_direct");
 
       }
 
@@ -227,14 +227,14 @@ namespace viennacl
       {
 
         fft_direct<<<128,128>>>(
-							reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-							reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(out)),
-							static_cast<unsigned int>(size),
-							static_cast<unsigned int>(stride),
-							static_cast<unsigned int>(batch_num),
-							sign,
-							static_cast<bool>(data_order));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("fft_direct");
+			reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(out)),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(stride),
+			static_cast<unsigned int>(batch_num),
+			sign,
+			static_cast<bool>(data_order));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("fft_direct");
 
       }
 
@@ -288,13 +288,13 @@ namespace viennacl
       {
 
         fft_reorder<<<128,128>>>(
-							reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-							static_cast<unsigned int>(bits_datasize),
-							static_cast<unsigned int>(size),
-							static_cast<unsigned int>(stride),
-							static_cast<unsigned int>(batch_num),
-							static_cast<bool>(data_order));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("fft_reorder");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			static_cast<unsigned int>(bits_datasize),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(stride),
+			static_cast<unsigned int>(batch_num),
+			static_cast<bool>(data_order));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("fft_reorder");
       }
 
       template<typename T,typename SCALARTYPE>
@@ -460,38 +460,38 @@ namespace viennacl
         if (size <= viennacl::linalg::cuda::detail::fft::MAX_LOCAL_POINTS_NUM)
         {
           fft_radix2_local<<<128,128>>>(
-							reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-							static_cast<unsigned int>(bit_size),
-							static_cast<unsigned int>(size),
-							static_cast<unsigned int>(stride),
-							static_cast<unsigned int>(batch_num),
-							static_cast<SCALARTYPE>(sign),
-							static_cast<bool>(data_order));
-		  VIENNACL_CUDA_LAST_ERROR_CHECK("fft_radix2_local");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			static_cast<unsigned int>(bit_size),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(stride),
+			static_cast<unsigned int>(batch_num),
+			static_cast<SCALARTYPE>(sign),
+			static_cast<bool>(data_order));
+	 VIENNACL_CUDA_LAST_ERROR_CHECK("fft_radix2_local");
 
         } else
         {
           fft_reorder<<<128,128>>>(
-							reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-							static_cast<unsigned int>(bit_size),
-							static_cast<unsigned int>(size),
-							static_cast<unsigned int>(stride),
-							static_cast<unsigned int>(batch_num),
-							static_cast<bool>(data_order));
-		  VIENNACL_CUDA_LAST_ERROR_CHECK("fft_reorder");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			static_cast<unsigned int>(bit_size),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(stri
+			static_cast<unsigned int>(batch_num),
+			static_cast<bool>(data_order));
+	  VIENNACL_CUDA_LAST_ERROR_CHECK("fft_reorder");
 
           for (vcl_size_t step = 0; step < bit_size; step++)
           {
             fft_radix2<<<128,128>>>(
-							reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-							static_cast<unsigned int>(step),
-							static_cast<unsigned int>(bit_size),
-							static_cast<unsigned int>(size),
-							static_cast<unsigned int>(stride),
-							static_cast<unsigned int>(batch_num),
-							sign,
-							static_cast<bool>(data_order));
-			VIENNACL_CUDA_LAST_ERROR_CHECK("fft_radix2");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			static_cast<unsigned int>(step),
+			static_cast<unsigned int>(bit_size),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(stride),
+			static_cast<unsigned int>(batch_num),
+			sign,
+			static_cast<bool>(data_order));
+	    VIENNACL_CUDA_LAST_ERROR_CHECK("fft_radix2");
           }
         }
       }
@@ -515,36 +515,36 @@ namespace viennacl
         if (size <= viennacl::linalg::cuda::detail::fft::MAX_LOCAL_POINTS_NUM)
         {
           fft_radix2_local<<<128,128>>>(
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-								static_cast<unsigned int>(bit_size),
-								static_cast<unsigned int>(size),
-								static_cast<unsigned int>(stride),
-								static_cast<unsigned int>(batch_num),
-								sign,
-								static_cast<bool>(data_order));
-		  VIENNACL_CUDA_LAST_ERROR_CHECK("fft_radix2_local");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			static_cast<unsigned int>(bit_size),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(stride),
+			static_cast<unsigned int>(batch_num),
+			sign,
+			static_cast<bool>(data_order));
+	  VIENNACL_CUDA_LAST_ERROR_CHECK("fft_radix2_local");
         } else
         {
           fft_reorder<<<128,128>>>(
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-								static_cast<unsigned int>(bit_size),
-								static_cast<unsigned int>(size),
-								static_cast<unsigned int>(stride),
-								static_cast<unsigned int>(batch_num),
-								static_cast<bool>(data_order));
-		  VIENNACL_CUDA_LAST_ERROR_CHECK("fft_reorder");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			static_cast<unsigned int>(bit_size),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(stride),
+			static_cast<unsigned int>(batch_num),
+			static_cast<bool>(data_order));
+	  VIENNACL_CUDA_LAST_ERROR_CHECK("fft_reorder");
           for (vcl_size_t step = 0; step < bit_size; step++)
           {
             fft_radix2<<<128,128>>>(
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-								static_cast<unsigned int>(step),
-								static_cast<unsigned int>(bit_size),
-								static_cast<unsigned int>(size),
-								static_cast<unsigned int>(stride),
-								static_cast<unsigned int>(batch_num),
-								sign,
-								static_cast<bool>(data_order));
-			 VIENNACL_CUDA_LAST_ERROR_CHECK("fft_radix2");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			static_cast<unsigned int>(step),
+			static_cast<unsigned int>(bit_size),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(stride),
+			static_cast<unsigned int>(batch_num),
+			sign,
+			static_cast<bool>(data_order));
+	   VIENNACL_CUDA_LAST_ERROR_CHECK("fft_radix2");
           }
         }
       }
@@ -660,28 +660,28 @@ namespace viennacl
         viennacl::vector<SCALARTYPE, ALIGNMENT> Z(ext_size << 1);
 
         zero2<<<128,128>>>(
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(A)),
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(B)),
-								static_cast<unsigned int>(ext_size));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("zero2");
-
-				          bluestein_pre<<<128,128>>>(
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(A)),
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(B)),
-								static_cast<unsigned int>(size),
-								static_cast<unsigned int>(ext_size),
-								SCALARTYPE(1));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("bluestein_pre");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(A)),
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(B)),
+			static_cast<unsigned int>(ext_size));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("zero2");
+	
+	bluestein_pre<<<128,128>>>(
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(A)),
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(B)),
+			static_cast<unsigned int>(size),
+			static_cast<unsigned int>(ext_size),
+			SCALARTYPE(1));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("bluestein_pre");
 
         viennacl::linalg::convolve_i(A, B, Z);
 
         bluestein_post<<<128,128>>>(
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(Z)),
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(out)),
-								static_cast<unsigned int>(size),
-								SCALARTYPE(1));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("bluestein_post");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(Z)),
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(out)),
+			static_cast<unsigned int>(size),
+			SCALARTYPE(1));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("bluestein_post");
 
       }
 
@@ -710,11 +710,11 @@ namespace viennacl
       {
         vcl_size_t size = input1.size() >> 1;
         fft_mult_vec<<<128,128>>>(
-								reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input1)),
-								reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input2)),
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(output)),
-								static_cast<unsigned int>(size));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("fft_mult_vec");
+			reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input1)),
+			reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input2)),
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(output)),
+			static_cast<unsigned int>(size));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("fft_mult_vec");
 
       }
 
@@ -738,10 +738,10 @@ namespace viennacl
         vcl_size_t size = input.size() >> 1;
         SCALARTYPE norm_factor = static_cast<SCALARTYPE>(size);
         fft_div_vec_scalar<<<128,128>>>(
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input)),
-								static_cast<unsigned int>(size),
-								norm_factor);
-		VIENNACL_CUDA_LAST_ERROR_CHECK("fft_div_vec_scalar");
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input)),
+			static_cast<unsigned int>(size),
+			norm_factor);
+	VIENNACL_CUDA_LAST_ERROR_CHECK("fft_div_vec_scalar");
 
       }
 
@@ -771,11 +771,11 @@ namespace viennacl
       {
 
         transpose<<<128,128>>>(
-								reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input)),
-								reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(output)),
-								static_cast<unsigned int>(input.internal_size1()>>1),
-								static_cast<unsigned int>(input.internal_size2()>>1));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("transpose");
+			reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input)),
+			reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(output)),
+			static_cast<unsigned int>(input.internal_size1()>>1),
+			static_cast<unsigned int>(input.internal_size2()>>1));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("transpose");
 
       }
 
@@ -807,10 +807,10 @@ namespace viennacl
       void transpose(viennacl::matrix<SCALARTYPE, viennacl::row_major, ALIGNMENT> & input)
       {
         transpose_inplace<<<128,128>>>(
-									reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input)),
-									static_cast<unsigned int>(input.internal_size1()>>1),
-									static_cast<unsigned int>(input.internal_size2() >> 1));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("transpose_inplace");
+				reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(input)),
+				static_cast<unsigned int>(input.internal_size1()>>1),
+				static_cast<unsigned int>(input.internal_size2() >> 1));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("transpose_inplace");
 
       }
 
@@ -838,10 +838,10 @@ namespace viennacl
           viennacl::vector_base<SCALARTYPE> & out, vcl_size_t size)
       {
         real_to_complex<<<128,128>>>(
-        							detail::cuda_arg<SCALARTYPE>(in),
-									reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(out)),
-									static_cast<unsigned int>(size));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("real_to_complex");
+        			detail::cuda_arg<SCALARTYPE>(in),
+				reinterpret_cast<typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(out)),
+				static_cast<unsigned int>(size));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("real_to_complex");
 
       }
 
@@ -864,10 +864,10 @@ namespace viennacl
       {
 
         complex_to_real<<<128,128>>>(
-									reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
-									detail::cuda_arg<SCALARTYPE>(out),
-									static_cast<unsigned int>(size));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("complex_to_real");
+				reinterpret_cast<const typename viennacl::linalg::cuda::detail::type_to_type2<SCALARTYPE>::type *>(detail::cuda_arg<SCALARTYPE>(in)),
+				detail::cuda_arg<SCALARTYPE>(out),
+				static_cast<unsigned int>(size));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("complex_to_real");
 
       }
 
@@ -895,9 +895,9 @@ namespace viennacl
 
         vcl_size_t size = in.size();
         reverse_inplace<<<128,128>>>(
-									detail::cuda_arg<SCALARTYPE>(in),
-									static_cast<unsigned int>(size));
-		VIENNACL_CUDA_LAST_ERROR_CHECK("reverse_inplace");
+				detail::cuda_arg<SCALARTYPE>(in),
+				static_cast<unsigned int>(size));
+	VIENNACL_CUDA_LAST_ERROR_CHECK("reverse_inplace");
 
       }
 
