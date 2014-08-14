@@ -46,7 +46,7 @@ namespace viennacl
       program(cl_program program_handle, viennacl::ocl::context const & program_context, std::string const & prog_name = std::string())
         : handle_(program_handle, program_context), p_context_(&program_context), name_(prog_name) {}
 
-      program(program const & other) : handle_(other.handle_), p_context_(other.p_context_), name_(other.name_), kernels_(other.kernels_) {}
+      program(program const & other) : handle_(other.handle_), p_context_(other.p_context_), name_(other.name_), kernels_(other.kernels_) {      }
 
       viennacl::ocl::program & operator=(const program & other)
       {

@@ -40,7 +40,7 @@
 //
 // *** ViennaCL
 //
-//#define VIENNACL_DEBUG_ALL
+#define VIENNACL_DEBUG_ALL
 //#define VIENNACL_DEBUG_BUILD
 #define VIENNACL_WITH_UBLAS 1
 #include "viennacl/scalar.hpp"
@@ -151,166 +151,166 @@ int test_prod(Epsilon const& epsilon,
      std::cout << "Test C = A * B passed!" << std::endl;
 
 
-   C     += viennacl::linalg::prod(A, B);
-   vcl_C += viennacl::linalg::prod(vcl_A, vcl_B);
-   act_diff = std::fabs(diff(C, vcl_C));
+//   C     += viennacl::linalg::prod(A, B);
+//   vcl_C += viennacl::linalg::prod(vcl_A, vcl_B);
+//   act_diff = std::fabs(diff(C, vcl_C));
 
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C += A * B passed!" << std::endl;
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C += A * B passed!" << std::endl;
 
-   C     -= viennacl::linalg::prod(A, B);
-   vcl_C -= viennacl::linalg::prod(vcl_A, vcl_B);
-   act_diff = std::fabs(diff(C, vcl_C));
+//   C     -= viennacl::linalg::prod(A, B);
+//   vcl_C -= viennacl::linalg::prod(vcl_A, vcl_B);
+//   act_diff = std::fabs(diff(C, vcl_C));
 
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C -= A * B passed!" << std::endl;
-
-
-
-
-
-   // Test: C +-= A * trans(B) --------------------------------------------------------------------------
-   C     = boost::numeric::ublas::prod(A, trans(B_trans));
-   vcl_C = viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
-   act_diff = std::fabs(diff(C, vcl_C));
-
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C = A * trans(B) passed!" << std::endl;
-
-
-   C     += boost::numeric::ublas::prod(A, trans(B_trans));
-   vcl_C += viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
-   act_diff = std::fabs(diff(C, vcl_C));
-
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C += A * trans(B) passed!" << std::endl;
-
-
-   C     -= boost::numeric::ublas::prod(A, trans(B_trans));
-   vcl_C -= viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
-   act_diff = std::fabs(diff(C, vcl_C));
-
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C -= A * trans(B) passed!" << std::endl;
-
-
-
-   // Test: C +-= trans(A) * B --------------------------------------------------------------------------
-   C     = boost::numeric::ublas::prod(trans(A_trans), B);
-   vcl_C = viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
-   act_diff = std::fabs(diff(C, vcl_C));
-
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C = trans(A) * B passed!" << std::endl;
-
-
-   C     += boost::numeric::ublas::prod(trans(A_trans), B);
-   vcl_C += viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
-   act_diff = std::fabs(diff(C, vcl_C));
-
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C += trans(A) * B passed!" << std::endl;
-
-
-   C     -= boost::numeric::ublas::prod(trans(A_trans), B);
-   vcl_C -= viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
-   act_diff = std::fabs(diff(C, vcl_C));
-
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C -= trans(A) * B passed!" << std::endl;
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C -= A * B passed!" << std::endl;
 
 
 
 
 
-   // Test: C +-= trans(A) * trans(B) --------------------------------------------------------------------------
-   C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
-   vcl_C = viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
-   act_diff = std::fabs(diff(C, vcl_C));
+//   // Test: C +-= A * trans(B) --------------------------------------------------------------------------
+//   C     = boost::numeric::ublas::prod(A, trans(B_trans));
+//   vcl_C = viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
+//   act_diff = std::fabs(diff(C, vcl_C));
 
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
-
-   C     += boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
-   vcl_C += viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
-   act_diff = std::fabs(diff(C, vcl_C));
-
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C += trans(A) * trans(B) passed!" << std::endl;
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C = A * trans(B) passed!" << std::endl;
 
 
-   C     -= boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
-   vcl_C -= viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
-   act_diff = std::fabs(diff(C, vcl_C));
+//   C     += boost::numeric::ublas::prod(A, trans(B_trans));
+//   vcl_C += viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
+//   act_diff = std::fabs(diff(C, vcl_C));
 
-   if( act_diff > epsilon )
-   {
-     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
-     std::cout << "  diff: " << act_diff << std::endl;
-     retval = EXIT_FAILURE;
-   }
-   else
-     std::cout << "Test C -= trans(A) * trans(B) passed!" << std::endl;
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C += A * trans(B) passed!" << std::endl;
+
+
+//   C     -= boost::numeric::ublas::prod(A, trans(B_trans));
+//   vcl_C -= viennacl::linalg::prod(vcl_A, trans(vcl_B_trans));
+//   act_diff = std::fabs(diff(C, vcl_C));
+
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C -= A * trans(B) passed!" << std::endl;
+
+
+
+//   // Test: C +-= trans(A) * B --------------------------------------------------------------------------
+//   C     = boost::numeric::ublas::prod(trans(A_trans), B);
+//   vcl_C = viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
+//   act_diff = std::fabs(diff(C, vcl_C));
+
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C = trans(A) * B passed!" << std::endl;
+
+
+//   C     += boost::numeric::ublas::prod(trans(A_trans), B);
+//   vcl_C += viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
+//   act_diff = std::fabs(diff(C, vcl_C));
+
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C += trans(A) * B passed!" << std::endl;
+
+
+//   C     -= boost::numeric::ublas::prod(trans(A_trans), B);
+//   vcl_C -= viennacl::linalg::prod(trans(vcl_A_trans), vcl_B);
+//   act_diff = std::fabs(diff(C, vcl_C));
+
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C -= trans(A) * B passed!" << std::endl;
+
+
+
+
+
+//   // Test: C +-= trans(A) * trans(B) --------------------------------------------------------------------------
+//   C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
+//   vcl_C = viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
+//   act_diff = std::fabs(diff(C, vcl_C));
+
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
+
+//   C     += boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
+//   vcl_C += viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
+//   act_diff = std::fabs(diff(C, vcl_C));
+
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C += trans(A) * trans(B) passed!" << std::endl;
+
+
+//   C     -= boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
+//   vcl_C -= viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans));
+//   act_diff = std::fabs(diff(C, vcl_C));
+
+//   if( act_diff > epsilon )
+//   {
+//     std::cout << "# Error at operation: matrix-matrix product" << std::endl;
+//     std::cout << "  diff: " << act_diff << std::endl;
+//     retval = EXIT_FAILURE;
+//   }
+//   else
+//     std::cout << "Test C -= trans(A) * trans(B) passed!" << std::endl;
 
 
 
@@ -326,8 +326,8 @@ int test_prod(Epsilon const& epsilon)
   int ret;
 
   std::size_t matrix_size1 = 131;  //some odd number, not too large
-  std::size_t matrix_size2 = 67;  //some odd number, not too large
-  std::size_t matrix_size3 = 73;  //some odd number, not too large
+  std::size_t matrix_size2 = 273;  //some odd number, not too large
+  std::size_t matrix_size3 = 388;  //some odd number, not too large
   //long matrix_size1 = 128;  //some odd number, not too large
   //long matrix_size2 = 64;  //some odd number, not too large
   //long matrix_size3 = 128;  //some odd number, not too large
@@ -462,319 +462,319 @@ int test_prod(Epsilon const& epsilon)
     return ret;
 
 
-  //
-  //
-  std::cout << "Now using A=matrix, B=matrix, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_A, vcl_A_trans,
-                            vcl_B, vcl_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=matrix, B=matrix, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_A, vcl_A_trans,
+//                            vcl_B, vcl_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  //
-  //
-  std::cout << "Now using A=matrix, B=matrix, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_A, vcl_A_trans,
-                            vcl_B, vcl_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-
-  //
-  //
-  std::cout << "Now using A=matrix, B=range, C=matrix" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_A, vcl_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-  //
-  //
-  std::cout << "Now using A=matrix, B=range, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_A, vcl_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=matrix, B=range, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_A, vcl_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-  //
-  //
-  std::cout << "Now using A=matrix, B=slice, C=matrix" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_A, vcl_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-  //
-  //
-  std::cout << "Now using A=matrix, B=slice, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_A, vcl_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=matrix, B=slice, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_A, vcl_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-  //////
-  //////  A: range
-  //////
-
-  //
-  //
-  std::cout << "Now using A=range, B=matrix, C=matrix" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_B, vcl_B_trans,
-                            vcl_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-  //
-  //
-  std::cout << "Now using A=range, B=matrix, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_B, vcl_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=range, B=matrix, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_B, vcl_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=matrix, B=matrix, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_A, vcl_A_trans,
+//                            vcl_B, vcl_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
 
-  //
-  //
-  std::cout << "Now using A=range, B=range, C=matrix" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=matrix, B=range, C=matrix" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_A, vcl_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
-  //
-  //
-  std::cout << "Now using A=range, B=range, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=matrix, B=range, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_A, vcl_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  //
-  //
-  std::cout << "Now using A=range, B=range, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-  //
-  //
-  std::cout << "Now using A=range, B=slice, C=matrix" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=matrix, B=range, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_A, vcl_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
-  //
-  //
-  std::cout << "Now using A=range, B=slice, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=range, B=slice, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_range_A, vcl_range_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=matrix, B=slice, C=matrix" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_A, vcl_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
+//  //
+//  //
+//  std::cout << "Now using A=matrix, B=slice, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_A, vcl_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
-  //////
-  //////  A: slice
-  //////
-
-  //
-  //
-  std::cout << "Now using A=slice, B=matrix, C=matrix" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_B, vcl_B_trans,
-                            vcl_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-  //
-  //
-  std::cout << "Now using A=slice, B=matrix, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_B, vcl_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=slice, B=matrix, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_B, vcl_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=matrix, B=slice, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_A, vcl_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
+//  //////
+//  //////  A: range
+//  //////
 
-  //
-  //
-  std::cout << "Now using A=slice, B=range, C=matrix" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-
-  //
-  //
-  std::cout << "Now using A=slice, B=range, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
-
-  //
-  //
-  std::cout << "Now using A=slice, B=range, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_range_B, vcl_range_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=range, B=matrix, C=matrix" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_B, vcl_B_trans,
+//                            vcl_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
-  //
-  //
-  std::cout << "Now using A=slice, B=slice, C=matrix" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=range, B=matrix, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_B, vcl_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+//  //
+//  //
+//  std::cout << "Now using A=range, B=matrix, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_B, vcl_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
-  //
-  //
-  std::cout << "Now using A=slice, B=slice, C=range" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_range_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
 
-  //
-  //
-  std::cout << "Now using A=slice, B=slice, C=slice" << std::endl;
-  ret = test_prod<NumericT>(epsilon,
-                            A, A_trans, B, B_trans, C,
-                            vcl_slice_A, vcl_slice_A_trans,
-                            vcl_slice_B, vcl_slice_B_trans,
-                            vcl_slice_C);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  //
+//  //
+//  std::cout << "Now using A=range, B=range, C=matrix" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+//  //
+//  //
+//  std::cout << "Now using A=range, B=range, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+//  //
+//  //
+//  std::cout << "Now using A=range, B=range, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+//  //
+//  //
+//  std::cout << "Now using A=range, B=slice, C=matrix" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+//  //
+//  //
+//  std::cout << "Now using A=range, B=slice, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+//  //
+//  //
+//  std::cout << "Now using A=range, B=slice, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_range_A, vcl_range_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+
+//  //////
+//  //////  A: slice
+//  //////
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=matrix, C=matrix" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_B, vcl_B_trans,
+//                            vcl_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=matrix, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_B, vcl_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=matrix, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_B, vcl_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=range, C=matrix" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=range, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=range, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_range_B, vcl_range_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=slice, C=matrix" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=slice, C=range" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_range_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
+
+//  //
+//  //
+//  std::cout << "Now using A=slice, B=slice, C=slice" << std::endl;
+//  ret = test_prod<NumericT>(epsilon,
+//                            A, A_trans, B, B_trans, C,
+//                            vcl_slice_A, vcl_slice_A_trans,
+//                            vcl_slice_B, vcl_slice_B_trans,
+//                            vcl_slice_C);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
 
   return ret;
@@ -835,12 +835,12 @@ int test(Epsilon const& epsilon)
 //  if (ret != EXIT_SUCCESS)
 //    return ret;
 
-  std::cout << "///////////////////////////////////////" << std::endl;
-  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
-  std::cout << "///////////////////////////////////////" << std::endl;
-  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
-  if (ret != EXIT_SUCCESS)
-    return ret;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  std::cout << "/// Now testing A=col, B=col, C=row ///" << std::endl;
+//  std::cout << "///////////////////////////////////////" << std::endl;
+//  ret = test_prod<NumericT, viennacl::column_major, viennacl::column_major, viennacl::row_major>(epsilon);
+//  if (ret != EXIT_SUCCESS)
+//    return ret;
 
   std::cout << "///////////////////////////////////////" << std::endl;
   std::cout << "/// Now testing A=col, B=col, C=col ///" << std::endl;

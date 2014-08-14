@@ -135,7 +135,7 @@ private:
 
     static void parse(scheduler::statement const & s,
                vcl_size_t & C_idx, leaf_t & C_leaf, vcl_size_t & alpha_idx, leaf_t & alpha_leaf,
-               vcl_size_t & A_idx, leaf_t & A_leaf, vcl_size_t & B_idx, leaf_t & B_leaf,
+               vcl_size_t & A_idx, leaf_t & A_leaf, bool& A_trans, vcl_size_t & B_idx, leaf_t & B_leaf, bool& B_trans,
                vcl_size_t & beta_idx, leaf_t & beta_leaf)
     {
       using namespace tree_parsing;
@@ -155,18 +155,26 @@ private:
 
       vcl_size_t mat_prod_idx = array[node_1_idx].lhs.node_index;
       if(array[mat_prod_idx].lhs.type_family==MATRIX_TYPE_FAMILY)
+      {
+        A_trans = false;
         A_idx = mat_prod_idx;
+      }
       else
+      {
+        A_trans = true;
         A_idx = array[mat_prod_idx].lhs.node_index;
+      }
       A_leaf = LHS_NODE_TYPE;
 
       if(array[mat_prod_idx].rhs.type_family==MATRIX_TYPE_FAMILY)
       {
+        B_trans = false;
         B_idx = mat_prod_idx;
         B_leaf = RHS_NODE_TYPE;
       }
       else
       {
+        B_trans = true;
         B_idx = array[mat_prod_idx].rhs.node_index;
         B_leaf = LHS_NODE_TYPE;
       }
@@ -176,15 +184,15 @@ private:
       beta_leaf = RHS_NODE_TYPE;
     }
 
-    std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings) const
+    std::string generate_impl(const std::string &kernel_prefix, const statements_container &statements, const std::vector<mapping_type> &mappings, bool fallback) const
     {
-        std::vector<std::string> res;
-
         using tools::to_string;
+        parameters_type pfallback(1, p_.local_size_0, p_.kL, p_.local_size_1, 1, 1, 1, FETCH_FROM_GLOBAL_CONTIGUOUS, FETCH_FROM_GLOBAL_CONTIGUOUS, 0, 0);
+        parameters_type const & p = fallback?pfallback:p_;
 
-        std::string vload = utils::append_width("vload", p_.simd_width);
-        std::string vstore = utils::append_width("vstore", p_.simd_width);
-        std::string widthstr = tools::to_string(p_.simd_width);
+        std::string vload = utils::append_width("vload", p.simd_width);
+        std::string vstore = utils::append_width("vstore", p.simd_width);
+        std::string widthstr = tools::to_string(p.simd_width);
 
         //////////////////
         /// INIT
@@ -193,9 +201,10 @@ private:
         scheduler::statement const & st = statements.data().front();
         mapping_type const & mapping = mappings.front();
 
+        bool A_trans = false, B_trans = false;
         vcl_size_t C_idx=0, alpha_idx=0, A_idx=0, B_idx=0, beta_idx=0;
         leaf_t C_leaf=LHS_NODE_TYPE, alpha_leaf=LHS_NODE_TYPE, A_leaf=LHS_NODE_TYPE, B_leaf=LHS_NODE_TYPE, beta_leaf=LHS_NODE_TYPE;
-        parse(st, C_idx, C_leaf, alpha_idx, alpha_leaf, A_idx, A_leaf, B_idx, B_leaf, beta_idx, beta_leaf);
+        parse(st, C_idx, C_leaf, alpha_idx, alpha_leaf, A_idx, A_leaf, A_trans, B_idx, B_leaf, B_trans, beta_idx, beta_leaf);
 
         mapped_matrix * C = (mapped_matrix*)mapping.at(mapping_key(C_idx, C_leaf)).get();
         mapped_host_scalar * alpha = (mapped_host_scalar*)mapping.at(mapping_key(alpha_idx, alpha_leaf)).get();
@@ -207,170 +216,179 @@ private:
         /// DECLARATIONS
         /// //////////////
 
-        stream << " __attribute__((reqd_work_group_size(" << p_.local_size_0 << "," << p_.local_size_1 << ",1)))" << std::endl;
+        stream << " __attribute__((reqd_work_group_size(" << p.local_size_0 << "," << p.local_size_1 << ",1)))" << std::endl;
         generate_prototype(stream, kernel_prefix, "unsigned int M, unsigned int N, unsigned int K, ", mappings, statements);
         stream << "{" << std::endl;
         stream.inc_tab();
 
+        if(fallback)
+            stream << "if(get_global_id(0)>=M || get_global_id(1)>=N) return;" << std::endl;
+
+        stream << A->process("#pointer += #start1 + #start2*#ld;") << std::endl;
+        stream << B->process("#pointer += #start1 + #start2*#ld;") << std::endl;
+        stream << C->process("#pointer += #start1 + #start2*#ld;") << std::endl;
 
         ///Result Values
-        stream << C->process("#scalartype rC[" + to_string(p_.mS) + "][" + to_string(p_.nS) + "] = {{(#scalartype)0}};") << std::endl;
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL)
-          stream << A->process("#scalartype rA[" + to_string(p_.kS) + "][" + to_string(p_.mS) + "];") << std::endl;
+        stream << C->process("#scalartype rC[" + to_string(p.mS) + "][" + to_string(p.nS) + "] = {{(#scalartype)0}};") << std::endl;
+        if(p.A_fetching_policy==FETCH_FROM_LOCAL)
+          stream << A->process("#scalartype rA[" + to_string(p.kS) + "][" + to_string(p.mS) + "];") << std::endl;
         else
-          stream << A->process(utils::append_width("#scalartype",p_.simd_width) + " rA[" + to_string(p_.kS) + "][" + to_string(p_.mS/p_.simd_width) + "];") << std::endl;
-        if(p_.B_fetching_policy==FETCH_FROM_LOCAL)
-          stream << B->process("#scalartype rB[" + to_string(p_.kS) + "][" + to_string(p_.nS) + "];");
+          stream << A->process(utils::append_width("#scalartype",p.simd_width) + " rA[" + to_string(p.kS) + "][" + to_string(p.mS/p.simd_width) + "];") << std::endl;
+        if(p.B_fetching_policy==FETCH_FROM_LOCAL)
+          stream << B->process("#scalartype rB[" + to_string(p.kS) + "][" + to_string(p.nS) + "];");
         else
-          stream << B->process(utils::append_width("#scalartype",p_.simd_width) + " rB[" + to_string(p_.kS) + "][" + to_string(p_.nS/p_.simd_width) + "];") << std::endl;
+          stream << B->process(utils::append_width("#scalartype",p.simd_width) + " rB[" + to_string(p.kS) + "][" + to_string(p.nS/p.simd_width) + "];") << std::endl;
 
 
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL)
-          stream << A->process("__local #scalartype lA[" + to_string(p_.kL*(p_.mL+1)) + "];");
-        if(p_.B_fetching_policy==FETCH_FROM_LOCAL)
-          stream << B->process("__local #scalartype lB[" + to_string(p_.kL*(p_.nL+1)) + "];");
+        if(p.A_fetching_policy==FETCH_FROM_LOCAL)
+          stream << A->process("__local #scalartype lA[" + to_string(p.kL*(p.mL+1)) + "];");
+        if(p.B_fetching_policy==FETCH_FROM_LOCAL)
+          stream << B->process("__local #scalartype lB[" + to_string(p.kL*(p.nL+1)) + "];");
         stream << std::endl;
 
         stream << "uint gidx = get_group_id(0);" << std::endl;
         stream << "uint gidy = get_group_id(1);" << std::endl;
         stream << "uint idx = get_local_id(0);" << std::endl;
         stream << "uint idy = get_local_id(1);" << std::endl;
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL || p_.B_fetching_policy==FETCH_FROM_LOCAL)
+        if(p.A_fetching_policy==FETCH_FROM_LOCAL || p.B_fetching_policy==FETCH_FROM_LOCAL)
         {
             stream << std::endl;
-            stream << "uint idt = " << p_.local_size_0 << "*idy + idx;" << std::endl;
-            stream << "uint idxT = idt % " << p_.local_fetch_0 << ";" << std::endl;
-            stream << "uint idyT = idt / " << p_.local_fetch_0 << ";" << std::endl;
+            stream << "uint idt = " << p.local_size_0 << "*idy + idx;" << std::endl;
+            stream << "uint idxT = idt % " << p.local_fetch_0 << ";" << std::endl;
+            stream << "uint idyT = idt / " << p.local_fetch_0 << ";" << std::endl;
         }
         stream << std::endl;
 
-        switch(p_.A_fetching_policy)
+        switch(p.A_fetching_policy)
         {
           case FETCH_FROM_LOCAL:
             if(A_trans_=='N')
-                stream << A->process("#pointer += gidx*" + to_string(p_.mL) + "+ idxT*" + widthstr + " + idyT*#ld;") << std::endl;
+                stream << A->process("#pointer += gidx*" + to_string(p.mL) + "+ idxT*" + widthstr + " + idyT*#ld;") << std::endl;
             else
-                stream << A->process("#pointer += gidx*" + to_string(p_.mL) + "*#ld + idxT + idyT*#ld;") << std::endl;
+                stream << A->process("#pointer += gidx*" + to_string(p.mL) + "*#ld + idxT + idyT*#ld;") << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_CONTIGUOUS:
             if(A_trans_=='N')
-                stream << A->process("#pointer += gidx*" + to_string(p_.mL) + "+ idx*" + to_string(p_.mS) + ";") << std::endl;
+                stream << A->process("#pointer += gidx*" + to_string(p.mL) + "+ idx*" + to_string(p.mS) + ";") << std::endl;
             else
-                stream << A->process("#pointer += (gidx*" + to_string(p_.mL) + "+ idx*" + to_string(p_.mS) + ")*#ld;") << std::endl;
+                stream << A->process("#pointer += (gidx*" + to_string(p.mL) + "+ idx*" + to_string(p.mS) + ")*#ld;") << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(A_trans_=='N')
-                stream << A->process("#pointer += gidx*" + to_string(p_.mL) + "+ idx*" + widthstr + ";") << std::endl;
+                stream << A->process("#pointer += gidx*" + to_string(p.mL) + "+ idx*" + widthstr + ";") << std::endl;
             else
-                stream << A->process("#pointer += (gidx*" + to_string(p_.mL) + "+ idx)*#ld;") << std::endl;
+                stream << A->process("#pointer += (gidx*" + to_string(p.mL) + "+ idx)*#ld;") << std::endl;
             break;
 
           default: break;
         }
 
-        switch(p_.B_fetching_policy)
+        switch(p.B_fetching_policy)
         {
           case FETCH_FROM_LOCAL:
             if(B_trans_=='T')
-                stream << B->process("#pointer += gidy*" + to_string(p_.nL) + "+ idxT*" + widthstr + " + idyT*#ld;") << std::endl;
+                stream << B->process("#pointer += gidy*" + to_string(p.nL) + "+ idxT*" + widthstr + " + idyT*#ld;") << std::endl;
             else
-                stream << B->process("#pointer += gidy*" + to_string(p_.nL) + "*#ld + idxT + idyT*#ld;") << std::endl;
+                stream << B->process("#pointer += gidy*" + to_string(p.nL) + "*#ld + idxT + idyT*#ld;") << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_CONTIGUOUS:
             if(B_trans_=='T')
-                stream << B->process("#pointer += gidy*" + to_string(p_.nL) + "+ idy*" + to_string(p_.nS) + ";") << std::endl;
+                stream << B->process("#pointer += gidy*" + to_string(p.nL) + "+ idy*" + to_string(p.nS) + ";") << std::endl;
             else
-                stream << B->process("#pointer += (gidy*" + to_string(p_.nL) + "+ idy*" + to_string(p_.nS) + ")*#ld;") << std::endl;
+                stream << B->process("#pointer += (gidy*" + to_string(p.nL) + "+ idy*" + to_string(p.nS) + ")*#ld;") << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(B_trans_=='T')
-                stream << B->process("#pointer += gidy*" + to_string(p_.nL) + "+ idy*" + widthstr + ";") << std::endl;
+                stream << B->process("#pointer += gidy*" + to_string(p.nL) + "+ idy*" + widthstr + ";") << std::endl;
             else
-                stream << B->process("#pointer += (gidy*" + to_string(p_.nL) + "+ idy)*#ld;") << std::endl;
+                stream << B->process("#pointer += (gidy*" + to_string(p.nL) + "+ idy)*#ld;") << std::endl;
             break;
 
           default: break;
         }
 
         stream << std::endl;
-        stream << "for(unsigned int block_k=0 ; block_k< K ; block_k+=" << p_.kL << "){" << std::endl;
+        stream << "for(unsigned int block_k=0 ; block_k < K ; block_k+=" << p.kL << "){" << std::endl;
         stream.inc_tab();
 
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL)
+        if(p.A_fetching_policy==FETCH_FROM_LOCAL)
         {
             if(A_trans_=='N')
-                stream << A->process("__local #scalartype* plA = lA + idyT*" + to_string(p_.mL + 1) + " + " + to_string(p_.simd_width) + "*idxT;") << std::endl;
+                stream << A->process("__local #scalartype* plA = lA + idyT*" + to_string(p.mL + 1) + " + " + to_string(p.simd_width) + "*idxT;") << std::endl;
             else
-                stream << A->process("__local #scalartype* plA = lA + idxT*" + to_string(p_.mL + 1) + " + idyT;") << std::endl;
+                stream << A->process("__local #scalartype* plA = lA + idxT*" + to_string(p.mL + 1) + " + idyT;") << std::endl;
         }
 
 
-        if(p_.B_fetching_policy==FETCH_FROM_LOCAL)
+        if(p.B_fetching_policy==FETCH_FROM_LOCAL)
         {
             if(B_trans_=='T')
-                stream  << B->process("__local #scalartype* plB = lB + idyT*" + to_string(p_.nL+1) + " + " + to_string(p_.simd_width) + "*idxT;") << std::endl;
+                stream  << B->process("__local #scalartype* plB = lB + idyT*" + to_string(p.nL+1) + " + " + to_string(p.simd_width) + "*idxT;") << std::endl;
             else
-                stream << B->process("__local #scalartype* plB = lB + idxT*" + to_string(p_.nL+1) + "+ idyT;") <<std::endl;
+                stream << B->process("__local #scalartype* plB = lB + idxT*" + to_string(p.nL+1) + "+ idyT;") <<std::endl;
         }
 
 
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL || p_.B_fetching_policy==FETCH_FROM_LOCAL)
+        if(p.A_fetching_policy==FETCH_FROM_LOCAL || p.B_fetching_policy==FETCH_FROM_LOCAL)
             stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
         ///Fetch LHS to Local Memory
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL)
+        if(p.A_fetching_policy==FETCH_FROM_LOCAL)
         {
-            unsigned int bound1 = (A_trans_=='N')?p_.kL:p_.mL;
-            unsigned int bound0 = (A_trans_=='N')?p_.mL:p_.kL;
-            for(unsigned int k = 0 ; k < bound1 ; k += p_.local_fetch_1)
-                for(unsigned int m = 0 ; m < bound0 ; m += p_.local_fetch_0*p_.simd_width)
+            unsigned int bound1 = (A_trans_=='N')?p.kL:p.mL;
+            unsigned int bound0 = (A_trans_=='N')?p.mL:p.kL;
+            for(unsigned int k = 0 ; k < bound1 ; k += p.local_fetch_1)
+                for(unsigned int m = 0 ; m < bound0 ; m += p.local_fetch_0*p.simd_width)
                 {
-                    unsigned int offset = (A_trans_=='N')?(k*(p_.mL+1)+m):(m*(p_.mL+1)+k);
-                    stream << A->process(vstore + "(" + vload + "(" + to_string(m/p_.simd_width) + ", #pointer + " + to_string(k) + "*#ld), 0, plA + " + to_string(offset) + ");") << std::endl;
+                    unsigned int offset = (A_trans_=='N')?(k*(p.mL+1)+m):(m*(p.mL+1)+k);
+                    stream << A->process(vstore + "(" + vload + "(" + to_string(m/p.simd_width) + ", #pointer + " + to_string(k) + "*#ld), 0, plA + " + to_string(offset) + ");") << std::endl;
                 }
         }
 
         ///Fetch RHS to Local Memory
-        if(p_.B_fetching_policy==FETCH_FROM_LOCAL)
+        if(p.B_fetching_policy==FETCH_FROM_LOCAL)
         {
-            unsigned int bound1 = (B_trans_=='T')?p_.kL:p_.nL;
-            unsigned int bound0 = (B_trans_=='T')?p_.nL:p_.kL;
-            for(unsigned int k = 0 ; k < bound1 ; k += p_.local_fetch_1)
-                for(unsigned int n = 0 ; n < bound0 ; n += p_.local_fetch_0*p_.simd_width)
+            unsigned int bound1 = (B_trans_=='T')?p.kL:p.nL;
+            unsigned int bound0 = (B_trans_=='T')?p.nL:p.kL;
+            for(unsigned int k = 0 ; k < bound1 ; k += p.local_fetch_1)
+                for(unsigned int n = 0 ; n < bound0 ; n += p.local_fetch_0*p.simd_width)
                 {
-                    unsigned int offset = (B_trans_=='T')?k*(p_.nL+1) + n:n*(p_.nL+1) + k;
-                    stream << B->process(vstore + "(" + vload + "(" + to_string(n/p_.simd_width) + ", #pointer + " + to_string(k) + "*#ld), 0, plB + " + to_string(offset) + ");") << std::endl;
+                    unsigned int offset = (B_trans_=='T')?k*(p.nL+1) + n:n*(p.nL+1) + k;
+                    stream << B->process(vstore + "(" + vload + "(" + to_string(n/p.simd_width) + ", #pointer + " + to_string(k) + "*#ld), 0, plB + " + to_string(offset) + ");") << std::endl;
                 }
 
         }
 
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL || p_.B_fetching_policy == FETCH_FROM_LOCAL)
+        if(p.A_fetching_policy==FETCH_FROM_LOCAL || p.B_fetching_policy == FETCH_FROM_LOCAL)
         {
           stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-          stream << "uint offA = " << p_.simd_width << "*idx;" << std::endl;
-          stream << "uint offB = " << p_.simd_width << "*idy;" << std::endl;
+          stream << "uint offA = " << p.simd_width << "*idx;" << std::endl;
+          stream << "uint offB = " << p.simd_width << "*idy;" << std::endl;
         }
 
-        //stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int k = 0 ; k < " << p_.kL << "; k+=" << p_.kS << "){" << std::endl;
+        stream << "#pragma unroll" << std::endl;
+        if(fallback)
+          stream << "for(unsigned int k = 0 ; k < " << p.kL << " && (block_k + k < K); k+=" << p.kS << "){" << std::endl;
+        else
+          stream << "for(unsigned int k = 0 ; k < " << p.kL << "; k+=" << p.kS << "){" << std::endl;
         stream.inc_tab();
 
         ///Fetch LHS to registers
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int kk = 0 ; kk < " << p_.kS << "; kk++)" << std::endl;
+        stream << "for(unsigned int kk = 0 ; kk < " << p.kS << "; kk++)" << std::endl;
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int mm = 0 ; mm < " << p_.mS/p_.simd_width << "; mm++)" << std::endl;
+        stream << "for(unsigned int mm = 0 ; mm < " << p.mS/p.simd_width << "; mm++)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        switch(p_.A_fetching_policy)
+        switch(p.A_fetching_policy)
         {
           case FETCH_FROM_LOCAL:
-            for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
-                stream << "rA[kk][mm*" << p_.simd_width << "+" << ss << "] = lA[offA + mm*" << p_.local_size_0*p_.simd_width << "+" << ss << "+ kk*" << (p_.mL+1) << "];" << std::endl;
+            for(unsigned int ss = 0 ; ss < p.simd_width ; ++ss)
+                stream << "rA[kk][mm*" << p.simd_width << "+" << ss << "] = lA[offA + mm*" << p.local_size_0*p.simd_width << "+" << ss << "+ kk*" << (p.mL+1) << "];" << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_CONTIGUOUS:
@@ -382,9 +400,9 @@ private:
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(A_trans_=='N')
-                stream << A->process("rA[kk][mm] = " + vload + "(mm*" + to_string(p_.local_size_0) + ", #pointer + kk*#ld);") << std::endl;
+                stream << A->process("rA[kk][mm] = " + vload + "(mm*" + to_string(p.local_size_0) + ", #pointer + kk*#ld);") << std::endl;
             else
-                stream << A->process("rA[kk][mm] = " + vload + "(kk , #pointer + mm*" + to_string(p_.local_size_0) + "*#ld);") << std::endl;
+                stream << A->process("rA[kk][mm] = " + vload + "(kk , #pointer + mm*" + to_string(p.local_size_0) + "*#ld);") << std::endl;
             break;
 
           default:
@@ -395,16 +413,16 @@ private:
         stream << "}" << std::endl;
 
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int kk = 0 ; kk < " << p_.kS << "; kk++)" << std::endl;
+        stream << "for(unsigned int kk = 0 ; kk < " << p.kS << "; kk++)" << std::endl;
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int nn = 0 ; nn < " << p_.nS/p_.simd_width << "; nn++)" << std::endl;
+        stream << "for(unsigned int nn = 0 ; nn < " << p.nS/p.simd_width << "; nn++)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        switch(p_.B_fetching_policy)
+        switch(p.B_fetching_policy)
         {
           case FETCH_FROM_LOCAL:
-            for(unsigned int ss = 0 ; ss < p_.simd_width ; ++ss)
-                stream << "rB[kk][nn*" << p_.simd_width << "+" << ss << "] = lB[offB + nn*" << p_.local_size_1*p_.simd_width << "+" << ss  << "+ kk*" << (p_.nL+1) << "];" << std::endl;
+            for(unsigned int ss = 0 ; ss < p.simd_width ; ++ss)
+                stream << "rB[kk][nn*" << p.simd_width << "+" << ss << "] = lB[offB + nn*" << p.local_size_1*p.simd_width << "+" << ss  << "+ kk*" << (p.nL+1) << "];" << std::endl;
             break;
 
           case FETCH_FROM_GLOBAL_CONTIGUOUS:
@@ -416,9 +434,9 @@ private:
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(B_trans_=='T')
-                stream << B->process("rB[kk][nn] = " + vload + "(nn*" + to_string(p_.local_size_1) + ", #pointer  + kk*#ld);") << std::endl;
+                stream << B->process("rB[kk][nn] = " + vload + "(nn*" + to_string(p.local_size_1) + ", #pointer  + kk*#ld);") << std::endl;
             else
-                stream << B->process("rB[kk][nn] = " + vload + "(kk, #pointer + nn*" + to_string(p_.local_size_1) + "*#ld);") << std::endl;
+                stream << B->process("rB[kk][nn] = " + vload + "(kk, #pointer + nn*" + to_string(p.local_size_1) + "*#ld);") << std::endl;
             break;
 
           default: break;
@@ -428,58 +446,58 @@ private:
 
 
         ///Increment pointers
-        switch(p_.A_fetching_policy)
+        switch(p.A_fetching_policy)
         {
           case FETCH_FROM_LOCAL:
-            stream << "offA += " << p_.kS*(p_.mL+1) << ";" << std::endl;
+            stream << "offA += " << p.kS*(p.mL+1) << ";" << std::endl;
             break;
 
           default:
             if(A_trans_=='N')
-                stream << A->process("#pointer += " + to_string(p_.kS) + "*#ld;") << std::endl;
+                stream << A->process("#pointer += " + to_string(p.kS) + "*#ld;") << std::endl;
             else
-                stream << A->process("#pointer += " + to_string(p_.kS) + ";") << std::endl;
+                stream << A->process("#pointer += " + to_string(p.kS) + ";") << std::endl;
             break;
         }
 
 
-        switch(p_.B_fetching_policy)
+        switch(p.B_fetching_policy)
         {
           case FETCH_FROM_LOCAL:
-            stream << "offB += " << p_.kS*(p_.nL+1) << ";" << std::endl;
+            stream << "offB += " << p.kS*(p.nL+1) << ";" << std::endl;
             break;
 
           default:
             if(B_trans_=='T')
-                stream << B->process("#pointer += " + to_string(p_.kS) + "*#ld;") << std::endl;
+                stream << B->process("#pointer += " + to_string(p.kS) + "*#ld;") << std::endl;
             else
-                stream << B->process("#pointer += " + to_string(p_.kS) + ";") << std::endl;
+                stream << B->process("#pointer += " + to_string(p.kS) + ";") << std::endl;
             break;
         }
 
 
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int kk = 0 ; kk <" << p_.kS << " ; ++kk)" << std::endl;
+        stream << "for(unsigned int kk = 0 ; kk <" << p.kS << " ; ++kk)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        for(unsigned int nn=0 ; nn < p_.nS ; ++nn)
-        for(unsigned int mm=0 ; mm < p_.mS ; ++mm)
+        for(unsigned int nn=0 ; nn < p.nS ; ++nn)
+        for(unsigned int mm=0 ; mm < p.mS ; ++mm)
         {
             std::string res_str, lhs_str, rhs_str;
             res_str = "rC[" + tools::to_string(mm) + "][" + tools::to_string(nn) + "]";
-            if(p_.A_fetching_policy==FETCH_FROM_LOCAL || p_.simd_width==1)
+            if(p.A_fetching_policy==FETCH_FROM_LOCAL || p.simd_width==1)
                 lhs_str = "rA[kk][" + tools::to_string(mm) + "]";
             else
-                lhs_str = "rA[kk][" + tools::to_string(mm/p_.simd_width) + "].s" + tools::to_string(mm%p_.simd_width);
-            if(p_.B_fetching_policy==FETCH_FROM_LOCAL || p_.simd_width==1)
+                lhs_str = "rA[kk][" + tools::to_string(mm/p.simd_width) + "].s" + tools::to_string(mm%p.simd_width);
+            if(p.B_fetching_policy==FETCH_FROM_LOCAL || p.simd_width==1)
                 rhs_str = "rB[kk]["+tools::to_string(nn)+"]";
             else
-                rhs_str = "rB[kk]["+tools::to_string(nn/p_.simd_width)+"].s"+tools::to_string(nn%p_.simd_width);
+                rhs_str = "rB[kk]["+tools::to_string(nn/p.simd_width)+"].s"+tools::to_string(nn%p.simd_width);
             stream << res_str << "=" << "fma(" << lhs_str << "," << rhs_str << "," << res_str << ");" << std::endl;
         }
         stream.dec_tab();
         stream << "}" << std::endl;
-        
+
 
 
 
@@ -488,80 +506,165 @@ private:
 
         //Increment global pointer if local memory is used
         //Else, it's incremented directly when fetching
-        if(p_.A_fetching_policy==FETCH_FROM_LOCAL)
+        if(p.A_fetching_policy==FETCH_FROM_LOCAL)
         {
             if(A_trans_=='N')
-                stream << A->process("#pointer += " + to_string(p_.kL) + "*#ld;") << std::endl;
+                stream << A->process("#pointer += " + to_string(p.kL) + "*#ld;") << std::endl;
             else
-                stream << A->process("#pointer += " + to_string(p_.kL) + ";") << std::endl;
+                stream << A->process("#pointer += " + to_string(p.kL) + ";") << std::endl;
         }
 
-        if(p_.B_fetching_policy==FETCH_FROM_LOCAL)
+        if(p.B_fetching_policy==FETCH_FROM_LOCAL)
         {
             if(B_trans_=='T')
-                stream << B->process("#pointer += " + to_string(p_.kL) + "*#ld;") << std::endl;
+                stream << B->process("#pointer += " + to_string(p.kL) + "*#ld;") << std::endl;
             else
-                stream << B->process("#pointer += " + to_string(p_.kL) + ";") << std::endl;
+                stream << B->process("#pointer += " + to_string(p.kL) + ";") << std::endl;
         }
 
         stream.dec_tab();
         stream << "}" << std::endl;
 
+
         if(C->row_major())
         {
-          unsigned int ministartstride0 = p_.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p_.mS:p_.simd_width;
-          unsigned int ministartstride1 = p_.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p_.nS:p_.simd_width;
+          unsigned int ministartstride0 = p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p.mS:p.simd_width;
+          unsigned int ministartstride1 = p.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p.nS:p.simd_width;
 
-          stream << C->process("#pointer += gidx*" + to_string(p_.mL) + "*#ld;") << std::endl;
+          stream << C->process("#pointer += gidx*" + to_string(p.mL) + "*#ld;") << std::endl;
           stream << C->process("#pointer += idx*" + to_string(ministartstride0) + "*#ld;") << std::endl;
-          stream << C->process("#pointer += gidy*" + to_string(p_.nL) + ";") << std::endl;
+          stream << C->process("#pointer += gidy*" + to_string(p.nL) + ";") << std::endl;
           stream << C->process("#pointer += idy*" + to_string(ministartstride1) + ";") << std::endl;
 
-          for(unsigned int n=0 ; n < p_.nS ; ++n){
-              for(unsigned int m=0 ; m < p_.mS ; ++m)
+          for(unsigned int n=0 ; n < p.nS ; ++n){
+              for(unsigned int m=0 ; m < p.mS ; ++m)
               {
-                  unsigned int ministride1 = p_.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p_.local_size_0;
-                  std::string Cj = to_string((m/p_.simd_width)*(ministride1*p_.simd_width) + m%p_.simd_width);
+                  unsigned int ministride1 = p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p.local_size_0;
+                  std::string Cj = to_string((m/p.simd_width)*(ministride1*p.simd_width) + m%p.simd_width);
                   stream << C->process("#pointer[" + Cj + "*#ld] = rC[" + to_string(m) + "][" + to_string(n) + "]*" + alpha->name() + "+ #pointer[" + Cj + "*#ld]*" + beta->name() + ";") << std::endl;
               }
-              if((n+1)%p_.simd_width>0 || p_.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
+              if((n+1)%p.simd_width>0 || p.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
                   stream << C->process("#pointer += 1;") << std::endl;
               else
-                  stream << C->process("#pointer += " + to_string((p_.local_size_1*p_.simd_width) - (p_.simd_width-1)) + ";") << std::endl;
+                  stream << C->process("#pointer += " + to_string((p.local_size_1*p.simd_width) - (p.simd_width-1)) + ";") << std::endl;
           }
 
         }
         else
         {
-          unsigned int ministartstride0 = p_.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p_.mS:p_.simd_width;
-          unsigned int ministartstride1 = p_.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p_.nS:p_.simd_width;
+          unsigned int ministartstride0 = p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p.mS:p.simd_width;
+          unsigned int ministartstride1 = p.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?p.nS:p.simd_width;
 
-          stream << C->process("#pointer += gidx*" + to_string(p_.mL) + ";") << std::endl;
+          stream << C->process("#pointer += gidx*" + to_string(p.mL) + ";") << std::endl;
           stream << C->process("#pointer += idx*" + to_string(ministartstride0) + ";") << std::endl;
-          stream << C->process("#pointer += gidy*" + to_string(p_.nL) + "*#ld;") << std::endl;
+          stream << C->process("#pointer += gidy*" + to_string(p.nL) + "*#ld;") << std::endl;
           stream << C->process("#pointer += idy*" + to_string(ministartstride1) + "*#ld;") << std::endl;
 
-          for(unsigned int m=0 ; m < p_.mS ; ++m)
+          for(unsigned int m=0 ; m < p.mS ; ++m)
           {
-              for(unsigned int n=0 ; n < p_.nS ; ++n)
+              for(unsigned int n=0 ; n < p.nS ; ++n)
               {
-                  unsigned int ministride1 = p_.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p_.local_size_1;
-                  std::string Cj = to_string((n/p_.simd_width)*(ministride1*p_.simd_width) + n%p_.simd_width);
+                  unsigned int ministride1 = p.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p.local_size_1;
+                  std::string Cj = to_string((n/p.simd_width)*(ministride1*p.simd_width) + n%p.simd_width);
                   stream << C->process("#pointer[" + Cj + "*#ld] = rC[" + to_string(m) + "][" + to_string(n) + "]*" + alpha->name() + " + #pointer[" + Cj + "*#ld]*" + beta->name() + ";") << std::endl;
               }
 
-              if((m+1)%p_.simd_width>0 || p_.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
+              if((m+1)%p.simd_width>0 || p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
                   stream << C->process("#pointer+=1;") << std::endl;
               else
-                  stream << C->process("#pointer += " + to_string((p_.local_size_0*p_.simd_width) - (p_.simd_width-1)) + ";") << std::endl;
+                  stream << C->process("#pointer += " + to_string((p.local_size_0*p.simd_width) - (p.simd_width-1)) + ";") << std::endl;
           }
         }
 
         stream << "}" << std::endl;
         stream.dec_tab();
 
-        res.push_back(stream.str());
+        return stream.str();
+    }
+
+    std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings) const
+    {
+        std::vector<std::string> res;
+        res.push_back(generate_impl(kernel_prefix, statements, mappings, false));
+        res.push_back(generate_impl(kernel_prefix, statements, mappings, true));
         return res;
+    }
+
+    template<class T>
+    void enqueue_block(scheduler::statement & statement, viennacl::ocl::kernel * kernels[],
+                       scheduler::lhs_rhs_element& eA, scheduler::lhs_rhs_element& eB, scheduler::lhs_rhs_element& eC, scheduler::lhs_rhs_element& ebeta,
+                       matrix_base<T> const & A, matrix_base<T> const & B, matrix_base<T> const & C, T beta, bool fallback)
+    {
+        viennacl::ocl::kernel& kernel = fallback?*kernels[1]:*kernels[0];
+
+        scheduler::statement::assign_element(eA, A);
+        scheduler::statement::assign_element(eB, B);
+        scheduler::statement::assign_element(eC, C);
+        scheduler::statement::assign_element(ebeta, beta);
+
+        std::cout << "----------------" << std::endl;
+        std::cout << "A - " << "[" <<  A.start1() << " " << A.start1() + A.size1() << "," << A.start2() << " " << A.start2() + A.size2()  << "]" << std::endl;
+        std::cout << "B - " << "[" <<  B.start1() << " " << B.start1() + B.size1() << "," << B.start2() << " " << B.start2() + B.size2()  << "]" << std::endl;
+        std::cout << "C - " << "[" <<  C.start1() << " " << C.start1() + C.size1() << "," << C.start2() << " " << C.start2() + C.size2()  << "]" << std::endl;
+        std::cout << "beta " << beta << std::endl;
+        std::cout << "----------------" << std::endl;
+
+        if(fallback)
+        {
+            kernel.global_work_size(0, tools::align_to_multiple(C.size1(), kernel.local_work_size(0)));
+            kernel.global_work_size(1, tools::align_to_multiple(C.size2(), kernel.local_work_size(1)));
+        }
+        else
+        {
+            kernel.global_work_size(0, C.size1()/p_.mS);
+            kernel.global_work_size(1, C.size2()/p_.nS);
+        }
+        unsigned int current_arg = 0;
+        kernel.arg(current_arg++, cl_uint(C.size1()));
+        kernel.arg(current_arg++, cl_uint(C.size2()));
+        kernel.arg(current_arg++, cl_uint(A.size2()));
+        set_arguments(statement, kernel, current_arg);
+        viennacl::ocl::enqueue(kernel);
+
+    }
+
+    template<class T> matrix_range<viennacl::matrix_base<T> >  create_range(viennacl::matrix_base<T>* scheduler::lhs_rhs_element::*ptr, scheduler::lhs_rhs_element const & element, range const & r0, range const & r1, char trans)
+    {
+        if(trans=='T')
+            return matrix_range<viennacl::matrix_base<T> >(*(element.*ptr), r1, r0);
+        return matrix_range<viennacl::matrix_base<T> >(*(element.*ptr), r0, r1);
+    }
+
+    template<class T>
+    void enqueue_impl(viennacl::matrix_base<T>* scheduler::lhs_rhs_element::*ptr, scheduler::statement & statement, ocl::kernel* kernels[], scheduler::lhs_rhs_element & A, scheduler::lhs_rhs_element & B, scheduler::lhs_rhs_element & C, scheduler::lhs_rhs_element & beta,
+                      vcl_size_t M, vcl_size_t N, vcl_size_t K)
+    {
+        vcl_size_t lM = M / p_.mL * p_.mL;
+        vcl_size_t lN = N / p_.nL * p_.nL;
+        vcl_size_t lK = K / p_.kL * p_.kL;
+
+        viennacl::range r0(0, lM);
+        viennacl::range r1(lM, M);
+        viennacl::range r2(0, lN);
+        viennacl::range r3(lN, N);
+        viennacl::range r4(0, lK);
+        viennacl::range r5(lK, K);
+
+        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r0, r4, A_trans_), create_range<T>(ptr, B, r4, r2, B_trans_), create_range<T>(ptr, C, r0, r2, 'N'), (T)0, true);
+        if(lK!=K)
+        {
+            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r0, r5, A_trans_), create_range<T>(ptr, B, r5, r2, B_trans_), create_range<T>(ptr, C, r0, r2, 'N'), (T)1, true);
+
+            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r0, r4, A_trans_), create_range<T>(ptr, B, r4, r3, B_trans_), create_range<T>(ptr, C, r0, r3, 'N'), (T)0, true);
+            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r0, r5, A_trans_), create_range<T>(ptr, B, r5, r3, B_trans_), create_range<T>(ptr, C, r0, r3, 'N'), (T)1, true);
+
+            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r1, r4, A_trans_), create_range<T>(ptr, B, r4, r2, B_trans_), create_range<T>(ptr, C, r1, r2, 'N'), (T)0, true);
+            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r1, r5, A_trans_), create_range<T>(ptr, B, r5, r2, B_trans_), create_range<T>(ptr, C, r1, r2, 'N'), (T)1, true);
+
+            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r1, r4, A_trans_), create_range<T>(ptr, B, r4, r3, B_trans_), create_range<T>(ptr, C, r1, r3, 'N'), (T)0, true);
+            enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr, A, r1, r5, A_trans_), create_range<T>(ptr, B, r5, r3, B_trans_), create_range<T>(ptr, C, r1, r3, 'N'), (T)1, true);
+
+        }
     }
 
 public:
@@ -574,40 +677,47 @@ public:
       using namespace tree_parsing;
 
       scheduler::statement const & st = statements.data().front();
-      vcl_size_t C_idx=0, A_idx=0, B_idx=0, dummyidx=0;
-      leaf_t C_leaf=LHS_NODE_TYPE, A_leaf=LHS_NODE_TYPE, B_leaf=LHS_NODE_TYPE, dummyleaf=LHS_NODE_TYPE;
-      parse(st, C_idx, C_leaf, dummyidx, dummyleaf, A_idx, A_leaf, B_idx, B_leaf, dummyidx, dummyleaf);
+      bool A_trans, B_trans;
+      vcl_size_t C_idx=0, A_idx=0, B_idx=0, alpha_idx=0, beta_idx = 0;
+      leaf_t C_leaf=LHS_NODE_TYPE, A_leaf=LHS_NODE_TYPE, B_leaf=LHS_NODE_TYPE, alpha_leaf=LHS_NODE_TYPE, beta_leaf=LHS_NODE_TYPE;
+      parse(st, C_idx, C_leaf, alpha_idx, alpha_leaf, A_idx, A_leaf, A_trans, B_idx, B_leaf, B_trans, beta_idx, beta_leaf);
+
+      scheduler::statement stcopy = st;
+      scheduler::lhs_rhs_element& A = utils::lhs_rhs_element(stcopy, A_idx, A_leaf);
+      scheduler::lhs_rhs_element& B = utils::lhs_rhs_element(stcopy, B_idx, B_leaf);
+      scheduler::lhs_rhs_element& C = utils::lhs_rhs_element(stcopy, C_idx, C_leaf);
+      scheduler::lhs_rhs_element& beta = utils::lhs_rhs_element(stcopy, beta_idx, beta_leaf);
 
       //set M, N
-      vcl_size_t iM = call_on_matrix(utils::lhs_rhs_element(st, C_idx, C_leaf), internal_size1_fun());
-      vcl_size_t iN = call_on_matrix(utils::lhs_rhs_element(st, C_idx, C_leaf), internal_size2_fun());
+      vcl_size_t M = call_on_matrix(C, size1_fun());
+      vcl_size_t N = call_on_matrix(C, size2_fun());
 
-      vcl_size_t M = call_on_matrix(utils::lhs_rhs_element(st, C_idx, C_leaf), size1_fun());
-      vcl_size_t N = call_on_matrix(utils::lhs_rhs_element(st, C_idx, C_leaf), size2_fun());
+      vcl_size_t sA1 = call_on_matrix(A, size1_fun());
+      vcl_size_t sA2 = call_on_matrix(A, size2_fun());
+      vcl_size_t sB1 = call_on_matrix(B, size1_fun());
+      vcl_size_t sB2 = call_on_matrix(B, size2_fun());
+      vcl_size_t K = (sA1==sB1 || sA1==sB2)?sA1:sA2;
 
-      vcl_size_t A1 = call_on_matrix(utils::lhs_rhs_element(st, A_idx, A_leaf), size1_fun());
-      vcl_size_t A2 = call_on_matrix(utils::lhs_rhs_element(st, A_idx, A_leaf), size2_fun());
-      vcl_size_t B1 = call_on_matrix(utils::lhs_rhs_element(st, B_idx, B_leaf), size1_fun());
-      vcl_size_t B2 = call_on_matrix(utils::lhs_rhs_element(st, B_idx, B_leaf), size2_fun());
+      viennacl::ocl::program& p0 = programs[0].program();
+      viennacl::ocl::program& p1 = programs[1].program();;
 
-      //set ND range
-      viennacl::ocl::kernel* kernel = &programs[0].program().get_kernel(kernel_prefix);
+      viennacl::ocl::kernel* kernels[2];
+      kernels[0] = &programs[0].program().get_kernel(kernel_prefix);
+      kernels[1] = &programs[1].program().get_kernel(kernel_prefix);
+      kernels[0]->local_work_size(0, p_.local_size_0);
+      kernels[0]->local_work_size(1, p_.local_size_1);
+      kernels[1]->local_work_size(0, p_.local_size_0);
+      kernels[1]->local_work_size(1, p_.local_size_1);
 
-      kernel->local_work_size(0, p_.local_size_0);
-      kernel->local_work_size(1, p_.local_size_1);
-      kernel->global_work_size(0, iM/p_.mS);
-      kernel->global_work_size(1, iN/p_.nS);
 
-      unsigned int current_arg = 0;
-      kernel->arg(current_arg++, cl_uint(M));
-      kernel->arg(current_arg++, cl_uint(N));
-      if(A1==B1 || A1==B2)
-         kernel->arg(current_arg++, cl_uint(A1));
+
+      if(C.numeric_type==scheduler::FLOAT_TYPE)
+        enqueue_impl<float>(&scheduler::lhs_rhs_element::matrix_float, stcopy, kernels, A, B, C, beta, M, N, K);
+      else if(C.numeric_type==scheduler::DOUBLE_TYPE)
+        enqueue_impl<double>(&scheduler::lhs_rhs_element::matrix_double, stcopy, kernels, A, B, C, beta, M, N, K);
       else
-         kernel->arg(current_arg++, cl_uint(A2));
+        throw generator_not_supported_exception("GEMM only supported for float/double");
 
-      set_arguments(statements, *kernel, current_arg);
-      viennacl::ocl::enqueue(*kernel);
     }
 
 private:
