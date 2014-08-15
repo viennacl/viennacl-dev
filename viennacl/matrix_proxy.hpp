@@ -24,8 +24,8 @@
 
 #include "viennacl/forwards.h"
 #include "viennacl/range.hpp"
-#include "viennacl/matrix.hpp"
-#include "viennacl/linalg/matrix_operations.hpp"
+#include "viennacl/slice.hpp"
+#include "viennacl/matrix_def.hpp"
 
 namespace viennacl
 {

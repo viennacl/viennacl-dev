@@ -28,6 +28,9 @@ License:         MIT (X11), see file LICENSE in the base directory
 
 #include "viennacl/scheduler/forwards.h"
 
+#include "viennacl/matrix_def.hpp"
+#include "viennacl/matrix_proxy.hpp"
+
 #include "viennacl/device_specific/templates/template_base.hpp"
 #include "viennacl/device_specific/mapped_objects.hpp"
 #include "viennacl/device_specific/utils.hpp"
@@ -224,7 +227,7 @@ private:
         if(fallback)
             stream << "if(get_global_id(0)>=M || get_global_id(1)>=N) return;" << std::endl;
 
-        tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#pointer += #start1 + #start2*#ld;", statements, mappings);
+        tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#pointer += $OFFSET{#start1, #start2};", statements, mappings);
         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#ld *= #stride2;", statements, mappings);
 
         ///Result Values
@@ -638,8 +641,7 @@ private:
         vcl_size_t start2 = M.start2();
         vcl_size_t stride1 = M.stride1();
         vcl_size_t stride2 = M.stride2();
-        //not for C?
-        if(trans=='T' ^ M.row_major())
+        if(trans=='T')
         {
           std::swap(start1, start2);
           std::swap(stride1, stride2);

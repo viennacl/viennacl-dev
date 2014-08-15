@@ -339,6 +339,11 @@ namespace viennacl
               register_attribute(start2_, "#start2", name_ + "_start2");
               register_attribute(stride1_, "#stride1", name_ + "_stride1");
               register_attribute(stride2_, "#stride2", name_ + "_stride2");
+              if(row_major_)
+              {
+                std::swap(start1_, start2_);
+                std::swap(stride1_, stride2_);
+              }
           }
 
           bool row_major() const
