@@ -86,9 +86,9 @@ namespace viennacl{
         public:
           typedef bool (*pred_t)(scheduler::statement_node const & node);
 
-          filter(pred_t pred, std::vector<vcl_size_t> & out) : pred_(pred), out_(out){ }
+          filter(pred_t pred, std::vector<size_t> & out) : pred_(pred), out_(out){ }
 
-          void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t) const
+          void operator()(scheduler::statement const & statement, size_t root_idx, leaf_t) const
           {
              scheduler::statement_node const * root_node = &statement.array()[root_idx];
              if(pred_(*root_node))
@@ -96,11 +96,30 @@ namespace viennacl{
           }
       private:
           pred_t pred_;
-          std::vector<vcl_size_t> & out_;
+          std::vector<size_t> & out_;
+      };
+
+      class filter_elements : public traversal_functor
+      {
+        public:
+          filter_elements(scheduler::statement_node_subtype subtype, std::vector<scheduler::lhs_rhs_element> & out) : subtype_(subtype), out_(out) { }
+
+          void operator()(scheduler::statement const & statement, size_t root_idx, leaf_t) const
+          {
+             scheduler::statement_node const * root_node = &statement.array()[root_idx];
+             if(root_node->lhs.subtype==subtype_)
+               out_.push_back(root_node->lhs);
+             if(root_node->rhs.subtype==subtype_)
+               out_.push_back(root_node->rhs);
+          }
+      private:
+          scheduler::statement_node_subtype subtype_;
+          std::vector<scheduler::lhs_rhs_element> & out_;
       };
 
       /** @brief generate a string from an operation_node_type */
-      inline const char * evaluate(scheduler::operation_node_type type){
+      inline const char * evaluate(scheduler::operation_node_type type)
+      {
         using namespace scheduler;
         // unary expression
         switch(type){
@@ -217,13 +236,12 @@ namespace viennacl{
       class evaluate_expression_traversal: public tree_parsing::traversal_functor
       {
         private:
-          index_tuple index_;
-          unsigned int simd_element_;
+          std::map<std::string, std::string> const & accessors_;
           std::string & str_;
           mapping_type const & mapping_;
 
         public:
-          evaluate_expression_traversal(index_tuple const & index, unsigned int simd_element, std::string & str, mapping_type const & mapping) : index_(index), simd_element_(simd_element), str_(str), mapping_(mapping){ }
+          evaluate_expression_traversal(std::map<std::string, std::string> const & accessors, std::string & str, mapping_type const & mapping) : accessors_(accessors), str_(str), mapping_(mapping){ }
 
           void call_before_expansion(scheduler::statement const & statement, vcl_size_t root_idx) const
           {
@@ -246,7 +264,7 @@ namespace viennacl{
             if(leaf==PARENT_NODE_TYPE)
             {
               if(utils::node_leaf(root_node.op))
-                str_ += mapping_.at(key)->evaluate(index_, simd_element_);
+                str_ += mapping_.at(key)->evaluate(accessors_);
               else if(utils::elementwise_operator(root_node.op))
                 str_ += tree_parsing::evaluate(root_node.op.type);
               else if(root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY && utils::elementwise_function(root_node.op))
@@ -257,23 +275,23 @@ namespace viennacl{
               if(leaf==LHS_NODE_TYPE)
               {
                 if(root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                  str_ += mapping_.at(key)->evaluate(index_,simd_element_);
+                  str_ += mapping_.at(key)->evaluate(accessors_);
               }
 
               if(leaf==RHS_NODE_TYPE)
               {
                 if(root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-                  str_ += mapping_.at(key)->evaluate(index_,simd_element_);
+                  str_ += mapping_.at(key)->evaluate(accessors_);
               }
             }
           }
       };
 
-      inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, index_tuple const & index,
-                                             unsigned int simd_element, mapping_type const & mapping, leaf_t leaf)
+      inline std::string evaluate(leaf_t leaf, std::map<std::string, std::string> const & accessors,
+                                  scheduler::statement const & statement, vcl_size_t root_idx, mapping_type const & mapping)
       {
         std::string res;
-        evaluate_expression_traversal traversal_functor(index, simd_element, res, mapping);
+        evaluate_expression_traversal traversal_functor(accessors, res, mapping);
         scheduler::statement_node const & root_node = statement.array()[root_idx];
 
         if(leaf==RHS_NODE_TYPE)
@@ -296,63 +314,80 @@ namespace viennacl{
         return res;
       }
 
+      inline void evaluate(utils::kernel_generation_stream & stream, leaf_t leaf, std::map<std::string, std::string> const & accessors,
+                              statements_container const & statements, std::vector<mapping_type> const & mappings)
+      {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::const_iterator mit;
+
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+          stream << evaluate(leaf, accessors, *sit, sit->root(), *mit) << ";" << std::endl;
+      }
+
 
       /** @brief functor for fetching or writing-back the elements in a statement */
-      class read_write_traversal : public tree_parsing::traversal_functor{
+      class process_traversal : public tree_parsing::traversal_functor
+      {
         public:
-          enum mode_t { FETCH, WRITE_BACK };
+          process_traversal(std::string const & type_key, std::string const & to_process, utils::kernel_generation_stream & stream,
+                            mapping_type const & mapping, std::set<std::string> & already_processed) : type_key_(type_key), to_process_(to_process),  stream_(stream), mapping_(mapping), already_processed_(already_processed){ }
 
-          read_write_traversal(mode_t mode, std::string suffix, std::set<std::string> & cache,
-                               index_tuple const & index, utils::kernel_generation_stream & stream, mapping_type const & mapping)
-            : mode_(mode), suffix_(suffix), cache_(cache), index_(index), stream_(stream), mapping_(mapping){ }
-
-          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, leaf_t leaf) const {
+          void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, leaf_t leaf) const
+          {
              mapping_type::const_iterator it = mapping_.find(std::make_pair(root_idx, leaf));
              if(it!=mapping_.end())
              {
-               if(mode_==FETCH)
-                if(fetchable * p = dynamic_cast<fetchable *>(it->second.get()))
-                  p->fetch(suffix_, index_, cache_, stream_);
-
-               if(mode_==WRITE_BACK)
-                if(writable * p = dynamic_cast<writable *>(it->second.get()))
-                  p->write_back(suffix_, index_, cache_, stream_);
+               mapped_object * obj = it->second.get();
+               if(obj->type_key()==type_key_)
+               {
+                 if(already_processed_.insert(obj->process("#name")).second)
+                  stream_ << obj->process(to_process_) << std::endl;
+               }
              }
           }
       private:
-        mode_t mode_;
-        std::string suffix_;
-        std::set<std::string> & cache_;
-        index_tuple index_;
+        std::string const & type_key_;
+        std::string const & to_process_;
         utils::kernel_generation_stream & stream_;
         mapping_type const & mapping_;
+        std::set<std::string> & already_processed_;
       };
 
-
-      inline void read_write(tree_parsing::read_write_traversal::mode_t mode, std::string const & suffix,
-                                  std::set<std::string> & cache, scheduler::statement const & statement,vcl_size_t root_idx
-                                  ,index_tuple const & index,utils::kernel_generation_stream & stream, mapping_type const & mapping, leaf_t leaf)
+      inline void process(utils::kernel_generation_stream & stream, leaf_t leaf, std::string const & type_key, std::string const & to_process,
+                          scheduler::statement const & statement, size_t root_idx, mapping_type const & mapping, std::set<std::string> & already_processed)
       {
-        read_write_traversal traversal_functor(mode, suffix, cache, index, stream, mapping);
+        process_traversal traversal_functor(type_key, to_process, stream, mapping, already_processed);
         scheduler::statement_node const & root_node = statement.array()[root_idx];
-
 
         if(leaf==RHS_NODE_TYPE)
         {
           if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            tree_parsing::traverse(statement, root_node.rhs.node_index, traversal_functor, false);
+            tree_parsing::traverse(statement, root_node.rhs.node_index, traversal_functor, true);
           else
             traversal_functor(statement, root_idx, leaf);
         }
         else if(leaf==LHS_NODE_TYPE)
         {
           if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
-            tree_parsing::traverse(statement, root_node.lhs.node_index, traversal_functor, false);
+            tree_parsing::traverse(statement, root_node.lhs.node_index, traversal_functor, true);
           else
             traversal_functor(statement, root_idx, leaf);
         }
         else
-          tree_parsing::traverse(statement, root_idx, traversal_functor, false);
+        {
+          tree_parsing::traverse(statement, root_idx, traversal_functor, true);
+        }
+      }
+
+      inline void process(utils::kernel_generation_stream & stream, leaf_t leaf, std::string const & type_key, std::string const & to_process,
+                              statements_container const & statements, std::vector<mapping_type> const & mappings)
+      {
+        statements_container::data_type::const_iterator sit;
+        std::vector<mapping_type>::const_iterator mit;
+        std::set<std::string> already_processed;
+
+        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+          process(stream, leaf, type_key, to_process, *sit, sit->root(), *mit, already_processed);
       }
 
 

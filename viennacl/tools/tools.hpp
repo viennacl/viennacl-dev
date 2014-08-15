@@ -164,6 +164,17 @@ namespace viennacl
         return num;
     }
 
+    /** @brief  Returns true if pred returns true for any of the elements in the range [first,last), and false otherwise.*/
+    template<class InputIterator, class UnaryPredicate>
+      bool any_of (InputIterator first, InputIterator last, UnaryPredicate pred)
+    {
+      while (first!=last) {
+        if (pred(*first)) return true;
+        ++first;
+      }
+      return false;
+    }
+
     /** @brief Create a double precision kernel out of a single precision kernel
     *
     * @param source          The source string

@@ -24,8 +24,8 @@
 
 #include "viennacl/forwards.h"
 #include "viennacl/range.hpp"
-#include "viennacl/matrix.hpp"
-#include "viennacl/linalg/matrix_operations.hpp"
+#include "viennacl/slice.hpp"
+#include "viennacl/matrix_def.hpp"
 
 namespace viennacl
 {
@@ -55,7 +55,7 @@ namespace viennacl
                    range const & col_range) : base_type(A.handle(),
                                                         row_range.size(), row_range.start(), 1, A.internal_size1(),
                                                         col_range.size(), col_range.start(), 1, A.internal_size2(),
-                                                        viennacl::is_row_major<MatrixType>::value) {}
+                                                        A.row_major()) {}
 
       matrix_range(self_type const & other) : base_type(const_cast<handle_type &>(other.handle()),
                                                         other.size1(), other.start1(), other.stride1(), other.internal_size1(),
@@ -311,7 +311,7 @@ namespace viennacl
                    slice const & col_slice) : base_type(A.handle(),
                                                         row_slice.size(), row_slice.start(), row_slice.stride(), A.internal_size1(),
                                                         col_slice.size(), col_slice.start(), col_slice.stride(), A.internal_size2(),
-                                                        viennacl::is_row_major<MatrixType>::value) {}
+                                                        A.row_major()) {}
 
       matrix_slice(self_type const & other) : base_type(const_cast<handle_type &>(other.handle()),
                                                         other.size1(), other.start1(), other.stride1(), other.internal_size1(),

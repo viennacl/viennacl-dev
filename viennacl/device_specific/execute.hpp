@@ -31,7 +31,7 @@
 #include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/templates/template_base.hpp"
 #include "viennacl/device_specific/tree_parsing.hpp"
-
+#include "viennacl/device_specific/execution_handler.hpp"
 
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/timer.hpp"
@@ -44,23 +44,12 @@ namespace viennacl{
     {
       //Generate program name
       std::string program_name = tree_parsing::statements_representation(statements, BIND_TO_HANDLE);
-
       //Retrieve/Compile program
       if(force_compilation)
         ctx.delete_program(program_name);
-      if(!ctx.has_program(program_name))
-      {
-        std::string src;
-        //Headers generation
-        src+="#if defined(cl_khr_fp64)\n";
-        src+="#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n";
-        src+="#elif defined(cl_amd_fp64)\n";
-        src+="#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n";
-        src+="#endif\n";
-        src +=tplt.generate(statements, ctx.current_device());
-        ctx.add_program(src, program_name);
-      }
-      tplt.enqueue(ctx.get_program(program_name), statements);
+      execution_handler handler(program_name, ctx, ctx.current_device());
+      handler.add(program_name, &tplt, statements);
+      handler.execute(program_name, statements);
     }
 
   }

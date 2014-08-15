@@ -28,6 +28,8 @@
 #include <set>
 #include <stdexcept>
 
+#include "viennacl/scheduler/io.hpp"
+
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/scheduler/forwards.h"
@@ -48,6 +50,7 @@ namespace viennacl{
     static const int TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE = -6;
     static const int TEMPLATE_INVALID_SIMD_WIDTH = -7;
     static const int TEMPLATE_ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE = -8;
+    static const int TEMPLATE_INVALID_FETCHING_POLICY_TYPE= -9;
 
     static const int TEMPLATE_GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH = -10;
     static const int TEMPLATE_MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE = -11;
@@ -78,6 +81,14 @@ namespace viennacl{
       return node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE
           || node.op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY
           || node.op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY;
+    }
+
+    inline scheduler::statement_node const & lhs_most(scheduler::statement::container_type const & array, size_t root)
+    {
+      scheduler::statement_node const * current = &array[root];
+      while(current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+        current = &array[current->lhs.node_index];
+      return *current;
     }
 
     enum expression_type{
@@ -167,7 +178,7 @@ namespace viennacl{
       template<class Fun>
       inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect);
 
-      inline std::string evaluate_expression(scheduler::statement const & statement, vcl_size_t root_idx, index_tuple const & index, unsigned int simd_element, mapping_type const & mapping, leaf_t initial_leaf);
+      inline std::string evaluate(leaf_t leaf, std::map<std::string, std::string> const & accessors, scheduler::statement const & statement, vcl_size_t root_idx,mapping_type const & mapping);
     }
 
     using scheduler::INT_TYPE;

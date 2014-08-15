@@ -36,48 +36,45 @@ namespace viennacl{
 
   namespace device_specific{
 
-    static void compute_reduction(utils::kernel_generation_stream & os, std::string accidx, std::string curidx, std::string const & acc, std::string const & cur, scheduler::op_element const & op){
-        if(utils::is_index_reduction(op))
-        {
-          os << accidx << "= select(" << accidx << "," << curidx << "," << cur << ">" << acc << ");" << std::endl;
-          os << acc << "=";
-          if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGFMAX_TYPE) os << "fmax";
-          if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE) os << "max";
-          if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGFMIN_TYPE) os << "fmin";
-          if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMIN_TYPE) os << "min";
-          os << "(" << acc << "," << cur << ");"<< std::endl;
-        }
-        else{
-          os << acc << "=";
-          if(utils::elementwise_function(op))
-              os << tree_parsing::evaluate(op.type) << "(" << acc << "," << cur << ")";
-          else
-              os << "(" << acc << ")" << tree_parsing::evaluate(op.type)  << "(" << cur << ")";
-          os << ";" << std::endl;
-        }
+    inline void compute_reduction(utils::kernel_generation_stream & os, std::string acc, std::string cur, scheduler::op_element const & op)
+    {
+      if(utils::elementwise_function(op))
+        os << acc << "=" << tree_parsing::evaluate(op.type) << "(" << acc << "," << cur << ");" << std::endl;
+      else
+        os << acc << "= (" << acc << ")" << tree_parsing::evaluate(op.type)  << "(" << cur << ");" << std::endl;
+    }
+
+    inline void compute_index_reduction(utils::kernel_generation_stream & os, std::string acc, std::string cur, std::string const & acc_value, std::string const & cur_value, scheduler::op_element const & op)
+    {
+      os << acc << "= select(" << acc << "," << cur << "," << cur_value << ">" << acc_value << ");" << std::endl;
+      os << acc_value << "=";
+      if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGFMAX_TYPE) os << "fmax";
+      if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMAX_TYPE) os << "max";
+      if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGFMIN_TYPE) os << "fmin";
+      if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGMIN_TYPE) os << "min";
+      os << "(" << acc_value << "," << cur_value << ");"<< std::endl;
+    }
+
+    inline void process_all(std::string const & type_key, std::string const & str,
+                            utils::kernel_generation_stream & stream, std::vector<mapping_type> const & mappings)
+    {
+      for(std::vector<mapping_type>::const_iterator mit = mappings.begin() ; mit != mappings.end() ; ++mit)
+        for(mapping_type::const_iterator mmit = mit->begin() ; mmit != mit->end() ; ++mmit)
+          if(mmit->second->type_key()==type_key)
+            stream << mmit->second->process(str) << std::endl;
     }
 
 
-    inline void reduce_1d_local_memory(utils::kernel_generation_stream & stream, unsigned int size, std::vector<std::string> const & bufs, std::vector<scheduler::op_element> const & rops)
+    inline void process_all_at(std::string const & type_key, std::string const & str,
+                            utils::kernel_generation_stream & stream, std::vector<mapping_type> const & mappings,
+                            size_t root_idx, leaf_t leaf)
     {
-        //Reduce local memory
-        stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int stride = " << size/2 << "; stride >0 ; stride /=2){" << std::endl;
-        stream.inc_tab();
-        stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
-        stream << "if(lid <  stride){" << std::endl;
-        stream.inc_tab();
-        for(unsigned int k = 0 ; k < bufs.size() ; ++k){
-            std::string acc = bufs[k] + "[lid]";
-            std::string accidx = (bufs[k] + "idx") + "[lid]";
-            std::string cur = bufs[k] + "[lid + stride]";
-            std::string curidx = (bufs[k] + "idx") + "[lid + stride]";
-            compute_reduction(stream,accidx,curidx,acc,cur,rops[k]);
-        }
-        stream.dec_tab();
-        stream << "}" << std::endl;
-        stream.dec_tab();
-        stream << "}" << std::endl;
+      for(std::vector<mapping_type>::const_iterator mit = mappings.begin() ; mit != mappings.end() ; ++mit)
+      {
+         mapped_object * obj = mit->at(mapping_key(root_idx, leaf)).get();
+         if(obj->type_key()==type_key)
+           stream << obj->process(str) << std::endl;
+      }
     }
 
     inline std::string neutral_element(scheduler::op_element const & op){

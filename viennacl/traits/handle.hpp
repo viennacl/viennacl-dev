@@ -189,7 +189,18 @@ namespace viennacl
     inline double    opencl_handle(double          val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 
 
+    template <typename T>
+    viennacl::ocl::context & opencl_context(T const & obj)
+    {
+      return const_cast<viennacl::ocl::context &>(opencl_handle(obj).context());
+    }
+
 #endif
+
+    //
+    // OpenCL context extraction
+    //
+
 
 
 

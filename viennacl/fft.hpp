@@ -109,14 +109,14 @@ namespace viennacl
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(in.context());
           viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
-          std::string program_string = viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, row_major>::program_name();
+          std::string program_string = viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, row_major>::program_name();
           if (data_order == FFT_DATA_ORDER::COL_MAJOR)
           {
-            viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, column_major>::init(ctx);
-            program_string = viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, column_major>::program_name();
+            viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, column_major>::init(ctx);
+            program_string = viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, column_major>::program_name();
           }
           else
-            viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, row_major>::init(ctx);
+            viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, row_major>::init(ctx);
           viennacl::ocl::kernel& kernel = ctx.get_kernel(program_string, "fft_direct");
           viennacl::ocl::enqueue(kernel(in, out, static_cast<cl_uint>(size), static_cast<cl_uint>(stride), static_cast<cl_uint>(batch_num), sign));
         }
@@ -137,14 +137,14 @@ namespace viennacl
           viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(in.context());
           viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
-          std::string program_string = viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, row_major>::program_name();
+          std::string program_string = viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, row_major>::program_name();
           if (data_order == FFT_DATA_ORDER::COL_MAJOR)
           {
-            viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, column_major>::init(ctx);
-            program_string = viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, column_major>::program_name();
+            viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, column_major>::init(ctx);
+            program_string = viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, column_major>::program_name();
           }
           else
-            viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, row_major>::init(ctx);
+            viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, row_major>::init(ctx);
 
           viennacl::ocl::kernel& kernel = ctx.get_kernel(program_string, "fft_reorder");
           viennacl::ocl::enqueue(kernel(in,
@@ -178,14 +178,14 @@ namespace viennacl
             assert(batch_num != 0);
             assert(is_radix2(size));
 
-            std::string program_string = viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, row_major>::program_name();
+            std::string program_string = viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, row_major>::program_name();
             if (data_order == FFT_DATA_ORDER::COL_MAJOR)
             {
-              viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, column_major>::init(ctx);
-              program_string = viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, column_major>::program_name();
+              viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, column_major>::init(ctx);
+              program_string = viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, column_major>::program_name();
             }
             else
-              viennacl::linalg::opencl::kernels::matrix<SCALARTYPE, row_major>::init(ctx);
+              viennacl::linalg::opencl::kernels::matrix_legacy<SCALARTYPE, row_major>::init(ctx);
 
             vcl_size_t bits_datasize = num_bits(size);
 

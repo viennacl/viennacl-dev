@@ -263,6 +263,36 @@ namespace viennacl{
         template<class T> result_type operator()(T const &t) const { return viennacl::traits::size(t); }
       };
 
+      struct stride_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::stride(t); }
+      };
+
+      struct start1_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::start1(t); }
+      };
+
+      struct start2_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::start2(t); }
+      };
+
+      struct leading_stride{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::row_major(t)?viennacl::traits::stride2(t):viennacl::traits::stride1(t); }
+      };
+
+      struct stride1_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::stride1(t); }
+      };
+
+      struct stride2_fun{
+        typedef vcl_size_t result_type;
+        template<class T> result_type operator()(T const &t) const { return viennacl::traits::stride2(t); }
+      };
+
       struct handle_fun{
         typedef cl_mem result_type;
         template<class T>
@@ -305,10 +335,13 @@ namespace viennacl{
       template<class T>
       struct is_same_type<T,T> { enum { value = 1 }; };
 
-      inline bool is_reduction(scheduler::op_element const & op){
-        return op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
-            || op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY
-            || op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY;
+      inline bool is_reduction(scheduler::statement_node const & node)
+      {
+        return node.op.type_family==scheduler::OPERATION_VECTOR_REDUCTION_TYPE_FAMILY
+            || node.op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY
+            || node.op.type_family==scheduler::OPERATION_ROWS_REDUCTION_TYPE_FAMILY
+            || node.op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE
+            || node.op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE;
       }
 
       inline bool is_index_reduction(scheduler::op_element const & op)
@@ -453,13 +486,13 @@ namespace viennacl{
 
       }
 
-      inline scheduler::lhs_rhs_element lhs_rhs_element(scheduler::statement const & st, vcl_size_t idx, leaf_t leaf)
+      inline scheduler::lhs_rhs_element & lhs_rhs_element(scheduler::statement const & st, vcl_size_t idx, leaf_t leaf)
       {
         using namespace tree_parsing;
         assert(leaf==LHS_NODE_TYPE || leaf==RHS_NODE_TYPE);
         if(leaf==LHS_NODE_TYPE)
-          return st.array()[idx].lhs;
-        return st.array()[idx].rhs;
+          return const_cast<scheduler::lhs_rhs_element &>(st.array()[idx].lhs);
+        return const_cast<scheduler::lhs_rhs_element &>(st.array()[idx].rhs);
       }
 
       inline unsigned int size_of(scheduler::statement_node_numeric_type type)
@@ -486,11 +519,11 @@ namespace viennacl{
         }
       }
 
-      inline std::string simd_scalartype(std::string const & scalartype, unsigned int width)
+      inline std::string append_width(std::string const & str, unsigned int width)
       {
         if(width==1)
-          return scalartype;
-        return scalartype + tools::to_string(width);
+          return str;
+        return str + tools::to_string(width);
       }
 
     }

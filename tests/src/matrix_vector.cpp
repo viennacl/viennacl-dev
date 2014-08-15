@@ -1062,22 +1062,22 @@ int main()
 
    int retval = EXIT_SUCCESS;
 
-   std::cout << std::endl;
-   std::cout << "----------------------------------------------" << std::endl;
-   std::cout << std::endl;
-   {
-      typedef float NumericT;
-      NumericT epsilon = NumericT(1.0E-3);
-      std::cout << "# Testing setup:" << std::endl;
-      std::cout << "  eps:     " << epsilon << std::endl;
-      std::cout << "  numeric: float" << std::endl;
-      std::cout << "  layout: row-major" << std::endl;
-      retval = test<NumericT, viennacl::row_major>(epsilon);
-      if( retval == EXIT_SUCCESS )
-         std::cout << "# Test passed" << std::endl;
-      else
-         return retval;
-   }
+//   std::cout << std::endl;
+//   std::cout << "----------------------------------------------" << std::endl;
+//   std::cout << std::endl;
+//   {
+//      typedef float NumericT;
+//      NumericT epsilon = NumericT(1.0E-3);
+//      std::cout << "# Testing setup:" << std::endl;
+//      std::cout << "  eps:     " << epsilon << std::endl;
+//      std::cout << "  numeric: float" << std::endl;
+//      std::cout << "  layout: row-major" << std::endl;
+//      retval = test<NumericT, viennacl::row_major>(epsilon);
+//      if( retval == EXIT_SUCCESS )
+//         std::cout << "# Test passed" << std::endl;
+//      else
+//         return retval;
+//   }
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
