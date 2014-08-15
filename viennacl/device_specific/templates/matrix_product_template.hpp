@@ -536,7 +536,8 @@ private:
           stream << C->process("#pointer += gidy*" + to_string(p.nL) + "*#stride1;") << std::endl;
           stream << C->process("#pointer += idy*" + to_string(ministartstride1) + "*#stride1;") << std::endl;
 
-          for(unsigned int n=0 ; n < p.nS ; ++n){
+          for(unsigned int n=0 ; n < p.nS ; ++n)
+          {
               for(unsigned int m=0 ; m < p.mS ; ++m)
               {
                   unsigned int ministride1 = p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p.local_size_0;
@@ -598,11 +599,6 @@ private:
         if(A.size1()==0 || A.size2()==0 || B.size1()==0 || B.size2()==0 || C.size1()==0 || C.size2()==0)
             return;
 
-//        std::cout << "-----" << std::endl;
-//        std::cout << "C[" << C.start1() << ":" << C.start1()+C.size1() << "," << C.start2() << ":" << C.start2() + C.size2() << "]" <<
-//                  "=" << "A[" << A.start1() << ":" << A.start1()+A.size1() << "," << A.start2() << ":" << A.start2() + A.size2() <<  "]" <<
-//                     "B[" << B.start1() << ":" << B.start1()+B.size1() << "," << B.start2() << ":" << B.start2() + B.size2() << "]" << std::endl;
-
         viennacl::ocl::kernel& kernel = fallback?*kernels[1]:*kernels[0];
 
         scheduler::statement::assign_element(eA, A);
@@ -610,6 +606,9 @@ private:
         scheduler::statement::assign_element(eC, C);
         scheduler::statement::assign_element(ebeta, beta);
 
+//        std::cout << "C[" << C.start1() << ":" << C.size1() + C.start1() << "," << C.start2() << ":" << C.start2() + C.size2() << "] = "
+//                  << "A[" << A.start1() << ":" << A.start1() + A.size1() << "," << A.start2() << ":" << A.start2() + A.size2()<< "]*"
+//                  << "B[" << B.start1() << ":" << B.start1() + B.size1() << "," << B.start2() << ":" << B.start2() + B.size2() << "]" << std::endl;
         vcl_size_t K = A.size1()==B.size1()||A.size1()==B.size2()?A.size1():A.size2();
 
         if(fallback)
@@ -631,19 +630,25 @@ private:
 
     }
 
-    template<class T> matrix_range<viennacl::matrix_base<T> >  create_range(viennacl::matrix_base<T>* scheduler::lhs_rhs_element::*ptr, scheduler::lhs_rhs_element const & element,
+    template<class T> matrix_slice<viennacl::matrix_base<T> >  create_slice(viennacl::matrix_base<T>* scheduler::lhs_rhs_element::*ptr, scheduler::lhs_rhs_element const & element,
                                                                             vcl_size_t s0_0, vcl_size_t s0_1, vcl_size_t s1_0, vcl_size_t s1_1, char trans)
     {
         matrix_base<T> & M = *(element.*ptr);
         vcl_size_t start1 = M.start1();
         vcl_size_t start2 = M.start2();
-        if(trans=='T')
+        vcl_size_t stride1 = M.stride1();
+        vcl_size_t stride2 = M.stride2();
+        //not for C?
+        if(trans=='T' ^ M.row_major())
+        {
           std::swap(start1, start2);
-        range r0(start1 + s0_0, start1 + s0_1);
-        range r1(start2 + s1_0, start2 + s1_1);
+          std::swap(stride1, stride2);
+        }
+        slice s0(start1 + s0_0, stride1, s0_1 - s0_0);
+        slice s1(start2 + s1_0, stride2, s1_1 - s1_0);
         if(trans=='T')
-            std::swap(r0, r1);
-        return matrix_range<viennacl::matrix_base<T> >(M, r0, r1);
+            std::swap(s0, s1);
+        return matrix_slice<viennacl::matrix_base<T> >(M, s0, s1);
     }
 
     template<class T>
@@ -652,10 +657,12 @@ private:
                       T beta_value, vcl_size_t M, vcl_size_t N, vcl_size_t K)
     {
         using namespace device_specific::utils;
-        if(M < p_.mL || N < p_.nL || K < p_.kL
+        if(true || M < p_.mL || N < p_.nL || K < p_.kL
            ||call_on_matrix(A, stride1_fun()) > 1 || call_on_matrix(B, stride1_fun()) > 1 || call_on_matrix(C, stride1_fun()) > 1)
         {
-            enqueue_block(statement, kernels, A, B, C, beta, *(A.*ptr_matrix), *(B.*ptr_matrix), *(C.*ptr_matrix), beta_value, true);
+            enqueue_block(statement, kernels, A, B, C, beta, create_slice(ptr_matrix, A, 0, M, 0, K, A_trans_),
+                                                            create_slice(ptr_matrix, B, 0, K, 0, N,  B_trans_),
+                                                            create_slice(ptr_matrix, C, 0, M, 0, N, 'N'), beta_value, true);
             return;
         }
 
@@ -668,17 +675,17 @@ private:
         vcl_size_t lK = K / p_.kL * p_.kL;
 
 
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, 0, lM, 0, lK, A_trans_), create_range<T>(ptr_matrix, Bcopy, 0, lK, 0, lN, B_trans_), create_range<T>(ptr_matrix, Ccopy, 0, lM, 0, lN, 'N'), beta_value, false);
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, 0, lM, lK, K, A_trans_), create_range<T>(ptr_matrix, Bcopy, lK, K, 0, lN, B_trans_), create_range<T>(ptr_matrix, Ccopy, 0, lM, 0, lN, 'N'), (T)1, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_slice<T>(ptr_matrix, Acopy, 0, lM, 0, lK, A_trans_), create_slice<T>(ptr_matrix, Bcopy, 0, lK, 0, lN, B_trans_), create_slice<T>(ptr_matrix, Ccopy, 0, lM, 0, lN, 'N'), beta_value, false);
+        enqueue_block(statement, kernels, A, B, C, beta, create_slice<T>(ptr_matrix, Acopy, 0, lM, lK, K, A_trans_), create_slice<T>(ptr_matrix, Bcopy, lK, K, 0, lN, B_trans_), create_slice<T>(ptr_matrix, Ccopy, 0, lM, 0, lN, 'N'), (T)1, true);
 
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, 0, lM, 0, lK, A_trans_), create_range<T>(ptr_matrix, Bcopy, 0, lK, lN, N, B_trans_), create_range<T>(ptr_matrix, Ccopy, 0, lM, lN, N, 'N'), beta_value, true);
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, 0, lM, lK, K, A_trans_), create_range<T>(ptr_matrix, Bcopy, lK, K, lN, N, B_trans_), create_range<T>(ptr_matrix, Ccopy, 0, lM, lN, N, 'N'), (T)1, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_slice<T>(ptr_matrix, Acopy, 0, lM, 0, lK, A_trans_), create_slice<T>(ptr_matrix, Bcopy, 0, lK, lN, N, B_trans_), create_slice<T>(ptr_matrix, Ccopy, 0, lM, lN, N, 'N'), beta_value, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_slice<T>(ptr_matrix, Acopy, 0, lM, lK, K, A_trans_), create_slice<T>(ptr_matrix, Bcopy, lK, K, lN, N, B_trans_), create_slice<T>(ptr_matrix, Ccopy, 0, lM, lN, N, 'N'), (T)1, true);
 
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, lM, M, 0, lK, A_trans_), create_range<T>(ptr_matrix, Bcopy, 0, lK, 0, lN, B_trans_), create_range<T>(ptr_matrix, Ccopy, lM, M, 0, lN, 'N'), beta_value, true);
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, lM, M, lK, K, A_trans_), create_range<T>(ptr_matrix, Bcopy, lK, K, 0, lN, B_trans_), create_range<T>(ptr_matrix, Ccopy, lM, M, 0, lN, 'N'), (T)1, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_slice<T>(ptr_matrix, Acopy, lM, M, 0, lK, A_trans_), create_slice<T>(ptr_matrix, Bcopy, 0, lK, 0, lN, B_trans_), create_slice<T>(ptr_matrix, Ccopy, lM, M, 0, lN, 'N'), beta_value, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_slice<T>(ptr_matrix, Acopy, lM, M, lK, K, A_trans_), create_slice<T>(ptr_matrix, Bcopy, lK, K, 0, lN, B_trans_), create_slice<T>(ptr_matrix, Ccopy, lM, M, 0, lN, 'N'), (T)1, true);
 
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, lM, M, 0, lK, A_trans_), create_range<T>(ptr_matrix, Bcopy, 0, lK, lN, N, B_trans_), create_range<T>(ptr_matrix, Ccopy, lM, M, lN, N, 'N'), beta_value, true);
-        enqueue_block(statement, kernels, A, B, C, beta, create_range<T>(ptr_matrix, Acopy, lM, M, lK, K, A_trans_), create_range<T>(ptr_matrix, Bcopy, lK, K, lN, N, B_trans_), create_range<T>(ptr_matrix, Ccopy, lM, M, lN, N, 'N'), (T)1, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_slice<T>(ptr_matrix, Acopy, lM, M, 0, lK, A_trans_), create_slice<T>(ptr_matrix, Bcopy, 0, lK, lN, N, B_trans_), create_slice<T>(ptr_matrix, Ccopy, lM, M, lN, N, 'N'), beta_value, true);
+        enqueue_block(statement, kernels, A, B, C, beta, create_slice<T>(ptr_matrix, Acopy, lM, M, lK, K, A_trans_), create_slice<T>(ptr_matrix, Bcopy, lK, K, lN, N, B_trans_), create_slice<T>(ptr_matrix, Ccopy, lM, M, lN, N, 'N'), (T)1, true);
     }
 
 public:

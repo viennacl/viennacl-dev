@@ -335,20 +335,10 @@ namespace viennacl
           mapped_matrix(std::string const & scalartype, unsigned int id, bool row_major) : mapped_buffer(scalartype, id, "matrix"), row_major_(row_major)
           {
               register_attribute(ld_, "#ld", name_ + "_ld");
-              if(row_major_)
-              {
-                register_attribute(start1_, "#start2", name_ + "_start1");
-                register_attribute(start2_, "#start1", name_ + "_start2");
-                register_attribute(stride1_, "#stride2", name_ + "_stride1");
-                register_attribute(stride2_, "#stride1", name_ + "_stride2");
-              }
-              else
-              {
-                register_attribute(start1_, "#start1", name_ + "_start1");
-                register_attribute(start2_, "#start2", name_ + "_start2");
-                register_attribute(stride1_, "#stride1", name_ + "_stride1");
-                register_attribute(stride2_, "#stride2", name_ + "_stride2");
-              }
+              register_attribute(start1_, "#start1", name_ + "_start1");
+              register_attribute(start2_, "#start2", name_ + "_start2");
+              register_attribute(stride1_, "#stride1", name_ + "_stride1");
+              register_attribute(stride2_, "#stride2", name_ + "_stride2");
           }
 
           bool row_major() const

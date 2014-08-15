@@ -231,21 +231,10 @@ namespace viennacl
             {
               kernel_.arg(current_arg_++, mat.handle().opencl_handle());
               kernel_.arg(current_arg_++, cl_uint(viennacl::traits::ld(mat)));
-              if(mat.row_major())
-              {
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
-              }
-              else
-              {
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
-                kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
-              }
-
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride1(mat)));
+              kernel_.arg(current_arg_++, cl_uint(viennacl::traits::stride2(mat)));
             }
           }
 
