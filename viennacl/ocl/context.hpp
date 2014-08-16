@@ -285,7 +285,7 @@ namespace viennacl
           QueueContainer::const_iterator it = queues_.find(devices_[current_device_id_].id());
           if (it != queues_.end()) {
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
-            std::cout << "ViennaCL: Queue handle " << ((*it)->second)[current_queue_id_].handle() << std::endl;
+            std::cout << "ViennaCL: Queue handle " << (it->second)[current_queue_id_].handle() << std::endl;
             #endif
             return (it->second)[current_queue_id_];
           }
