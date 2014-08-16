@@ -753,21 +753,20 @@ namespace viennacl
     inline viennacl::ocl::kernel & viennacl::ocl::program::add_kernel(cl_kernel kernel_handle, std::string const & kernel_name)
     {
       assert(p_context_ != NULL && bool("Pointer to context invalid in viennacl::ocl::program object"));
-      viennacl::ocl::kernel temp(kernel_handle, *this, *p_context_, kernel_name);
-      kernels_.push_back(temp);
-      return kernels_.back();
+      kernels_.push_back(tools::shared_ptr<ocl::kernel>(new ocl::kernel(kernel_handle, *this, *p_context_, kernel_name)));
+      return *kernels_.back();
     }
 
     /** @brief Returns the kernel with the provided name */
     inline viennacl::ocl::kernel & viennacl::ocl::program::get_kernel(std::string const & name)
     {
       //std::cout << "Requiring kernel " << name << " from program " << name_ << std::endl;
-      for (KernelContainer::iterator it = kernels_.begin();
+      for (kernel_container_type::iterator it = kernels_.begin();
             it != kernels_.end();
            ++it)
       {
-        if (it->name() == name)
-          return *it;
+        if ((*it)->name() == name)
+          return **it;
       }
       std::cerr << "ViennaCL: FATAL ERROR: Could not find kernel '" << name << "' from program '" << name_ << "'" << std::endl;
       std::cout << "Number of kernels in program: " << kernels_.size() << std::endl;

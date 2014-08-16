@@ -27,6 +27,7 @@
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/kernel.hpp"
+#include "viennacl/tools/shared_ptr.hpp"
 
 namespace viennacl
 {
@@ -39,7 +40,7 @@ namespace viennacl
       */
     class program
     {
-      typedef std::vector<viennacl::ocl::kernel>    KernelContainer;
+      typedef std::vector<tools::shared_ptr<viennacl::ocl::kernel> >    kernel_container_type;
 
     public:
       program() : p_context_(NULL) {}
@@ -74,7 +75,7 @@ namespace viennacl
       viennacl::ocl::handle<cl_program> handle_;
       viennacl::ocl::context const * p_context_;
       std::string name_;
-      KernelContainer kernels_;
+      kernel_container_type kernels_;
     };
   } //namespace ocl
 } //namespace viennacl
