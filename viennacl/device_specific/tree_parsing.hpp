@@ -399,7 +399,7 @@ namespace viennacl{
             else
               while(val>0)
               {
-                  *ptr++='0' + (val % 10);
+                  *ptr++= (char)('0' + (val % 10));
                   val /= 10;
               }
           }

@@ -162,8 +162,8 @@ namespace viennacl{
             }
           }
         private:
-          bool is_trans;
           std::vector<mapped_row_wise_reduction*> exprs;
+          bool is_trans;
         };
         element_wise_loop_1D(stream, loop_body(exprs, is_trans), p_.fetch_policy, simd_width, "c", "N", "get_local_id(1)", "get_local_size(1)");
         stream.dec_tab();

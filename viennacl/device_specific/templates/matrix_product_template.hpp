@@ -609,12 +609,6 @@ private:
         scheduler::statement::assign_element(eC, C);
         scheduler::statement::assign_element(ebeta, beta);
 
-//        std::cout << A.row_major() << " " << B.row_major() << " " << C.row_major() << std::endl;
-//        std::cout << "C[" << C.start1() << ":" << C.stride1() << ":" << C.size1() + C.start1() << "," << C.start2() << ":" << C.stride2() <<":" << C.start2() + C.size2() << "] = "
-//                  << "A[" << A.start1() << ":" << A.stride1() << ":" << A.start1() + A.size1() << "," << A.start2() << ":" << A.stride2() <<":" << A.start2() + A.size2()<< "]*"
-//                  << "B[" << B.start1() << ":" << B.stride1() << ":" << B.start1() + B.size1() << "," << B.start2() << ":" << B.stride2() <<":" << B.start2() + B.size2() << "]" << std::endl;
-
-
         if(fallback)
         {
             kernel.global_work_size(0, tools::align_to_multiple(C.size1(), kernel.local_work_size(0)));
@@ -666,8 +660,8 @@ private:
         vcl_size_t ldstrideA = call_on_matrix(A, leading_stride());
         vcl_size_t ldstrideB = call_on_matrix(B, leading_stride());
         vcl_size_t ldstrideC = call_on_matrix(C, leading_stride());
-        bool swap_A = (A_trans_=='T' ^ utils::call_on_matrix(A, row_major_fun()));
-        bool swap_B = (B_trans_=='T' ^ utils::call_on_matrix(B, row_major_fun()));
+        bool swap_A = ((A_trans_=='T') ^ utils::call_on_matrix(A, row_major_fun()));
+        bool swap_B = ((B_trans_=='T') ^ utils::call_on_matrix(B, row_major_fun()));
 
         vcl_size_t M = call_on_matrix(C, size1_fun());
         vcl_size_t N = call_on_matrix(C, size2_fun());
@@ -730,8 +724,8 @@ public:
       scheduler::lhs_rhs_element& beta = utils::lhs_rhs_element(stcopy, beta_idx, beta_leaf);
 
 
-      viennacl::ocl::program& p0 = programs[0].program();
-      viennacl::ocl::program& p1 = programs[1].program();;
+      programs[0].program();
+      programs[1].program();;
 
       viennacl::ocl::kernel* kernels[2];
       kernels[0] = &programs[0].program().get_kernel(kernel_prefix);

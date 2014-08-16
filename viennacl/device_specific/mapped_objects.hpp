@@ -43,7 +43,7 @@ namespace viennacl
       class mapped_object
       {
         private:
-           virtual void postprocess(std::string & res) const { }
+           virtual void postprocess(std::string &) const { }
 
         protected:
           struct MorphBase { virtual ~MorphBase(){} };

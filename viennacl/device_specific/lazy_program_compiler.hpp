@@ -37,8 +37,8 @@ namespace viennacl
     {
     public:
 
-      lazy_program_compiler(viennacl::ocl::context * ctx, std::string const & name, std::string const & src) : ctx_(ctx), name_(name), src_(src), program_(NULL){ }
-      lazy_program_compiler(viennacl::ocl::context * ctx, std::string const & name) : ctx_(ctx), name_(name), program_(NULL){ }
+      lazy_program_compiler(viennacl::ocl::context * ctx, std::string const & name, std::string const & src) : ctx_(ctx), program_(NULL), name_(name), src_(src){ }
+      lazy_program_compiler(viennacl::ocl::context * ctx, std::string const & name) : ctx_(ctx), program_(NULL), name_(name){ }
 
       void add(std::string const & src)
       {

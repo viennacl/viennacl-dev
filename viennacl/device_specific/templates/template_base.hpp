@@ -443,6 +443,7 @@ namespace viennacl
     public:
       /** @brief The constructor */
       template_base(template_base::parameters_type const & parameters, binding_policy_t binding_policy) : p_(parameters), binding_policy_(binding_policy){ }
+      virtual ~template_base(){ }
 
       /** @brief returns whether or not the profile has undefined behavior on particular device */
       int check_invalid(statements_container const & statements, viennacl::ocl::device const & device) const
@@ -493,7 +494,7 @@ namespace viennacl
 
 
 
-      std::vector<std::string> generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & device)
+      std::vector<std::string> generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & /*device*/)
       {
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::iterator mit;
