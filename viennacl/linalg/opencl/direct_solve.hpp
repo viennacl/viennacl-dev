@@ -72,8 +72,8 @@ namespace viennacl
       * @param B    The matrix of row vectors, where the solution is directly written to
       */
       template <typename NumericT, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
-                         matrix_base<NumericT> & B, bool trans_B,
+      void inplace_solve(const matrix_base<NumericT> & A, bool A_trans,
+                         matrix_base<NumericT> & B, bool B_trans,
                          SOLVERTAG)
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
@@ -105,14 +105,14 @@ namespace viennacl
         }
 
         std::stringstream ss;
-        if (trans_A) ss << "trans_";
+        if (A_trans) ss << "trans_";
         ss << SOLVERTAG::name();
-        if (trans_B) ss << "_trans";
+        if (B_trans) ss << "_trans";
         ss << "_solve";
 
         viennacl::ocl::kernel & k = ctx.get_kernel(program_name, ss.str());
 
-        if (trans_B)
+        if (B_trans)
           k.global_work_size(0, B.size1() * k.local_work_size());
         else
           k.global_work_size(0, B.size2() * k.local_work_size());
@@ -126,26 +126,26 @@ namespace viennacl
       //
 
       template <typename NumericT, typename SOLVERTAG>
-      void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,
-                               vector_base<NumericT> & vec,
+      void inplace_solve(const matrix_base<NumericT> & A, bool A_trans,
+                               vector_base<NumericT> & x,
                          SOLVERTAG)
       {
         cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
-        if (trans_mat)
+        if (A_trans)
           options |= 0x02;
 
-        viennacl::ocl::kernel & k = detail::legacy_kernel_for_matrix(mat,  "triangular_substitute_inplace");
+        viennacl::ocl::kernel & k = detail::legacy_kernel_for_matrix(A,  "triangular_substitute_inplace");
 
         k.global_work_size(0, k.local_work_size());
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),
-                                 cl_uint(viennacl::traits::start1(mat)),         cl_uint(viennacl::traits::start2(mat)),
-                                 cl_uint(viennacl::traits::stride1(mat)),        cl_uint(viennacl::traits::stride2(mat)),
-                                 cl_uint(viennacl::traits::size1(mat)),          cl_uint(viennacl::traits::size2(mat)),
-                                 cl_uint(viennacl::traits::internal_size1(mat)), cl_uint(viennacl::traits::internal_size2(mat)),
-                                 viennacl::traits::opencl_handle(vec),
-                                 cl_uint(viennacl::traits::start(vec)),
-                                 cl_uint(viennacl::traits::stride(vec)),
-                                 cl_uint(viennacl::traits::size(vec)),
+        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
+                                 cl_uint(viennacl::traits::start1(A)),         cl_uint(viennacl::traits::start2(A)),
+                                 cl_uint(viennacl::traits::stride1(A)),        cl_uint(viennacl::traits::stride2(A)),
+                                 cl_uint(viennacl::traits::size1(A)),          cl_uint(viennacl::traits::size2(A)),
+                                 cl_uint(viennacl::traits::internal_size1(A)), cl_uint(viennacl::traits::internal_size2(A)),
+                                 viennacl::traits::opencl_handle(x),
+                                 cl_uint(viennacl::traits::start(x)),
+                                 cl_uint(viennacl::traits::stride(x)),
+                                 cl_uint(viennacl::traits::size(x)),
                                  options
                                 )
                               );

@@ -43,7 +43,7 @@ namespace viennacl
       {
 
         template <typename ScalarType>
-        void level_scheduling_substitute(vector<ScalarType> & vec,
+        void level_scheduling_substitute(vector<ScalarType> & x,
                                      viennacl::backend::mem_handle const & row_index_array,
                                      viennacl::backend::mem_handle const & row_buffer,
                                      viennacl::backend::mem_handle const & col_buffer,
@@ -51,13 +51,13 @@ namespace viennacl
                                      vcl_size_t num_rows
                                     )
         {
-          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
 
           viennacl::linalg::opencl::kernels::ilu<ScalarType>::init(ctx);
           viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<ScalarType>::program_name(), "level_scheduling_substitute");
 
           viennacl::ocl::enqueue(k(row_index_array.opencl_handle(), row_buffer.opencl_handle(), col_buffer.opencl_handle(), element_buffer.opencl_handle(),
-                                   vec,
+                                   x,
                                    static_cast<cl_uint>(num_rows)));
         }
 

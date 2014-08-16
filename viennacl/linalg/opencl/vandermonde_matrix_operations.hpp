@@ -46,18 +46,18 @@ namespace viennacl
       * @param result The result vector
       */
         template<class SCALARTYPE, unsigned int ALIGNMENT>
-        void prod_impl(const viennacl::vandermonde_matrix<SCALARTYPE, ALIGNMENT> & mat,
-                      const viennacl::vector_base<SCALARTYPE> & vec,
-                            viennacl::vector_base<SCALARTYPE> & result)
+        void prod_impl(const viennacl::vandermonde_matrix<SCALARTYPE, ALIGNMENT> & A,
+                      const viennacl::vector_base<SCALARTYPE> & x,
+                            viennacl::vector_base<SCALARTYPE> & y)
         {
-          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(mat).context());
+          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
           viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::init(ctx);
 
           viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::fft<SCALARTYPE>::program_name(), "vandermonde_prod");
-          viennacl::ocl::enqueue(kernel(viennacl::traits::opencl_handle(mat),
-                                        viennacl::traits::opencl_handle(vec),
-                                        viennacl::traits::opencl_handle(result),
-                                        static_cast<cl_uint>(mat.size1())));
+          viennacl::ocl::enqueue(kernel(viennacl::traits::opencl_handle(A),
+                                        viennacl::traits::opencl_handle(x),
+                                        viennacl::traits::opencl_handle(y),
+                                        static_cast<cl_uint>(A.size1())));
         }
 
     } //namespace opencl
