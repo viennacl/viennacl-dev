@@ -697,11 +697,13 @@ namespace viennacl
                 pC.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
               else
                 pC.reset(new viennacl::matrix<TYPE, viennacl::column_major>());
+
+              //Dummy types. The values don't matter for the kernel generation.
               viennacl::matrix_base<TYPE>& C = *pC;
               viennacl::matrix<TYPE, viennacl::column_major> A;
               viennacl::matrix<TYPE, viennacl::column_major> B;
-              TYPE alpha;
-              TYPE beta;
+              TYPE alpha = 1;
+              TYPE beta = 0;
 
               handler.add("prod_NN", new ds::matrix_product_template(matrix_product_params_NN, 'N', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C));
               handler.add("prod_TN", new ds::matrix_product_template(matrix_product_params_TN, 'T', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C));

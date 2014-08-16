@@ -281,8 +281,6 @@ namespace viennacl
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
       {
-        typedef NumericT        value_type;
-
         // Inplace matrix-vector products like x = prod(A, x) are currently illegal: Introduce a temporary like y = prod(A, x); x = y; instead
         assert(viennacl::traits::handle(vec) != viennacl::traits::handle(result) && bool("No direct inplace matrix-vector product possible. Introduce a temporary!"));
         std::string kernel_name = std::string("mat_vec_") + (trans_mat1 ^ mat1.row_major()?"T":"N");
