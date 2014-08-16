@@ -41,7 +41,7 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/command_queue.hpp"
 #include "viennacl/tools/sha1.hpp"
-
+#include "viennacl/tools/shared_ptr.hpp"
 namespace viennacl
 {
   namespace ocl
@@ -53,7 +53,7 @@ namespace viennacl
     */
     class context
     {
-      typedef std::vector< viennacl::ocl::program >   ProgramContainer;
+      typedef std::vector< tools::shared_ptr<viennacl::ocl::program> >   program_container_type;
 
       public:
         context() : initialized_(false),
@@ -285,7 +285,7 @@ namespace viennacl
           QueueContainer::const_iterator it = queues_.find(devices_[current_device_id_].id());
           if (it != queues_.end()) {
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
-            std::cout << "ViennaCL: Queue handle " << (it->second)[current_queue_id_].handle() << std::endl;
+            std::cout << "ViennaCL: Queue handle " << ((*it)->second)[current_queue_id_].handle() << std::endl;
             #endif
             return (it->second)[current_queue_id_];
           }
@@ -295,7 +295,7 @@ namespace viennacl
           std::cout << "Number of devices in context: " << devices_.size() << std::endl;
           throw "queue not found!";
 
-          //return (it->second)[current_queue_id_];
+          //return ((*it)->second)[current_queue_id_];
         }
 
         //get a particular queue:
@@ -371,11 +371,11 @@ namespace viennacl
         */
         viennacl::ocl::program & add_program(cl_program p, std::string const & prog_name)
         {
-          programs_.push_back(viennacl::ocl::program(p, *this, prog_name));
+          programs_.push_back(tools::shared_ptr<ocl::program>(new viennacl::ocl::program(p, *this, prog_name)));
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Adding program '" << prog_name << "' with cl_program to context " << h_ << std::endl;
           #endif
-          return programs_.back();
+          return *programs_.back();
         }
 
         /** @brief Adds a new program with the provided source to the context. Compiles the program and extracts all kernels from it
@@ -473,9 +473,9 @@ namespace viennacl
           }
 
 
-          programs_.push_back(viennacl::ocl::program(temp, *this, prog_name));
+          programs_.push_back(tools::shared_ptr<ocl::program>(new ocl::program(temp, *this, prog_name)));
 
-          viennacl::ocl::program & prog = programs_.back();
+          viennacl::ocl::program & prog = *programs_.back();
 
           //
           // Extract kernels
@@ -493,7 +493,7 @@ namespace viennacl
           }
 
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
-          std::cout << "ViennaCL: Stored program '" << programs_.back().name() << "' in context " << h_ << std::endl;
+          std::cout << "ViennaCL: Stored program '" << programs_.back()->name() << "' in context " << h_ << std::endl;
           std::cout << "ViennaCL: There is/are " << programs_.size() << " program(s)" << std::endl;
           #endif
 
@@ -505,11 +505,12 @@ namespace viennacl
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
           std::cout << "ViennaCL: Deleting program '" << name << "' from context " << h_ << std::endl;
           #endif
-          for (ProgramContainer::iterator it = programs_.begin();
+          for (program_container_type::iterator it = programs_.begin();
                 it != programs_.end();
                 ++it)
           {
-            if (it->name() == name){
+            if ((*it)->name() == name)
+            {
               programs_.erase(it);
               return;
             }
@@ -523,13 +524,13 @@ namespace viennacl
           std::cout << "ViennaCL: Getting program '" << name << "' from context " << h_ << std::endl;
           std::cout << "ViennaCL: There are " << programs_.size() << " programs" << std::endl;
           #endif
-          for (ProgramContainer::iterator it = programs_.begin();
+          for (program_container_type::iterator it = programs_.begin();
                 it != programs_.end();
                 ++it)
           {
-            //std::cout << "Name: " << it->name() << std::endl;
-            if (it->name() == name)
-              return *it;
+            //std::cout << "Name: " << (*it)->name() << std::endl;
+            if ((*it)->name() == name)
+              return **it;
           }
           std::cerr << "ViennaCL: Could not find program '" << name << "'" << std::endl;
           throw "In class 'context': name invalid in get_program()";
@@ -542,13 +543,13 @@ namespace viennacl
           std::cout << "ViennaCL: Getting program '" << name << "' from context " << h_ << std::endl;
           std::cout << "ViennaCL: There are " << programs_.size() << " programs" << std::endl;
           #endif
-          for (ProgramContainer::const_iterator it = programs_.begin();
+          for (program_container_type::const_iterator it = programs_.begin();
                 it != programs_.end();
                 ++it)
           {
-            //std::cout << "Name: " << it->name() << std::endl;
-            if (it->name() == name)
-              return *it;
+            //std::cout << "Name: " << (*it)->name() << std::endl;
+            if ((*it)->name() == name)
+              return **it;
           }
           std::cerr << "ViennaCL: Could not find program '" << name << "'" << std::endl;
           throw "In class 'context': name invalid in get_program()";
@@ -557,11 +558,11 @@ namespace viennacl
 
         /** @brief Returns whether the program with the provided name exists or not */
         bool has_program(std::string const & name){
-            for (ProgramContainer::iterator it = programs_.begin();
+            for (program_container_type::iterator it = programs_.begin();
                   it != programs_.end();
                   ++it)
             {
-              if (it->name() == name) return true;
+              if ((*it)->name() == name) return true;
             }
             return false;
         }
@@ -577,10 +578,10 @@ namespace viennacl
           if(id >= programs_.size())
             throw invalid_program();
 
-          return programs_[id];
+          return *programs_[id];
         }
 
-        ProgramContainer get_programs()
+        program_container_type get_programs()
         {
           return programs_;
         }
@@ -739,7 +740,7 @@ namespace viennacl
         std::vector< viennacl::ocl::device > devices_;
         vcl_size_t current_device_id_;
         vcl_size_t default_device_num_;
-        ProgramContainer programs_;
+        program_container_type programs_;
         std::map< cl_device_id, std::vector< viennacl::ocl::command_queue> > queues_;
         std::string build_options_;
         vcl_size_t pf_index_;

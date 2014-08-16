@@ -724,12 +724,12 @@ public:
       scheduler::lhs_rhs_element& beta = utils::lhs_rhs_element(stcopy, beta_idx, beta_leaf);
 
 
-      programs[0].program();
-      programs[1].program();;
+      viennacl::ocl::program & p0 = programs[0].program();
+      viennacl::ocl::program & p1 = programs[1].program();;
 
       viennacl::ocl::kernel* kernels[2];
-      kernels[0] = &programs[0].program().get_kernel(kernel_prefix);
-      kernels[1] = &programs[1].program().get_kernel(kernel_prefix);
+      kernels[0] = &p0.get_kernel(kernel_prefix);
+      kernels[1] = &p1.get_kernel(kernel_prefix);
       kernels[0]->local_work_size(0, p_.local_size_0);
       kernels[0]->local_work_size(1, p_.local_size_1);
       kernels[1]->local_work_size(0, p_.local_size_0);
