@@ -340,6 +340,11 @@ namespace viennacl
               register_attribute(stride1_, "#stride1", name_ + "_stride1");
               register_attribute(stride2_, "#stride2", name_ + "_stride2");
               if(row_major_)
+                keywords_["#nldstride"] = "#stride1";
+              else
+                keywords_["#nldstride"] = "#stride2";
+
+              if(row_major_)
               {
                 std::swap(start1_, start2_);
                 std::swap(stride1_, stride2_);

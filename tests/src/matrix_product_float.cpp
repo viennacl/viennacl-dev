@@ -15,7 +15,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-#include "blas3_prod_float_double.hpp"
+#include "matrix_product_float_double.hpp"
+
 
 //
 // -------------------------------------------------------------
@@ -35,26 +36,21 @@ int main()
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
-#ifdef VIENNACL_WITH_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
-#endif
    {
-      {
-        typedef double NumericT;
-        NumericT epsilon = 1.0E-11;
-        std::cout << "# Testing setup:" << std::endl;
-        std::cout << "  eps:     " << epsilon << std::endl;
-        std::cout << "  numeric: double" << std::endl;
-        retval = test<NumericT>(epsilon);
-        if( retval == EXIT_SUCCESS )
-          std::cout << "# Test passed" << std::endl;
-        else
-          return retval;
-      }
-      std::cout << std::endl;
-      std::cout << "----------------------------------------------" << std::endl;
-      std::cout << std::endl;
+      typedef float NumericT;
+      NumericT epsilon = NumericT(1.0E-3);
+      std::cout << "# Testing setup:" << std::endl;
+      std::cout << "  eps:     " << epsilon << std::endl;
+      std::cout << "  numeric: float" << std::endl;
+      retval = run_test<NumericT>(epsilon);
+      if( retval == EXIT_SUCCESS )
+        std::cout << "# Test passed" << std::endl;
+      else
+        return retval;
    }
+   std::cout << std::endl;
+   std::cout << "----------------------------------------------" << std::endl;
+   std::cout << std::endl;
 
    std::cout << std::endl;
    std::cout << "------- Test completed --------" << std::endl;

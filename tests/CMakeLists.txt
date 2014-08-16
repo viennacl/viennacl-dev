@@ -2,7 +2,7 @@
 include_directories(${Boost_INCLUDE_DIRS})
 
 # tests with CPU backend
-foreach(PROG blas3_prod_float blas3_prod_double blas3_solve iterators
+foreach(PROG matrix_product_float matrix_product_double blas3_solve iterators
              global_variables
              matrix_vector matrix_vector_int
              matrix_row_float matrix_row_double matrix_row_int
@@ -18,8 +18,7 @@ endforeach(PROG)
 
 # tests with OpenCL backend
 if (ENABLE_OPENCL)
-  foreach(PROG blas3_prod_float blas3_prod_double blas3_solve fft iterators
-               #generator_blas1 generator_blas2 generator_blas3 generator_segmentation
+  foreach(PROG matrix_product_float matrix_product_double blas3_solve fft iterators
                global_variables
                matrix_vector matrix_vector_int
                matrix_row_float matrix_row_double matrix_row_int
@@ -44,7 +43,7 @@ endif (ENABLE_OPENCL)
 
 # tests with CUDA backend
 if (ENABLE_CUDA)
-  foreach(PROG blas3_prod_float blas3_prod_double blas3_solve iterators
+  foreach(PROG matrix_product_float matrix_product_double blas3_solve iterators
                global_variables
                matrix_vector matrix_vector_int
                matrix_row_float matrix_row_double matrix_row_int

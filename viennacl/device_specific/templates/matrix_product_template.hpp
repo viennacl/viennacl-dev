@@ -228,7 +228,7 @@ private:
             stream << "if(get_global_id(0)>=M || get_global_id(1)>=N) return;" << std::endl;
 
         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#pointer += $OFFSET{#start1, #start2};", statements, mappings);
-        tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#ld *= #stride2;", statements, mappings);
+        tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#ld *= #nldstride;", statements, mappings);
 
         ///Result Values
         stream << C->process("#scalartype rC[" + to_string(p.mS) + "][" + to_string(p.nS) + "] = {{(#scalartype)0}};") << std::endl;
@@ -536,8 +536,8 @@ private:
 
           stream << C->process("#pointer += gidx*" + to_string(p.mL) + "*#ld;") << std::endl;
           stream << C->process("#pointer += idx*" + to_string(ministartstride0) + "*#ld;") << std::endl;
-          stream << C->process("#pointer += gidy*" + to_string(p.nL) + "*#stride1;") << std::endl;
-          stream << C->process("#pointer += idy*" + to_string(ministartstride1) + "*#stride1;") << std::endl;
+          stream << C->process("#pointer += gidy*" + to_string(p.nL) + "*#stride2;") << std::endl;
+          stream << C->process("#pointer += idy*" + to_string(ministartstride1) + "*#stride2;") << std::endl;
 
           for(unsigned int n=0 ; n < p.nS ; ++n)
           {
