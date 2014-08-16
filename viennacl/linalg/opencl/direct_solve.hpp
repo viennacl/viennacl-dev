@@ -134,7 +134,7 @@ namespace viennacl
         if (trans_mat)
           options |= 0x02;
 
-        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat,  "triangular_substitute_inplace");
+        viennacl::ocl::kernel & k = detail::legacy_kernel_for_matrix(mat,  "triangular_substitute_inplace");
 
         k.global_work_size(0, k.local_work_size());
         viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat),

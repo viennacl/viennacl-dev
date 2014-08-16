@@ -45,10 +45,6 @@
 #include "viennacl/linalg/opencl/common.hpp"
 
 #include "viennacl/linalg/opencl/kernels/matrix.hpp"
-#include "viennacl/linalg/opencl/kernels/matrix_element.hpp"
-
-#include "viennacl/linalg/opencl/kernels/matrix_prod.hpp"
-
 
 namespace viennacl
 {
@@ -56,56 +52,6 @@ namespace viennacl
   {
     namespace opencl
     {
-
-      namespace detail
-      {
-        template <typename NumericT>
-        viennacl::ocl::program & program_for_matrix(matrix_base<NumericT> const & A, unsigned int id)
-        {
-          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
-
-          if (A.row_major())
-          {
-            switch(id)
-            {
-              case 0:{
-                typedef viennacl::linalg::opencl::kernels::matrix_legacy<NumericT, row_major>  KernelClass;
-                KernelClass::init(ctx);
-                return ctx.get_program(KernelClass::program_name());
-              }
-              default:{
-                typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, column_major, column_major, row_major>  KernelClass;
-                KernelClass::init(ctx);
-                return ctx.get_program(KernelClass::program_name());
-              }
-            }
-          }
-          else
-          {
-            switch(id)
-            {
-              case 0:{
-                typedef viennacl::linalg::opencl::kernels::matrix_legacy<NumericT, column_major>  KernelClass;
-                KernelClass::init(ctx);
-                return ctx.get_program(KernelClass::program_name());
-              }
-              default:{
-                typedef viennacl::linalg::opencl::kernels::matrix_prod_legacy<NumericT, column_major, column_major, column_major>  KernelClass;
-                KernelClass::init(ctx);
-                return ctx.get_program(KernelClass::program_name());
-              }
-            }
-          }
-        }
-
-        template <typename NumericT>
-        viennacl::ocl::kernel & kernel_for_matrix(matrix_base<NumericT> const & A, std::string kernel_name)
-        {
-          return program_for_matrix(A,0).get_kernel(kernel_name);
-        }
-
-      }
-
 
       //
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
@@ -344,10 +290,9 @@ namespace viennacl
         assert( (viennacl::traits::size2(mat1) == viennacl::traits::size(vec2)) && bool("Size mismatch in scaled_rank_1_update: size2(A) != size(v2)"));
 
         cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
+        viennacl::ocl::kernel& kernel= detail::legacy_kernel_for_matrix(mat1, viennacl::is_cpu_scalar<S1>::value ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
 
-        viennacl::ocl::kernel & k = detail::kernel_for_matrix(mat1, viennacl::is_cpu_scalar<S1>::value ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
-
-        viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(mat1),
+        viennacl::ocl::enqueue(kernel(viennacl::traits::opencl_handle(mat1),
                                  cl_uint(viennacl::traits::start1(mat1)),           cl_uint(viennacl::traits::start2(mat1)),
                                  cl_uint(viennacl::traits::stride1(mat1)),          cl_uint(viennacl::traits::stride2(mat1)),
                                  cl_uint(viennacl::traits::size1(mat1)),            cl_uint(viennacl::traits::size2(mat1)),

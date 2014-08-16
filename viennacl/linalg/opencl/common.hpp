@@ -39,6 +39,28 @@ namespace viennacl
       namespace detail
       {
 
+
+        template<class T>
+        ocl::kernel & legacy_kernel_for_matrix(matrix_base<T> const & M, std::string const & kernel_name)
+        {
+          viennacl::ocl::context& ctx = traits::opencl_context(M);
+          ocl::program* program;
+          if(M.row_major())
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_legacy<T, row_major>  KernelClass;
+            KernelClass::init(ctx);
+            program = &ctx.get_program(KernelClass::program_name());
+          }
+          else
+          {
+            typedef viennacl::linalg::opencl::kernels::matrix_legacy<T, column_major>  KernelClass;
+            KernelClass::init(ctx);
+            program = &ctx.get_program(KernelClass::program_name());
+          }
+          return program->get_kernel(kernel_name);
+        }
+
+
         inline cl_uint make_options(vcl_size_t length, bool reciprocal, bool flip_sign)
         {
           return static_cast<cl_uint>( ((length > 1) ? (cl_uint(length) << 2) : 0) + (reciprocal ? 2 : 0) + (flip_sign ? 1 : 0) );
@@ -69,6 +91,8 @@ namespace viennacl
 
           return "mat_mult_col_col";
         }
+
+
 
         template<class T>
         ocl::device const & current_device(T const & t)

@@ -33,7 +33,6 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/opencl/common.hpp"
 #include "viennacl/linalg/opencl/kernels/vector.hpp"
-#include "viennacl/linalg/opencl/kernels/vector_element.hpp"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/scheduler/preset.hpp"
@@ -51,39 +50,6 @@ namespace viennacl
       //
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
-
-      namespace detail
-      {
-        /** @brief Initialize and return the vector program
-         *
-         *  @param x the vector we want to initialize for
-         *  @param id the program we want : 0 - vector ; 1 - vector-operations ; >2 - multiple inner products
-         */
-        template<typename NumericT>
-        viennacl::ocl::program & program_for_vector(vector_base<NumericT> const & x, unsigned int id)
-        {
-          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
-          if(id==0)
-          {
-            typedef viennacl::linalg::opencl::kernels::vector<NumericT> KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_program(KernelClass::program_name());
-          }
-          else if(id==1)
-          {
-            typedef viennacl::linalg::opencl::kernels::vector_element<NumericT> KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_program(KernelClass::program_name());
-          }
-          else
-          {
-            typedef viennacl::linalg::opencl::kernels::vector_multi_inner_prod<NumericT> KernelClass;
-            KernelClass::init(ctx);
-            return ctx.get_program(KernelClass::program_name());
-          }
-        }
-
-      }
 
       template <typename T, typename ScalarType1>
       void av(vector_base<T> & vec1,
