@@ -312,8 +312,16 @@ namespace viennacl
                              scalar<T> & result)
     {
       typedef typename matrix_base<T>::handle_type  HandleType;
-      viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
-      norm_2_impl(temp, result);
+
+      if ((A.start1() > 0) or (A.start2() > 0) or (A.stride1() > 1) or (A.stride2() > 1)) {
+        viennacl::matrix<T> temp_A(A);
+        viennacl::vector_base<T> temp(const_cast<HandleType &>(temp_A.handle()), temp_A.internal_size(), 0, 1);
+        norm_2_impl(temp, result);
+      } else {
+        viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
+        norm_2_impl(temp, result);
+      }
+
     }
 
     /** @brief Computes the Frobenius norm of a vector with final reduction on the CPU
@@ -323,11 +331,19 @@ namespace viennacl
     */
     template <typename T>
     void norm_frobenius_cpu(matrix_base<T> const & A,
-                             T & result)
+                            T & result)
     {
       typedef typename matrix_base<T>::handle_type  HandleType;
-      viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
-      norm_2_cpu(temp, result);
+
+      if ((A.start1() > 0) or (A.start2() > 0) or (A.stride1() > 1) or (A.stride2() > 1)) {
+        viennacl::matrix<T> temp_A(A);
+        viennacl::vector_base<T> temp(const_cast<HandleType &>(temp_A.handle()), temp_A.internal_size(), 0, 1);
+        norm_2_cpu(temp, result);
+      } else {
+        viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
+        norm_2_cpu(temp, result);
+      }
+
     }
 
     //
