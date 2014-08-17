@@ -306,6 +306,8 @@ namespace viennacl
     *
     * @param A      The matrix
     * @param result The result scalar
+    *
+    * Note that if A is strided or off-set, then a copy will be created.
     */
     template <typename T>
     void norm_frobenius_impl(matrix_base<T> const & A,
@@ -313,10 +315,16 @@ namespace viennacl
     {
       typedef typename matrix_base<T>::handle_type  HandleType;
 
-      if ((A.start1() > 0) or (A.start2() > 0) or (A.stride1() > 1) or (A.stride2() > 1)) {
-        viennacl::matrix<T> temp_A(A);
-        viennacl::vector_base<T> temp(const_cast<HandleType &>(temp_A.handle()), temp_A.internal_size(), 0, 1);
-        norm_2_impl(temp, result);
+      if ((A.start1() > 0) || (A.start2() > 0) || (A.stride1() > 1) || (A.stride2() > 1)) {
+        if (A.row_major()) {
+          viennacl::matrix<T, viennacl::row_major> temp_A(A);
+          viennacl::vector_base<T> temp(const_cast<HandleType &>(temp_A.handle()), temp_A.internal_size(), 0, 1);
+          norm_2_impl(temp, result);
+        } else {
+          viennacl::matrix<T, viennacl::column_major> temp_A(A);
+          viennacl::vector_base<T> temp(const_cast<HandleType &>(temp_A.handle()), temp_A.internal_size(), 0, 1);
+          norm_2_impl(temp, result);
+        }
       } else {
         viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
         norm_2_impl(temp, result);
@@ -328,6 +336,8 @@ namespace viennacl
     *
     * @param A      The matrix
     * @param result The result scalar
+    *
+    * Note that if A is strided or off-set, then a copy will be created.
     */
     template <typename T>
     void norm_frobenius_cpu(matrix_base<T> const & A,
@@ -335,10 +345,16 @@ namespace viennacl
     {
       typedef typename matrix_base<T>::handle_type  HandleType;
 
-      if ((A.start1() > 0) or (A.start2() > 0) or (A.stride1() > 1) or (A.stride2() > 1)) {
-        viennacl::matrix<T> temp_A(A);
-        viennacl::vector_base<T> temp(const_cast<HandleType &>(temp_A.handle()), temp_A.internal_size(), 0, 1);
-        norm_2_cpu(temp, result);
+      if ((A.start1() > 0) || (A.start2() > 0) || (A.stride1() > 1) || (A.stride2() > 1)) {
+        if (A.row_major()) {
+          viennacl::matrix<T, viennacl::row_major> temp_A(A);
+          viennacl::vector_base<T> temp(const_cast<HandleType &>(temp_A.handle()), temp_A.internal_size(), 0, 1);
+          norm_2_cpu(temp, result);
+        } else {
+          viennacl::matrix<T, viennacl::column_major> temp_A(A);
+          viennacl::vector_base<T> temp(const_cast<HandleType &>(temp_A.handle()), temp_A.internal_size(), 0, 1);
+          norm_2_cpu(temp, result);
+        }
       } else {
         viennacl::vector_base<T> temp(const_cast<HandleType &>(A.handle()), A.internal_size(), 0, 1);
         norm_2_cpu(temp, result);
