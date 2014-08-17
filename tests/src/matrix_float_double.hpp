@@ -1003,6 +1003,34 @@ int run_test(double epsilon)
       return EXIT_FAILURE;
     }
 
+    vcl_norm_frobenius = viennacl::linalg::norm_frobenius(vcl_range_C);
+    if ( std::fabs(ublas_norm_frobenius - vcl_norm_frobenius) / ublas_norm_frobenius > epsilon)
+    {
+      std::cerr << "Failure at norm_frobenius() with range" << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    device_vcl_norm_frobenius = viennacl::linalg::norm_frobenius(vcl_range_C);
+    if ( std::fabs(device_ublas_norm_frobenius - device_vcl_norm_frobenius) / device_ublas_norm_frobenius > epsilon)
+    {
+      std::cerr << "Failure at norm_frobenius() with range" << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    vcl_norm_frobenius = viennacl::linalg::norm_frobenius(vcl_slice_C);
+    if ( std::fabs(ublas_norm_frobenius - vcl_norm_frobenius) / ublas_norm_frobenius > epsilon)
+    {
+      std::cerr << "Failure at norm_frobenius() with slice" << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    device_vcl_norm_frobenius = viennacl::linalg::norm_frobenius(vcl_slice_C);
+    if ( std::fabs(device_ublas_norm_frobenius - device_vcl_norm_frobenius) / device_ublas_norm_frobenius > epsilon)
+    {
+      std::cerr << "Failure at norm_frobenius() with slice" << std::endl;
+      return EXIT_FAILURE;
+    }
+
     std::cout << "PASSED!" << std::endl;
 
 
