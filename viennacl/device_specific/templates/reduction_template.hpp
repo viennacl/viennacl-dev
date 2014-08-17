@@ -284,7 +284,7 @@ namespace viennacl
         std::map<std::string, std::string> accessors;
         accessors["scalar_reduction"] = "#name_buf[0]";
         accessors["scalar"] = "*#pointer";
-        accessors["vectors"] = "*#pointer";
+        accessors["vector"] = "#pointer[#start]";
         tree_parsing::evaluate(stream, PARENT_NODE_TYPE, accessors, statements, mappings);
         stream.dec_tab();
         stream << "}" << std::endl;
@@ -352,12 +352,14 @@ namespace viennacl
               if(tmp_.size() <= i)
                 tmp_.push_back(kernels[k]->context().create_memory(CL_MEM_READ_WRITE, p_.num_groups*scalartype_size));
               kernels[k]->arg(n_arg++, tmp_[i]);
+              i++;
 
               if(utils::is_index_reduction((*it)->op))
               {
                 if(tmpidx_.size() <= j)
                   tmpidx_.push_back(kernels[k]->context().create_memory(CL_MEM_READ_WRITE, p_.num_groups*4));
                 kernels[k]->arg(n_arg++, tmpidx_[j]);
+                j++;
               }
             }
             set_arguments(statements, *kernels[k], n_arg);
