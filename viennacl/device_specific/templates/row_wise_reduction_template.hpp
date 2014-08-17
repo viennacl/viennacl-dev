@@ -97,6 +97,7 @@ namespace viennacl{
         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#pointer += #start1 + #start2*#ld;", statements, mappings);
         tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", "#pointer += #start;", statements, mappings);
 
+        tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#ld *= #nldstride;", statements, mappings);
 
         for(std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           stream << (*it)->process("__local #scalartype #name_buf[" + to_string(lsize0*lsize1) + "];") << std::endl;
@@ -123,9 +124,9 @@ namespace viennacl{
             for(std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
             {
               if(is_trans)
-                tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_trans", utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "(c*#stride2, #pointer + r*#stride1*#ld);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+                tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_trans", utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "(c*#stride1, #pointer + r*#ld);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
               else
-                tree_parsing::process(stream, LHS_NODE_TYPE, "matrix", "#scalartype #namereg = vload(c*#stride2*#ld, #pointer + r*#stride1);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+                tree_parsing::process(stream, LHS_NODE_TYPE, "matrix", "#scalartype #namereg = vload(c*#ld, #pointer + r*#stride1);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
               tree_parsing::process(stream, RHS_NODE_TYPE, "vector", utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "(c*#stride, #pointer);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
             }
 
