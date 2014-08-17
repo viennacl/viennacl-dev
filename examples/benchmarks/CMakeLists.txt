@@ -1,13 +1,13 @@
 # Targets using CPU-based execution
-foreach(bench blas3 copy scheduler vector)
-   add_executable(${bench}bench-cpu ${bench}.cpp)
+foreach(bench dense_blas scheduler)
+   add_executable(${bench}-bench-cpu ${bench}.cpp)
 endforeach()
 
 if (ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
     foreach(bench sparse solver)
-      add_executable(${bench}bench-cpu ${bench}.cpp)
-      target_link_libraries(${bench}bench-cpu ${Boost_LIBRARIES})
+      add_executable(${bench}-bench-cpu ${bench}.cpp)
+      target_link_libraries(${bench}-bench-cpu ${Boost_LIBRARIES})
     endforeach()
 endif (ENABLE_UBLAS)
 
@@ -15,19 +15,18 @@ endif (ENABLE_UBLAS)
 # Targets using OpenCL
 if (ENABLE_OPENCL)
 
-  foreach(bench blas3 copy
-          opencl vector)
-    add_executable(${bench}bench-opencl ${bench}.cpp)
-    target_link_libraries(${bench}bench-opencl ${OPENCL_LIBRARIES})
-    set_target_properties(${bench}bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
+  foreach(bench dense_blas opencl)
+    add_executable(${bench}-bench-opencl ${bench}.cpp)
+    target_link_libraries(${bench}-bench-opencl ${OPENCL_LIBRARIES})
+    set_target_properties(${bench}-bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
   endforeach()
 
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
      foreach(bench sparse solver)
-       add_executable(${bench}bench-opencl ${bench}.cpp)
-       target_link_libraries(${bench}bench-opencl ${OPENCL_LIBRARIES} ${Boost_LIBRARIES})
-       set_target_properties(${bench}bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
+       add_executable(${bench}-bench-opencl ${bench}.cpp)
+       target_link_libraries(${bench}-bench-opencl ${OPENCL_LIBRARIES} ${Boost_LIBRARIES})
+       set_target_properties(${bench}-bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
      endforeach()
   endif (ENABLE_UBLAS)
 
@@ -36,15 +35,15 @@ endif (ENABLE_OPENCL)
 # Targets using CUDA
 if (ENABLE_CUDA)
 
-  foreach(bench blas3 copy vector)
-     cuda_add_executable(${bench}bench-cuda ${bench}.cu)
+  foreach(bench dense_blas)
+     cuda_add_executable(${bench}-bench-cuda ${bench}.cu)
   endforeach()
 
   if (ENABLE_UBLAS)
      include_directories(${Boost_INCLUDE_DIRS})
      foreach(bench sparse solver)
-       cuda_add_executable(${bench}bench-cuda ${bench}.cu)
-      target_link_libraries(${bench}bench-cuda ${Boost_LIBRARIES})
+       cuda_add_executable(${bench}-bench-cuda ${bench}.cu)
+      target_link_libraries(${bench}-bench-cuda ${Boost_LIBRARIES})
      endforeach()
   endif (ENABLE_UBLAS)
 
