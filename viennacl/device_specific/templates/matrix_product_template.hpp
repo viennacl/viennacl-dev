@@ -187,11 +187,29 @@ private:
       beta_leaf = RHS_NODE_TYPE;
     }
 
+    void handle_bounds(bool fallback, utils::kernel_generation_stream & stream, std::string const & inbounds, std::string const & to_load, std::string const & access) const
+    {
+      if(fallback)
+      {
+        stream << "if(" << inbounds << ")" << std::endl;
+        stream.inc_tab();
+        stream << to_load << " = " << access << ";" << std::endl;
+        stream << "else" << std::endl;
+        stream << to_load << " = 0;" << std::endl;
+        stream.dec_tab();
+      }
+      else
+        stream << to_load << " = " << access << ";" << std::endl;
+    }
+
     std::string generate_impl(const std::string &kernel_prefix, const statements_container &statements, const std::vector<mapping_type> &mappings, bool fallback) const
     {
         using tools::to_string;
-        parameters_type pfallback(1, p_.local_size_0, p_.kL, p_.local_size_1, 1, 1, 1, FETCH_FROM_GLOBAL_CONTIGUOUS, FETCH_FROM_GLOBAL_CONTIGUOUS, 0, 0);
+        parameters_type pfallback(1, p_.local_size_0, p_.kL, p_.local_size_1, p_.mS, 1, p_.nS, FETCH_FROM_GLOBAL_STRIDED, FETCH_FROM_GLOBAL_STRIDED, 0, 0);
         parameters_type const & p = fallback?pfallback:p_;
+
+        std::string const & inbounds0 = "gidx*" + to_string (p_.mL) + "+ idx + mm*" + to_string(p.local_size_0) + " < M";
+        std::string const & inbounds1 = "gidy*" + to_string (p_.nL) + "+ idy + nn*" + to_string(p.local_size_1) + " < N";
 
         std::string vload = utils::append_width("vload", p.simd_width);
         std::string vstore = utils::append_width("vstore", p.simd_width);
@@ -224,8 +242,6 @@ private:
         stream << "{" << std::endl;
         stream.inc_tab();
 
-        if(fallback)
-            stream << "if(get_global_id(0)>=M || get_global_id(1)>=N) return;" << std::endl;
 
         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#pointer += $OFFSET{#start1, #start2};", statements, mappings);
         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#ld *= #nldstride;", statements, mappings);
@@ -403,9 +419,9 @@ private:
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(A_trans_=='N')
-                stream << A->process("rA[kk][mm] = " + vload + "(mm*" + to_string(p.local_size_0) + "*#stride1, #pointer + kk*#ld);") << std::endl;
+              handle_bounds(fallback, stream, inbounds0, "rA[kk][mm]", A->process(vload + "(mm*" + to_string(p.local_size_0) + "*#stride1, #pointer + kk*#ld)"));
             else
-                stream << A->process("rA[kk][mm] = " + vload + "(kk*#stride1 , #pointer + mm*" + to_string(p.local_size_0) + "*#ld);") << std::endl;
+              handle_bounds(fallback, stream, inbounds0, "rA[kk][mm]", A->process(vload + "(kk*#stride1 , #pointer + mm*" + to_string(p.local_size_0) + "*#ld)"));
             break;
 
           default:
@@ -437,9 +453,9 @@ private:
 
           case FETCH_FROM_GLOBAL_STRIDED:
             if(B_trans_=='T')
-                stream << B->process("rB[kk][nn] = " + vload + "(nn*" + to_string(p.local_size_1) + "*#stride1, #pointer  + kk*#ld);") << std::endl;
+                handle_bounds(fallback, stream, inbounds1, "rB[kk][nn]", B->process(vload + "(nn*" + to_string(p.local_size_1) + "*#stride1, #pointer  + kk*#ld)"));
             else
-                stream << B->process("rB[kk][nn] = " + vload + "(kk*#stride1, #pointer + nn*" + to_string(p.local_size_1) + "*#ld);") << std::endl;
+                handle_bounds(fallback, stream, inbounds1, "rB[kk][nn]", B->process(vload + "(kk*#stride1, #pointer + nn*" + to_string(p.local_size_1) + "*#ld)"));
             break;
 
           default: break;
@@ -545,12 +561,20 @@ private:
               {
                   unsigned int ministride1 = p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p.local_size_0;
                   std::string Cj = to_string((m/p.simd_width)*(ministride1*p.simd_width) + m%p.simd_width);
+                  if(fallback)
+                  {
+                    stream << "if(gidx*" << p_.mL << "+ idx + " << m*p_.local_size_0 << " < M &&"
+                                 "gidy*" << p_.nL << "+ idy + " << n*p_.local_size_1 << " < N)" << std::endl;
+                    stream.inc_tab();
+                  }
                   stream << C->process("#pointer[" + Cj + "*#ld] = rC[" + to_string(m) + "][" + to_string(n) + "]*" + alpha->name() + "+ #pointer[" + Cj + "*#ld]*" + beta->name() + ";") << std::endl;
+                  if(fallback)
+                    stream.dec_tab();
               }
               if((n+1)%p.simd_width>0 || p.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
                   stream << C->process("#pointer += 1;") << std::endl;
               else
-                  stream << C->process("#pointer += " + to_string((p.local_size_1*p.simd_width) - (p.simd_width-1)) + ";") << std::endl;
+                  stream << C->process("#pointer += " + to_string((p.local_size_1*p.simd_width) - (p.simd_width-1)) + "*#stride2;") << std::endl;
           }
 
         }
@@ -570,13 +594,21 @@ private:
               {
                   unsigned int ministride1 = p.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p.local_size_1;
                   std::string Cj = to_string((n/p.simd_width)*(ministride1*p.simd_width) + n%p.simd_width);
+                  if(fallback)
+                  {
+                    stream << "if(gidx*" << p_.mL << "+ idx + " << m*p_.local_size_0 << " < M &&"
+                                 "gidy*" << p_.nL << "+ idy + " << n*p_.local_size_1 << " < N)" << std::endl;
+                    stream.inc_tab();
+                  }
                   stream << C->process("#pointer[" + Cj + "*#ld] = rC[" + to_string(m) + "][" + to_string(n) + "]*" + alpha->name() + " + #pointer[" + Cj + "*#ld]*" + beta->name() + ";") << std::endl;
+                  if(fallback)
+                    stream.dec_tab();
               }
 
               if((m+1)%p.simd_width>0 || p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
                   stream << C->process("#pointer +=1 ;") << std::endl;
               else
-                  stream << C->process("#pointer += " + to_string((p.local_size_0*p.simd_width) - (p.simd_width-1)) + ";") << std::endl;
+                  stream << C->process("#pointer += " + to_string((p.local_size_0*p.simd_width) - (p.simd_width-1)) + "*#stride1;") << std::endl;
           }
         }
 
@@ -611,8 +643,8 @@ private:
 
         if(fallback)
         {
-            kernel.global_work_size(0, tools::align_to_multiple(C.size1(), kernel.local_work_size(0)));
-            kernel.global_work_size(1, tools::align_to_multiple(C.size2(), kernel.local_work_size(1)));
+            kernel.global_work_size(0, tools::align_to_multiple<vcl_size_t>(C.size1()/p_.mS, p_.local_size_0));
+            kernel.global_work_size(1, tools::align_to_multiple<vcl_size_t>(C.size2()/p_.nS, p_.local_size_1));
         }
         else
         {
