@@ -143,11 +143,11 @@ Note that FSPAI depends on the ordering of the unknowns, thus bandwidth reductio
 
 
 \section{Fast Fourier Transform}
-\NOTE{The fast Fourier transform is experimental in {\ViennaCLversion} and available with the {\OpenCL} backend only.
-      Interface changes as well as considerable performance improvements may be included in future releases!}
+
+Fast Furier Transformation is available with {\OpenCL},{\CUDA},{\OpenMP} backends.
 
 Since there is no standardized complex type in {\OpenCL} at the time of the release of {\ViennaCLversion}, vectors need to be set up with real- and imaginary
-part before computing a fast Fourier tranform (FFT). In order to store complex numbers $z_0$, $z_1$, etc.~in a \lstinline|viennacl::vector|, say \lstinline|v|,
+part before computing a fast Fourier transform (FFT). In order to store complex numbers $z_0$, $z_1$, etc.~in a \lstinline|viennacl::vector|, say \lstinline|v|,
 the real and imaginary parts are mapped to even and odd entries of \lstinline|v| respectively: \lstinline|v[0] = Real(z_0)|, \lstinline|v[1] = Imag(z_0)|,
 \lstinline|v[2] = Real(z_1)|, \lstinline|v[3] = Imag(z_1)|, etc.
 
@@ -162,8 +162,67 @@ Conversely, the inverse FFT is computed as
  viennacl::inplace_ifft(v);
 \end{lstlisting}
 
+Second possibility to compute FFT is with Bluestein algorithm. Currently,  Works only for sizes of input data which is less than $2^{16}$. Uses a lot of additional memory, but should be fast for any size of data. Bluestein algorithm uses at least three-times more additional memory than another algorithms. Serial implementation has something about $o(n * \lg n)$ complexity.
+Compute FFT with Bluestein algorithm from complex vector \lstinline|v| and store result in vector \lstinline|output| user can do with function
+\begin{lstlisting}
+ viennacl::linalg::bluestein(v, output,batch_size);
+\end{lstlisting}
+
 \NOTE{In {\ViennaCLversion} the FFT with complexity $N \log N$ is computed for vectors with a size of a power of two only. For other vector sizes, a standard
 discrete Fourier transform with complexity $N^2$ is employed. This is subject to change in future versions.}
+
+Some of the FFT functions are also suitable for matrices and can be computed in 2D. FFT of \lstinline|viennacl::matrix|, say  \lstinline|mat| , where also the even entries are real parts and odd entries are imaginary parts of complex numbers. In order to store complex numbers $z_0$, $z_1$, etc.~in \lstinline|mat|: \lstinline|mat(0,0) = Real(z_0)|, \lstinline|mat(0,1) = Imag(z_0)|,\lstinline|mat(0,2) = Real(z_0)|, \lstinline|mat(0,3) = Imag(z_0)| etc.
+
+Than user can compute FFT  either by writing to a second matrix \lstinline|output| or by directly writing the result to \lstinline|mat| 
+\begin{lstlisting}
+ viennacl::fft(mat, output);
+ viennacl::inplace_fft(v);
+\end{lstlisting}
+
+\NOTE{In {\ViennaCLversion} the FFT with complexity $N \log N$ is computed for matrices with a number of rows and columns a power of two only. For other matrix sizes, a standard
+discrete Fourier transform with complexity $N^2$ is employed. This is subject to change in future versions.}
+
+ViennaCL covers also the possibility to transpose matrix \lstinline|mat| which can be either used to store result in  matrix \lstinline|output| or by directly writing the result to matrix  \lstinline|output|
+\begin{lstlisting}
+viennacl::linalg::transpose(mat,output);
+viennacl::linalg::transpose(mat);
+\end{lstlisting}
+
+\NOTE{In {\ViennaCLversion} the transpose function works just for square matrix}
+
+There are two additional functions to calculate Convolution. It expresses the amount of overlap of one function represented by vector \lstinline|v| as it is shifted over another function represented by vector \lstinline|u|. Convolution is defined by integral 
+$$(v*u)(t) = \int_{-\infty}^\infty f(x)g(t-x) dx$$ Define $F$ as Fast Fourier Transform operator, so we can define convolution of two infinite sequences  \lstinline|v| and  \lstinline|u| as 
+$$F\{v*u\} = F\{u\}F\{v\} \rightarrow v*u = F^{-1}\{F\{v\}F\{u\}\}$$
+In other words, convolution in time domain is equals  multiplication in the frequency domain. To compute this function from two complex vectors \lstinline|v| and \lstinline|u| where the result will be stored in \lstinline|output| can be computed with additional memory allocating of three vectors with size \lstinline|v.size()| as  
+\begin{lstlisting}
+ viennacl::linalg::convolve(v,u,output);
+\end{lstlisting}
+or without additional memory allocations as
+\begin{lstlisting}
+ viennacl::linalg::convolve_i(v,u,output);
+\end{lstlisting}
+
+\NOTE{This function can make changes in input vectors!}
+
+Multiplication of two complex vectors \lstinline|u|, \lstinline|v| where the result will be stored in \lstinline|output| vector is covered in function
+\begin{lstlisting}
+ viennacl::linalg::multiply_complex(u,v,output);
+\end{lstlisting}
+
+For computing complex vector \lstinline|v| from real vector \lstinline|u| with length \lstinline|size = v.size() / 2| can be used function
+\begin{lstlisting}
+ viennacl::linalg::real_to_complex(u,v,size);
+\end{lstlisting}
+or in opposite direction, computing real vector \lstinline|v| from complex vector \lstinline|u| with length \lstinline|size = v.size() / 2| 
+\begin{lstlisting}
+ viennacl::linalg::complex_to_real(u,v,size);
+\end{lstlisting}
+
+Reverse vector \lstinline|v| to oposite order and save it in vector \lstinline|v| user can use
+function 
+\begin{lstlisting}
+ viennacl::linalg::reverse(v);
+\end{lstlisting}
 
 \section{Bandwidth Reduction} \label{sec:bandwidth-reduction}
 \NOTE{Bandwidth reduction algorithms are experimental in {\ViennaCLversion}. Interface changes as well as considerable performance improvements may
