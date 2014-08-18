@@ -737,8 +737,8 @@ private:
 
         if(fallback)
         {
-            kernel.global_work_size(0, tools::align_to_multiple<vcl_size_t>(C.size1()/p_.mS, p_.local_size_0));
-            kernel.global_work_size(1, tools::align_to_multiple<vcl_size_t>(C.size2()/p_.nS, p_.local_size_1));
+            kernel.global_work_size(0, tools::align_to_multiple(tools::align_to_multiple((unsigned int)C.size1(),p_.mS), p_.local_size_0));
+            kernel.global_work_size(1, tools::align_to_multiple(tools::align_to_multiple((unsigned int)C.size2(),p_.nS), p_.local_size_1));
         }
         else
         {
