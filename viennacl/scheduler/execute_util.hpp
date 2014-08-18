@@ -108,6 +108,24 @@ namespace viennacl
         {
           switch (root_node.lhs.numeric_type)
           {
+            case CHAR_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_char);
+            case UCHAR_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_char);
+            case SHORT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_short);
+            case USHORT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_ushort);
+            case INT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_int);
+            case UINT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_uint);
+            case LONG_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_long);
+            case ULONG_TYPE:
+              return viennacl::traits::context(*root_node.lhs.scalar_ulong);
+            //case HALF_TYPE:
+              //return viennacl::traits::context(*root_node.lhs.scalar_half);
             case FLOAT_TYPE:
               return viennacl::traits::context(*root_node.lhs.scalar_float);
             case DOUBLE_TYPE:
@@ -120,6 +138,24 @@ namespace viennacl
         {
           switch (root_node.lhs.numeric_type)
           {
+            case CHAR_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_char);
+            case UCHAR_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_char);
+            case SHORT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_short);
+            case USHORT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_ushort);
+            case INT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_int);
+            case UINT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_uint);
+            case LONG_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_long);
+            case ULONG_TYPE:
+              return viennacl::traits::context(*root_node.lhs.vector_ulong);
+            //case HALF_TYPE:
+              //return viennacl::traits::context(*root_node.lhs.vector_half);
             case FLOAT_TYPE:
               return viennacl::traits::context(*root_node.lhs.vector_float);
             case DOUBLE_TYPE:
@@ -132,6 +168,24 @@ namespace viennacl
         {
           switch (root_node.lhs.numeric_type)
           {
+            case CHAR_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_char);
+            case UCHAR_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_char);
+            case SHORT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_short);
+            case USHORT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_ushort);
+            case INT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_int);
+            case UINT_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_uint);
+            case LONG_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_long);
+            case ULONG_TYPE:
+              return viennacl::traits::context(*root_node.lhs.matrix_ulong);
+            //case HALF_TYPE:
+              //return viennacl::traits::context(*root_node.lhs.matrix_half);
             case FLOAT_TYPE:
               return viennacl::traits::context(*root_node.lhs.matrix_float);
             case DOUBLE_TYPE:
