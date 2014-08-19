@@ -52,7 +52,6 @@
 #include <iostream>
 #include <vector>
 #include "benchmark-utils.hpp"
-#include "io.hpp"
 
 
 #define BENCHMARK_RUNS          10
@@ -74,12 +73,16 @@ int run_benchmark()
   boost::numeric::ublas::vector<ScalarType> ublas_vec1;
   boost::numeric::ublas::vector<ScalarType> ublas_vec2;
 
-  if (!readVectorFromFile<ScalarType>("../examples/testdata/result65025.txt", ublas_vec1))
+  boost::numeric::ublas::compressed_matrix<ScalarType> ublas_matrix;
+  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
   {
-    std::cout << "Error reading RHS file" << std::endl;
+    std::cout << "Error reading Matrix file" << std::endl;
     return 0;
   }
-  std::cout << "done reading rhs" << std::endl;
+  //unsigned int cg_mat_size = cg_mat.size();
+  std::cout << "done reading matrix" << std::endl;
+
+  ublas_vec1 = boost::numeric::ublas::scalar_vector<ScalarType>(ublas_matrix.size1(), ScalarType(1.0));
   ublas_vec2 = ublas_vec1;
 
   viennacl::compressed_matrix<ScalarType, 1> vcl_compressed_matrix_1;
@@ -91,15 +94,6 @@ int run_benchmark()
   viennacl::ell_matrix<ScalarType, 1> vcl_ell_matrix_1;
   viennacl::hyb_matrix<ScalarType, 1> vcl_hyb_matrix_1;
   viennacl::sliced_ell_matrix<ScalarType> vcl_sliced_ell_matrix_1;
-
-  boost::numeric::ublas::compressed_matrix<ScalarType> ublas_matrix;
-  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
-  {
-    std::cout << "Error reading Matrix file" << std::endl;
-    return 0;
-  }
-  //unsigned int cg_mat_size = cg_mat.size();
-  std::cout << "done reading matrix" << std::endl;
 
   viennacl::vector<ScalarType> vcl_vec1(ublas_vec1.size());
   viennacl::vector<ScalarType> vcl_vec2(ublas_vec1.size());

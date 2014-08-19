@@ -59,7 +59,6 @@
 #include <iostream>
 #include <vector>
 #include "benchmark-utils.hpp"
-#include "io.hpp"
 
 
 using namespace boost::numeric;
@@ -138,19 +137,18 @@ int run_benchmark(viennacl::context ctx)
   unsigned int solver_krylov_dim = 20;
   double solver_tolerance = 1e-6;
 
-  if (!readVectorFromFile<ScalarType>("../examples/testdata/rhs65025.txt", ublas_vec1))
+  ublas::compressed_matrix<ScalarType> ublas_matrix;
+  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
   {
-    std::cout << "Error reading RHS file" << std::endl;
-    return 0;
+    std::cout << "Error reading Matrix file" << std::endl;
+    return EXIT_FAILURE;
   }
-  std::cout << "done reading rhs" << std::endl;
+  //unsigned int cg_mat_size = cg_mat.size();
+  std::cout << "done reading matrix" << std::endl;
+
+  ublas_result = ublas::scalar_vector<ScalarType>(ublas_matrix.size1(), ScalarType(1.0));
+  ublas_vec1 = ublas::prod(ublas_matrix, ublas_result);
   ublas_vec2 = ublas_vec1;
-  if (!readVectorFromFile<ScalarType>("../examples/testdata/result65025.txt", ublas_result))
-  {
-    std::cout << "Error reading result file" << std::endl;
-    return 0;
-  }
-  std::cout << "done reading result" << std::endl;
 
   viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(ublas_vec1.size(), ublas_vec1.size(), ctx);
   viennacl::coordinate_matrix<ScalarType> vcl_coordinate_matrix(ublas_vec1.size(), ublas_vec1.size(), ctx);
@@ -161,15 +159,6 @@ int run_benchmark(viennacl::context ctx)
   viennacl::vector<ScalarType> vcl_vec2(ublas_vec1.size(), ctx);
   viennacl::vector<ScalarType> vcl_result(ublas_vec1.size(), ctx);
 
-
-  ublas::compressed_matrix<ScalarType> ublas_matrix;
-  if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
-  {
-    std::cout << "Error reading Matrix file" << std::endl;
-    return EXIT_FAILURE;
-  }
-  //unsigned int cg_mat_size = cg_mat.size();
-  std::cout << "done reading matrix" << std::endl;
 
   //cpu to gpu:
   viennacl::copy(ublas_matrix, vcl_compressed_matrix);
