@@ -4,6 +4,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 # tests with CPU backend
 foreach(PROG blas3_prod_float blas3_prod_double blas3_solve fft_1d fft_2d iterators
              global_variables
+             nmf
              matrix_vector matrix_vector_int
              matrix_row_float matrix_row_double matrix_row_int
              matrix_col_float matrix_col_double matrix_col_int
@@ -50,6 +51,7 @@ if (ENABLE_CUDA)
                matrix_row_float matrix_row_double matrix_row_int
                matrix_col_float matrix_col_double matrix_col_int
                scalar sparse
+               nmf
                vector_float_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)

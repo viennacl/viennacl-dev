@@ -162,7 +162,9 @@ Conversely, the inverse FFT is computed as
  viennacl::inplace_ifft(v);
 \end{lstlisting}
 
-Second possibility to compute FFT is with Bluestein algorithm. Currently,  Works only for sizes of input data which is less than $2^{16}$. Uses a lot of additional memory, but should be fast for any size of data. Bluestein algorithm uses at least three-times more additional memory than another algorithms. Serial implementation has something about $o(n * \lg n)$ complexity.
+Second possibility to compute FFT is with Bluestein algorithm. Currently,  Works only for sizes of input data which is less than $2^{16}$. Uses a lot of additional 
+memory, but should be fast for any size of data. Bluestein algorithm uses at least three-times more additional memory than another algorithms. 
+Serial implementation has something about $o(n * \lg n)$ complexity.
 Compute FFT with Bluestein algorithm from complex vector \lstinline|v| and store result in vector \lstinline|output| user can do with function
 \begin{lstlisting}
  viennacl::linalg::bluestein(v, output,batch_size);
@@ -171,7 +173,9 @@ Compute FFT with Bluestein algorithm from complex vector \lstinline|v| and store
 \NOTE{In {\ViennaCLversion} the FFT with complexity $N \log N$ is computed for vectors with a size of a power of two only. For other vector sizes, a standard
 discrete Fourier transform with complexity $N^2$ is employed. This is subject to change in future versions.}
 
-Some of the FFT functions are also suitable for matrices and can be computed in 2D. FFT of \lstinline|viennacl::matrix|, say  \lstinline|mat| , where also the even entries are real parts and odd entries are imaginary parts of complex numbers. In order to store complex numbers $z_0$, $z_1$, etc.~in \lstinline|mat|: \lstinline|mat(0,0) = Real(z_0)|, \lstinline|mat(0,1) = Imag(z_0)|,\lstinline|mat(0,2) = Real(z_0)|, \lstinline|mat(0,3) = Imag(z_0)| etc.
+Some of the FFT functions are also suitable for matrices and can be computed in 2D. FFT of \lstinline|viennacl::matrix|, say  \lstinline|mat| , 
+where also the even entries are real parts and odd entries are imaginary parts of complex numbers. In order to store complex numbers $z_0$, $z_1$, 
+etc.~in \lstinline|mat|: \lstinline|mat(0,0) = Real(z_0)|, \lstinline|mat(0,1) = Imag(z_0)|,\lstinline|mat(0,2) = Real(z_0)|, \lstinline|mat(0,3) = Imag(z_0)| etc.
 
 Than user can compute FFT  either by writing to a second matrix \lstinline|output| or by directly writing the result to \lstinline|mat| 
 \begin{lstlisting}
@@ -190,10 +194,12 @@ viennacl::linalg::transpose(mat);
 
 \NOTE{In {\ViennaCLversion} the transpose function works just for square matrix}
 
-There are two additional functions to calculate Convolution. It expresses the amount of overlap of one function represented by vector \lstinline|v| as it is shifted over another function represented by vector \lstinline|u|. Convolution is defined by integral 
+There are two additional functions to calculate Convolution. It expresses the amount of overlap of one function represented by vector \lstinline|v| as it is shifted over 
+another function represented by vector \lstinline|u|. Convolution is defined by integral 
 $$(v*u)(t) = \int_{-\infty}^\infty f(x)g(t-x) dx$$ Define $F$ as Fast Fourier Transform operator, so we can define convolution of two infinite sequences  \lstinline|v| and  \lstinline|u| as 
 $$F\{v*u\} = F\{u\}F\{v\} \rightarrow v*u = F^{-1}\{F\{v\}F\{u\}\}$$
-In other words, convolution in time domain is equals  multiplication in the frequency domain. To compute this function from two complex vectors \lstinline|v| and \lstinline|u| where the result will be stored in \lstinline|output| can be computed with additional memory allocating of three vectors with size \lstinline|v.size()| as  
+In other words, convolution in time domain is equals  multiplication in the frequency domain. To compute this function from two complex vectors \lstinline|v| and \lstinline|u| 
+where the result will be stored in \lstinline|output| can be computed with additional memory allocating of three vectors with size \lstinline|v.size()| as  
 \begin{lstlisting}
  viennacl::linalg::convolve(v,u,output);
 \end{lstlisting}
@@ -261,20 +267,35 @@ can be found in \lstinline|examples/tutorial/bandwidth-reduction.cpp|.
 
 
 \section{Nonnegative Matrix Factorization}
-\NOTE{Nonnegative Matrix Factorization is experimental in {\ViennaCLversion} and available with the {\OpenCL} backend only.
-      Interface changes as well as considerable performance improvements may be included in future releases!}
 
-In various fields such as text mining, a matrix $V$ needs to be factored into factors $W$ and $H$ such that the function
+Nonnegative Matrix Factorization is available with {\OpenCL},{\CUDA},{\OpenMP} backends.
+
+In various fields such as text mining, a matrix \lstinline|V| needs to be factored into factors \lstinline|W| and \lstinline|H|  with the property that all three matrices have no negative elements, 
+such that the function
 \begin{align*}
  f(W, H) = \Vert V - WH \Vert_{\mathrm{F}}^2
 \end{align*}
-is minimized. The algorithm proposed by Lee and Seoung \cite{lee:nmf} is available in ViennaCL in the header file \texttt{viennacl/linalg/nmf.hpp} as
+is minimized. Lets say we want to find matrices \lstinline|W| and \lstinline|H| from \lstinline|V| where we can apply this formula $$ W*H \approx V$$ For example, we have matrix 
+\lstinline|V(size1,size2)|, matrix \lstinline|W| has to have size \lstinline|W(size1,k)| and matrix \lstinline|H| has to have size 
+\lstinline|H(k,size2)| because of matrix multiplication, where \lstinline|k| can be randomly chosen integer.
+The fourth and last neccesary parameter is class \lstinline|viennacl::linalg::nmf_config| which contains all necessary parameters 
+of NMF routine: 
+\begin{itemize}
+ \item \lstinline|eps_|: Relative tolerance for convergence
+ \item \lstinline|stagnation_eps_|: Relative tolerance for the stagnation check
+ \item \lstinline|max_iters_|: Maximum number of iterations for the NMF algorithm
+ \item \lstinline|iters_|: The number of iterations of the last NMF run using this configuration object
+ \item \lstinline|print_relative_error_|: Flag specifying whether the relative tolerance should be printed in each iteration
+ \item \lstinline|check_after_steps_|:Number of steps after which the convergence of NMF should be checked (again)
+\end{itemize}
+Whit this parameters the algorithm proposed by Lee and Seoung \cite{lee:nmf} which is available in ViennaCL in the header 
+file \texttt{viennacl/linalg/nmf\_operations.hpp} can be computed as
 \begin{lstlisting}
  viennacl::matrix<ScalarType> V(size1, size2);
  viennacl::matrix<ScalarType> W(size1, k);
  viennacl::matrix<ScalarType> H(k, size2);
 
  viennacl::linalg::nmf_config conf;
- viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, conf);
+ viennacl::linalg::nmf(V, W, H, conf);
 \end{lstlisting}
-For an overview of the parameters (tolerances) of the configuration object \lstinline|conf|, please refer to the Doxygen documentation in \texttt{doc/doxygen/}.
+Multiple tests can be found in file \texttt{viennacl/test/src/nmf.cpp} and tutorial in file \texttt{viennacl/examples/tutorial/nmf.cpp}
