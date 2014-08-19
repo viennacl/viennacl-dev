@@ -43,22 +43,25 @@ namespace viennacl
   namespace device_specific
   {
 
-    class reduction_template : public template_base
+    struct reduction_parameters : public template_base::parameters_type
+    {
+      reduction_parameters(unsigned int _simd_width,
+                 unsigned int _group_size, unsigned int _num_groups,
+                 fetching_policy_type _fetching_policy) : template_base::parameters_type(_simd_width, _group_size, 1, 2), num_groups(_num_groups), fetching_policy(_fetching_policy){ }
+
+      unsigned int num_groups;
+      fetching_policy_type fetching_policy;
+    };
+
+    class reduction_template : public template_base_impl<reduction_template, reduction_parameters>
     {
 
-    public:
-      struct parameters_type : public template_base::parameters_type
-      {
-        parameters_type(unsigned int _simd_width,
-                   unsigned int _group_size, unsigned int _num_groups,
-                   fetching_policy_type _fetching_policy) : template_base::parameters_type(_simd_width, _group_size, 1, 2), num_groups(_num_groups), fetching_policy(_fetching_policy){ }
-
-        unsigned int num_groups;
-        fetching_policy_type fetching_policy;
-      };
-
     private:
-      unsigned int n_lmem_elements() const { return p_.local_size_0; }
+
+      unsigned int n_lmem_elements() const
+      {
+          return p_.local_size_0;
+      }
 
       int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
@@ -303,13 +306,12 @@ namespace viennacl
         return result;
       }
     public:
-      reduction_template(reduction_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, binding_policy), p_(parameters){ }
-      reduction_template::parameters_type const & parameters() const { return p_; }
+      reduction_template(reduction_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base_impl<reduction_template, reduction_parameters>(parameters, binding_policy) { }
 
       void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs, statements_container const & statements)
       {
         std::vector<scheduler::statement_node const *> reductions;
-        cl_uint size;
+        cl_uint size = 0;
         for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
           std::vector<size_t> reductions_idx;
@@ -321,7 +323,6 @@ namespace viennacl
 
         scheduler::statement const & statement = statements.data().front();
         unsigned int scalartype_size = utils::size_of(lhs_most(statement.array(), statement.root()).lhs.numeric_type);
-
 
         viennacl::ocl::kernel * kernels[2];
         if(has_strided_access(statements) && p_.simd_width > 1)
@@ -349,11 +350,6 @@ namespace viennacl
             unsigned int j = 0;
             for(std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it)
             {
-              if(tmp_.size() <= i)
-                tmp_.push_back(kernels[k]->context().create_memory(CL_MEM_READ_WRITE, p_.num_groups*scalartype_size));
-              kernels[k]->arg(n_arg++, tmp_[i]);
-              i++;
-
               if(utils::is_index_reduction((*it)->op))
               {
                 if(tmpidx_.size() <= j)
@@ -361,16 +357,21 @@ namespace viennacl
                 kernels[k]->arg(n_arg++, tmpidx_[j]);
                 j++;
               }
+
+              if(tmp_.size() <= i)
+                tmp_.push_back(kernels[k]->context().create_memory(CL_MEM_READ_WRITE, p_.num_groups*scalartype_size));
+              kernels[k]->arg(n_arg++, tmp_[i]);
+              i++;
             }
             set_arguments(statements, *kernels[k], n_arg);
         }
 
         for(unsigned int k = 0 ; k < 2 ; k++)
             viennacl::ocl::enqueue(*kernels[k]);
+
       }
 
     private:
-      reduction_template::parameters_type p_;
       std::vector< viennacl::ocl::handle<cl_mem> > tmp_;
       std::vector< viennacl::ocl::handle<cl_mem> > tmpidx_;
     };

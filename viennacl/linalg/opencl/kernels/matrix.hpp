@@ -453,26 +453,26 @@ namespace viennacl
           {
             namespace ds = viennacl::device_specific;
 
-            handler.add(prefix + "0000", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false));
-            handler.add(prefix + "1000", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false));
-            handler.add(prefix + "0100", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false));
-            handler.add(prefix + "1100", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false));
+            handler.add(prefix + "0000", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false));
+            handler.add(prefix + "1000", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false));
+            handler.add(prefix + "0100", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false));
+            handler.add(prefix + "1100", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false));
             if(b)
             {
-              handler.add(prefix + "0010", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false));
-              handler.add(prefix + "1010", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false));
-              handler.add(prefix + "0110", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false));
-              handler.add(prefix + "1110", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false));
+              handler.add(prefix + "0010", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false));
+              handler.add(prefix + "1010", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false));
+              handler.add(prefix + "0110", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false));
+              handler.add(prefix + "1110", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false));
 
-              handler.add(prefix + "0001", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true));
-              handler.add(prefix + "1001", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true));
-              handler.add(prefix + "0101", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true));
-              handler.add(prefix + "1101", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true));
+              handler.add(prefix + "0001", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true));
+              handler.add(prefix + "1001", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true));
+              handler.add(prefix + "0101", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true));
+              handler.add(prefix + "1101", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true));
 
-              handler.add(prefix + "0011", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true));
-              handler.add(prefix + "1011", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true));
-              handler.add(prefix + "0111", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true));
-              handler.add(prefix + "1111", new ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true));
+              handler.add(prefix + "0011", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true));
+              handler.add(prefix + "1011", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true));
+              handler.add(prefix + "0111", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true));
+              handler.add(prefix + "1111", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true));
             }
           }
 
@@ -542,12 +542,12 @@ namespace viennacl
               generate_ambm_impl(handler, "assign_", matrix_axpy_params, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &ha, &da, &C, &hb, &db);
               generate_ambm_impl(handler, "ip_add_", matrix_axpy_params, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &ha, &da, &C, &hb, &db);
 
-              handler.add("assign_cpu", new ds::matrix_axpy_template(matrix_axpy_params), scheduler::preset::assign_cpu(&A, &M));
-              handler.add("matrix_diag_from_vector", new ds::matrix_axpy_template(matrix_axpy_params), scheduler::preset::matrix_diag_from_vector(&x, &A, hi));
-              handler.add("matrix_row", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_row(&x, &A, hui));
-              handler.add("matrix_column", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_column(&x, &A, hui));
-              handler.add("matrix_diag_to_vector", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_diag_to_vector(&x, &A, hi));
-              handler.add("diagonal_assign_cpu", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::diagonal_assign_cpu(&A, &sx));
+              handler.add("assign_cpu", ds::matrix_axpy_template(matrix_axpy_params), scheduler::preset::assign_cpu(&A, &M));
+              handler.add("matrix_diag_from_vector", ds::matrix_axpy_template(matrix_axpy_params), scheduler::preset::matrix_diag_from_vector(&x, &A, hi));
+              handler.add("matrix_row", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_row(&x, &A, hui));
+              handler.add("matrix_column", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_column(&x, &A, hui));
+              handler.add("matrix_diag_to_vector", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_diag_to_vector(&x, &A, hi));
+              handler.add("diagonal_assign_cpu", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::diagonal_assign_cpu(&A, &sx));
             }
             return handlers_map.at(key);
           }
@@ -599,7 +599,7 @@ namespace viennacl
 
 
               // unary operations
-#define ADD_UNARY(OPTYPE) handler.add(operator_string(OPTYPE), new ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::unary_element_op(&A, &B, OPTYPE))
+#define ADD_UNARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::unary_element_op(&A, &B, OPTYPE))
               if (numeric_string == "float" || numeric_string == "double")
               {
                 ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
@@ -626,7 +626,7 @@ namespace viennacl
 #undef ADD_UNARY
 
               // binary operations
-#define ADD_BINARY(OPTYPE) handler.add(operator_string(OPTYPE), new ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::binary_element_op(&A, &B, &C, OPTYPE))
+#define ADD_BINARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::binary_element_op(&A, &B, &C, OPTYPE))
               ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
               ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
               if (numeric_string == "float" || numeric_string == "double")
@@ -661,8 +661,8 @@ namespace viennacl
               viennacl::matrix<TYPE, viennacl::column_major> A;
               viennacl::vector<TYPE> x;
               viennacl::vector<TYPE> y;
-              handler.add("mat_vec_T", new ds::row_wise_reduction_template(ds::builtin_database::row_wise_reduction_params<TYPE>(device, 'T'), 'T'), scheduler::preset::mat_vec_prod(&A, true, &x, &y));
-              handler.add("mat_vec_N", new ds::row_wise_reduction_template(ds::builtin_database::row_wise_reduction_params<TYPE>(device, 'N'), 'N'), scheduler::preset::mat_vec_prod(&A, false, &x, &y));
+              handler.add("mat_vec_T", ds::row_wise_reduction_template(ds::builtin_database::row_wise_reduction_params<TYPE>(device, 'T'), 'T'), scheduler::preset::mat_vec_prod(&A, true, &x, &y));
+              handler.add("mat_vec_N", ds::row_wise_reduction_template(ds::builtin_database::row_wise_reduction_params<TYPE>(device, 'N'), 'N'), scheduler::preset::mat_vec_prod(&A, false, &x, &y));
 
             }
             return handlers_map.at(key);
@@ -705,10 +705,10 @@ namespace viennacl
               TYPE alpha = 1;
               TYPE beta = 0;
 
-              handler.add("prod_NN", new ds::matrix_product_template(matrix_product_params_NN, 'N', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C));
-              handler.add("prod_TN", new ds::matrix_product_template(matrix_product_params_TN, 'T', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C));
-              handler.add("prod_NT", new ds::matrix_product_template(matrix_product_params_NT, 'N', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C));
-              handler.add("prod_TT", new ds::matrix_product_template(matrix_product_params_TT, 'T', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C));
+              handler.add("prod_NN", ds::matrix_product_template(matrix_product_params_NN, 'N', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, false, beta, &C));
+              handler.add("prod_TN", ds::matrix_product_template(matrix_product_params_TN, 'T', 'N'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, false, beta, &C));
+              handler.add("prod_NT", ds::matrix_product_template(matrix_product_params_NT, 'N', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, false, &B, true, beta, &C));
+              handler.add("prod_TT", ds::matrix_product_template(matrix_product_params_TT, 'T', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C));
 
             }
             return handlers_map.at(key);

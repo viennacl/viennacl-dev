@@ -43,36 +43,35 @@ namespace viennacl{
 
 namespace device_specific{
 
-class matrix_product_template : public template_base{
+struct matrix_product_parameters : public template_base::parameters_type
+{
+  matrix_product_parameters(unsigned int simd_width
+             , unsigned int local_size_0, unsigned int KL, unsigned int local_size_1
+             , unsigned int ms, unsigned int ks, unsigned int ns
+             , fetching_policy_type A_fetching_policy, fetching_policy_type B_fetching_policy
+             , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters_type(simd_width, local_size_0, local_size_1, 1),
+                                         kL(KL), mS(ms), kS(ks), nS(ns), A_fetching_policy(A_fetching_policy), B_fetching_policy(B_fetching_policy),
+                                         local_fetch_0(local_fetch_0), local_fetch_1(local_fetch_1),
+                                          mL(ms*local_size_0), nL(ns*local_size_1){}
 
-public:
-    struct parameters_type : public template_base::parameters_type
-    {
-      parameters_type(unsigned int simd_width
-                 , unsigned int local_size_0, unsigned int KL, unsigned int local_size_1
-                 , unsigned int ms, unsigned int ks, unsigned int ns
-                 , fetching_policy_type A_fetching_policy, fetching_policy_type B_fetching_policy
-                 , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters_type(simd_width, local_size_0, local_size_1, 1),
-                                             kL(KL), mS(ms), kS(ks), nS(ns), A_fetching_policy(A_fetching_policy), B_fetching_policy(B_fetching_policy),
-                                             local_fetch_0(local_fetch_0), local_fetch_1(local_fetch_1),
-                                              mL(ms*local_size_0), nL(ns*local_size_1){}
+  unsigned int kL;
 
-      unsigned int kL;
+  unsigned int mS;
+  unsigned int kS;
+  unsigned int nS;
 
-      unsigned int mS;
-      unsigned int kS;
-      unsigned int nS;
+  fetching_policy_type A_fetching_policy;
+  fetching_policy_type B_fetching_policy;
 
-      fetching_policy_type A_fetching_policy;
-      fetching_policy_type B_fetching_policy;
+  unsigned int local_fetch_0;
+  unsigned int local_fetch_1;
 
-      unsigned int local_fetch_0;
-      unsigned int local_fetch_1;
+  unsigned int mL;
+  unsigned int nL;
+};
 
-      unsigned int mL;
-      unsigned int nL;
-    };
-
+class matrix_product_template : public template_base_impl<matrix_product_template, matrix_product_parameters>
+{
 private:
 
     unsigned int n_lmem_elements() const
@@ -813,8 +812,7 @@ private:
     }
 
 public:
-    matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans) : template_base(p_, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans), p_(parameters){ }
-    matrix_product_template::parameters_type const & parameters() const { return p_; }
+    matrix_product_template(matrix_product_template::parameters_type const & parameters, char A_trans, char B_trans) : template_base_impl<matrix_product_template, matrix_product_parameters>(parameters, BIND_ALL_UNIQUE), A_trans_(A_trans), B_trans_(B_trans){ }
 
     virtual void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs, statements_container const & statements)
     {
@@ -859,7 +857,6 @@ public:
 private:
     const char A_trans_;
     const char B_trans_;
-    matrix_product_template::parameters_type p_;
 };
 
 }

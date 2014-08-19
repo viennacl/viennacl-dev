@@ -37,8 +37,8 @@ namespace viennacl
     {
     public:
 
-      lazy_program_compiler(viennacl::ocl::context * ctx, std::string const & name, std::string const & src) : ctx_(ctx), program_(NULL), name_(name), src_(src){ }
-      lazy_program_compiler(viennacl::ocl::context * ctx, std::string const & name) : ctx_(ctx), program_(NULL), name_(name){ }
+      lazy_program_compiler(viennacl::ocl::context * ctx, std::string const & name, std::string const & src, bool force_recompilation) : ctx_(ctx), name_(name), src_(src), force_recompilation_(force_recompilation){ }
+      lazy_program_compiler(viennacl::ocl::context * ctx, std::string const & name, bool force_recompilation) : ctx_(ctx), name_(name), force_recompilation_(force_recompilation){ }
 
       void add(std::string const & src)
       {
@@ -49,13 +49,14 @@ namespace viennacl
 
       viennacl::ocl::program & program()
       {
-        if(program_==NULL)
+        if(force_recompilation_ && ctx_->has_program(name_))
+          ctx_->delete_program(name_);
+        if(!ctx_->has_program(name_))
         {
-//          std::cout << src_ << std::endl;
           #ifdef VIENNACL_BUILD_INFO
           std::cerr << "Creating program " << program_name << std::endl;
           #endif
-          program_ = &ctx_->add_program(src_, name_);
+          ctx_->add_program(src_, name_);
           #ifdef VIENNACL_BUILD_INFO
           std::cerr << "Done creating program " << program_name << std::endl;
           #endif
@@ -65,9 +66,9 @@ namespace viennacl
 
     private:
       viennacl::ocl::context * ctx_;
-      viennacl::ocl::program * program_;
       std::string name_;
       std::string src_;
+      bool force_recompilation_;
     };
 
   }

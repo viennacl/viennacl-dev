@@ -19,7 +19,7 @@ namespace fallback{
 
 inline void add_4B(database_type<vector_axpy_template::parameters_type> & db)
 {
-  db.add_4B(unknown_id, CL_DEVICE_TYPE_CPU, unknown, "", vector_axpy_template::parameters_type(1,128,128,FETCH_FROM_GLOBAL_CONTIGUOUS));
+  db.add_4B(unknown_id, CL_DEVICE_TYPE_CPU, unknown, "", vector_axpy_template::parameters_type(1,128,128,FETCH_FROM_GLOBAL_STRIDED));
 }
 
 inline void add_4B(database_type<reduction_template::parameters_type> & db)

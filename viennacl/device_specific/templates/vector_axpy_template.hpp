@@ -45,22 +45,23 @@ namespace viennacl
   namespace device_specific
   {
 
-    class vector_axpy_template : public template_base
+    class vector_axpy_parameters : public template_base::parameters_type
+    {
+    public:
+      vector_axpy_parameters(unsigned int _simd_width,
+                 unsigned int _group_size, unsigned int _num_groups,
+                 fetching_policy_type _fetching_policy) : template_base::parameters_type(_simd_width, _group_size, 1, 1), num_groups(_num_groups), fetching_policy(_fetching_policy){ }
+
+
+
+      unsigned int num_groups;
+      fetching_policy_type fetching_policy;
+    };
+
+    class vector_axpy_template : public template_base_impl<vector_axpy_template, vector_axpy_parameters>
     {
 
     public:
-      class parameters_type : public template_base::parameters_type
-      {
-      public:
-        parameters_type(unsigned int _simd_width,
-                   unsigned int _group_size, unsigned int _num_groups,
-                   fetching_policy_type _fetching_policy) : template_base::parameters_type(_simd_width, _group_size, 1, 1), num_groups(_num_groups), fetching_policy(_fetching_policy){ }
-
-
-
-        unsigned int num_groups;
-        fetching_policy_type fetching_policy;
-      };
 
     private:
       virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
@@ -134,10 +135,9 @@ namespace viennacl
       }
 
     public:
-      vector_axpy_template(vector_axpy_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, binding_policy), up_to_internal_size_(false), p_(parameters){ }
+      vector_axpy_template(vector_axpy_template::parameters_type const & parameters, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base_impl<vector_axpy_template, vector_axpy_parameters>(parameters, binding_policy), up_to_internal_size_(false){ }
 
       void up_to_internal_size(bool v) { up_to_internal_size_ = v; }
-      vector_axpy_template::parameters_type const & parameters() const { return p_; }
 
       void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs,  statements_container const & statements)
       {
@@ -159,7 +159,6 @@ namespace viennacl
 
     private:
       bool up_to_internal_size_;
-      vector_axpy_template::parameters_type p_;
     };
 
   }

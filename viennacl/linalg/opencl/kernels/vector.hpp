@@ -34,13 +34,11 @@ namespace viennacl
         static void generate_inner_prod_impl(device_specific::execution_handler & handler, std::string const & prefix, device_specific::reduction_template::parameters_type const & parameters, vcl_size_t vector_num,
                                        viennacl::vector<T> const * x, viennacl::vector<T> const * y, ScalarType const* s)
         {
-          using device_specific::reduction_template;
-          using device_specific::statements_container;
-
-          statements_container::data_type statements;
+          namespace ds = device_specific;
+          ds::statements_container::data_type statements;
           for(unsigned int i = 0 ; i < vector_num ; ++i)
             statements.push_back(scheduler::preset::inner_prod(s, x, y));
-          handler.add(prefix, new reduction_template(parameters), statements_container(statements,statements_container::INDEPENDENT));
+          handler.add(prefix, ds::reduction_template(parameters), ds::statements_container(statements,ds::statements_container::INDEPENDENT));
         }
 
 
@@ -57,28 +55,27 @@ namespace viennacl
                                          viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType1 const * a,
                                          viennacl::vector_base<T> const * z, ScalarType2 const * b)
           {
-            using device_specific::vector_axpy_template;
-
-            handler.add(prefix + "0000", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false));
-            handler.add(prefix + "1000", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false));
-            handler.add(prefix + "0100", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false));
-            handler.add(prefix + "1100", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false));
+            namespace ds = device_specific;
+            handler.add(prefix + "0000", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false));
+            handler.add(prefix + "1000", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false));
+            handler.add(prefix + "0100", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false));
+            handler.add(prefix + "1100", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false));
             if(b)
             {
-              handler.add(prefix + "0010", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false));
-              handler.add(prefix + "1010", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false));
-              handler.add(prefix + "0110", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false));
-              handler.add(prefix + "1110", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false));
+              handler.add(prefix + "0010", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false));
+              handler.add(prefix + "1010", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false));
+              handler.add(prefix + "0110", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false));
+              handler.add(prefix + "1110", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false));
 
-              handler.add(prefix + "0001", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true));
-              handler.add(prefix + "1001", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true));
-              handler.add(prefix + "0101", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true));
-              handler.add(prefix + "1101", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true));
+              handler.add(prefix + "0001", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true));
+              handler.add(prefix + "1001", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true));
+              handler.add(prefix + "0101", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true));
+              handler.add(prefix + "1101", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true));
 
-              handler.add(prefix + "0011", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true));
-              handler.add(prefix + "1011", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true));
-              handler.add(prefix + "0111", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true));
-              handler.add(prefix + "1111", new vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true));
+              handler.add(prefix + "0011", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true));
+              handler.add(prefix + "1011", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true));
+              handler.add(prefix + "0111", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true));
+              handler.add(prefix + "1111", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true));
             }
           }
 
@@ -125,19 +122,19 @@ namespace viennacl
               generate_avbv_impl(handler, "assign_", vector_axpy_params, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
               generate_avbv_impl(handler, "ip_add_", vector_axpy_params, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
 
-              handler.add("plane_rotation", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::plane_rotation(&x, &y, &ha, &hb));
-              handler.add("swap", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::swap(&x, &y));
-              handler.add("assign_cpu", new ds::vector_axpy_template(vector_axpy_params), scheduler::preset::assign_cpu(&x, &scalary));
+              handler.add("plane_rotation", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::plane_rotation(&x, &y, &ha, &hb));
+              handler.add("swap", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::swap(&x, &y));
+              handler.add("assign_cpu", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::assign_cpu(&x, &scalary));
 
               generate_inner_prod_impl(handler, "inner_prod", reduction_params, 1, &x, &y, &da);
 
-              handler.add("norm_1", new ds::reduction_template(reduction_params), scheduler::preset::norm_1(&da, &x));
+              handler.add("norm_1", ds::reduction_template(reduction_params), scheduler::preset::norm_1(&da, &x));
               if(is_floating_point<TYPE>::value)
                 //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
-                handler.add("norm_2", new ds::reduction_template(reduction_params, ds::BIND_TO_HANDLE), scheduler::preset::norm_2(&da, &x));
-              handler.add("norm_inf", new ds::reduction_template(reduction_params), scheduler::preset::norm_inf(&da, &x));
-              handler.add("index_norm_inf", new ds::reduction_template(reduction_params), scheduler::preset::index_norm_inf(&da, &x));
-              handler.add("sum", new ds::reduction_template(reduction_params), scheduler::preset::sum(&da, &x));
+                handler.add("norm_2", ds::reduction_template(reduction_params, ds::BIND_TO_HANDLE), scheduler::preset::norm_2(&da, &x));
+              handler.add("norm_inf", ds::reduction_template(reduction_params), scheduler::preset::norm_inf(&da, &x));
+              handler.add("index_norm_inf", ds::reduction_template(reduction_params), scheduler::preset::index_norm_inf(&da, &x));
+              handler.add("sum", ds::reduction_template(reduction_params), scheduler::preset::sum(&da, &x));
             }
             return handlers_map.at(h);
           }
@@ -207,7 +204,7 @@ namespace viennacl
               viennacl::vector<TYPE> z;
 
               // unary operations
-#define ADD_UNARY(OPTYPE) handler.add(operator_string(OPTYPE), new ds::vector_axpy_template(vector_axpy_params),scheduler::preset::unary_element_op(&x, &y, OPTYPE))
+#define ADD_UNARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::vector_axpy_template(vector_axpy_params),scheduler::preset::unary_element_op(&x, &y, OPTYPE))
               if (numeric_string == "float" || numeric_string == "double")
               {
                 ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
@@ -234,7 +231,7 @@ namespace viennacl
 #undef ADD_UNARY
 
               // binary operations
-#define ADD_BINARY(OPTYPE) handler.add(operator_string(OPTYPE), new ds::vector_axpy_template(vector_axpy_params),scheduler::preset::binary_element_op(&x, &y, &z, OPTYPE))
+#define ADD_BINARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::vector_axpy_template(vector_axpy_params),scheduler::preset::binary_element_op(&x, &y, &z, OPTYPE))
               ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
               ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
               if (numeric_string == "float" || numeric_string == "double")

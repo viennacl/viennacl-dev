@@ -40,15 +40,12 @@ namespace viennacl{
 
   namespace device_specific{
 
-    inline void execute(template_base & tplt, statements_container const & statements, viennacl::ocl::context & ctx = viennacl::ocl::current_context(), bool force_compilation = false)
+    inline void execute(template_base const & T, statements_container const & statements, viennacl::ocl::context & ctx = viennacl::ocl::current_context(), bool force_compilation = false)
     {
       //Generate program name
       std::string program_name = tree_parsing::statements_representation(statements, BIND_TO_HANDLE);
-      //Retrieve/Compile program
-      if(force_compilation)
-        ctx.delete_program(program_name);
-      execution_handler handler(program_name, ctx, ctx.current_device());
-      handler.add(program_name, &tplt, statements);
+      execution_handler handler(program_name, ctx, ctx.current_device(), force_compilation);
+      handler.add(program_name, T, statements);
       handler.execute(program_name, statements);
     }
 

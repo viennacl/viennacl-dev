@@ -39,24 +39,27 @@
 
 #include "viennacl/scheduler/io.hpp"
 
-namespace viennacl{
+namespace viennacl
+{
 
-  namespace device_specific{
-
-    class row_wise_reduction_template : public template_base{
-    public:
-      struct parameters_type : public template_base::parameters_type
-      {
-        parameters_type(unsigned int _simd_width,
-                   unsigned int _local_size_0, unsigned int _local_size_1,
-                   unsigned int _num_groups_0, fetching_policy_type _fetch_policy): template_base::parameters_type(_simd_width, _local_size_0, _local_size_1, 1),
-                                               num_groups_0(_num_groups_0), fetch_policy(_fetch_policy) { }
+  namespace device_specific
+  {
 
 
-        unsigned int num_groups_0;
-        fetching_policy_type fetch_policy;
-      };
+    struct row_wise_reduction_parameters : public template_base::parameters_type
+    {
+      row_wise_reduction_parameters(unsigned int _simd_width,
+                 unsigned int _local_size_0, unsigned int _local_size_1,
+                 unsigned int _num_groups_0, fetching_policy_type _fetch_policy): template_base::parameters_type(_simd_width, _local_size_0, _local_size_1, 1),
+                                             num_groups_0(_num_groups_0), fetch_policy(_fetch_policy) { }
 
+
+      unsigned int num_groups_0;
+      fetching_policy_type fetch_policy;
+    };
+
+    class row_wise_reduction_template : public template_base_impl<row_wise_reduction_template, row_wise_reduction_parameters>
+    {
     private:
 
       virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
@@ -221,8 +224,8 @@ namespace viennacl{
       std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
         std::vector<mapped_row_wise_reduction*> exprs;
-        bool is_trans;
-        bool row_major;
+        bool is_trans = false;
+        bool row_major = false;
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
         for(mit = mappings.begin(), sit = statements.data().begin() ; mit != mappings.end() ; ++mit, ++sit)
@@ -248,8 +251,7 @@ namespace viennacl{
         return res;
       }
     public:
-      row_wise_reduction_template(row_wise_reduction_template::parameters_type const & parameters, char A_trans, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base(p_, binding_policy), A_trans_(A_trans), p_(parameters){ }
-      row_wise_reduction_template::parameters_type const & parameters() const { return p_; }
+      row_wise_reduction_template(row_wise_reduction_template::parameters_type const & parameters, char A_trans, binding_policy_t binding_policy = BIND_ALL_UNIQUE) : template_base_impl<row_wise_reduction_template, row_wise_reduction_parameters>(parameters, binding_policy), A_trans_(A_trans){ }
 
       void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs, statements_container const & statements)
       {
@@ -294,7 +296,6 @@ namespace viennacl{
 
     private:
       const char A_trans_;
-      row_wise_reduction_template::parameters_type p_;
     };
 
   }

@@ -54,25 +54,25 @@ namespace viennacl
                   "#endif\n";
       }
 
-      void init_program_compiler(std::string const & name)
+      void init_program_compiler(std::string const & name, bool force_recompilation)
       {
-        lazy_programs_.push_back(lazy_program_compiler(&ctx_, name));
+        lazy_programs_.push_back(lazy_program_compiler(&ctx_, name, force_recompilation));
         lazy_programs_.back().add(define_extension(device_.double_support_extension()));
       }
 
     public:
-      execution_handler(std::string const & program_name_base, viennacl::ocl::context & ctx, viennacl::ocl::device const & device) : ctx_(ctx), device_(device), program_names_(2), init_done_(false)
+      execution_handler(std::string const & program_name_base, viennacl::ocl::context & ctx, viennacl::ocl::device const & device, bool force_recompilation = false) : ctx_(ctx), device_(device), program_names_(2), init_done_(false)
       {
         lazy_programs_.reserve(2);
-        init_program_compiler(program_name_base + "_0");
-        init_program_compiler(program_name_base + "_1");
+        init_program_compiler(program_name_base + "_0", force_recompilation);
+        init_program_compiler(program_name_base + "_1", force_recompilation);
       }
 
-      void add(std::string const & key, template_base * ptr, statements_container const & statements)
+      void add(std::string const & key, template_base const & T, statements_container const & statements)
       {
-        if(kernels_.insert(container_type::value_type(key, tools::shared_ptr<template_base>(ptr))).second)
+        if(kernels_.insert(container_type::value_type(key, T.clone())).second)
         {
-          std::vector<std::string> sources = ptr->generate(append_prefix(key), statements, device_);
+          std::vector<std::string> sources = kernels_.at(key)->generate(append_prefix(key), statements, device_);
           assert(sources.size()<=2);
           for(unsigned int i = 0 ; i < sources.size() ; ++i)
             lazy_programs_[i].add(sources[i]);

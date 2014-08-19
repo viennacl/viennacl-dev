@@ -46,6 +46,7 @@ namespace viennacl{
 
     inline void compute_index_reduction(utils::kernel_generation_stream & os, std::string acc, std::string cur, std::string const & acc_value, std::string const & cur_value, scheduler::op_element const & op)
     {
+//        os << acc << " = " << cur_value << ">" << acc_value  << "?" << cur << ":" << acc << ";" << std::endl;
       os << acc << "= select(" << acc << "," << cur << "," << cur_value << ">" << acc_value << ");" << std::endl;
       os << acc_value << "=";
       if(op.type==scheduler::OPERATION_BINARY_ELEMENT_ARGFMAX_TYPE) os << "fmax";

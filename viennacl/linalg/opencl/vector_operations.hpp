@@ -377,7 +377,6 @@ namespace viennacl
       cl_uint index_norm_inf(vector_base<T> const & x)
       {
         viennacl::scalar<T> result(0, viennacl::traits::context(x));
-
         scheduler::statement statement = scheduler::preset::index_norm_inf(&result, &x);
         kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("index_norm_inf", statement);
         T host_result = result;
