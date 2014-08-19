@@ -57,14 +57,14 @@ namespace viennacl
         //std::cout << "prod(circulant_matrix" << ALIGNMENT << ", vector) called with internal_nnz=" << mat.internal_nnz() << std::endl;
 
         viennacl::vector<SCALARTYPE> circ(mat.elements().size() * 2);
-        viennacl::detail::fft::real_to_complex(mat.elements(), circ, mat.elements().size());
+        viennacl::linalg::real_to_complex(mat.elements(), circ, mat.elements().size());
 
         viennacl::vector<SCALARTYPE> tmp(vec.size() * 2);
         viennacl::vector<SCALARTYPE> tmp2(vec.size() * 2);
 
-        viennacl::detail::fft::real_to_complex(vec, tmp, vec.size());
+       	viennacl::linalg::real_to_complex(vec, tmp, vec.size());
         viennacl::linalg::convolve(circ, tmp, tmp2);
-        viennacl::detail::fft::complex_to_real(tmp2, result, vec.size());
+        viennacl::linalg::complex_to_real(tmp2, result, vec.size());
 
       }
 

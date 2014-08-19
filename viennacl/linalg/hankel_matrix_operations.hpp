@@ -54,7 +54,7 @@ namespace viennacl
       assert(mat.size2() == vec.size());
 
       prod_impl(mat.elements(), vec, result);
-      viennacl::detail::fft::reverse(result);
+      viennacl::linalg::reverse(result);
     }
 
   } //namespace linalg

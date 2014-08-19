@@ -154,7 +154,7 @@ void transpose_test()
     }
     viennacl::fast_copy(&s_normal[0], &s_normal[0] + s_normal.size(), normal);
     std::cout << normal << std::endl;
-    viennacl::detail::fft::transpose(normal);
+    viennacl::linalg::transpose(normal);
     std::cout << normal << std::endl;
 }
 

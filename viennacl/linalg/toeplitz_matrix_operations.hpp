@@ -57,14 +57,14 @@ namespace viennacl
       viennacl::vector<SCALARTYPE> tmp2(vec.size() * 4);
 
       viennacl::vector<SCALARTYPE> tep(mat.elements().size() * 2);
-      viennacl::detail::fft::real_to_complex(mat.elements(), tep, mat.elements().size());
+      viennacl::linalg::real_to_complex(mat.elements(), tep, mat.elements().size());
 
 
 
       copy(vec, tmp);
-      viennacl::detail::fft::real_to_complex(tmp, tmp2, vec.size() * 2);
+      viennacl::linalg::real_to_complex(tmp, tmp2, vec.size() * 2);
       viennacl::linalg::convolve(tep, tmp2, tmp);
-      viennacl::detail::fft::complex_to_real(tmp, tmp2, vec.size() * 2);
+      viennacl::linalg::complex_to_real(tmp, tmp2, vec.size() * 2);
       copy(tmp2.begin(), tmp2.begin() + static_cast<vcl_ptrdiff_t>(vec.size()), result.begin());
     }
 
