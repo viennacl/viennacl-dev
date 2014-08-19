@@ -157,13 +157,13 @@ namespace viennacl
             //Fetch vector entry
             {
             std::set<std::string> already_fetched;
-            process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "(" + i + ", #pointer);";
+            process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width,i,"#pointer")+";";
             for(std::vector<mapped_scalar_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
             {
-              tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", process_str, (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
-              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = vload($OFFSET{#row, i}, #pointer);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
-              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = vload($OFFSET{i,#column}, #pointer);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
-              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = vload(#diag_offset<0?$OFFSET{i - #diag_offset, i}:$OFFSET{i, i + #diag_offset}, #pointer);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+              (*it)->process_recursive(stream, PARENT_NODE_TYPE, "vector", process_str, already_fetched);
+              (*it)->process_recursive(stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = #pointer[$OFFSET{#row*#stride1, i*#stride2}];", already_fetched);
+              (*it)->process_recursive(stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = #pointer[$OFFSET{i*#stride1,#column*#stride2}];", already_fetched);
+              (*it)->process_recursive(stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = #pointer[#diag_offset<0?$OFFSET{(i - #diag_offset)*#stride1, i*#stride2}:$OFFSET{i*#stride1, (i + #diag_offset)*#stride2}];", already_fetched);
             }
             }
 
@@ -185,9 +185,9 @@ namespace viennacl
                 accessors["matrix_column"] = str[a];
                 accessors["matrix_diag"] = str[a];
                 accessors["scalar"] = "#namereg";
-                std::string value = tree_parsing::evaluate(LHS_NODE_TYPE, accessors, exprs[k]->statement(), exprs[k]->root_idx(),exprs[k]->mapping());
+                std::string value = exprs[k]->evaluate_recursive(LHS_NODE_TYPE, accessors);
                 if(exprs[k]->root_node().op.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
-                  value+= "*" + tree_parsing::evaluate(RHS_NODE_TYPE, accessors, exprs[k]->statement(), exprs[k]->root_idx(),exprs[k]->mapping());
+                  value+= "*" + exprs[k]->evaluate_recursive(RHS_NODE_TYPE, accessors);
 
                 if(exprs[k]->is_index_reduction())
                   compute_index_reduction(stream, exprs[k]->process("#name_acc"),  "i*"+tools::to_string(simd_width) + "+" + tools::to_string(a), exprs[k]->process("#name_acc_value"), value,exprs[k]->root_op());

@@ -178,6 +178,8 @@ namespace viennacl{
       template<class Fun>
       inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect);
 
+      inline void process(utils::kernel_generation_stream & stream, leaf_t leaf, std::string const & type_key, std::string const & to_process,
+                          scheduler::statement const & statement, size_t root_idx, mapping_type const & mapping, std::set<std::string> & already_processed);
       inline std::string evaluate(leaf_t leaf, std::map<std::string, std::string> const & accessors, scheduler::statement const & statement, vcl_size_t root_idx,mapping_type const & mapping);
     }
 

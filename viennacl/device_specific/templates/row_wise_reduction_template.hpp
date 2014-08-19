@@ -124,10 +124,10 @@ namespace viennacl{
             for(std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
             {
               if(is_trans)
-                tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_trans", utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "(c*#stride1, #pointer + r*#ld);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+                (*it)->process_recursive(stream, LHS_NODE_TYPE, "matrix_trans", utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width, "c*#stride1", "#pointer + r*#ld")+";", already_fetched);
               else
-                tree_parsing::process(stream, LHS_NODE_TYPE, "matrix", "#scalartype #namereg = vload(c*#ld, #pointer + r*#stride1);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
-              tree_parsing::process(stream, RHS_NODE_TYPE, "vector", utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "(c*#stride, #pointer);", (*it)->statement(), (*it)->root_idx(), (*it)->mapping(), already_fetched);
+                (*it)->process_recursive(stream, LHS_NODE_TYPE, "matrix", "#scalartype #namereg = #pointer[r*#stride1 + c*#ld];", already_fetched);
+              (*it)->process_recursive(stream, RHS_NODE_TYPE, "vector", utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width, "c*#stride", "#pointer")+";", already_fetched);
             }
 
 
@@ -151,9 +151,9 @@ namespace viennacl{
                   accessors["matrix"] = str[a];
                 accessors["vector"] = str[a];
                 accessors["scalar"] = "#namereg";
-                std::string value = tree_parsing::evaluate(LHS_NODE_TYPE, accessors, exprs[k]->statement(), exprs[k]->root_idx(),exprs[k]->mapping());
+                std::string value = exprs[k]->evaluate_recursive(LHS_NODE_TYPE, accessors);
                 if(exprs[k]->root_node().op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-                  value+= "*" + tree_parsing::evaluate(RHS_NODE_TYPE, accessors, exprs[k]->statement(), exprs[k]->root_idx(),exprs[k]->mapping());
+                  value+= "*" + exprs[k]->evaluate_recursive(RHS_NODE_TYPE, accessors);
 
                 if(exprs[k]->is_index_reduction())
                   compute_index_reduction(stream, exprs[k]->process("#name_acc"), "c*"+to_string(simd_width) + to_string(a), exprs[k]->process("#name_acc_value"), value,exprs[k]->root_op());

@@ -204,22 +204,6 @@ private:
         stream << do_if << ";" << std::endl;
     }
 
-    static std::string vstore(unsigned int simd_width, std::string const & value, std::string const & offset, std::string const & ptr)
-    {
-      if(simd_width==1)
-        return "(" + ptr + ")[" + offset + "] = " + value;
-      else
-        return utils::append_width("vstore", simd_width) + "(" + value + ", " + offset + ", " + ptr + ")";
-    }
-
-    static std::string vload(unsigned int simd_width, std::string const & offset, std::string const & ptr)
-    {
-      if(simd_width==1)
-        return "(" + ptr + ")[" + offset + "]";
-      else
-        return utils::append_width("vload", simd_width) + "(" + offset + ", " + ptr + ")";
-    }
-
 
     std::string generate_impl(const std::string &kernel_prefix, const statements_container &statements, const std::vector<mapping_type> &mappings, bool fallback) const
     {

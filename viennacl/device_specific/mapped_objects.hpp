@@ -142,9 +142,10 @@ namespace viennacl
       {
         public:
           binary_leaf(mapped_object::node_info info) : info_(info){ }
-          mapping_type const & mapping() const { return *info_.mapping; }
-          scheduler::statement const & statement() const { return *info_.statement; }
-          vcl_size_t root_idx() const { return info_.root_idx; }
+          void process_recursive(utils::kernel_generation_stream & stream, leaf_t leaf, std::string const & key, std::string const & process_str, std::set<std::string> & already_fetched)
+          { tree_parsing::process(stream, leaf, key, process_str, *info_.statement, info_.root_idx, *info_.mapping, already_fetched); }
+          std::string evaluate_recursive(leaf_t leaf, std::map<std::string, std::string> const & accessors)
+          { return tree_parsing::evaluate(leaf, accessors, *info_.statement, info_.root_idx, *info_.mapping); }
         protected:
           mapped_object::node_info info_;
       };

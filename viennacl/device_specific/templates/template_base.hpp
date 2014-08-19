@@ -440,6 +440,22 @@ namespace viennacl
         }
       }
 
+      static std::string vstore(unsigned int simd_width, std::string const & value, std::string const & offset, std::string const & ptr)
+      {
+        if(simd_width==1)
+          return "(" + ptr + ")[" + offset + "] = " + value;
+        else
+          return utils::append_width("vstore", simd_width) + "(" + value + ", " + offset + ", " + ptr + ")";
+      }
+
+      static std::string vload(unsigned int simd_width, std::string const & offset, std::string const & ptr)
+      {
+        if(simd_width==1)
+          return "(" + ptr + ")[" + offset + "]";
+        else
+          return utils::append_width("vload", simd_width) + "(" + offset + ", " + ptr + ")";
+      }
+
     public:
       /** @brief The constructor */
       template_base(template_base::parameters_type const & parameters, binding_policy_t binding_policy) : p_(parameters), binding_policy_(binding_policy){ }

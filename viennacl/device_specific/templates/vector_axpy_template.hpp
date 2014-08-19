@@ -96,11 +96,11 @@ namespace viennacl
               std::string process_str;
               std::string i = (simd_width==1)?"i*#stride":"i";
 
-              process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + utils::append_width("vload" , simd_width) + "(" + i + ", #pointer);";
+              process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width, i, "#pointer") + ";";
               tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", process_str, statements, mappings);
-              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = vload($OFFSET{#row*#stride1, i*#stride2}, #pointer);", statements, mappings);
-              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = vload($OFFSET{i*#stride1,#column*#stride2}, #pointer);", statements, mappings);
-              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = vload(#diag_offset<0?$OFFSET{(i - #diag_offset)*#stride1, i*#stride2}:$OFFSET{i*#stride1, (i + #diag_offset)*#stride2}, #pointer);", statements, mappings);
+              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = #pointer[$OFFSET{#row*#stride1, i*#stride2}];", statements, mappings);
+              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = #pointer[$OFFSET{i*#stride1,#column*#stride2}];", statements, mappings);
+              tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = #pointer[#diag_offset<0?$OFFSET{(i - #diag_offset)*#stride1, i*#stride2}:$OFFSET{i*#stride1, (i + #diag_offset)*#stride2}];", statements, mappings);
 
               std::map<std::string, std::string> accessors;
               accessors["vector"] = "#namereg";
@@ -110,11 +110,11 @@ namespace viennacl
               accessors["scalar"] = "#namereg";
               tree_parsing::evaluate(stream, PARENT_NODE_TYPE, accessors, statements, mappings);
 
-              process_str = utils::append_width("vstore", simd_width) +"(#namereg, " + i + ", #pointer);";
+              process_str = vstore(simd_width, "#namereg",i,"#pointer")+";";
               tree_parsing::process(stream, LHS_NODE_TYPE, "vector", process_str, statements, mappings);
-              tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_row", "vstore(#namereg, $OFFSET{#row, i}, #pointer);", statements, mappings);
-              tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_column", "vstore(#namereg, $OFFSET{i, #column}, #pointer);", statements, mappings);
-              tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_diag", "vstore(#namereg, #diag_offset<0?$OFFSET{i - #diag_offset, i}:$OFFSET{i, i + #diag_offset}, #pointer);", statements, mappings);
+              tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_row", "#pointer[$OFFSET{#row, i}] = #namereg;", statements, mappings);
+              tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_column", "#pointer[$OFFSET{i, #column}] = #namereg;", statements, mappings);
+              tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_diag", "#pointer[#diag_offset<0?$OFFSET{i - #diag_offset, i}:$OFFSET{i, i + #diag_offset}] = #namereg;", statements, mappings);
 
             }
 
@@ -129,6 +129,7 @@ namespace viennacl
           stream << "}" << std::endl;
           result.push_back(stream.str());
         }
+
         return result;
       }
 
