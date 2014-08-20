@@ -386,7 +386,7 @@ void fft_radix2(std::complex<NumericT> * input_complex, unsigned int batch_num,
   {
     unsigned int ss = 1 << step;
     unsigned int half_size = size >> 1;
-
+    NumericT cs, sn;
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for private(cs,sn) shared(ss,half_size,step)
 #endif
@@ -412,8 +412,8 @@ void fft_radix2(std::complex<NumericT> * input_complex, unsigned int batch_num,
           in2 = input_complex[offset + ss * stride];
         }
         NumericT arg = group * sign * NUM_PI / ss;
-        NumericT sn = sin(arg);
-        NumericT cs = cos(arg);
+        sn = sin(arg);
+        cs = cos(arg);
         std::complex<NumericT> ex(cs, sn);
         std::complex<NumericT> tmp(in2.real() * ex.real() - in2.imag() * ex.imag(),
                                    in2.real() * ex.imag() + in2.imag() * ex.real());
@@ -644,6 +644,7 @@ void bluestein(viennacl::vector<NumericT, AlignmentV>& in, viennacl::vector<Nume
 
   viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&Z_complex[0], Z, ext_size);
 
+  NumericT sn_a, cs_a;
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for private(sn_a,cs_a)
 #endif
@@ -651,8 +652,8 @@ void bluestein(viennacl::vector<NumericT, AlignmentV>& in, viennacl::vector<Nume
   {
     unsigned int rm = i * i % (double_size);
     NumericT angle = (NumericT) rm / size * (-NUM_PI);
-    NumericT sn_a = sin(angle);
-    NumericT cs_a = cos(angle);
+    sn_a = sin(angle);
+    cs_a = cos(angle);
     std::complex<NumericT> b_i(cs_a, sn_a);
     output_complex[i] = std::complex<NumericT>(Z_complex[i].real() * b_i.real() - Z_complex[i].imag() * b_i.imag(),
                                                Z_complex[i].real() * b_i.imag() + Z_complex[i].imag() * b_i.real());
