@@ -32,44 +32,45 @@
 #undef min
 #undef max
 
-namespace viennacl{
+namespace viennacl
+{
+namespace tools
+{
 
-  namespace tools{
+/** @brief Simple timer class based on gettimeofday (POSIX) or QueryPerformanceCounter (Windows).
+  *
+  * Avoids messing with Boost and should be sufficient for benchmarking purposes.
+  */
+class timer
+{
+public:
 
-    /** @brief Simple timer class based on gettimeofday (POSIX) or QueryPerformanceCounter (Windows).
-      *
-      * Avoids messing with Boost and should be sufficient for benchmarking purposes.
-      */
-    class timer
-    {
-    public:
-
-      timer()
-      {
-        QueryPerformanceFrequency(&freq);
-      }
-
-      void start()
-      {
-        QueryPerformanceCounter((LARGE_INTEGER*) &start_time);
-      }
-
-      double get() const
-      {
-        LARGE_INTEGER  elapsed;
-        QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
-    elapsed.QuadPart = end_time.QuadPart - start_time.QuadPart;
-        return elapsed.QuadPart / static_cast<double>(freq.QuadPart);
-      } 
-
-
-    private:
-      LARGE_INTEGER freq;
-      LARGE_INTEGER start_time;
-      LARGE_INTEGER end_time;
-    };
-
+  timer()
+  {
+    QueryPerformanceFrequency(&freq);
   }
+
+  void start()
+  {
+    QueryPerformanceCounter((LARGE_INTEGER*) &start_time);
+  }
+
+  double get() const
+  {
+    LARGE_INTEGER  elapsed;
+    QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
+    elapsed.QuadPart = end_time.QuadPart - start_time.QuadPart;
+    return elapsed.QuadPart / static_cast<double>(freq.QuadPart);
+  }
+
+
+private:
+  LARGE_INTEGER freq;
+  LARGE_INTEGER start_time;
+  LARGE_INTEGER end_time;
+};
+
+}
 
 }
 
@@ -77,47 +78,46 @@ namespace viennacl{
 
 #include <sys/time.h>
 
-namespace viennacl{
+namespace viennacl
+{
+namespace tools
+{
 
-  namespace tools{
+/** @brief Simple timer class based on gettimeofday (POSIX) or QueryPerformanceCounter (Windows).
+  *
+  * Avoids messing with Boost and should be sufficient for benchmarking purposes.
+  */
+class timer
+{
+public:
 
-    /** @brief Simple timer class based on gettimeofday (POSIX) or QueryPerformanceCounter (Windows).
-      *
-      * Avoids messing with Boost and should be sufficient for benchmarking purposes.
-      */
-    class timer
-    {
-    public:
+  timer() : ts(0)
+  {}
 
-      timer() : ts(0)
-      {}
-
-      void start()
-      {
-        struct timeval tval;
-        gettimeofday(&tval, NULL);
-        ts = static_cast<double>(tval.tv_sec * 1000000 + tval.tv_usec);
-      }
-
-      double get() const
-      {
-        struct timeval tval;
-        gettimeofday(&tval, NULL);
-        double end_time = tval.tv_sec * 1000000 + tval.tv_usec;
-
-        return static_cast<double>(end_time-ts) / 1000000.0;
-      }
-
-    private:
-      double ts;
-    };
-
+  void start()
+  {
+    struct timeval tval;
+    gettimeofday(&tval, NULL);
+    ts = static_cast<double>(tval.tv_sec * 1000000 + tval.tv_usec);
   }
 
+  double get() const
+  {
+    struct timeval tval;
+    gettimeofday(&tval, NULL);
+    double end_time = tval.tv_sec * 1000000 + tval.tv_usec;
+
+    return static_cast<double>(end_time-ts) / 1000000.0;
+  }
+
+private:
+  double ts;
+};
+
+}
 }
 
 
 
 #endif
-
 #endif

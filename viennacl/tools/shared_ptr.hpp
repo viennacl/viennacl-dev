@@ -29,135 +29,151 @@
 
 namespace viennacl
 {
-  namespace tools
+namespace tools
+{
+
+namespace detail
+{
+
+  /** @brief Reference counting class for the shared_ptr implementation */
+  class count
   {
+  public:
+    count(unsigned int val) : val_(val){ }
+    void dec(){ --val_; }
+    void inc(){ ++val_; }
+    bool is_null(){ return val_ == 0; }
+    unsigned int val(){ return val_; }
+  private:
+    unsigned int val_;
+  };
 
-    namespace detail
-    {
+  /** @brief Interface for the reference counter inside the shared_ptr */
+  struct aux
+  {
+    detail::count count;
 
-      /** @brief Reference counting class for the shared_ptr implementation */
-      class count
-      {
-        public:
-          count(unsigned int val) : val_(val){ }
-          void dec(){ --val_; }
-          void inc(){ ++val_; }
-          bool is_null(){ return val_ == 0; }
-          unsigned int val(){ return val_; }
-        private:
-          unsigned int val_;
-      };
+    aux() :count(1) {}
+    virtual void destroy()=0;
+    virtual ~aux() {}
+  };
 
-      /** @brief Interface for the reference counter inside the shared_ptr */
-      struct aux
-      {
-        detail::count count;
+  /** @brief Implementation helper for the reference counting mechanism inside shared_ptr. */
+  template<class U, class Deleter>
+  struct auximpl: public detail::aux
+  {
+    U* p;
+    Deleter d;
 
-        aux() :count(1) {}
-        virtual void destroy()=0;
-        virtual ~aux() {}
-      };
+    auximpl(U* pu, Deleter x) :p(pu), d(x) {}
+    virtual void destroy() { d(p); }
+  };
 
-      /** @brief Implementation helper for the reference counting mechanism inside shared_ptr. */
-      template<class U, class Deleter>
-      struct auximpl: public detail::aux
-      {
-        U* p;
-        Deleter d;
+  /** @brief Default deleter class for a pointer. The default is to just call 'delete' on the pointer. Provide your own implementations for 'delete[]' and 'free'. */
+  template<class U>
+  struct default_deleter
+  {
+    void operator()(U* p) const { delete p; }
+  };
 
-        auximpl(U* pu, Deleter x) :p(pu), d(x) {}
-        virtual void destroy() { d(p); }
-      };
+}
 
-      /** @brief Default deleter class for a pointer. The default is to just call 'delete' on the pointer. Provide your own implementations for 'delete[]' and 'free'. */
-      template<class U>
-      struct default_deleter
-      {
-        void operator()(U* p) const { delete p; }
-      };
+/** @brief A shared pointer class similar to boost::shared_ptr. Reimplemented in order to avoid a Boost-dependency. Will be replaced by std::shared_ptr as soon as C++11 is widely available. */
+template<class T>
+class shared_ptr
+{
+  template<class U>
+  friend class shared_ptr;
 
-    }
+  detail::aux* pa;
+  T* pt;
 
-    /** @brief A shared pointer class similar to boost::shared_ptr. Reimplemented in order to avoid a Boost-dependency. Will be replaced by std::shared_ptr as soon as C++11 is widely available. */
-    template<class T>
-    class shared_ptr
-    {
-        template<class U>
-        friend class shared_ptr;
+public:
 
-        detail::aux* pa;
-        T* pt;
+  shared_ptr() :pa(NULL), pt(NULL) {}
 
-      public:
+  template<class U, class Deleter>
+  shared_ptr(U* pu, Deleter d) : pa(new detail::auximpl<U, Deleter>(pu, d)), pt(pu) {}
 
-        shared_ptr() :pa(NULL), pt(NULL) {}
+  template<class U>
+  explicit shared_ptr(U* pu) : pa(new detail::auximpl<U, detail::default_deleter<U> >(pu, detail::default_deleter<U>())), pt(pu) {}
 
-        template<class U, class Deleter>
-        shared_ptr(U* pu, Deleter d) : pa(new detail::auximpl<U, Deleter>(pu, d)), pt(pu) {}
+  T* get() const {  return pt; }
 
-        template<class U>
-        explicit shared_ptr(U* pu) : pa(new detail::auximpl<U, detail::default_deleter<U> >(pu, detail::default_deleter<U>())), pt(pu) {}
+  T* operator->() const {  return pt; }
 
-        shared_ptr(const shared_ptr& s) :pa(s.pa), pt(s.pt) { inc(); }
+  T& operator*() const { return *pt; }
 
-        template<class U>
-        shared_ptr(const shared_ptr<U>& s) :pa(s.pa), pt(s.pt) { inc(); }
-
-        ~shared_ptr() { dec(); }
-
-        void reset(){
-            shared_ptr<T>().swap(*this);
-        }
-
-        void reset(T * ptr){
-            shared_ptr<T>(ptr).swap(*this);
-        }
-
-        void swap(shared_ptr<T> & other){
-            std::swap(pt,other.pt);
-            std::swap(pa, other.pa);
-        }
-
-
-        shared_ptr& operator=(const shared_ptr& s)
-        {
-            if (this!=&s)
-            {
-                dec();
-                pa = s.pa;
-                pt = s.pt;
-                inc();
-            }
-            return *this;
-        }
-
-        T* get() const {  return pt; }
-
-        T* operator->() const {  return pt; }
-
-        T& operator*() const { return *pt; }
-
-        void inc() { if (pa) pa->count.inc(); }
-
-        void dec()
-        {
-          if (pa)
-          {
-            pa->count.dec();
-
-            if (pa->count.is_null())
-            {
-                pa->destroy();
-                delete pa;
-                pa = NULL;
-            }
-          }
-        }
-
-    };
-
+  shared_ptr(const shared_ptr& s) :pa(s.pa), pt(s.pt)
+  {
+    inc();
   }
 
+  template<class U>
+  shared_ptr(const shared_ptr<U>& s) :pa(s.pa), pt(s.pt)
+  {
+    inc();
+  }
+
+  ~shared_ptr()
+  {
+    dec();
+  }
+
+  void reset()
+  {
+    shared_ptr<T>().swap(*this);
+  }
+
+  void reset(T * ptr)
+  {
+    shared_ptr<T>(ptr).swap(*this);
+  }
+
+  void swap(shared_ptr<T> & other)
+  {
+    std::swap(pt,other.pt);
+    std::swap(pa, other.pa);
+  }
+
+
+  shared_ptr& operator=(const shared_ptr& s)
+  {
+    if (this!=&s)
+    {
+      dec();
+      pa = s.pa;
+      pt = s.pt;
+      inc();
+    }
+    return *this;
+  }
+
+
+
+  void inc()
+  {
+    if (pa) pa->count.inc();
+  }
+
+  void dec()
+  {
+    if (pa)
+    {
+      pa->count.dec();
+
+      if (pa->count.is_null())
+      {
+        pa->destroy();
+        delete pa;
+        pa = NULL;
+      }
+    }
+  }
+
+};
+
+}
 }
 
 #endif // VIENNACL_UTILS_SHARED_PTR_HPP

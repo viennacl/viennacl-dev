@@ -34,114 +34,114 @@
 
 namespace viennacl
 {
-  namespace tools
+namespace tools
+{
+
+/** @brief Generates a sparse matrix obtained from a simple finite-difference discretization of the Laplace equation on the unit square (2d).
+  *
+  * @tparam MatrixType  An uBLAS-compatible matrix type supporting .clear(), .resize(), and operator()-access
+  * @param A            A sparse matrix object from ViennaCL, total number of unknowns will be points_x*points_y
+  * @param points_x     Number of points in x-direction
+  * @param points_y     Number of points in y-direction
+  */
+template<typename MatrixType>
+void generate_fdm_laplace(MatrixType & A, vcl_size_t points_x, vcl_size_t points_y)
+{
+  typedef typename MatrixType::value_type  ScalarType;
+
+  std::size_t total_unknowns = points_x * points_y;
+
+  A.clear();
+  A.resize(total_unknowns, total_unknowns, false);
+
+  for (std::size_t i=0; i<points_x; ++i)
   {
-
-    /** @brief Generates a sparse matrix obtained from a simple finite-difference discretization of the Laplace equation on the unit square (2d).
-      *
-      * @tparam MatrixType  An uBLAS-compatible matrix type supporting .clear(), .resize(), and operator()-access
-      * @param A            A sparse matrix object from ViennaCL, total number of unknowns will be points_x*points_y
-      * @param points_x     Number of points in x-direction
-      * @param points_y     Number of points in y-direction
-      */
-    template<typename MatrixType>
-    void generate_fdm_laplace(MatrixType & A, vcl_size_t points_x, vcl_size_t points_y)
+    for (std::size_t j=0; j<points_y; ++j)
     {
-      typedef typename MatrixType::value_type  ScalarType;
+      std::size_t row = i + j * points_x;
 
-      std::size_t total_unknowns = points_x * points_y;
+      A(row, row) = 4.0;
 
-      A.clear();
-      A.resize(total_unknowns, total_unknowns, false);
-
-      for (std::size_t i=0; i<points_x; ++i)
+      if (i > 0)
       {
-        for (std::size_t j=0; j<points_y; ++j)
-        {
-          std::size_t row = i + j * points_x;
-
-          A(row, row) = 4.0;
-
-          if (i > 0)
-          {
-            std::size_t col = (i-1) + j * points_x;
-            A(row, col) = -1.0;
-          }
-
-          if (j > 0)
-          {
-            std::size_t col = i + (j-1) * points_x;
-            A(row, col) = -1.0;
-          }
-
-          if (i < points_x-1)
-          {
-            std::size_t col = (i+1) + j * points_x;
-            A(row, col) = -1.0;
-          }
-
-          if (j < points_y-1)
-          {
-            std::size_t col = i + (j+1) * points_x;
-            A(row, col) = -1.0;
-          }
-        }
+        std::size_t col = (i-1) + j * points_x;
+        A(row, col) = -1.0;
       }
 
+      if (j > 0)
+      {
+        std::size_t col = i + (j-1) * points_x;
+        A(row, col) = -1.0;
+      }
+
+      if (i < points_x-1)
+      {
+        std::size_t col = (i+1) + j * points_x;
+        A(row, col) = -1.0;
+      }
+
+      if (j < points_y-1)
+      {
+        std::size_t col = i + (j+1) * points_x;
+        A(row, col) = -1.0;
+      }
     }
+  }
 
-    template<typename NumericT>
-    void generate_fdm_laplace(viennacl::compressed_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
-    {
-      // Assemble into temporary matrix on CPU, then copy over:
-      std::vector< std::map<unsigned int, NumericT> > temp_A;
-      viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
-      generate_fdm_laplace(adapted_A, points_x, points_y);
-      viennacl::copy(temp_A, A);
-    }
+}
 
-    template<typename NumericT>
-    void generate_fdm_laplace(viennacl::coordinate_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
-    {
-      // Assemble into temporary matrix on CPU, then copy over:
-      std::vector< std::map<unsigned int, NumericT> > temp_A;
-      viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
-      generate_fdm_laplace(adapted_A, points_x, points_y);
-      viennacl::copy(temp_A, A);
-    }
+template<typename NumericT>
+void generate_fdm_laplace(viennacl::compressed_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
+{
+  // Assemble into temporary matrix on CPU, then copy over:
+  std::vector< std::map<unsigned int, NumericT> > temp_A;
+  viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
+  generate_fdm_laplace(adapted_A, points_x, points_y);
+  viennacl::copy(temp_A, A);
+}
 
-    template<typename NumericT>
-    void generate_fdm_laplace(viennacl::ell_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
-    {
-      // Assemble into temporary matrix on CPU, then copy over:
-      std::vector< std::map<unsigned int, NumericT> > temp_A;
-      viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
-      generate_fdm_laplace(adapted_A, points_x, points_y);
-      viennacl::copy(temp_A, A);
-    }
+template<typename NumericT>
+void generate_fdm_laplace(viennacl::coordinate_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
+{
+  // Assemble into temporary matrix on CPU, then copy over:
+  std::vector< std::map<unsigned int, NumericT> > temp_A;
+  viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
+  generate_fdm_laplace(adapted_A, points_x, points_y);
+  viennacl::copy(temp_A, A);
+}
 
-    template<typename NumericT>
-    void generate_fdm_laplace(viennacl::sliced_ell_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
-    {
-      // Assemble into temporary matrix on CPU, then copy over:
-      std::vector< std::map<unsigned int, NumericT> > temp_A;
-      viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
-      generate_fdm_laplace(adapted_A, points_x, points_y);
-      viennacl::copy(temp_A, A);
-    }
+template<typename NumericT>
+void generate_fdm_laplace(viennacl::ell_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
+{
+  // Assemble into temporary matrix on CPU, then copy over:
+  std::vector< std::map<unsigned int, NumericT> > temp_A;
+  viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
+  generate_fdm_laplace(adapted_A, points_x, points_y);
+  viennacl::copy(temp_A, A);
+}
 
-    template<typename NumericT>
-    void generate_fdm_laplace(viennacl::hyb_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
-    {
-      // Assemble into temporary matrix on CPU, then copy over:
-      std::vector< std::map<unsigned int, NumericT> > temp_A;
-      viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
-      generate_fdm_laplace(adapted_A, points_x, points_y);
-      viennacl::copy(temp_A, A);
-    }
+template<typename NumericT>
+void generate_fdm_laplace(viennacl::sliced_ell_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
+{
+  // Assemble into temporary matrix on CPU, then copy over:
+  std::vector< std::map<unsigned int, NumericT> > temp_A;
+  viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
+  generate_fdm_laplace(adapted_A, points_x, points_y);
+  viennacl::copy(temp_A, A);
+}
+
+template<typename NumericT>
+void generate_fdm_laplace(viennacl::hyb_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
+{
+  // Assemble into temporary matrix on CPU, then copy over:
+  std::vector< std::map<unsigned int, NumericT> > temp_A;
+  viennacl::tools::sparse_matrix_adapter<NumericT> adapted_A(temp_A);
+  generate_fdm_laplace(adapted_A, points_x, points_y);
+  viennacl::copy(temp_A, A);
+}
 
 
-  } //namespace tools
+} //namespace tools
 } //namespace viennacl
 
 
