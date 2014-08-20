@@ -131,9 +131,9 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
 
 int main()
 {
-  size_t M = 3000;
-  size_t N = 3000;
-  size_t K = 3000;
+  size_t M = 2432;
+  size_t N = 2432;
+  size_t K = 2432;
 
   size_t xN = 1e7;
   std::cout << "Benchmark : BLAS" << std::endl;
