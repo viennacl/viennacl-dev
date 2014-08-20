@@ -29,7 +29,7 @@
 #include "viennacl/linalg/host_based/vector_operations.hpp"
 
 #include <stdexcept>
-#include <math.h>
+#include <cmath>
 #include <complex>
 
 namespace viennacl
@@ -100,7 +100,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (unsigned int i = 0; i < size * 2; i += 2)
+            for (int i = 0; i < size * 2; i += 2)
             { //change array to complex array
               input_complex[i / 2] = std::complex<SCALARTYPE>(in[i], in[i + 1]);
             }
@@ -113,7 +113,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (unsigned int i = 0; i < size * 2; i += 2)
+            for (int i = 0; i < size * 2; i += 2)
             { //change array to complex array
               input_complex[i / 2] = std::complex<SCALARTYPE>(in[i], in[i + 1]);
             }
@@ -121,12 +121,12 @@ namespace viennacl
 
           template<class SCALARTYPE, unsigned int ALIGNMENT>
           void copy_to_vector(std::complex<SCALARTYPE> * input_complex,
-              viennacl::vector<SCALARTYPE, ALIGNMENT>& in, unsigned int size)
+              viennacl::vector<SCALARTYPE, ALIGNMENT>& in, int size)
           {
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (unsigned int i = 0; i < size; i += 1)
+            for (int i = 0; i < size; i += 1)
             {
               in(i * 2) = (SCALARTYPE) std::real(input_complex[i]);
               in(i * 2 + 1) = std::imag(input_complex[i]);
@@ -140,7 +140,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-            for (unsigned int i = 0; i < size * 2; i += 2)
+            for (int i = 0; i < size * 2; i += 2)
             { //change array to complex array
               input_complex[i / 2] = std::complex<SCALARTYPE>(in[i], in[i + 1]);
             }
@@ -252,15 +252,15 @@ namespace viennacl
               viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
       {
 
-        std::complex<SCALARTYPE> input_complex[size * batch_num];
-        std::complex<SCALARTYPE> output[size * batch_num];
+        std::vector<std::complex<SCALARTYPE> > input_complex(size * batch_num);
+        std::vector<std::complex<SCALARTYPE> > output(size * batch_num);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, in,
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], in,
             size * batch_num);
 
-        fft_direct(input_complex, output, size, stride, batch_num, sign, data_order);
+        fft_direct(&input_complex[0], &output[0], size, stride, batch_num, sign, data_order);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(output, out, size * batch_num);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&output[0], out, size * batch_num);
       }
 
       /**
@@ -281,18 +281,17 @@ namespace viennacl
 
         unsigned int size_mat = row_num * col_num;
 
-        std::complex<SCALARTYPE> input_complex[size_mat];
-        std::complex<SCALARTYPE> output[size_mat];
+        std::vector<std::complex<SCALARTYPE> > input_complex(size_mat);
+        std::vector<std::complex<SCALARTYPE> > output(size_mat);
 
         const SCALARTYPE * data_A = detail::extract_raw_pointer<SCALARTYPE>(in);
         SCALARTYPE * data_B = detail::extract_raw_pointer<SCALARTYPE>(out);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, data_A,
-            size_mat);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], data_A, size_mat);
 
-        fft_direct(input_complex, output, size, stride, batch_num, sign, data_order);
+        fft_direct(&input_complex[0], &output[0], size, stride, batch_num, sign, data_order);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(output, data_B, size_mat);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&output[0], data_B, size_mat);
       }
 
       /*
@@ -305,9 +304,8 @@ namespace viennacl
           viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::DATA_ORDER data_order =
               viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
       {
-        std::complex<SCALARTYPE> input[size * batch_num];
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input, in,
-            size * batch_num);
+        std::vector<std::complex<SCALARTYPE> > input(size * batch_num);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input[0], in, size * batch_num);
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -315,8 +313,7 @@ namespace viennacl
         {
           for (unsigned int i = 0; i < size; i++)
           {
-            unsigned int v = viennacl::linalg::host_based::detail::fft::get_reorder_num(i,
-                bits_datasize);
+            unsigned int v = viennacl::linalg::host_based::detail::fft::get_reorder_num(i, bits_datasize);
             if (i < v)
             {
               if (!data_order)
@@ -333,7 +330,7 @@ namespace viennacl
             }
           }
         }
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(input, in, size * batch_num);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&input[0], in, size * batch_num);
       }
 
       /*
@@ -352,9 +349,9 @@ namespace viennacl
         unsigned int col_num = in.internal_size2() >> 1;
         unsigned int size_mat = row_num * col_num;
 
-        std::complex<SCALARTYPE> input[size_mat];
+        std::vector<std::complex<SCALARTYPE> > input(size_mat);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input, data, size_mat);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input[0], data, size_mat);
 
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for
@@ -381,7 +378,7 @@ namespace viennacl
             }
           }
         }
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(input, data, size_mat);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&input[0], data, size_mat);
       }
 
       /**
@@ -536,32 +533,23 @@ namespace viennacl
 
         unsigned int bit_size = viennacl::linalg::host_based::detail::fft::num_bits(size);
 
-        std::complex<SCALARTYPE> input_complex[size * batch_num];
-        std::complex<SCALARTYPE> lcl_input[size * batch_num];
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, in,
-            size * batch_num);
+        std::vector<std::complex<SCALARTYPE> > input_complex(size * batch_num);
+        std::vector<std::complex<SCALARTYPE> > lcl_input(size * batch_num);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], in, size * batch_num);
 
         if (size <= viennacl::linalg::host_based::detail::fft::MAX_LOCAL_POINTS_NUM)
         {
-          viennacl::linalg::host_based::fft_radix2_local(input_complex, lcl_input, batch_num,
-              bit_size, size, stride, sign, data_order);
-
-        } else
-        {
-
-          viennacl::linalg::host_based::reorder<SCALARTYPE>(in, size, stride, bit_size, batch_num,
-              data_order);
-
-          viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, in,
-              size * batch_num);
-
-          viennacl::linalg::host_based::fft_radix2(input_complex, batch_num, bit_size, size, stride,
-              sign, data_order);
+          viennacl::linalg::host_based::fft_radix2_local(&input_complex[0], &lcl_input[0], batch_num, bit_size, size, stride, sign, data_order);
 
         }
+        else
+        {
+          viennacl::linalg::host_based::reorder<SCALARTYPE>(in, size, stride, bit_size, batch_num, data_order);
+          viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], in, size * batch_num);
+          viennacl::linalg::host_based::fft_radix2(&input_complex[0], batch_num, bit_size, size, stride, sign, data_order);
+        }
 
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(input_complex, in,
-            size * batch_num);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&input_complex[0], in, size * batch_num);
       }
 
       /**
@@ -586,32 +574,23 @@ namespace viennacl
         unsigned int col_num = in.internal_size2() >> 1;
         unsigned int size_mat = row_num * col_num;
 
-        std::complex<SCALARTYPE> input_complex[size_mat];
+        std::vector<std::complex<SCALARTYPE> > input_complex(size_mat);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, data,
-            size_mat);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], data, size_mat);
         if (size <= viennacl::linalg::host_based::detail::fft::MAX_LOCAL_POINTS_NUM)
         {
           //std::cout<<bit_size<<","<<size<<","<<stride<<","<<batch_num<<","<<size<<","<<sign<<","<<data_order<<std::endl;
-          std::complex<SCALARTYPE> lcl_input[size_mat];
-          viennacl::linalg::host_based::fft_radix2_local(input_complex, lcl_input, batch_num,
-              bit_size, size, stride, sign, data_order);
-
-        } else
+          std::vector<std::complex<SCALARTYPE> > lcl_input(size_mat);
+          viennacl::linalg::host_based::fft_radix2_local(&input_complex[0], &lcl_input[0], batch_num, bit_size, size, stride, sign, data_order);
+        }
+        else
         {
-
-          viennacl::linalg::host_based::reorder<SCALARTYPE>(in, size, stride, bit_size, batch_num,
-              data_order);
-          std::cout << "in" << in << std::endl;
-
-          viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, data,
-              size_mat);
-
-          viennacl::linalg::host_based::fft_radix2(input_complex, batch_num, bit_size, size, stride,
-              sign, data_order);
+          viennacl::linalg::host_based::reorder<SCALARTYPE>(in, size, stride, bit_size, batch_num, data_order);
+          viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], data, size_mat);
+          viennacl::linalg::host_based::fft_radix2(&input_complex[0], batch_num, bit_size, size, stride, sign, data_order);
         }
 
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(input_complex, data, size_mat);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&input_complex[0], data, size_mat);
 
       }
 
@@ -634,14 +613,14 @@ namespace viennacl
         viennacl::vector<SCALARTYPE, ALIGNMENT> B(ext_size << 1);
         viennacl::vector<SCALARTYPE, ALIGNMENT> Z(ext_size << 1);
 
-        std::complex<SCALARTYPE> input_complex[size];
-        std::complex<SCALARTYPE> output_complex[size];
+        std::vector<std::complex<SCALARTYPE> > input_complex(size);
+        std::vector<std::complex<SCALARTYPE> > output_complex(size);
 
-        std::complex<SCALARTYPE> A_complex[ext_size];
-        std::complex<SCALARTYPE> B_complex[ext_size];
-        std::complex<SCALARTYPE> Z_complex[ext_size];
+        std::vector<std::complex<SCALARTYPE> > A_complex(ext_size);
+        std::vector<std::complex<SCALARTYPE> > B_complex(ext_size);
+        std::vector<std::complex<SCALARTYPE> > Z_complex(ext_size);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, in, size);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], in, size);
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for
 #endif
@@ -679,13 +658,13 @@ namespace viennacl
             B_complex[ext_size - i] = b_i;
         }
 
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(input_complex, in, size);
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(A_complex, A, ext_size);
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(B_complex, B, ext_size);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&input_complex[0], in, size);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&A_complex[0], A, ext_size);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&B_complex[0], B, ext_size);
 
         viennacl::linalg::convolve_i(A, B, Z);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(Z_complex, Z, ext_size);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&Z_complex[0], Z, ext_size);
 
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for private(sn_a,cs_a)
@@ -701,7 +680,7 @@ namespace viennacl
               Z_complex[i].real() * b_i.real() - Z_complex[i].imag() * b_i.imag(),
               Z_complex[i].real() * b_i.imag() + Z_complex[i].imag() * b_i.real());
         }
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(output_complex, out, size);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&output_complex[0], out, size);
 
       }
 
@@ -731,13 +710,11 @@ namespace viennacl
 
         vcl_size_t size = input1.size() >> 1;
 
-        std::complex<SCALARTYPE> input1_complex[size];
-        std::complex<SCALARTYPE> input2_complex[size];
-        std::complex<SCALARTYPE> output_complex[size];
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input1_complex, input1,
-            size);
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input2_complex, input2,
-            size);
+        std::vector<std::complex<SCALARTYPE> > input1_complex(size);
+        std::vector<std::complex<SCALARTYPE> > input2_complex(size);
+        std::vector<std::complex<SCALARTYPE> > output_complex(size);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input1_complex[0], input1, size);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input2_complex[0], input2, size);
 
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for
@@ -750,7 +727,7 @@ namespace viennacl
               in1.real() * in2.real() - in1.imag() * in2.imag(),
               in1.real() * in2.imag() + in1.imag() * in2.real());
         }
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(output_complex, output, size);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&output_complex[0], output, size);
 
       }
       /**
@@ -766,9 +743,9 @@ namespace viennacl
 
         SCALARTYPE * data = detail::extract_raw_pointer<SCALARTYPE>(input);
 
-        std::complex<SCALARTYPE> input_complex[size];
+        std::vector<std::complex<SCALARTYPE> > input_complex(size);
 
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, data, size);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], data, size);
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for shared(row_num,col_num)
 #endif
@@ -785,7 +762,7 @@ namespace viennacl
             input_complex[new_pos] = val;
           }
         }
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(input_complex, data, size);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&input_complex[0], data, size);
 
       }
 
@@ -804,11 +781,10 @@ namespace viennacl
         const SCALARTYPE * data_A = detail::extract_raw_pointer<SCALARTYPE>(input);
         SCALARTYPE * data_B = detail::extract_raw_pointer<SCALARTYPE>(output);
 
-        std::complex<SCALARTYPE> input_complex[size];
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input_complex, data_A,
-            size);
+        std::vector<std::complex<SCALARTYPE> > input_complex(size);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], data_A, size);
 
-        std::complex<SCALARTYPE> output_complex[size];
+        std::vector<std::complex<SCALARTYPE> > output_complex(size);
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for shared(row_num,col_num)
 #endif
@@ -819,7 +795,7 @@ namespace viennacl
           unsigned int new_pos = col * row_num + row;
           output_complex[new_pos] = input_complex[i];
         }
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(output_complex, data_B, size);
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&output_complex[0], data_B, size);
       }
 
       /**
@@ -830,7 +806,7 @@ namespace viennacl
           viennacl::vector_base<SCALARTYPE> & out, vcl_size_t size)
       {
 
-        std::complex<SCALARTYPE> out_complex[size];
+        std::vector<std::complex<SCALARTYPE> > out_complex(size);
 
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
@@ -841,7 +817,7 @@ namespace viennacl
           val.real() = in[i];
           out_complex[i] = val;
         }
-        viennacl::linalg::host_based::detail::fft::copy_to_vector(out_complex, out, int(size));
+        viennacl::linalg::host_based::detail::fft::copy_to_vector(&out_complex[0], out, int(size));
       }
 
       /**
@@ -851,8 +827,8 @@ namespace viennacl
       void complex_to_real(viennacl::vector_base<SCALARTYPE> const & in,
           viennacl::vector_base<SCALARTYPE> & out, vcl_size_t size)
       {
-        std::complex<SCALARTYPE> input1_complex[size];
-        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(input1_complex, in, size);
+        std::vector<std::complex<SCALARTYPE> > input1_complex(size);
+        viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input1_complex[0], in, size);
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif

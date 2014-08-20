@@ -115,13 +115,14 @@ namespace viennacl
           viennacl::matrix_base<ScalarType> & W, viennacl::matrix_base<ScalarType> & H,
           nmf_config const & conf);
 
-      mutable vcl_size_t iters_;
     private:
       double eps_;
       double stagnation_eps_;
       vcl_size_t max_iters_;
       vcl_size_t check_after_steps_;
       bool print_relative_error_;
+    public:
+      mutable vcl_size_t iters_;
     };
 
     namespace host_based

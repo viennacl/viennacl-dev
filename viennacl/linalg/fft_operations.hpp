@@ -138,13 +138,13 @@ namespace viennacl
       switch (viennacl::traits::handle(in).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::reorder(in, size, stride, bits_datasize, batch_num);
+          viennacl::linalg::host_based::reorder(in, size, stride, bits_datasize, batch_num, data_order);
           break;
 #ifdef VIENNACL_WITH_OPENCL
           case viennacl::OPENCL_MEMORY:
           viennacl::linalg::opencl::reorder<SCALARTYPE>(
               viennacl::traits::opencl_handle(in), size, stride,
-              bits_datasize, batch_num);
+              bits_datasize, batch_num, data_order);
           break;
 #endif
 
