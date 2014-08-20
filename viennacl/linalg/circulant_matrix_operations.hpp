@@ -62,7 +62,7 @@ namespace viennacl
         viennacl::vector<SCALARTYPE> tmp(vec.size() * 2);
         viennacl::vector<SCALARTYPE> tmp2(vec.size() * 2);
 
-       	viennacl::linalg::real_to_complex(vec, tmp, vec.size());
+         viennacl::linalg::real_to_complex(vec, tmp, vec.size());
         viennacl::linalg::convolve(circ, tmp, tmp2);
         viennacl::linalg::complex_to_real(tmp2, result, vec.size());
 

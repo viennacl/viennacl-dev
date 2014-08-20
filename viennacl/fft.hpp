@@ -281,8 +281,8 @@ namespace viennacl
 
       viennacl::inplace_ifft(output);
     }
-  }			//namespace linalg
-}			//namespace viennacl
+  }      //namespace linalg
+}      //namespace viennacl
 
 /// @endcond
 #endif

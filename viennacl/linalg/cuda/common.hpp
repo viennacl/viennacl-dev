@@ -103,7 +103,7 @@ namespace viennacl
           return reinterpret_cast<const ScalarType *>(h.get());
         }
 
- 		template <typename T>
+     template <typename T>
         struct type_to_type2;
 
         template <>

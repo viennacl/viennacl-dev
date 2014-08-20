@@ -58,7 +58,7 @@ namespace viennacl{
       {
         LARGE_INTEGER  elapsed;
         QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
-		elapsed.QuadPart = end_time.QuadPart - start_time.QuadPart;
+    elapsed.QuadPart = end_time.QuadPart - start_time.QuadPart;
         return elapsed.QuadPart / static_cast<double>(freq.QuadPart);
       } 
 
