@@ -110,19 +110,19 @@ struct is_flip_sign_scalar<viennacl::scalar_expression< const scalar<T>,
 
 /** \cond */
 #define VIENNACL_MAKE_ANY_VECTOR_TRUE(type) template<> struct is_any_vector< type > { enum { value = 1 }; };
-#define VIENNACL_MAKE_FOR_ALL_SCALARTYPE(type) \
+#define VIENNACL_MAKE_FOR_ALL_NumericT(type) \
   VIENNACL_MAKE_ANY_VECTOR_TRUE(type<float>)\
   VIENNACL_MAKE_ANY_VECTOR_TRUE(type<double>)
 
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector_range)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::vector_slice)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::unit_vector)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::zero_vector)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::one_vector)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::scalar_vector)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::vector)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::vector_range)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::vector_slice)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::unit_vector)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::zero_vector)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::one_vector)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::scalar_vector)
 
-#undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE
+#undef VIENNACL_MAKE_FOR_ALL_NumericT
 #undef VIENNACL_MAKE_ANY_VECTOR_TRUE
   /** \endcond */
 
@@ -131,26 +131,26 @@ struct is_flip_sign_scalar<viennacl::scalar_expression< const scalar<T>,
 #define VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE)\
 template<> struct is_any_dense_matrix< TYPE > { enum { value = 1 }; };
 
-#define VIENNACL_MAKE_FOR_ALL_SCALARTYPE(TYPE) \
+#define VIENNACL_MAKE_FOR_ALL_NumericT(TYPE) \
   VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float>)\
   VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double>)
 
 #define COMMA ,
-#define VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(TYPE) \
+#define VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT(TYPE) \
   VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float COMMA viennacl::row_major>)\
   VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double COMMA viennacl::row_major>)\
   VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float COMMA viennacl::column_major>)\
   VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double COMMA viennacl::column_major>)
 
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix)
-  //    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix_range)
-  //    VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT(viennacl::matrix_slice)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::identity_matrix)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::zero_matrix)
-  VIENNACL_MAKE_FOR_ALL_SCALARTYPE(viennacl::scalar_matrix)
+  VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT(viennacl::matrix)
+  //    VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT(viennacl::matrix_range)
+  //    VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT(viennacl::matrix_slice)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::identity_matrix)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::zero_matrix)
+  VIENNACL_MAKE_FOR_ALL_NumericT(viennacl::scalar_matrix)
 
-#undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE_LAYOUT
-#undef VIENNACL_MAKE_FOR_ALL_SCALARTYPE
+#undef VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT
+#undef VIENNACL_MAKE_FOR_ALL_NumericT
 #undef VIENNACL_MAKE_ANY_MATRIX_TRUE
 /** \endcond */
 
@@ -194,14 +194,14 @@ struct is_row_major<viennacl::matrix_expression<T, T, viennacl::op_trans> >
 //};
 
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_circulant_matrix<viennacl::circulant_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_circulant_matrix<viennacl::circulant_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
 
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_circulant_matrix<const viennacl::circulant_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_circulant_matrix<const viennacl::circulant_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -217,14 +217,14 @@ struct is_circulant_matrix<const viennacl::circulant_matrix<ScalarType, ALIGNMEN
 //};
 
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_hankel_matrix<viennacl::hankel_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_hankel_matrix<viennacl::hankel_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
 
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_hankel_matrix<const viennacl::hankel_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_hankel_matrix<const viennacl::hankel_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -240,14 +240,14 @@ struct is_hankel_matrix<const viennacl::hankel_matrix<ScalarType, ALIGNMENT> >
 //};
 
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_toeplitz_matrix<viennacl::toeplitz_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_toeplitz_matrix<viennacl::toeplitz_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
 
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_toeplitz_matrix<const viennacl::toeplitz_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_toeplitz_matrix<const viennacl::toeplitz_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -263,14 +263,14 @@ struct is_toeplitz_matrix<const viennacl::toeplitz_matrix<ScalarType, ALIGNMENT>
 //};
 
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_vandermonde_matrix<viennacl::vandermonde_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_vandermonde_matrix<viennacl::vandermonde_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
 
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_vandermonde_matrix<const viennacl::vandermonde_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_vandermonde_matrix<const viennacl::vandermonde_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -282,8 +282,8 @@ struct is_vandermonde_matrix<const viennacl::vandermonde_matrix<ScalarType, ALIG
 //
 
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_compressed_matrix<viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_compressed_matrix<viennacl::compressed_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -294,8 +294,8 @@ struct is_compressed_matrix<viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
 //
 
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_coordinate_matrix<viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_coordinate_matrix<viennacl::coordinate_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -305,8 +305,8 @@ struct is_coordinate_matrix<viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
 // is_ell_matrix
 //
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_ell_matrix<viennacl::ell_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_ell_matrix<viennacl::ell_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -327,8 +327,8 @@ struct is_sliced_ell_matrix<viennacl::sliced_ell_matrix<ScalarType, IndexT> >
 // is_hyb_matrix
 //
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_hyb_matrix<viennacl::hyb_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_hyb_matrix<viennacl::hyb_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -345,8 +345,8 @@ struct is_hyb_matrix<viennacl::hyb_matrix<ScalarType, ALIGNMENT> >
 //};
 
 /** \cond */
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_any_sparse_matrix<viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_any_sparse_matrix<viennacl::compressed_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -357,14 +357,14 @@ struct is_any_sparse_matrix<viennacl::compressed_compressed_matrix<ScalarType> >
   enum { value = true };
 };
 
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_any_sparse_matrix<viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_any_sparse_matrix<viennacl::coordinate_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
 
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_any_sparse_matrix<viennacl::ell_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_any_sparse_matrix<viennacl::ell_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };
@@ -375,8 +375,8 @@ struct is_any_sparse_matrix<viennacl::sliced_ell_matrix<ScalarType, IndexT> >
   enum { value = true };
 };
 
-template<typename ScalarType, unsigned int ALIGNMENT>
-struct is_any_sparse_matrix<viennacl::hyb_matrix<ScalarType, ALIGNMENT> >
+template<typename ScalarType, unsigned int AlignmentV>
+struct is_any_sparse_matrix<viennacl::hyb_matrix<ScalarType, AlignmentV> >
 {
   enum { value = true };
 };

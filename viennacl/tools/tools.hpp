@@ -38,19 +38,19 @@ namespace tools
 
 /** \cond */
 /** @brief Supply suitable increment functions for the iterators: */
-template<class NumericT, typename F, unsigned int ALIGNMENT>
-struct MATRIX_ITERATOR_INCREMENTER<viennacl::row_iteration, viennacl::matrix<NumericT, F, ALIGNMENT> >
+template<class NumericT, typename F, unsigned int AlignmentV>
+struct MATRIX_ITERATOR_INCREMENTER<viennacl::row_iteration, viennacl::matrix<NumericT, F, AlignmentV> >
 {
-  static void apply(const viennacl::matrix<NumericT, F, ALIGNMENT> & /*mat*/, unsigned int & row, unsigned int & /*col*/)
+  static void apply(const viennacl::matrix<NumericT, F, AlignmentV> & /*mat*/, unsigned int & row, unsigned int & /*col*/)
   {
     ++row;
   }
 };
 
-template<class NumericT, typename F, unsigned int ALIGNMENT>
-struct MATRIX_ITERATOR_INCREMENTER<viennacl::col_iteration, viennacl::matrix<NumericT, F, ALIGNMENT> >
+template<class NumericT, typename F, unsigned int AlignmentV>
+struct MATRIX_ITERATOR_INCREMENTER<viennacl::col_iteration, viennacl::matrix<NumericT, F, AlignmentV> >
 {
-  static void apply(const viennacl::matrix<NumericT, F, ALIGNMENT> & /*mat*/, unsigned int & /*row*/, unsigned int & col)
+  static void apply(const viennacl::matrix<NumericT, F, AlignmentV> & /*mat*/, unsigned int & /*row*/, unsigned int & col)
   {
     ++col;
   }

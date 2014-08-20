@@ -91,7 +91,7 @@ private:
       return TEMPLATE_GLOBAL_MEMORY_REQUIRES_ZERO_LOCAL_FETCH;
 
     if (viennacl::dense_padding_size % p_.mL > 0 || viennacl::dense_padding_size % p_.kL > 0 || viennacl::dense_padding_size % p_.nL > 0)
-      return TEMPLATE_ALIGNMENT_MUST_BE_BLOCK_SIZE_MULTIPLE;
+      return TEMPLATE_AlignmentV_MUST_BE_BLOCK_SIZE_MULTIPLE;
 
     if ((p_.mS % p_.simd_width) > 0 || (p_.nS % p_.simd_width) > 0)
       return TEMPLATE_MS_NS_MUST_BE_SIMD_WIDTH_MULTIPLE;

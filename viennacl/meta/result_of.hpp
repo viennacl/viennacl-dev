@@ -75,10 +75,10 @@ struct alignment<const T>
   enum { value = alignment<T>::value };
 };
 
-template<typename SCALARTYPE, unsigned int ALIGNMENT>
-struct alignment< vector<SCALARTYPE, ALIGNMENT> >
+template<typename NumericT, unsigned int AlignmentV>
+struct alignment< vector<NumericT, AlignmentV> >
 {
-  enum { value = ALIGNMENT };
+  enum { value = AlignmentV };
 };
 
 template<typename T>
@@ -102,10 +102,10 @@ struct alignment< vector_expression<LHS, RHS, OP> >
 
 
 // Matrices
-template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
-struct alignment< matrix<SCALARTYPE, F, ALIGNMENT> >
+template<typename NumericT, typename F, unsigned int AlignmentV>
+struct alignment< matrix<NumericT, F, AlignmentV> >
 {
-  enum { value = ALIGNMENT };
+  enum { value = AlignmentV };
 };
 
 template<typename T>
@@ -325,8 +325,8 @@ struct cpu_value_type<viennacl::implicit_vector_base<T> >
 };
 
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::vector<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::vector<T, AlignmentV> >
 {
   typedef T    type;
 };
@@ -369,8 +369,8 @@ struct cpu_value_type<viennacl::implicit_matrix_base<T> >
 };
 
 
-template<typename T, typename F, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::matrix<T, F, ALIGNMENT> >
+template<typename T, typename F, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::matrix<T, F, AlignmentV> >
 {
   typedef T    type;
 };
@@ -387,8 +387,8 @@ struct cpu_value_type<viennacl::matrix_slice<T> >
   typedef typename cpu_value_type<T>::type    type;
 };
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::compressed_matrix<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::compressed_matrix<T, AlignmentV> >
 {
   typedef typename cpu_value_type<T>::type    type;
 };
@@ -399,14 +399,14 @@ struct cpu_value_type<viennacl::compressed_compressed_matrix<T> >
   typedef typename cpu_value_type<T>::type    type;
 };
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::coordinate_matrix<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::coordinate_matrix<T, AlignmentV> >
 {
   typedef typename cpu_value_type<T>::type    type;
 };
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::ell_matrix<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::ell_matrix<T, AlignmentV> >
 {
   typedef typename cpu_value_type<T>::type    type;
 };
@@ -417,32 +417,32 @@ struct cpu_value_type<viennacl::sliced_ell_matrix<T, IndexT> >
   typedef typename cpu_value_type<T>::type    type;
 };
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::hyb_matrix<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::hyb_matrix<T, AlignmentV> >
 {
   typedef typename cpu_value_type<T>::type    type;
 };
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::circulant_matrix<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::circulant_matrix<T, AlignmentV> >
 {
   typedef typename cpu_value_type<T>::type    type;
 };
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::hankel_matrix<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::hankel_matrix<T, AlignmentV> >
 {
   typedef typename cpu_value_type<T>::type    type;
 };
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::toeplitz_matrix<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::toeplitz_matrix<T, AlignmentV> >
 {
   typedef typename cpu_value_type<T>::type    type;
 };
 
-template<typename T, unsigned int ALIGNMENT>
-struct cpu_value_type<viennacl::vandermonde_matrix<T, ALIGNMENT> >
+template<typename T, unsigned int AlignmentV>
+struct cpu_value_type<viennacl::vandermonde_matrix<T, AlignmentV> >
 {
   typedef typename cpu_value_type<T>::type    type;
 };

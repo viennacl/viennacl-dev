@@ -50,10 +50,10 @@ namespace detail
       {
         switch (op_type)
         {
-#define VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPNAME, SCALARTYPE, OPTAG) \
-        case OPNAME:  viennacl::linalg::element_op(*result.vector_##SCALARTYPE, \
-        viennacl::vector_expression<const vector_base<SCALARTYPE>, const vector_base<SCALARTYPE>, \
-        op_element_unary<OPTAG> >(*x.vector_##SCALARTYPE, *x.vector_##SCALARTYPE)); break;
+#define VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPNAME, NumericT, OPTAG) \
+        case OPNAME:  viennacl::linalg::element_op(*result.vector_##NumericT, \
+        viennacl::vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, \
+        op_element_unary<OPTAG> >(*x.vector_##NumericT, *x.vector_##NumericT)); break;
 
         VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ABS_TYPE,   float, op_abs)
             VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ACOS_TYPE,  float, op_acos)
@@ -112,10 +112,10 @@ namespace detail
       {
         switch (op_type)
         {
-#define VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPNAME, SCALARTYPE, OPTAG) \
-        case OPNAME:  viennacl::linalg::element_op(*result.matrix_##SCALARTYPE, \
-        viennacl::matrix_expression<const matrix_base<SCALARTYPE>, const matrix_base<SCALARTYPE>, \
-        op_element_unary<OPTAG> >(*x.matrix_##SCALARTYPE, *x.matrix_##SCALARTYPE)); break;
+#define VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPNAME, NumericT, OPTAG) \
+        case OPNAME:  viennacl::linalg::element_op(*result.matrix_##NumericT, \
+        viennacl::matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, \
+        op_element_unary<OPTAG> >(*x.matrix_##NumericT, *x.matrix_##NumericT)); break;
 
         VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ABS_TYPE,   float, op_abs)
             VIENNACL_SCHEDULER_GENERATE_UNARY_ELEMENT_OP(OPERATION_UNARY_ACOS_TYPE,  float, op_acos)

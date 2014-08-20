@@ -228,10 +228,10 @@ inline vcl_size_t size1(Eigen::SparseMatrix<T, options> & m) { return static_cas
 #endif
 
 #ifdef VIENNACL_WITH_MTL4
-template<typename SCALARTYPE, typename T>
-vcl_size_t size1(mtl::dense2D<SCALARTYPE, T> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
-template<typename SCALARTYPE>
-vcl_size_t size1(mtl::compressed2D<SCALARTYPE> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
+template<typename NumericT, typename T>
+vcl_size_t size1(mtl::dense2D<NumericT, T> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
+template<typename NumericT>
+vcl_size_t size1(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
 #endif
 
 /** \endcond */
@@ -253,10 +253,10 @@ inline vcl_size_t size2(Eigen::SparseMatrix<T, options> & m) { return m.cols(); 
 #endif
 
 #ifdef VIENNACL_WITH_MTL4
-template<typename SCALARTYPE, typename T>
-vcl_size_t size2(mtl::dense2D<SCALARTYPE, T> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
-template<typename SCALARTYPE>
-vcl_size_t size2(mtl::compressed2D<SCALARTYPE> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
+template<typename NumericT, typename T>
+vcl_size_t size2(mtl::dense2D<NumericT, T> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
+template<typename NumericT>
+vcl_size_t size2(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
 #endif
 /** \endcond */
 

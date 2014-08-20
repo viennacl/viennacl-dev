@@ -63,8 +63,8 @@ void clear(VectorType & vec)
 }
 
 /** @brief Generic routine for setting all entries of a vector to zero. This is the version for ViennaCL objects. */
-template<typename ScalarType, unsigned int ALIGNMENT>
-void clear(viennacl::vector<ScalarType, ALIGNMENT> & vec)
+template<typename ScalarType, unsigned int AlignmentV>
+void clear(viennacl::vector<ScalarType, AlignmentV> & vec)
 {
   vec.clear();
 }

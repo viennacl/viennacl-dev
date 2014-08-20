@@ -47,9 +47,9 @@ start(T const & obj)
 }
 
 //ViennaCL vector leads to start index 0:
-template<typename ScalarType, unsigned int ALIGNMENT>
-typename result_of::size_type<viennacl::vector<ScalarType, ALIGNMENT> >::type
-start(viennacl::vector<ScalarType, ALIGNMENT> const &)
+template<typename ScalarType, unsigned int AlignmentV>
+typename result_of::size_type<viennacl::vector<ScalarType, AlignmentV> >::type
+start(viennacl::vector<ScalarType, AlignmentV> const &)
 {
   return 0;
 }
@@ -68,9 +68,9 @@ start1(T const & obj)
 }
 
 //ViennaCL matrix leads to start index 0:
-template<typename ScalarType, typename F, unsigned int ALIGNMENT>
-typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
-start1(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
+template<typename ScalarType, typename F, unsigned int AlignmentV>
+typename result_of::size_type<viennacl::matrix<ScalarType, F, AlignmentV> >::type
+start1(viennacl::matrix<ScalarType, F, AlignmentV> const &)
 {
   return 0;
 }
@@ -87,9 +87,9 @@ start2(T const & obj)
 }
 
 //ViennaCL matrix leads to start index 0:
-template<typename ScalarType, typename F, unsigned int ALIGNMENT>
-typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
-start2(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
+template<typename ScalarType, typename F, unsigned int AlignmentV>
+typename result_of::size_type<viennacl::matrix<ScalarType, F, AlignmentV> >::type
+start2(viennacl::matrix<ScalarType, F, AlignmentV> const &)
 {
   return 0;
 }

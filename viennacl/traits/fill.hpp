@@ -42,19 +42,19 @@ namespace traits
 {
 
 /** @brief Generic filler routine for setting an entry of a matrix to a particular value */
-template<typename MatrixType, typename SCALARTYPE>
-void fill(MatrixType & matrix, vcl_size_t row_index, vcl_size_t col_index, SCALARTYPE value)
+template<typename MatrixType, typename NumericT>
+void fill(MatrixType & matrix, vcl_size_t row_index, vcl_size_t col_index, NumericT value)
 {
   matrix(row_index, col_index) = value;
 }
 
 #ifdef VIENNACL_WITH_EIGEN
 /** @brief Generic filler routine for setting an entry of a matrix to a particular value. Special case for Eigen sparse matrices. */
-template<typename T, int options, typename SCALARTYPE>
+template<typename T, int options, typename NumericT>
 inline void fill(Eigen::SparseMatrix<T, options> & m,
                  vcl_size_t row_index,
                  vcl_size_t col_index,
-                 SCALARTYPE value
+                 NumericT value
                  )
 {
   m.insert(row_index, col_index) = value;
