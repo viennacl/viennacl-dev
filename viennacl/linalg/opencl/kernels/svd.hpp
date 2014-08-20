@@ -16,7 +16,7 @@ namespace viennacl
     {
       namespace kernels
       {
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_bidiag_pack(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bidiag_pack(__global "); source.append(numeric_string); source.append("* A, \n");
@@ -38,7 +38,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_col_reduce_lcl_array(StringType & source, std::string const & numeric_string)
         {
           // calculates a sum of local array elements
@@ -55,7 +55,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_copy_col(StringType & source, std::string const & numeric_string)
         {
           // probably, this is a ugly way
@@ -75,7 +75,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_copy_row(StringType & source, std::string const & numeric_string)
         {
           // probably, this is too
@@ -95,7 +95,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_final_iter_update(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void final_iter_update(__global "); source.append(numeric_string); source.append("* A, \n");
@@ -119,7 +119,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_givens_next(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void givens_next(__global "); source.append(numeric_string); source.append("* matr, \n");
@@ -181,7 +181,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_givens_prev(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void givens_prev(__global "); source.append(numeric_string); source.append("* matr, \n");
@@ -243,7 +243,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_house_update_A_left(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void house_update_A_left( \n");
@@ -278,7 +278,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_house_update_A_right(StringType & source, std::string const & numeric_string)
         {
 
@@ -323,7 +323,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_house_update_QL(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void house_update_QL( \n");
@@ -363,7 +363,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_house_update_QR(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void house_update_QR( \n");
@@ -404,7 +404,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_inverse_signs(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void inverse_signs(__global "); source.append(numeric_string); source.append("* v, \n");
@@ -422,7 +422,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_transpose_inplace(StringType & source, std::string const & numeric_string)
         {
 
@@ -449,7 +449,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_svd_update_qr_column(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void update_qr_column(__global "); source.append(numeric_string); source.append("* A, \n");
@@ -499,7 +499,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for singular value decomposition of dense matrices. */
-        template <class NumericT>
+        template<class NumericT>
         struct svd
         {
           static std::string program_name()

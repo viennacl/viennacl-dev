@@ -66,7 +66,7 @@ using namespace boost::numeric;
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    if (s1 != s2)
@@ -74,7 +74,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
    return 0;
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
@@ -106,7 +106,7 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
 }
 
 
-template <typename ScalarType, typename VCL_MATRIX>
+template<typename ScalarType, typename VCL_MATRIX>
 ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & gpu_matrix)
 {
   typedef ublas::compressed_matrix<ScalarType>  CPU_MATRIX;

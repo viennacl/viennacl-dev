@@ -37,7 +37,7 @@ namespace viennacl
     namespace cuda
     {
 
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_upper_solve_kernel(
                 const T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -123,7 +123,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_lower_solve_kernel(
                 const T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -213,19 +213,19 @@ namespace viennacl
 
       namespace detail
       {
-        template <typename T>
+        template<typename T>
         bool is_unit_solve(T const & tag) { return false; }
 
         inline bool is_unit_solve(viennacl::linalg::unit_lower_tag) { return true; }
         inline bool is_unit_solve(viennacl::linalg::unit_upper_tag) { return true; }
 
-        template <typename T>
+        template<typename T>
         bool is_upper_solve(T const & tag) { return false; }
 
         inline bool is_upper_solve(viennacl::linalg::upper_tag) { return true; }
         inline bool is_upper_solve(viennacl::linalg::unit_upper_tag) { return true; }
 
-        template <typename M1, typename M2, typename SolverTag>
+        template<typename M1, typename M2, typename SolverTag>
         void inplace_solve_impl(M1 const & A, bool transpose_A,
                                 M2 & B,       bool transpose_B,
                                 SolverTag const & tag)
@@ -295,7 +295,7 @@ namespace viennacl
       * @param trans_B   Whether B is transposed
       * @param tag       Solver tag for identifying the respective triangular solver
       */
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
                          matrix_base<NumericT> & B, bool trans_B,
                          SOLVERTAG tag)
@@ -309,7 +309,7 @@ namespace viennacl
       //  Solve on vector
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void triangular_substitute_inplace_row_kernel(
                 T const * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -351,7 +351,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       __global__ void triangular_substitute_inplace_col_kernel(
                 T const * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -399,7 +399,7 @@ namespace viennacl
         inline unsigned int get_option_for_solver_tag(viennacl::linalg::lower_tag)      { return (1 << 2); }
         inline unsigned int get_option_for_solver_tag(viennacl::linalg::unit_lower_tag) { return (1 << 2) | (1 << 0); }
 
-        template <typename MatrixType, typename VectorType>
+        template<typename MatrixType, typename VectorType>
         void inplace_solve_vector_impl(MatrixType const & mat,
                                        VectorType & vec,
                                        unsigned int options)
@@ -443,7 +443,7 @@ namespace viennacl
       * @param mat    The system matrix proxy
       * @param vec    The load vector, where the solution is directly written to
       */
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,
                                vector_base<NumericT> & vec,
                          SOLVERTAG)

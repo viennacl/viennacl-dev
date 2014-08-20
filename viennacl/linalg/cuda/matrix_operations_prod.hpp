@@ -34,7 +34,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...col_major, A...col_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_col_col_prod_AA_kernel(
                 T alpha,
                 const T * A,
@@ -121,7 +121,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B^T
       // matrix layouts: C...col_major, A...col_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_col_col_prod_AT_kernel(
                 T alpha,
                 const T * A,
@@ -208,7 +208,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B
       // matrix layouts: C...col_major, A...col_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_col_col_prod_TA_kernel(
                 T alpha,
                 const T * A,
@@ -295,7 +295,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B^T
       // matrix layouts: C...col_major, A...col_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_col_col_prod_TT_kernel(
                 T alpha,
                 const T * A,
@@ -389,7 +389,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...row_major, A...col_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_col_col_prod_AA_kernel(
                 T alpha,
                 const T * A,
@@ -476,7 +476,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B^T
       // matrix layouts: C...row_major, A...col_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_col_col_prod_AT_kernel(
                 T alpha,
                 const T * A,
@@ -563,7 +563,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B
       // matrix layouts: C...row_major, A...col_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_col_col_prod_TA_kernel(
                 T alpha,
                 const T * A,
@@ -650,7 +650,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B^T
       // matrix layouts: C...row_major, A...col_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_col_col_prod_TT_kernel(
                 T alpha,
                 const T * A,
@@ -745,7 +745,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...col_major, A...col_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_col_row_prod_AA_kernel(
                 T alpha,
                 const T * A,
@@ -832,7 +832,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B^T
       // matrix layouts: C...col_major, A...col_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_col_row_prod_AT_kernel(
                 T alpha,
                 const T * A,
@@ -919,7 +919,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B
       // matrix layouts: C...col_major, A...col_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_col_row_prod_TA_kernel(
                 T alpha,
                 const T * A,
@@ -1006,7 +1006,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B^T
       // matrix layouts: C...col_major, A...col_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_col_row_prod_TT_kernel(
                 T alpha,
                 const T * A,
@@ -1100,7 +1100,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...row_major, A...col_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_col_row_prod_AA_kernel(
                 T alpha,
                 const T * A,
@@ -1187,7 +1187,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B^T
       // matrix layouts: C...row_major, A...col_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_col_row_prod_AT_kernel(
                 T alpha,
                 const T * A,
@@ -1274,7 +1274,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B
       // matrix layouts: C...row_major, A...col_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_col_row_prod_TA_kernel(
                 T alpha,
                 const T * A,
@@ -1361,7 +1361,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B^T
       // matrix layouts: C...row_major, A...col_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_col_row_prod_TT_kernel(
                 T alpha,
                 const T * A,
@@ -1459,7 +1459,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...col_major, A...row_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_row_col_prod_AA_kernel(
                 T alpha,
                 const T * A,
@@ -1546,7 +1546,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B^T
       // matrix layouts: C...col_major, A...row_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_row_col_prod_AT_kernel(
                 T alpha,
                 const T * A,
@@ -1633,7 +1633,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B
       // matrix layouts: C...col_major, A...row_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_row_col_prod_TA_kernel(
                 T alpha,
                 const T * A,
@@ -1720,7 +1720,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B^T
       // matrix layouts: C...col_major, A...row_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_row_col_prod_TT_kernel(
                 T alpha,
                 const T * A,
@@ -1815,7 +1815,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...row_major, A...row_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_row_col_prod_AA_kernel(
                 T alpha,
                 const T * A,
@@ -1902,7 +1902,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B^T
       // matrix layouts: C...row_major, A...row_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_row_col_prod_AT_kernel(
                 T alpha,
                 const T * A,
@@ -1989,7 +1989,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B
       // matrix layouts: C...row_major, A...row_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_row_col_prod_TA_kernel(
                 T alpha,
                 const T * A,
@@ -2076,7 +2076,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B^T
       // matrix layouts: C...row_major, A...row_major, B...col_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_row_col_prod_TT_kernel(
                 T alpha,
                 const T * A,
@@ -2174,7 +2174,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...col_major, A...row_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_row_row_prod_AA_kernel(
                 T alpha,
                 const T * A,
@@ -2261,7 +2261,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B^T
       // matrix layouts: C...col_major, A...row_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_row_row_prod_AT_kernel(
                 T alpha,
                 const T * A,
@@ -2348,7 +2348,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B
       // matrix layouts: C...col_major, A...row_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_row_row_prod_TA_kernel(
                 T alpha,
                 const T * A,
@@ -2435,7 +2435,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B^T
       // matrix layouts: C...col_major, A...row_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_col_row_row_prod_TT_kernel(
                 T alpha,
                 const T * A,
@@ -2531,7 +2531,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B
       // matrix layouts: C...row_major, A...row_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_row_row_prod_AA_kernel(
                 T alpha,
                 const T * A,
@@ -2618,7 +2618,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A * B^T
       // matrix layouts: C...row_major, A...row_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_row_row_prod_AT_kernel(
                 T alpha,
                 const T * A,
@@ -2705,7 +2705,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B
       // matrix layouts: C...row_major, A...row_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_row_row_prod_TA_kernel(
                 T alpha,
                 const T * A,
@@ -2792,7 +2792,7 @@ namespace viennacl
 
       // matrix-matrix multiplication C = A^T * B^T
       // matrix layouts: C...row_major, A...row_major, B...row_major
-      template <typename T>
+      template<typename T>
       __global__ void matrix_matrix_row_row_row_prod_TT_kernel(
                 T alpha,
                 const T * A,

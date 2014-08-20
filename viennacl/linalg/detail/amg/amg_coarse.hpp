@@ -48,7 +48,7 @@ namespace viennacl
       * @param Slicing    Partitioning of the system matrix to different processors (only used in RS0 and RS3)
       * @param tag    AMG preconditioner tag
       */
-    template <typename InternalType1, typename InternalType2, typename InternalType3>
+    template<typename InternalType1, typename InternalType2, typename InternalType3>
     void amg_coarse(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, InternalType3 & Slicing, amg_tag & tag)
     {
       switch (tag.get_coarse())
@@ -67,7 +67,7 @@ namespace viennacl
     * @param Pointvector   Vector of points on all levels
     * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_influence(unsigned int level, InternalType1 const & A, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
@@ -153,7 +153,7 @@ namespace viennacl
     * @param Pointvector   Vector of points on all levels
     * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_coarse_classic_onepass(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, amg_tag & tag)
     {
       amg_point* c_point, *point1, *point2;
@@ -241,7 +241,7 @@ namespace viennacl
     * @param Pointvector   Vector of points on all levels
     * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_coarse_classic(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType2::value_type PointVectorType;
@@ -364,7 +364,7 @@ namespace viennacl
     * @param Slicing    Partitioning of the system matrix and the other data structures to different processors
     * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2, typename InternalType3>
+    template<typename InternalType1, typename InternalType2, typename InternalType3>
     void amg_coarse_rs0(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, InternalType3 & Slicing, amg_tag & tag)
     {
       unsigned int total_points;
@@ -438,7 +438,7 @@ namespace viennacl
     * @param Slicing    Partitioning of the system matrix and the other data structures to different processors
     * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2, typename InternalType3>
+    template<typename InternalType1, typename InternalType2, typename InternalType3>
     void amg_coarse_rs3(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, InternalType3 & Slicing, amg_tag & tag)
     {
       amg_point *c_point, *point1, *point2;
@@ -567,7 +567,7 @@ namespace viennacl
         * @param Pointvector   Vector of points on all levels
         * @param tag    AMG preconditioner tag
         */
-        template <typename InternalType1, typename InternalType2>
+        template<typename InternalType1, typename InternalType2>
         void amg_coarse_ag(unsigned int level, InternalType1 & A, InternalType2 & Pointvector, amg_tag & tag)
         {
           typedef typename InternalType1::value_type SparseMatrixType;

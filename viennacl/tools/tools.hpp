@@ -38,13 +38,13 @@ namespace viennacl
 
     /** \cond */
     /** @brief Supply suitable increment functions for the iterators: */
-    template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
+    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT>
     struct MATRIX_ITERATOR_INCREMENTER<viennacl::row_iteration, viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
     {
       static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & /*mat*/, unsigned int & row, unsigned int & /*col*/) { ++row; }
     };
 
-    template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
+    template<class SCALARTYPE, typename F, unsigned int ALIGNMENT>
     struct MATRIX_ITERATOR_INCREMENTER<viennacl::col_iteration, viennacl::matrix<SCALARTYPE, F, ALIGNMENT> >
     {
       static void apply(const viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & /*mat*/, unsigned int & /*row*/, unsigned int & col) { ++col; }
@@ -53,20 +53,20 @@ namespace viennacl
 
 
     /** @brief A guard that checks whether the floating point type of GPU types is either float or double */
-    template <typename T>
+    template<typename T>
     struct CHECK_SCALAR_TEMPLATE_ARGUMENT
     {
         typedef typename T::ERROR_SCALAR_MUST_HAVE_TEMPLATE_ARGUMENT_FLOAT_OR_DOUBLE  ResultType;
     };
 
     /** \cond */
-    template <>
+    template<>
     struct CHECK_SCALAR_TEMPLATE_ARGUMENT<float>
     {
         typedef float  ResultType;
     };
 
-    template <>
+    template<>
     struct CHECK_SCALAR_TEMPLATE_ARGUMENT<double>
     {
         typedef double  ResultType;
@@ -123,7 +123,7 @@ namespace viennacl
     * @param base       The base
     * @return The smallest multiple of 'base' such that to_reach <= base
     */
-    template <class INT_TYPE>
+    template<class INT_TYPE>
     INT_TYPE align_to_multiple(INT_TYPE to_reach, INT_TYPE base)
     {
       if (to_reach % base == 0) return to_reach;
@@ -138,7 +138,7 @@ namespace viennacl
     * @param base       The base
     * @return The biggest multiple of 'base' such that to_reach >= base
     */
-    template <class INT_TYPE>
+    template<class INT_TYPE>
     INT_TYPE roundDownToPreviousMultiple(INT_TYPE to_reach, INT_TYPE base)
     {
       if (to_reach % base == 0) return to_reach;
@@ -193,14 +193,14 @@ namespace viennacl
 
 
     /** @brief Removes the const qualifier from a type */
-    template <typename T>
+    template<typename T>
     struct CONST_REMOVER
     {
       typedef T   ResultType;
     };
 
     /** \cond */
-    template <typename T>
+    template<typename T>
     struct CONST_REMOVER<const T>
     {
       typedef T   ResultType;
@@ -214,7 +214,7 @@ namespace viennacl
     *
     * @tparam T   Either a CPU scalar type or a GPU scalar type
     */
-    template <typename T>
+    template<typename T>
     struct CPU_SCALAR_TYPE_DEDUCER
     {
       //force compiler error if type cannot be deduced
@@ -222,38 +222,38 @@ namespace viennacl
     };
 
     /** \cond */
-    template <>
+    template<>
     struct CPU_SCALAR_TYPE_DEDUCER< float >
     {
       typedef float       ResultType;
     };
 
-    template <>
+    template<>
     struct CPU_SCALAR_TYPE_DEDUCER< double >
     {
       typedef double       ResultType;
     };
 
-    template <typename T>
+    template<typename T>
     struct CPU_SCALAR_TYPE_DEDUCER< viennacl::scalar<T> >
     {
       typedef T       ResultType;
     };
 
-    template <typename T, unsigned int A>
+    template<typename T, unsigned int A>
     struct CPU_SCALAR_TYPE_DEDUCER< viennacl::vector<T, A> >
     {
       typedef T       ResultType;
     };
 
-    template <typename T, typename F, unsigned int A>
+    template<typename T, typename F, unsigned int A>
     struct CPU_SCALAR_TYPE_DEDUCER< viennacl::matrix<T, F, A> >
     {
       typedef T       ResultType;
     };
 
 
-    template <typename T, typename F, unsigned int A>
+    template<typename T, typename F, unsigned int A>
     struct CPU_SCALAR_TYPE_DEDUCER< viennacl::matrix_expression<const matrix<T, F, A>, const matrix<T, F, A>, op_trans> >
     {
       typedef T       ResultType;
@@ -264,10 +264,10 @@ namespace viennacl
     // Converts a scalar type when necessary unless it is a viennacl::scalar<> (typical use-case: convert user-provided floats to double (and vice versa) for OpenCL kernels)
     //
 
-    template <typename HostScalarType>
+    template<typename HostScalarType>
     viennacl::scalar<HostScalarType> const & promote_if_host_scalar(viennacl::scalar<HostScalarType> const & s) { return s; }
 
-    template <typename HostScalarType>
+    template<typename HostScalarType>
     viennacl::scalar_expression<const viennacl::scalar<HostScalarType>,
                                 const viennacl::scalar<HostScalarType>,
                                 viennacl::op_flip_sign> const &
@@ -275,25 +275,25 @@ namespace viennacl
                                                        const viennacl::scalar<HostScalarType>,
                                                        viennacl::op_flip_sign> const & s) { return s; }
 
-    template <typename HostScalarType>
+    template<typename HostScalarType>
     HostScalarType promote_if_host_scalar(float s) { return s; }
 
-    template <typename HostScalarType>
+    template<typename HostScalarType>
     HostScalarType promote_if_host_scalar(double s) { return s; }
 
-    template <typename HostScalarType>
+    template<typename HostScalarType>
     HostScalarType promote_if_host_scalar(long s) { return s; }
 
-    template <typename HostScalarType>
+    template<typename HostScalarType>
     HostScalarType promote_if_host_scalar(unsigned long s) { return s; }
 
-    template <typename HostScalarType>
+    template<typename HostScalarType>
     HostScalarType promote_if_host_scalar(int s) { return s; }
 
-    template <typename HostScalarType>
+    template<typename HostScalarType>
     HostScalarType promote_if_host_scalar(unsigned int s) { return s; }
 
-    template <class T>
+    template<class T>
     inline std::string to_string ( T const t )
     {
       std::stringstream ss;

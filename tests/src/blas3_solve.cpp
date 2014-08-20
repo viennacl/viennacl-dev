@@ -58,7 +58,7 @@ using namespace boost::numeric;
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
@@ -67,7 +67,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
    return 0;
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
@@ -87,7 +87,7 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
 }
 
 
-template <typename ScalarType, typename VCLMatrixType>
+template<typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
@@ -117,7 +117,7 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 
 
 
-template <typename RHSTypeRef, typename RHSTypeCheck, typename Epsilon >
+template<typename RHSTypeRef, typename RHSTypeCheck, typename Epsilon >
 void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, Epsilon const & epsilon)
 {
    double act_diff = fabs(diff(B_ref, B_check));

@@ -67,7 +67,7 @@ namespace viennacl
         * @param J current set
         * @param ind current element
         */
-        template <typename SizeType>
+        template<typename SizeType>
         bool isInIndexSet(const std::vector<SizeType>& J, SizeType ind)
         {
           return (std::find(J.begin(), J.end(), ind) != J.end());
@@ -82,7 +82,7 @@ namespace viennacl
         * @param J set of non-zero columns
         * @param m original column of M
         */
-        template <typename VectorType, typename SparseVectorType>
+        template<typename VectorType, typename SparseVectorType>
         void fanOutVector(const VectorType& m_in, const std::vector<unsigned int>& J, SparseVectorType& m)
         {
           unsigned int  cnt = 0;
@@ -94,7 +94,7 @@ namespace viennacl
         * @param y right handside vector
         * @param x solution vector
         */
-        template <typename MatrixType, typename VectorType>
+        template<typename MatrixType, typename VectorType>
         void backwardSolve(const MatrixType& R, const VectorType& y, VectorType& x)
         {
           for (long i = static_cast<long>(R.size2())-1; i >= 0 ; i--)
@@ -111,7 +111,7 @@ namespace viennacl
         * @param y result vector
         * @param ind index of unit vector
         */
-        template <typename VectorType, typename ScalarType>
+        template<typename VectorType, typename ScalarType>
         void projectI(const std::vector<unsigned int>& I, VectorType& y, unsigned int ind)
         {
           for(vcl_size_t i = 0; i < I.size(); ++i)
@@ -128,7 +128,7 @@ namespace viennacl
         * @param v current column of preconditioner
         * @param J output - index set of non-zero columns
         */
-        template <typename SparseVectorType>
+        template<typename SparseVectorType>
         void buildColumnIndexSet(const SparseVectorType& v, std::vector<unsigned int>& J)
         {
             //typedef typename VectorType::value_type ScalarType;
@@ -145,7 +145,7 @@ namespace viennacl
         * @param A input matrix
         * @param M output matrix - initialized preconditioner
         */
-        template <typename SparseMatrixType>
+        template<typename SparseMatrixType>
         void initPreconditioner(const SparseMatrixType& A, SparseMatrixType& M)
         {
           typedef typename SparseMatrixType::value_type ScalarType;
@@ -165,7 +165,7 @@ namespace viennacl
         * @param J set of non-zero rows
         * @param I output matrix
         */
-        template <typename SparseVectorType>
+        template<typename SparseVectorType>
         void projectRows(const std::vector<SparseVectorType>& A_v_c, const std::vector<unsigned int>& J, std::vector<unsigned int>& I)
         {
           for(vcl_size_t i = 0; i < J.size(); ++i)

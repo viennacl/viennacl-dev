@@ -305,7 +305,7 @@ namespace viennacl
       //
       namespace detail
       {
-        template <typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
+        template<typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
         void csr_inplace_solve(SizeTypeArray const & row_buffer,
                                SizeTypeArray const & col_buffer,
                                ConstScalarTypeArray const & element_buffer,
@@ -329,7 +329,7 @@ namespace viennacl
           }
         }
 
-        template <typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
+        template<typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
         void csr_inplace_solve(SizeTypeArray const & row_buffer,
                                SizeTypeArray const & col_buffer,
                                ConstScalarTypeArray const & element_buffer,
@@ -360,7 +360,7 @@ namespace viennacl
         }
 
 
-        template <typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
+        template<typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
         void csr_inplace_solve(SizeTypeArray const & row_buffer,
                                SizeTypeArray const & col_buffer,
                                ConstScalarTypeArray const & element_buffer,
@@ -384,7 +384,7 @@ namespace viennacl
           }
         }
 
-        template <typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
+        template<typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
         void csr_inplace_solve(SizeTypeArray const & row_buffer,
                                SizeTypeArray const & col_buffer,
                                ConstScalarTypeArray const & element_buffer,
@@ -507,7 +507,7 @@ namespace viennacl
 
       namespace detail
       {
-        template <typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
+        template<typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
         void csr_trans_inplace_solve(SizeTypeArray const & row_buffer,
                                      SizeTypeArray const & col_buffer,
                                      ConstScalarTypeArray const & element_buffer,
@@ -530,7 +530,7 @@ namespace viennacl
           }
         }
 
-        template <typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
+        template<typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
         void csr_trans_inplace_solve(SizeTypeArray const & row_buffer,
                                      SizeTypeArray const & col_buffer,
                                      ConstScalarTypeArray const & element_buffer,
@@ -568,7 +568,7 @@ namespace viennacl
           }
         }
 
-        template <typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
+        template<typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
         void csr_trans_inplace_solve(SizeTypeArray const & row_buffer,
                                      SizeTypeArray const & col_buffer,
                                      ConstScalarTypeArray const & element_buffer,
@@ -593,7 +593,7 @@ namespace viennacl
           }
         }
 
-        template <typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
+        template<typename NumericT, typename ConstScalarTypeArray, typename ScalarTypeArray, typename SizeTypeArray>
         void csr_trans_inplace_solve(SizeTypeArray const & row_buffer,
                                      SizeTypeArray const & col_buffer,
                                      ConstScalarTypeArray const & element_buffer,

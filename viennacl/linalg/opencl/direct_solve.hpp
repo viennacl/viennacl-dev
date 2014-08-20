@@ -42,7 +42,7 @@ namespace viennacl
         inline cl_uint get_option_for_solver_tag(viennacl::linalg::lower_tag)      { return (1 << 2); }
         inline cl_uint get_option_for_solver_tag(viennacl::linalg::unit_lower_tag) { return (1 << 2) | (1 << 0); }
 
-        template <typename M1, typename M2, typename KernelType>
+        template<typename M1, typename M2, typename KernelType>
         void inplace_solve_impl(M1 const & A, M2 & B, KernelType & k)
         {
           viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
@@ -71,7 +71,7 @@ namespace viennacl
       * @param A    The system matrix
       * @param B    The matrix of row vectors, where the solution is directly written to
       */
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT> & A, bool A_trans,
                          matrix_base<NumericT> & B, bool B_trans,
                          SOLVERTAG)
@@ -125,7 +125,7 @@ namespace viennacl
       //  Solve on vector
       //
 
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT> & A, bool A_trans,
                                vector_base<NumericT> & x,
                          SOLVERTAG)

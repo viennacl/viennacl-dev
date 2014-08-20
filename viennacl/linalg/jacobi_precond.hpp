@@ -45,7 +45,7 @@ namespace viennacl
 
     /** @brief Jacobi preconditioner class, can be supplied to solve()-routines. Generic version for non-ViennaCL matrices.
     */
-    template <typename MatrixType,
+    template<typename MatrixType,
               bool is_viennacl = detail::row_scaling_for_viennacl<MatrixType>::value >
     class jacobi_precond
     {
@@ -83,7 +83,7 @@ namespace viennacl
 
 
         /** @brief Apply to res = b - Ax, i.e. jacobi applied vec (right hand side),  */
-        template <typename VectorType>
+        template<typename VectorType>
         void apply(VectorType & vec) const
         {
           assert(viennacl::traits::size(diag_A) == viennacl::traits::size(vec) && bool("Size mismatch"));
@@ -100,7 +100,7 @@ namespace viennacl
     *
     *  Specialization for compressed_matrix
     */
-    template <typename MatrixType>
+    template<typename MatrixType>
     class jacobi_precond< MatrixType, true>
     {
         typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type  ScalarType;
@@ -118,7 +118,7 @@ namespace viennacl
         }
 
 
-        template <unsigned int ALIGNMENT>
+        template<unsigned int ALIGNMENT>
         void apply(viennacl::vector<ScalarType, ALIGNMENT> & vec) const
         {
           assert(viennacl::traits::size(diag_A) == viennacl::traits::size(vec) && bool("Size mismatch"));

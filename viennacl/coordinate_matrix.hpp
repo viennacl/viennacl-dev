@@ -43,7 +43,7 @@ namespace viennacl
     * @param cpu_matrix   A sparse matrix on the host.
     * @param gpu_matrix   A compressed_matrix from ViennaCL
     */
-    template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const CPU_MATRIX & cpu_matrix,
                      coordinate_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
@@ -118,7 +118,7 @@ namespace viennacl
     * @param cpu_matrix   A sparse square matrix on the host.
     * @param gpu_matrix   A coordinate_matrix from ViennaCL
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const std::vector< std::map<unsigned int, SCALARTYPE> > & cpu_matrix,
                      coordinate_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
@@ -135,7 +135,7 @@ namespace viennacl
     * @param gpu_matrix   A coordinate_matrix from ViennaCL
     * @param cpu_matrix   A sparse matrix on the host.
     */
-    template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const coordinate_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
                      CPU_MATRIX & cpu_matrix )
     {
@@ -165,7 +165,7 @@ namespace viennacl
     * @param gpu_matrix   A coordinate_matrix from ViennaCL
     * @param cpu_matrix   A sparse matrix on the host.
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const coordinate_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               std::vector< std::map<unsigned int, SCALARTYPE> > & cpu_matrix)
     {
@@ -358,10 +358,10 @@ namespace viennacl
         vcl_size_t groups() const { return group_num_; }
 
         #if defined(_MSC_VER) && _MSC_VER < 1500      //Visual Studio 2005 needs special treatment
-        template <typename CPU_MATRIX>
+        template<typename CPU_MATRIX>
         friend void copy(const CPU_MATRIX & cpu_matrix, coordinate_matrix & gpu_matrix );
         #else
-        template <typename CPU_MATRIX, typename SCALARTYPE2, unsigned int ALIGNMENT2>
+        template<typename CPU_MATRIX, typename SCALARTYPE2, unsigned int ALIGNMENT2>
         friend void copy(const CPU_MATRIX & cpu_matrix, coordinate_matrix<SCALARTYPE2, ALIGNMENT2> & gpu_matrix );
         #endif
 
@@ -394,7 +394,7 @@ namespace viennacl
       namespace detail
       {
         // x = A * y
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const coordinate_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -411,7 +411,7 @@ namespace viennacl
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const coordinate_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -422,7 +422,7 @@ namespace viennacl
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const coordinate_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -435,7 +435,7 @@ namespace viennacl
 
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -446,7 +446,7 @@ namespace viennacl
         };
 
         // x += A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -459,7 +459,7 @@ namespace viennacl
         };
 
         // x -= A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const coordinate_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)

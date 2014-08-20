@@ -91,14 +91,14 @@ namespace viennacl
     namespace detail
     {
 
-      template <typename SRC_VECTOR, typename DEST_VECTOR>
+      template<typename SRC_VECTOR, typename DEST_VECTOR>
       void gmres_copy_helper(SRC_VECTOR const & src, DEST_VECTOR & dest, vcl_size_t len, vcl_size_t start = 0)
       {
         for (vcl_size_t i=0; i<len; ++i)
           dest[start+i] = src[start+i];
       }
 
-      template <typename ScalarType, typename DEST_VECTOR>
+      template<typename ScalarType, typename DEST_VECTOR>
       void gmres_copy_helper(viennacl::vector<ScalarType> const & src, DEST_VECTOR & dest, vcl_size_t len, vcl_size_t start = 0)
       {
         typedef typename viennacl::vector<ScalarType>::difference_type   difference_type;
@@ -115,7 +115,7 @@ namespace viennacl
         * @param mu              The norm of the input vector part relevant for the reflection: norm_2(input_vec[j:size])
         * @param j               Index of the last nonzero index in 'input_vec' after applying the reflection
       */
-      template <typename VectorType, typename ScalarType>
+      template<typename VectorType, typename ScalarType>
       void gmres_setup_householder_vector(VectorType const & input_vec, VectorType & hh_vec, ScalarType & beta, ScalarType & mu, vcl_size_t j)
       {
         ScalarType input_j = input_vec(j);
@@ -146,7 +146,7 @@ namespace viennacl
       }
 
       // Apply (I - beta h h^T) to x (Householder reflection with Householder vector h)
-      template <typename VectorType, typename ScalarType>
+      template<typename VectorType, typename ScalarType>
       void gmres_householder_reflect(VectorType & x, VectorType const & h, ScalarType beta)
       {
         ScalarType hT_in_x = viennacl::linalg::inner_prod(h, x);
@@ -165,7 +165,7 @@ namespace viennacl
     * @param precond    A preconditioner. Precondition operation is done via member function apply()
     * @return The result vector
     */
-    template <typename MatrixType, typename VectorType, typename PreconditionerType>
+    template<typename MatrixType, typename VectorType, typename PreconditionerType>
     VectorType solve(const MatrixType & matrix, VectorType const & rhs, gmres_tag const & tag, PreconditionerType const & precond)
     {
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
@@ -340,7 +340,7 @@ namespace viennacl
 
     /** @brief Convenience overload of the solve() function using GMRES. Per default, no preconditioner is used
     */
-    template <typename MatrixType, typename VectorType>
+    template<typename MatrixType, typename VectorType>
     VectorType solve(const MatrixType & matrix, VectorType const & rhs, gmres_tag const & tag)
     {
       return solve(matrix, rhs, tag, no_precond());

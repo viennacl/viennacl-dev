@@ -44,7 +44,7 @@ namespace viennacl
       * @param points_x     Number of points in x-direction
       * @param points_y     Number of points in y-direction
       */
-    template <typename MatrixType>
+    template<typename MatrixType>
     void generate_fdm_laplace(MatrixType & A, vcl_size_t points_x, vcl_size_t points_y)
     {
       typedef typename MatrixType::value_type  ScalarType;
@@ -90,7 +90,7 @@ namespace viennacl
 
     }
 
-    template <typename NumericT>
+    template<typename NumericT>
     void generate_fdm_laplace(viennacl::compressed_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
     {
       // Assemble into temporary matrix on CPU, then copy over:
@@ -100,7 +100,7 @@ namespace viennacl
       viennacl::copy(temp_A, A);
     }
 
-    template <typename NumericT>
+    template<typename NumericT>
     void generate_fdm_laplace(viennacl::coordinate_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
     {
       // Assemble into temporary matrix on CPU, then copy over:
@@ -110,7 +110,7 @@ namespace viennacl
       viennacl::copy(temp_A, A);
     }
 
-    template <typename NumericT>
+    template<typename NumericT>
     void generate_fdm_laplace(viennacl::ell_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
     {
       // Assemble into temporary matrix on CPU, then copy over:
@@ -120,7 +120,7 @@ namespace viennacl
       viennacl::copy(temp_A, A);
     }
 
-    template <typename NumericT>
+    template<typename NumericT>
     void generate_fdm_laplace(viennacl::sliced_ell_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
     {
       // Assemble into temporary matrix on CPU, then copy over:
@@ -130,7 +130,7 @@ namespace viennacl
       viennacl::copy(temp_A, A);
     }
 
-    template <typename NumericT>
+    template<typename NumericT>
     void generate_fdm_laplace(viennacl::hyb_matrix<NumericT> & A, vcl_size_t points_x, vcl_size_t points_y)
     {
       // Assemble into temporary matrix on CPU, then copy over:

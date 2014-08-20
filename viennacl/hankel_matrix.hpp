@@ -143,7 +143,7 @@ namespace viennacl {
     * @param cpu_vec   A std::vector on the host.
     * @param gpu_mat   A hankel_matrix from ViennaCL
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(std::vector<SCALARTYPE> const & cpu_vec, hankel_matrix<SCALARTYPE, ALIGNMENT> & gpu_mat)
     {
         assert((gpu_mat.size1() * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
@@ -157,7 +157,7 @@ namespace viennacl {
     * @param gpu_mat   A hankel_matrix from ViennaCL
     * @param cpu_vec   A std::vector on the host.
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(hankel_matrix<SCALARTYPE, ALIGNMENT> const & gpu_mat, std::vector<SCALARTYPE> & cpu_vec)
     {
         assert((gpu_mat.size1() * 2 - 1)  == cpu_vec.size() && bool("Size mismatch"));
@@ -171,7 +171,7 @@ namespace viennacl {
     * @param han_src   A hankel_matrix from ViennaCL
     * @param com_dst   A matrix-like object
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(hankel_matrix<SCALARTYPE, ALIGNMENT> const & han_src, MATRIXTYPE& com_dst)
     {
         assert( (viennacl::traits::size1(com_dst) == han_src.size1()) && bool("Size mismatch") );
@@ -192,7 +192,7 @@ namespace viennacl {
     * @param com_src   A std::vector on the host
     * @param han_dst   A hankel_matrix from ViennaCL
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE const & com_src, hankel_matrix<SCALARTYPE, ALIGNMENT>& han_dst)
     {
         assert( (han_dst.size1() == 0 || viennacl::traits::size1(com_src) == han_dst.size1()) && bool("Size mismatch") );
@@ -212,7 +212,7 @@ namespace viennacl {
         viennacl::copy(tmp, han_dst);
     }
 
-    /*template <typename SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+    /*template<typename SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
     void prod_impl(hankel_matrix<SCALARTYPE, ALIGNMENT>& mat,
                    vector<SCALARTYPE, VECTOR_ALIGNMENT>& vec,
                    vector<SCALARTYPE, VECTOR_ALIGNMENT>& result)
@@ -253,7 +253,7 @@ namespace viennacl {
       namespace detail
       {
         // x = A * y
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const hankel_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hankel_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -270,7 +270,7 @@ namespace viennacl {
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const hankel_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hankel_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -281,7 +281,7 @@ namespace viennacl {
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const hankel_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hankel_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -294,7 +294,7 @@ namespace viennacl {
 
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const hankel_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hankel_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -305,7 +305,7 @@ namespace viennacl {
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const hankel_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hankel_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -318,7 +318,7 @@ namespace viennacl {
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const hankel_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const hankel_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)

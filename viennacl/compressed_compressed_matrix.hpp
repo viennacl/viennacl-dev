@@ -37,7 +37,7 @@ namespace viennacl
 {
     namespace detail
     {
-      template <typename CPU_MATRIX, typename SCALARTYPE>
+      template<typename CPU_MATRIX, typename SCALARTYPE>
       void copy_impl(const CPU_MATRIX & cpu_matrix,
                      compressed_compressed_matrix<SCALARTYPE> & gpu_matrix,
                      vcl_size_t nonzero_rows,
@@ -111,7 +111,7 @@ namespace viennacl
     * @param cpu_matrix   A sparse matrix on the host.
     * @param gpu_matrix   A compressed_compressed_matrix from ViennaCL
     */
-    template <typename CPU_MATRIX, typename SCALARTYPE>
+    template<typename CPU_MATRIX, typename SCALARTYPE>
     void copy(const CPU_MATRIX & cpu_matrix,
               compressed_compressed_matrix<SCALARTYPE> & gpu_matrix )
     {
@@ -159,7 +159,7 @@ namespace viennacl
     * @param cpu_matrix   A sparse square matrix on the host using STL types
     * @param gpu_matrix   A compressed_compressed_matrix from ViennaCL
     */
-    template <typename SizeType, typename SCALARTYPE>
+    template<typename SizeType, typename SCALARTYPE>
     void copy(const std::vector< std::map<SizeType, SCALARTYPE> > & cpu_matrix,
               compressed_compressed_matrix<SCALARTYPE> & gpu_matrix )
     {
@@ -194,7 +194,7 @@ namespace viennacl
     * @param gpu_matrix   A compressed_compressed_matrix from ViennaCL
     * @param cpu_matrix   A sparse matrix on the host.
     */
-    template <typename CPU_MATRIX, typename SCALARTYPE>
+    template<typename CPU_MATRIX, typename SCALARTYPE>
     void copy(const compressed_compressed_matrix<SCALARTYPE> & gpu_matrix,
               CPU_MATRIX & cpu_matrix )
     {
@@ -242,7 +242,7 @@ namespace viennacl
     * @param gpu_matrix   A compressed_compressed_matrix from ViennaCL
     * @param cpu_matrix   A sparse matrix on the host.
     */
-    template <typename SCALARTYPE>
+    template<typename SCALARTYPE>
     void copy(const compressed_compressed_matrix<SCALARTYPE> & gpu_matrix,
               std::vector< std::map<unsigned int, SCALARTYPE> > & cpu_matrix)
     {
@@ -502,7 +502,7 @@ namespace viennacl
       namespace detail
       {
         // x = A * y
-        template <typename T>
+        template<typename T>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const compressed_compressed_matrix<T>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_compressed_matrix<T>, const vector_base<T>, op_prod> const & rhs)
@@ -519,7 +519,7 @@ namespace viennacl
             }
         };
 
-        template <typename T>
+        template<typename T>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const compressed_compressed_matrix<T>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_compressed_matrix<T>, const vector_base<T>, op_prod> const & rhs)
@@ -530,7 +530,7 @@ namespace viennacl
             }
         };
 
-        template <typename T>
+        template<typename T>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const compressed_compressed_matrix<T>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_compressed_matrix<T>, const vector_base<T>, op_prod> const & rhs)
@@ -543,7 +543,7 @@ namespace viennacl
 
 
         // x = A * vec_op
-        template <typename T, typename LHS, typename RHS, typename OP>
+        template<typename T, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const compressed_compressed_matrix<T>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_compressed_matrix<T>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -554,7 +554,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename T, typename LHS, typename RHS, typename OP>
+        template<typename T, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const compressed_compressed_matrix<T>, vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_compressed_matrix<T>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -567,7 +567,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename T, typename LHS, typename RHS, typename OP>
+        template<typename T, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const compressed_compressed_matrix<T>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_compressed_matrix<T>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)

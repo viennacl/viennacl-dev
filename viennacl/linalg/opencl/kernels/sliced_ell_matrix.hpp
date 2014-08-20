@@ -21,7 +21,7 @@ namespace viennacl
 
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_sliced_ell_vec_mul(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void vec_mul( \n");
@@ -61,10 +61,10 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for ell_matrix. */
-        template <typename NumericT, typename IndexT>
+        template<typename NumericT, typename IndexT>
         struct sliced_ell_matrix;
 
-        template <typename NumericT>
+        template<typename NumericT>
         struct sliced_ell_matrix<NumericT, unsigned int>
         {
           static std::string program_name()

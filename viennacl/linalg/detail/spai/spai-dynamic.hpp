@@ -76,7 +76,7 @@ namespace viennacl
           /** @brief Helper functor for comparing std::pair<> based on the second member. */
           struct CompareSecond
           {
-            template <typename T1, typename T2>
+            template<typename T1, typename T2>
             bool operator()(std::pair<T1, T2> const & left, std::pair<T1, T2> const & right)
             {
               return static_cast<double>(left.second) > static_cast<double>(right.second);
@@ -167,7 +167,7 @@ namespace viennacl
           * @param J_u set of new column indices
           * @param tag SPAI tag with parameters
           */
-          template <typename SparseVectorType, typename ScalarType>
+          template<typename SparseVectorType, typename ScalarType>
           bool buildAugmentedIndexSet(const std::vector<SparseVectorType>& A_v_c,
                                       const SparseVectorType& res,
                                       std::vector<unsigned int>& J,
@@ -363,7 +363,7 @@ namespace viennacl
           * @param g_I_u container of new row indices
           * @param g_I_q container of row indices for new QR blocks
           */
-          template <typename SizeType>
+          template<typename SizeType>
           void assemble_qr_row_inds(const std::vector<std::vector<SizeType> >& g_I, const std::vector<std::vector<SizeType> > g_J,
                                     const std::vector<std::vector<SizeType> >& g_I_u,
                                     std::vector<std::vector<SizeType> >& g_I_q)

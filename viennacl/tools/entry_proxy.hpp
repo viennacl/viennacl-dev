@@ -36,7 +36,7 @@ namespace viennacl
     *
     * @tparam SCALARTYPE Either float or double
     */
-    template <typename SCALARTYPE>
+    template<typename SCALARTYPE>
     class entry_proxy
     {
       public:
@@ -174,7 +174,7 @@ namespace viennacl
     *
     * @tparam SCALARTYPE Either float or double
     */
-    template <typename SCALARTYPE>
+    template<typename SCALARTYPE>
     class const_entry_proxy
     {
         typedef const_entry_proxy<SCALARTYPE>      self_type;

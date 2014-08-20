@@ -57,19 +57,19 @@ namespace viennacl
     /** \cond */
     namespace detail
     {
-      template <typename T>
+      template<typename T>
       struct row_scaling_for_viennacl
       {
         enum { value = false };
       };
 
-      template <typename ScalarType, unsigned int ALIGNMENT>
+      template<typename ScalarType, unsigned int ALIGNMENT>
       struct row_scaling_for_viennacl< viennacl::compressed_matrix<ScalarType, ALIGNMENT> >
       {
         enum { value = true };
       };
 
-      template <typename ScalarType, unsigned int ALIGNMENT>
+      template<typename ScalarType, unsigned int ALIGNMENT>
       struct row_scaling_for_viennacl< viennacl::coordinate_matrix<ScalarType, ALIGNMENT> >
       {
         enum { value = true };
@@ -82,7 +82,7 @@ namespace viennacl
      *
      *  Default implementation for non-native ViennaCL matrices (e.g. uBLAS)
      */
-    template <typename MatrixType,
+    template<typename MatrixType,
               bool is_viennacl = detail::row_scaling_for_viennacl<MatrixType>::value >
     class row_scaling
     {
@@ -129,7 +129,7 @@ namespace viennacl
 
 
         /** @brief Apply to res = b - Ax, i.e. row applied vec (right hand side),  */
-        template <typename VectorType>
+        template<typename VectorType>
         void apply(VectorType & vec) const
         {
           assert(vec.size() == diag_M.size() && bool("Size mismatch"));
@@ -146,7 +146,7 @@ namespace viennacl
     *
     *  Specialization for compressed_matrix
     */
-    template <typename MatrixType>
+    template<typename MatrixType>
     class row_scaling< MatrixType, true>
     {
         typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type  ScalarType;
@@ -181,7 +181,7 @@ namespace viennacl
           }
         }
 
-        template <unsigned int ALIGNMENT>
+        template<unsigned int ALIGNMENT>
         void apply(viennacl::vector<ScalarType, ALIGNMENT> & vec) const
         {
           assert(viennacl::traits::size(diag_M) == viennacl::traits::size(vec) && bool("Size mismatch"));

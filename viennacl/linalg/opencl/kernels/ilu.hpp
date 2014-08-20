@@ -16,7 +16,7 @@ namespace viennacl
     {
       namespace kernels
       {
-        template <typename StringType>
+        template<typename StringType>
         void generate_ilu_level_scheduling_substitute(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void level_scheduling_substitute( \n");
@@ -45,7 +45,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for incomplete LU factorization preconditioners. */
-        template <class NumericT>
+        template<class NumericT>
         struct ilu
         {
           static std::string program_name()

@@ -57,7 +57,7 @@ namespace viennacl
           *   Ap = prod(A, p);
           * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
           */
-        template <typename T>
+        template<typename T>
         void pipelined_prod_impl(compressed_matrix<T> const & A,
                                  vector_base<T> const & p,
                                  vector_base<T> & Ap,
@@ -108,7 +108,7 @@ namespace viennacl
           *   Ap = prod(A, p);
           * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
           */
-        template <typename T>
+        template<typename T>
         void pipelined_prod_impl(coordinate_matrix<T> const & A,
                                  vector_base<T> const & p,
                                  vector_base<T> & Ap,
@@ -161,7 +161,7 @@ namespace viennacl
           *   Ap = prod(A, p);
           * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
           */
-        template <typename T>
+        template<typename T>
         void pipelined_prod_impl(ell_matrix<T> const & A,
                                  vector_base<T> const & p,
                                  vector_base<T> & Ap,
@@ -214,7 +214,7 @@ namespace viennacl
           *   Ap = prod(A, p);
           * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
           */
-        template <typename T, typename IndexT>
+        template<typename T, typename IndexT>
         void pipelined_prod_impl(sliced_ell_matrix<T, IndexT> const & A,
                                  vector_base<T> const & p,
                                  vector_base<T> & Ap,
@@ -290,7 +290,7 @@ namespace viennacl
           *   Ap = prod(A, p);
           * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
           */
-        template <typename T>
+        template<typename T>
         void pipelined_prod_impl(hyb_matrix<T> const & A,
                                  vector_base<T> const & p,
                                  vector_base<T> & Ap,
@@ -363,7 +363,7 @@ namespace viennacl
         *   p       = r + beta * p;
         * and runs the parallel reduction stage for computing inner_prod(r,r)
         */
-      template <typename T>
+      template<typename T>
       void pipelined_cg_vector_update(vector_base<T> & result,
                                       T alpha,
                                       vector_base<T> & p,
@@ -409,7 +409,7 @@ namespace viennacl
         *   Ap = prod(A, p);
         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
         */
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(compressed_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -427,7 +427,7 @@ namespace viennacl
         *   Ap = prod(A, p);
         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
         */
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(coordinate_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -444,7 +444,7 @@ namespace viennacl
         *   Ap = prod(A, p);
         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
         */
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(ell_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -461,7 +461,7 @@ namespace viennacl
         *   Ap = prod(A, p);
         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
         */
-      template <typename T, typename IndexT>
+      template<typename T, typename IndexT>
       void pipelined_cg_prod(sliced_ell_matrix<T, IndexT> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -480,7 +480,7 @@ namespace viennacl
         *   Ap = prod(A, p);
         * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap)
         */
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(hyb_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -500,7 +500,7 @@ namespace viennacl
         * with alpha obtained from a reduction step on the 0th and the 3rd out of 6 chunks in inner_prod_buffer
         * and runs the parallel reduction stage for computing inner_prod(s,s)
         */
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_update_s(vector_base<T> & s,
                                        vector_base<T> & r,
                                        vector_base<T> const & Ap,
@@ -550,7 +550,7 @@ namespace viennacl
         * p_{j+1} = r_{j+1} + beta * (p_j - omega * q_j)
         * and compute first stage of r_dot_r0 = <r_{j+1}, r_o^*> for use in next iteration
         */
-       template <typename T>
+       template<typename T>
        void pipelined_bicgstab_vector_update(vector_base<T> & result, T alpha, vector_base<T> & p, T omega, vector_base<T> const & s,
                                              vector_base<T> & residual, vector_base<T> const & As,
                                              T beta, vector_base<T> const & Ap,
@@ -603,7 +603,7 @@ namespace viennacl
          *   Ap = prod(A, p);
          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
          */
-       template <typename T>
+       template<typename T>
        void pipelined_bicgstab_prod(compressed_matrix<T> const & A,
                                     vector_base<T> const & p,
                                     vector_base<T> & Ap,
@@ -623,7 +623,7 @@ namespace viennacl
          *   Ap = prod(A, p);
          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
          */
-       template <typename T>
+       template<typename T>
        void pipelined_bicgstab_prod(coordinate_matrix<T> const & A,
                                     vector_base<T> const & p,
                                     vector_base<T> & Ap,
@@ -643,7 +643,7 @@ namespace viennacl
          *   Ap = prod(A, p);
          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
          */
-       template <typename T>
+       template<typename T>
        void pipelined_bicgstab_prod(ell_matrix<T> const & A,
                                     vector_base<T> const & p,
                                     vector_base<T> & Ap,
@@ -663,7 +663,7 @@ namespace viennacl
          *   Ap = prod(A, p);
          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
          */
-       template <typename T, typename IndexT>
+       template<typename T, typename IndexT>
        void pipelined_bicgstab_prod(sliced_ell_matrix<T, IndexT> const & A,
                                     vector_base<T> const & p,
                                     vector_base<T> & Ap,
@@ -683,7 +683,7 @@ namespace viennacl
          *   Ap = prod(A, p);
          * and computes the two reduction stages for computing inner_prod(p,Ap), inner_prod(Ap,Ap), inner_prod(Ap, r0)
          */
-       template <typename T>
+       template<typename T>
        void pipelined_bicgstab_prod(hyb_matrix<T> const & A,
                                     vector_base<T> const & p,
                                     vector_base<T> & Ap,

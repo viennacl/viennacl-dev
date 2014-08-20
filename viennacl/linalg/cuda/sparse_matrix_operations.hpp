@@ -43,7 +43,7 @@ namespace viennacl
       namespace detail
       {
 
-        template <typename T>
+        template<typename T>
         __global__ void csr_row_info_extractor_kernel(
                   const unsigned int * row_indices,
                   const unsigned int * column_indices,
@@ -114,7 +114,7 @@ namespace viennacl
       } //namespace detail
 
 
-      template <typename T>
+      template<typename T>
       __global__ void compressed_matrix_vec_mul_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -174,7 +174,7 @@ namespace viennacl
         *
         * @param LayoutT   The layout tag: Either row_major or column_major
         */
-      template <typename LayoutT>
+      template<typename LayoutT>
       struct mat_mult_matrix_index
       {
         static __device__ unsigned int apply(unsigned int i, unsigned int j,
@@ -187,7 +187,7 @@ namespace viennacl
       };
 
       /** \cond */
-      template <>
+      template<>
       struct mat_mult_matrix_index<viennacl::column_major>
       {
         static __device__ unsigned int apply(unsigned int i, unsigned int j,
@@ -201,7 +201,7 @@ namespace viennacl
       /** \endcond */
 
 
-      template <typename DMatIndexT, typename ResultIndexT, typename T>
+      template<typename DMatIndexT, typename ResultIndexT, typename T>
       __global__ void compressed_matrix_d_mat_mul_kernel(
                 const unsigned int * sp_mat_row_indices,
                 const unsigned int * sp_mat_col_indices,
@@ -357,7 +357,7 @@ namespace viennacl
       }
 
 
-      template <typename DMatIndexT, typename ResultIndexT, typename T>
+      template<typename DMatIndexT, typename ResultIndexT, typename T>
       __global__ void compressed_matrix_d_tr_mat_mul_kernel(
                 const unsigned int * sp_mat_row_indices,
                 const unsigned int * sp_mat_col_indices,
@@ -519,7 +519,7 @@ namespace viennacl
       // triangular solves for compressed_matrix
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void compressed_matrix_diagonal_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -789,7 +789,7 @@ namespace viennacl
       // Compressed Compressed Matrix
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void compressed_compressed_matrix_vec_mul_kernel(
                 const unsigned int * row_jumper,
                 const unsigned int * row_indices,
@@ -861,7 +861,7 @@ namespace viennacl
       namespace detail
       {
 
-        template <typename T>
+        template<typename T>
         __global__ void coo_row_info_extractor( const unsigned int * coords, //(row_index, column_index)
                                                 const T * elements,
                                                 const unsigned int * group_boundaries,
@@ -1006,7 +1006,7 @@ namespace viennacl
       } //namespace detail
 
 
-      template <typename T>
+      template<typename T>
       __global__ void coordinate_matrix_vec_mul_kernel(const unsigned int * coords, //(row_index, column_index)
                                                        const T * elements,
                                                        const unsigned int * group_boundaries,
@@ -1106,7 +1106,7 @@ namespace viennacl
 
 
 
-      template <typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT>
+      template<typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT>
       __global__ void coordinate_matrix_d_mat_mul_kernel(const unsigned int * coords, //(row_index, column_index)
                                                          const ScalarType * elements,
                                                          const unsigned int * group_boundaries,
@@ -1301,7 +1301,7 @@ namespace viennacl
 
       }
 
-      template <typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT>
+      template<typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT>
       __global__ void coordinate_matrix_d_tr_mat_mul_kernel(const unsigned int * coords, //(row_index, column_index)
                                                            const ScalarType * elements,
                                                            const unsigned int * group_boundaries,
@@ -1501,7 +1501,7 @@ namespace viennacl
       // ELL Matrix
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void ell_matrix_vec_mul_kernel(const unsigned int * coords,
                                                 const T * elements,
                                                 const T * x,
@@ -1571,7 +1571,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("ell_matrix_vec_mul_kernel");
       }
 
-      template <typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT >
+      template<typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT >
       __global__ void ell_matrix_d_mat_mul_kernel(const unsigned int * sp_mat_coords,
                                                   const ScalarType * sp_mat_elements,
                                                   unsigned int sp_mat_row_num,
@@ -1743,7 +1743,7 @@ namespace viennacl
         }
       }
 
-      template <typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT >
+      template<typename DMatIndexT, typename ResultIndexT, typename ScalarType, typename NumericT >
       __global__ void ell_matrix_d_tr_mat_mul_kernel(const unsigned int * sp_mat_coords,
                                                   const ScalarType * sp_mat_elements,
                                                   unsigned int sp_mat_row_num,
@@ -1925,7 +1925,7 @@ namespace viennacl
       // SELL-C-\sigma Matrix
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void sliced_ell_matrix_vec_mul_kernel(const unsigned int * columns_per_block,
                                                        const unsigned int * column_indices,
                                                        const unsigned int * block_start,
@@ -1998,7 +1998,7 @@ namespace viennacl
       //
 
 
-      template <typename T>
+      template<typename T>
       __global__ void hyb_matrix_vec_mul_kernel(const unsigned int * ell_coords,
                                                 const T * ell_elements,
                                                 const unsigned int * csr_rows,
@@ -2084,7 +2084,7 @@ namespace viennacl
 
 
 
-      template <typename DMatIndexT, typename ResultIndexT, typename NumericT>
+      template<typename DMatIndexT, typename ResultIndexT, typename NumericT>
       __global__ void hyb_matrix_d_mat_mul_kernel(const unsigned int * ell_coords,
                                                 const NumericT * ell_elements,
                                                 const unsigned int * csr_rows,
@@ -2282,7 +2282,7 @@ namespace viennacl
 
 
 
-      template <typename DMatIndexT, typename ResultIndexT, typename NumericT>
+      template<typename DMatIndexT, typename ResultIndexT, typename NumericT>
       __global__ void hyb_matrix_d_tr_mat_mul_kernel(const unsigned int * ell_coords,
                                                 const NumericT * ell_elements,
                                                 const unsigned int * csr_rows,

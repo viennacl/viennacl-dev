@@ -70,7 +70,7 @@ static const unsigned int max_small_block_size = max_alignment;
 //
 // -------------------------------------------------------------
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
@@ -79,7 +79,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
    return 0;
 }
 
-template <typename ScalarType, typename VCLMatrixType>
+template<typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());

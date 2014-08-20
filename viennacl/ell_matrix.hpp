@@ -93,10 +93,10 @@ namespace viennacl
         const handle_type & handle2() const { return coords_; }
 
       #if defined(_MSC_VER) && _MSC_VER < 1500          //Visual Studio 2005 needs special treatment
-        template <typename CPU_MATRIX>
+        template<typename CPU_MATRIX>
         friend void copy(const CPU_MATRIX & cpu_matrix, ell_matrix & gpu_matrix );
       #else
-        template <typename CPU_MATRIX, typename T, unsigned int ALIGN>
+        template<typename CPU_MATRIX, typename T, unsigned int ALIGN>
         friend void copy(const CPU_MATRIX & cpu_matrix, ell_matrix<T, ALIGN> & gpu_matrix );
       #endif
 
@@ -109,7 +109,7 @@ namespace viennacl
         handle_type elements_;
     };
 
-    template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const CPU_MATRIX& cpu_matrix, ell_matrix<SCALARTYPE, ALIGNMENT>& gpu_matrix )
     {
       assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
@@ -161,7 +161,7 @@ namespace viennacl
       }
     }
 
-    template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const ell_matrix<SCALARTYPE, ALIGNMENT>& gpu_matrix, CPU_MATRIX& cpu_matrix)
     {
       assert( (viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
@@ -208,7 +208,7 @@ namespace viennacl
       namespace detail
       {
         // x = A * y
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -225,7 +225,7 @@ namespace viennacl
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -236,7 +236,7 @@ namespace viennacl
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -249,7 +249,7 @@ namespace viennacl
 
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -260,7 +260,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -273,7 +273,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const ell_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)

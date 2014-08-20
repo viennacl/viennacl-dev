@@ -59,7 +59,7 @@
 #include "vector-io.hpp"
 #include "../benchmarks/benchmark-utils.hpp"
 
-template <typename ScalarType>
+template<typename ScalarType>
 void run_test()
 {
   typedef mtl::dense2D<ScalarType>        MTL4DenseMatrix;

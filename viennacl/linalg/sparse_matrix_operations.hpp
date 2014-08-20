@@ -338,7 +338,7 @@ namespace viennacl
   * @param result The vector the result is written to.
   * @param proxy  An expression template proxy class holding v1, A, and v2.
   */
-  template <typename SCALARTYPE, typename SparseMatrixType>
+  template<typename SCALARTYPE, typename SparseMatrixType>
   typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                 viennacl::vector<SCALARTYPE> >::type
   operator+(viennacl::vector_base<SCALARTYPE> & result,
@@ -356,7 +356,7 @@ namespace viennacl
   * @param result The vector the result is written to.
   * @param proxy  An expression template proxy class.
   */
-  template <typename SCALARTYPE, typename SparseMatrixType>
+  template<typename SCALARTYPE, typename SparseMatrixType>
   typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                 viennacl::vector<SCALARTYPE> >::type
   operator-(viennacl::vector_base<SCALARTYPE> & result,

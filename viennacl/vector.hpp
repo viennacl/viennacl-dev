@@ -55,7 +55,7 @@ namespace viennacl
   * @tparam RHS   right hand side operand
   * @tparam OP    the operator
   */
-  template <typename LHS, typename RHS, typename OP>
+  template<typename LHS, typename RHS, typename OP>
   class vector_expression
   {
       typedef typename viennacl::result_of::reference_if_nonscalar<LHS>::type     lhs_reference_type;
@@ -249,15 +249,15 @@ namespace viennacl
   };
 
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base() : size_(0), start_(0), stride_(1), internal_size_(0) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(viennacl::backend::mem_handle & h,
                        size_type vec_size, size_type vec_start, size_type vec_stride)
     : size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(size_type vec_size, viennacl::context ctx)
     : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
   {
@@ -269,7 +269,7 @@ namespace viennacl
   }
 
   // CUDA or host memory:
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start, size_type stride)
     : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
   {
@@ -295,7 +295,7 @@ namespace viennacl
   }
 
 #ifdef VIENNACL_WITH_OPENCL
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(cl_mem existing_mem, size_type vec_size, size_type start, size_type stride, viennacl::context ctx)
     : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
   {
@@ -308,8 +308,8 @@ namespace viennacl
 #endif
 
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  template <typename LHS, typename RHS, typename OP>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<typename LHS, typename RHS, typename OP>
   vector_base<SCALARTYPE, SizeType, DistanceType>::vector_base(vector_expression<const LHS, const RHS, OP> const & proxy)
     : size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
   {
@@ -321,7 +321,7 @@ namespace viennacl
     self_type::operator=(proxy);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator=(const self_type & vec)
   {
     assert( ( (vec.size() == size()) || (size() == 0) )
@@ -353,8 +353,8 @@ namespace viennacl
   *
   * @param proxy  An expression template proxy class.
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  template <typename LHS, typename RHS, typename OP>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<typename LHS, typename RHS, typename OP>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator=(const vector_expression<const LHS, const RHS, OP> & proxy)
   {
     assert( ( (viennacl::traits::size(proxy) == size()) || (size() == 0) )
@@ -375,8 +375,8 @@ namespace viennacl
   }
 
   // assign vector range or vector slice
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  template <typename T>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<typename T>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>:: operator = (const vector_base<T> & v1)
   {
     assert( ( (v1.size() == size()) || (size() == 0) )
@@ -400,7 +400,7 @@ namespace viennacl
   }
 
   /** @brief Creates the vector from the supplied unit vector. */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator = (unit_vector<SCALARTYPE> const & v)
   {
     assert( ( (v.size() == size()) || (size() == 0) )
@@ -426,7 +426,7 @@ namespace viennacl
   }
 
   /** @brief Creates the vector from the supplied zero vector. */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator = (zero_vector<SCALARTYPE> const & v)
   {
     assert( ( (v.size() == size()) || (size() == 0) )
@@ -449,7 +449,7 @@ namespace viennacl
   }
 
   /** @brief Creates the vector from the supplied scalar vector. */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator = (scalar_vector<SCALARTYPE> const & v)
   {
     assert( ( (v.size() == size()) || (size() == 0) )
@@ -480,7 +480,7 @@ namespace viennacl
   //This is certainly not the nicest approach and will most likely by changed in the future, but it works :-)
 
   //matrix<>
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator=(const viennacl::vector_expression< const matrix_base<SCALARTYPE>, const vector_base<SCALARTYPE>, viennacl::op_prod> & proxy)
   {
     assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
@@ -501,7 +501,7 @@ namespace viennacl
 
 
   //transposed_matrix_proxy:
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator=(const vector_expression< const matrix_expression< const matrix_base<SCALARTYPE>, const matrix_base<SCALARTYPE>, op_trans >,
                                                  const vector_base<SCALARTYPE>,
                                                  op_prod> & proxy)
@@ -528,7 +528,7 @@ namespace viennacl
   //////////////////////////// Read-write access to an element of the vector start ///////////////////
   //read-write access to an element of the vector
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   entry_proxy<SCALARTYPE> vector_base<SCALARTYPE, SizeType, DistanceType>::operator()(size_type index)
   {
     assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
@@ -537,7 +537,7 @@ namespace viennacl
     return entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   entry_proxy<SCALARTYPE> vector_base<SCALARTYPE, SizeType, DistanceType>::operator[](size_type index)
   {
     assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
@@ -546,7 +546,7 @@ namespace viennacl
     return entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   const_entry_proxy<SCALARTYPE> vector_base<SCALARTYPE, SizeType, DistanceType>::operator()(size_type index) const
   {
     assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
@@ -555,7 +555,7 @@ namespace viennacl
     return const_entry_proxy<SCALARTYPE>(start_ + stride_ * index, elements_);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   const_entry_proxy<SCALARTYPE> vector_base<SCALARTYPE, SizeType, DistanceType>::operator[](size_type index) const
   {
     assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
@@ -570,7 +570,7 @@ namespace viennacl
   //
   // Operator overloads with implicit conversion (thus cannot be made global without introducing additional headache)
   //
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator += (const self_type & vec)
   {
     assert(vec.size() == size() && bool("Incompatible vector sizes!"));
@@ -582,7 +582,7 @@ namespace viennacl
     return *this;
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator -= (const self_type & vec)
   {
     assert(vec.size() == size() && bool("Incompatible vector sizes!"));
@@ -596,7 +596,7 @@ namespace viennacl
 
   /** @brief Scales a vector (or proxy) by a CPU scalar value
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator *= (SCALARTYPE val)
   {
     if (size() > 0)
@@ -607,7 +607,7 @@ namespace viennacl
 
   /** @brief Scales this vector by a CPU scalar value
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::operator /= (SCALARTYPE val)
   {
     if (size() > 0)
@@ -619,7 +619,7 @@ namespace viennacl
 
   /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_expression< const vector_base<SCALARTYPE, SizeType, DistanceType>, const SCALARTYPE, op_mult>
   vector_base<SCALARTYPE, SizeType, DistanceType>::operator * (SCALARTYPE value) const
   {
@@ -629,7 +629,7 @@ namespace viennacl
 
   /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_expression< const vector_base<SCALARTYPE, SizeType, DistanceType>, const SCALARTYPE, op_div>
   vector_base<SCALARTYPE, SizeType, DistanceType>::operator / (SCALARTYPE value) const
   {
@@ -638,7 +638,7 @@ namespace viennacl
 
 
   /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_expression<const vector_base<SCALARTYPE, SizeType, DistanceType>, const SCALARTYPE, op_mult>
   vector_base<SCALARTYPE, SizeType, DistanceType>::operator-() const
   {
@@ -650,33 +650,33 @@ namespace viennacl
   //
 
   /** @brief Returns an iterator pointing to the beginning of the vector  (STL like)*/
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   typename vector_base<SCALARTYPE, SizeType, DistanceType>::iterator vector_base<SCALARTYPE, SizeType, DistanceType>::begin()
   {
     return iterator(*this, 0, start_, stride_);
   }
 
   /** @brief Returns an iterator pointing to the end of the vector (STL like)*/
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   typename vector_base<SCALARTYPE, SizeType, DistanceType>::iterator vector_base<SCALARTYPE, SizeType, DistanceType>::end()
   {
     return iterator(*this, size(), start_, stride_);
   }
 
   /** @brief Returns a const-iterator pointing to the beginning of the vector (STL like)*/
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   typename vector_base<SCALARTYPE, SizeType, DistanceType>::const_iterator vector_base<SCALARTYPE, SizeType, DistanceType>::begin() const
   {
     return const_iterator(*this, 0, start_, stride_);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   typename vector_base<SCALARTYPE, SizeType, DistanceType>::const_iterator vector_base<SCALARTYPE, SizeType, DistanceType>::end() const
   {
     return const_iterator(*this, size(), start_, stride_);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::swap(self_type & other)
   {
     viennacl::linalg::vector_swap(*this, other);
@@ -684,13 +684,13 @@ namespace viennacl
   }
 
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   void vector_base<SCALARTYPE, SizeType, DistanceType>::clear()
   {
     viennacl::linalg::vector_assign(*this, cpu_value_type(0.0), true);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   vector_base<SCALARTYPE, SizeType, DistanceType> & vector_base<SCALARTYPE, SizeType, DistanceType>::fast_swap(self_type & other)
   {
     assert(this->size_ == other.size_ && bool("Vector size mismatch"));
@@ -698,7 +698,7 @@ namespace viennacl
     return *this;
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   void vector_base<SCALARTYPE, SizeType, DistanceType>::pad()
   {
     if (internal_size() != size())
@@ -708,7 +708,7 @@ namespace viennacl
     }
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   void vector_base<SCALARTYPE, SizeType, DistanceType>::switch_memory_context(viennacl::context new_ctx)
   {
     viennacl::backend::switch_memory_context<SCALARTYPE>(elements_, new_ctx);
@@ -718,19 +718,19 @@ namespace viennacl
   //void insert_element(unsigned int i, SCALARTYPE val){}
   //void erase_element(unsigned int i){}
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   void vector_base<SCALARTYPE, SizeType, DistanceType>::resize(size_type new_size, bool preserve)
   {
     resize_impl(new_size, viennacl::traits::context(*this), preserve);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   void vector_base<SCALARTYPE, SizeType, DistanceType>::resize(size_type new_size, viennacl::context ctx, bool preserve)
   {
     resize_impl(new_size, ctx, preserve);
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   void vector_base<SCALARTYPE, SizeType, DistanceType>::resize_impl(size_type new_size, viennacl::context ctx, bool preserve)
   {
     assert(new_size > 0 && bool("Positive size required when resizing vector!"));
@@ -803,7 +803,7 @@ namespace viennacl
     explicit vector(size_type vec_size, viennacl::ocl::context const & ctx) : base_type(vec_size, ctx) {}
 #endif
 
-    template <typename LHS, typename RHS, typename OP>
+    template<typename LHS, typename RHS, typename OP>
     vector(vector_expression<const LHS, const RHS, OP> const & proxy) : base_type(proxy) {}
 
     vector(const base_type & v) : base_type(v.size(), viennacl::traits::context(v))
@@ -840,7 +840,7 @@ namespace viennacl
     }
 
     // the following is used to circumvent an issue with Clang 3.0 when 'using base_type::operator=;' directly
-    template <typename T>
+    template<typename T>
     self_type & operator=(T const & other)
     {
       base_type::operator=(other);
@@ -882,7 +882,7 @@ namespace viennacl
   }; //vector
 
   /** @brief Tuple class holding pointers to multiple vectors. Mainly used as a temporary object returned from viennacl::tie(). */
-  template <typename ScalarT>
+  template<typename ScalarT>
   class vector_tuple
   {
     typedef vector_base<ScalarT>   VectorType;
@@ -964,34 +964,34 @@ namespace viennacl
   };
 
   // 2 args
-  template <typename ScalarT>
+  template<typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1) { return vector_tuple<ScalarT>(v0, v1); }
 
-  template <typename ScalarT>
+  template<typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1) { return vector_tuple<ScalarT>(v0, v1); }
 
   // 3 args
-  template <typename ScalarT>
+  template<typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
 
-  template <typename ScalarT>
+  template<typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
 
   // 4 args
-  template <typename ScalarT>
+  template<typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2, vector_base<ScalarT> const & v3)
   {
     return vector_tuple<ScalarT>(v0, v1, v2, v3);
   }
 
-  template <typename ScalarT>
+  template<typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2, vector_base<ScalarT>       & v3)
   {
     return vector_tuple<ScalarT>(v0, v1, v2, v3);
   }
 
   // 5 args
-  template <typename ScalarT>
+  template<typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0,
                             vector_base<ScalarT> const & v1,
                             vector_base<ScalarT> const & v2,
@@ -1008,7 +1008,7 @@ namespace viennacl
     return vector_tuple<ScalarT>(vec);
   }
 
-  template <typename ScalarT>
+  template<typename ScalarT>
   vector_tuple<ScalarT> tie(vector_base<ScalarT> & v0,
                             vector_base<ScalarT> & v1,
                             vector_base<ScalarT> & v2,
@@ -1043,7 +1043,7 @@ namespace viennacl
   * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
   * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
   void fast_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
                   const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
                   CPU_ITERATOR cpu_begin )
@@ -1076,7 +1076,7 @@ namespace viennacl
   * @param gpu_vec    A gpu vector.
   * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
   */
-  template <typename NumericT, typename CPUVECTOR>
+  template<typename NumericT, typename CPUVECTOR>
   void fast_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
   {
     viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
@@ -1093,7 +1093,7 @@ namespace viennacl
   * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
   * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
   void async_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
                   const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
                   CPU_ITERATOR cpu_begin )
@@ -1118,7 +1118,7 @@ namespace viennacl
   * @param gpu_vec    A gpu vector.
   * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
   */
-  template <typename NumericT, typename CPUVECTOR>
+  template<typename NumericT, typename CPUVECTOR>
   void async_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
   {
     viennacl::async_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
@@ -1131,7 +1131,7 @@ namespace viennacl
   * @param gpu_end    GPU constant iterator pointing to the end of the vector (STL-like)
   * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
   void copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
             const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
             CPU_ITERATOR cpu_begin )
@@ -1153,7 +1153,7 @@ namespace viennacl
   * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
   * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
   void copy(const vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
             const vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
             CPU_ITERATOR cpu_begin )
@@ -1169,7 +1169,7 @@ namespace viennacl
   * @param gpu_vec    A gpu vector
   * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
   */
-  template <typename NumericT, typename CPUVECTOR>
+  template<typename NumericT, typename CPUVECTOR>
   void copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
   {
     viennacl::copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
@@ -1178,14 +1178,14 @@ namespace viennacl
 
 
   #ifdef VIENNACL_WITH_EIGEN
-  template <unsigned int ALIGNMENT>
+  template<unsigned int ALIGNMENT>
   void copy(vector<float, ALIGNMENT> const & gpu_vec,
             Eigen::VectorXf & eigen_vec)
   {
     viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), &(eigen_vec[0]));
   }
 
-  template <unsigned int ALIGNMENT>
+  template<unsigned int ALIGNMENT>
   void copy(vector<double, ALIGNMENT> & gpu_vec,
             Eigen::VectorXd & eigen_vec)
   {
@@ -1209,7 +1209,7 @@ namespace viennacl
   * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
   * @param gpu_begin  Output iterator for the gpu vector. The gpu iterator must be incrementable (cpu_end - cpu_begin) times, otherwise the result is undefined.
   */
-  template <typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
+  template<typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
   void fast_copy(CPU_ITERATOR const & cpu_begin,
                   CPU_ITERATOR const & cpu_end,
                   vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
@@ -1243,7 +1243,7 @@ namespace viennacl
   * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
   * @param gpu_vec    The gpu vector.
   */
-  template <typename CPUVECTOR, typename NumericT>
+  template<typename CPUVECTOR, typename NumericT>
   void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
   {
     viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
@@ -1259,7 +1259,7 @@ namespace viennacl
   * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
   * @param gpu_begin  Output iterator for the gpu vector. The gpu iterator must be incrementable (cpu_end - cpu_begin) times, otherwise the result is undefined.
   */
-  template <typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
+  template<typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
   void async_copy(CPU_ITERATOR const & cpu_begin,
                   CPU_ITERATOR const & cpu_end,
                   vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
@@ -1284,7 +1284,7 @@ namespace viennacl
   * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
   * @param gpu_vec    The gpu vector.
   */
-  template <typename CPUVECTOR, typename NumericT>
+  template<typename CPUVECTOR, typename NumericT>
   void async_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
   {
     viennacl::async_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
@@ -1297,7 +1297,7 @@ namespace viennacl
   * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
   * @param gpu_begin  Output iterator for the gpu vector. The gpu vector must be at least as long as the cpu vector!
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
   void copy(CPU_ITERATOR const & cpu_begin,
             CPU_ITERATOR const & cpu_end,
             vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin)
@@ -1319,7 +1319,7 @@ namespace viennacl
   * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
   * @param gpu_vec    The gpu vector.
   */
-  template <typename CPUVECTOR, typename T>
+  template<typename CPUVECTOR, typename T>
   void copy(const CPUVECTOR & cpu_vec, vector_base<T> & gpu_vec)
   {
     viennacl::copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
@@ -1327,7 +1327,7 @@ namespace viennacl
 
 
   #ifdef VIENNACL_WITH_EIGEN
-  template <unsigned int ALIGNMENT>
+  template<unsigned int ALIGNMENT>
   void copy(Eigen::VectorXf const & eigen_vec,
             vector<float, ALIGNMENT> & gpu_vec)
   {
@@ -1337,7 +1337,7 @@ namespace viennacl
     viennacl::fast_copy(entries.begin(), entries.end(), gpu_vec.begin());
   }
 
-  template <unsigned int ALIGNMENT>
+  template<unsigned int ALIGNMENT>
   void copy(Eigen::VectorXd const & eigen_vec,
             vector<double, ALIGNMENT> & gpu_vec)
   {
@@ -1359,7 +1359,7 @@ namespace viennacl
   * @param gpu_src_end      GPU iterator pointing to the end of the vector (STL-like)
   * @param gpu_dest_begin   Output iterator for the gpu vector. The gpu_dest vector must be at least as long as the gpu_src vector!
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT_SRC, unsigned int ALIGNMENT_DEST>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT_SRC, unsigned int ALIGNMENT_DEST>
   void copy(const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_begin,
             const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_end,
             vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin)
@@ -1387,7 +1387,7 @@ namespace viennacl
   * @param gpu_src_end     GPU iterator pointing to the end of the vector (STL-like)
   * @param gpu_dest_begin  Output iterator for the gpu vector. The gpu vector must be at least as long as the cpu vector!
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT_SRC, unsigned int ALIGNMENT_DEST>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT_SRC, unsigned int ALIGNMENT_DEST>
   void copy(vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_begin,
             vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_end,
             vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin)
@@ -1402,7 +1402,7 @@ namespace viennacl
   * @param gpu_src_vec    A gpu vector
   * @param gpu_dest_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT_SRC, unsigned int ALIGNMENT_DEST>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT_SRC, unsigned int ALIGNMENT_DEST>
   void copy(vector<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_vec,
             vector<SCALARTYPE, ALIGNMENT_DEST> & gpu_dest_vec )
   {
@@ -1419,7 +1419,7 @@ namespace viennacl
   * @param os   STL output stream
   * @param val  The vector that should be printed
   */
-  template <typename T>
+  template<typename T>
   std::ostream & operator<<(std::ostream & os, vector_base<T> const & val)
   {
     std::vector<T> tmp(val.size());
@@ -1435,7 +1435,7 @@ namespace viennacl
     return os;
   }
 
-  template <typename LHS, typename RHS, typename OP>
+  template<typename LHS, typename RHS, typename OP>
   std::ostream & operator<<(std::ostream & os, vector_expression<LHS, RHS, OP> const & proxy)
 
   {
@@ -1450,7 +1450,7 @@ namespace viennacl
   * @param vec1   The first vector
   * @param vec2   The second vector
   */
-  template <typename T>
+  template<typename T>
   void swap(vector_base<T> & vec1, vector_base<T> & vec2)
   {
     viennacl::linalg::vector_swap(vec1, vec2);
@@ -1461,7 +1461,7 @@ namespace viennacl
   * @param v1   The first vector
   * @param v2   The second vector
   */
-  template <typename SCALARTYPE, unsigned int ALIGNMENT>
+  template<typename SCALARTYPE, unsigned int ALIGNMENT>
   vector<SCALARTYPE, ALIGNMENT> & fast_swap(vector<SCALARTYPE, ALIGNMENT> & v1,
                                             vector<SCALARTYPE, ALIGNMENT> & v2)
   {
@@ -1485,7 +1485,7 @@ namespace viennacl
 
   /** @brief Scales this vector by a GPU scalar value
   */
-  template <typename T, typename S1>
+  template<typename T, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 vector_base<T> &
                               >::type
@@ -1505,7 +1505,7 @@ namespace viennacl
 
   /** @brief Scales this vector by a GPU scalar value
   */
-  template <typename T, typename S1>
+  template<typename T, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 vector_base<T> &
                               >::type
@@ -1528,7 +1528,7 @@ namespace viennacl
   * @param proxy1  Left hand side vector expression
   * @param proxy2  Right hand side vector expression
   */
-  template <typename LHS1, typename RHS1, typename OP1,
+  template<typename LHS1, typename RHS1, typename OP1,
             typename LHS2, typename RHS2, typename OP2>
   vector_expression< const vector_expression< LHS1, RHS1, OP1>,
                      const vector_expression< LHS2, RHS2, OP2>,
@@ -1547,7 +1547,7 @@ namespace viennacl
   * @param proxy   Left hand side vector expression
   * @param vec     Right hand side vector (also -range and -slice is allowed)
   */
-  template <typename LHS, typename RHS, typename OP, typename T>
+  template<typename LHS, typename RHS, typename OP, typename T>
   vector_expression< const vector_expression<LHS, RHS, OP>,
                      const vector_base<T>,
                      viennacl::op_add>
@@ -1565,7 +1565,7 @@ namespace viennacl
   * @param proxy   Left hand side vector expression
   * @param vec     Right hand side vector (also -range and -slice is allowed)
   */
-  template <typename T, typename LHS, typename RHS, typename OP>
+  template<typename T, typename LHS, typename RHS, typename OP>
   vector_expression< const vector_base<T>,
                      const vector_expression<LHS, RHS, OP>,
                      viennacl::op_add>
@@ -1580,7 +1580,7 @@ namespace viennacl
 
   /** @brief Returns an expression template object for adding up two vectors, i.e. v1 + v2
   */
-  template <typename T>
+  template<typename T>
   vector_expression< const vector_base<T>, const vector_base<T>, op_add>
   operator + (const vector_base<T> & v1, const vector_base<T> & v2)
   {
@@ -1598,7 +1598,7 @@ namespace viennacl
   * @param proxy1  Left hand side vector expression
   * @param proxy2  Right hand side vector expression
   */
-  template <typename LHS1, typename RHS1, typename OP1,
+  template<typename LHS1, typename RHS1, typename OP1,
             typename LHS2, typename RHS2, typename OP2>
   vector_expression< const vector_expression< LHS1, RHS1, OP1>,
                      const vector_expression< LHS2, RHS2, OP2>,
@@ -1618,7 +1618,7 @@ namespace viennacl
   * @param proxy   Left hand side vector expression
   * @param vec     Right hand side vector (also -range and -slice is allowed)
   */
-  template <typename LHS, typename RHS, typename OP, typename T>
+  template<typename LHS, typename RHS, typename OP, typename T>
   vector_expression< const vector_expression<LHS, RHS, OP>,
                      const vector_base<T>,
                      viennacl::op_sub>
@@ -1636,7 +1636,7 @@ namespace viennacl
   * @param proxy   Left hand side vector expression
   * @param vec     Right hand side vector (also -range and -slice is allowed)
   */
-  template <typename T, typename LHS, typename RHS, typename OP>
+  template<typename T, typename LHS, typename RHS, typename OP>
   vector_expression< const vector_base<T>,
                      const vector_expression<LHS, RHS, OP>,
                      viennacl::op_sub>
@@ -1651,7 +1651,7 @@ namespace viennacl
 
   /** @brief Returns an expression template object for subtracting two vectors, i.e. v1 - v2
   */
-  template <typename T>
+  template<typename T>
   vector_expression< const vector_base<T>, const vector_base<T>, op_sub>
   operator - (const vector_base<T> & v1, const vector_base<T> & v2)
   {
@@ -1669,7 +1669,7 @@ namespace viennacl
   * @param value   The host scalar (float or double)
   * @param vec     A ViennaCL vector
   */
-  template <typename S1, typename T>
+  template<typename S1, typename T>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 vector_expression< const vector_base<T>, const S1, op_mult> >::type
   operator * (S1 const & value, vector_base<T> const & vec)
@@ -1682,7 +1682,7 @@ namespace viennacl
   * @param value   The host scalar (float or double)
   * @param vec     A ViennaCL vector
   */
-  template <typename T>
+  template<typename T>
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (char value, vector_base<T> const & vec)
   {
@@ -1694,7 +1694,7 @@ namespace viennacl
   * @param value   The host scalar (float or double)
   * @param vec     A ViennaCL vector
   */
-  template <typename T>
+  template<typename T>
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (short value, vector_base<T> const & vec)
   {
@@ -1706,7 +1706,7 @@ namespace viennacl
   * @param value   The host scalar (float or double)
   * @param vec     A ViennaCL vector
   */
-  template <typename T>
+  template<typename T>
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (int value, vector_base<T> const & vec)
   {
@@ -1718,7 +1718,7 @@ namespace viennacl
   * @param value   The host scalar (float or double)
   * @param vec     A ViennaCL vector
   */
-  template <typename T>
+  template<typename T>
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (long value, vector_base<T> const & vec)
   {
@@ -1733,7 +1733,7 @@ namespace viennacl
   * @param expr    The scalar expression
   * @param vec     A ViennaCL vector
   */
-  template <typename LHS, typename RHS, typename OP, typename T>
+  template<typename LHS, typename RHS, typename OP, typename T>
   vector_expression< const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult>
   operator * (scalar_expression<LHS, RHS, OP> const & expr, vector_base<T> const & vec)
   {
@@ -1742,7 +1742,7 @@ namespace viennacl
 
   /** @brief Scales the vector by a scalar 'alpha' and returns an expression template
   */
-  template <typename T, typename S1>
+  template<typename T, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 vector_expression< const vector_base<T>, const S1, op_mult> >::type
   operator * (vector_base<T> const & vec, S1 const & value)
@@ -1750,7 +1750,7 @@ namespace viennacl
     return vector_expression< const vector_base<T>, const S1, op_mult>(vec, value);
   }
 
-  template <typename T>
+  template<typename T>
   vector_expression< const vector_base<T>, const T, op_mult>
   operator * (vector_base<T> const & vec, T const & value)
   {
@@ -1762,7 +1762,7 @@ namespace viennacl
   * @param proxy   Left hand side vector expression
   * @param val     Right hand side scalar
   */
-  template <typename LHS, typename RHS, typename OP, typename S1>
+  template<typename LHS, typename RHS, typename OP, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 viennacl::vector_expression<const vector_expression<LHS, RHS, OP>, const S1, op_mult>  >::type
   operator * (vector_expression< LHS, RHS, OP> const & proxy,
@@ -1776,7 +1776,7 @@ namespace viennacl
   * @param val     Right hand side scalar
   * @param proxy   Left hand side vector expression
   */
-  template <typename S1, typename LHS, typename RHS, typename OP>
+  template<typename S1, typename LHS, typename RHS, typename OP>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 viennacl::vector_expression<const vector_expression<LHS, RHS, OP>, const S1, op_mult>  >::type
   operator * (S1 const & val,
@@ -1794,7 +1794,7 @@ namespace viennacl
   * @param proxy   Left hand side vector expression
   * @param val     Right hand side scalar
   */
-  template <typename S1, typename LHS, typename RHS, typename OP>
+  template<typename S1, typename LHS, typename RHS, typename OP>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 viennacl::vector_expression<const vector_expression<LHS, RHS, OP>, const S1, op_div>  >::type
   operator / (vector_expression< LHS, RHS, OP> const & proxy,
@@ -1806,7 +1806,7 @@ namespace viennacl
 
   /** @brief Returns an expression template for scaling the vector by a GPU scalar 'alpha'
   */
-  template <typename T, typename S1>
+  template<typename T, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 vector_expression< const vector_base<T>, const S1, op_div> >::type
   operator / (vector_base<T> const & v1, S1 const & s1)
@@ -1827,7 +1827,7 @@ namespace viennacl
     namespace detail
     {
       // x = y
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_assign, vector_base<T> >
       {
         static void apply(vector_base<T> & lhs, vector_base<T> const & rhs)
@@ -1837,7 +1837,7 @@ namespace viennacl
       };
 
       // x = inner_prod(z, {y0, y1, ...})
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_base<T>, const vector_tuple<T>, op_inner_prod> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_tuple<T>, op_inner_prod> const & rhs)
@@ -1847,7 +1847,7 @@ namespace viennacl
       };
 
       // x += y
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_inplace_add, vector_base<T> >
       {
         static void apply(vector_base<T> & lhs, vector_base<T> const & rhs)
@@ -1857,7 +1857,7 @@ namespace viennacl
       };
 
       // x -= y
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_base<T> >
       {
         static void apply(vector_base<T> & lhs, vector_base<T> const & rhs)
@@ -1870,11 +1870,11 @@ namespace viennacl
 
 
       // x = alpha * y
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_base<T>, const ScalarType, op_mult> >
       {
         // generic case: ScalarType is a scalar expression
-        template <typename LHS, typename RHS, typename OP>
+        template<typename LHS, typename RHS, typename OP>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult> const & proxy)
         {
           T alpha = proxy.rhs();
@@ -1893,11 +1893,11 @@ namespace viennacl
       };
 
       // x += alpha * y
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const vector_base<T>, const ScalarType, op_mult> >
       {
         // generic case: ScalarType is a scalar expression
-        template <typename LHS, typename RHS, typename OP>
+        template<typename LHS, typename RHS, typename OP>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult> const & proxy)
         {
           T alpha = proxy.rhs();
@@ -1916,11 +1916,11 @@ namespace viennacl
       };
 
       // x -= alpha * y
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const vector_base<T>, const ScalarType, op_mult> >
       {
         // generic case: ScalarType is a scalar expression
-        template <typename LHS, typename RHS, typename OP>
+        template<typename LHS, typename RHS, typename OP>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const scalar_expression<LHS, RHS, OP>, op_mult> const & proxy)
         {
           T alpha = proxy.rhs();
@@ -1942,7 +1942,7 @@ namespace viennacl
       ///////////// x  OP  vec_expr * alpha ////////////////////////
 
       // x = alpha * vec_expr
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
       {
           static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
@@ -1953,7 +1953,7 @@ namespace viennacl
       };
 
       // x += alpha * vec_expr
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
       {
           static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
@@ -1964,7 +1964,7 @@ namespace viennacl
       };
 
       // x -= alpha * vec_expr
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
       {
           static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
@@ -1978,7 +1978,7 @@ namespace viennacl
       ///////////// x  OP  y / alpha ////////////////////////
 
       // x = y / alpha
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_base<T>, const ScalarType, op_div> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const ScalarType, op_div> const & proxy)
@@ -1988,7 +1988,7 @@ namespace viennacl
       };
 
       // x += y / alpha
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const vector_base<T>, const ScalarType, op_div> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const ScalarType, op_div> const & proxy)
@@ -1998,7 +1998,7 @@ namespace viennacl
       };
 
       // x -= y / alpha
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const vector_base<T>, const ScalarType, op_div> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const ScalarType, op_div> const & proxy)
@@ -2011,7 +2011,7 @@ namespace viennacl
       ///////////// x  OP  vec_expr / alpha ////////////////////////
 
       // x = vec_expr / alpha
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
       {
           static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
@@ -2022,7 +2022,7 @@ namespace viennacl
       };
 
       // x += vec_expr / alpha
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
       {
           static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
@@ -2033,7 +2033,7 @@ namespace viennacl
       };
 
       // x -= vec_expr / alpha
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
       {
           static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
@@ -2046,11 +2046,11 @@ namespace viennacl
 
 
       // generic x = vec_expr1 + vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const RHS, op_add> >
       {
         // generic x = vec_expr1 + vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_add> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2160,11 +2160,11 @@ namespace viennacl
 
 
       // generic x += vec_expr1 + vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const LHS, const RHS, op_add> >
       {
         // generic x += vec_expr1 + vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_add> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2192,7 +2192,7 @@ namespace viennacl
         }
 
         // x += alpha * y + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   const vector_base<T>,
                                                                   op_add> const & proxy)
@@ -2203,7 +2203,7 @@ namespace viennacl
         }
 
         // x += y / alpha + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   const vector_base<T>,
                                                                   op_add> const & proxy)
@@ -2214,7 +2214,7 @@ namespace viennacl
         }
 
         // x += y + beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   op_add> const & proxy)
@@ -2225,7 +2225,7 @@ namespace viennacl
         }
 
         // x += y + z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   op_add> const & proxy)
@@ -2236,7 +2236,7 @@ namespace viennacl
         }
 
         // x += alpha * y + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -2247,7 +2247,7 @@ namespace viennacl
         }
 
         // x += alpha * y + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -2258,7 +2258,7 @@ namespace viennacl
         }
 
         // x += y / alpha + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -2269,7 +2269,7 @@ namespace viennacl
         }
 
         // x += y / alpha + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -2283,11 +2283,11 @@ namespace viennacl
 
 
       // generic x -= vec_expr1 + vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const LHS, const RHS, op_add> >
       {
         // generic x -= vec_expr1 + vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_add> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2315,7 +2315,7 @@ namespace viennacl
         }
 
         // x -= alpha * y + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   const vector_base<T>,
                                                                   op_add> const & proxy)
@@ -2326,7 +2326,7 @@ namespace viennacl
         }
 
         // x -= y / alpha + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   const vector_base<T>,
                                                                   op_add> const & proxy)
@@ -2337,7 +2337,7 @@ namespace viennacl
         }
 
         // x -= y + beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   op_add> const & proxy)
@@ -2348,7 +2348,7 @@ namespace viennacl
         }
 
         // x -= y + z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   op_add> const & proxy)
@@ -2359,7 +2359,7 @@ namespace viennacl
         }
 
         // x -= alpha * y + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -2370,7 +2370,7 @@ namespace viennacl
         }
 
         // x -= alpha * y + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -2381,7 +2381,7 @@ namespace viennacl
         }
 
         // x -= y / alpha + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -2392,7 +2392,7 @@ namespace viennacl
         }
 
         // x -= y / alpha + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -2410,11 +2410,11 @@ namespace viennacl
 
 
       // generic x = vec_expr1 - vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const RHS, op_sub> >
       {
         // generic x = vec_expr1 - vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_sub> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2442,7 +2442,7 @@ namespace viennacl
         }
 
         // x = alpha * y - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   const vector_base<T>,
                                                                   op_sub> const & proxy)
@@ -2453,7 +2453,7 @@ namespace viennacl
         }
 
         // x = y / alpha - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   const vector_base<T>,
                                                                   op_sub> const & proxy)
@@ -2464,7 +2464,7 @@ namespace viennacl
         }
 
         // x = y - beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2475,7 +2475,7 @@ namespace viennacl
         }
 
         // x = y - z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   op_sub> const & proxy)
@@ -2486,7 +2486,7 @@ namespace viennacl
         }
 
         // x = alpha * y - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2497,7 +2497,7 @@ namespace viennacl
         }
 
         // x = alpha * y - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2508,7 +2508,7 @@ namespace viennacl
         }
 
         // x = y / alpha - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2519,7 +2519,7 @@ namespace viennacl
         }
 
         // x = y / alpha - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2532,11 +2532,11 @@ namespace viennacl
 
 
       // generic x += vec_expr1 - vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const LHS, const RHS, op_sub> >
       {
         // generic x += vec_expr1 - vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_sub> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2564,7 +2564,7 @@ namespace viennacl
         }
 
         // x += alpha * y - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   const vector_base<T>,
                                                                   op_sub> const & proxy)
@@ -2575,7 +2575,7 @@ namespace viennacl
         }
 
         // x += y / alpha - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   const vector_base<T>,
                                                                   op_sub> const & proxy)
@@ -2586,7 +2586,7 @@ namespace viennacl
         }
 
         // x += y - beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2597,7 +2597,7 @@ namespace viennacl
         }
 
         // x += y - z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   op_sub> const & proxy)
@@ -2608,7 +2608,7 @@ namespace viennacl
         }
 
         // x += alpha * y - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2619,7 +2619,7 @@ namespace viennacl
         }
 
         // x += alpha * y - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2630,7 +2630,7 @@ namespace viennacl
         }
 
         // x += y / alpha - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2641,7 +2641,7 @@ namespace viennacl
         }
 
         // x += y / alpha - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2655,11 +2655,11 @@ namespace viennacl
 
 
       // generic x -= vec_expr1 - vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const LHS, const RHS, op_sub> >
       {
         // generic x -= vec_expr1 - vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(vector_base<T> & lhs, vector_expression<const LHS1, const RHS1, op_sub> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2687,7 +2687,7 @@ namespace viennacl
         }
 
         // x -= alpha * y - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   const vector_base<T>,
                                                                   op_sub> const & proxy)
@@ -2698,7 +2698,7 @@ namespace viennacl
         }
 
         // x -= y / alpha - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   const vector_base<T>,
                                                                   op_sub> const & proxy)
@@ -2709,7 +2709,7 @@ namespace viennacl
         }
 
         // x -= y - beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2720,7 +2720,7 @@ namespace viennacl
         }
 
         // x -= y - z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType, op_div>,
                                                                   op_sub> const & proxy)
@@ -2731,7 +2731,7 @@ namespace viennacl
         }
 
         // x -= alpha * y - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2742,7 +2742,7 @@ namespace viennacl
         }
 
         // x -= alpha * y - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_mult>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2753,7 +2753,7 @@ namespace viennacl
         }
 
         // x -= y / alpha - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2764,7 +2764,7 @@ namespace viennacl
         }
 
         // x -= y / alpha - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const vector_base<T>, const ScalarType1, op_div>,
                                                                   const vector_expression<const vector_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2795,7 +2795,7 @@ namespace viennacl
       //////////////////// Element-wise operations ////////////////////////////////////////
 
       // generic x = vec_expr1 .* vec_expr2:
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
         // x = y .* z  or  x = y ./ z
@@ -2805,7 +2805,7 @@ namespace viennacl
         }
 
         // x = y .* vec_expr  or  x = y ./ vec_expr
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
@@ -2813,7 +2813,7 @@ namespace viennacl
         }
 
         // x = vec_expr .* z  or  x = vec_expr ./ z
-        template <typename LHS1, typename RHS1, typename OP1>
+        template<typename LHS1, typename RHS1, typename OP1>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
@@ -2821,7 +2821,7 @@ namespace viennacl
         }
 
         // x = vec_expr .* vec_expr  or  z = vec_expr .* vec_expr
-        template <typename LHS1, typename RHS1, typename OP1,
+        template<typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
                                                                   const vector_expression<const LHS2, const RHS2, OP2>,
@@ -2834,7 +2834,7 @@ namespace viennacl
       };
 
       // generic x += vec_expr1 .* vec_expr2:
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
         // x += y .* z  or  x += y ./ z
@@ -2845,7 +2845,7 @@ namespace viennacl
         }
 
         // x += y .* vec_expr  or  x += y ./ vec_expr
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>,  op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
@@ -2855,7 +2855,7 @@ namespace viennacl
         }
 
         // x += vec_expr .* z  or  x += vec_expr ./ z
-        template <typename LHS1, typename RHS1, typename OP1>
+        template<typename LHS1, typename RHS1, typename OP1>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
@@ -2865,7 +2865,7 @@ namespace viennacl
         }
 
         // x += vec_expr .* vec_expr  or  x += vec_expr ./ vec_expr
-        template <typename LHS1, typename RHS1, typename OP1,
+        template<typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
                                                                   const vector_expression<const LHS2, const RHS2, OP2>,
@@ -2880,7 +2880,7 @@ namespace viennacl
       };
 
       // generic x -= vec_expr1 .* vec_expr2:
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
 
@@ -2892,7 +2892,7 @@ namespace viennacl
         }
 
         // x -= y .* vec_expr  or  x -= y ./ vec_expr
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.rhs());
@@ -2902,7 +2902,7 @@ namespace viennacl
         }
 
         // x -= vec_expr .* z  or  x -= vec_expr ./ z
-        template <typename LHS1, typename RHS1, typename OP1>
+        template<typename LHS1, typename RHS1, typename OP1>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>, const vector_base<T>, op_element_binary<OP> > const & proxy)
         {
           vector<T> temp(proxy.lhs());
@@ -2912,7 +2912,7 @@ namespace viennacl
         }
 
         // x -= vec_expr .* vec_expr  or  x -= vec_expr ./ vec_expr
-        template <typename LHS1, typename RHS1, typename OP1,
+        template<typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS1, const RHS1, OP1>,
                                                                   const vector_expression<const LHS2, const RHS2, OP2>,
@@ -2928,7 +2928,7 @@ namespace viennacl
 
       //////////////// unary expressions
 
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const RHS, op_element_unary<OP> > >
       {
         // x = OP(y)
@@ -2938,7 +2938,7 @@ namespace viennacl
         }
 
         // x = OP(vec_expr)
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_unary<OP> > const & proxy)
@@ -2948,7 +2948,7 @@ namespace viennacl
         }
       };
 
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const LHS, const RHS, op_element_unary<OP> > >
       {
         // x += OP(y)
@@ -2959,7 +2959,7 @@ namespace viennacl
         }
 
         // x += OP(vec_expr)
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_unary<OP> > const & proxy)
@@ -2970,7 +2970,7 @@ namespace viennacl
         }
       };
 
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const LHS, const RHS, op_element_unary<OP> > >
       {
         // x -= OP(y)
@@ -2981,7 +2981,7 @@ namespace viennacl
         }
 
         // x -= OP(vec_expr)
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(vector_base<T> & lhs, vector_expression<const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   const vector_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_unary<OP> > const & proxy)

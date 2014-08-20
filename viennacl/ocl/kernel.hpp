@@ -58,7 +58,7 @@ namespace viennacl
     /** @brief Represents an OpenCL kernel within ViennaCL */
     class kernel
     {
-      template <typename KernelType>
+      template<typename KernelType>
       friend void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue);
 
       template<cl_kernel_info param>
@@ -275,7 +275,7 @@ namespace viennacl
 
 
       /** @brief Convenience function for setting one kernel parameter */
-      template <typename T0>
+      template<typename T0>
       kernel & operator()(T0 const & t0)
       {
          arg(0, t0);
@@ -283,7 +283,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting two kernel parameters */
-      template <typename T0, typename T1>
+      template<typename T0, typename T1>
       kernel & operator()(T0 const & t0, T1 const & t1)
       {
          arg(0, t0); arg(1, t1);
@@ -291,7 +291,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting three kernel parameters */
-      template <typename T0, typename T1, typename T2>
+      template<typename T0, typename T1, typename T2>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2)
       {
          arg(0, t0); arg(1, t1); arg(2, t2);
@@ -299,7 +299,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting four kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3>
+      template<typename T0, typename T1, typename T2, typename T3>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3)
       {
          arg(0, t0); arg(1, t1); arg(2, t2); arg(3, t3);
@@ -307,7 +307,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting five kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4>
+      template<typename T0, typename T1, typename T2, typename T3, typename T4>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4)
       {
          arg(0, t0); arg(1, t1); arg(2, t2); arg(3, t3); arg(4, t4);
@@ -315,7 +315,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting six kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5)
       {
          arg(0, t0); arg(1, t1); arg(2, t2); arg(3, t3); arg(4, t4); arg(5, t5);
@@ -323,7 +323,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting seven kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5, T6 const & t6)
       {
          arg(0, t0); arg(1, t1); arg(2, t2); arg(3, t3); arg(4, t4); arg(5, t5); arg(6, t6);
@@ -331,7 +331,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting eight kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5, T6 const & t6, T7 const & t7)
       {
          arg(0, t0); arg(1, t1); arg(2, t2); arg(3, t3); arg(4, t4); arg(5, t5); arg(6, t6); arg(7, t7);
@@ -339,7 +339,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting nine kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8)
       {
          arg(0, t0); arg(1, t1); arg(2, t2); arg(3, t3); arg(4, t4); arg(5, t5); arg(6, t6); arg(7, t7); arg(8, t8);
@@ -347,7 +347,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting ten kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4,
                 typename T5, typename T6, typename T7, typename T8, typename T9>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4,
                           T5 const & t5, T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9)
@@ -357,7 +357,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting eleven kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5,
                           T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9, T10 const & t10)
@@ -367,7 +367,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting twelve kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5,
                           T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9, T10 const & t10, T11 const & t11)
@@ -378,7 +378,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting thirteen kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5,
                           T6 const & t6, T7 const & t7, T8 const & t8, T9 const & t9, T10 const & t10, T11 const & t11, T12 const & t12)
@@ -389,7 +389,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting fourteen kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5,
@@ -403,7 +403,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting fifteen kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5,
@@ -417,7 +417,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting sixteen kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5,
@@ -431,7 +431,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting seventeen kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5,
@@ -445,7 +445,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting eighteen kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17>
       kernel & operator()(T0 const & t0, T1 const & t1, T2 const & t2, T3 const & t3, T4 const & t4, T5 const & t5,
@@ -459,7 +459,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting nineteen kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18>
@@ -477,7 +477,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting twenty kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19>
@@ -495,7 +495,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting twentyone kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20>
@@ -513,7 +513,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting twentytwo kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21>
@@ -531,7 +531,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 23 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22>
@@ -549,7 +549,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 24 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23>
@@ -567,7 +567,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 25 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23,
@@ -588,7 +588,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 26 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23,
@@ -609,7 +609,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 27 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23,
@@ -630,7 +630,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 28 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23,
@@ -651,7 +651,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 29 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23,
@@ -672,7 +672,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 30 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23,
@@ -693,7 +693,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 31 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23,
@@ -717,7 +717,7 @@ namespace viennacl
       }
 
       /** @brief Convenience function for setting 32 kernel parameters */
-      template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
+      template<typename T0, typename T1, typename T2, typename T3, typename T4, typename T5,
                 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
                 typename T12, typename T13, typename T14, typename T15, typename T16, typename T17,
                 typename T18, typename T19, typename T20, typename T21, typename T22, typename T23,

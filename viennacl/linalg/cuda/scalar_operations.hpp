@@ -49,7 +49,7 @@ namespace viennacl
 
       /////////////////// as /////////////////////////////
 
-      template <typename T>
+      template<typename T>
       __global__ void as_kernel(T * s1, const T * fac2, unsigned int options2, const T * s2)
       {
           T alpha = *fac2;
@@ -61,7 +61,7 @@ namespace viennacl
           *s1 = *s2 * alpha;
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void as_kernel(T * s1, T fac2, unsigned int options2, const T * s2)
       {
           T alpha = fac2;
@@ -73,7 +73,7 @@ namespace viennacl
           *s1 = *s2 * alpha;
       }
 
-      template <typename S1,
+      template<typename S1,
                 typename S2, typename ScalarType1>
       typename viennacl::enable_if< viennacl::is_scalar<S1>::value
                                     && viennacl::is_scalar<S2>::value
@@ -100,7 +100,7 @@ namespace viennacl
       //////////////////// asbs ////////////////////////////
 
       // alpha and beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void asbs_kernel(T * s1,
                                   const T * fac2, unsigned int options2, const T * s2,
                                   const T * fac3, unsigned int options3, const T * s3)
@@ -121,7 +121,7 @@ namespace viennacl
       }
 
       // alpha on CPU, beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void asbs_kernel(T * s1,
                                   T fac2, unsigned int options2, const T * s2,
                                   const T * fac3, unsigned int options3, const T * s3)
@@ -142,7 +142,7 @@ namespace viennacl
       }
 
       // alpha on GPU, beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void asbs_kernel(T * s1,
                                   const T * fac2, unsigned int options2, const T * s2,
                                   T fac3, unsigned int options3, const T * s3)
@@ -163,7 +163,7 @@ namespace viennacl
       }
 
       // alpha and beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void asbs_kernel(T * s1,
                                   T fac2, unsigned int options2, const T * s2,
                                   T fac3, unsigned int options3, const T * s3)
@@ -184,7 +184,7 @@ namespace viennacl
       }
 
 
-      template <typename S1,
+      template<typename S1,
                 typename S2, typename ScalarType1,
                 typename S3, typename ScalarType2>
       typename viennacl::enable_if< viennacl::is_scalar<S1>::value
@@ -223,7 +223,7 @@ namespace viennacl
       //////////////////// asbs_s ////////////////////
 
       // alpha and beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void asbs_s_kernel(T * s1,
                                     const T * fac2, unsigned int options2, const T * s2,
                                     const T * fac3, unsigned int options3, const T * s3)
@@ -244,7 +244,7 @@ namespace viennacl
       }
 
       // alpha on CPU, beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void asbs_s_kernel(T * s1,
                                     T fac2, unsigned int options2, const T * s2,
                                     const T * fac3, unsigned int options3, const T * s3)
@@ -265,7 +265,7 @@ namespace viennacl
       }
 
       // alpha on GPU, beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void asbs_s_kernel(T * s1,
                                     const T * fac2, unsigned int options2, const T * s2,
                                     T fac3, unsigned int options3, const T * s3)
@@ -286,7 +286,7 @@ namespace viennacl
       }
 
       // alpha and beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void asbs_s_kernel(T * s1,
                                     T fac2, unsigned int options2, const T * s2,
                                     T fac3, unsigned int options3, const T * s3)
@@ -307,7 +307,7 @@ namespace viennacl
       }
 
 
-      template <typename S1,
+      template<typename S1,
                 typename S2, typename ScalarType1,
                 typename S3, typename ScalarType2>
       typename viennacl::enable_if< viennacl::is_scalar<S1>::value
@@ -346,7 +346,7 @@ namespace viennacl
 
       ///////////////// swap //////////////////
 
-      template <typename T>
+      template<typename T>
       __global__ void scalar_swap_kernel(T * s1, T * s2)
       {
         T tmp = *s2;
@@ -359,7 +359,7 @@ namespace viennacl
       * @param s1   The first scalar
       * @param s2   The second scalar
       */
-      template <typename S1, typename S2>
+      template<typename S1, typename S2>
       typename viennacl::enable_if<    viennacl::is_scalar<S1>::value
                                     && viennacl::is_scalar<S2>::value
                                   >::type

@@ -120,7 +120,7 @@ namespace viennacl
           // Helper: Store A in an STL container of type, exploiting symmetry
           // Reason: ublas interface does not allow to iterate over nonzeros of a particular row without starting an iterator1 from the very beginning of the matrix...
           //
-          template <typename MatrixType, typename ScalarType>
+          template<typename MatrixType, typename ScalarType>
           void sym_sparse_matrix_to_stl(MatrixType const & A, std::vector<std::map<unsigned int, ScalarType> > & STL_A)
           {
             STL_A.resize(A.size1());
@@ -144,7 +144,7 @@ namespace viennacl
           //
           // Generate index sets J_k, k=0,...,N-1
           //
-          template <typename MatrixType>
+          template<typename MatrixType>
           void generateJ(MatrixType const & A, std::vector<std::vector<vcl_size_t> > & J)
           {
             for (typename MatrixType::const_iterator1 row_it  = A.begin1();
@@ -171,7 +171,7 @@ namespace viennacl
           // Extracts the blocks A(\tilde{J}_k, \tilde{J}_k) from A
           // Sets up y_k = A(\tilde{J}_k, k) for the inplace-solution after Cholesky-factoriation
           //
-          template <typename ScalarType, typename MatrixType, typename VectorType>
+          template<typename ScalarType, typename MatrixType, typename VectorType>
           void fill_blocks(std::vector< std::map<unsigned int, ScalarType> > & A,
                           std::vector<MatrixType> & blocks,
                           std::vector<std::vector<vcl_size_t> > const & J,
@@ -209,7 +209,7 @@ namespace viennacl
           //
           // Perform Cholesky factorization of A inplace. Cf. Schwarz: Numerische Mathematik, vol 5, p. 58
           //
-          template <typename MatrixType>
+          template<typename MatrixType>
           void cholesky_decompose(MatrixType & A)
           {
             for (vcl_size_t k=0; k<A.size2(); ++k)
@@ -237,7 +237,7 @@ namespace viennacl
           //
           // Compute x in Ax = b, where A is already Cholesky factored (A = L L^T)
           //
-          template <typename MatrixType, typename VectorType>
+          template<typename MatrixType, typename VectorType>
           void cholesky_solve(MatrixType const & L, VectorType & b)
           {
             // inplace forward solve L x = b
@@ -265,7 +265,7 @@ namespace viennacl
           //
           // Compute the Cholesky factor L from the sparse vectors y_k
           //
-          template <typename MatrixType, typename VectorType1>
+          template<typename MatrixType, typename VectorType1>
           void computeL(MatrixType const & A,
                         MatrixType & L,
                         MatrixType & L_trans,
@@ -312,7 +312,7 @@ namespace viennacl
           //
           // Top level FSPAI function
           //
-          template <typename MatrixType>
+          template<typename MatrixType>
           void computeFSPAI(MatrixType const & A,
                             MatrixType const & PatternA,
                             MatrixType & L,

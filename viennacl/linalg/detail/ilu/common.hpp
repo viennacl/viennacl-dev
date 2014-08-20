@@ -47,7 +47,7 @@ namespace viennacl
       // Level Scheduling Setup for ILU:
       //
 
-      template <typename ScalarType, unsigned int ALIGNMENT>
+      template<typename ScalarType, unsigned int ALIGNMENT>
       void level_scheduling_setup_impl(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
                                        vector<ScalarType> const & diagonal_LU,
                                        std::list< viennacl::backend::mem_handle > & row_index_arrays,
@@ -187,7 +187,7 @@ namespace viennacl
       }
 
 
-      template <typename ScalarType, unsigned int ALIGNMENT>
+      template<typename ScalarType, unsigned int ALIGNMENT>
       void level_scheduling_setup_L(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
                                 vector<ScalarType> const & diagonal_LU,
                                 std::list< viennacl::backend::mem_handle > & row_index_arrays,
@@ -204,7 +204,7 @@ namespace viennacl
       // Multifrontal setup of U:
       //
 
-      template <typename ScalarType, unsigned int ALIGNMENT>
+      template<typename ScalarType, unsigned int ALIGNMENT>
       void level_scheduling_setup_U(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & LU,
                                 vector<ScalarType> const & diagonal_LU,
                                 std::list< viennacl::backend::mem_handle > & row_index_arrays,
@@ -220,7 +220,7 @@ namespace viennacl
       //
       // Multifrontal substitution (both L and U). Will partly be moved to single_threaded/opencl/cuda implementations
       //
-      template <typename ScalarType>
+      template<typename ScalarType>
       void level_scheduling_substitute(vector<ScalarType> & vec,
                                        std::list< viennacl::backend::mem_handle > const & row_index_arrays,
                                        std::list< viennacl::backend::mem_handle > const & row_buffers,

@@ -65,7 +65,7 @@ namespace viennacl
   // Initializer types
   //
   /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
+  template<typename SCALARTYPE>
   class identity_matrix : public implicit_matrix_base<SCALARTYPE>
   {
     public:
@@ -77,7 +77,7 @@ namespace viennacl
 
 
   /** @brief Represents a vector consisting of zeros only. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
+  template<typename SCALARTYPE>
   class zero_matrix : public implicit_matrix_base<SCALARTYPE>
   {
     public:
@@ -89,7 +89,7 @@ namespace viennacl
 
 
   /** @brief Represents a vector consisting of scalars 's' only, i.e. v[i] = s for all i. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
+  template<typename SCALARTYPE>
   class scalar_matrix : public implicit_matrix_base<SCALARTYPE>
   {
     public:
@@ -99,7 +99,7 @@ namespace viennacl
       scalar_matrix(size_type s1, size_type s2, const_reference val, viennacl::context ctx = viennacl::context()) : implicit_matrix_base<SCALARTYPE>(s1, s2, val, false, ctx) {}
   };
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   class matrix_base
   {
       typedef matrix_base<SCALARTYPE, SizeType, DistanceType>          self_type;
@@ -131,7 +131,7 @@ namespace viennacl
                            size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
                            size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                            bool is_row_major);
-      template <typename LHS, typename RHS, typename OP>
+      template<typename LHS, typename RHS, typename OP>
       explicit matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy);
 
       // CUDA or host memory:
@@ -152,13 +152,13 @@ namespace viennacl
       self_type & operator=(const self_type & other);
       /** @brief Implementation of the operation m1 = m2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
       * @param proxy  An expression template proxy class. */
-      template <typename LHS, typename RHS, typename OP>
+      template<typename LHS, typename RHS, typename OP>
       self_type & operator=(const matrix_expression<const LHS, const RHS, OP> & proxy);
       // A = trans(B). Currently achieved in CPU memory
       self_type & operator=(const matrix_expression< const self_type, const self_type, op_trans> & proxy);
-      template <typename LHS, typename RHS, typename OP>
+      template<typename LHS, typename RHS, typename OP>
       self_type & operator+=(const matrix_expression<const LHS, const RHS, OP> & proxy);
-      template <typename LHS, typename RHS, typename OP>
+      template<typename LHS, typename RHS, typename OP>
       self_type & operator-=(const matrix_expression<const LHS, const RHS, OP> & proxy);
       /** @brief Assigns the supplied identity matrix to the matrix. */
       self_type & operator = (identity_matrix<SCALARTYPE> const & m);

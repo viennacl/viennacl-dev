@@ -96,7 +96,7 @@ namespace viennacl
     * @tparam MatrixType A generic matrix type. Type requirements: size1() returns number of rows, size2() returns number columns, operator() writes array entries, resize() allows resizing the matrix.
     * @return Returns nonzero if file is read correctly
     */
-    template <typename MatrixType>
+    template<typename MatrixType>
     long read_matrix_market_file_impl(MatrixType & mat,
                                       const char * file,
                                       long index_base)
@@ -318,7 +318,7 @@ namespace viennacl
     * @tparam MatrixType A generic matrix type. Type requirements: size1() returns number of rows, size2() returns number columns, operator() writes array entries, resize() allows resizing the matrix.
     * @return Returns nonzero if file is read correctly
     */
-    template <typename MatrixType>
+    template<typename MatrixType>
     long read_matrix_market_file(MatrixType & mat,
                                  const char * file,
                                  long index_base = 1)
@@ -326,7 +326,7 @@ namespace viennacl
       return read_matrix_market_file_impl(mat, file, index_base);
     }
 
-    template <typename MatrixType>
+    template<typename MatrixType>
     long read_matrix_market_file(MatrixType & mat,
                                  const std::string & file,
                                  long index_base = 1)
@@ -334,7 +334,7 @@ namespace viennacl
       return read_matrix_market_file_impl(mat, file.c_str(), index_base);
     }
 
-    template <typename ScalarType>
+    template<typename ScalarType>
     long read_matrix_market_file(std::vector< std::map<unsigned int, ScalarType> > & mat,
                                  const char * file,
                                  long index_base = 1)
@@ -343,7 +343,7 @@ namespace viennacl
       return read_matrix_market_file_impl(adapted_matrix, file, index_base);
     }
 
-    template <typename ScalarType>
+    template<typename ScalarType>
     long read_matrix_market_file(std::vector< std::map<unsigned int, ScalarType> > & mat,
                                  const std::string & file,
                                  long index_base = 1)
@@ -354,7 +354,7 @@ namespace viennacl
 
 
     ////////// writer /////////////
-    template <typename MatrixType>
+    template<typename MatrixType>
     void write_matrix_market_file_impl(MatrixType const & mat, const char * file, long index_base)
     {
       std::ofstream writer(file);
@@ -382,7 +382,7 @@ namespace viennacl
       writer.close();
     }
 
-    template <typename ScalarType>
+    template<typename ScalarType>
     void write_matrix_market_file(std::vector< std::map<unsigned int, ScalarType> > const & mat,
                                   const char * file,
                                   long index_base = 1)
@@ -391,7 +391,7 @@ namespace viennacl
       return write_matrix_market_file_impl(adapted_matrix, file, index_base);
     }
 
-    template <typename ScalarType>
+    template<typename ScalarType>
     void write_matrix_market_file(std::vector< std::map<unsigned int, ScalarType> > const & mat,
                                   const std::string & file,
                                   long index_base = 1)
@@ -408,7 +408,7 @@ namespace viennacl
     * @tparam MatrixType A generic matrix type. Type requirements: size1() returns number of rows, size2() returns number columns, operator() writes array entries, resize() allows resizing the matrix.
     * @return Returns nonzero if file is read correctly
     */
-    template <typename MatrixType>
+    template<typename MatrixType>
     void write_matrix_market_file(MatrixType const & mat,
                                   const std::string & file,
                                   long index_base = 1)

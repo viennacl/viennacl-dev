@@ -34,7 +34,7 @@ namespace viennacl
       //
 
       // alpha on CPU
-      template <typename T>
+      template<typename T>
       __global__ void am_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -71,7 +71,7 @@ namespace viennacl
       }
 
       // alpha on GPU
-      template <typename T>
+      template<typename T>
       __global__ void am_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -113,7 +113,7 @@ namespace viennacl
       //
 
       // alpha and beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void ambm_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -188,7 +188,7 @@ namespace viennacl
 
 
       // alpha on CPU, beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void ambm_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -262,7 +262,7 @@ namespace viennacl
       }
 
       // alpha on GPU, beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void ambm_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -337,7 +337,7 @@ namespace viennacl
 
 
       // alpha and beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void ambm_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -416,7 +416,7 @@ namespace viennacl
       //
 
       // alpha and beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void ambm_m_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -491,7 +491,7 @@ namespace viennacl
 
 
       // alpha on CPU, beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void ambm_m_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -565,7 +565,7 @@ namespace viennacl
       }
 
       // alpha on GPU, beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void ambm_m_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -640,7 +640,7 @@ namespace viennacl
 
 
       // alpha and beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void ambm_m_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -717,7 +717,7 @@ namespace viennacl
       // assignments
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_assign_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -735,7 +735,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_diagonal_assign_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -754,7 +754,7 @@ namespace viennacl
       // binary element-wise operations
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void element_op_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -803,7 +803,7 @@ namespace viennacl
         }
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void element_op_int_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -849,7 +849,7 @@ namespace viennacl
       //
 
       // abs
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_abs_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -872,7 +872,7 @@ namespace viennacl
 
 
       // acos
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_acos_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -895,7 +895,7 @@ namespace viennacl
 
 
       // asin
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_asin_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -918,7 +918,7 @@ namespace viennacl
 
 
       // atan
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_atan_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -941,7 +941,7 @@ namespace viennacl
 
 
       // ceil
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_ceil_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -964,7 +964,7 @@ namespace viennacl
 
 
       // cos
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_cos_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -987,7 +987,7 @@ namespace viennacl
 
 
       // cosh
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_cosh_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1010,7 +1010,7 @@ namespace viennacl
 
 
       // exp
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_exp_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1033,7 +1033,7 @@ namespace viennacl
 
 
       // fabs
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_fabs_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1056,7 +1056,7 @@ namespace viennacl
 
 
       // floor
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_floor_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1079,7 +1079,7 @@ namespace viennacl
 
 
       // log
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_log_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1102,7 +1102,7 @@ namespace viennacl
 
 
       // log10
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_log10_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1125,7 +1125,7 @@ namespace viennacl
 
 
       // sin
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_sin_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1148,7 +1148,7 @@ namespace viennacl
 
 
       // sinh
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_sinh_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1171,7 +1171,7 @@ namespace viennacl
 
 
       // sqrt
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_sqrt_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1194,7 +1194,7 @@ namespace viennacl
 
 
       // tan
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_tan_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1217,7 +1217,7 @@ namespace viennacl
 
 
       // tanh
-      template <typename T>
+      template<typename T>
       __global__ void matrix_row_element_tanh_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1244,7 +1244,7 @@ namespace viennacl
       // matrix-vector product
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void vec_mul_row_kernel(
                 const T * A,
                 unsigned int A_row_start,
@@ -1289,7 +1289,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       __global__ void trans_vec_mul_row_kernel(
                 const T * A,
                 unsigned int A_row_start,
@@ -1331,7 +1331,7 @@ namespace viennacl
       //
 
       // alpha on CPU
-      template <typename T>
+      template<typename T>
       __global__ void scaled_rank1_update_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,
@@ -1371,7 +1371,7 @@ namespace viennacl
 
 
       // alpha on GPU
-      template <typename T>
+      template<typename T>
       __global__ void scaled_rank1_update_row_kernel(
                 T * A,
                 unsigned int A_start1, unsigned int A_start2,

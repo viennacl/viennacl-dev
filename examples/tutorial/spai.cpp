@@ -53,7 +53,7 @@
 
 #include "vector-io.hpp"
 
-template <typename MatrixType, typename VectorType, typename SolverTag, typename Preconditioner>
+template<typename MatrixType, typename VectorType, typename SolverTag, typename Preconditioner>
 void run_solver(MatrixType const & A, VectorType const & b, SolverTag const & solver_tag, Preconditioner const & precond)
 {
     VectorType result = viennacl::linalg::solve(A, b, solver_tag, precond);

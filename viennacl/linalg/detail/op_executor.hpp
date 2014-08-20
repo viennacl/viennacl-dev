@@ -31,38 +31,38 @@ namespace viennacl
   {
     namespace detail
     {
-      template <typename T, typename B>
+      template<typename T, typename B>
       bool op_aliasing(vector_base<T> const & /*lhs*/, B const & /*b*/)
       {
         return false;
       }
 
-      template <typename T>
+      template<typename T>
       bool op_aliasing(vector_base<T> const & lhs, vector_base<T> const & b)
       {
         return lhs.handle() == b.handle();
       }
 
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       bool op_aliasing(vector_base<T> const & lhs, vector_expression<const LHS, const RHS, OP> const & rhs)
       {
         return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
       }
 
 
-      template <typename T, typename B>
+      template<typename T, typename B>
       bool op_aliasing(matrix_base<T> const & /*lhs*/, B const & /*b*/)
       {
         return false;
       }
 
-      template <typename T>
+      template<typename T>
       bool op_aliasing(matrix_base<T> const & lhs, matrix_base<T> const & b)
       {
         return lhs.handle() == b.handle();
       }
 
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       bool op_aliasing(matrix_base<T> const & lhs, matrix_expression<const LHS, const RHS, OP> const & rhs)
       {
         return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
@@ -75,7 +75,7 @@ namespace viennacl
         * @tparam OP   One out of {op_assign, op_inplace_add, op_inplace_sub}
         @ @tparam T    Right hand side of the assignment
       */
-      template <typename A, typename OP, typename T>
+      template<typename A, typename OP, typename T>
       struct op_executor {};
 
     }

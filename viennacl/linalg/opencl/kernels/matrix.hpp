@@ -49,7 +49,7 @@ namespace viennacl
 
 
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft(StringType & source, std::string const & numeric_string, bool is_row_major)
         {
           // naive fourier transform (quadratic complexity, use for reference only)
@@ -271,7 +271,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_lu(StringType & source, std::string const & numeric_string, bool is_row_major)
         {
           source.append("__kernel void lu_factorize( \n");
@@ -326,7 +326,7 @@ namespace viennacl
         }
 
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_scaled_rank1_update(StringType & source, std::string const & numeric_string, bool is_row_major, bool alpha_on_cpu)
         {
           source.append("__kernel void scaled_rank1_update_"); alpha_on_cpu ? source.append("cpu") : source.append("gpu"); source.append("( \n");
@@ -378,7 +378,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_triangular_substitute_inplace(StringType & source, std::string const & numeric_string, bool is_row_major)
         {
           source.append("__kernel void triangular_substitute_inplace( \n");
@@ -441,7 +441,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
-        template <class TYPE>
+        template<class TYPE>
         class matrix
         {
         private:
@@ -555,7 +555,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for elementwise operations other than addition and subtraction on/with viennacl::vector<>. */
-        template <class TYPE>
+        template<class TYPE>
         struct matrix_element
         {
 
@@ -642,7 +642,7 @@ namespace viennacl
 
 
         /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
-        template <class TYPE>
+        template<class TYPE>
         class row_wise_reduction
         {
         public:
@@ -670,7 +670,7 @@ namespace viennacl
         };
 
         /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
-        template <class TYPE>
+        template<class TYPE>
         class matrix_prod
         {
         public:
@@ -717,7 +717,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for operations on/with dense matrix objects of type viennacl::matrix<>. */
-        template <typename TYPE, typename F>
+        template<typename TYPE, typename F>
         struct matrix_legacy
         {
           static std::string program_name()

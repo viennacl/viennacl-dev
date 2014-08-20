@@ -48,7 +48,7 @@ namespace viennacl
     namespace opencl
     {
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_vector_update(vector_base<T> & result,
                                       T alpha,
                                       vector_base<T> & p,
@@ -66,7 +66,7 @@ namespace viennacl
         viennacl::ocl::enqueue(k(result, alpha, p, r, Ap, beta, inner_prod_buffer, vec_size, viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))));
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(compressed_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -94,7 +94,7 @@ namespace viennacl
 
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(coordinate_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -128,7 +128,7 @@ namespace viennacl
                                 ));
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(ell_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -164,7 +164,7 @@ namespace viennacl
                                );
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(sliced_ell_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -200,7 +200,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(hyb_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -242,7 +242,7 @@ namespace viennacl
 
       //////////////////////////// BiCGStab ////////////////////////
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_update_s(vector_base<T> & s,
                                        vector_base<T> & r,
                                        vector_base<T> const & Ap,
@@ -267,7 +267,7 @@ namespace viennacl
                                  viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))));
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_vector_update(vector_base<T> & result, T alpha, vector_base<T> & p, T omega, vector_base<T> const & s,
                                             vector_base<T> & residual, vector_base<T> const & As,
                                             T beta, vector_base<T> const & Ap,
@@ -294,7 +294,7 @@ namespace viennacl
                                );
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(compressed_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,
@@ -328,7 +328,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(coordinate_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,
@@ -367,7 +367,7 @@ namespace viennacl
                                 ));
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(ell_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,
@@ -408,7 +408,7 @@ namespace viennacl
                                );
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(sliced_ell_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,
@@ -449,7 +449,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(hyb_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,

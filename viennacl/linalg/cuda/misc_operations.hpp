@@ -39,7 +39,7 @@ namespace viennacl
       namespace detail
       {
 
-        template <typename T>
+        template<typename T>
         __global__ void level_scheduling_substitute_kernel(
                   const unsigned int * row_index_array,
                   const unsigned int * row_indices,
@@ -65,7 +65,7 @@ namespace viennacl
 
 
 
-        template <typename ScalarType>
+        template<typename ScalarType>
         void level_scheduling_substitute(vector<ScalarType> & vec,
                                      viennacl::backend::mem_handle const & row_index_array,
                                      viennacl::backend::mem_handle const & row_buffer,

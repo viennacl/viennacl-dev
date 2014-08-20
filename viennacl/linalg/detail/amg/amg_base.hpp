@@ -120,7 +120,7 @@ namespace viennacl
         *  @brief Values are only written to those datatypes if non-zero to optimize memory usage and performance.
         *  @brief Needed for the []- and ()-operators.
         */
-        template <typename InternalType, typename IteratorType, typename ScalarType>
+        template<typename InternalType, typename IteratorType, typename ScalarType>
         class amg_nonzero_scalar
         {
           private:
@@ -199,7 +199,7 @@ namespace viennacl
 
         /** @brief Defines an iterator for the sparse vector type.
         */
-        template <typename InternalType>
+        template<typename InternalType>
         class amg_sparsevector_iterator
         {
           private:
@@ -250,7 +250,7 @@ namespace viennacl
 
         /** @brief A class for the sparse vector type.
         */
-        template <typename ScalarType>
+        template<typename ScalarType>
         class amg_sparsevector
         {
           public:
@@ -308,7 +308,7 @@ namespace viennacl
             }
 
             // Write to the map. Is called from non-zero scalar type.
-            template <typename IteratorType>
+            template<typename IteratorType>
             void addscalar(IteratorType & iter, unsigned int i, unsigned int /* j */, ScalarType s)
             {
               // Don't write if value is zero
@@ -323,7 +323,7 @@ namespace viennacl
             }
 
             // Remove value from the map. Is called from non-zero scalar type.
-            template <typename IteratorType>
+            template<typename IteratorType>
             void removescalar(IteratorType & iter, unsigned int /* i */) { internal_vector.erase(iter); }
 
             // Bracket operator. Returns non-zero scalar type with actual values of the respective entry which calls addscalar/removescalar after value is altered.
@@ -372,7 +372,7 @@ namespace viennacl
         *  Uses similar interface as ublas::compressed_matrix.
         *  Can deal with transposed of matrix internally: Creation, Storage, Iterators, etc.
         */
-        template <typename ScalarType>
+        template<typename ScalarType>
         class amg_sparsematrix
         {
           public:
@@ -455,7 +455,7 @@ namespace viennacl
               * (Only necessary feature of this other matrix type is to have const iterators)
               * @param mat  Matrix
               */
-            template <typename MatrixType>
+            template<typename MatrixType>
             amg_sparsematrix (MatrixType const & mat)
             {
               AdapterType a (internal_mat, mat.size1(), mat.size2());
@@ -562,7 +562,7 @@ namespace viennacl
             } //add()
 
             // Write to the internal data structure. Is called from non-zero scalar type.
-            template <typename IteratorType>
+            template<typename IteratorType>
             void addscalar(IteratorType & iter, unsigned int i, unsigned int j, ScalarType s)
             {
               // Don't write if value is zero
@@ -578,7 +578,7 @@ namespace viennacl
             }
 
             // Remove entry from internal data structure. Is called from non-zero scalar type.
-            template <typename IteratorType>
+            template<typename IteratorType>
             void removescalar(IteratorType & iter, unsigned int i)
             {
               internal_mat[i].erase(iter);
@@ -1087,7 +1087,7 @@ namespace viennacl
             }
 
             // Return information for debugging purposes
-            template <typename MatrixType>
+            template<typename MatrixType>
             void get_influence_matrix(MatrixType & mat) const
             {
               mat = MatrixType(size(),size());
@@ -1097,7 +1097,7 @@ namespace viennacl
                 for (amg_point::iterator col_iter = (*row_iter)->begin_influencing(); col_iter != (*row_iter)->end_influencing(); ++col_iter)
                   mat((*row_iter)->get_index(),(*col_iter)->get_index()) = true;
             }
-            template <typename VectorType>
+            template<typename VectorType>
             void get_influence(VectorType & vec) const
             {
               vec = VectorType(size_);
@@ -1106,7 +1106,7 @@ namespace viennacl
               for (const_iterator iter = begin(); iter != end(); ++iter)
                 vec[(*iter)->get_index()] = (*iter)->get_influence();
             }
-            template <typename VectorType>
+            template<typename VectorType>
             void get_sorting(VectorType & vec) const
             {
               vec = VectorType(pointlist.size());
@@ -1119,7 +1119,7 @@ namespace viennacl
                 i++;
               }
             }
-            template <typename VectorType>
+            template<typename VectorType>
             void get_C(VectorType & vec) const
             {
               vec = VectorType(size_);
@@ -1131,7 +1131,7 @@ namespace viennacl
                   vec[(*iter)->get_index()] = true;
               }
             }
-            template <typename VectorType>
+            template<typename VectorType>
             void get_F(VectorType & vec) const
             {
               vec = VectorType(size_);
@@ -1143,7 +1143,7 @@ namespace viennacl
                   vec[(*iter)->get_index()] = true;
               }
             }
-            template <typename MatrixType>
+            template<typename MatrixType>
             void get_Aggregates(MatrixType & mat) const
             {
               mat = MatrixType(size_,size_);
@@ -1160,7 +1160,7 @@ namespace viennacl
         /** @brief A class for the matrix slicing for parallel coarsening schemes (RS0/RS3).
           * @brief Holds information on a per-processor basis and offers functionality to slice and join the data structures.
           */
-        template <typename InternalType1, typename InternalType2>
+        template<typename InternalType1, typename InternalType2>
         class amg_slicing
         {
             typedef typename InternalType1::value_type SparseMatrixType;
@@ -1311,7 +1311,7 @@ namespace viennacl
           * @param B    Right Matrix
           * @param RES    Result Matrix
           */
-        template <typename SparseMatrixType>
+        template<typename SparseMatrixType>
         void amg_mat_prod (SparseMatrixType & A, SparseMatrixType & B, SparseMatrixType & RES)
         {
           typedef typename SparseMatrixType::value_type ScalarType;
@@ -1351,7 +1351,7 @@ namespace viennacl
           * @param P    Prolongation/Interpolation matrix
           * @param RES    Result Matrix (Galerkin operator)
           */
-        template <typename SparseMatrixType>
+        template<typename SparseMatrixType>
         void amg_galerkin_prod (SparseMatrixType & A, SparseMatrixType & P, SparseMatrixType & RES)
         {
           typedef typename SparseMatrixType::value_type ScalarType;
@@ -1409,7 +1409,7 @@ namespace viennacl
           * @param P    Prolongation/Interpolation matrix
           * @param A_i1    Result Matrix
           */
-        template <typename SparseMatrixType>
+        template<typename SparseMatrixType>
         void test_triplematprod(SparseMatrixType & A, SparseMatrixType & P, SparseMatrixType  & A_i1)
         {
           typedef typename SparseMatrixType::value_type ScalarType;
@@ -1443,7 +1443,7 @@ namespace viennacl
           * @param P    Prolongation/Interpolation matrix
           * @param Pointvector  Vector of points
           */
-        template <typename SparseMatrixType, typename PointVectorType>
+        template<typename SparseMatrixType, typename PointVectorType>
         void test_interpolation(SparseMatrixType & A, SparseMatrixType & P, PointVectorType & Pointvector)
         {
           for (unsigned int i=0; i<P.size1(); ++i)

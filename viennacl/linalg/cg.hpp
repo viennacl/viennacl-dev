@@ -112,8 +112,8 @@ namespace viennacl
     * @param precond    A preconditioner. Precondition operation is done via member function apply()
     * @return The result vector
     */
-    //template <typename MatrixType, typename ScalarType>
-    template <typename MatrixType, typename ScalarType>
+    //template<typename MatrixType, typename ScalarType>
+    template<typename MatrixType, typename ScalarType>
     viennacl::vector<ScalarType> solve(MatrixType const & A, //MatrixType const & A,
                                        viennacl::vector<ScalarType> const & rhs,
                                        cg_tag const & tag,
@@ -177,7 +177,7 @@ namespace viennacl
     * @param precond    A preconditioner. Precondition operation is done via member function apply()
     * @return The result vector
     */
-    template <typename MatrixType, typename VectorType, typename PreconditionerType>
+    template<typename MatrixType, typename VectorType, typename PreconditionerType>
     VectorType solve(const MatrixType & matrix, VectorType const & rhs, cg_tag const & tag, PreconditionerType const & precond)
     {
       typedef typename viennacl::result_of::value_type<VectorType>::type        ScalarType;
@@ -237,7 +237,7 @@ namespace viennacl
       return result;
     }
 
-    template <typename MatrixType, typename VectorType>
+    template<typename MatrixType, typename VectorType>
     VectorType solve(const MatrixType & matrix, VectorType const & rhs, cg_tag const & tag)
     {
       return solve(matrix, rhs, tag, viennacl::linalg::no_precond());

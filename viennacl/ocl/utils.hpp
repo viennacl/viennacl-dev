@@ -34,14 +34,14 @@ namespace viennacl
 
     /** @brief Ensures that double precision types are only allocated if it is supported by the device. If double precision is requested for a device not capable of providing that, a double_precision_not_provided_error is thrown.
      */
-    template <typename ScalarType>
+    template<typename ScalarType>
     struct DOUBLE_PRECISION_CHECKER
     {
       static void apply(viennacl::ocl::context const &) {}
     };
 
     /** \cond */
-    template <>
+    template<>
     struct DOUBLE_PRECISION_CHECKER<double>
     {
       static void apply(viennacl::ocl::context const & ctx)
@@ -53,28 +53,28 @@ namespace viennacl
     /** \endcond */
 
     /** \brief Helper class for converting a type to its string representation. */
-    template <typename T>
+    template<typename T>
     struct type_to_string;
 
     /** \cond */
-    template <> struct type_to_string<char>   { static std::string apply() { return "char";  } };
-    template <> struct type_to_string<short>  { static std::string apply() { return "short"; } };
-    template <> struct type_to_string<int>    { static std::string apply() { return "int";   } };
-    template <> struct type_to_string<long>   { static std::string apply() { return "long";  } };
+    template<> struct type_to_string<char>   { static std::string apply() { return "char";  } };
+    template<> struct type_to_string<short>  { static std::string apply() { return "short"; } };
+    template<> struct type_to_string<int>    { static std::string apply() { return "int";   } };
+    template<> struct type_to_string<long>   { static std::string apply() { return "long";  } };
 
-    template <> struct type_to_string<unsigned char>   { static std::string apply() { return "uchar";  } };
-    template <> struct type_to_string<unsigned short>  { static std::string apply() { return "ushort"; } };
-    template <> struct type_to_string<unsigned int>    { static std::string apply() { return "uint";   } };
-    template <> struct type_to_string<unsigned long>   { static std::string apply() { return "ulong";  } };
+    template<> struct type_to_string<unsigned char>   { static std::string apply() { return "uchar";  } };
+    template<> struct type_to_string<unsigned short>  { static std::string apply() { return "ushort"; } };
+    template<> struct type_to_string<unsigned int>    { static std::string apply() { return "uint";   } };
+    template<> struct type_to_string<unsigned long>   { static std::string apply() { return "ulong";  } };
 
-    template <> struct type_to_string<float>  { static std::string apply() { return "float";  } };
-    template <> struct type_to_string<double> { static std::string apply() { return "double"; } };
+    template<> struct type_to_string<float>  { static std::string apply() { return "float";  } };
+    template<> struct type_to_string<double> { static std::string apply() { return "double"; } };
     /** \endcond */
 
-    template <typename T>
+    template<typename T>
     void append_double_precision_pragma(viennacl::ocl::context const & /*ctx*/, std::string & /*source*/) {}
 
-    template <>
+    template<>
     inline void append_double_precision_pragma<double>(viennacl::ocl::context const & ctx, std::string & source)
     {
       source.append("#pragma OPENCL EXTENSION " + ctx.current_device().double_support_extension() + " : enable\n\n");

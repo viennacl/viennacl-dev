@@ -51,7 +51,7 @@ namespace viennacl
     * @tparam RHS   The right hand side of the expression tree
     * @tparam OP    The operator to apply to LHS and RHS to obtain the result.
     */
-  template <typename LHS, typename RHS, typename OP>
+  template<typename LHS, typename RHS, typename OP>
   class matrix_expression
   {
       typedef typename viennacl::result_of::reference_if_nonscalar<LHS>::type     lhs_reference_type;
@@ -89,7 +89,7 @@ namespace viennacl
 
   //STL-like iterator. TODO: STL-compliance...
   /** @brief uBLAS-like iterator class for iterating over the entries of a dense matrix. */
-  template <typename ROWCOL, typename MATRIXTYPE>
+  template<typename ROWCOL, typename MATRIXTYPE>
   class matrix_iterator
   {
       typedef matrix_iterator<ROWCOL, MATRIXTYPE>    self_type;
@@ -120,11 +120,11 @@ namespace viennacl
 
 
   /** @brief The default constructor. Does not allocate any memory. */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(false), row_major_(true) {}
 
   /** @brief The layout constructor. Does not allocate any memory. */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(bool is_row_major) : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(true), row_major_(is_row_major) {}
 
   /** @brief Creates the matrix with the given dimensions
@@ -133,7 +133,7 @@ namespace viennacl
   * @param columns  Number of columns
   * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(size_type rows, size_type columns, bool is_row_major, viennacl::context ctx)
       : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1),
         internal_size1_(viennacl::tools::align_to_multiple<size_type>(rows, dense_padding_size)),
@@ -148,7 +148,7 @@ namespace viennacl
   }
 
   /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(viennacl::backend::mem_handle & h,
                        size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
                        size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
@@ -160,8 +160,8 @@ namespace viennacl
       row_major_fixed_(true), row_major_(is_row_major),
       elements_(h) {}
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  template <typename LHS, typename RHS, typename OP>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<typename LHS, typename RHS, typename OP>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) :
     size1_(viennacl::traits::size1(proxy)), size2_(viennacl::traits::size2(proxy)), start1_(0), start2_(0), stride1_(1), stride2_(1),
     internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size)),
@@ -178,7 +178,7 @@ namespace viennacl
   }
 
   // CUDA or host memory:
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(SCALARTYPE * ptr_to_mem, viennacl::memory_types mem_type,
                        size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
                        size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
@@ -210,7 +210,7 @@ namespace viennacl
   }
 
 #ifdef VIENNACL_WITH_OPENCL
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(cl_mem mem, size_type rows, size_type columns, bool is_row_major, viennacl::context ctx)
     : size1_(rows), size2_(columns),
       start1_(0), start2_(0),
@@ -225,7 +225,7 @@ namespace viennacl
     elements_.raw_size(sizeof(SCALARTYPE)*internal_size());
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(cl_mem mem, viennacl::context ctx,
                        size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
                        size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
@@ -244,7 +244,7 @@ namespace viennacl
   }
 #endif
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType>::matrix_base(const matrix_base<SCALARTYPE, SizeType, DistanceType> & other) :
     size1_(other.size1()), size2_(other.size2()), start1_(0), start2_(0), stride1_(1), stride2_(1),
     internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size)),
@@ -260,7 +260,7 @@ namespace viennacl
     }
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator=(const self_type & other)  //enables implicit conversions
   {
     if(&other==this)
@@ -284,8 +284,8 @@ namespace viennacl
   *
   * @param proxy  An expression template proxy class.
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  template <typename LHS, typename RHS, typename OP>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<typename LHS, typename RHS, typename OP>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator=(const matrix_expression<const LHS, const RHS, OP> & proxy)
   {
     assert(  (viennacl::traits::size1(proxy) == size1() || size1() == 0)
@@ -313,7 +313,7 @@ namespace viennacl
 
 
   // A = trans(B). Currently achieved in CPU memory
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator=(const matrix_expression< const self_type,
                                                  const self_type,
                                                  op_trans> & proxy)
@@ -375,8 +375,8 @@ namespace viennacl
     return *this;
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  template <typename LHS, typename RHS, typename OP>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<typename LHS, typename RHS, typename OP>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator+=(const matrix_expression<const LHS, const RHS, OP> & proxy)
   {
     assert(  (viennacl::traits::size1(proxy) == size1())
@@ -390,8 +390,8 @@ namespace viennacl
     return *this;
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
-  template <typename LHS, typename RHS, typename OP>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<typename LHS, typename RHS, typename OP>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator-=(const matrix_expression<const LHS, const RHS, OP> & proxy)
   {
     assert(  (viennacl::traits::size1(proxy) == size1())
@@ -406,7 +406,7 @@ namespace viennacl
   }
 
   /** @brief Assigns the supplied identity matrix to the matrix. */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator = (identity_matrix<SCALARTYPE> const & m)
   {
     assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
@@ -434,7 +434,7 @@ namespace viennacl
   }
 
   /** @brief Assigns the supplied zero matrix to the matrix. */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator = (zero_matrix<SCALARTYPE> const & m)
   {
     assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
@@ -459,7 +459,7 @@ namespace viennacl
   }
 
   /** @brief Assigns the supplied scalar vector to the matrix. */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator = (scalar_matrix<SCALARTYPE> const & m)
   {
     assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
@@ -490,7 +490,7 @@ namespace viennacl
   //read-write access to an element of the matrix/matrix_range/matrix_slice
   /** @brief Read-write access to a single element of the matrix/matrix_range/matrix_slice
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   entry_proxy<SCALARTYPE> matrix_base<SCALARTYPE, SizeType, DistanceType>::operator()(size_type row_index, size_type col_index)
   {
     if (row_major_)
@@ -500,7 +500,7 @@ namespace viennacl
 
   /** @brief Read access to a single element of the matrix/matrix_range/matrix_slice
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   const_entry_proxy<SCALARTYPE> matrix_base<SCALARTYPE, SizeType, DistanceType>::operator()(size_type row_index, size_type col_index) const
   {
     if (row_major_)
@@ -511,7 +511,7 @@ namespace viennacl
   //
   // Operator overloads for enabling implicit conversions:
   //
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator += (const matrix_base<SCALARTYPE, SizeType, DistanceType> & other)
   {
     viennacl::linalg::ambm(*this,
@@ -520,7 +520,7 @@ namespace viennacl
     return *this;
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator -= (const matrix_base<SCALARTYPE, SizeType, DistanceType> & other)
   {
     viennacl::linalg::ambm(*this,
@@ -531,7 +531,7 @@ namespace viennacl
 
   /** @brief Scales a matrix by a CPU scalar value
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator *= (SCALARTYPE val)
   {
     //viennacl::linalg::inplace_mult(*this, val);
@@ -542,7 +542,7 @@ namespace viennacl
 
   /** @brief Scales this matrix by a CPU scalar value
   */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator /= (SCALARTYPE val)
   {
     //viennacl::linalg::inplace_mult(*this, static_cast<SCALARTYPE>(1) / val);
@@ -553,17 +553,17 @@ namespace viennacl
 
 
   /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_expression<const matrix_base<SCALARTYPE, SizeType, DistanceType>, const SCALARTYPE, op_mult> matrix_base<SCALARTYPE, SizeType, DistanceType>::operator-() const
   {
     return matrix_expression<const self_type, const SCALARTYPE, op_mult>(*this, SCALARTYPE(-1));
   }
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   void matrix_base<SCALARTYPE, SizeType, DistanceType>::clear() { viennacl::linalg::matrix_assign(*this, SCALARTYPE(0), true); }
 
 
-  template <class SCALARTYPE, typename SizeType, typename DistanceType>
+  template<class SCALARTYPE, typename SizeType, typename DistanceType>
   void matrix_base<SCALARTYPE, SizeType, DistanceType>::resize(size_type rows, size_type columns, bool preserve)
   {
     assert( (rows > 0 && columns > 0) && bool("Check failed in matrix::resize(): Number of rows and columns must be positive!"));
@@ -621,7 +621,7 @@ namespace viennacl
   * @tparam F            Storage layout: Either row_major or column_major
   * @tparam ALIGNMENT   The internal memory size is given by (size()/ALIGNMENT + 1) * ALIGNMENT. ALIGNMENT must be a power of two. Best values or usually 4, 8 or 16, higher values are usually a waste of memory.
   */
-  template <class SCALARTYPE, typename F, unsigned int ALIGNMENT>
+  template<class SCALARTYPE, typename F, unsigned int ALIGNMENT>
   class matrix : public matrix_base<SCALARTYPE>
   {
       typedef matrix<SCALARTYPE, F, ALIGNMENT>          self_type;
@@ -644,7 +644,7 @@ namespace viennacl
       explicit matrix(cl_mem mem, size_type rows, size_type columns) : base_type(mem, rows, columns, viennacl::is_row_major<F>::value) {}
 #endif
 
-      template <typename LHS, typename RHS, typename OP>
+      template<typename LHS, typename RHS, typename OP>
       matrix(matrix_expression< LHS, RHS, OP> const & proxy) : base_type(proxy) {}
 
       /** @brief Creates the matrix from the supplied identity matrix. */
@@ -681,7 +681,7 @@ namespace viennacl
       }
 
 
-      /*template <typename M1>
+      /*template<typename M1>
       self_type & operator=(const matrix_expression< const M1, const M1, op_trans> & proxy)
       {
         self_type temp(proxy.lhs());
@@ -808,7 +808,7 @@ namespace viennacl
   * @param cpu_matrix   A dense matrix on the host. Type requirements: .size1() returns number of rows, .size2() returns number of columns. Access to entries via operator()
   * @param gpu_matrix   A dense ViennaCL matrix
   */
-  template <typename CPU_MATRIX, typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+  template<typename CPU_MATRIX, typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
   void copy(const CPU_MATRIX & cpu_matrix,
             matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix )
   {
@@ -844,7 +844,7 @@ namespace viennacl
   * @param cpu_matrix   A dense matrix on the host of type std::vector< std::vector<> >. cpu_matrix[i][j] returns the element in the i-th row and j-th columns (both starting with zero)
   * @param gpu_matrix   A dense ViennaCL matrix
   */
-  template <typename SCALARTYPE, typename A1, typename A2, typename F, unsigned int ALIGNMENT>
+  template<typename SCALARTYPE, typename A1, typename A2, typename F, unsigned int ALIGNMENT>
   void copy(const std::vector< std::vector<SCALARTYPE, A1>, A2> & cpu_matrix,
             matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix )
   {
@@ -882,7 +882,7 @@ namespace viennacl
   * @param cpu_matrix_end     Pointer past the last matrix entry. Cf. iterator concept in STL
   * @param gpu_matrix         A dense ViennaCL matrix
   */
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+  template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
   void fast_copy(SCALARTYPE * cpu_matrix_begin,
                   SCALARTYPE * cpu_matrix_end,
                   matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix)
@@ -900,7 +900,7 @@ namespace viennacl
   * @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
   * @param gpu_matrix   A dense ViennaCL matrix
   */
-  template <typename F, unsigned int ALIGNMENT>
+  template<typename F, unsigned int ALIGNMENT>
   void copy(const Eigen::MatrixXf & cpu_matrix,
             matrix<float, F, ALIGNMENT> & gpu_matrix)
   {
@@ -936,7 +936,7 @@ namespace viennacl
   * @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
   * @param gpu_matrix   A dense ViennaCL matrix
   */
-  template <typename F, unsigned int ALIGNMENT>
+  template<typename F, unsigned int ALIGNMENT>
   void copy(const Eigen::MatrixXd & cpu_matrix,
             matrix<double, F, ALIGNMENT> & gpu_matrix)
   {
@@ -974,7 +974,7 @@ namespace viennacl
   * @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
   * @param gpu_matrix   A dense ViennaCL matrix
   */
-  template <typename SCALARTYPE, typename T, typename F, unsigned int ALIGNMENT>
+  template<typename SCALARTYPE, typename T, typename F, unsigned int ALIGNMENT>
   void copy(const mtl::dense2D<SCALARTYPE, T>& cpu_matrix,
             matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix)
   {
@@ -1017,7 +1017,7 @@ namespace viennacl
   * @param gpu_matrix   A dense ViennaCL matrix
   * @param cpu_matrix   A dense memory on the host. Must have at least as many rows and columns as the gpu_matrix! Type requirement: Access to entries via operator()
   */
-  template <typename CPU_MATRIX, typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+  template<typename CPU_MATRIX, typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
   void copy(const matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix,
             CPU_MATRIX & cpu_matrix )
   {
@@ -1046,7 +1046,7 @@ namespace viennacl
   * @param gpu_matrix   A dense ViennaCL matrix
   * @param cpu_matrix   A dense memory on the host using STL types, typically std::vector< std::vector<> > Must have at least as many rows and columns as the gpu_matrix! Type requirement: Access to entries via operator()
   */
-  template <typename SCALARTYPE, typename A1, typename A2, typename F, unsigned int ALIGNMENT>
+  template<typename SCALARTYPE, typename A1, typename A2, typename F, unsigned int ALIGNMENT>
   void copy(const matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix,
             std::vector< std::vector<SCALARTYPE, A1>, A2> & cpu_matrix)
   {
@@ -1076,7 +1076,7 @@ namespace viennacl
   * @param gpu_matrix         A dense ViennaCL matrix
   * @param cpu_matrix_begin   Pointer to the output memory on the CPU. User must ensure that provided memory is large enough.
   */
-  template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+  template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
   void fast_copy(const matrix<SCALARTYPE, F, ALIGNMENT> & gpu_matrix,
                   SCALARTYPE * cpu_matrix_begin)
   {
@@ -1090,7 +1090,7 @@ namespace viennacl
 
   // operator +
   /** @brief Generic 'catch-all' overload, which enforces a temporary if the expression tree gets too deep. */
-  template <typename LHS1, typename RHS1, typename OP1,
+  template<typename LHS1, typename RHS1, typename OP1,
             typename LHS2, typename RHS2, typename OP2>
   matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
                      const matrix_expression<const LHS2, const RHS2, OP2>,
@@ -1106,7 +1106,7 @@ namespace viennacl
                               op_add>(proxy1, proxy2);
   }
 
-  template <typename LHS1, typename RHS1, typename OP1,
+  template<typename LHS1, typename RHS1, typename OP1,
             typename NumericT>
   matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
                      const matrix_base<NumericT>,
@@ -1122,7 +1122,7 @@ namespace viennacl
                               op_add>(proxy1, proxy2);
   }
 
-  template <typename NumericT,
+  template<typename NumericT,
             typename LHS2, typename RHS2, typename OP2>
   matrix_expression< const matrix_base<NumericT>,
                      const matrix_expression<const LHS2, const RHS2, OP2>,
@@ -1139,7 +1139,7 @@ namespace viennacl
   }
 
   /** @brief Operator overload for m1 + m2, where m1 and m2 are either dense matrices, matrix ranges, or matrix slices. No mixing of different storage layouts allowed at the moment. */
-  template <typename NumericT>
+  template<typename NumericT>
   matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_add >
   operator + (const matrix_base<NumericT> & m1, const matrix_base<NumericT> & m2)
   {
@@ -1150,7 +1150,7 @@ namespace viennacl
 
 
   // operator -
-  template <typename LHS1, typename RHS1, typename OP1,
+  template<typename LHS1, typename RHS1, typename OP1,
             typename LHS2, typename RHS2, typename OP2>
   matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
                      const matrix_expression<const LHS2, const RHS2, OP2>,
@@ -1166,7 +1166,7 @@ namespace viennacl
                               op_sub>(proxy1, proxy2);
   }
 
-  template <typename LHS1, typename RHS1, typename OP1,
+  template<typename LHS1, typename RHS1, typename OP1,
             typename NumericT>
   matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
                      const matrix_base<NumericT>,
@@ -1182,7 +1182,7 @@ namespace viennacl
                               op_sub>(proxy1, proxy2);
   }
 
-  template <typename NumericT,
+  template<typename NumericT,
             typename LHS2, typename RHS2, typename OP2>
   matrix_expression< const matrix_base<NumericT>,
                      const matrix_expression<const LHS2, const RHS2, OP2>,
@@ -1199,7 +1199,7 @@ namespace viennacl
   }
 
   /** @brief Operator overload for m1 - m2, where m1 and m2 are either dense matrices, matrix ranges, or matrix slices. No mixing of different storage layouts allowed at the moment. */
-  template <typename NumericT>
+  template<typename NumericT>
   matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_sub >
   operator - (const matrix_base<NumericT> & m1, const matrix_base<NumericT> & m2)
   {
@@ -1216,7 +1216,7 @@ namespace viennacl
   * @param value   The host scalar (float or double)
   * @param m1      A ViennaCL matrix
   */
-  template <typename S1, typename NumericT>
+  template<typename S1, typename NumericT>
   typename viennacl::enable_if<    viennacl::is_any_scalar<S1>::value,
                                 matrix_expression< const matrix_base<NumericT>, const S1, op_mult>
                               >::type
@@ -1231,7 +1231,7 @@ namespace viennacl
   * @param proxy   Left hand side matrix expression
   * @param val     Right hand side scalar
   */
-  template <typename LHS, typename RHS, typename OP, typename S1>
+  template<typename LHS, typename RHS, typename OP, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 matrix_expression< const matrix_expression< LHS, RHS, OP>, const S1, op_mult> >::type
   operator * (matrix_expression< LHS, RHS, OP> const & proxy,
@@ -1246,7 +1246,7 @@ namespace viennacl
   * @param val     Right hand side scalar
   * @param proxy   Left hand side matrix expression
   */
-  template <typename S1, typename LHS, typename RHS, typename OP>
+  template<typename S1, typename LHS, typename RHS, typename OP>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 matrix_expression< const matrix_expression< LHS, RHS, OP>, const S1, op_mult> >::type
   operator * (S1 const & val,
@@ -1257,7 +1257,7 @@ namespace viennacl
 
   /** @brief Scales the matrix by a GPU scalar 'alpha' and returns an expression template
   */
-  template <typename NumericT, typename S1>
+  template<typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 matrix_expression< const matrix_base<NumericT>, const S1, op_mult> >::type
   operator * (matrix_base<NumericT> const & m1, S1 const & s1)
@@ -1270,7 +1270,7 @@ namespace viennacl
 
   /** @brief Scales a matrix by a GPU scalar value
   */
-  template <typename NumericT, typename S1>
+  template<typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
                                 matrix_base<NumericT> &
                               >::type
@@ -1291,7 +1291,7 @@ namespace viennacl
   * @param proxy   Left hand side matrix expression
   * @param val     Right hand side scalar
   */
-  template <typename LHS, typename RHS, typename OP, typename S1>
+  template<typename LHS, typename RHS, typename OP, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 matrix_expression< const matrix_expression<const LHS, const RHS, OP>, const S1, op_div> >::type
   operator / (matrix_expression<const LHS, const RHS, OP> const & proxy,
@@ -1303,7 +1303,7 @@ namespace viennacl
 
   /** @brief Returns an expression template for scaling the matrix by a GPU scalar 'alpha'
   */
-  template <typename NumericT, typename S1>
+  template<typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
                                 matrix_expression< const matrix_base<NumericT>, const S1, op_div> >::type
   operator / (matrix_base<NumericT> const & m1, S1 const & s1)
@@ -1316,7 +1316,7 @@ namespace viennacl
 
   /** @brief Scales a matrix by a GPU scalar value
   */
-  template <typename NumericT, typename S1>
+  template<typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
                                 matrix_base<NumericT> &
                               >::type
@@ -1333,7 +1333,7 @@ namespace viennacl
 
 
   // outer_prod(v1, v2) * val;
-  template <typename NumericT, typename S1>
+  template<typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
                                 viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                                              const S1,
@@ -1347,7 +1347,7 @@ namespace viennacl
                                         op_mult>(proxy, val);
   }
 
-  template <typename NumericT, typename S1>
+  template<typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_cpu_scalar<S1>::value,
                                 viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                                               const NumericT,
@@ -1362,7 +1362,7 @@ namespace viennacl
   }
 
   // val * outer_prod(v1, v2);
-  template <typename NumericT, typename S1>
+  template<typename NumericT, typename S1>
   typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
                                 viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
                                                              const S1,
@@ -1404,7 +1404,7 @@ namespace viennacl
     {
 
       // x = y
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_assign, matrix_base<T> >
       {
         static void apply(matrix_base<T> & lhs, matrix_base<T> const & rhs)
@@ -1414,7 +1414,7 @@ namespace viennacl
       };
 
       // x = trans(y)
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> const & rhs)
@@ -1426,7 +1426,7 @@ namespace viennacl
 
 
       // x += y
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_base<T> >
       {
         static void apply(matrix_base<T> & lhs, matrix_base<T> const & rhs)
@@ -1436,7 +1436,7 @@ namespace viennacl
       };
 
       // x += trans(y)
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> const & rhs)
@@ -1447,7 +1447,7 @@ namespace viennacl
       };
 
       // x -= y
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_base<T> >
       {
         static void apply(matrix_base<T> & lhs, matrix_base<T> const & rhs)
@@ -1457,7 +1457,7 @@ namespace viennacl
       };
 
       // x -= trans(y)
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> const & rhs)
@@ -1471,7 +1471,7 @@ namespace viennacl
 
 
       // x = alpha * y
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> const & proxy)
@@ -1481,7 +1481,7 @@ namespace viennacl
       };
 
       // x += alpha * y
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> const & proxy)
@@ -1491,7 +1491,7 @@ namespace viennacl
       };
 
       // x -= alpha * y
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> const & proxy)
@@ -1504,7 +1504,7 @@ namespace viennacl
       ///////////// x  OP  vec_expr * alpha ////////////////////////
 
       // x = alpha * vec_expr
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
       {
           static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
@@ -1523,7 +1523,7 @@ namespace viennacl
       };
 
       // x += alpha * vec_expr
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
       {
           static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
@@ -1542,7 +1542,7 @@ namespace viennacl
       };
 
       // x -= alpha * vec_expr
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
       {
           static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
@@ -1564,7 +1564,7 @@ namespace viennacl
       ///////////// x  OP  y / alpha ////////////////////////
 
       // x = y / alpha
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>, const ScalarType, op_div> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_div> const & proxy)
@@ -1574,7 +1574,7 @@ namespace viennacl
       };
 
       // x += y / alpha
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>, const ScalarType, op_div> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_div> const & proxy)
@@ -1584,7 +1584,7 @@ namespace viennacl
       };
 
       // x -= y / alpha
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_base<T>, const ScalarType, op_div> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_div> const & proxy)
@@ -1597,7 +1597,7 @@ namespace viennacl
       ///////////// x  OP  vec_expr / alpha ////////////////////////
 
       // x = vec_expr / alpha
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
       {
           static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
@@ -1616,7 +1616,7 @@ namespace viennacl
       };
 
       // x += vec_expr / alpha
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
       {
           static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
@@ -1635,7 +1635,7 @@ namespace viennacl
       };
 
       // x -= vec_expr / alpha
-      template <typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+      template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
       {
           static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
@@ -1656,11 +1656,11 @@ namespace viennacl
 
 
       // generic x = vec_expr1 + vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const LHS, const RHS, op_add> >
       {
         // generic x = vec_expr1 + vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const LHS1, const RHS1, op_add> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -1688,7 +1688,7 @@ namespace viennacl
         }
 
         // x = alpha * y + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   const matrix_base<T>,
                                                                   op_add> const & proxy)
@@ -1699,7 +1699,7 @@ namespace viennacl
         }
 
         // x = y / alpha + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   const matrix_base<T>,
                                                                   op_add> const & proxy)
@@ -1710,7 +1710,7 @@ namespace viennacl
         }
 
         // x = y + beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   op_add> const & proxy)
@@ -1721,7 +1721,7 @@ namespace viennacl
         }
 
         // x = y + z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   op_add> const & proxy)
@@ -1732,7 +1732,7 @@ namespace viennacl
         }
 
         // x = alpha * y + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -1743,7 +1743,7 @@ namespace viennacl
         }
 
         // x = alpha * y + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -1754,7 +1754,7 @@ namespace viennacl
         }
 
         // x = y / alpha + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -1765,7 +1765,7 @@ namespace viennacl
         }
 
         // x = y / alpha + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -1777,10 +1777,10 @@ namespace viennacl
       };
 
       // dense = sparse * dense
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const LHS, const RHS, op_prod> >
       {
-        template < typename SparseMatrixType>
+        template< typename SparseMatrixType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const SparseMatrixType,
                                                                   const viennacl::matrix_base<T>,
                                                                   viennacl::op_prod> const & proxy)
@@ -1789,7 +1789,7 @@ namespace viennacl
         }
 
         // dense = sparse * trans(dense)
-        template < typename SparseMatrixType >
+        template< typename SparseMatrixType >
         static void apply(matrix_base<T> & lhs, matrix_expression<const SparseMatrixType,
                                                                   const viennacl::matrix_expression< const viennacl::matrix_base<T>,
                                                                                                      const viennacl::matrix_base<T>,
@@ -1802,11 +1802,11 @@ namespace viennacl
       };
 
       // generic x += vec_expr1 + vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const LHS, const RHS, op_add> >
       {
         // generic x += vec_expr1 + vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const LHS1, const RHS1, op_add> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -1834,7 +1834,7 @@ namespace viennacl
         }
 
         // x += alpha * y + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   const matrix_base<T>,
                                                                   op_add> const & proxy)
@@ -1845,7 +1845,7 @@ namespace viennacl
         }
 
         // x += y / alpha + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   const matrix_base<T>,
                                                                   op_add> const & proxy)
@@ -1856,7 +1856,7 @@ namespace viennacl
         }
 
         // x += y + beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   op_add> const & proxy)
@@ -1867,7 +1867,7 @@ namespace viennacl
         }
 
         // x += y + z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   op_add> const & proxy)
@@ -1878,7 +1878,7 @@ namespace viennacl
         }
 
         // x += alpha * y + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -1889,7 +1889,7 @@ namespace viennacl
         }
 
         // x += alpha * y + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -1900,7 +1900,7 @@ namespace viennacl
         }
 
         // x += y / alpha + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -1911,7 +1911,7 @@ namespace viennacl
         }
 
         // x += y / alpha + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -1925,11 +1925,11 @@ namespace viennacl
 
 
       // generic x -= vec_expr1 + vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_add> >
       {
         // generic x -= vec_expr1 + vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const LHS1, const RHS1, op_add> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -1957,7 +1957,7 @@ namespace viennacl
         }
 
         // x -= alpha * y + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   const matrix_base<T>,
                                                                   op_add> const & proxy)
@@ -1968,7 +1968,7 @@ namespace viennacl
         }
 
         // x -= y / alpha + z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   const matrix_base<T>,
                                                                   op_add> const & proxy)
@@ -1979,7 +1979,7 @@ namespace viennacl
         }
 
         // x -= y + beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   op_add> const & proxy)
@@ -1990,7 +1990,7 @@ namespace viennacl
         }
 
         // x -= y + z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   op_add> const & proxy)
@@ -2001,7 +2001,7 @@ namespace viennacl
         }
 
         // x -= alpha * y + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -2012,7 +2012,7 @@ namespace viennacl
         }
 
         // x -= alpha * y + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -2023,7 +2023,7 @@ namespace viennacl
         }
 
         // x -= y / alpha + beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_add> const & proxy)
@@ -2034,7 +2034,7 @@ namespace viennacl
         }
 
         // x -= y / alpha + z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_add> const & proxy)
@@ -2052,11 +2052,11 @@ namespace viennacl
 
 
       // generic x = vec_expr1 - vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const LHS, const RHS, op_sub> >
       {
         // generic x = vec_expr1 - vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const LHS1, const RHS1, op_sub> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2084,7 +2084,7 @@ namespace viennacl
         }
 
         // x = alpha * y - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   const matrix_base<T>,
                                                                   op_sub> const & proxy)
@@ -2095,7 +2095,7 @@ namespace viennacl
         }
 
         // x = y / alpha - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   const matrix_base<T>,
                                                                   op_sub> const & proxy)
@@ -2106,7 +2106,7 @@ namespace viennacl
         }
 
         // x = y - beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2117,7 +2117,7 @@ namespace viennacl
         }
 
         // x = y - z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   op_sub> const & proxy)
@@ -2128,7 +2128,7 @@ namespace viennacl
         }
 
         // x = alpha * y - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2139,7 +2139,7 @@ namespace viennacl
         }
 
         // x = alpha * y - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2150,7 +2150,7 @@ namespace viennacl
         }
 
         // x = y / alpha - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2161,7 +2161,7 @@ namespace viennacl
         }
 
         // x = y / alpha - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2174,11 +2174,11 @@ namespace viennacl
 
 
       // generic x += vec_expr1 - vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const LHS, const RHS, op_sub> >
       {
         // generic x += vec_expr1 - vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const LHS1, const RHS1, op_sub> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2206,7 +2206,7 @@ namespace viennacl
         }
 
         // x += alpha * y - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   const matrix_base<T>,
                                                                   op_sub> const & proxy)
@@ -2217,7 +2217,7 @@ namespace viennacl
         }
 
         // x += y / alpha - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   const matrix_base<T>,
                                                                   op_sub> const & proxy)
@@ -2228,7 +2228,7 @@ namespace viennacl
         }
 
         // x += y - beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2239,7 +2239,7 @@ namespace viennacl
         }
 
         // x += y - z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   op_sub> const & proxy)
@@ -2250,7 +2250,7 @@ namespace viennacl
         }
 
         // x += alpha * y - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2261,7 +2261,7 @@ namespace viennacl
         }
 
         // x += alpha * y - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2272,7 +2272,7 @@ namespace viennacl
         }
 
         // x += y / alpha - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2283,7 +2283,7 @@ namespace viennacl
         }
 
         // x += y / alpha - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2297,11 +2297,11 @@ namespace viennacl
 
 
       // generic x -= vec_expr1 - vec_expr2:
-      template <typename T, typename LHS, typename RHS>
+      template<typename T, typename LHS, typename RHS>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_sub> >
       {
         // generic x -= vec_expr1 - vec_expr2:
-        template <typename LHS1, typename RHS1>
+        template<typename LHS1, typename RHS1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const LHS1, const RHS1, op_sub> const & proxy)
         {
           bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
@@ -2329,7 +2329,7 @@ namespace viennacl
         }
 
         // x -= alpha * y - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   const matrix_base<T>,
                                                                   op_sub> const & proxy)
@@ -2340,7 +2340,7 @@ namespace viennacl
         }
 
         // x -= y / alpha - z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   const matrix_base<T>,
                                                                   op_sub> const & proxy)
@@ -2351,7 +2351,7 @@ namespace viennacl
         }
 
         // x -= y - beta * z
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2362,7 +2362,7 @@ namespace viennacl
         }
 
         // x -= y - z / beta
-        template <typename ScalarType>
+        template<typename ScalarType>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType, op_div>,
                                                                   op_sub> const & proxy)
@@ -2373,7 +2373,7 @@ namespace viennacl
         }
 
         // x -= alpha * y - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2384,7 +2384,7 @@ namespace viennacl
         }
 
         // x -= alpha * y - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_mult>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2395,7 +2395,7 @@ namespace viennacl
         }
 
         // x -= y / alpha - beta * z
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_mult>,
                                                                   op_sub> const & proxy)
@@ -2406,7 +2406,7 @@ namespace viennacl
         }
 
         // x -= y / alpha - z / beta
-        template <typename ScalarType1, typename ScalarType2>
+        template<typename ScalarType1, typename ScalarType2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const matrix_base<T>, const ScalarType1, op_div>,
                                                                   const matrix_expression<const matrix_base<T>, const ScalarType2, op_div>,
                                                                   op_sub> const & proxy)
@@ -2420,7 +2420,7 @@ namespace viennacl
 
       //////////////////// diag(), row(), column() operations ////////////////////////////////////////
 
-      template <typename T, typename LHS>
+      template<typename T, typename LHS>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const LHS, const int, op_vector_diag> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const vector_base<T>, const int, op_vector_diag> const & proxy)
@@ -2430,7 +2430,7 @@ namespace viennacl
       };
 
 
-      template <typename T, typename LHS>
+      template<typename T, typename LHS>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const int, op_matrix_diag> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T>, const int, op_matrix_diag> const & proxy)
@@ -2439,7 +2439,7 @@ namespace viennacl
         }
       };
 
-      template <typename T, typename LHS>
+      template<typename T, typename LHS>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const unsigned int, op_row> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T>, const unsigned int, op_row> const & proxy)
@@ -2449,7 +2449,7 @@ namespace viennacl
       };
 
 
-      template <typename T, typename LHS>
+      template<typename T, typename LHS>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const LHS, const unsigned int, op_column> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T>, const unsigned int, op_column> const & proxy)
@@ -2462,7 +2462,7 @@ namespace viennacl
       //////////////////// Element-wise operations ////////////////////////////////////////
 
       // generic x = mat_expr1 .* mat_expr2:
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
         // x = y .* z
@@ -2472,7 +2472,7 @@ namespace viennacl
         }
 
         // x = y .* mat_expr
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           matrix_base<T> temp(proxy.rhs());
@@ -2480,7 +2480,7 @@ namespace viennacl
         }
 
         // x = mat_expr .* z
-        template <typename LHS1, typename RHS1, typename OP1>
+        template<typename LHS1, typename RHS1, typename OP1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, OP1>, const matrix_base<T>, op_element_binary<OP> > const & proxy)
         {
           matrix_base<T> temp(proxy.lhs());
@@ -2488,7 +2488,7 @@ namespace viennacl
         }
 
         // x = mat_expr .* mat_expr
-        template <typename LHS1, typename RHS1, typename OP1,
+        template<typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, OP1>,
                                                                   const matrix_expression<const LHS2, const RHS2, OP2>,
@@ -2501,7 +2501,7 @@ namespace viennacl
       };
 
       // generic x += mat_expr .* mat_expr:
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
         // x += y .* z
@@ -2512,7 +2512,7 @@ namespace viennacl
         }
 
         // x += y .* mat_expr
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           matrix_base<T> temp(proxy.rhs());
@@ -2522,7 +2522,7 @@ namespace viennacl
         }
 
         // x += mat_expr .* z
-        template <typename LHS1, typename RHS1, typename OP1>
+        template<typename LHS1, typename RHS1, typename OP1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, OP1>, const matrix_base<T>, op_element_binary<OP> > const & proxy)
         {
           matrix_base<T> temp(proxy.lhs());
@@ -2532,7 +2532,7 @@ namespace viennacl
         }
 
         // x += mat_expr .* mat_expr
-        template <typename LHS1, typename RHS1, typename OP1,
+        template<typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, OP1>,
                                                                   const matrix_expression<const LHS2, const RHS2, OP2>,
@@ -2547,7 +2547,7 @@ namespace viennacl
       };
 
       // generic x -= mat_expr1 .* mat_expr2:
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_element_binary<OP> > >
       {
 
@@ -2559,7 +2559,7 @@ namespace viennacl
         }
 
         // x -= y .* mat_expr
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_expression<const LHS2, const RHS2, OP2>, op_element_binary<OP> > const & proxy)
         {
           matrix_base<T> temp(proxy.rhs());
@@ -2569,7 +2569,7 @@ namespace viennacl
         }
 
         // x -= mat_expr .* z
-        template <typename LHS1, typename RHS1, typename OP1>
+        template<typename LHS1, typename RHS1, typename OP1>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, OP1>, const matrix_base<T>, op_element_binary<OP> > const & proxy)
         {
           matrix_base<T> temp(proxy.lhs());
@@ -2579,7 +2579,7 @@ namespace viennacl
         }
 
         // x -= mat_expr .* mat_expr
-        template <typename LHS1, typename RHS1, typename OP1,
+        template<typename LHS1, typename RHS1, typename OP1,
                   typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS1, const RHS1, OP1>,
                                                                   const matrix_expression<const LHS2, const RHS2, OP2>,
@@ -2595,7 +2595,7 @@ namespace viennacl
 
       //////////////// unary expressions
 
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const LHS, const RHS, op_element_unary<OP> > >
       {
         // x = OP(y)
@@ -2605,7 +2605,7 @@ namespace viennacl
         }
 
         // x = OP(vec_expr)
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS2, const RHS2, OP2>,
                                                                   const matrix_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_unary<OP> > const & proxy)
@@ -2615,7 +2615,7 @@ namespace viennacl
         }
       };
 
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const LHS, const RHS, op_element_unary<OP> > >
       {
         // x += OP(y)
@@ -2626,7 +2626,7 @@ namespace viennacl
         }
 
         // x += OP(vec_expr)
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS2, const RHS2, OP2>,
                                                                   const matrix_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_unary<OP> > const & proxy)
@@ -2637,7 +2637,7 @@ namespace viennacl
         }
       };
 
-      template <typename T, typename LHS, typename RHS, typename OP>
+      template<typename T, typename LHS, typename RHS, typename OP>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const LHS, const RHS, op_element_unary<OP> > >
       {
         // x -= OP(y)
@@ -2648,7 +2648,7 @@ namespace viennacl
         }
 
         // x -= OP(vec_expr)
-        template <typename LHS2, typename RHS2, typename OP2>
+        template<typename LHS2, typename RHS2, typename OP2>
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS2, const RHS2, OP2>,
                                                                   const matrix_expression<const LHS2, const RHS2, OP2>,
                                                                   op_element_unary<OP> > const & proxy)
@@ -2664,7 +2664,7 @@ namespace viennacl
       //////////////// Matrix - Matrix products ////////////////
 
       // C = A * B
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> const & rhs)
@@ -2674,7 +2674,7 @@ namespace viennacl
       };
 
       // C = A * B^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>,
                                                                       const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                       op_mat_mat_prod> >
@@ -2688,7 +2688,7 @@ namespace viennacl
       };
 
       // C = A^T * B
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                       const matrix_base<T>,
                                                                       op_mat_mat_prod> >
@@ -2702,7 +2702,7 @@ namespace viennacl
       };
 
       // C = A^T * B^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                       const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                       op_mat_mat_prod> >
@@ -2717,7 +2717,7 @@ namespace viennacl
 
 
       // C += A * B
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> const & rhs)
@@ -2727,7 +2727,7 @@ namespace viennacl
       };
 
       // C += A * B^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>,
                                                                            const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            op_mat_mat_prod> >
@@ -2741,7 +2741,7 @@ namespace viennacl
       };
 
       // C += A^T * B
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            const matrix_base<T>,
                                                                            op_mat_mat_prod> >
@@ -2755,7 +2755,7 @@ namespace viennacl
       };
 
       // C += A^T * B^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            op_mat_mat_prod> >
@@ -2770,7 +2770,7 @@ namespace viennacl
 
 
       // C -= A * B
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> const & rhs)
@@ -2780,7 +2780,7 @@ namespace viennacl
       };
 
       // C -= A * B^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_base<T>,
                                                                            const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            op_mat_mat_prod> >
@@ -2794,7 +2794,7 @@ namespace viennacl
       };
 
       // C -= A^T * B
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            const matrix_base<T>,
                                                                            op_mat_mat_prod> >
@@ -2808,7 +2808,7 @@ namespace viennacl
       };
 
       // C -= A^T * B^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            op_mat_mat_prod> >
@@ -2824,7 +2824,7 @@ namespace viennacl
       ////////////////// Matrix-Vector Products ///////////////
 
       // y = A * x
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const matrix_base<T>, const vector_base<T>, op_prod> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T>, const vector_base<T>, op_prod> const & rhs)
@@ -2841,7 +2841,7 @@ namespace viennacl
       };
 
       // y = A^T * x
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_assign, vector_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                       const vector_base<T>,
                                                                       op_prod> >
@@ -2863,7 +2863,7 @@ namespace viennacl
 
 
       // y += A * x
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const matrix_base<T>, const vector_base<T>, op_prod> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T>, const vector_base<T>, op_prod> const & rhs)
@@ -2874,7 +2874,7 @@ namespace viennacl
       };
 
       // y += A^T * x
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            const vector_base<T>,
                                                                            op_prod> >
@@ -2890,7 +2890,7 @@ namespace viennacl
 
 
       // y -= A * x
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const matrix_base<T>, const vector_base<T>, op_prod> >
       {
         static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T>, const vector_base<T>, op_prod> const & rhs)
@@ -2901,7 +2901,7 @@ namespace viennacl
       };
 
       // y -= A^T * x
-      template <typename T>
+      template<typename T>
       struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                                                                            const vector_base<T>,
                                                                            op_prod> >
@@ -2920,7 +2920,7 @@ namespace viennacl
       ////////////////// Rank-1 Updates ///////////////
 
       // A = v1 * v2^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> const & rhs)
@@ -2931,7 +2931,7 @@ namespace viennacl
       };
 
       // A = alpha * v1 * v2^T
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_assign, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
                                                                        const ScalarType,
                                                                        op_mult> >
@@ -2946,7 +2946,7 @@ namespace viennacl
       };
 
       // A += v1 * v2^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> const & rhs)
@@ -2956,7 +2956,7 @@ namespace viennacl
       };
 
       // A += alpha * v1 * v2^T
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
                                                                             const ScalarType,
                                                                             op_mult> >
@@ -2970,7 +2970,7 @@ namespace viennacl
       };
 
       // A -= v1 * v2^T
-      template <typename T>
+      template<typename T>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> >
       {
         static void apply(matrix_base<T> & lhs, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> const & rhs)
@@ -2980,7 +2980,7 @@ namespace viennacl
       };
 
       // A -= alpha * v1 * v2^T
-      template <typename T, typename ScalarType>
+      template<typename T, typename ScalarType>
       struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression< const matrix_expression<const vector_base<T>, const vector_base<T>, op_prod>,
                                                                             const ScalarType,
                                                                             op_mult> >

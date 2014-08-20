@@ -57,7 +57,7 @@ namespace viennacl
           //
           // Constructs an orthonormal sparse matrix M (with M^T M = Id). Is composed of elementary 2x2 rotation matrices with suitable renumbering.
           //
-          template <typename MatrixType>
+          template<typename MatrixType>
           void make_rotation_matrix(MatrixType & mat, vcl_size_t new_size, vcl_size_t off_diagonal_distance = 4)
           {
             mat.resize(new_size, new_size, false);
@@ -77,7 +77,7 @@ namespace viennacl
 
 
           //calcualtes matrix determinant
-          template <typename MatrixType>
+          template<typename MatrixType>
           double determinant(boost::numeric::ublas::matrix_expression<MatrixType> const& mat_r)
           {
               double det = 1.0;

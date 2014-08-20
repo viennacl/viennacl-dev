@@ -49,7 +49,7 @@
 
 using namespace boost::numeric;
 
-template <typename MatrixType, typename VCLMatrixType>
+template<typename MatrixType, typename VCLMatrixType>
 bool check_for_equality(MatrixType const & ublas_A, VCLMatrixType const & vcl_A, double epsilon)
 {
   typedef typename MatrixType::value_type   value_type;
@@ -81,7 +81,7 @@ bool check_for_equality(MatrixType const & ublas_A, VCLMatrixType const & vcl_A,
 
 
 
-template <typename UBLASMatrixType,
+template<typename UBLASMatrixType,
           typename ViennaCLMatrixType1, typename ViennaCLMatrixType2, typename ViennaCLMatrixType3>
 int run_test(double epsilon,
              UBLASMatrixType & ublas_A, UBLASMatrixType & ublas_B, UBLASMatrixType & ublas_C,
@@ -381,7 +381,7 @@ int run_test(double epsilon,
 
 
 
-template <typename T, typename ScalarType>
+template<typename T, typename ScalarType>
 int run_test(double epsilon)
 {
     //typedef float               ScalarType;

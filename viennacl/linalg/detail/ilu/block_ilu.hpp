@@ -39,7 +39,7 @@ namespace viennacl
     namespace detail
     {
       /** @brief Helper range class for representing a subvector of a larger buffer. */
-      template <typename VectorType, typename ValueType, typename SizeType = vcl_size_t>
+      template<typename VectorType, typename ValueType, typename SizeType = vcl_size_t>
       class ilu_vector_range
       {
         public:
@@ -78,7 +78,7 @@ namespace viennacl
         * @param start_index         First row- and column-index of the block
         * @param stop_index          First row- and column-index beyond the block
         */
-      template <typename ScalarType>
+      template<typename ScalarType>
       void extract_block_matrix(viennacl::compressed_matrix<ScalarType> const & A,
                                 viennacl::compressed_matrix<ScalarType> & diagonal_block_A,
                                 vcl_size_t start_index,
@@ -131,7 +131,7 @@ namespace viennacl
      * @tparam MatrixType   Type of the system matrix
      * @tparam ILUTag       Type of the tag identifiying the ILU preconditioner to be used on each block.
     */
-    template <typename MatrixType, typename ILUTag>
+    template<typename MatrixType, typename ILUTag>
     class block_ilu_precond
     {
       typedef typename MatrixType::value_type      ScalarType;
@@ -174,7 +174,7 @@ namespace viennacl
         }
 
 
-        template <typename VectorType>
+        template<typename VectorType>
         void apply(VectorType & vec) const
         {
           for (vcl_size_t i=0; i<block_indices_.size(); ++i)
@@ -252,7 +252,7 @@ namespace viennacl
     *
     *  Specialization for compressed_matrix
     */
-    template <typename ScalarType, unsigned int MAT_ALIGNMENT, typename ILUTag>
+    template<typename ScalarType, unsigned int MAT_ALIGNMENT, typename ILUTag>
     class block_ilu_precond< compressed_matrix<ScalarType, MAT_ALIGNMENT>, ILUTag >
     {
         typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>        MatrixType;

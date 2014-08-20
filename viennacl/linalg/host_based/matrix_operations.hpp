@@ -48,7 +48,7 @@ namespace viennacl
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
 
-      template <typename NumericT, typename ScalarType1>
+      template<typename NumericT, typename ScalarType1>
       void am(matrix_base<NumericT> & mat1,
               matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha)
       {
@@ -130,7 +130,7 @@ namespace viennacl
       }
 
 
-      template <typename NumericT,
+      template<typename NumericT,
                 typename ScalarType1, typename ScalarType2>
       void ambm(matrix_base<NumericT> & mat1,
                 matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
@@ -265,7 +265,7 @@ namespace viennacl
       }
 
 
-      template <typename NumericT,
+      template<typename NumericT,
                 typename ScalarType1, typename ScalarType2>
       void ambm_m(matrix_base<NumericT> & mat1,
                   matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
@@ -402,7 +402,7 @@ namespace viennacl
 
 
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_assign(matrix_base<NumericT> & mat, NumericT s, bool clear = false)
       {
         typedef NumericT        value_type;
@@ -449,7 +449,7 @@ namespace viennacl
 
 
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
       {
         typedef NumericT        value_type;
@@ -488,7 +488,7 @@ namespace viennacl
         }
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & mat)
       {
         typedef NumericT        value_type;
@@ -535,7 +535,7 @@ namespace viennacl
         }
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diag_to_vector(const matrix_base<NumericT> & mat, int k, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
@@ -580,7 +580,7 @@ namespace viennacl
         }
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_row(const matrix_base<NumericT> & mat, unsigned int i, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
@@ -617,7 +617,7 @@ namespace viennacl
         }
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
@@ -665,7 +665,7 @@ namespace viennacl
       * @param A      The result matrix (or -range, or -slice)
       * @param proxy  The proxy object holding B, C, and the operation
       */
-      template <typename NumericT, typename OP>
+      template<typename NumericT, typename OP>
       void element_op(matrix_base<NumericT> & A,
                       matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_element_binary<OP> > const & proxy)
       {
@@ -739,7 +739,7 @@ namespace viennacl
       // Unary operations
 
       // A = op(B)
-      template <typename NumericT, typename OP>
+      template<typename NumericT, typename OP>
       void element_op(matrix_base<NumericT> & A,
                       matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_element_unary<OP> > const & proxy)
       {
@@ -809,7 +809,7 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template <typename NumericT>
+      template<typename NumericT>
       void prod_impl(const matrix_base<NumericT> & mat, bool trans,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
@@ -910,7 +910,7 @@ namespace viennacl
 
       namespace detail
       {
-        template <typename A, typename B, typename C, typename NumericT>
+        template<typename A, typename B, typename C, typename NumericT>
         void prod(A & a, B & b, C & c,
                   vcl_size_t C_size1, vcl_size_t C_size2, vcl_size_t A_size2,
                   NumericT alpha, NumericT beta)
@@ -941,7 +941,7 @@ namespace viennacl
       * Implementation of C = prod(A, B);
       *
       */
-      template <typename NumericT, typename ScalarType >
+      template<typename NumericT, typename ScalarType >
       void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
                      const matrix_base<NumericT> & B, bool trans_B,
                            matrix_base<NumericT> & C,
@@ -1268,7 +1268,7 @@ namespace viennacl
       * @param vec1    The first vector
       * @param vec2    The second vector
       */
-      template <typename NumericT, typename S1>
+      template<typename NumericT, typename S1>
       void scaled_rank_1_update(matrix_base<NumericT> & mat1,
                                 S1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
                                 const vector_base<NumericT> & vec1,

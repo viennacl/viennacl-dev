@@ -38,7 +38,7 @@ void read_matrix_size(std::fstream& f, std::size_t & sz1, std::size_t & sz2)
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
 {
   if(!f.is_open())
@@ -60,7 +60,7 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 void read_vector_body(std::fstream& f, std::vector<ScalarType>& v)
 {
   if(!f.is_open())
@@ -75,7 +75,7 @@ void read_vector_body(std::fstream& f, std::vector<ScalarType>& v)
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 void random_fill(std::vector<ScalarType>& in)
 {
   for(std::size_t i = 0; i < in.size(); i++)
@@ -83,7 +83,7 @@ void random_fill(std::vector<ScalarType>& in)
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 bool check_bidiag(viennacl::matrix<ScalarType>& A)
 {
   const ScalarType EPS = 0.0001f;
@@ -107,7 +107,7 @@ bool check_bidiag(viennacl::matrix<ScalarType>& A)
   return true;
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType matrix_compare(viennacl::matrix<ScalarType>& res,
                      viennacl::matrix<ScalarType>& ref)
 {
@@ -130,7 +130,7 @@ ScalarType matrix_compare(viennacl::matrix<ScalarType>& res,
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType sigmas_compare(viennacl::matrix<ScalarType>& res,
                                std::vector<ScalarType>& ref)
 {
@@ -154,7 +154,7 @@ ScalarType sigmas_compare(viennacl::matrix<ScalarType>& res,
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 void test_svd(const std::string & fn, ScalarType EPS)
 {
   std::size_t sz1, sz2;
@@ -207,7 +207,7 @@ void test_svd(const std::string & fn, ScalarType EPS)
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 void time_svd(std::size_t sz1, std::size_t sz2)
 {
   viennacl::matrix<ScalarType> Ai(sz1, sz2), QL(sz1, sz1), QR(sz2, sz2);
@@ -229,7 +229,7 @@ void time_svd(std::size_t sz1, std::size_t sz2)
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 int test(ScalarType epsilon)
 {
 

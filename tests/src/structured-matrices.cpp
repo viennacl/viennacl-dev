@@ -36,7 +36,7 @@
 //
 // A simple dense matrix class (in order to avoid an unnecessary boost dependency)
 //
-template <typename T>
+template<typename T>
 class dense_matrix
 {
   public:
@@ -64,7 +64,7 @@ class dense_matrix
     std::size_t cols_;
 };
 
-template <typename T>
+template<typename T>
 std::ostream & operator<<(std::ostream & os, dense_matrix<T> const & mat)
 {
   std::cout << "[" << mat.size1() << "," << mat.size2() << "](";
@@ -80,7 +80,7 @@ std::ostream & operator<<(std::ostream & os, dense_matrix<T> const & mat)
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(dense_matrix<ScalarType> const & m1, dense_matrix<ScalarType> const & m2)
 {
     ScalarType df = 0.0;
@@ -102,7 +102,7 @@ ScalarType diff(dense_matrix<ScalarType> const & m1, dense_matrix<ScalarType> co
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
 {
     ScalarType df = 0.0;
@@ -117,7 +117,7 @@ ScalarType diff(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
     return std::sqrt(df / norm_ref) ;
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff_max(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
 {
   ScalarType df = 0.0;
@@ -140,7 +140,7 @@ ScalarType diff_max(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
 }
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 void transpose_test()
 {
     int w = 5, h = 7;
@@ -160,7 +160,7 @@ void transpose_test()
 
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 int toeplitz_test(ScalarType epsilon)
 {
     std::size_t TOEPLITZ_SIZE = 47;
@@ -261,7 +261,7 @@ int toeplitz_test(ScalarType epsilon)
     return EXIT_SUCCESS;
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 int circulant_test(ScalarType epsilon)
 {
     std::size_t CIRCULANT_SIZE = 53;
@@ -363,7 +363,7 @@ int circulant_test(ScalarType epsilon)
     return EXIT_SUCCESS;
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 int vandermonde_test(ScalarType epsilon)
 {
     std::size_t VANDERMONDE_SIZE = 61;
@@ -450,7 +450,7 @@ int vandermonde_test(ScalarType epsilon)
     return EXIT_SUCCESS;
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 int hankel_test(ScalarType epsilon)
 {
     std::size_t HANKEL_SIZE = 7;

@@ -25,14 +25,14 @@
 namespace viennacl
 {
     /** @brief Simple enable-if variant that uses the SFINAE pattern */
-    template <bool b, class T = void>
+    template<bool b, class T = void>
     struct enable_if
     {
       typedef T   type;
     };
 
     /** \cond */
-    template <class T>
+    template<class T>
     struct enable_if<false, T> {};
     /** \endcond */
 

@@ -39,7 +39,7 @@ namespace viennacl
         };
 
         // just returns the assignment string
-        template <typename StringType>
+        template<typename StringType>
         void generate_asbs_impl3(StringType & source, char sign_a, char sign_b, asbs_config const & cfg, bool mult_alpha, bool mult_beta)
         {
           source.append("      *s1 "); source.append(cfg.assign_op); source.append(1, sign_a); source.append(" *s2 ");
@@ -58,7 +58,7 @@ namespace viennacl
           source.append("; \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_asbs_impl2(StringType & source, char sign_a, char sign_b, asbs_config const & cfg)
         {
           source.append("    if (options2 & (1 << 1)) { \n");
@@ -85,7 +85,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_asbs_impl(StringType & source, std::string const & numeric_string, asbs_config const & cfg)
         {
           source.append("__kernel void as");
@@ -179,7 +179,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_asbs(StringType & source, std::string const & numeric_string)
         {
           asbs_config cfg;
@@ -205,7 +205,7 @@ namespace viennacl
           cfg.a = VIENNACL_ASBS_GPU; cfg.b = VIENNACL_ASBS_GPU; generate_asbs_impl(source, numeric_string, cfg);
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_scalar_swap(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void swap( \n");
@@ -222,7 +222,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for operations involving viennacl::scalar<>, but not viennacl::vector<> or viennacl::matrix<>. */
-        template <class TYPE>
+        template<class TYPE>
         struct scalar
         {
           static std::string program_name()

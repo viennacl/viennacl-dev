@@ -132,7 +132,7 @@ namespace viennacl{
       }
 
     /** @brief Emulation of C++11's .at() member for std::map<> */
-    template <typename KeyT, typename ValueT>
+    template<typename KeyT, typename ValueT>
     ValueT const & at(std::map<KeyT, ValueT> const & map, KeyT const & key)
     {
       typename std::map<KeyT, ValueT>::const_iterator it = map.find(key);

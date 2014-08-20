@@ -56,7 +56,7 @@ namespace viennacl
      * @param reciprocal_alpha  If true, then s2 / alpha instead of s2 * alpha is computed
      * @param flip_sign_alpha   If true, then (-alpha) is used instead of alpha
      */
-    template <typename S1,
+    template<typename S1,
               typename S2, typename ScalarType1>
     typename viennacl::enable_if< viennacl::is_scalar<S1>::value
                                   && viennacl::is_scalar<S2>::value
@@ -102,7 +102,7 @@ namespace viennacl
      * @param reciprocal_beta   If true, then s2 / beta instead of s2 * beta is computed
      * @param flip_sign_beta    If true, then (-beta) is used instead of beta
      */
-    template <typename S1,
+    template<typename S1,
               typename S2, typename ScalarType1,
               typename S3, typename ScalarType2>
     typename viennacl::enable_if< viennacl::is_scalar<S1>::value
@@ -158,7 +158,7 @@ namespace viennacl
      * @param reciprocal_beta   If true, then s2 / beta instead of s2 * beta is computed
      * @param flip_sign_beta    If true, then (-beta) is used instead of beta
      */
-    template <typename S1,
+    template<typename S1,
               typename S2, typename ScalarType1,
               typename S3, typename ScalarType2>
     typename viennacl::enable_if< viennacl::is_scalar<S1>::value
@@ -206,7 +206,7 @@ namespace viennacl
     * @param s1   The first scalar
     * @param s2   The second scalar
     */
-    template <typename S1, typename S2>
+    template<typename S1, typename S2>
     typename viennacl::enable_if<    viennacl::is_scalar<S1>::value
                                   && viennacl::is_scalar<S2>::value
                                 >::type

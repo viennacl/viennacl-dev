@@ -222,7 +222,7 @@ namespace viennacl
         *  @param flags  OpenCL flags for the buffer creation
         *  @param buffer A vector (STL vector, ublas vector, etc.)
         */
-        template < typename SCALARTYPE, typename A, template <typename, typename> class VectorType >
+        template< typename SCALARTYPE, typename A, template<typename, typename> class VectorType >
         viennacl::ocl::handle<cl_mem> create_memory(cl_mem_flags flags, const VectorType<SCALARTYPE, A> & buffer) const
         {
           return viennacl::ocl::handle<cl_mem>(create_memory_without_smart_handle(flags, static_cast<cl_uint>(sizeof(SCALARTYPE) * buffer.size()), (void*)&buffer[0]), *this);

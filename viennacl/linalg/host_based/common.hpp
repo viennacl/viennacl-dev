@@ -32,20 +32,20 @@ namespace viennacl
     {
       namespace detail
       {
-        template <typename T, typename VectorType>
+        template<typename T, typename VectorType>
         T * extract_raw_pointer(VectorType & vec)
         {
           return reinterpret_cast<T *>(viennacl::traits::ram_handle(vec).get());
         }
 
-        template <typename T, typename VectorType>
+        template<typename T, typename VectorType>
         T const * extract_raw_pointer(VectorType const & vec)
         {
           return reinterpret_cast<T const *>(viennacl::traits::ram_handle(vec).get());
         }
 
         /** @brief Helper class for accessing a strided subvector of a larger vector. */
-        template <typename NumericT>
+        template<typename NumericT>
         class vector_array_wrapper
         {
           public:
@@ -71,7 +71,7 @@ namespace viennacl
 
 
         /** @brief Helper array for accessing a strided submatrix embedded in a larger matrix. */
-        template <typename NumericT, typename F, bool is_transposed>
+        template<typename NumericT, typename F, bool is_transposed>
         class matrix_array_wrapper
         {
           public:
@@ -104,7 +104,7 @@ namespace viennacl
         };
 
         /** \cond */
-        template <typename NumericT, typename F>
+        template<typename NumericT, typename F>
         class matrix_array_wrapper<NumericT, F, true>
         {
           public:

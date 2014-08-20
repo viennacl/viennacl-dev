@@ -52,7 +52,7 @@
 using namespace boost::numeric;
 using namespace viennacl;
 
-template <typename ScalarType, typename VCLMatrixType>
+template<typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
@@ -74,7 +74,7 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    return ret;
 }
 
-template <typename ScalarType, unsigned int Alignment>
+template<typename ScalarType, unsigned int Alignment>
 ScalarType diff ( ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType,Alignment> & v2 ) {
     ublas::vector<ScalarType> v2_cpu ( v2.size() );
     viennacl::copy( v2.begin(), v2.end(), v2_cpu.begin() );

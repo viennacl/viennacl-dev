@@ -49,7 +49,7 @@ namespace viennacl
 
     /** \cond */
     //cl_mem:
-    template <>
+    template<>
     struct handle_inc_dec_helper<cl_mem>
     {
       static void inc(cl_mem & something)
@@ -68,7 +68,7 @@ namespace viennacl
     };
 
     //cl_program:
-    template <>
+    template<>
     struct handle_inc_dec_helper<cl_program>
     {
       static void inc(cl_program & something)
@@ -87,7 +87,7 @@ namespace viennacl
     };
 
     //cl_kernel:
-    template <>
+    template<>
     struct handle_inc_dec_helper<cl_kernel>
     {
       static void inc(cl_kernel & something)
@@ -106,7 +106,7 @@ namespace viennacl
     };
 
     //cl_command_queue:
-    template <>
+    template<>
     struct handle_inc_dec_helper<cl_command_queue>
     {
       static void inc(cl_command_queue & something)
@@ -125,7 +125,7 @@ namespace viennacl
     };
 
     //cl_context:
-    template <>
+    template<>
     struct handle_inc_dec_helper<cl_context>
     {
       static void inc(cl_context & something)

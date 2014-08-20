@@ -70,7 +70,7 @@ namespace viennacl
   };
 
   /** @brief Represents a vector consisting of 1 at a given index and zeros otherwise.*/
-  template <typename SCALARTYPE>
+  template<typename SCALARTYPE>
   struct unit_vector : public implicit_vector_base<SCALARTYPE>
   {
       unit_vector(vcl_size_t s, vcl_size_t ind, viennacl::context ctx = viennacl::context()) : implicit_vector_base<SCALARTYPE>(s, ind, 1, ctx)
@@ -81,13 +81,13 @@ namespace viennacl
 
 
   /** @brief Represents a vector consisting of scalars 's' only, i.e. v[i] = s for all i. To be used as an initializer for viennacl::vector, vector_range, or vector_slize only. */
-  template <typename SCALARTYPE>
+  template<typename SCALARTYPE>
   struct scalar_vector : public implicit_vector_base<SCALARTYPE>
   {
     scalar_vector(vcl_size_t s, SCALARTYPE val, viennacl::context ctx = viennacl::context()) : implicit_vector_base<SCALARTYPE>(s, val, ctx) {}
   };
 
-  template <typename SCALARTYPE>
+  template<typename SCALARTYPE>
   struct zero_vector : public scalar_vector<SCALARTYPE>
   {
     zero_vector(vcl_size_t s, viennacl::context ctx = viennacl::context()) : scalar_vector<SCALARTYPE>(s, 0, ctx){}
@@ -159,7 +159,7 @@ namespace viennacl
       explicit vector_base(cl_mem existing_mem, size_type vec_size, size_type start = 0, size_type stride = 1, viennacl::context ctx = viennacl::context());
 #endif
 
-      template <typename LHS, typename RHS, typename OP>
+      template<typename LHS, typename RHS, typename OP>
       explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy);
 
       /** @brief Assignment operator. Other vector needs to be of the same size, or this vector is not yet initialized.
@@ -168,10 +168,10 @@ namespace viennacl
       /** @brief Implementation of the operation v1 = v2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
       * @param proxy  An expression template proxy class.
       */
-      template <typename LHS, typename RHS, typename OP>
+      template<typename LHS, typename RHS, typename OP>
       self_type & operator=(const vector_expression<const LHS, const RHS, OP> & proxy);
       // assign vector range or vector slice
-      template <typename T>
+      template<typename T>
       self_type &  operator = (const vector_base<T> & v1);
       /** @brief Creates the vector from the supplied unit vector. */
       self_type & operator = (unit_vector<SCALARTYPE> const & v);

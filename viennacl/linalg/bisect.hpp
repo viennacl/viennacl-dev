@@ -40,19 +40,19 @@ namespace viennacl
       /**
       *    @brief overloaded function for copying vectors
       */
-      template <typename T, typename OtherVectorType>
+      template<typename T, typename OtherVectorType>
       void copy_vec_to_vec(viennacl::vector<T> const & src, OtherVectorType & dest)
       {
         viennacl::copy(src, dest);
       }
 
-      template <typename OtherVectorType, typename T>
+      template<typename OtherVectorType, typename T>
       void copy_vec_to_vec(OtherVectorType const & src, viennacl::vector<T> & dest)
       {
         viennacl::copy(src, dest);
       }
 
-      template <typename VectorType1, typename VectorType2>
+      template<typename VectorType1, typename VectorType2>
       void copy_vec_to_vec(VectorType1 const & src, VectorType2 & dest)
       {
         for (vcl_size_t i=0; i<src.size(); ++i)

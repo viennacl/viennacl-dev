@@ -50,7 +50,7 @@ namespace viennacl
     {
       namespace detail
       {
-        template <typename NumericT>
+        template<typename NumericT>
         NumericT flip_sign(NumericT val) { return -val; }
         inline unsigned long  flip_sign(unsigned long  val) { return val; }
         inline unsigned int   flip_sign(unsigned int   val) { return val; }
@@ -62,7 +62,7 @@ namespace viennacl
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
 
-      template <typename T, typename ScalarType1>
+      template<typename T, typename ScalarType1>
       void av(vector_base<T> & vec1,
               vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha)
       {
@@ -101,7 +101,7 @@ namespace viennacl
       }
 
 
-      template <typename T, typename ScalarType1, typename ScalarType2>
+      template<typename T, typename ScalarType1, typename ScalarType2>
       void avbv(vector_base<T> & vec1,
                 vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
                 vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -171,7 +171,7 @@ namespace viennacl
       }
 
 
-      template <typename T, typename ScalarType1, typename ScalarType2>
+      template<typename T, typename ScalarType1, typename ScalarType2>
       void avbv_v(vector_base<T> & vec1,
                   vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
                   vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -249,7 +249,7 @@ namespace viennacl
       * @param alpha  The value to be assigned
       * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
       */
-      template <typename T>
+      template<typename T>
       void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
       {
         typedef T        value_type;
@@ -276,7 +276,7 @@ namespace viennacl
       * @param vec1   The first vector (or -range, or -slice)
       * @param vec2   The second vector (or -range, or -slice)
       */
-      template <typename T>
+      template<typename T>
       void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
       {
         typedef T        value_type;
@@ -310,7 +310,7 @@ namespace viennacl
       * @param vec1   The result vector (or -range, or -slice)
       * @param proxy  The proxy object holding v2, v3 and the operation
       */
-      template <typename T, typename OP>
+      template<typename T, typename OP>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
       {
@@ -343,7 +343,7 @@ namespace viennacl
       * @param vec1   The result vector (or -range, or -slice)
       * @param proxy  The proxy object holding v2, v3 and the operation
       */
-      template <typename T, typename OP>
+      template<typename T, typename OP>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<OP> > const & proxy)
       {
@@ -379,7 +379,7 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the gpu)
       */
-      template <typename T, typename S3>
+      template<typename T, typename S3>
       void inner_prod_impl(vector_base<T> const & vec1,
                            vector_base<T> const & vec2,
                            S3 & result)
@@ -407,7 +407,7 @@ namespace viennacl
         result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
       }
 
-      template <typename T>
+      template<typename T>
       void inner_prod_impl(vector_base<T> const & x,
                            vector_tuple<T> const & vec_tuple,
                            vector_base<T> & result)
@@ -450,7 +450,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
+      template<typename T, typename S2>
       void norm_1_impl(vector_base<T> const & vec1,
                        S2 & result)
       {
@@ -478,7 +478,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
+      template<typename T, typename S2>
       void norm_2_impl(vector_base<T> const & vec1,
                        S2 & result)
       {
@@ -510,7 +510,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T, typename S2>
+      template<typename T, typename S2>
       void norm_inf_impl(vector_base<T> const & vec1,
                          S2 & result)
       {
@@ -539,7 +539,7 @@ namespace viennacl
       * @param vec1 The vector
       * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
       */
-      template <typename T>
+      template<typename T>
       vcl_size_t index_norm_inf(vector_base<T> const & vec1)
       {
         typedef T        value_type;
@@ -578,7 +578,7 @@ namespace viennacl
       * @param alpha  The first transformation coefficient
       * @param beta   The second transformation coefficient
       */
-      template <typename T>
+      template<typename T>
       void plane_rotation(vector_base<T> & vec1,
                           vector_base<T> & vec2,
                           T alpha, T beta)

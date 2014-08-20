@@ -33,13 +33,13 @@ namespace viennacl
 {
   namespace traits
   {
-    template <typename T>
+    template<typename T>
     bool row_major(T const &) { return true; } //default implementation: If there is no underlying matrix type, we take the result to be row-major
 
-    template <typename NumericT>
+    template<typename NumericT>
     bool row_major(matrix_base<NumericT> const & A) { return A.row_major(); }
 
-    template <typename LHS, typename RHS, typename OP>
+    template<typename LHS, typename RHS, typename OP>
     bool row_major(matrix_expression<LHS, RHS, OP> const & proxy) { return viennacl::traits::row_major(proxy.lhs()); }
 
   } //namespace traits

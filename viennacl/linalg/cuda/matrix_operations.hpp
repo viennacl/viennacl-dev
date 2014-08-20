@@ -53,7 +53,7 @@ namespace viennacl
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
 
-      template <typename NumericT,
+      template<typename NumericT,
                 typename ScalarType1>
       void am(matrix_base<NumericT> & mat1,
               matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
@@ -105,7 +105,7 @@ namespace viennacl
       }
 
 
-      template <typename NumericT,
+      template<typename NumericT,
                 typename ScalarType1, typename ScalarType2>
       void ambm(matrix_base<NumericT> & mat1,
                 matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
@@ -181,7 +181,7 @@ namespace viennacl
       }
 
 
-      template <typename NumericT,
+      template<typename NumericT,
                 typename ScalarType1, typename ScalarType2>
       void ambm_m(matrix_base<NumericT> & mat1,
                   matrix_base<NumericT> const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
@@ -259,7 +259,7 @@ namespace viennacl
 
 
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_assign(matrix_base<NumericT> & mat, NumericT s, bool clear = false)
       {
         typedef NumericT        value_type;
@@ -291,7 +291,7 @@ namespace viennacl
         }
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
       {
         typedef NumericT        value_type;
@@ -320,7 +320,7 @@ namespace viennacl
       }
 
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & mat)
       {
         typedef NumericT        value_type;
@@ -372,7 +372,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("av_kernel");
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diag_to_vector(const matrix_base<NumericT> & mat, int k, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
@@ -419,7 +419,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("av_kernel");
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_row(const matrix_base<NumericT> & mat, unsigned int i, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
@@ -452,7 +452,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("av_kernel");
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_base<NumericT> & vec)
       {
         typedef NumericT        value_type;
@@ -491,7 +491,7 @@ namespace viennacl
       //
 
 
-      template <typename T, typename SizeType, typename OP>
+      template<typename T, typename SizeType, typename OP>
       void element_op(matrix_base<T, SizeType> & A,
                       matrix_expression<const matrix_base<T, SizeType>, const matrix_base<T, SizeType>, op_element_binary<OP> > const & proxy)
       {
@@ -551,7 +551,7 @@ namespace viennacl
         }
       }
 
-      template <typename SizeType, typename OP>
+      template<typename SizeType, typename OP>
       void element_op(matrix_base<float, SizeType> & A,
                       matrix_expression<const matrix_base<float, SizeType>, const matrix_base<float, SizeType>, op_element_binary<OP> > const & proxy)
       {
@@ -611,7 +611,7 @@ namespace viennacl
         }
       }
 
-      template <typename SizeType, typename OP>
+      template<typename SizeType, typename OP>
       void element_op(matrix_base<double, SizeType> & A,
                       matrix_expression<const matrix_base<double, SizeType>, const matrix_base<double, SizeType>, op_element_binary<OP> > const & proxy)
       {
@@ -679,7 +679,7 @@ namespace viennacl
       //       we could not find a more 'automatic' way of generating the overloads below...
 
       // abs
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_abs> > const & proxy)
       {
@@ -721,7 +721,7 @@ namespace viennacl
 
 
       // acos
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_acos> > const & proxy)
       {
@@ -763,7 +763,7 @@ namespace viennacl
 
 
       // asin
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_asin> > const & proxy)
       {
@@ -805,7 +805,7 @@ namespace viennacl
 
 
       // atan
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_atan> > const & proxy)
       {
@@ -847,7 +847,7 @@ namespace viennacl
 
 
       // ceil
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_ceil> > const & proxy)
       {
@@ -889,7 +889,7 @@ namespace viennacl
 
 
       // cos
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_cos> > const & proxy)
       {
@@ -931,7 +931,7 @@ namespace viennacl
 
 
       // cosh
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_cosh> > const & proxy)
       {
@@ -973,7 +973,7 @@ namespace viennacl
 
 
       // exp
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_exp> > const & proxy)
       {
@@ -1015,7 +1015,7 @@ namespace viennacl
 
 
       // fabs
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_fabs> > const & proxy)
       {
@@ -1057,7 +1057,7 @@ namespace viennacl
 
 
       // floor
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_floor> > const & proxy)
       {
@@ -1099,7 +1099,7 @@ namespace viennacl
 
 
       // log
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_log> > const & proxy)
       {
@@ -1141,7 +1141,7 @@ namespace viennacl
 
 
       // log10
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_log10> > const & proxy)
       {
@@ -1183,7 +1183,7 @@ namespace viennacl
 
 
       // sin
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_sin> > const & proxy)
       {
@@ -1225,7 +1225,7 @@ namespace viennacl
 
 
       // sinh
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_sinh> > const & proxy)
       {
@@ -1267,7 +1267,7 @@ namespace viennacl
 
 
       // sqrt
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_sqrt> > const & proxy)
       {
@@ -1309,7 +1309,7 @@ namespace viennacl
 
 
       // tan
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_tan> > const & proxy)
       {
@@ -1351,7 +1351,7 @@ namespace viennacl
 
 
       // tanh
-      template <typename T>
+      template<typename T>
       void element_op(matrix_base<T> & A,
                       matrix_expression<const matrix_base<T>, const matrix_base<T>, op_element_unary<op_tanh> > const & proxy)
       {
@@ -1406,7 +1406,7 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template <typename NumericT>
+      template<typename NumericT>
       void prod_impl(const matrix_base<NumericT> & mat, bool mat_transpose,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
@@ -1511,7 +1511,7 @@ namespace viennacl
       namespace detail
       {
         // C = A * B and possibly transposed variants
-        template <typename T1, typename T2, typename T3, typename ScalarType >
+        template<typename T1, typename T2, typename T3, typename ScalarType >
         void prod_slow_kernel(const T1 & A, bool transposed_A,
                               const T2 & B, bool transposed_B,
                               T3 & C,
@@ -2288,7 +2288,7 @@ namespace viennacl
         }
 
         // C = A * B, using fast kernel
-        template <typename T1, typename T2, typename T3, typename ScalarType >
+        template<typename T1, typename T2, typename T3, typename ScalarType >
         void prod_fast_kernel(const T1 & A,
                               const T2 & B,
                               T3 & C,
@@ -2326,7 +2326,7 @@ namespace viennacl
           throw "not implemented yet";
         }
 
-        template <typename T1, typename T2, typename T3, typename ScalarType >
+        template<typename T1, typename T2, typename T3, typename ScalarType >
         void prod(const T1 & A, bool transposed_A,
                   const T2 & B, bool transposed_B,
                   T3 & C,
@@ -2364,7 +2364,7 @@ namespace viennacl
       * Implementation of C = prod(A, B);
       *
       */
-      template <typename NumericT, typename ScalarType >
+      template<typename NumericT, typename ScalarType >
       void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
                      const matrix_base<NumericT> & B, bool trans_B,
                            matrix_base<NumericT> & C,
@@ -2396,7 +2396,7 @@ namespace viennacl
       * @param vec1    The first vector
       * @param vec2    The second vector
       */
-      template <typename NumericT, typename S1>
+      template<typename NumericT, typename S1>
       void scaled_rank_1_update(matrix_base<NumericT> & mat1,
                                 S1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                                 const vector_base<NumericT> & vec1,

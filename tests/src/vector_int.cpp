@@ -48,7 +48,7 @@ using namespace boost::numeric;
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 {
   viennacl::backend::finish();
@@ -57,7 +57,7 @@ ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, viennacl::scalar<ScalarType> const & s2)
 {
   viennacl::backend::finish();
@@ -66,7 +66,7 @@ ScalarType diff(ScalarType const & s1, viennacl::scalar<ScalarType> const & s2)
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const & s2)
 {
   viennacl::backend::finish();
@@ -75,7 +75,7 @@ ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const &
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType, typename VCLVectorType>
+template<typename ScalarType, typename VCLVectorType>
 ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
@@ -91,7 +91,7 @@ ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
    return 0;
 }
 
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 int check(T1 const & t1, T2 const & t2)
 {
   int retval = EXIT_SUCCESS;

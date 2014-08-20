@@ -37,7 +37,7 @@ namespace viennacl
     // Context
     //
     /** @brief Returns an ID for the currently active memory domain of an object */
-    template <typename T>
+    template<typename T>
     viennacl::context context(T const & t)
     {
 #ifdef VIENNACL_WITH_OPENCL

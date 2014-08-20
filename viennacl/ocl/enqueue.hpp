@@ -44,7 +44,7 @@ namespace viennacl
   {
 
     /** @brief Enqueues a kernel in the provided queue */
-    template <typename KernelType>
+    template<typename KernelType>
     void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue)
     {
       #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
@@ -125,7 +125,7 @@ namespace viennacl
 
 
     /** @brief Convenience function that enqueues the provided kernel into the first queue of the currently active device in the currently active context */
-    template <typename KernelType>
+    template<typename KernelType>
     void enqueue(KernelType & k)
     {
       enqueue(k, k.context().get_queue());

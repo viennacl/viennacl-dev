@@ -127,7 +127,7 @@ namespace viennacl
     }
 
     // expression on rhs:
-    template <typename NumericT, typename LHS, typename RHS, typename OP>
+    template<typename NumericT, typename LHS, typename RHS, typename OP>
     viennacl::scalar_expression< const vector_base<NumericT>,
                                  const viennacl::vector_expression<LHS, RHS, OP>,
                                  viennacl::op_inner_prod >
@@ -141,7 +141,7 @@ namespace viennacl
     }
 
     // expression on lhs and rhs:
-    template <typename LHS1, typename RHS1, typename OP1,
+    template<typename LHS1, typename RHS1, typename OP1,
               typename LHS2, typename RHS2, typename OP2>
     viennacl::scalar_expression< const viennacl::vector_expression<LHS1, RHS1, OP1>,
                                  const viennacl::vector_expression<LHS2, RHS2, OP2>,

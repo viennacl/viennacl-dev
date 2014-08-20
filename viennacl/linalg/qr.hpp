@@ -49,7 +49,7 @@ namespace viennacl
     namespace detail
     {
 
-      template <typename MatrixType, typename VectorType>
+      template<typename MatrixType, typename VectorType>
       typename MatrixType::value_type setup_householder_vector_ublas(MatrixType const & A, VectorType & v, MatrixType & matrix_1x1, vcl_size_t j)
       {
         using boost::numeric::ublas::range;
@@ -88,7 +88,7 @@ namespace viennacl
       }
 
 
-      template <typename MatrixType, typename VectorType>
+      template<typename MatrixType, typename VectorType>
       typename viennacl::result_of::cpu_value_type< typename MatrixType::value_type >::type
       setup_householder_vector_viennacl(MatrixType const & A, VectorType & v, MatrixType & matrix_1x1, vcl_size_t j)
       {
@@ -130,7 +130,7 @@ namespace viennacl
 
 
       // Apply (I - beta v v^T) to the k-th column of A, where v is the reflector starting at j-th row/column
-      template <typename MatrixType, typename VectorType, typename ScalarType>
+      template<typename MatrixType, typename VectorType, typename ScalarType>
       void householder_reflect(MatrixType & A, VectorType & v, ScalarType beta, vcl_size_t j, vcl_size_t k)
       {
         ScalarType v_in_col = A(j,k);
@@ -143,7 +143,7 @@ namespace viennacl
           A(i,k) -= beta * v_in_col * v[i];
       }
 
-      template <typename MatrixType, typename VectorType, typename ScalarType>
+      template<typename MatrixType, typename VectorType, typename ScalarType>
       void householder_reflect_ublas(MatrixType & A, VectorType & v, MatrixType & matrix_1x1, ScalarType beta, vcl_size_t j, vcl_size_t k)
       {
         using boost::numeric::ublas::range;
@@ -157,7 +157,7 @@ namespace viennacl
         project(A, range(j, A.size1()), range(k, k+1)) -= (beta * v_in_col) * project(v, range(j, A.size1()), range(0, 1));
       }
 
-      template <typename MatrixType, typename VectorType, typename ScalarType>
+      template<typename MatrixType, typename VectorType, typename ScalarType>
       void householder_reflect_viennacl(MatrixType & A, VectorType & v, MatrixType & matrix_1x1, ScalarType beta, vcl_size_t j, vcl_size_t k)
       {
         using viennacl::range;
@@ -180,7 +180,7 @@ namespace viennacl
 
 
       // Apply (I - beta v v^T) to A, where v is the reflector starting at j-th row/column
-      template <typename MatrixType, typename VectorType, typename ScalarType>
+      template<typename MatrixType, typename VectorType, typename ScalarType>
       void householder_reflect(MatrixType & A, VectorType & v, ScalarType beta, vcl_size_t j)
       {
         vcl_size_t column_end = A.size2();
@@ -190,14 +190,14 @@ namespace viennacl
       }
 
 
-      template <typename MatrixType, typename VectorType>
+      template<typename MatrixType, typename VectorType>
       void write_householder_to_A(MatrixType & A, VectorType const & v, vcl_size_t j)
       {
         for (vcl_size_t i=j+1; i<A.size1(); ++i)
           A(i,j) = v[i];
       }
 
-      template <typename MatrixType, typename VectorType>
+      template<typename MatrixType, typename VectorType>
       void write_householder_to_A_ublas(MatrixType & A, VectorType const & v, vcl_size_t j)
       {
         using boost::numeric::ublas::range;
@@ -207,7 +207,7 @@ namespace viennacl
         project( A, range(j+1, A.size1()), range(j, j+1) ) = project(v, range(j+1, A.size1()), range(0, 1) );;
       }
 
-      template <typename MatrixType, typename VectorType>
+      template<typename MatrixType, typename VectorType>
       void write_householder_to_A_viennacl(MatrixType & A, VectorType const & v, vcl_size_t j)
       {
         using viennacl::range;
@@ -560,7 +560,7 @@ namespace viennacl
 
 
     //takes an inplace QR matrix A and generates Q and R explicitly
-    template <typename MatrixType, typename VectorType>
+    template<typename MatrixType, typename VectorType>
     void recoverQ(MatrixType const & A, VectorType const & betas, MatrixType & Q, MatrixType & R)
     {
       typedef typename MatrixType::value_type   ScalarType;
@@ -604,7 +604,7 @@ namespace viennacl
      *  @param betas  The scalars beta_i for each Householder reflector (I - beta_i v_i v_i^T)
      *  @param b      The vector b to which the result Q^T b is directly written to
      */
-    template <typename MatrixType, typename VectorType1, typename VectorType2>
+    template<typename MatrixType, typename VectorType1, typename VectorType2>
     void inplace_qr_apply_trans_Q(MatrixType const & A, VectorType1 const & betas, VectorType2 & b)
     {
       typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type   ScalarType;
@@ -624,7 +624,7 @@ namespace viennacl
       }
     }
 
-    template <typename T, typename F, unsigned int ALIGNMENT, typename VectorType1, unsigned int A2>
+    template<typename T, typename F, unsigned int ALIGNMENT, typename VectorType1, unsigned int A2>
     void inplace_qr_apply_trans_Q(viennacl::matrix<T, F, ALIGNMENT> const & A, VectorType1 const & betas, viennacl::vector<T, A2> & b)
     {
       boost::numeric::ublas::matrix<T> ublas_A(A.size1(), A.size2());

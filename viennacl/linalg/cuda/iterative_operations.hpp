@@ -40,7 +40,7 @@ namespace viennacl
       //
 
       // cpu scalar
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_cg_vector_kernel(T * result,
                                                  T alpha,
                                                  T * p,
@@ -81,7 +81,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_vector_update(vector_base<T> & result,
                                       T alpha,
                                       vector_base<T> & p,
@@ -110,7 +110,7 @@ namespace viennacl
       //
 
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_cg_csr_vec_mul_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -162,7 +162,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(compressed_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -188,7 +188,7 @@ namespace viennacl
       //
 
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_cg_coo_vec_mul_kernel(const unsigned int * coords, //(row_index, column_index)
                                                       const T * elements,
                                                       const unsigned int * group_boundaries,
@@ -292,7 +292,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(coordinate_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -320,7 +320,7 @@ namespace viennacl
       // ELL Matrix
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_cg_ell_vec_mul_kernel(const unsigned int * coords,
                                                       const T * elements,
                                                       unsigned int internal_row_num,
@@ -375,7 +375,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(ell_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -401,7 +401,7 @@ namespace viennacl
       // SELL-C-\sigma Matrix
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_cg_sliced_ell_vec_mul_kernel(const unsigned int * columns_per_block,
                                                              const unsigned int * column_indices,
                                                              const unsigned int * block_start,
@@ -462,7 +462,7 @@ namespace viennacl
         }
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(sliced_ell_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -489,7 +489,7 @@ namespace viennacl
       //
 
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_cg_hyb_vec_mul_kernel(const unsigned int * ell_coords,
                                                       const T * ell_elements,
                                                       const unsigned int * csr_rows,
@@ -557,7 +557,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_cg_prod(hyb_matrix<T> const & A,
                              vector_base<T> const & p,
                              vector_base<T> & Ap,
@@ -585,7 +585,7 @@ namespace viennacl
 
       /////////////////////////////////////
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_bicgstab_update_s_kernel(T * s,
                                                          T const * residual,
                                                          T const * Ap,
@@ -642,7 +642,7 @@ namespace viennacl
           inner_prod_buffer[blockIdx.x + chunk_offset] = shared_array[0];
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_update_s(vector_base<T> & s,
                                        vector_base<T> & r,
                                        vector_base<T> const & Ap,
@@ -664,7 +664,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_update_s_kernel");
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_bicgstab_vector_kernel(T * result,
                                                        T alpha,
                                                        T * p,
@@ -715,7 +715,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_vector_update(vector_base<T> & result, T alpha, vector_base<T> & p, T omega, vector_base<T> const & s,
                                             vector_base<T> & residual, vector_base<T> const & As,
                                             T beta, vector_base<T> const & Ap,
@@ -747,7 +747,7 @@ namespace viennacl
       //
 
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_bicgstab_csr_vec_mul_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -807,7 +807,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(compressed_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,
@@ -839,7 +839,7 @@ namespace viennacl
       //
 
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_bicgstab_coo_vec_mul_kernel(const unsigned int * coords, //(row_index, column_index)
                                                       const T * elements,
                                                       const unsigned int * group_boundaries,
@@ -953,7 +953,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(coordinate_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,
@@ -987,7 +987,7 @@ namespace viennacl
       // ELL Matrix
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_bicgstab_ell_vec_mul_kernel(const unsigned int * coords,
                                                       const T * elements,
                                                       unsigned int internal_row_num,
@@ -1050,7 +1050,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(ell_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,
@@ -1082,7 +1082,7 @@ namespace viennacl
       // SELL-C-\sigma Matrix
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_bicgstab_sliced_ell_vec_mul_kernel(const unsigned int * columns_per_block,
                                                                    const unsigned int * column_indices,
                                                                    const unsigned int * block_start,
@@ -1151,7 +1151,7 @@ namespace viennacl
         }
       }
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(sliced_ell_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,
@@ -1184,7 +1184,7 @@ namespace viennacl
       //
 
 
-      template <typename T>
+      template<typename T>
       __global__ void pipelined_bicgstab_hyb_vec_mul_kernel(const unsigned int * ell_coords,
                                                             const T * ell_elements,
                                                             const unsigned int * csr_rows,
@@ -1260,7 +1260,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       void pipelined_bicgstab_prod(hyb_matrix<T> const & A,
                                    vector_base<T> const & p,
                                    vector_base<T> & Ap,

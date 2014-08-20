@@ -32,7 +32,7 @@ namespace viennacl
   {
 
     /** @brief A backend that provides contexts for ViennaCL objects (vector, matrix, etc.) */
-    template <bool dummy = false>  //never use parameter other than default (introduced for linkage issues only)
+    template<bool dummy = false>  //never use parameter other than default (introduced for linkage issues only)
     class backend
     {
       public:
@@ -199,13 +199,13 @@ namespace viennacl
         static std::map<long, viennacl::ocl::context> contexts_;
     };
 
-    template <bool dummy>
+    template<bool dummy>
     long backend<dummy>::current_context_id_ = 0;
 
-    template <bool dummy>
+    template<bool dummy>
     std::map<long, bool> backend<dummy>::initialized_;
 
-    template <bool dummy>
+    template<bool dummy>
     std::map<long, viennacl::ocl::context> backend<dummy>::contexts_;
 
     ////////////////////// current context //////////////////

@@ -70,7 +70,7 @@ namespace viennacl
         // Symmetric tridiagonal QL algorithm.
         // This is derived from the Algol procedures tql2, by Bowdler, Martin, Reinsch, and Wilkinson,
         // Handbook for Auto. Comp., Vol.ii-Linear Algebra, and the corresponding Fortran subroutine in EISPACK.
-        template <typename SCALARTYPE, unsigned int ALIGNMENT>
+        template<typename SCALARTYPE, unsigned int ALIGNMENT>
         void tql2(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Q,
                   boost::numeric::ublas::vector<SCALARTYPE> & d,
                   boost::numeric::ublas::vector<SCALARTYPE> & e)
@@ -175,7 +175,7 @@ namespace viennacl
             }
         }
 
-        template <typename SCALARTYPE, typename MatrixT>
+        template<typename SCALARTYPE, typename MatrixT>
         void final_iter_update_gpu(MatrixT& A,
                                 int n,
                                 int last_n,
@@ -197,7 +197,7 @@ namespace viennacl
                                   ));
         }
 
-        template <typename SCALARTYPE, typename MatrixT>
+        template<typename SCALARTYPE, typename MatrixT>
         void update_float_QR_column_gpu(MatrixT& A,
                                 const std::vector<SCALARTYPE>& buf,
                                 viennacl::vector<SCALARTYPE>& buf_vcl,
@@ -223,7 +223,7 @@ namespace viennacl
                                   ));
         }
 
-        template <typename SCALARTYPE, typename MatrixT>
+        template<typename SCALARTYPE, typename MatrixT>
         void final_iter_update(MatrixT& A,
                                 int n,
                                 int last_n,
@@ -240,7 +240,7 @@ namespace viennacl
             }
         }
 
-        template <typename SCALARTYPE, typename MatrixT>
+        template<typename SCALARTYPE, typename MatrixT>
         void update_float_QR_column(MatrixT& A,
                                 const std::vector<SCALARTYPE>& buf,
                                 int m,
@@ -288,7 +288,7 @@ namespace viennacl
         }
 
         /** @brief Internal helper class representing a row-major dense matrix used for the QR method for the purpose of computing eigenvalues. */
-        template <typename SCALARTYPE>
+        template<typename SCALARTYPE>
         class FastMatrix
         {
         public:
@@ -331,7 +331,7 @@ namespace viennacl
         // Nonsymmetric reduction from Hessenberg to real Schur form.
         // This is derived from the Algol procedure hqr2, by Martin and Wilkinson, Handbook for Auto. Comp.,
         // Vol.ii-Linear Algebra, and the corresponding  Fortran subroutine in EISPACK.
-        template <typename SCALARTYPE, unsigned int ALIGNMENT>
+        template<typename SCALARTYPE, unsigned int ALIGNMENT>
         void hqr2(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& vcl_H,
                     viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& V,
                     boost::numeric::ublas::vector<SCALARTYPE>& d,
@@ -786,7 +786,7 @@ namespace viennacl
             V = viennacl::linalg::prod(trans(tmp), vcl_H);
         }
 
-        template <typename SCALARTYPE, unsigned int ALIGNMENT>
+        template<typename SCALARTYPE, unsigned int ALIGNMENT>
         bool householder_twoside(
                             viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                             viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& Q,
@@ -846,7 +846,7 @@ namespace viennacl
             return true;
         }
 
-        template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+        template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
         void tridiagonal_reduction(viennacl::matrix<SCALARTYPE, F, ALIGNMENT>& A,
                                     viennacl::matrix<SCALARTYPE, F, ALIGNMENT>& Q)
         {
@@ -861,7 +861,7 @@ namespace viennacl
 
         }
 
-        template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+        template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
         void qr_method(viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & A,
                        viennacl::matrix<SCALARTYPE, F, ALIGNMENT> & Q,
                        boost::numeric::ublas::vector<SCALARTYPE> & D,
@@ -925,7 +925,7 @@ namespace viennacl
     }
 
 
-    template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
     void qr_method_nsm(viennacl::matrix<SCALARTYPE, F, ALIGNMENT>& A,
                        viennacl::matrix<SCALARTYPE, F, ALIGNMENT>& Q,
                        boost::numeric::ublas::vector<SCALARTYPE>& D,
@@ -935,7 +935,7 @@ namespace viennacl
         detail::qr_method(A, Q, D, E, false);
     }
 
-    template <typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, typename F, unsigned int ALIGNMENT>
     void qr_method_sym(viennacl::matrix<SCALARTYPE, F, ALIGNMENT>& A,
                        viennacl::matrix<SCALARTYPE, F, ALIGNMENT>& Q,
                        boost::numeric::ublas::vector<SCALARTYPE>& D

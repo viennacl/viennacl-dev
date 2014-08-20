@@ -19,7 +19,7 @@ namespace viennacl
 
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_spai_assemble_blocks(StringType & source, std::string const & numeric_string)
         {
           source.append("float get_element(__global const unsigned int * row_indices, \n");
@@ -80,7 +80,7 @@ namespace viennacl
           source.append("  } \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_spai_block_bv_assembly(StringType & source, std::string const & numeric_string)
         {
           source.append("  void assemble_bv(__global "); source.append(numeric_string); source.append(" * g_bv_r, __global "); source.append(numeric_string); source.append(" * g_bv, unsigned int col_n){ \n");
@@ -117,7 +117,7 @@ namespace viennacl
           source.append("  } \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_spai_block_least_squares(StringType & source, std::string const & numeric_string)
         {
           source.append("void custom_dot_prod_ls(__global "); source.append(numeric_string); source.append(" * A, unsigned int row_n, __global "); source.append(numeric_string); source.append(" * v, unsigned int ind, "); source.append(numeric_string); source.append(" *res){ \n");
@@ -183,7 +183,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_spai_block_q_mult(StringType & source, std::string const & numeric_string)
         {
           source.append("void custom_dot_prod(__global "); source.append(numeric_string); source.append(" * A, unsigned int row_n, __local "); source.append(numeric_string); source.append(" * v, unsigned int ind, "); source.append(numeric_string); source.append(" *res){ \n");
@@ -259,7 +259,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_spai_block_qr(StringType & source, std::string const & numeric_string)
         {
           source.append("void dot_prod(__local const "); source.append(numeric_string); source.append("* A, unsigned int n, unsigned int beg_ind, "); source.append(numeric_string); source.append("* res){ \n");
@@ -393,7 +393,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_spai_block_qr_assembly(StringType & source, std::string const & numeric_string)
         {
           source.append("void assemble_upper_part(__global "); source.append(numeric_string); source.append(" * R_q, \n");
@@ -450,7 +450,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_spai_block_qr_assembly_1(StringType & source, std::string const & numeric_string)
         {
           source.append("void assemble_upper_part_1(__global "); source.append(numeric_string); source.append(" * R_q, unsigned int row_n_q, unsigned int col_n_q, __global "); source.append(numeric_string); source.append(" * R_u, \n");
@@ -490,7 +490,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_spai_block_r_assembly(StringType & source, std::string const & numeric_string)
         {
           source.append("void assemble_r(__global "); source.append(numeric_string); source.append(" * gR, unsigned int row_n_r, unsigned int col_n_r, __global "); source.append(numeric_string); source.append(" * R, \n");
@@ -566,7 +566,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for the sparse approximate inverse preconditioners. */
-        template <typename NumericT>
+        template<typename NumericT>
         struct spai
         {
           static std::string program_name()

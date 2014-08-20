@@ -44,7 +44,7 @@ namespace viennacl
     {
 
       /** @brief Helper struct for converting a type to its OpenCL pendant. */
-      template <typename T>
+      template<typename T>
       struct convert_to_opencl
       {
         typedef T    type;
@@ -52,7 +52,7 @@ namespace viennacl
       };
 
 #ifdef VIENNACL_WITH_OPENCL
-      template <>
+      template<>
       struct convert_to_opencl<unsigned int>
       {
         typedef cl_uint    type;
@@ -60,7 +60,7 @@ namespace viennacl
         enum { special = 1 };
       };
 
-      template <>
+      template<>
       struct convert_to_opencl<int>
       {
         typedef cl_int    type;
@@ -69,7 +69,7 @@ namespace viennacl
       };
 
 
-      template <>
+      template<>
       struct convert_to_opencl<unsigned long>
       {
         typedef cl_ulong    type;
@@ -77,7 +77,7 @@ namespace viennacl
         enum { special = 1 };
       };
 
-      template <>
+      template<>
       struct convert_to_opencl<long>
       {
         typedef cl_long    type;
@@ -91,7 +91,7 @@ namespace viennacl
 
 
     /** @brief Helper class implementing an array on the host. Default case: No conversion necessary */
-    template <typename T, bool special = detail::convert_to_opencl<T>::special>
+    template<typename T, bool special = detail::convert_to_opencl<T>::special>
     class typesafe_host_array
     {
         typedef T                                              cpu_type;
@@ -140,7 +140,7 @@ namespace viennacl
         // Setter and Getter
         //
 
-        template <typename U>
+        template<typename U>
         void set(vcl_size_t index, U value)
         {
           reinterpret_cast<cpu_type *>(bytes_buffer_)[index] = static_cast<cpu_type>(value);
@@ -170,7 +170,7 @@ namespace viennacl
 
 
     /** @brief Special host array type for conversion between OpenCL types and pure CPU types */
-    template <typename T>
+    template<typename T>
     class typesafe_host_array<T, true>
     {
         typedef T                                              cpu_type;
@@ -232,7 +232,7 @@ namespace viennacl
         // Setter and Getter
         //
 
-        template <typename U>
+        template<typename U>
         void set(vcl_size_t index, U value)
         {
 #ifdef VIENNACL_WITH_OPENCL

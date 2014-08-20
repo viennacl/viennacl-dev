@@ -46,7 +46,7 @@
 #include <boost/thread.hpp>
 
 
-template <typename NumericT>
+template<typename NumericT>
 class worker
 {
 public:

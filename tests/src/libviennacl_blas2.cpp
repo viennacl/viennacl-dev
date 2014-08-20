@@ -32,7 +32,7 @@
 
 #include "viennacl/vector.hpp"
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 {
    if (s1 != s2)
@@ -40,7 +40,7 @@ ScalarType diff(ScalarType const & s1, ScalarType const & s2)
    return 0;
 }
 
-template <typename ScalarType, typename ViennaCLVectorType>
+template<typename ScalarType, typename ViennaCLVectorType>
 ScalarType diff(std::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
 {
    std::vector<ScalarType> v2_cpu(vcl_vec.size());
@@ -62,7 +62,7 @@ ScalarType diff(std::vector<ScalarType> const & v1, ViennaCLVectorType const & v
    return inf_norm;
 }
 
-template <typename T, typename U, typename EpsilonT>
+template<typename T, typename U, typename EpsilonT>
 void check(T const & t, U const & u, EpsilonT eps)
 {
   EpsilonT rel_error = diff(t,u);

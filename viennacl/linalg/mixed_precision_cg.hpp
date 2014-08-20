@@ -118,7 +118,7 @@ namespace viennacl
     * @param tag        Solver configuration tag
     * @return The result vector
     */
-    template <typename MatrixType, typename VectorType>
+    template<typename MatrixType, typename VectorType>
     VectorType solve(const MatrixType & matrix, VectorType const & rhs, mixed_precision_cg_tag const & tag)
     {
       //typedef typename VectorType::value_type      ScalarType;
@@ -241,7 +241,7 @@ namespace viennacl
       return result;
     }
 
-    template <typename MatrixType, typename VectorType>
+    template<typename MatrixType, typename VectorType>
     VectorType solve(const MatrixType & matrix, VectorType const & rhs, mixed_precision_cg_tag const & tag, viennacl::linalg::no_precond)
     {
       return solve(matrix, rhs, tag);

@@ -46,7 +46,7 @@ namespace viennacl
       {
 
         // returns true if the matrix is hermitian (or real symmetric), false otherwise
-        template <typename ScalarType>
+        template<typename ScalarType>
         bool isHermitian(ScalarType ** const A, vcl_size_t n)
         {
           for(vcl_size_t i=0;i<n;i++)
@@ -57,7 +57,7 @@ namespace viennacl
         }
 
         // returns the bandwidth of a hermitian (or real symmetric) matrix
-        template <typename ScalarType>
+        template<typename ScalarType>
         vcl_size_t getHermitianBandwidth(ScalarType ** const A, vcl_size_t n)
         {
           for(vcl_size_t i=n-1;i>=0;i--)
@@ -69,7 +69,7 @@ namespace viennacl
 
         // helper for tridiagonalizeBandedMatrix
         // does a householder similarity transform to eliminate a range of nonzeros in a row of a hermitian matrix
-        template <typename ScalarType>
+        template<typename ScalarType>
         void eliminateHermitian(ScalarType ** A, vcl_size_t row, vcl_size_t from, vcl_size_t to, vcl_size_t width, ScalarType * ss)
         {
           if(from>=to)
@@ -291,7 +291,7 @@ namespace viennacl
       * @param piv          The optional pivot vector to store the pivot indices.  If piv is NULL, no partial pivoting will be performed.
       * @param block_size   The block size to be used
       */
-      template <typename ScalarType>
+      template<typename ScalarType>
       bool lu_factorize_row_major(ScalarType ** A, vcl_size_t m, vcl_size_t n, vcl_size_t * piv = NULL, vcl_size_t block_size = 8)
       {
         // Use a parallel "left-looking", row-operation-based, block Crout/Doolittle algorithm.
@@ -403,7 +403,7 @@ namespace viennacl
       * @param n            The width of the matrix
       * @param block_size   The block size to be used
       */
-      template <typename ScalarType>
+      template<typename ScalarType>
           std::vector<ScalarType> inplace_qr_col_major(ScalarType ** A, vcl_size_t m, vcl_size_t n, vcl_size_t block_size = 8)
       {
         std::vector<ScalarType> betas(std::min(m,n));
@@ -483,7 +483,7 @@ namespace viennacl
       * @param block_size   The block size to be used
       * @param num_threads  Number of threads to be used
       */
-      template <typename ScalarType>
+      template<typename ScalarType>
       std::vector<ScalarType> inplace_qr_row_major(ScalarType ** A, vcl_size_t m, vcl_size_t n, vcl_size_t block_size = 8, vcl_size_t num_threads = 1)
       {
         std::vector<ScalarType> betas(std::min(m,n));

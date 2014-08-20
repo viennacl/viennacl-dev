@@ -75,7 +75,7 @@ inline int calc_bw(std::vector< std::map<int, double> > const & matrix)
 
 
 // Calculate the bandwidth of a reordered matrix
-template <typename IndexT>
+template<typename IndexT>
 int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std::vector<IndexT> const & r)
 {
     int bw = 0;

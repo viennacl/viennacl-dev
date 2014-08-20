@@ -44,7 +44,7 @@ namespace viennacl
     *  @tparam is_iterator1   if true, this iterator iterates along increasing row indices, otherwise along increasing column indices
     *  @tparam increment      if +1, this is a forward iterator, if -1 we have a reverse iterator
     */
-    template <typename SCALARTYPE, typename SizeType, bool is_iterator1, bool is_forward>
+    template<typename SCALARTYPE, typename SizeType, bool is_iterator1, bool is_forward>
     class const_sparse_matrix_adapted_iterator
     {
       typedef const_sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, is_iterator1, is_forward>    self_type;
@@ -172,7 +172,7 @@ namespace viennacl
     *
     *  @tparam SCALARTYPE   either float or double
     */
-    template <typename SCALARTYPE, typename SizeType = unsigned int>
+    template<typename SCALARTYPE, typename SizeType = unsigned int>
     class const_sparse_matrix_adapter
     {
       public:
@@ -226,7 +226,7 @@ namespace viennacl
     *  @tparam SCALARTYPE     either float or double
     *  @tparam is_iterator1   if true, this iterator iterates along increasing row indices, otherwise along increasiong column indices
     */
-    template <typename SCALARTYPE, typename SizeType, bool is_iterator1>
+    template<typename SCALARTYPE, typename SizeType, bool is_iterator1>
     class sparse_matrix_adapted_iterator
     {
       typedef sparse_matrix_adapted_iterator<SCALARTYPE, SizeType, is_iterator1>    self_type;
@@ -341,7 +341,7 @@ namespace viennacl
     *
     *  @tparam SCALARTYPE   either float or double
     */
-    template <typename SCALARTYPE, typename SizeType = unsigned int>
+    template<typename SCALARTYPE, typename SizeType = unsigned int>
     class sparse_matrix_adapter : public const_sparse_matrix_adapter<SCALARTYPE, SizeType>
     {
         typedef const_sparse_matrix_adapter<SCALARTYPE, SizeType>   BaseType;

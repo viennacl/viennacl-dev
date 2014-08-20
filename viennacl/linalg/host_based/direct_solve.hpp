@@ -39,7 +39,7 @@ namespace viennacl
         //
         // Upper solve:
         //
-        template <typename MatrixType1, typename MatrixType2>
+        template<typename MatrixType1, typename MatrixType2>
         void upper_inplace_solve_matrix(MatrixType1 & A, MatrixType2 & B, vcl_size_t A_size, vcl_size_t B_size, bool unit_diagonal)
         {
           typedef typename MatrixType2::value_type   value_type;
@@ -64,13 +64,13 @@ namespace viennacl
           }
         }
 
-        template <typename MatrixType1, typename MatrixType2>
+        template<typename MatrixType1, typename MatrixType2>
         void inplace_solve_matrix(MatrixType1 & A, MatrixType2 & B, vcl_size_t A_size, vcl_size_t B_size, viennacl::linalg::unit_upper_tag)
         {
           upper_inplace_solve_matrix(A, B, A_size, B_size, true);
         }
 
-        template <typename MatrixType1, typename MatrixType2>
+        template<typename MatrixType1, typename MatrixType2>
         void inplace_solve_matrix(MatrixType1 & A, MatrixType2 & B, vcl_size_t A_size, vcl_size_t B_size, viennacl::linalg::upper_tag)
         {
           upper_inplace_solve_matrix(A, B, A_size, B_size, false);
@@ -79,7 +79,7 @@ namespace viennacl
         //
         // Lower solve:
         //
-        template <typename MatrixType1, typename MatrixType2>
+        template<typename MatrixType1, typename MatrixType2>
         void lower_inplace_solve_matrix(MatrixType1 & A, MatrixType2 & B, vcl_size_t A_size, vcl_size_t B_size, bool unit_diagonal)
         {
           typedef typename MatrixType2::value_type   value_type;
@@ -102,13 +102,13 @@ namespace viennacl
           }
         }
 
-        template <typename MatrixType1, typename MatrixType2>
+        template<typename MatrixType1, typename MatrixType2>
         void inplace_solve_matrix(MatrixType1 & A, MatrixType2 & B, vcl_size_t A_size, vcl_size_t B_size, viennacl::linalg::unit_lower_tag)
         {
           lower_inplace_solve_matrix(A, B, A_size, B_size, true);
         }
 
-        template <typename MatrixType1, typename MatrixType2>
+        template<typename MatrixType1, typename MatrixType2>
         void inplace_solve_matrix(MatrixType1 & A, MatrixType2 & B, vcl_size_t A_size, vcl_size_t B_size, viennacl::linalg::lower_tag)
         {
           lower_inplace_solve_matrix(A, B, A_size, B_size, false);
@@ -126,7 +126,7 @@ namespace viennacl
       * @param A      The system matrix
       * @param B      The matrix of row vectors, where the solution is directly written to
       */
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
                          matrix_base<NumericT> & B, bool trans_B,
                          SOLVERTAG)
@@ -286,7 +286,7 @@ namespace viennacl
       * @param A       The system matrix
       * @param proxy_B The proxy for the transposed matrix of row vectors, where the solution is directly written to
       */
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT> & A,
                          matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> proxy_B,
                          SOLVERTAG)
@@ -349,7 +349,7 @@ namespace viennacl
       * @param proxy_A  The transposed system matrix proxy
       * @param B        The matrix holding the load vectors, where the solution is directly written to
       */
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
                          matrix_base<NumericT> & B,
                          SOLVERTAG)
@@ -410,7 +410,7 @@ namespace viennacl
       * @param proxy_A    The transposed system matrix proxy
       * @param proxy_B    The transposed matrix holding the load vectors, where the solution is directly written to
       */
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
                                matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>   proxy_B,
                          SOLVERTAG)
@@ -475,7 +475,7 @@ namespace viennacl
         //
         // Upper solve:
         //
-        template <typename MatrixType, typename VectorType>
+        template<typename MatrixType, typename VectorType>
         void upper_inplace_solve_vector(MatrixType & A, VectorType & b, vcl_size_t A_size, bool unit_diagonal)
         {
           typedef typename VectorType::value_type   value_type;
@@ -495,13 +495,13 @@ namespace viennacl
           }
         }
 
-        template <typename MatrixType, typename VectorType>
+        template<typename MatrixType, typename VectorType>
         void inplace_solve_vector(MatrixType & A, VectorType & b, vcl_size_t A_size, viennacl::linalg::unit_upper_tag)
         {
           upper_inplace_solve_vector(A, b, A_size, true);
         }
 
-        template <typename MatrixType, typename VectorType>
+        template<typename MatrixType, typename VectorType>
         void inplace_solve_vector(MatrixType & A, VectorType & b, vcl_size_t A_size, viennacl::linalg::upper_tag)
         {
           upper_inplace_solve_vector(A, b, A_size, false);
@@ -510,7 +510,7 @@ namespace viennacl
         //
         // Lower solve:
         //
-        template <typename MatrixType, typename VectorType>
+        template<typename MatrixType, typename VectorType>
         void lower_inplace_solve_vector(MatrixType & A, VectorType & b, vcl_size_t A_size, bool unit_diagonal)
         {
           typedef typename VectorType::value_type   value_type;
@@ -528,13 +528,13 @@ namespace viennacl
           }
         }
 
-        template <typename MatrixType, typename VectorType>
+        template<typename MatrixType, typename VectorType>
         void inplace_solve_vector(MatrixType & A, VectorType & b, vcl_size_t A_size, viennacl::linalg::unit_lower_tag)
         {
           lower_inplace_solve_vector(A, b, A_size, true);
         }
 
-        template <typename MatrixType, typename VectorType>
+        template<typename MatrixType, typename VectorType>
         void inplace_solve_vector(MatrixType & A, VectorType & b, vcl_size_t A_size, viennacl::linalg::lower_tag)
         {
           lower_inplace_solve_vector(A, b, A_size, false);
@@ -542,7 +542,7 @@ namespace viennacl
 
       }
 
-      template <typename NumericT, typename SOLVERTAG>
+      template<typename NumericT, typename SOLVERTAG>
       void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,
                                vector_base<NumericT> & vec,
                          SOLVERTAG)

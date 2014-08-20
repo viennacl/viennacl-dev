@@ -146,7 +146,7 @@ namespace viennacl
     * @param cpu_vec   A std::vector on the host.
     * @param gpu_mat   A circulant_matrix from ViennaCL
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(std::vector<SCALARTYPE>& cpu_vec, circulant_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat)
     {
         assert( (gpu_mat.size1() == 0 || cpu_vec.size() == gpu_mat.size1()) && bool("Size mismatch"));
@@ -159,7 +159,7 @@ namespace viennacl
     * @param gpu_mat   A circulant_matrix from ViennaCL
     * @param cpu_vec   A std::vector on the host.
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(circulant_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat, std::vector<SCALARTYPE>& cpu_vec)
     {
         assert(cpu_vec.size() == gpu_mat.size1() && bool("Size mismatch"));
@@ -172,7 +172,7 @@ namespace viennacl
     * @param circ_src   A circulant_matrix from ViennaCL
     * @param com_dst   A matrix-like object
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_src, MATRIXTYPE& com_dst) {
         vcl_size_t size = circ_src.size1();
         assert(size == viennacl::traits::size1(com_dst) && bool("Size mismatch"));
@@ -196,7 +196,7 @@ namespace viennacl
     * @param com_src   A std::vector on the host
     * @param circ_dst   A circulant_matrix from ViennaCL
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE& com_src, circulant_matrix<SCALARTYPE, ALIGNMENT>& circ_dst)
     {
         assert( (circ_dst.size1() == 0 || circ_dst.size1() == viennacl::traits::size1(com_src)) && bool("Size mismatch"));
@@ -213,7 +213,7 @@ namespace viennacl
 
     /*namespace linalg
     {
-      template <typename SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
       void prod_impl(circulant_matrix<SCALARTYPE, ALIGNMENT> const & mat,
                       vector<SCALARTYPE, VECTOR_ALIGNMENT> const & vec,
                       vector<SCALARTYPE, VECTOR_ALIGNMENT>& result) {
@@ -268,7 +268,7 @@ namespace viennacl
       namespace detail
       {
         // x = A * y
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const circulant_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -285,7 +285,7 @@ namespace viennacl
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const circulant_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -296,7 +296,7 @@ namespace viennacl
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const circulant_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -309,7 +309,7 @@ namespace viennacl
 
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const circulant_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -320,7 +320,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const circulant_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -333,7 +333,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const circulant_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const circulant_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)

@@ -125,7 +125,7 @@ namespace viennacl
           * @param inds container of index sets
           * @param size output size
           */
-          template <typename SizeType>
+          template<typename SizeType>
           void get_size(const std::vector<std::vector<SizeType> >& inds, SizeType & size){
               size = 0;
               for (vcl_size_t i = 0; i < inds.size(); ++i) {
@@ -137,7 +137,7 @@ namespace viennacl
           * @param inds container of index sets
           * @param start_inds output index set
           */
-          template <typename SizeType>
+          template<typename SizeType>
           void init_start_inds(const std::vector<std::vector<SizeType> >& inds, std::vector<cl_uint>& start_inds){
               for(vcl_size_t i = 0; i < inds.size(); ++i){
                   start_inds[i+1] = start_inds[i] + static_cast<cl_uint>(inds[i].size());
@@ -291,7 +291,7 @@ namespace viennacl
           * @param inds container of index set
           * @param max_size max size that corresponds to that container
           */
-          template <typename SizeType>
+          template<typename SizeType>
           void get_max_block_size(const std::vector<std::vector<SizeType> >& inds, SizeType & max_size)
           {
               max_size = 0;

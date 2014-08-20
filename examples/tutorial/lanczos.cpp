@@ -54,7 +54,7 @@
 
 
 
-template <typename MatrixType>
+template<typename MatrixType>
 std::vector<double> initEig(MatrixType const & A)
 {
   viennacl::linalg::lanczos_tag ltag(0.75, 10, viennacl::linalg::lanczos_tag::partial_reorthogonalization, 1700);

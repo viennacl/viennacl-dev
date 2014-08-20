@@ -39,39 +39,39 @@ namespace viennacl
         * @tparam OP   One out of {op_assign, op_inplace_add, op_inplace_sub}
         @ @tparam T    Right hand side of the assignment
       */
-      template <typename OP>
+      template<typename OP>
       struct op_applier
       {
         typedef typename OP::ERROR_UNKNOWN_OP_TAG_PROVIDED    error_type;
       };
 
       /** \cond */
-      template <>
+      template<>
       struct op_applier<op_element_binary<op_prod> >
       {
-        template <typename T>
+        template<typename T>
         static void apply(T & result, T const & x, T const & y) { result = x * y; }
       };
 
-      template <>
+      template<>
       struct op_applier<op_element_binary<op_div> >
       {
-        template <typename T>
+        template<typename T>
         static void apply(T & result, T const & x, T const & y) { result = x / y; }
       };
 
-      template <>
+      template<>
       struct op_applier<op_element_binary<op_pow> >
       {
-        template <typename T>
+        template<typename T>
         static void apply(T & result, T const & x, T const & y) { result = std::pow(x, y); }
       };
 
 #define VIENNACL_MAKE_UNARY_OP_APPLIER(funcname)  \
-      template <> \
+      template<> \
       struct op_applier<op_element_unary<op_##funcname> > \
       { \
-        template <typename T> \
+        template<typename T> \
         static void apply(T & result, T const & x) { using namespace std; result = funcname(x); } \
       }
 

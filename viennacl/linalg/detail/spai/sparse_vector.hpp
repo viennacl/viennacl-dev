@@ -48,7 +48,7 @@ namespace viennacl
         /**
          * @brief Represents sparse vector based on std::map<unsigned int, ScalarType>
          */
-        template <typename ScalarType>
+        template<typename ScalarType>
         class sparse_vector{
         public:
             typedef typename std::map<unsigned int, ScalarType>::iterator iterator;

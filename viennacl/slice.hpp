@@ -34,7 +34,7 @@ namespace viennacl
    *
    * Similar to the boost::numeric::ublas::basic_range class.
    */
-  template <typename SizeType /* see forwards.h for default argument*/,
+  template<typename SizeType /* see forwards.h for default argument*/,
             typename DistanceType /* see forwards.h for default argument*/>
   class basic_slice
   {

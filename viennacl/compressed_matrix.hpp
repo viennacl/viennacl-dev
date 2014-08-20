@@ -37,7 +37,7 @@ namespace viennacl
 {
     namespace detail
     {
-      template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+      template<typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
       void copy_impl(const CPU_MATRIX & cpu_matrix,
                      compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
                      vcl_size_t nonzeros)
@@ -95,7 +95,7 @@ namespace viennacl
     * @param cpu_matrix   A sparse matrix on the host.
     * @param gpu_matrix   A compressed_matrix from ViennaCL
     */
-    template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const CPU_MATRIX & cpu_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
@@ -132,7 +132,7 @@ namespace viennacl
     * @param cpu_matrix   A sparse square matrix on the host using STL types
     * @param gpu_matrix   A compressed_matrix from ViennaCL
     */
-    template <typename SizeType, typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SizeType, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const std::vector< std::map<SizeType, SCALARTYPE> > & cpu_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix )
     {
@@ -152,7 +152,7 @@ namespace viennacl
     }
 
 #ifdef VIENNACL_WITH_UBLAS
-    template <typename ScalarType, typename F, vcl_size_t IB, typename IA, typename TA>
+    template<typename ScalarType, typename F, vcl_size_t IB, typename IA, typename TA>
     void copy(const boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, TA> & ublas_matrix,
               viennacl::compressed_matrix<ScalarType, 1> & gpu_matrix)
     {
@@ -179,7 +179,7 @@ namespace viennacl
 #endif
 
     #ifdef VIENNACL_WITH_EIGEN
-    template <typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
     void copy(const Eigen::SparseMatrix<SCALARTYPE, flags> & eigen_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix)
     {
@@ -198,7 +198,7 @@ namespace viennacl
 
 
 #ifdef VIENNACL_WITH_MTL4
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const mtl::compressed2D<SCALARTYPE> & cpu_matrix,
               compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix)
     {
@@ -254,7 +254,7 @@ namespace viennacl
     * @param gpu_matrix   A compressed_matrix from ViennaCL
     * @param cpu_matrix   A sparse matrix on the host.
     */
-    template <typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename CPU_MATRIX, typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               CPU_MATRIX & cpu_matrix )
     {
@@ -300,7 +300,7 @@ namespace viennacl
     * @param gpu_matrix   A compressed_matrix from ViennaCL
     * @param cpu_matrix   A sparse matrix on the host.
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(const compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               std::vector< std::map<unsigned int, SCALARTYPE> > & cpu_matrix)
     {
@@ -309,7 +309,7 @@ namespace viennacl
     }
 
 #ifdef VIENNACL_WITH_UBLAS
-    template <typename ScalarType, unsigned int ALIGNMENT, typename F, vcl_size_t IB, typename IA, typename TA>
+    template<typename ScalarType, unsigned int ALIGNMENT, typename F, vcl_size_t IB, typename IA, typename TA>
     void copy(viennacl::compressed_matrix<ScalarType, ALIGNMENT> const & gpu_matrix,
               boost::numeric::ublas::compressed_matrix<ScalarType> & ublas_matrix)
     {
@@ -339,7 +339,7 @@ namespace viennacl
 #endif
 
 #ifdef VIENNACL_WITH_EIGEN
-    template <typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, int flags, unsigned int ALIGNMENT>
     void copy(compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               Eigen::SparseMatrix<SCALARTYPE, flags> & eigen_matrix)
     {
@@ -376,7 +376,7 @@ namespace viennacl
 
 
 #ifdef VIENNACL_WITH_MTL4
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(compressed_matrix<SCALARTYPE, ALIGNMENT> & gpu_matrix,
               mtl::compressed2D<SCALARTYPE> & mtl4_matrix)
     {
@@ -772,7 +772,7 @@ namespace viennacl
       namespace detail
       {
         // x = A * y
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const compressed_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -789,7 +789,7 @@ namespace viennacl
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const compressed_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -800,7 +800,7 @@ namespace viennacl
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const compressed_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -813,7 +813,7 @@ namespace viennacl
 
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const compressed_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -824,7 +824,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const compressed_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -837,7 +837,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const compressed_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const compressed_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)

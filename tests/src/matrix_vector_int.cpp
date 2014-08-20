@@ -53,7 +53,7 @@ using namespace boost::numeric;
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
@@ -62,7 +62,7 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
    return 0;
 }
 
-template <typename ScalarType, typename VCLVectorType>
+template<typename ScalarType, typename VCLVectorType>
 ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
@@ -78,7 +78,7 @@ ScalarType diff(ublas::vector<ScalarType> const & v1, VCLVectorType const & v2)
    return 0;
 }
 
-template <typename ScalarType, typename VCLMatrixType>
+template<typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> const & mat1, VCLMatrixType const & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
@@ -100,7 +100,7 @@ ScalarType diff(ublas::matrix<ScalarType> const & mat1, VCLMatrixType const & ma
 // -------------------------------------------------------------
 //
 
-template <typename NumericT,
+template<typename NumericT,
           typename UblasMatrixType, typename UblasVectorType,
           typename VCLMatrixType, typename VCLVectorType1, typename VCLVectorType2>
 int test_prod_rank1(UblasMatrixType & ublas_m1, UblasVectorType & ublas_v1, UblasVectorType & ublas_v2,

@@ -51,7 +51,7 @@ namespace viennacl
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
 
-      template <typename T, typename ScalarType1>
+      template<typename T, typename ScalarType1>
       void av(vector_base<T> & x,
               vector_base<T> const & y, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha)
       {
@@ -66,7 +66,7 @@ namespace viennacl
       }
 
 
-      template <typename T, typename ScalarType1, typename ScalarType2>
+      template<typename T, typename ScalarType1, typename ScalarType2>
       void avbv(vector_base<T> & x,
                 vector_base<T> const & y, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
                 vector_base<T> const & z, ScalarType2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -87,7 +87,7 @@ namespace viennacl
       }
 
 
-      template <typename T, typename ScalarType1, typename ScalarType2>
+      template<typename T, typename ScalarType1, typename ScalarType2>
       void avbv_v(vector_base<T> & x,
                   vector_base<T> const & y, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
                   vector_base<T> const & z, ScalarType2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -114,7 +114,7 @@ namespace viennacl
       * @param alpha  The value to be assigned
       * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
       */
-      template <typename T>
+      template<typename T>
       void vector_assign(vector_base<T> & x, const T & alpha, bool up_to_internal_size = false)
       {
         scalar_vector<T> y(viennacl::traits::size(x),alpha,viennacl::traits::context(x));
@@ -130,7 +130,7 @@ namespace viennacl
       * @param x   The first vector (or -range, or -slice)
       * @param y   The second vector (or -range, or -slice)
       */
-      template <typename T>
+      template<typename T>
       void vector_swap(vector_base<T> & x, vector_base<T> & y)
       {
         assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -145,7 +145,7 @@ namespace viennacl
       * @param x   The result vector (or -range, or -slice)
       * @param proxy  The proxy object holding v2, v3 and the operation
       */
-      template <typename T, typename OP>
+      template<typename T, typename OP>
       void element_op(vector_base<T> & x,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
       {
@@ -164,7 +164,7 @@ namespace viennacl
       * @param x   The result vector (or -range, or -slice)
       * @param proxy  The proxy object holding v2 and the operation
       */
-      template <typename T, typename OP>
+      template<typename T, typename OP>
       void element_op(vector_base<T> & x,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<OP> > const & proxy)
       {
@@ -185,7 +185,7 @@ namespace viennacl
       * @param y The second vector
       * @param result The result scalar (on the gpu)
       */
-      template <typename T>
+      template<typename T>
       void inner_prod_impl(vector_base<T> const & x,
                            vector_base<T> const & y,
                            scalar<T> & result)
@@ -199,7 +199,7 @@ namespace viennacl
 
       namespace detail
       {
-        template <typename ScalarT>
+        template<typename ScalarT>
         viennacl::ocl::packed_cl_uint make_layout(vector_base<ScalarT> const & vec)
         {
           viennacl::ocl::packed_cl_uint ret;
@@ -217,7 +217,7 @@ namespace viennacl
       * @param vec_tuple  The tuple of vectors y1, y2, ..., yN
       * @param result     The result vector
       */
-      template <typename T>
+      template<typename T>
       void inner_prod_impl(vector_base<T> const & x,
                            vector_tuple<T> const & vec_tuple,
                            vector_base<T> & result)
@@ -253,7 +253,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       void inner_prod_cpu(vector_base<T> const & x,
                           vector_base<T> const & y,
                           T & result)
@@ -271,7 +271,7 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_1_impl(vector_base<T> const & x,
                        scalar<T> & result)
       {
@@ -286,7 +286,7 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_1_cpu(vector_base<T> const & x,
                       T & result)
       {
@@ -305,7 +305,7 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_2_impl(vector_base<T> const & x,
                        scalar<T> & result)
       {
@@ -320,7 +320,7 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_2_cpu(vector_base<T> const & x,
                       T & result)
       {
@@ -338,7 +338,7 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_inf_impl(vector_base<T> const & x,
                          scalar<T> & result)
       {
@@ -353,7 +353,7 @@ namespace viennacl
       * @param vec The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_inf_cpu(vector_base<T> const & x,
                         T & result)
       {
@@ -373,7 +373,7 @@ namespace viennacl
       * @param vec The vector
       * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
       */
-      template <typename T>
+      template<typename T>
       cl_uint index_norm_inf(vector_base<T> const & x)
       {
         viennacl::scalar<T> result(0, viennacl::traits::context(x));
@@ -393,7 +393,7 @@ namespace viennacl
       * @param alpha  The first transformation coefficient
       * @param beta   The second transformation coefficient
       */
-      template <typename T>
+      template<typename T>
       void plane_rotation(vector_base<T> & x,
                           vector_base<T> & y,
                           T alpha, T beta)

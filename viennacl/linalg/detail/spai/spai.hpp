@@ -442,7 +442,7 @@ namespace viennacl
         //************************************* BLOCK ASSEMBLY CODE *********************************************//
 
 
-        template <typename SizeType>
+        template<typename SizeType>
         void write_set_to_array(const std::vector<std::vector<SizeType> >& ind_set, std::vector<cl_uint>& a){
             vcl_size_t cnt = 0;
             //unsigned int tmp;
@@ -638,7 +638,7 @@ namespace viennacl
          * @param M output preconditioner
          * @param tag spai tag
          */
-        template <typename MatrixType>
+        template<typename MatrixType>
         void computeSPAI(const MatrixType & A, MatrixType & M, spai_tag & tag){
             typedef typename MatrixType::value_type ScalarType;
             typedef typename boost::numeric::ublas::vector<ScalarType> VectorType;
@@ -719,7 +719,7 @@ namespace viennacl
          * @param M output preconditioner
          * @param tag SPAI tag class with parameters
          */
-        template <typename ScalarType, unsigned int MAT_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         void computeSPAI(const viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>& A, //input
                          const boost::numeric::ublas::compressed_matrix<ScalarType>& cpu_A,
                          boost::numeric::ublas::compressed_matrix<ScalarType>& cpu_M, //output

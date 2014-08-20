@@ -141,7 +141,7 @@ namespace viennacl {
     * @param cpu_vec   A std::vector on the host.
     * @param gpu_mat   A vandermonde_matrix from ViennaCL
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(std::vector<SCALARTYPE>& cpu_vec, vandermonde_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat)
     {
         assert(cpu_vec.size() == gpu_mat.size1()  && bool("Size mismatch"));
@@ -154,7 +154,7 @@ namespace viennacl {
     * @param gpu_mat   A vandermonde_matrix from ViennaCL
     * @param cpu_vec   A std::vector on the host.
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void copy(vandermonde_matrix<SCALARTYPE, ALIGNMENT>& gpu_mat, std::vector<SCALARTYPE>& cpu_vec)
     {
         assert(cpu_vec.size() == gpu_mat.size1() && bool("Size mismatch"));
@@ -167,7 +167,7 @@ namespace viennacl {
     * @param vander_src   A vandermonde_matrix from ViennaCL
     * @param com_dst   A matrix-like object
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(vandermonde_matrix<SCALARTYPE, ALIGNMENT>& vander_src, MATRIXTYPE& com_dst)
     {
         assert(vander_src.size1() == viennacl::traits::size1(com_dst) && bool("Size mismatch"));
@@ -190,7 +190,7 @@ namespace viennacl {
     * @param com_src   A std::vector on the host
     * @param vander_dst   A vandermonde_matrix from ViennaCL
     */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT, typename MATRIXTYPE>
     void copy(MATRIXTYPE& com_src, vandermonde_matrix<SCALARTYPE, ALIGNMENT>& vander_dst)
     {
         assert( (vander_dst.size1() == 0 || vander_dst.size1() == viennacl::traits::size1(com_src)) && bool("Size mismatch"));
@@ -205,7 +205,7 @@ namespace viennacl {
         copy(tmp, vander_dst);
     }
 
-    /*template <typename SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
+    /*template<typename SCALARTYPE, unsigned int ALIGNMENT, unsigned int VECTOR_ALIGNMENT>
     void prod_impl(vandermonde_matrix<SCALARTYPE, ALIGNMENT>& mat,
                    vector<SCALARTYPE, VECTOR_ALIGNMENT>& vec,
                    vector<SCALARTYPE, VECTOR_ALIGNMENT>& result) {
@@ -251,7 +251,7 @@ namespace viennacl {
       namespace detail
       {
         // x = A * y
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const vandermonde_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const vandermonde_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -268,7 +268,7 @@ namespace viennacl {
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const vandermonde_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const vandermonde_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -279,7 +279,7 @@ namespace viennacl {
             }
         };
 
-        template <typename T, unsigned int A>
+        template<typename T, unsigned int A>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const vandermonde_matrix<T, A>, const vector_base<T>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const vandermonde_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
@@ -292,7 +292,7 @@ namespace viennacl {
 
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_assign, vector_expression<const vandermonde_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const vandermonde_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -303,7 +303,7 @@ namespace viennacl {
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_add, vector_expression<const vandermonde_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const vandermonde_matrix<T, A>, vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -316,7 +316,7 @@ namespace viennacl {
         };
 
         // x = A * vec_op
-        template <typename T, unsigned int A, typename LHS, typename RHS, typename OP>
+        template<typename T, unsigned int A, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<T>, op_inplace_sub, vector_expression<const vandermonde_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<T> & lhs, vector_expression<const vandermonde_matrix<T, A>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)

@@ -55,14 +55,14 @@ namespace viennacl
     // Resize: Change the size of vectors and matrices
     //
     /** @brief Generic resize routine for resizing a matrix (ViennaCL, uBLAS, etc.) to a new size/dimension */
-    template <typename MatrixType>
+    template<typename MatrixType>
     void resize(MatrixType & matrix, vcl_size_t rows, vcl_size_t cols)
     {
       matrix.resize(rows, cols);
     }
 
     /** @brief Generic resize routine for resizing a vector (ViennaCL, uBLAS, etc.) to a new size */
-    template <typename VectorType>
+    template<typename VectorType>
     void resize(VectorType & vec, vcl_size_t new_size)
     {
       vec.resize(new_size);
@@ -71,7 +71,7 @@ namespace viennacl
     /** \cond */
     #ifdef VIENNACL_WITH_UBLAS
     //ublas needs separate treatment:
-    template <typename ScalarType>
+    template<typename ScalarType>
     void resize(boost::numeric::ublas::compressed_matrix<ScalarType> & matrix,
                 vcl_size_t rows,
                 vcl_size_t cols)
@@ -82,7 +82,7 @@ namespace viennacl
 
 
     #ifdef VIENNACL_WITH_MTL4
-    template <typename ScalarType>
+    template<typename ScalarType>
     void resize(mtl::compressed2D<ScalarType> & matrix,
                 vcl_size_t rows,
                 vcl_size_t cols)
@@ -90,7 +90,7 @@ namespace viennacl
       matrix.change_dim(rows, cols);
     }
 
-    template <typename ScalarType>
+    template<typename ScalarType>
     void resize(mtl::dense_vector<ScalarType> & vec,
                 vcl_size_t new_size)
     {
@@ -113,7 +113,7 @@ namespace viennacl
       m.resize(new_rows, new_cols);
     }
 
-    template <typename T, int options>
+    template<typename T, int options>
     inline void resize(Eigen::SparseMatrix<T, options> & m,
                        vcl_size_t new_rows,
                        vcl_size_t new_cols)
@@ -140,14 +140,14 @@ namespace viennacl
     // size: Returns the length of vectors
     //
     /** @brief Generic routine for obtaining the size of a vector (ViennaCL, uBLAS, etc.) */
-    template <typename VectorType>
+    template<typename VectorType>
     vcl_size_t size(VectorType const & vec)
     {
       return vec.size();
     }
 
     /** \cond */
-    template <typename SparseMatrixType, typename VectorType>
+    template<typename SparseMatrixType, typename VectorType>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   vcl_size_t >::type
     size(vector_expression<const SparseMatrixType, const VectorType, op_prod> const & proxy)
@@ -155,25 +155,25 @@ namespace viennacl
       return proxy.lhs().size1();
     }
 
-    template <typename T, unsigned int A, typename VectorType>
+    template<typename T, unsigned int A, typename VectorType>
     vcl_size_t size(vector_expression<const circulant_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
 
-    template <typename T, unsigned int A, typename VectorType>
+    template<typename T, unsigned int A, typename VectorType>
     vcl_size_t size(vector_expression<const hankel_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
 
-    template <typename T, unsigned int A, typename VectorType>
+    template<typename T, unsigned int A, typename VectorType>
     vcl_size_t size(vector_expression<const toeplitz_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
 
-    template <typename T, unsigned int A, typename VectorType>
+    template<typename T, unsigned int A, typename VectorType>
     vcl_size_t size(vector_expression<const vandermonde_matrix<T, A>, const VectorType, op_prod> const & proxy) { return proxy.lhs().size1();  }
 
-    template <typename NumericT>
+    template<typename NumericT>
     vcl_size_t size(vector_expression<const matrix_base<NumericT>, const vector_base<NumericT>, op_prod> const & proxy)  //matrix-vector product
     {
       return proxy.lhs().size1();
     }
 
-    template <typename NumericT>
+    template<typename NumericT>
     vcl_size_t size(vector_expression<const matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>,
                                       const vector_base<NumericT>,
                                       op_prod> const & proxy)  //transposed matrix-vector product
@@ -183,7 +183,7 @@ namespace viennacl
 
 
     #ifdef VIENNACL_WITH_MTL4
-    template <typename ScalarType>
+    template<typename ScalarType>
     vcl_size_t size(mtl::dense_vector<ScalarType> const & vec) { return vec.used_memory(); }
     #endif
 
@@ -192,13 +192,13 @@ namespace viennacl
     inline vcl_size_t size(Eigen::VectorXd const & v) { return v.rows(); }
     #endif
 
-    template <typename LHS, typename RHS, typename OP>
+    template<typename LHS, typename RHS, typename OP>
     vcl_size_t size(vector_expression<LHS, RHS, OP> const & proxy)
     {
       return size(proxy.lhs());
     }
 
-    template <typename LHS, typename RHS>
+    template<typename LHS, typename RHS>
     vcl_size_t size(vector_expression<LHS, const vector_tuple<RHS>, op_inner_prod> const & proxy)
     {
       return proxy.rhs().const_size();
@@ -211,26 +211,26 @@ namespace viennacl
     // size1: No. of rows for matrices
     //
     /** @brief Generic routine for obtaining the number of rows of a matrix (ViennaCL, uBLAS, etc.) */
-    template <typename MatrixType>
+    template<typename MatrixType>
     vcl_size_t
     size1(MatrixType const & mat) { return mat.size1(); }
 
     /** \cond */
-    template <typename RowType>
+    template<typename RowType>
     vcl_size_t
     size1(std::vector< RowType > const & mat) { return mat.size(); }
 
     #ifdef VIENNACL_WITH_EIGEN
     inline vcl_size_t size1(Eigen::MatrixXf const & m) { return static_cast<vcl_size_t>(m.rows()); }
     inline vcl_size_t size1(Eigen::MatrixXd const & m) { return static_cast<vcl_size_t>(m.rows()); }
-    template <typename T, int options>
+    template<typename T, int options>
     inline vcl_size_t size1(Eigen::SparseMatrix<T, options> & m) { return static_cast<vcl_size_t>(m.rows()); }
     #endif
 
 #ifdef VIENNACL_WITH_MTL4
-    template <typename SCALARTYPE, typename T>
+    template<typename SCALARTYPE, typename T>
     vcl_size_t size1(mtl::dense2D<SCALARTYPE, T> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
-    template <typename SCALARTYPE>
+    template<typename SCALARTYPE>
     vcl_size_t size1(mtl::compressed2D<SCALARTYPE> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
 #endif
 
@@ -240,7 +240,7 @@ namespace viennacl
     // size2: No. of columns for matrices
     //
     /** @brief Generic routine for obtaining the number of columns of a matrix (ViennaCL, uBLAS, etc.) */
-    template <typename MatrixType>
+    template<typename MatrixType>
     typename result_of::size_type<MatrixType>::type
     size2(MatrixType const & mat) { return mat.size2(); }
 
@@ -248,14 +248,14 @@ namespace viennacl
     #ifdef VIENNACL_WITH_EIGEN
     inline vcl_size_t size2(Eigen::MatrixXf const & m) { return m.cols(); }
     inline vcl_size_t size2(Eigen::MatrixXd const & m) { return m.cols(); }
-    template <typename T, int options>
+    template<typename T, int options>
     inline vcl_size_t size2(Eigen::SparseMatrix<T, options> & m) { return m.cols(); }
     #endif
 
 #ifdef VIENNACL_WITH_MTL4
-    template <typename SCALARTYPE, typename T>
+    template<typename SCALARTYPE, typename T>
     vcl_size_t size2(mtl::dense2D<SCALARTYPE, T> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
-    template <typename SCALARTYPE>
+    template<typename SCALARTYPE>
     vcl_size_t size2(mtl::compressed2D<SCALARTYPE> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
 #endif
     /** \endcond */
@@ -264,7 +264,7 @@ namespace viennacl
     // internal_size: Returns the internal (padded) length of vectors
     //
     /** @brief Helper routine for obtaining the buffer length of a ViennaCL vector  */
-    template <typename NumericT>
+    template<typename NumericT>
     vcl_size_t internal_size(vector_base<NumericT> const & vec)
     {
       return vec.internal_size();
@@ -275,7 +275,7 @@ namespace viennacl
     // internal_size1: No. of internal (padded) rows for matrices
     //
     /** @brief Helper routine for obtaining the internal number of entries per row of a ViennaCL matrix  */
-    template <typename NumericT>
+    template<typename NumericT>
     vcl_size_t internal_size1(matrix_base<NumericT> const & mat) { return mat.internal_size1(); }
 
 
@@ -283,11 +283,11 @@ namespace viennacl
     // internal_size2: No. of internal (padded) columns for matrices
     //
     /** @brief Helper routine for obtaining the internal number of entries per column of a ViennaCL matrix  */
-    template <typename NumericT>
+    template<typename NumericT>
     vcl_size_t internal_size2(matrix_base<NumericT> const & mat) { return mat.internal_size2(); }
 
     /** @brief Helper routine for obtaining the internal number of entries per row of a ViennaCL matrix  */
-    template <typename NumericT>
+    template<typename NumericT>
     vcl_size_t ld(matrix_base<NumericT> const & mat)
     {
       if(mat.row_major())
@@ -295,7 +295,7 @@ namespace viennacl
       return mat.internal_size1();
     }
 
-    template <typename NumericT>
+    template<typename NumericT>
     vcl_size_t nld(matrix_base<NumericT> const & mat)
     {
       if(mat.row_major())
@@ -303,7 +303,7 @@ namespace viennacl
       return mat.stride1();
     }
 
-    template <typename LHS>
+    template<typename LHS>
     vcl_size_t size(vector_expression<LHS, const int, op_matrix_diag> const & proxy)
     {
       int k = proxy.rhs();
@@ -316,13 +316,13 @@ namespace viennacl
       return vcl_size_t(std::min(row_depth, col_depth));
     }
 
-    template <typename LHS>
+    template<typename LHS>
     vcl_size_t size(vector_expression<LHS, const unsigned int, op_row> const & proxy)
     {
       return size2(proxy.lhs());
     }
 
-    template <typename LHS>
+    template<typename LHS>
     vcl_size_t size(vector_expression<LHS, const unsigned int, op_column> const & proxy)
     {
       return size1(proxy.lhs());

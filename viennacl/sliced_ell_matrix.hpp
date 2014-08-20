@@ -102,10 +102,10 @@ namespace viennacl
         const handle_type & handle() const { return elements_; }
 
 #if defined(_MSC_VER) && _MSC_VER < 1500          //Visual Studio 2005 needs special treatment
-        template <typename CPUMatrixT>
+        template<typename CPUMatrixT>
         friend void copy(CPUMatrixT const & cpu_matrix, sliced_ell_matrix & gpu_matrix );
 #else
-        template <typename CPUMatrixT, typename ScalarT2, typename IndexT2>
+        template<typename CPUMatrixT, typename ScalarT2, typename IndexT2>
         friend void copy(CPUMatrixT const & cpu_matrix, sliced_ell_matrix<ScalarT2, IndexT2> & gpu_matrix );
 #endif
 
@@ -120,7 +120,7 @@ namespace viennacl
         handle_type elements_;
     };
 
-    template <typename CPUMatrixT, typename ScalarT, typename IndexT>
+    template<typename CPUMatrixT, typename ScalarT, typename IndexT>
     void copy(CPUMatrixT const & cpu_matrix, sliced_ell_matrix<ScalarT, IndexT> & gpu_matrix )
     {
       assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
@@ -195,7 +195,7 @@ namespace viennacl
     }
 
     /*
-    template <typename CPUMatrixT, typename ScalarT, typename IndexT>
+    template<typename CPUMatrixT, typename ScalarT, typename IndexT>
     void copy(sliced_ell_matrix<ScalarT, IndexT> const & gpu_matrix, CPUMatrixT & cpu_matrix )
     {
       assert( (viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
@@ -242,7 +242,7 @@ namespace viennacl
       namespace detail
       {
         // x = A * y
-        template <typename ScalarT, typename IndexT>
+        template<typename ScalarT, typename IndexT>
         struct op_executor<vector_base<ScalarT>, op_assign, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_base<ScalarT>, op_prod> >
         {
             static void apply(vector_base<ScalarT> & lhs, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_base<ScalarT>, op_prod> const & rhs)
@@ -259,7 +259,7 @@ namespace viennacl
             }
         };
 
-        template <typename ScalarT, typename IndexT>
+        template<typename ScalarT, typename IndexT>
         struct op_executor<vector_base<ScalarT>, op_inplace_add, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_base<ScalarT>, op_prod> >
         {
             static void apply(vector_base<ScalarT> & lhs, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_base<ScalarT>, op_prod> const & rhs)
@@ -270,7 +270,7 @@ namespace viennacl
             }
         };
 
-        template <typename ScalarT, typename IndexT>
+        template<typename ScalarT, typename IndexT>
         struct op_executor<vector_base<ScalarT>, op_inplace_sub, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_base<ScalarT>, op_prod> >
         {
             static void apply(vector_base<ScalarT> & lhs, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_base<ScalarT>, op_prod> const & rhs)
@@ -283,7 +283,7 @@ namespace viennacl
 
 
         // x = A * vec_op
-        template <typename ScalarT, typename IndexT, typename LHS, typename RHS, typename OP>
+        template<typename ScalarT, typename IndexT, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<ScalarT>, op_assign, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<ScalarT> & lhs, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -294,7 +294,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename ScalarT, typename IndexT, typename LHS, typename RHS, typename OP>
+        template<typename ScalarT, typename IndexT, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<ScalarT>, op_inplace_add, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<ScalarT> & lhs, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)
@@ -307,7 +307,7 @@ namespace viennacl
         };
 
         // x = A * vec_op
-        template <typename ScalarT, typename IndexT, typename LHS, typename RHS, typename OP>
+        template<typename ScalarT, typename IndexT, typename LHS, typename RHS, typename OP>
         struct op_executor<vector_base<ScalarT>, op_inplace_sub, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_expression<const LHS, const RHS, OP>, op_prod> >
         {
             static void apply(vector_base<ScalarT> & lhs, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_expression<const LHS, const RHS, OP>, op_prod> const & rhs)

@@ -48,7 +48,7 @@ using namespace boost::numeric;
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 {
    viennacl::backend::finish();
@@ -59,7 +59,7 @@ ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, viennacl::scalar<ScalarType> const & s2)
 {
    viennacl::backend::finish();
@@ -70,7 +70,7 @@ ScalarType diff(ScalarType const & s1, viennacl::scalar<ScalarType> const & s2)
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const & s2)
 {
    viennacl::backend::finish();
@@ -81,7 +81,7 @@ ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const &
 //
 // -------------------------------------------------------------
 //
-template <typename ScalarType, typename ViennaCLVectorType>
+template<typename ScalarType, typename ViennaCLVectorType>
 ScalarType diff(ublas::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
 {
    ublas::vector<ScalarType> v2_cpu(vcl_vec.size());
@@ -99,7 +99,7 @@ ScalarType diff(ublas::vector<ScalarType> const & v1, ViennaCLVectorType const &
    return ublas::norm_inf(v2_cpu);
 }
 
-template <typename ScalarType, typename ViennaCLVectorType>
+template<typename ScalarType, typename ViennaCLVectorType>
 ScalarType diff(ublas::vector_slice<ublas::vector<ScalarType> > const & v1, ViennaCLVectorType const & vcl_vec)
 {
    ublas::vector<ScalarType> v2_cpu(vcl_vec.size());
@@ -118,7 +118,7 @@ ScalarType diff(ublas::vector_slice<ublas::vector<ScalarType> > const & v1, Vien
 }
 
 
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 int check(T1 const & t1, T2 const & t2, double epsilon)
 {
   int retval = EXIT_SUCCESS;

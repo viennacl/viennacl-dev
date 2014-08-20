@@ -43,7 +43,7 @@ namespace viennacl
     * @tparam RHS   The right hand side operand
     * @tparam OP    The operation tag
     */
-    template <typename LHS, typename RHS, typename OP>
+    template<typename LHS, typename RHS, typename OP>
     class scalar_expression
     {
         typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
@@ -78,7 +78,7 @@ namespace viennacl
     * @tparam RHS   The right hand side operand
     * @tparam OP    The operation tag
     */
-    template <typename LHS, typename RHS>
+    template<typename LHS, typename RHS>
     class scalar_expression<LHS, RHS, op_inner_prod>
     {
         //typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
@@ -111,7 +111,7 @@ namespace viennacl
     * @tparam LHS   The left hand side operand
     * @tparam RHS   The right hand side operand
     */
-    template <typename LHS, typename RHS>
+    template<typename LHS, typename RHS>
     class scalar_expression<LHS, RHS, op_norm_1>
     {
         //typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
@@ -143,7 +143,7 @@ namespace viennacl
     * @tparam LHS   The left hand side operand
     * @tparam RHS   The right hand side operand
     */
-    template <typename LHS, typename RHS>
+    template<typename LHS, typename RHS>
     class scalar_expression<LHS, RHS, op_norm_2>
     {
         //typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
@@ -176,7 +176,7 @@ namespace viennacl
     * @tparam LHS   The left hand side operand
     * @tparam RHS   The right hand side operand
     */
-    template <typename LHS, typename RHS>
+    template<typename LHS, typename RHS>
     class scalar_expression<LHS, RHS, op_norm_inf>
     {
         //typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
@@ -208,7 +208,7 @@ namespace viennacl
     * @tparam LHS   The left hand side operand
     * @tparam RHS   The right hand side operand
     */
-    template <typename LHS, typename RHS>
+    template<typename LHS, typename RHS>
     class scalar_expression<LHS, RHS, op_norm_frobenius>
     {
         //typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
@@ -280,7 +280,7 @@ namespace viennacl
 #endif
 
       /** @brief Allocates memory for the scalar and sets it to the result of supplied expression. */
-      template <typename T1, typename T2, typename OP>
+      template<typename T1, typename T2, typename OP>
       scalar(scalar_expression<T1, T2, OP> const & proxy)
       {
         val_.switch_active_handle_id(viennacl::traits::handle(proxy.lhs()).get_active_handle_id());
@@ -384,7 +384,7 @@ namespace viennacl
       }
 
       /** @brief Sets the scalar to the result of supplied inner product expression. */
-      template <typename T1, typename T2>
+      template<typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_inner_prod> const & proxy)
       {
         init_if_necessary(viennacl::traits::context(proxy));
@@ -394,7 +394,7 @@ namespace viennacl
       }
 
       /** @brief Sets the scalar to the result of supplied norm_1 expression. */
-      template <typename T1, typename T2>
+      template<typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_1> const & proxy)
       {
         init_if_necessary(viennacl::traits::context(proxy));
@@ -404,7 +404,7 @@ namespace viennacl
       }
 
       /** @brief Sets the scalar to the result of supplied norm_2 expression. */
-      template <typename T1, typename T2>
+      template<typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_2> const & proxy)
       {
         init_if_necessary(viennacl::traits::context(proxy));
@@ -414,7 +414,7 @@ namespace viennacl
       }
 
       /** @brief Sets the scalar to the result of supplied norm_inf expression. */
-      template <typename T1, typename T2>
+      template<typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_inf> const & proxy)
       {
         init_if_necessary(viennacl::traits::context(proxy));
@@ -424,7 +424,7 @@ namespace viennacl
       }
 
       /** @brief Sets the scalar to the result of supplied norm_frobenius expression. */
-      template <typename T1, typename T2>
+      template<typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_norm_frobenius> const & proxy)
       {
         init_if_necessary(viennacl::traits::context(proxy));
@@ -434,7 +434,7 @@ namespace viennacl
       }
 
       /** @brief Sets the scalar to the inverse with respect to addition of the supplied sub-expression */
-      template <typename T1, typename T2>
+      template<typename T1, typename T2>
       self_type & operator= (scalar_expression<T1, T2, op_flip_sign> const & proxy)
       {
         init_if_necessary(viennacl::traits::context(proxy));
@@ -544,7 +544,7 @@ namespace viennacl
         return result;
       }
       /** @brief Addition of a ViennaCL scalar with a scalar expression */
-      template <typename T1, typename T2, typename OP>
+      template<typename T1, typename T2, typename OP>
       self_type operator + (scalar_expression<T1, T2, OP> const & proxy) const
       {
         assert( val_.get_active_handle_id() != viennacl::MEMORY_NOT_INITIALIZED && bool("Scalar not initialized!"));
@@ -595,7 +595,7 @@ namespace viennacl
         return result;
       }
       /** @brief Subtraction of a ViennaCL scalar from a scalar expression */
-      template <typename T1, typename T2, typename OP>
+      template<typename T1, typename T2, typename OP>
       self_type operator - (scalar_expression<T1, T2, OP> const & proxy) const
       {
         assert( val_.get_active_handle_id() != viennacl::MEMORY_NOT_INITIALIZED && bool("Scalar not initialized!"));
@@ -636,7 +636,7 @@ namespace viennacl
         return result;
       }
       /** @brief Multiplication of a ViennaCL scalar with a scalar expression */
-      template <typename T1, typename T2, typename OP>
+      template<typename T1, typename T2, typename OP>
       self_type operator * (scalar_expression<T1, T2, OP> const & proxy) const
       {
         assert( val_.get_active_handle_id() != viennacl::MEMORY_NOT_INITIALIZED && bool("Scalar not initialized!"));
@@ -675,7 +675,7 @@ namespace viennacl
         return result;
       }
       /** @brief Division of a ViennaCL scalar by a scalar expression */
-      template <typename T1, typename T2, typename OP>
+      template<typename T1, typename T2, typename OP>
       self_type operator / (scalar_expression<T1, T2, OP> const & proxy) const
       {
         assert( val_.get_active_handle_id() != viennacl::MEMORY_NOT_INITIALIZED && bool("Scalar not initialized!"));

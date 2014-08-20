@@ -804,7 +804,7 @@ namespace viennacl
       // SELL-C-\sigma Matrix
       //
 
-      template <typename ScalarT, typename IndexT>
+      template<typename ScalarT, typename IndexT>
       void prod_impl( const viennacl::sliced_ell_matrix<ScalarT, IndexT> & A,
                       const viennacl::vector_base<ScalarT> & x,
                       viennacl::vector_base<ScalarT> & y)

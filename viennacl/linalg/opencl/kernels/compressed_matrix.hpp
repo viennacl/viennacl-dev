@@ -21,7 +21,7 @@ namespace viennacl
 
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_block_trans_lu_backward(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void block_trans_lu_backward( \n");
@@ -60,7 +60,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_block_trans_unit_lu_forward(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void block_trans_unit_lu_forward( \n");
@@ -97,7 +97,7 @@ namespace viennacl
         namespace detail
         {
           /** @brief Generate kernel for C = A * B with A being a compressed_matrix, B and C dense */
-          template <typename StringType>
+          template<typename StringType>
           void generate_compressed_matrix_dense_matrix_mult(StringType & source, std::string const & numeric_string,
                                                             bool B_transposed, bool B_row_major, bool C_row_major)
           {
@@ -165,7 +165,7 @@ namespace viennacl
 
           }
         }
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_dense_matrix_multiplication(StringType & source, std::string const & numeric_string)
         {
           detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, false, false, false);
@@ -179,7 +179,7 @@ namespace viennacl
           detail::generate_compressed_matrix_dense_matrix_mult(source, numeric_string, true,  true,  true);
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_jacobi(StringType & source, std::string const & numeric_string)
         {
 
@@ -212,7 +212,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_lu_backward(StringType & source, std::string const & numeric_string)
         {
           // compute x in Ux = y for incomplete LU factorizations of a sparse matrix in compressed format
@@ -295,7 +295,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_lu_forward(StringType & source, std::string const & numeric_string)
         {
 
@@ -370,7 +370,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_row_info_extractor(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void row_info_extractor( \n");
@@ -425,7 +425,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_trans_lu_backward(StringType & source, std::string const & numeric_string)
         {
 
@@ -499,7 +499,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_trans_lu_forward(StringType & source, std::string const & numeric_string)
         {
 
@@ -571,7 +571,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_trans_unit_lu_backward(StringType & source, std::string const & numeric_string)
         {
 
@@ -641,7 +641,7 @@ namespace viennacl
         }
 
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_trans_unit_lu_forward(StringType & source, std::string const & numeric_string)
         {
 
@@ -708,7 +708,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_trans_unit_lu_forward_slow(StringType & source, std::string const & numeric_string)
         {
 
@@ -739,7 +739,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_unit_lu_backward(StringType & source, std::string const & numeric_string)
         {
 
@@ -820,7 +820,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_unit_lu_forward(StringType & source, std::string const & numeric_string)
         {
 
@@ -892,7 +892,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_vec_mul(StringType & source, std::string const & numeric_string)
         {
 
@@ -917,7 +917,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_vec_mul4(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void vec_mul4( \n");
@@ -958,7 +958,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_vec_mul8(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void vec_mul8( \n");
@@ -1004,7 +1004,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_vec_mul_cpu(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void vec_mul_cpu( \n");
@@ -1035,7 +1035,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for compressed_matrix. */
-        template <typename NumericT>
+        template<typename NumericT>
         struct compressed_matrix
         {
           static std::string program_name()

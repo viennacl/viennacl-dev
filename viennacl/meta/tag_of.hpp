@@ -80,7 +80,7 @@ namespace viennacl
     struct tag_of;
 
     /** \cond */
-    template < typename Sequence, typename Active >
+    template< typename Sequence, typename Active >
     struct tag_of
     {
       typedef viennacl::tag_none  type;
@@ -90,19 +90,19 @@ namespace viennacl
     // ----------------------------------------------------
     // MTL4
     //
-    template <typename ScalarType>
+    template<typename ScalarType>
     struct tag_of< mtl::dense_vector<ScalarType> >
     {
       typedef viennacl::tag_mtl4  type;
     };
 
-    template <typename ScalarType>
+    template<typename ScalarType>
     struct tag_of< mtl::compressed2D<ScalarType> >
     {
       typedef viennacl::tag_mtl4  type;
     };
 
-    template <typename ScalarType, typename T>
+    template<typename ScalarType, typename T>
     struct tag_of< mtl::dense2D<ScalarType, T> >
     {
       typedef viennacl::tag_mtl4  type;
@@ -114,31 +114,31 @@ namespace viennacl
     // ----------------------------------------------------
     // Eigen
     //
-    template <>
+    template<>
     struct tag_of< Eigen::VectorXf >
     {
       typedef viennacl::tag_eigen  type;
     };
 
-    template <>
+    template<>
     struct tag_of< Eigen::VectorXd >
     {
       typedef viennacl::tag_eigen  type;
     };
 
-    template <>
+    template<>
     struct tag_of< Eigen::MatrixXf >
     {
       typedef viennacl::tag_eigen  type;
     };
 
-    template <>
+    template<>
     struct tag_of< Eigen::MatrixXd >
     {
       typedef viennacl::tag_eigen  type;
     };
 
-    template <typename ScalarType, int option>
+    template<typename ScalarType, int option>
     struct tag_of< Eigen::SparseMatrix<ScalarType, option> >
     {
       typedef viennacl::tag_eigen  type;
@@ -293,14 +293,14 @@ namespace viennacl
   *
   *  This is an internal function only, there is no need for a library user of ViennaCL to care about it any further
   */
-  template <typename Tag>
+  template<typename Tag>
   struct is_mtl4
   {
      enum { value = false };
   };
 
   /** \cond */
-  template <>
+  template<>
   struct is_mtl4< viennacl::tag_mtl4 >
   {
      enum { value = true };
@@ -311,14 +311,14 @@ namespace viennacl
   *
   *  This is an internal function only, there is no need for a library user of ViennaCL to care about it any further
   */
-  template <typename Tag>
+  template<typename Tag>
   struct is_eigen
   {
      enum { value = false };
   };
 
   /** \cond */
-  template <>
+  template<>
   struct is_eigen< viennacl::tag_eigen >
   {
      enum { value = true };
@@ -330,14 +330,14 @@ namespace viennacl
   *
   *  This is an internal function only, there is no need for a library user of ViennaCL to care about it any further
   */
-  template <typename Tag>
+  template<typename Tag>
   struct is_ublas
   {
      enum { value = false };
   };
 
   /** \cond */
-  template <>
+  template<>
   struct is_ublas< viennacl::tag_ublas >
   {
      enum { value = true };
@@ -348,14 +348,14 @@ namespace viennacl
   *
   *  This is an internal function only, there is no need for a library user of ViennaCL to care about it any further
   */
-  template <typename Tag>
+  template<typename Tag>
   struct is_stl
   {
      enum { value = false };
   };
 
   /** \cond */
-  template <>
+  template<>
   struct is_stl< viennacl::tag_stl >
   {
      enum { value = true };
@@ -367,14 +367,14 @@ namespace viennacl
   *
   *  This is an internal function only, there is no need for a library user of ViennaCL to care about it any further
   */
-  template <typename Tag>
+  template<typename Tag>
   struct is_viennacl
   {
      enum { value = false };
   };
 
   /** \cond */
-  template <>
+  template<>
   struct is_viennacl< viennacl::tag_viennacl >
   {
      enum { value = true };

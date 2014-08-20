@@ -38,7 +38,7 @@ namespace viennacl
     {
 
       /** @brief Wrapper for viennacl::linalg::av(), taking care of the argument unwrapping */
-      template <typename ScalarType1>
+      template<typename ScalarType1>
       void am(lhs_rhs_element & mat1,
               lhs_rhs_element const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
@@ -71,7 +71,7 @@ namespace viennacl
       }
 
       /** @brief Wrapper for viennacl::linalg::avbv(), taking care of the argument unwrapping */
-      template <typename ScalarType1, typename ScalarType2>
+      template<typename ScalarType1, typename ScalarType2>
       void ambm(lhs_rhs_element & mat1,
                 lhs_rhs_element const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                 lhs_rhs_element const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -112,7 +112,7 @@ namespace viennacl
       }
 
       /** @brief Wrapper for viennacl::linalg::avbv_v(), taking care of the argument unwrapping */
-      template <typename ScalarType1, typename ScalarType2>
+      template<typename ScalarType1, typename ScalarType2>
       void ambm_m(lhs_rhs_element & mat1,
                   lhs_rhs_element const & mat2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                   lhs_rhs_element const & mat3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)

@@ -45,7 +45,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
-        template <class TYPE>
+        template<class TYPE>
         class vector
         {
         private:
@@ -142,7 +142,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
-        template <class TYPE>
+        template<class TYPE>
         class vector_multi_inner_prod
         {
         public:
@@ -177,7 +177,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for elementwise operations other than addition and subtraction on/with viennacl::vector<>. */
-        template <class TYPE>
+        template<class TYPE>
         struct vector_element
         {
 

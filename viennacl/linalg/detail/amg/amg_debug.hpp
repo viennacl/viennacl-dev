@@ -43,7 +43,7 @@ namespace viennacl
       {
 
 #ifdef VIENNACL_AMG_DEBUG
-        template <typename MatrixType>
+        template<typename MatrixType>
         void printmatrix(MatrixType & mat, int const value=-1)
         {
           typedef typename MatrixType::value_type ScalarType;
@@ -63,7 +63,7 @@ namespace viennacl
           std::cout << std::endl;
         }
 
-        template <typename VectorType>
+        template<typename VectorType>
         void printvector(VectorType const & vec)
         {
           for (typename VectorType::const_iterator iter = vec.begin(); iter != vec.end(); ++iter)
@@ -73,10 +73,10 @@ namespace viennacl
           std::cout << std::endl;
         }
 #else
-        template <typename MatrixType>
+        template<typename MatrixType>
         void printmatrix(MatrixType &, int) {}
 
-        template <typename VectorType>
+        template<typename VectorType>
         void printvector(VectorType const &) {}
 
 #endif

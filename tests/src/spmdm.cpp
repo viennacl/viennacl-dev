@@ -46,7 +46,7 @@
 
 using namespace boost::numeric;
 
-template < typename ScalarType >
+template< typename ScalarType >
 int check_matrices(const ublas::matrix< ScalarType >& ref_mat, const ublas::matrix< ScalarType >& mat, ScalarType eps) {
 
   std::size_t size1, size2;
@@ -69,7 +69,7 @@ int check_matrices(const ublas::matrix< ScalarType >& ref_mat, const ublas::matr
   return EXIT_SUCCESS;
 }
 
-template <typename NumericT, typename ResultLayoutT, typename FactorLayoutT>
+template<typename NumericT, typename ResultLayoutT, typename FactorLayoutT>
 int test(NumericT epsilon)
 {
   int retVal = EXIT_SUCCESS;

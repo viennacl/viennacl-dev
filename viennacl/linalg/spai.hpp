@@ -71,7 +71,7 @@ namespace viennacl
          * @param Vector vector that is used for computations
          */
         //UBLAS version
-        template <typename MatrixType>
+        template<typename MatrixType>
         class spai_precond
         {
         public:
@@ -120,7 +120,7 @@ namespace viennacl
          * @param Matrix matrix that is used for computations
          * @param Vector vector that is used for computations
          */
-        template <typename ScalarType, unsigned int MAT_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         class spai_precond< viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT> >
         {
             typedef viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT> MatrixType;
@@ -185,7 +185,7 @@ namespace viennacl
         * @param Vector vector that is used for computations
         */
         //UBLAS version
-        template <typename MatrixType>
+        template<typename MatrixType>
         class fspai_precond
         {
             typedef typename MatrixType::value_type ScalarType;
@@ -233,7 +233,7 @@ namespace viennacl
         * @param Matrix matrix that is used for computations
         * @param Vector vector that is used for computations
         */
-        template <typename ScalarType, unsigned int MAT_ALIGNMENT>
+        template<typename ScalarType, unsigned int MAT_ALIGNMENT>
         class fspai_precond< viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT> >
         {
             typedef viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;

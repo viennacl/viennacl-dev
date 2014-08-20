@@ -49,7 +49,7 @@ namespace viennacl
      * @param Pointvector  Vector of points on all levels
      * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_interpol(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       switch (tag.get_interpol())
@@ -67,7 +67,7 @@ namespace viennacl
      * @param Pointvector  Vector of points on all levels
      * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_interpol_direct(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
@@ -169,7 +169,7 @@ namespace viennacl
      * @param Pointvector  Vector of points on all levels
      * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_interpol_classic(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
@@ -293,7 +293,7 @@ namespace viennacl
     * @param row  Row which has to be truncated
     * @param tag  AMG preconditioner tag
     */
-    template <typename SparseMatrixType>
+    template<typename SparseMatrixType>
     void amg_truncate_row(SparseMatrixType & P, unsigned int row, amg_tag & tag)
     {
       typedef typename SparseMatrixType::value_type ScalarType;
@@ -358,7 +358,7 @@ namespace viennacl
      * @param P      Prolongation matrices. P[level] is constructed
      * @param Pointvector  Vector of points on all levels
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_interpol_ag(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;
@@ -402,7 +402,7 @@ namespace viennacl
      * @param Pointvector  Vector of points on all levels
      * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_interpol_sa(unsigned int level, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType1::value_type SparseMatrixType;

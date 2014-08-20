@@ -57,7 +57,7 @@ namespace viennacl
       // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
       //
 
-      template <typename NumericT,
+      template<typename NumericT,
                 typename ScalarType1>
       void am(matrix_base<NumericT> & A,
               matrix_base<NumericT> const & B, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha)
@@ -74,7 +74,7 @@ namespace viennacl
       }
 
 
-      template <typename NumericT,
+      template<typename NumericT,
                 typename ScalarType1, typename ScalarType2>
       void ambm(matrix_base<NumericT> & A,
                 matrix_base<NumericT> const & B, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
@@ -95,7 +95,7 @@ namespace viennacl
       }
 
 
-      template <typename NumericT,
+      template<typename NumericT,
                 typename ScalarType1, typename ScalarType2>
       void ambm_m(matrix_base<NumericT> & A,
                   matrix_base<NumericT> const & B, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
@@ -118,7 +118,7 @@ namespace viennacl
 
 
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_assign(matrix_base<NumericT> & A, NumericT s, bool up_to_internal_size = false)
       {
         scalar_matrix<NumericT> B(viennacl::traits::size1(A),viennacl::traits::size2(A),s,viennacl::traits::context(A));
@@ -128,7 +128,7 @@ namespace viennacl
         kernels::matrix<NumericT>::execution_handler(A.row_major(), viennacl::traits::opencl_context(A)).execute("assign_cpu", statement);
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diagonal_assign(matrix_base<NumericT> & A, NumericT s)
       {
         viennacl::scalar_vector<NumericT> sx(std::min(viennacl::traits::size1(A), viennacl::traits::size2(A)), s);
@@ -136,28 +136,28 @@ namespace viennacl
         kernels::matrix<NumericT>::execution_handler(A.row_major(), viennacl::traits::opencl_context(A)).execute("diagonal_assign_cpu", statement);
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diag_from_vector(const vector_base<NumericT> & vec, int k, matrix_base<NumericT> & A)
       {
         scheduler::statement statement = scheduler::preset::matrix_diag_from_vector(&vec, &A, k);
         kernels::matrix<NumericT>::execution_handler(A.row_major(), viennacl::traits::opencl_context(A)).execute("matrix_diag_from_vector", statement);
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_diag_to_vector(const matrix_base<NumericT> & A, int k, vector_base<NumericT> & vec)
       {
         scheduler::statement statement = scheduler::preset::matrix_diag_to_vector(&vec, &A, k);
         kernels::matrix<NumericT>::execution_handler(A.row_major(), viennacl::traits::opencl_context(A)).execute("matrix_diag_to_vector", statement);
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_row(const matrix_base<NumericT> & A, unsigned int i, vector_base<NumericT> & vec)
       {
         scheduler::statement statement = scheduler::preset::matrix_row(&vec, &A, i);
         kernels::matrix<NumericT>::execution_handler(A.row_major(), viennacl::traits::opencl_context(A)).execute("matrix_row", statement);
       }
 
-      template <typename NumericT>
+      template<typename NumericT>
       void matrix_column(const matrix_base<NumericT> & A, unsigned int j, vector_base<NumericT> & vec)
       {
         scheduler::statement statement = scheduler::preset::matrix_column(&vec, &A, j);
@@ -175,7 +175,7 @@ namespace viennacl
       * @param A      The result matrix (or -range, or -slice)
       * @param proxy  The proxy object holding B, C, and the operation
       */
-      template <typename NumericT, typename OP>
+      template<typename NumericT, typename OP>
       void element_op(matrix_base<NumericT> & A,
                       matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_element_binary<OP> > const & proxy)
       {
@@ -197,7 +197,7 @@ namespace viennacl
       * @param A      The result matrix (or -range, or -slice)
       * @param proxy  The proxy object holding B and the operation
       */
-      template <typename NumericT, typename OP>
+      template<typename NumericT, typename OP>
       void element_op(matrix_base<NumericT> & A,
                       matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_element_unary<OP> > const & proxy)
       {
@@ -222,7 +222,7 @@ namespace viennacl
       * @param vec    The vector
       * @param result The result vector
       */
-      template <typename NumericT>
+      template<typename NumericT>
       void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
                      const vector_base<NumericT> & vec,
                            vector_base<NumericT> & result)
@@ -242,7 +242,7 @@ namespace viennacl
       * Implementation of C = prod(A, B);
       *
       */
-      template <typename NumericT, typename ScalarType >
+      template<typename NumericT, typename ScalarType >
       void prod_impl(const matrix_base<NumericT> & A, bool A_trans,
                      const matrix_base<NumericT> & B, bool B_trans,
                            matrix_base<NumericT> & C,
@@ -280,7 +280,7 @@ namespace viennacl
       * @param vec1    The first vector
       * @param vec2    The second vector
       */
-      template <typename NumericT, typename S1>
+      template<typename NumericT, typename S1>
       void scaled_rank_1_update(matrix_base<NumericT> & A,
                                 S1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                                 const vector_base<NumericT> & vec1,

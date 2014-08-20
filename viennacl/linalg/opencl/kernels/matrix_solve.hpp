@@ -19,7 +19,7 @@ namespace viennacl
       namespace kernels
       {
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_matrix_solve_blas3(StringType & source, std::string const & numeric_string,
                                          bool row_major_A, bool row_major_B,
                                          bool transpose_A, bool transpose_B,
@@ -130,7 +130,7 @@ namespace viennacl
           * @param F1  Row/Column majority tag for the system matrix
           * @param F2  Row/Column majority tag for the right hand side matrix
           */
-        template <class NumericT, typename F1, typename F2>
+        template<class NumericT, typename F1, typename F2>
         struct matrix_solve
         {
           static std::string program_name()

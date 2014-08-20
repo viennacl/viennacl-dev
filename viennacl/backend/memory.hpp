@@ -295,14 +295,14 @@ namespace viennacl
 
     namespace detail
     {
-      template <typename T>
+      template<typename T>
       vcl_size_t element_size(memory_types /* mem_type */)
       {
         return sizeof(T);
       }
 
 
-      template <>
+      template<>
       inline vcl_size_t element_size<unsigned long>(memory_types
 #ifdef VIENNACL_WITH_OPENCL
                                                       mem_type  //in order to compile cleanly at -Wextra in GCC
@@ -316,7 +316,7 @@ namespace viennacl
         return sizeof(unsigned long);
       }
 
-      template <>
+      template<>
       inline vcl_size_t element_size<long>(memory_types
 #ifdef VIENNACL_WITH_OPENCL
                                                       mem_type  //in order to compile cleanly at -Wextra in GCC
@@ -331,7 +331,7 @@ namespace viennacl
       }
 
 
-      template <>
+      template<>
       inline vcl_size_t element_size<unsigned int>(memory_types
 #ifdef VIENNACL_WITH_OPENCL
                                                       mem_type  //in order to compile cleanly at -Wextra in GCC
@@ -345,7 +345,7 @@ namespace viennacl
         return sizeof(unsigned int);
       }
 
-      template <>
+      template<>
       inline vcl_size_t element_size<int>(memory_types
 #ifdef VIENNACL_WITH_OPENCL
                                            mem_type  //in order to compile cleanly at -Wextra in GCC
@@ -364,7 +364,7 @@ namespace viennacl
 
 
     /** @brief Switches the active memory domain within a memory handle. Data is copied if the new active domain differs from the old one. Memory in the source handle is not free'd. */
-    template <typename DataType>
+    template<typename DataType>
     void switch_memory_context(mem_handle & handle, viennacl::context new_ctx)
     {
       if (handle.get_active_handle_id() == new_ctx.memory_type())
@@ -466,7 +466,7 @@ namespace viennacl
 
 
     /** @brief Copies data of the provided 'DataType' from 'handle_src' to 'handle_dst' and converts the data if the binary representation of 'DataType' among the memory domains differs. */
-    template <typename DataType>
+    template<typename DataType>
     void typesafe_memory_copy(mem_handle const & handle_src, mem_handle & handle_dst)
     {
       if (handle_dst.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
@@ -620,7 +620,7 @@ namespace viennacl
   //
 
   /** @brief Generic convenience routine for migrating data of an object to a new memory domain */
-  template <typename T>
+  template<typename T>
   void switch_memory_context(T & obj, viennacl::context new_ctx)
   {
     obj.switch_memory_context(new_ctx);

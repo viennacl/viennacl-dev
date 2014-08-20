@@ -61,20 +61,20 @@ namespace viennacl
       static const double EPS = 1e-10;
       static const vcl_size_t ITER_MAX = 50;
 
-      template <typename SCALARTYPE>
+      template<typename SCALARTYPE>
       SCALARTYPE pythag(SCALARTYPE a, SCALARTYPE b)
       {
         return std::sqrt(a*a + b*b);
       }
 
-      template <typename SCALARTYPE>
+      template<typename SCALARTYPE>
       SCALARTYPE sign(SCALARTYPE val)
       {
           return (val >= 0) ? SCALARTYPE(1) : SCALARTYPE(-1);
       }
 
       // DEPRECATED: Replace with viennacl::linalg::norm_2
-      template <typename VectorType>
+      template<typename VectorType>
       typename VectorType::value_type norm_lcl(VectorType const & x, vcl_size_t size)
       {
         typename VectorType::value_type x_norm = 0.0;
@@ -83,7 +83,7 @@ namespace viennacl
         return std::sqrt(x_norm);
       }
 
-      template <typename VectorType>
+      template<typename VectorType>
       void normalize(VectorType & x, vcl_size_t size)
       {
         typename VectorType::value_type x_norm = norm_lcl(x, size);
@@ -93,7 +93,7 @@ namespace viennacl
 
 
 
-      template <typename VectorType>
+      template<typename VectorType>
       void householder_vector(VectorType & v, vcl_size_t start)
       {
         typedef typename VectorType::value_type    ScalarType;
@@ -103,7 +103,7 @@ namespace viennacl
         normalize(v, v.size());
       }
 
-      template <typename MatrixType>
+      template<typename MatrixType>
       void transpose(MatrixType & A)
       {
         typedef typename MatrixType::value_type                                   ScalarType;
@@ -121,7 +121,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       void cdiv(T xr, T xi, T yr, T yi, T& cdivr, T& cdivi)
       {
           // Complex scalar division.
@@ -144,7 +144,7 @@ namespace viennacl
       }
 
 
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int ALIGNMENT>
       void copy_vec(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& V,
                     vcl_size_t row_start,
@@ -196,7 +196,7 @@ namespace viennacl
         //std::cout << "2: "  << D << "\n";
       }
 
-      template <typename SCALARTYPE, unsigned int ALIGNMENT, typename VectorType>
+      template<typename SCALARTYPE, unsigned int ALIGNMENT, typename VectorType>
       void bidiag_pack(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                        VectorType & dh,
                        VectorType & sh

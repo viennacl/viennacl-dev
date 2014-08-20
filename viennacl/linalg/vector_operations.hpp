@@ -46,7 +46,7 @@ namespace viennacl
 {
   namespace linalg
   {
-    template <typename T, typename ScalarType1>
+    template<typename T, typename ScalarType1>
     void av(vector_base<T> & vec1,
             vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
     {
@@ -75,7 +75,7 @@ namespace viennacl
     }
 
 
-    template <typename T, typename ScalarType1, typename ScalarType2>
+    template<typename T, typename ScalarType1, typename ScalarType2>
     void avbv(vector_base<T> & vec1,
               vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
               vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -112,7 +112,7 @@ namespace viennacl
     }
 
 
-    template <typename T, typename ScalarType1, typename ScalarType2>
+    template<typename T, typename ScalarType1, typename ScalarType2>
     void avbv_v(vector_base<T> & vec1,
                 vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                 vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -155,7 +155,7 @@ namespace viennacl
     * @param alpha  The value to be assigned
     * @param up_to_internal_size    Whether 'alpha' should be written to padded memory as well. This is used for setting all entries to zero, including padded memory.
     */
-    template <typename T>
+    template<typename T>
     void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
@@ -186,7 +186,7 @@ namespace viennacl
     * @param vec1   The first vector (or -range, or -slice)
     * @param vec2   The second vector (or -range, or -slice)
     */
-    template <typename T>
+    template<typename T>
     void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in vector_swap()"));
@@ -223,7 +223,7 @@ namespace viennacl
     * @param vec1   The result vector (or -range, or -slice)
     * @param proxy  The proxy object holding v2, v3 and the operation
     */
-    template <typename T, typename OP>
+    template<typename T, typename OP>
     void element_op(vector_base<T> & vec1,
                     vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
     {
@@ -255,28 +255,28 @@ namespace viennacl
 
 // Helper macro for generating binary element-wise operations such as element_prod(), element_div(), element_pow() without unnecessary code duplication */
 #define VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(OPNAME) \
-    template <typename T> \
+    template<typename T> \
     viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
     element_##OPNAME(vector_base<T> const & v1, vector_base<T> const & v2) \
     { \
       return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> >(v1, v2); \
     } \
 \
-    template <typename V1, typename V2, typename OP, typename T> \
+    template<typename V1, typename V2, typename OP, typename T> \
     viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
     element_##OPNAME(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2) \
     { \
       return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_##OPNAME> >(proxy, v2); \
     } \
 \
-    template <typename T, typename V2, typename V3, typename OP> \
+    template<typename T, typename V2, typename V3, typename OP> \
     viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> > \
     element_##OPNAME(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy) \
     { \
       return viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> >(v1, proxy); \
     } \
 \
-    template <typename V1, typename V2, typename OP1, \
+    template<typename V1, typename V2, typename OP1, \
               typename V3, typename V4, typename OP2> \
     viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>, \
                                 const vector_expression<const V3, const V4, OP2>, \
@@ -304,13 +304,13 @@ namespace viennacl
 
 // Helper macro for generating unary element-wise operations such as element_exp(), element_sin(), etc. without unnecessary code duplication */
 #define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
-    template <typename T> \
+    template<typename T> \
     viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_##funcname> > \
     element_##funcname(vector_base<T> const & v) \
     { \
       return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_##funcname> >(v, v); \
     } \
-    template <typename LHS, typename RHS, typename OP> \
+    template<typename LHS, typename RHS, typename OP> \
     viennacl::vector_expression<const vector_expression<const LHS, const RHS, OP>, \
                                 const vector_expression<const LHS, const RHS, OP>, \
                                 op_element_unary<op_##funcname> > \
@@ -355,7 +355,7 @@ namespace viennacl
      * @param vec2 The second vector
      * @param result The result scalar (on the gpu)
      */
-    template <typename T>
+    template<typename T>
     void inner_prod_impl(vector_base<T> const & vec1,
                          vector_base<T> const & vec2,
                          scalar<T> & result)
@@ -385,7 +385,7 @@ namespace viennacl
     }
 
     // vector expression on lhs
-    template <typename LHS, typename RHS, typename OP, typename T>
+    template<typename LHS, typename RHS, typename OP, typename T>
     void inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
                          vector_base<T> const & vec2,
                          scalar<T> & result)
@@ -396,7 +396,7 @@ namespace viennacl
 
 
     // vector expression on rhs
-    template <typename T, typename LHS, typename RHS, typename OP>
+    template<typename T, typename LHS, typename RHS, typename OP>
     void inner_prod_impl(vector_base<T> const & vec1,
                          viennacl::vector_expression<LHS, RHS, OP> const & vec2,
                          scalar<T> & result)
@@ -407,7 +407,7 @@ namespace viennacl
 
 
     // vector expression on lhs and rhs
-    template <typename LHS1, typename RHS1, typename OP1,
+    template<typename LHS1, typename RHS1, typename OP1,
               typename LHS2, typename RHS2, typename OP2, typename T>
     void inner_prod_impl(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
                          viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
@@ -427,7 +427,7 @@ namespace viennacl
      * @param vec2 The second vector
      * @param result The result scalar (on the gpu)
      */
-    template <typename T>
+    template<typename T>
     void inner_prod_cpu(vector_base<T> const & vec1,
                         vector_base<T> const & vec2,
                         T & result)
@@ -457,7 +457,7 @@ namespace viennacl
     }
 
     // vector expression on lhs
-    template <typename LHS, typename RHS, typename OP, typename T>
+    template<typename LHS, typename RHS, typename OP, typename T>
     void inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
                         vector_base<T> const & vec2,
                         T & result)
@@ -468,7 +468,7 @@ namespace viennacl
 
 
     // vector expression on rhs
-    template <typename T, typename LHS, typename RHS, typename OP>
+    template<typename T, typename LHS, typename RHS, typename OP>
     void inner_prod_cpu(vector_base<T> const & vec1,
                         viennacl::vector_expression<LHS, RHS, OP> const & vec2,
                         T & result)
@@ -479,7 +479,7 @@ namespace viennacl
 
 
     // vector expression on lhs and rhs
-    template <typename LHS1, typename RHS1, typename OP1,
+    template<typename LHS1, typename RHS1, typename OP1,
               typename LHS2, typename RHS2, typename OP2, typename S3>
     void inner_prod_cpu(viennacl::vector_expression<LHS1, RHS1, OP1> const & vec1,
                         viennacl::vector_expression<LHS2, RHS2, OP2> const & vec2,
@@ -498,7 +498,7 @@ namespace viennacl
      * @param y_tuple A collection of vector, all of the same size.
      * @param result  The result scalar (on the gpu). Needs to match the number of elements in y_tuple
      */
-    template <typename T>
+    template<typename T>
     void inner_prod_impl(vector_base<T> const & x,
                          vector_tuple<T> const & y_tuple,
                          vector_base<T> & result)
@@ -534,7 +534,7 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename T>
+    template<typename T>
     void norm_1_impl(vector_base<T> const & vec,
                      scalar<T> & result)
     {
@@ -566,7 +566,7 @@ namespace viennacl
     * @param vec    The vector expression
     * @param result The result scalar
     */
-    template <typename LHS, typename RHS, typename OP, typename S2>
+    template<typename LHS, typename RHS, typename OP, typename S2>
     void norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                      S2 & result)
     {
@@ -581,7 +581,7 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename T>
+    template<typename T>
     void norm_1_cpu(vector_base<T> const & vec,
                     T & result)
     {
@@ -612,7 +612,7 @@ namespace viennacl
     * @param vec    The vector expression
     * @param result The result scalar
     */
-    template <typename LHS, typename RHS, typename OP, typename S2>
+    template<typename LHS, typename RHS, typename OP, typename S2>
     void norm_1_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                     S2 & result)
     {
@@ -628,7 +628,7 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename T>
+    template<typename T>
     void norm_2_impl(vector_base<T> const & vec,
                      scalar<T> & result)
     {
@@ -659,7 +659,7 @@ namespace viennacl
     * @param vec    The vector expression
     * @param result The result scalar
     */
-    template <typename LHS, typename RHS, typename OP, typename T>
+    template<typename LHS, typename RHS, typename OP, typename T>
     void norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                      scalar<T> & result)
     {
@@ -673,7 +673,7 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename T>
+    template<typename T>
     void norm_2_cpu(vector_base<T> const & vec,
                     T & result)
     {
@@ -704,7 +704,7 @@ namespace viennacl
     * @param vec    The vector expression
     * @param result The result scalar
     */
-    template <typename LHS, typename RHS, typename OP, typename S2>
+    template<typename LHS, typename RHS, typename OP, typename S2>
     void norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                     S2 & result)
     {
@@ -720,7 +720,7 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename T>
+    template<typename T>
     void norm_inf_impl(vector_base<T> const & vec,
                        scalar<T> & result)
     {
@@ -751,7 +751,7 @@ namespace viennacl
     * @param vec    The vector expression
     * @param result The result scalar
     */
-    template <typename LHS, typename RHS, typename OP, typename T>
+    template<typename LHS, typename RHS, typename OP, typename T>
     void norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                        scalar<T> & result)
     {
@@ -765,7 +765,7 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template <typename T>
+    template<typename T>
     void norm_inf_cpu(vector_base<T> const & vec,
                       T & result)
     {
@@ -796,7 +796,7 @@ namespace viennacl
     * @param vec    The vector expression
     * @param result The result scalar
     */
-    template <typename LHS, typename RHS, typename OP, typename S2>
+    template<typename LHS, typename RHS, typename OP, typename S2>
     void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       S2 & result)
     {
@@ -813,7 +813,7 @@ namespace viennacl
     * @param vec The vector
     * @return The result. Note that the result must be a CPU scalar
     */
-    template <typename T>
+    template<typename T>
     vcl_size_t index_norm_inf(vector_base<T> const & vec)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
@@ -839,7 +839,7 @@ namespace viennacl
     *
     * @param vec    The vector expression
     */
-    template <typename LHS, typename RHS, typename OP>
+    template<typename LHS, typename RHS, typename OP>
     vcl_size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec)
     {
       viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
@@ -856,7 +856,7 @@ namespace viennacl
     * @param alpha  The first transformation coefficient (CPU scalar)
     * @param beta   The second transformation coefficient (CPU scalar)
     */
-    template <typename T>
+    template<typename T>
     void plane_rotation(vector_base<T> & vec1,
                         vector_base<T> & vec2,
                         T alpha, T beta)
@@ -885,7 +885,7 @@ namespace viennacl
 
   } //namespace linalg
 
-  template <typename T, typename LHS, typename RHS, typename OP>
+  template<typename T, typename LHS, typename RHS, typename OP>
   vector_base<T> & operator += (vector_base<T> & v1, const vector_expression<const LHS, const RHS, OP> & proxy)
   {
     assert( (viennacl::traits::size(proxy) == v1.size()) && bool("Incompatible vector sizes!"));
@@ -896,7 +896,7 @@ namespace viennacl
     return v1;
   }
 
-  template <typename T, typename LHS, typename RHS, typename OP>
+  template<typename T, typename LHS, typename RHS, typename OP>
   vector_base<T> & operator -= (vector_base<T> & v1, const vector_expression<const LHS, const RHS, OP> & proxy)
   {
     assert( (viennacl::traits::size(proxy) == v1.size()) && bool("Incompatible vector sizes!"));

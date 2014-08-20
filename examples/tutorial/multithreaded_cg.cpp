@@ -67,7 +67,7 @@ using namespace boost::numeric;
 
 #include <boost/thread.hpp>
 
-template <typename NumericT>
+template<typename NumericT>
 class worker
 {
 public:

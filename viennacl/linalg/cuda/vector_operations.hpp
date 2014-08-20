@@ -47,7 +47,7 @@ namespace viennacl
       //////////////////////// av /////////////////////////////
 
       // gpu scalar
-      template <typename T>
+      template<typename T>
       __global__ void av_kernel(T * vec1,
                                 unsigned int start1,
                                 unsigned int inc1,
@@ -80,7 +80,7 @@ namespace viennacl
       }
 
       // cpu scalar
-      template <typename T>
+      template<typename T>
       __global__ void av_kernel(T * vec1,
                                 unsigned int start1,
                                 unsigned int inc1,
@@ -114,7 +114,7 @@ namespace viennacl
 
 
 
-      template <typename T, typename ScalarType1>
+      template<typename T, typename ScalarType1>
       void av(vector_base<T> & vec1,
               vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
       {
@@ -149,7 +149,7 @@ namespace viennacl
       ///////////////////// avbv //////////////////////////////////
 
       // alpha and beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void avbv_kernel(T * vec1,
                                   unsigned int start1,
                                   unsigned int inc1,
@@ -212,7 +212,7 @@ namespace viennacl
       }
 
       // alpha on CPU, beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void avbv_kernel(T * vec1,
                                   unsigned int start1,
                                   unsigned int inc1,
@@ -275,7 +275,7 @@ namespace viennacl
       }
 
       // alpha on GPU, beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void avbv_kernel(T * vec1,
                                   unsigned int start1,
                                   unsigned int inc1,
@@ -338,7 +338,7 @@ namespace viennacl
       }
 
       // alpha and beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void avbv_kernel(T * vec1,
                                   unsigned int start1,
                                   unsigned int inc1,
@@ -403,7 +403,7 @@ namespace viennacl
 
 
 
-      template <typename T, typename ScalarType1, typename ScalarType2>
+      template<typename T, typename ScalarType1, typename ScalarType2>
       void avbv(vector_base<T> & vec1,
                 vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                 vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -453,7 +453,7 @@ namespace viennacl
 
 
       // alpha and beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void avbv_v_kernel(T * vec1,
                                     unsigned int start1,
                                     unsigned int inc1,
@@ -516,7 +516,7 @@ namespace viennacl
       }
 
       // alpha on CPU, beta on GPU
-      template <typename T>
+      template<typename T>
       __global__ void avbv_v_kernel(T * vec1,
                                     unsigned int start1,
                                     unsigned int inc1,
@@ -579,7 +579,7 @@ namespace viennacl
       }
 
       // alpha on GPU, beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void avbv_v_kernel(T * vec1,
                                     unsigned int start1,
                                     unsigned int inc1,
@@ -642,7 +642,7 @@ namespace viennacl
       }
 
       // alpha and beta on CPU
-      template <typename T>
+      template<typename T>
       __global__ void avbv_v_kernel(T * vec1,
                                     unsigned int start1,
                                     unsigned int inc1,
@@ -705,7 +705,7 @@ namespace viennacl
       }
 
 
-      template <typename T, typename ScalarType1, typename ScalarType2>
+      template<typename T, typename ScalarType1, typename ScalarType2>
       void avbv_v(vector_base<T> & vec1,
                   vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
                   vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
@@ -752,7 +752,7 @@ namespace viennacl
 
       //////////////////////////
 
-      template <typename T>
+      template<typename T>
       __global__ void vector_assign_kernel(T * vec1,
                                            unsigned int start1,
                                            unsigned int inc1,
@@ -773,7 +773,7 @@ namespace viennacl
       * @param alpha  The value to be assigned
       * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
       */
-      template <typename T, typename S1>
+      template<typename T, typename S1>
       void vector_assign(vector_base<T> & vec1, const S1 & alpha, bool up_to_internal_size = false)
       {
         typedef T        value_type;
@@ -796,7 +796,7 @@ namespace viennacl
 
       //////////////////////////
 
-      template <typename T>
+      template<typename T>
       __global__ void vector_swap_kernel(T * vec1,
                                          unsigned int start1,
                                          unsigned int inc1,
@@ -823,7 +823,7 @@ namespace viennacl
       * @param vec1   The first vector (or -range, or -slice)
       * @param vec2   The second vector (or -range, or -slice)
       */
-      template <typename T>
+      template<typename T>
       void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
       {
         typedef T      value_type;
@@ -841,7 +841,7 @@ namespace viennacl
 
       ///////////////////////// Binary Elementwise operations /////////////
 
-      template <typename T>
+      template<typename T>
       __global__ void element_op_kernel(T * vec1,
                                          unsigned int start1,
                                          unsigned int inc1,
@@ -887,7 +887,7 @@ namespace viennacl
         }
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void element_op_int_kernel(T * vec1,
                                          unsigned int start1,
                                          unsigned int inc1,
@@ -929,7 +929,7 @@ namespace viennacl
       * @param vec1   The result vector (or -range, or -slice)
       * @param proxy  The proxy object holding v2, v3 and the operation
       */
-      template <typename T, typename OP>
+      template<typename T, typename OP>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
       {
@@ -959,7 +959,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
       }
 
-      template <typename OP>
+      template<typename OP>
       void element_op(vector_base<float> & vec1,
                       vector_expression<const vector_base<float>, const vector_base<float>, op_element_binary<OP> > const & proxy)
       {
@@ -989,7 +989,7 @@ namespace viennacl
         VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
       }
 
-      template <typename OP>
+      template<typename OP>
       void element_op(vector_base<double> & vec1,
                       vector_expression<const vector_base<double>, const vector_base<double>, op_element_binary<OP> > const & proxy)
       {
@@ -1025,7 +1025,7 @@ namespace viennacl
 // Question (Karl Rupp): Why is CUDA code always such a hassle when trying to use it in a library context?
 
       // acos
-      template <typename T> __global__ void vec_element_acos_kernel(
+      template<typename T> __global__ void vec_element_acos_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1033,7 +1033,7 @@ namespace viennacl
           vec1[i*inc1+start1] = acos(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_acos> > const & proxy)
       {
@@ -1051,7 +1051,7 @@ namespace viennacl
       }
 
       // asin
-      template <typename T> __global__ void vec_element_asin_kernel(
+      template<typename T> __global__ void vec_element_asin_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1059,7 +1059,7 @@ namespace viennacl
           vec1[i*inc1+start1] = asin(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_asin> > const & proxy)
       {
@@ -1078,7 +1078,7 @@ namespace viennacl
 
 
       // atan
-      template <typename T> __global__ void vec_element_atan_kernel(
+      template<typename T> __global__ void vec_element_atan_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1086,7 +1086,7 @@ namespace viennacl
           vec1[i*inc1+start1] = atan(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_atan> > const & proxy)
       {
@@ -1105,7 +1105,7 @@ namespace viennacl
 
 
       // ceil
-      template <typename T> __global__ void vec_element_ceil_kernel(
+      template<typename T> __global__ void vec_element_ceil_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1113,7 +1113,7 @@ namespace viennacl
           vec1[i*inc1+start1] = ceil(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_ceil> > const & proxy)
       {
@@ -1132,7 +1132,7 @@ namespace viennacl
 
 
       // cos
-      template <typename T> __global__ void vec_element_cos_kernel(
+      template<typename T> __global__ void vec_element_cos_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1140,7 +1140,7 @@ namespace viennacl
           vec1[i*inc1+start1] = cos(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_cos> > const & proxy)
       {
@@ -1159,7 +1159,7 @@ namespace viennacl
 
 
       // cosh
-      template <typename T> __global__ void vec_element_cosh_kernel(
+      template<typename T> __global__ void vec_element_cosh_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1167,7 +1167,7 @@ namespace viennacl
           vec1[i*inc1+start1] = cosh(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_cosh> > const & proxy)
       {
@@ -1186,7 +1186,7 @@ namespace viennacl
 
 
       // exp
-      template <typename T> __global__ void vec_element_exp_kernel(
+      template<typename T> __global__ void vec_element_exp_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1194,7 +1194,7 @@ namespace viennacl
           vec1[i*inc1+start1] = exp(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_exp> > const & proxy)
       {
@@ -1213,7 +1213,7 @@ namespace viennacl
 
 
       // fabs
-      template <typename T> __global__ void vec_element_fabs_kernel(
+      template<typename T> __global__ void vec_element_fabs_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1221,7 +1221,7 @@ namespace viennacl
           vec1[i*inc1+start1] = fabs(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_fabs> > const & proxy)
       {
@@ -1239,7 +1239,7 @@ namespace viennacl
       }
 
       // abs
-      template <typename T> __global__ void vec_element_abs_kernel(
+      template<typename T> __global__ void vec_element_abs_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1247,7 +1247,7 @@ namespace viennacl
           vec1[i*inc1+start1] = abs(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_abs> > const & proxy)
       {
@@ -1267,7 +1267,7 @@ namespace viennacl
 
 
       // floor
-      template <typename T> __global__ void vec_element_floor_kernel(
+      template<typename T> __global__ void vec_element_floor_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1275,7 +1275,7 @@ namespace viennacl
           vec1[i*inc1+start1] = floor(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_floor> > const & proxy)
       {
@@ -1294,7 +1294,7 @@ namespace viennacl
 
 
       // log
-      template <typename T> __global__ void vec_element_log_kernel(
+      template<typename T> __global__ void vec_element_log_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1302,7 +1302,7 @@ namespace viennacl
           vec1[i*inc1+start1] = log(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_log> > const & proxy)
       {
@@ -1321,7 +1321,7 @@ namespace viennacl
 
 
       // log10
-      template <typename T> __global__ void vec_element_log10_kernel(
+      template<typename T> __global__ void vec_element_log10_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1329,7 +1329,7 @@ namespace viennacl
           vec1[i*inc1+start1] = log10(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_log10> > const & proxy)
       {
@@ -1348,7 +1348,7 @@ namespace viennacl
 
 
       // sin
-      template <typename T> __global__ void vec_element_sin_kernel(
+      template<typename T> __global__ void vec_element_sin_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1356,7 +1356,7 @@ namespace viennacl
           vec1[i*inc1+start1] = sin(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_sin> > const & proxy)
       {
@@ -1375,7 +1375,7 @@ namespace viennacl
 
 
       // sinh
-      template <typename T> __global__ void vec_element_sinh_kernel(
+      template<typename T> __global__ void vec_element_sinh_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1383,7 +1383,7 @@ namespace viennacl
           vec1[i*inc1+start1] = sinh(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_sinh> > const & proxy)
       {
@@ -1402,7 +1402,7 @@ namespace viennacl
 
 
       // sqrt
-      template <typename T> __global__ void vec_element_sqrt_kernel(
+      template<typename T> __global__ void vec_element_sqrt_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1410,7 +1410,7 @@ namespace viennacl
           vec1[i*inc1+start1] = sqrt(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_sqrt> > const & proxy)
       {
@@ -1429,7 +1429,7 @@ namespace viennacl
 
 
       // tan
-      template <typename T> __global__ void vec_element_tan_kernel(
+      template<typename T> __global__ void vec_element_tan_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1437,7 +1437,7 @@ namespace viennacl
           vec1[i*inc1+start1] = tan(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_tan> > const & proxy)
       {
@@ -1456,7 +1456,7 @@ namespace viennacl
 
 
       // tanh
-      template <typename T> __global__ void vec_element_tanh_kernel(
+      template<typename T> __global__ void vec_element_tanh_kernel(
           T       * vec1, unsigned int start1, unsigned int inc1, unsigned int size1,
           T const * vec2, unsigned int start2, unsigned int inc2)
       {
@@ -1464,7 +1464,7 @@ namespace viennacl
           vec1[i*inc1+start1] = tanh(vec2[i*inc2+start2]);
       }
 
-      template <typename T>
+      template<typename T>
       void element_op(vector_base<T> & vec1,
                       vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_tanh> > const & proxy)
       {
@@ -1486,7 +1486,7 @@ namespace viennacl
       ///////////////////////// Norms and inner product ///////////////////
 
 
-      template <typename T>
+      template<typename T>
       __global__ void inner_prod_kernel(const T * vec1,
                                         unsigned int start1,
                                         unsigned int inc1,
@@ -1526,7 +1526,7 @@ namespace viennacl
 
 
       // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
-      template <typename T>
+      template<typename T>
       __global__ void vector_sum_kernel_floats(
                 const T * vec1,
                 unsigned int start1,
@@ -1568,7 +1568,7 @@ namespace viennacl
         }
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void vector_sum_kernel_integers(
                 const T * vec1,
                 unsigned int start1,
@@ -1605,7 +1605,7 @@ namespace viennacl
           *result = tmp_buffer[0];
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void vector_sum_kernel_unsigned_integers(
                 const T * vec1,
                 unsigned int start1,
@@ -1647,7 +1647,7 @@ namespace viennacl
         /** \cond */
         struct vector_sum_kernel_launcher_integers
         {
-          template <typename T, typename S3>
+          template<typename T, typename S3>
           static void apply(vector_base<T> const & temp,
                             unsigned int option,
                             S3 & result)
@@ -1665,7 +1665,7 @@ namespace viennacl
 
         struct vector_sum_kernel_launcher_unsigned_integers
         {
-          template <typename T, typename S3>
+          template<typename T, typename S3>
           static void apply(vector_base<T> const & temp,
                             unsigned int option,
                             S3 & result)
@@ -1683,7 +1683,7 @@ namespace viennacl
 
         struct vector_sum_kernel_launcher_floats
         {
-          template <typename T, typename S3>
+          template<typename T, typename S3>
           static void apply(vector_base<T> const & temp,
                             unsigned int option,
                             S3 & result)
@@ -1699,25 +1699,25 @@ namespace viennacl
           }
         };
 
-        template <typename T>
+        template<typename T>
         struct vector_sum_kernel_launcher : public vector_sum_kernel_launcher_integers {};
 
-        template <>
+        template<>
         struct vector_sum_kernel_launcher<unsigned char>  : public vector_sum_kernel_launcher_unsigned_integers {};
 
-        template <>
+        template<>
         struct vector_sum_kernel_launcher<unsigned short>  : public vector_sum_kernel_launcher_unsigned_integers {};
 
-        template <>
+        template<>
         struct vector_sum_kernel_launcher<unsigned int>  : public vector_sum_kernel_launcher_unsigned_integers {};
 
-        template <>
+        template<>
         struct vector_sum_kernel_launcher<unsigned long>  : public vector_sum_kernel_launcher_unsigned_integers {};
 
-        template <>
+        template<>
         struct vector_sum_kernel_launcher<float>  : public vector_sum_kernel_launcher_floats {};
 
-        template <>
+        template<>
         struct vector_sum_kernel_launcher<double> : public vector_sum_kernel_launcher_floats {};
 
         /** \endcond */
@@ -1732,7 +1732,7 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the gpu)
       */
-      template <typename T, typename S3>
+      template<typename T, typename S3>
       void inner_prod_impl(vector_base<T> const & vec1,
                            vector_base<T> const & vec2,
                            S3 & result)
@@ -1764,7 +1764,7 @@ namespace viennacl
       * @param vec2 The second vector
       * @param result The result scalar (on the host)
       */
-      template <typename T>
+      template<typename T>
       void inner_prod_cpu(vector_base<T> const & vec1,
                           vector_base<T> const & vec2,
                           T & result)
@@ -1800,7 +1800,7 @@ namespace viennacl
 #define VIENNACL_MDOT_WORKGROUP_SIZE  128
 #define VIENNACL_MDOT_WORKGROUP_NUM   128
       // M = 2:
-      template <typename NumericT>
+      template<typename NumericT>
       __global__ void inner_prod_2_kernel(const NumericT *x,  unsigned int startx, unsigned int stridex, unsigned int sizex,
                                           const NumericT *y0, unsigned int start0, unsigned int stride0,
                                           const NumericT *y1, unsigned int start1, unsigned int stride1,
@@ -1839,7 +1839,7 @@ namespace viennacl
       }
 
       // M = 3:
-      template <typename NumericT>
+      template<typename NumericT>
       __global__ void inner_prod_3_kernel(const NumericT *x,  unsigned int startx, unsigned int stridex, unsigned int sizex,
                                           const NumericT *y0, unsigned int start0, unsigned int stride0,
                                           const NumericT *y1, unsigned int start1, unsigned int stride1,
@@ -1884,7 +1884,7 @@ namespace viennacl
       }
 
       // M = 4:
-      template <typename NumericT>
+      template<typename NumericT>
       __global__ void inner_prod_4_kernel(const NumericT *x,  unsigned int startx, unsigned int stridex, unsigned int sizex,
                                           const NumericT *y0, unsigned int start0, unsigned int stride0,
                                           const NumericT *y1, unsigned int start1, unsigned int stride1,
@@ -1935,7 +1935,7 @@ namespace viennacl
       }
 
       // M = 8:
-      template <typename NumericT>
+      template<typename NumericT>
       __global__ void inner_prod_8_kernel(const NumericT *x,  unsigned int startx, unsigned int stridex, unsigned int sizex,
                                           const NumericT *y0, unsigned int start0, unsigned int stride0,
                                           const NumericT *y1, unsigned int start1, unsigned int stride1,
@@ -2010,7 +2010,7 @@ namespace viennacl
       }
 
       // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
-      template <typename T>
+      template<typename T>
       __global__ void vector_multi_sum_kernel(
                 T const * vec1,
                 T * result,
@@ -2032,7 +2032,7 @@ namespace viennacl
           result[start_result + inc_result * blockIdx.x] = tmp_buffer[0];
       }
 
-      template <typename T>
+      template<typename T>
       void inner_prod_impl(vector_base<T> const & x,
                            vector_tuple<T> const & vec_tuple,
                            vector_base<T> & result)
@@ -2231,7 +2231,7 @@ namespace viennacl
 
       ///////////////////////////////////
 
-      template <typename T>
+      template<typename T>
       __global__ void norm_kernel_floats(
                  const T * vec,
                 unsigned int start1,
@@ -2294,7 +2294,7 @@ namespace viennacl
           group_buffer[blockIdx.x] = tmp_buffer[0];
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void norm_kernel_integers(
                  const T * vec,
                 unsigned int start1,
@@ -2348,7 +2348,7 @@ namespace viennacl
           group_buffer[blockIdx.x] = tmp_buffer[0];
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void norm_kernel_unsigned_integers(
                  const T * vec,
                 unsigned int start1,
@@ -2407,7 +2407,7 @@ namespace viennacl
       {
         struct norm_kernel_launcher_integers
         {
-          template <typename T>
+          template<typename T>
           static void apply(vector_base<T> const & vec1,
                             vector_base<T> & temp,
                             unsigned int option)
@@ -2426,7 +2426,7 @@ namespace viennacl
 
         struct norm_kernel_launcher_unsigned_integers
         {
-          template <typename T>
+          template<typename T>
           static void apply(vector_base<T> const & vec1,
                             vector_base<T> & temp,
                             unsigned int option)
@@ -2446,7 +2446,7 @@ namespace viennacl
 
         struct norm_kernel_launcher_floats
         {
-          template <typename T>
+          template<typename T>
           static void apply(vector_base<T> const & vec1,
                             vector_base<T> & temp,
                             unsigned int option)
@@ -2463,25 +2463,25 @@ namespace viennacl
           }
         };
 
-        template <typename T>
+        template<typename T>
         struct norm_kernel_launcher : public norm_kernel_launcher_integers {};
 
-        template <>
+        template<>
         struct norm_kernel_launcher<unsigned char>  : public norm_kernel_launcher_unsigned_integers {};
 
-        template <>
+        template<>
         struct norm_kernel_launcher<unsigned short>  : public norm_kernel_launcher_unsigned_integers {};
 
-        template <>
+        template<>
         struct norm_kernel_launcher<unsigned int>  : public norm_kernel_launcher_unsigned_integers {};
 
-        template <>
+        template<>
         struct norm_kernel_launcher<unsigned long>  : public norm_kernel_launcher_unsigned_integers {};
 
-        template <>
+        template<>
         struct norm_kernel_launcher<float>  : public norm_kernel_launcher_floats {};
 
-        template <>
+        template<>
         struct norm_kernel_launcher<double> : public norm_kernel_launcher_floats {};
 
       }
@@ -2493,7 +2493,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_1_impl(vector_base<T> const & vec1,
                        scalar<T> & result)
       {
@@ -2511,7 +2511,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_1_cpu(vector_base<T> const & vec1,
                       T & result)
       {
@@ -2538,7 +2538,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_2_impl(vector_base<T> const & vec1,
                        scalar<T> & result)
       {
@@ -2557,7 +2557,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_2_cpu(vector_base<T> const & vec1,
                       T & result)
       {
@@ -2585,7 +2585,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_inf_impl(vector_base<T> const & vec1,
                          scalar<T> & result)
       {
@@ -2605,7 +2605,7 @@ namespace viennacl
       * @param vec1 The vector
       * @param result The result scalar
       */
-      template <typename T>
+      template<typename T>
       void norm_inf_cpu(vector_base<T> const & vec1,
                         T & result)
       {
@@ -2632,14 +2632,14 @@ namespace viennacl
       //index_norm_inf:
 
       // fixes the problem of not having (f)abs available in a consistent manner
-      template <typename T>
+      template<typename T>
       __device__ T              cuda_abs(T val) { return (val < 0) ? -val : val; }
       __device__ inline unsigned long  cuda_abs(unsigned long  val) { return val; }
       __device__ inline unsigned int   cuda_abs(unsigned int   val) { return val; }
       __device__ inline unsigned short cuda_abs(unsigned short val) { return val; }
       __device__ inline unsigned char  cuda_abs(unsigned char  val) { return val; }
 
-      template <typename T>
+      template<typename T>
       __global__ void index_norm_inf_kernel(const T * vec,
                                             unsigned int start1,
                                             unsigned int inc1,
@@ -2694,7 +2694,7 @@ namespace viennacl
       * @param vec1 The vector
       * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
       */
-      template <typename T>
+      template<typename T>
       vcl_size_t index_norm_inf(vector_base<T> const & vec1)
       {
         typedef T       value_type;
@@ -2718,7 +2718,7 @@ namespace viennacl
 
       ///////////////////////////////////////////
 
-      template <typename T>
+      template<typename T>
       __global__ void plane_rotation_kernel(
                 T * vec1,
                 unsigned int start1,
@@ -2754,7 +2754,7 @@ namespace viennacl
       * @param alpha  The first transformation coefficient
       * @param beta   The second transformation coefficient
       */
-      template <typename T>
+      template<typename T>
       void plane_rotation(vector_base<T> & vec1,
                           vector_base<T> & vec2,
                           T alpha, T beta)

@@ -143,7 +143,7 @@ namespace viennacl
 
     /** @brief ILU0 preconditioner class, can be supplied to solve()-routines
     */
-    template <typename MatrixType>
+    template<typename MatrixType>
     class ilu0_precond
     {
         typedef typename MatrixType::value_type      ScalarType;
@@ -157,7 +157,7 @@ namespace viennacl
             //std::cout << "End CPU precond" << std::endl;
         }
 
-        template <typename VectorType>
+        template<typename VectorType>
         void apply(VectorType & vec) const
         {
           unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU.handle1());
@@ -188,7 +188,7 @@ namespace viennacl
       *
       *  Specialization for compressed_matrix
       */
-    template <typename ScalarType, unsigned int MAT_ALIGNMENT>
+    template<typename ScalarType, unsigned int MAT_ALIGNMENT>
     class ilu0_precond< compressed_matrix<ScalarType, MAT_ALIGNMENT> >
     {
         typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;

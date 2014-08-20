@@ -34,7 +34,7 @@ namespace viennacl
     *
     * In MATLAB notation, this could for example refer to the subvector x(3:8) of a vector x.
     */
-  template <typename VectorType>
+  template<typename VectorType>
   class vector_range : public vector_base<typename VectorType::cpu_value_type>
   {
       typedef vector_range<VectorType>             self_type;
@@ -65,7 +65,7 @@ namespace viennacl
   ///////////////////////// CPU to GPU ////////////////////////
   /////////////////////////////////////////////////////////////
 
-  template <typename VectorType, typename SCALARTYPE>
+  template<typename VectorType, typename SCALARTYPE>
   void copy(const VectorType & cpu_vector,
             vector_range<vector<SCALARTYPE> > & gpu_vector_range )
   {
@@ -86,7 +86,7 @@ namespace viennacl
   * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
   * @param gpu_vec    The gpu vector.
   */
-  template <typename CPUVECTOR, typename VectorType>
+  template<typename CPUVECTOR, typename VectorType>
   void fast_copy(const CPUVECTOR & cpu_vec, vector_range<VectorType> & gpu_vec)
   {
     viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
@@ -97,7 +97,7 @@ namespace viennacl
   /////////////////////////////////////////////////////////////
 
 
-  template <typename SCALARTYPE, typename VectorType>
+  template<typename SCALARTYPE, typename VectorType>
   void copy(vector_range<vector<SCALARTYPE> > const & gpu_vector_range,
             VectorType & cpu_vector)
   {
@@ -119,7 +119,7 @@ namespace viennacl
   * @param gpu_vec    A gpu vector range.
   * @param cpu_vec    The cpu vector. Type requirements: Output iterator can be obtained via member function .begin()
   */
-  template <typename VectorType, typename CPUVECTOR>
+  template<typename VectorType, typename CPUVECTOR>
   void fast_copy(vector_range< VectorType > const & gpu_vec,
                  CPUVECTOR & cpu_vec )
   {
@@ -131,13 +131,13 @@ namespace viennacl
   //
   // Convenience function
   //
-  template <typename VectorType>
+  template<typename VectorType>
   vector_range<VectorType> project(VectorType & vec, viennacl::range const & r1)
   {
     return vector_range<VectorType>(vec, r1);
   }
 
-  template <typename VectorType>
+  template<typename VectorType>
   vector_range<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::range const & r1)
   {
     assert(r1.size() <= vec.size() && bool("Size of range invalid!"));
@@ -158,7 +158,7 @@ namespace viennacl
     *
     * In MATLAB notation, this could for example refer to the subvector x(3:2:8) of a vector x.
     */
-  template <typename VectorType>
+  template<typename VectorType>
   class vector_slice : public vector_base<typename VectorType::cpu_value_type>
   {
       typedef vector_slice<VectorType>             self_type;
@@ -188,7 +188,7 @@ namespace viennacl
   ///////////////////////// CPU to GPU ////////////////////////
   /////////////////////////////////////////////////////////////
 
-  template <typename VectorType, typename SCALARTYPE>
+  template<typename VectorType, typename SCALARTYPE>
   void copy(const VectorType & cpu_vector,
             vector_slice<vector<SCALARTYPE> > & gpu_vector_slice )
   {
@@ -212,7 +212,7 @@ namespace viennacl
   /////////////////////////////////////////////////////////////
 
 
-  template <typename VectorType, typename SCALARTYPE>
+  template<typename VectorType, typename SCALARTYPE>
   void copy(vector_slice<vector<SCALARTYPE> > const & gpu_vector_slice,
             VectorType & cpu_vector)
   {
@@ -235,14 +235,14 @@ namespace viennacl
   //
   // Convenience functions
   //
-  template <typename VectorType>
+  template<typename VectorType>
   vector_slice<VectorType> project(VectorType & vec, viennacl::slice const & s1)
   {
     assert(s1.size() <= vec.size() && bool("Size of slice larger than vector size!"));
     return vector_slice<VectorType>(vec, s1);
   }
 
-  template <typename VectorType>
+  template<typename VectorType>
   vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::slice const & s1)
   {
     assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
@@ -251,14 +251,14 @@ namespace viennacl
 
   // interaction with range and vector_range:
 
-  template <typename VectorType>
+  template<typename VectorType>
   vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::range const & r1)
   {
     assert(r1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
     return vector_slice<VectorType>(vec, viennacl::slice(vec.start() + r1.start(), vec.stride(), r1.size()));
   }
 
-  template <typename VectorType>
+  template<typename VectorType>
   vector_slice<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::slice const & s1)
   {
     assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));

@@ -50,7 +50,7 @@ namespace viennacl
     template<class OCL_TYPE>
     class handle;
 
-    template <typename KernelType>
+    template<typename KernelType>
     void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue);
 
     inline viennacl::ocl::context & current_context();

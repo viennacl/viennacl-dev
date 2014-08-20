@@ -45,7 +45,7 @@ namespace viennacl
     namespace detail
     {
 
-      template <typename ScalarType>
+      template<typename ScalarType>
       void level_scheduling_substitute(vector<ScalarType> & vec,
                                   viennacl::backend::mem_handle const & row_index_array,
                                   viennacl::backend::mem_handle const & row_buffer,

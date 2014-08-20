@@ -19,7 +19,7 @@ namespace viennacl
 
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_vec_mul(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void vec_mul( \n");
@@ -47,7 +47,7 @@ namespace viennacl
         //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
         /** @brief Main kernel class for generating OpenCL kernels for compressed_compressed_matrix. */
-        template <typename NumericT>
+        template<typename NumericT>
         struct compressed_compressed_matrix
         {
           static std::string program_name()

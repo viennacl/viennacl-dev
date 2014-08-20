@@ -81,7 +81,7 @@ namespace viennacl
 
 
     /** @brief Dispatcher overload for extracting the row of nonzeros of a compressed matrix */
-    template <typename ScalarType, typename SizeType, typename SparseVector>
+    template<typename ScalarType, typename SizeType, typename SparseVector>
     ScalarType setup_w(viennacl::compressed_matrix<ScalarType> const & A,
                        SizeType row,
                        SparseVector & w)
@@ -107,7 +107,7 @@ namespace viennacl
     }
 
     /** @brief Dispatcher overload for extracting the row of nonzeros of a STL-grown sparse matrix */
-    template <typename ScalarType, typename SizeType, typename SparseVector>
+    template<typename ScalarType, typename SizeType, typename SparseVector>
     ScalarType setup_w(std::vector< std::map<SizeType, ScalarType> > const & A,
                        SizeType row,
                        SparseVector & w)
@@ -245,7 +245,7 @@ namespace viennacl
 
     /** @brief ILUT preconditioner class, can be supplied to solve()-routines
     */
-    template <typename MatrixType>
+    template<typename MatrixType>
     class ilut_precond
     {
       typedef typename MatrixType::value_type      ScalarType;
@@ -259,7 +259,7 @@ namespace viennacl
           //std::cout << "End CPU precond" << std::endl;
         }
 
-        template <typename VectorType>
+        template<typename VectorType>
         void apply(VectorType & vec) const
         {
           //Note: Since vec can be a rather arbitrary vector type, we call the more generic version in the backend manually:
@@ -297,7 +297,7 @@ namespace viennacl
     *
     *  Specialization for compressed_matrix
     */
-    template <typename ScalarType, unsigned int MAT_ALIGNMENT>
+    template<typename ScalarType, unsigned int MAT_ALIGNMENT>
     class ilut_precond< compressed_matrix<ScalarType, MAT_ALIGNMENT> >
     {
       typedef compressed_matrix<ScalarType, MAT_ALIGNMENT>   MatrixType;

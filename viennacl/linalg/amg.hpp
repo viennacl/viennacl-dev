@@ -68,7 +68,7 @@ namespace viennacl
     * @param Pointvector  Vector of points on all levels
     * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_setup(InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       typedef typename InternalType2::value_type PointVectorType;
@@ -142,7 +142,7 @@ namespace viennacl
     * @param Pointvector  Vector of points on all levels
     * @param tag    AMG preconditioner tag
     */
-    template <typename MatrixType, typename InternalType1, typename InternalType2>
+    template<typename MatrixType, typename InternalType1, typename InternalType2>
     void amg_init(MatrixType const & mat, InternalType1 & A, InternalType1 & P, InternalType2 & Pointvector, amg_tag & tag)
     {
       //typedef typename MatrixType::value_type ScalarType;
@@ -175,7 +175,7 @@ namespace viennacl
     * @param P_setup    Prolongation/Interpolation operators on all levels from setup phase
     * @param tag    AMG preconditioner tag
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_transform_cpu (InternalType1 & A, InternalType1 & P, InternalType1 & R, InternalType2 & A_setup, InternalType2 & P_setup, amg_tag & tag)
     {
       //typedef typename InternalType1::value_type MatrixType;
@@ -215,7 +215,7 @@ namespace viennacl
     * @param tag    AMG preconditioner tag
     * @param ctx      Optional context in which the auxiliary objects are created (one out of multiple OpenCL contexts, CUDA, host)
     */
-    template <typename InternalType1, typename InternalType2>
+    template<typename InternalType1, typename InternalType2>
     void amg_transform_gpu (InternalType1 & A, InternalType1 & P, InternalType1 & R, InternalType2 & A_setup, InternalType2 & P_setup, amg_tag & tag, viennacl::context ctx)
     {
       // Resize internal data structures to actual size.
@@ -255,7 +255,7 @@ namespace viennacl
     * @param A      Operators matrices on all levels from setup phase
     * @param tag    AMG preconditioner tag
     */
-    template <typename InternalVectorType, typename SparseMatrixType>
+    template<typename InternalVectorType, typename SparseMatrixType>
     void amg_setup_apply (InternalVectorType & result, InternalVectorType & rhs, InternalVectorType & residual, SparseMatrixType const & A, amg_tag const & tag)
     {
       typedef typename InternalVectorType::value_type VectorType;
@@ -288,7 +288,7 @@ namespace viennacl
     * @param tag    AMG preconditioner tag
     * @param ctx      Optional context in which the auxiliary objects are created (one out of multiple OpenCL contexts, CUDA, host)
     */
-    template <typename InternalVectorType, typename SparseMatrixType>
+    template<typename InternalVectorType, typename SparseMatrixType>
     void amg_setup_apply (InternalVectorType & result, InternalVectorType & rhs, InternalVectorType & residual, SparseMatrixType const & A, amg_tag const & tag, viennacl::context ctx)
     {
       typedef typename InternalVectorType::value_type VectorType;
@@ -316,7 +316,7 @@ namespace viennacl
     * @param Permutation  Permutation matrix which saves the factorization result
     * @param A      Operator matrix on coarsest level
     */
-    template <typename ScalarType, typename SparseMatrixType>
+    template<typename ScalarType, typename SparseMatrixType>
     void amg_lu(boost::numeric::ublas::compressed_matrix<ScalarType> & op, boost::numeric::ublas::permutation_matrix<> & Permutation, SparseMatrixType const & A)
     {
       typedef typename SparseMatrixType::const_iterator1 ConstRowIterator;
@@ -335,7 +335,7 @@ namespace viennacl
 
     /** @brief AMG preconditioner class, can be supplied to solve()-routines
     */
-    template <typename MatrixType>
+    template<typename MatrixType>
     class amg_precond
     {
       typedef typename MatrixType::value_type ScalarType;
@@ -413,7 +413,7 @@ namespace viennacl
       * @param avgstencil  Average stencil sizes on all levels
       * @return     Operator complexity of AMG method
       */
-      template <typename VectorType>
+      template<typename VectorType>
       ScalarType calc_complexity(VectorType & avgstencil)
       {
         avgstencil = VectorType (tag_.get_coarselevels()+1);
@@ -441,7 +441,7 @@ namespace viennacl
       *
       * @param vec The vector to which preconditioning is applied to (ublas version)
       */
-      template <typename VectorType>
+      template<typename VectorType>
       void apply(VectorType & vec) const
       {
         // Build data structures and do lu factorization before first iteration step.
@@ -522,7 +522,7 @@ namespace viennacl
       * @param x     The vector smoothing is applied to
       * @param rhs    The right hand side of the equation for the smoother
       */
-      template <typename VectorType>
+      template<typename VectorType>
       void smooth_jacobi(int level, int const iterations, VectorType & x, VectorType const & rhs) const
       {
         VectorType old_result (x.size());
@@ -561,7 +561,7 @@ namespace viennacl
     *
     *  Specialization for compressed_matrix
     */
-    template <typename ScalarType, unsigned int MAT_ALIGNMENT>
+    template<typename ScalarType, unsigned int MAT_ALIGNMENT>
     class amg_precond< compressed_matrix<ScalarType, MAT_ALIGNMENT> >
     {
       typedef viennacl::compressed_matrix<ScalarType, MAT_ALIGNMENT> MatrixType;
@@ -648,7 +648,7 @@ namespace viennacl
       * @param avgstencil  Average stencil sizes on all levels
       * @return     Operator complexity of AMG method
       */
-      template <typename VectorType>
+      template<typename VectorType>
       ScalarType calc_complexity(VectorType & avgstencil)
       {
         avgstencil = VectorType (tag_.get_coarselevels()+1);
@@ -676,7 +676,7 @@ namespace viennacl
       *
       * @param vec The vector to which preconditioning is applied to
       */
-      template <typename VectorType>
+      template<typename VectorType>
       void apply(VectorType & vec) const
       {
         if (!done_init_apply)
@@ -764,7 +764,7 @@ namespace viennacl
       * @param x           The vector smoothing is applied to
       * @param rhs         The right hand side of the equation for the smoother
       */
-      template <typename VectorType>
+      template<typename VectorType>
       void smooth_jacobi(int level, unsigned int iterations, VectorType & x, VectorType const & rhs) const
       {
         VectorType old_result = x;

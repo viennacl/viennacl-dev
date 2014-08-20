@@ -21,7 +21,7 @@ namespace viennacl
 
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_hyb_vec_mul(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void vec_mul( \n");
@@ -70,7 +70,7 @@ namespace viennacl
 
         namespace detail
         {
-          template <typename StringType>
+          template<typename StringType>
           void generate_hyb_matrix_dense_matrix_mul(StringType & source, std::string const & numeric_string,
                                                     bool B_transposed, bool B_row_major, bool C_row_major)
           {
@@ -154,7 +154,7 @@ namespace viennacl
           }
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_hyb_matrix_dense_matrix_multiplication(StringType & source, std::string const & numeric_string)
         {
           detail::generate_hyb_matrix_dense_matrix_mul(source, numeric_string, false, false, false);
@@ -172,7 +172,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for hyb_matrix. */
-        template <typename NumericT>
+        template<typename NumericT>
         struct hyb_matrix
         {
           static std::string program_name()

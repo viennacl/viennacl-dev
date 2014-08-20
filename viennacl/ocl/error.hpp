@@ -560,7 +560,7 @@ namespace viennacl
     *  Do not use this class directly, use the macro CL_ERROR_CHECK instead.
     *  @tparam T   Useless. Helps to avoid troubles with external linkage of namespace functions.
     */
-    template <typename T>
+    template<typename T>
     struct error_checker
     {
 

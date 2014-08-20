@@ -50,7 +50,7 @@ namespace viennacl
     * @param A    The system matrix
     * @param B    The matrix of row vectors, where the solution is directly written to
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     void inplace_solve(const matrix_base<NumericT> & A, matrix_base<NumericT> & B, SOLVERTAG)
     {
       assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
@@ -83,7 +83,7 @@ namespace viennacl
     * @param A       The system matrix
     * @param proxy_B The transposed matrix of row vectors, where the solution is directly written to
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     void inplace_solve(const matrix_base<NumericT> & A,
                        matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> proxy_B,
                        SOLVERTAG)
@@ -119,7 +119,7 @@ namespace viennacl
     * @param proxy_A  The system matrix proxy
     * @param B        The matrix holding the load vectors, where the solution is directly written to
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
                        matrix_base<NumericT> & B,
                        SOLVERTAG)
@@ -154,7 +154,7 @@ namespace viennacl
     * @param proxy_A  The system matrix proxy
     * @param proxy_B  The matrix holding the load vectors, where the solution is directly written to
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
                              matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>   proxy_B,
                        SOLVERTAG)
@@ -191,7 +191,7 @@ namespace viennacl
     // A \ b
     //
 
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     void inplace_solve(const matrix_base<NumericT> & mat,
                              vector_base<NumericT> & vec,
                        SOLVERTAG)
@@ -226,7 +226,7 @@ namespace viennacl
     * @param proxy    The system matrix proxy
     * @param vec    The load vector, where the solution is directly written to
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
                        vector_base<NumericT> & vec,
                        SOLVERTAG)
@@ -265,7 +265,7 @@ namespace viennacl
     * @param B    The matrix of load vectors
     * @param tag    Dispatch tag
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     matrix_base<NumericT> solve(const matrix_base<NumericT> & A,
                                 const matrix_base<NumericT> & B,
                                 SOLVERTAG tag)
@@ -287,7 +287,7 @@ namespace viennacl
     * @param proxy  The transposed load vector
     * @param tag    Dispatch tag
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     matrix_base<NumericT> solve(const matrix_base<NumericT> & A,
                                 const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
                                 SOLVERTAG tag)
@@ -306,7 +306,7 @@ namespace viennacl
     * @param vec    The load vector
     * @param tag    Dispatch tag
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     vector<NumericT> solve(const matrix_base<NumericT> & mat,
                            const vector_base<NumericT> & vec,
                            SOLVERTAG const & tag)
@@ -327,7 +327,7 @@ namespace viennacl
     * @param B      The matrix of load vectors
     * @param tag    Dispatch tag
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     matrix_base<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
                                 const matrix_base<NumericT> & B,
                                 SOLVERTAG tag)
@@ -347,7 +347,7 @@ namespace viennacl
     * @param proxy_B  The transposed matrix of load vectors, where the solution is directly written to
     * @param tag    Dispatch tag
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     matrix_base<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
                                 const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_B,
                                 SOLVERTAG tag)
@@ -366,7 +366,7 @@ namespace viennacl
     * @param vec    The load vector, where the solution is directly written to
     * @param tag    Dispatch tag
     */
-    template <typename NumericT, typename SOLVERTAG>
+    template<typename NumericT, typename SOLVERTAG>
     vector<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
                            const vector_base<NumericT> & vec,
                            SOLVERTAG const & tag)

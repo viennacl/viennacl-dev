@@ -44,7 +44,7 @@ namespace viennacl
   {
 
     // Calculate the bandwidth of a reordered matrix
-    template <typename IndexT, typename ValueT>
+    template<typename IndexT, typename ValueT>
     IndexT calc_reordered_bw(std::vector< std::map<IndexT, ValueT> > const & matrix,
                              std::vector<bool> & dof_assigned_to_node,
                              std::vector<IndexT> const & permutation)
@@ -86,7 +86,7 @@ namespace viennacl
     //       comb represents an ordered selection of m values out of n
     // n: int
     //    total number of values out of which comb is taken as selection
-    template <typename IndexT>
+    template<typename IndexT>
     bool comb_inc(std::vector<IndexT> & comb, vcl_size_t n)
     {
       vcl_size_t m;
@@ -119,7 +119,7 @@ namespace viennacl
       *
       */
     // node s
-    template <typename MatrixT, typename IndexT>
+    template<typename MatrixT, typename IndexT>
     void generate_layering(MatrixT const & matrix,
                            std::vector< std::vector<IndexT> > & layer_list)
     {
@@ -167,7 +167,7 @@ namespace viennacl
 
 
     // function to generate a node layering as a tree structure rooted at node s
-    template <typename MatrixType>
+    template<typename MatrixType>
     void generate_layering(MatrixType const & matrix,
                            std::vector< std::vector<int> > & l,
                            int s)
@@ -212,7 +212,7 @@ namespace viennacl
       *
       *  If more than one node is provided, all nodes should be from the same strongly connected component.
       */
-    template <typename MatrixT, typename IndexT>
+    template<typename MatrixT, typename IndexT>
     void nodes_of_strongly_connected_component(MatrixT const & matrix,
                                                std::vector<IndexT> & node_list)
     {
@@ -267,7 +267,7 @@ namespace viennacl
       return (a[1] < b[1]);
     }
 
-    template <typename IndexT>
+    template<typename IndexT>
     bool cuthill_mckee_comp_func_pair(std::pair<IndexT, IndexT> const & a,
                                       std::pair<IndexT, IndexT> const & b)
     {
@@ -284,7 +284,7 @@ namespace viennacl
       *
       * @return The next free dof available
       */
-    template <typename IndexT, typename ValueT>
+    template<typename IndexT, typename ValueT>
     vcl_size_t cuthill_mckee_on_strongly_connected_component(std::vector< std::map<IndexT, ValueT> > const & matrix,
                                                               std::deque<IndexT> & node_assignment_queue,
                                                               std::vector<bool>  & dof_assigned_to_node,
@@ -364,7 +364,7 @@ namespace viennacl
    * @return permutation vector r. r[l] = i means that the new label of node i will be l.
    *
    */
-  template <typename IndexT, typename ValueT>
+  template<typename IndexT, typename ValueT>
   std::vector<IndexT> reorder(std::vector< std::map<IndexT, ValueT> > const & matrix, cuthill_mckee_tag)
   {
     std::vector<IndexT> permutation(matrix.size());
@@ -471,7 +471,7 @@ namespace viennacl
    *    E. Cuthill and J. McKee: "Reducing the Bandwidth of sparse symmetric Matrices".
    *    Naval Ship Research and Development Center, Washington, D. C., 20007
    */
-  template <typename IndexT, typename ValueT>
+  template<typename IndexT, typename ValueT>
   std::vector<IndexT> reorder(std::vector< std::map<IndexT, ValueT> > const & matrix,
                               advanced_cuthill_mckee_tag const & tag)
   {

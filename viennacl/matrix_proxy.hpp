@@ -34,7 +34,7 @@ namespace viennacl
     *
     * In MATLAB notation, this could for example refer to the submatrix A(3:8, 6:10) of a matrix A.
     */
-  template <typename MatrixType>
+  template<typename MatrixType>
   class matrix_range : public matrix_base<typename MatrixType::cpu_value_type>
   {
       typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
@@ -72,7 +72,7 @@ namespace viennacl
   /////////////////////////////////////////////////////////////
 
   //row_major:
-  template <typename CPU_MATRIX, typename SCALARTYPE>
+  template<typename CPU_MATRIX, typename SCALARTYPE>
   void copy(const CPU_MATRIX & cpu_matrix,
             matrix_range<matrix<SCALARTYPE, row_major, 1> > & gpu_matrix_range )
   {
@@ -114,7 +114,7 @@ namespace viennacl
   }
 
   //column_major:
-  template <typename CPU_MATRIX, typename SCALARTYPE>
+  template<typename CPU_MATRIX, typename SCALARTYPE>
   void copy(const CPU_MATRIX & cpu_matrix,
             matrix_range<matrix<SCALARTYPE, column_major, 1> > & gpu_matrix_range )
   {
@@ -163,7 +163,7 @@ namespace viennacl
 
 
   //row_major:
-  template <typename CPU_MATRIX, typename SCALARTYPE>
+  template<typename CPU_MATRIX, typename SCALARTYPE>
   void copy(matrix_range<matrix<SCALARTYPE, row_major, 1> > const & gpu_matrix_range,
             CPU_MATRIX & cpu_matrix)
   {
@@ -205,7 +205,7 @@ namespace viennacl
 
 
   //column_major:
-  template <typename CPU_MATRIX, typename SCALARTYPE>
+  template<typename CPU_MATRIX, typename SCALARTYPE>
   void copy(matrix_range<matrix<SCALARTYPE, column_major, 1> > const & gpu_matrix_range,
             CPU_MATRIX & cpu_matrix)
   {
@@ -251,7 +251,7 @@ namespace viennacl
   //
   // Convenience function
   //
-  template <typename MatrixType>
+  template<typename MatrixType>
   matrix_range<MatrixType> project(MatrixType & A, viennacl::range const & r1, viennacl::range const & r2)
   {
     assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of range invalid!"));
@@ -260,7 +260,7 @@ namespace viennacl
   }
 
 
-  template <typename MatrixType>
+  template<typename MatrixType>
   matrix_range<MatrixType> project(matrix_range<MatrixType> & A, viennacl::range const & r1, viennacl::range const & r2)
   {
     assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of range invalid!"));
@@ -290,7 +290,7 @@ namespace viennacl
     *
     * In MATLAB notation, this could for example refer to the submatrix A(3:2:8, 6:3:16) of a matrix A.
     */
-  template <typename MatrixType>
+  template<typename MatrixType>
   class matrix_slice : public matrix_base<typename MatrixType::cpu_value_type>
   {
       typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
@@ -329,7 +329,7 @@ namespace viennacl
   /////////////////////////////////////////////////////////////
 
   //row_major:
-  template <typename CPU_MATRIX, typename SCALARTYPE>
+  template<typename CPU_MATRIX, typename SCALARTYPE>
   void copy(const CPU_MATRIX & cpu_matrix,
             matrix_slice<matrix<SCALARTYPE, row_major, 1> > & gpu_matrix_slice )
   {
@@ -358,7 +358,7 @@ namespace viennacl
   }
 
   //column_major:
-  template <typename CPU_MATRIX, typename SCALARTYPE>
+  template<typename CPU_MATRIX, typename SCALARTYPE>
   void copy(const CPU_MATRIX & cpu_matrix,
             matrix_slice<matrix<SCALARTYPE, column_major, 1> > & gpu_matrix_slice )
   {
@@ -396,7 +396,7 @@ namespace viennacl
 
 
   //row_major:
-  template <typename CPU_MATRIX, typename SCALARTYPE>
+  template<typename CPU_MATRIX, typename SCALARTYPE>
   void copy(matrix_slice<matrix<SCALARTYPE, row_major, 1> > const & gpu_matrix_slice,
             CPU_MATRIX & cpu_matrix)
   {
@@ -426,7 +426,7 @@ namespace viennacl
 
 
   //column_major:
-  template <typename CPU_MATRIX, typename SCALARTYPE>
+  template<typename CPU_MATRIX, typename SCALARTYPE>
   void copy(matrix_slice<matrix<SCALARTYPE, column_major, 1> > const & gpu_matrix_slice,
             CPU_MATRIX & cpu_matrix)
   {
@@ -458,7 +458,7 @@ namespace viennacl
   //
   // Convenience function
   //
-  template <typename MatrixType>
+  template<typename MatrixType>
   matrix_slice<MatrixType> project(MatrixType & A, viennacl::slice const & r1, viennacl::slice const & r2)
   {
     assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));
@@ -466,7 +466,7 @@ namespace viennacl
     return matrix_slice<MatrixType>(A, r1, r2);
   }
 
-  template <typename MatrixType>
+  template<typename MatrixType>
   matrix_slice<MatrixType> project(matrix_range<MatrixType> & A, viennacl::slice const & r1, viennacl::slice const & r2)
   {
     assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));
@@ -477,7 +477,7 @@ namespace viennacl
                                    );
   }
 
-  template <typename MatrixType>
+  template<typename MatrixType>
   matrix_slice<MatrixType> project(matrix_slice<MatrixType> & A, viennacl::slice const & r1, viennacl::slice const & r2)
   {
     assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));

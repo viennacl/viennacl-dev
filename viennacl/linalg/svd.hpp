@@ -282,7 +282,7 @@ namespace viennacl
       }
 
 
-      /*template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      /*template<typename SCALARTYPE, unsigned int ALIGNMENT>
       bool householder_c(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT> & D,
@@ -324,7 +324,7 @@ namespace viennacl
         return true;
       }*/
 
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int ALIGNMENT>
       bool householder_c(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
@@ -369,7 +369,7 @@ namespace viennacl
       }
 
       /*
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int ALIGNMENT>
       bool householder_r(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT>& Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT>& S,
@@ -409,7 +409,7 @@ namespace viennacl
         return true;
       } */
 
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int ALIGNMENT>
       bool householder_r(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & A,
                           viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Q,
                           viennacl::vector<SCALARTYPE, ALIGNMENT>& D,
@@ -453,7 +453,7 @@ namespace viennacl
         return true;
       }
 
-      template <typename SCALARTYPE, unsigned int ALIGNMENT>
+      template<typename SCALARTYPE, unsigned int ALIGNMENT>
       void bidiag(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & Ai,
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QL,
                   viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QR)
@@ -486,7 +486,7 @@ namespace viennacl
      * @param QL    The left orthogonal matrix
      * @param QR    The right orthogonal matrix
      */
-    template <typename SCALARTYPE, unsigned int ALIGNMENT>
+    template<typename SCALARTYPE, unsigned int ALIGNMENT>
     void svd(viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & A,
               viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QL,
               viennacl::matrix<SCALARTYPE, row_major, ALIGNMENT> & QR)

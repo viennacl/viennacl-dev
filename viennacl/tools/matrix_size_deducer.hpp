@@ -43,7 +43,7 @@ namespace viennacl
     * @tparam RHS   The right hand side operand
     * @tparam OP    The operation tag
     */
-    template <typename LHS, typename RHS, typename OP>
+    template<typename LHS, typename RHS, typename OP>
     struct MATRIX_SIZE_DEDUCER
     {
       //Standard case: size1 from lhs, size2 from rhs (fits most cases)
@@ -53,7 +53,7 @@ namespace viennacl
 
     /** \cond */
     //special case: outer vector product:
-    template <typename ScalarType>
+    template<typename ScalarType>
     struct MATRIX_SIZE_DEDUCER<const viennacl::vector_base<ScalarType>,
                                const viennacl::vector_base<ScalarType>,
                                viennacl::op_prod>
@@ -67,7 +67,7 @@ namespace viennacl
 
 
     //special case: multiplication with a scalar
-    template <typename LHS, typename RHS, typename OP, typename ScalarType>
+    template<typename LHS, typename RHS, typename OP, typename ScalarType>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<const LHS, const RHS, OP>,
                                const ScalarType,
                                viennacl::op_mult>
@@ -80,7 +80,7 @@ namespace viennacl
     };
 
     //special case: multiplication with a scalar
-    template <typename T, typename ScalarType>
+    template<typename T, typename ScalarType>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<T>,
                                const ScalarType,
                                viennacl::op_mult>
@@ -94,7 +94,7 @@ namespace viennacl
 
 
     //special case: division with a scalar
-    template <typename LHS, typename RHS, typename OP, typename ScalarType>
+    template<typename LHS, typename RHS, typename OP, typename ScalarType>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<const LHS, const RHS, OP>,
                                const ScalarType,
                                viennacl::op_div>
@@ -107,7 +107,7 @@ namespace viennacl
     };
 
     //special case: division with a scalar
-    template <typename T, typename ScalarType>
+    template<typename T, typename ScalarType>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<T>,
                                const ScalarType,
                                viennacl::op_div>
@@ -120,7 +120,7 @@ namespace viennacl
     };
 
     //special case: diagonal from vector
-    template <typename T>
+    template<typename T>
     struct MATRIX_SIZE_DEDUCER<const viennacl::vector_base<T>,
                                const int,
                                viennacl::op_vector_diag>
@@ -140,7 +140,7 @@ namespace viennacl
 
 
     //special case: transposed matrix-vector product: Return the number of rows of the matrix
-    template <typename MatrixType>
+    template<typename MatrixType>
     struct MATRIX_SIZE_DEDUCER<MatrixType,
                                MatrixType,
                                viennacl::op_trans>
@@ -152,7 +152,7 @@ namespace viennacl
     };
 
     // A^T * B
-    template <typename ScalarType, typename T1>
+    template<typename ScalarType, typename T1>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<T1,
                                                                  T1, op_trans>,
                                const viennacl::matrix_base<ScalarType>,
@@ -171,7 +171,7 @@ namespace viennacl
 
     // A * B^T
 
-    template <typename ScalarType, typename T2>
+    template<typename ScalarType, typename T2>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<ScalarType>,
                                const viennacl::matrix_expression<T2,
                                                                  T2, op_trans>,
@@ -192,7 +192,7 @@ namespace viennacl
 
     // A^T * B^T
 
-    template <typename T1, typename T2>
+    template<typename T1, typename T2>
     struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<T1,
                                                                  T1, op_trans>,
                                const viennacl::matrix_expression<T2,

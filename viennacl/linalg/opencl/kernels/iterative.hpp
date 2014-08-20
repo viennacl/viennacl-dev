@@ -28,7 +28,7 @@ namespace viennacl
       {
         //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_pipelined_cg_vector_update(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void cg_vector_update( \n");
@@ -72,7 +72,7 @@ namespace viennacl
           source.append("} \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_pipelined_cg_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void cg_csr_prod( \n");
@@ -122,7 +122,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_coordinate_matrix_pipelined_cg_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void cg_coo_prod( \n");
@@ -225,7 +225,7 @@ namespace viennacl
         }
 
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_ell_matrix_pipelined_cg_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void cg_ell_prod( \n");
@@ -281,7 +281,7 @@ namespace viennacl
           source.append("} \n \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_sliced_ell_matrix_pipelined_cg_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void cg_sliced_ell_prod( \n");
@@ -341,7 +341,7 @@ namespace viennacl
           source.append("} \n \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_hyb_matrix_pipelined_cg_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void cg_hyb_prod( \n");
@@ -411,7 +411,7 @@ namespace viennacl
         //////////////////////////////////////////////////////
 
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_pipelined_bicgstab_update_s(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bicgstab_update_s( \n");
@@ -474,7 +474,7 @@ namespace viennacl
 
 
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_pipelined_bicgstab_vector_update(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bicgstab_vector_update( \n");
@@ -529,7 +529,7 @@ namespace viennacl
         }
 
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_compressed_matrix_pipelined_bicgstab_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bicgstab_csr_prod( \n");
@@ -587,7 +587,7 @@ namespace viennacl
 
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_coordinate_matrix_pipelined_bicgstab_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bicgstab_coo_prod( \n");
@@ -700,7 +700,7 @@ namespace viennacl
         }
 
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_ell_matrix_pipelined_bicgstab_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bicgstab_ell_prod( \n");
@@ -764,7 +764,7 @@ namespace viennacl
           source.append("} \n \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_sliced_ell_matrix_pipelined_bicgstab_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bicgstab_sliced_ell_prod( \n");
@@ -832,7 +832,7 @@ namespace viennacl
           source.append("} \n \n");
         }
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_hyb_matrix_pipelined_bicgstab_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bicgstab_hyb_prod( \n");
@@ -912,7 +912,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating specialized OpenCL kernels for fast iterative solvers. */
-        template <typename NumericT>
+        template<typename NumericT>
         struct iterative
         {
           static std::string program_name()

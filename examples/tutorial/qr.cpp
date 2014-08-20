@@ -55,7 +55,7 @@
 //
 // A helper function checking the result
 //
-template <typename MatrixType>
+template<typename MatrixType>
 double check(MatrixType const & qr, MatrixType const & ref)
 {
   bool do_break = false;

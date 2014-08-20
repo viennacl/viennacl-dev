@@ -35,7 +35,7 @@
 
 using namespace boost::numeric;
 
-template <typename ScalarType, typename VCLMatrixType>
+template<typename ScalarType, typename VCLMatrixType>
 ScalarType diff(ublas::matrix<ScalarType> const & mat1, VCLMatrixType  const & mat2)
 {
    ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
@@ -105,7 +105,7 @@ struct matrix_maker< ublas::matrix_slice<MatrixT>, F>
   }
 };
 
-template <typename T, typename CType, typename AType, typename BType>
+template<typename T, typename CType, typename AType, typename BType>
 int test_layout(CType & C, AType const & A, AType const & AT, BType const & B, BType const & BT,
                 ublas::matrix<T> const & ground, T epsilon)
 {
@@ -135,7 +135,7 @@ int test_layout(CType & C, AType const & A, AType const & AT, BType const & B, B
   return EXIT_SUCCESS;
 }
 
-template <typename T, typename RefAType, typename RefBType, typename RefCType>
+template<typename T, typename RefAType, typename RefBType, typename RefCType>
 int test_all_layouts(int CM, int CN, RefCType & cC, int AM, int AK, RefAType & cA, RefAType & cAT, int BK, int BN, RefBType & cB,  RefBType & cBT, T epsilon)
 {
   viennacl::matrix<T, viennacl::row_major> ArowTmp(AM, AK);
@@ -194,7 +194,7 @@ void init_rand(MatrixType & A)
       A(i, j) = static_cast<T>(0.1) * random<T>();
 }
 
-template <typename T>
+template<typename T>
 int run_test(T epsilon)
 {
     typedef ublas::range range_type;

@@ -27,21 +27,21 @@
 #include "viennacl/traits/size.hpp"
 
 
-template <typename MatrixType, typename ScalarType>
+template<typename MatrixType, typename ScalarType>
 void insert(MatrixType & matrix, long row, long col, ScalarType value)
 {
   matrix(row, col) = value;
 }
 
 #ifdef VIENNACL_HAVE_EIGEN
-template <typename ScalarType, int option>
+template<typename ScalarType, int option>
 void insert(Eigen::SparseMatrix<ScalarType, option> & matrix, long row, long col, double value)
 {
   matrix.fill(row, col) = value;
 }
 #endif
 
-template <typename MatrixType>
+template<typename MatrixType>
 class my_inserter
 {
   public:
@@ -58,7 +58,7 @@ class my_inserter
 
 #ifdef VIENNACL_HAVE_MTL4
 #include <boost/numeric/mtl/matrix/inserter.hpp>
-/*template <typename ScalarType>
+/*template<typename ScalarType>
 void insert(mtl::compressed2D<ScalarType> & matrix, long row, long col, ScalarType value)
 {
   typedef mtl::compressed2D<ScalarType>   MatrixType;
@@ -69,13 +69,13 @@ void insert(mtl::compressed2D<ScalarType> & matrix, long row, long col, ScalarTy
   //matrix.fill(row, col) = val;
 }*/
 
-template <typename ScalarType>
+template<typename ScalarType>
 void resize_vector(mtl::dense_vector<ScalarType> & vec, unsigned int size)
 {
   vec.change_dim(size);
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 class my_inserter<mtl::compressed2D<ScalarType> >
 {
     typedef mtl::compressed2D<ScalarType>    MatrixType;
@@ -94,13 +94,13 @@ class my_inserter<mtl::compressed2D<ScalarType> >
 };
 #endif
 
-template <typename VectorType>
+template<typename VectorType>
 void resize_vector(VectorType & vec, unsigned int size)
 {
   vec.resize(size);
 }
 
-template <typename VectorType>
+template<typename VectorType>
 bool readVectorFromFile(const std::string & filename,
                         VectorType & vec)
 {
@@ -126,7 +126,7 @@ bool readVectorFromFile(const std::string & filename,
 }
 
 
-template <class MatrixType>
+template<class MatrixType>
 bool readMatrixFromFile(const std::string & filename, MatrixType & matrix)
 {
   typedef typename viennacl::result_of::value_type<MatrixType>::type    ScalarType;

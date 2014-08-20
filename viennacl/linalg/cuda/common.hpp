@@ -50,32 +50,32 @@ namespace viennacl
           }
         }
 
-        template <typename T, typename U>
+        template<typename T, typename U>
         T * cuda_arg(vector_base<U> & obj)
         {
           return reinterpret_cast<T *>(viennacl::traits::handle(obj).cuda_handle().get());
         }
 
-        template <typename T, typename U>
+        template<typename T, typename U>
         const T * cuda_arg(vector_base<U> const & obj)
         {
           return reinterpret_cast<const T *>(viennacl::traits::handle(obj).cuda_handle().get());
         }
 
-        template <typename NumericT>
+        template<typename NumericT>
         NumericT * cuda_arg(matrix_base<NumericT> & obj)
         {
           return reinterpret_cast<NumericT *>(viennacl::traits::handle(obj).cuda_handle().get());
         }
 
-        template <typename NumericT>
+        template<typename NumericT>
         const NumericT * cuda_arg(matrix_base<NumericT> const & obj)
         {
           return reinterpret_cast<const NumericT *>(viennacl::traits::handle(obj).cuda_handle().get());
         }
 
 
-        template <typename ScalarType, typename T>
+        template<typename ScalarType, typename T>
         typename viennacl::enable_if< viennacl::is_scalar<T>::value,
                                       ScalarType *>::type
         cuda_arg(T & obj)
@@ -83,7 +83,7 @@ namespace viennacl
           return reinterpret_cast<ScalarType *>(viennacl::traits::handle(obj).cuda_handle().get());
         }
 
-        template <typename ScalarType, typename T>
+        template<typename ScalarType, typename T>
         typename viennacl::enable_if< viennacl::is_scalar<T>::value,
                                       const ScalarType *>::type
         cuda_arg(T const & obj)
@@ -91,100 +91,100 @@ namespace viennacl
           return reinterpret_cast<const ScalarType *>(viennacl::traits::handle(obj).cuda_handle().get());
         }
 
-        template <typename ScalarType>
+        template<typename ScalarType>
         ScalarType *  cuda_arg(viennacl::backend::mem_handle::cuda_handle_type & h)
         {
           return reinterpret_cast<ScalarType *>(h.get());
         }
 
-        template <typename ScalarType>
+        template<typename ScalarType>
         ScalarType const *  cuda_arg(viennacl::backend::mem_handle::cuda_handle_type const & h)
         {
           return reinterpret_cast<const ScalarType *>(h.get());
         }
 
-     template <typename T>
+     template<typename T>
         struct type_to_type2;
 
-        template <>
+        template<>
         struct type_to_type2<float> { typedef float2  type; };
 
-        template <>
+        template<>
         struct type_to_type2<double> { typedef double2  type; };
         
-        //template <typename ScalarType>
+        //template<typename ScalarType>
         //ScalarType cuda_arg(ScalarType const & val)  { return val; }
 
         inline unsigned int cuda_arg(unsigned int val)  { return val; }
 
-        template <typename T> char           cuda_arg(char val)           { return val; }
-        template <typename T> unsigned char  cuda_arg(unsigned char val)  { return val; }
+        template<typename T> char           cuda_arg(char val)           { return val; }
+        template<typename T> unsigned char  cuda_arg(unsigned char val)  { return val; }
 
-        template <typename T> short          cuda_arg(short val)          { return val; }
-        template <typename T> unsigned short cuda_arg(unsigned short val) { return val; }
+        template<typename T> short          cuda_arg(short val)          { return val; }
+        template<typename T> unsigned short cuda_arg(unsigned short val) { return val; }
 
-        template <typename T> int            cuda_arg(int val)            { return val; }
-        template <typename T> unsigned int   cuda_arg(unsigned int val)   { return val; }
+        template<typename T> int            cuda_arg(int val)            { return val; }
+        template<typename T> unsigned int   cuda_arg(unsigned int val)   { return val; }
 
-        template <typename T> long           cuda_arg(long val)           { return val; }
-        template <typename T> unsigned long  cuda_arg(unsigned long val)  { return val; }
+        template<typename T> long           cuda_arg(long val)           { return val; }
+        template<typename T> unsigned long  cuda_arg(unsigned long val)  { return val; }
 
-        template <typename T> float          cuda_arg(float val)          { return val; }
-        template <typename T> double         cuda_arg(double val)         { return val; }
+        template<typename T> float          cuda_arg(float val)          { return val; }
+        template<typename T> double         cuda_arg(double val)         { return val; }
 
-        template <typename T, typename U>
+        template<typename T, typename U>
         typename viennacl::backend::mem_handle::cuda_handle_type & arg_reference(viennacl::scalar<T> & s, U) { return s.handle().cuda_handle(); }
 
-        template <typename T, typename U>
+        template<typename T, typename U>
         typename viennacl::backend::mem_handle::cuda_handle_type const & arg_reference(viennacl::scalar<T> const & s, U) { return s.handle().cuda_handle(); }
 
         // all other cases where T is not a ViennaCL scalar
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       char const &>::type
         arg_reference(T, char const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       unsigned char const &>::type
         arg_reference(T, unsigned char const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       short const &>::type
         arg_reference(T, short const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       unsigned short const &>::type
         arg_reference(T, unsigned short const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       int const &>::type
         arg_reference(T, int const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       unsigned int const &>::type
         arg_reference(T, unsigned int const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       long const &>::type
         arg_reference(T, long const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       unsigned long const &>::type
         arg_reference(T, unsigned long const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       float const &>::type
         arg_reference(T, float const & val)  { return val; }
 
-        template <typename T>
+        template<typename T>
         typename viennacl::enable_if< viennacl::is_cpu_scalar<T>::value,
                                       double const &>::type
         arg_reference(T, double const & val)  { return val; }

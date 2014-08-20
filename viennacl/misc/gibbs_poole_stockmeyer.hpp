@@ -60,7 +60,7 @@ namespace viennacl
 
     // function to decompose a list of nodes rg into connected components
     // sorted by decreasing number of nodes per component
-    template <typename MatrixType>
+    template<typename MatrixType>
     std::vector< std::vector<int> > gps_rg_components(MatrixType const & matrix, int n,
                                                       std::vector<int> const & rg)
     {
@@ -151,7 +151,7 @@ namespace viennacl
    * @param matrix  vector of n matrix rows, where each row is a map<int, double> containing only the nonzero elements
    * @return permutation vector r. r[l] = i means that the new label of node i will be l.
    */
-  template <typename MatrixType>
+  template<typename MatrixType>
   std::vector<int> reorder(MatrixType const & matrix,
                            gibbs_poole_stockmeyer_tag)
   {

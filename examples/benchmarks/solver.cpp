@@ -66,7 +66,7 @@ using namespace boost::numeric;
 #define BENCHMARK_RUNS          1
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff_inf(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
@@ -83,7 +83,7 @@ ScalarType diff_inf(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType>
    return norm_inf(v2_cpu);
 }
 
-template <typename ScalarType>
+template<typename ScalarType>
 ScalarType diff_2(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
    ublas::vector<ScalarType> v2_cpu(v2.size());
@@ -93,7 +93,7 @@ ScalarType diff_2(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> &
 }
 
 
-template <typename MatrixType, typename VectorType, typename SolverTag, typename PrecondTag>
+template<typename MatrixType, typename VectorType, typename SolverTag, typename PrecondTag>
 void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType const & ref_result, SolverTag const & solver, PrecondTag const & precond, long ops)
 {
   Timer timer;

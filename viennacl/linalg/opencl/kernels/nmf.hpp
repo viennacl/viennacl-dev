@@ -17,7 +17,7 @@ namespace viennacl
       namespace kernels
       {
 
-        template <typename StringType>
+        template<typename StringType>
         void generate_nmf_el_wise_mul_div(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void el_wise_mul_div( \n");
@@ -37,7 +37,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for nonnegative matrix factorization of a dense matrices. */
-        template <class NumericT>
+        template<class NumericT>
         struct nmf
         {
           static std::string program_name()

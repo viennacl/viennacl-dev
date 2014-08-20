@@ -38,7 +38,7 @@ namespace viennacl
       // non-transposed
       //
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_unit_lu_forward_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -106,7 +106,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_lu_forward_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -176,7 +176,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_unit_lu_backward_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -253,7 +253,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_lu_backward_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -338,7 +338,7 @@ namespace viennacl
       //
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_trans_lu_forward_kernel2(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -363,7 +363,7 @@ namespace viennacl
         }
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_trans_unit_lu_forward_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -425,7 +425,7 @@ namespace viennacl
 
       }
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_trans_lu_forward_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -493,7 +493,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_trans_unit_lu_backward_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -559,7 +559,7 @@ namespace viennacl
 
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_trans_lu_backward_kernel2(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -593,7 +593,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_trans_lu_backward_kernel(
                 const unsigned int * row_indices,
                 const unsigned int * column_indices,
@@ -664,7 +664,7 @@ namespace viennacl
       }
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_block_trans_unit_lu_forward(
                 const unsigned int * row_jumper_L,      //L part (note that L is transposed in memory)
                 const unsigned int * column_indices_L,
@@ -696,7 +696,7 @@ namespace viennacl
       };
 
 
-      template <typename T>
+      template<typename T>
       __global__ void csr_block_trans_lu_backward(
                 const unsigned int * row_jumper_U,      //U part (note that U is transposed in memory)
                 const unsigned int * column_indices_U,

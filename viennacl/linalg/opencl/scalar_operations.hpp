@@ -43,7 +43,7 @@ namespace viennacl
   {
     namespace opencl
     {
-      template <typename S1,
+      template<typename S1,
                 typename S2, typename ScalarType1>
       typename viennacl::enable_if< viennacl::is_scalar<S1>::value
                                     && viennacl::is_scalar<S2>::value
@@ -72,7 +72,7 @@ namespace viennacl
       }
 
 
-      template <typename S1,
+      template<typename S1,
                 typename S2, typename ScalarType1,
                 typename S3, typename ScalarType2>
       typename viennacl::enable_if< viennacl::is_scalar<S1>::value
@@ -119,7 +119,7 @@ namespace viennacl
       }
 
 
-      template <typename S1,
+      template<typename S1,
                 typename S2, typename ScalarType1,
                 typename S3, typename ScalarType2>
       typename viennacl::enable_if< viennacl::is_scalar<S1>::value
@@ -171,7 +171,7 @@ namespace viennacl
       * @param s1   The first scalar
       * @param s2   The second scalar
       */
-      template <typename S1, typename S2>
+      template<typename S1, typename S2>
       typename viennacl::enable_if<    viennacl::is_scalar<S1>::value
                                     && viennacl::is_scalar<S2>::value
                                   >::type

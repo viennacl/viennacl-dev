@@ -21,7 +21,7 @@ namespace viennacl
 
 
         // Postprocessing phase of Bluestein algorithm
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_bluestein_post(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bluestein_post(__global "); source.append(numeric_string); source.append("2 *Z, \n");
@@ -48,7 +48,7 @@ namespace viennacl
         }
 
         // Preprocessing phase of Bluestein algorithm
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_bluestein_pre(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void bluestein_pre(__global "); source.append(numeric_string); source.append("2 *input, \n");
@@ -85,7 +85,7 @@ namespace viennacl
         }
 
         /** @brief Extract real part of a complex number array */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_complex_to_real(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void complex_to_real(__global "); source.append(numeric_string); source.append("2 *in, \n");
@@ -97,7 +97,7 @@ namespace viennacl
         }
 
         /** @brief OpenCL kernel generation code for dividing a complex number by a real number */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_div_vec_scalar(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void fft_div_vec_scalar(__global "); source.append(numeric_string); source.append("2 *input1, \n");
@@ -109,7 +109,7 @@ namespace viennacl
         }
 
         /** @brief Elementwise product of two complex vectors */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_mult_vec(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void fft_mult_vec(__global const "); source.append(numeric_string); source.append("2 *input1, \n");
@@ -126,7 +126,7 @@ namespace viennacl
         }
 
         /** @brief Embedds a real-valued vector into a complex one */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_real_to_complex(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void real_to_complex(__global "); source.append(numeric_string); source.append(" *in, \n");
@@ -141,7 +141,7 @@ namespace viennacl
         }
 
         /** @brief Reverses the entries in a vector */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_reverse_inplace(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void reverse_inplace(__global "); source.append(numeric_string); source.append(" *vec, uint size) { \n");
@@ -156,7 +156,7 @@ namespace viennacl
         }
 
         /** @brief Simplistic matrix transpose function */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_transpose(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void transpose(__global "); source.append(numeric_string); source.append("2 *input, \n");
@@ -176,7 +176,7 @@ namespace viennacl
         }
 
         /** @brief Simplistic inplace matrix transpose function */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_transpose_inplace(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void transpose_inplace(__global "); source.append(numeric_string); source.append("2* input, \n");
@@ -199,7 +199,7 @@ namespace viennacl
         }
 
         /** @brief Computes the matrix vector product with a Vandermonde matrix */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_vandermonde_prod(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void vandermonde_prod(__global "); source.append(numeric_string); source.append(" *vander, \n");
@@ -222,7 +222,7 @@ namespace viennacl
         }
 
         /** @brief Zero two complex vectors (to avoid kernel launch overhead) */
-        template <typename StringType>
+        template<typename StringType>
         void generate_fft_zero2(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void zero2(__global "); source.append(numeric_string); source.append("2 *input1, \n");
@@ -239,7 +239,7 @@ namespace viennacl
 
         // main kernel class
         /** @brief Main kernel class for generating OpenCL kernels for the fast Fourier transform. */
-        template <class NumericT>
+        template<class NumericT>
         struct fft
         {
           static std::string program_name()

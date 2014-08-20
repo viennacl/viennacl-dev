@@ -57,19 +57,19 @@
 //
 
 //dense matrix:
-template <typename T>
+template<typename T>
 struct Eigen_dense_matrix
 {
   typedef typename T::ERROR_NO_EIGEN_TYPE_AVAILABLE   error_type;
 };
 
-template <>
+template<>
 struct Eigen_dense_matrix<float>
 {
   typedef Eigen::MatrixXf  type; 
 };
 
-template <>
+template<>
 struct Eigen_dense_matrix<double>
 {
   typedef Eigen::MatrixXd  type; 
@@ -77,19 +77,19 @@ struct Eigen_dense_matrix<double>
 
 
 //sparse matrix
-template <typename T>
+template<typename T>
 struct Eigen_vector
 {
   typedef typename T::ERROR_NO_EIGEN_TYPE_AVAILABLE   error_type;
 };
 
-template <>
+template<>
 struct Eigen_vector<float>
 {
   typedef Eigen::VectorXf  type; 
 };
 
-template <>
+template<>
 struct Eigen_vector<double>
 {
   typedef Eigen::VectorXd  type; 
@@ -99,7 +99,7 @@ struct Eigen_vector<double>
 
 
 
-template <typename ScalarType>
+template<typename ScalarType>
 void run_test()
 {
   //

@@ -47,7 +47,7 @@
 //
 //  A simple CUDA kernel for the vector operation x += y
 //
-template <typename T>
+template<typename T>
 __global__ void my_inplace_add_kernel(T * vec1, T * vec2, unsigned int size)
 {
     for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
