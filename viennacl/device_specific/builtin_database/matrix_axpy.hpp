@@ -12,9 +12,12 @@
 #include "viennacl/device_specific/builtin_database/devices/cpu/fallback.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/fallback.hpp"
 
-namespace viennacl{
-namespace device_specific{
-namespace builtin_database{
+namespace viennacl
+{
+namespace device_specific
+{
+namespace builtin_database
+{
 
 inline database_type<matrix_axpy_template::parameters_type> init_matrix_axpy()
 {
@@ -34,12 +37,11 @@ inline database_type<matrix_axpy_template::parameters_type> init_matrix_axpy()
 
 static database_type<matrix_axpy_template::parameters_type> matrix_axpy = init_matrix_axpy();
 
-template<class T>
+template<class NumericT>
 matrix_axpy_template::parameters_type const & matrix_axpy_params(ocl::device const & device)
 {
-  return get_parameters<T>(matrix_axpy, device);
+  return get_parameters<NumericT>(matrix_axpy, device);
 }
-
 
 }
 }

@@ -12,10 +12,12 @@
 #include "viennacl/device_specific/builtin_database/devices/cpu/fallback.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/fallback.hpp"
 
-namespace viennacl{
-namespace device_specific{
-namespace builtin_database{
-
+namespace viennacl
+{
+namespace device_specific
+{
+namespace builtin_database
+{
 
 inline database_type<row_wise_reduction_template::parameters_type> init_row_wise_reduction_N()
 {
@@ -55,7 +57,7 @@ inline database_type<row_wise_reduction_template::parameters_type> init_row_wise
 static database_type<row_wise_reduction_template::parameters_type> row_wise_reduction_N = init_row_wise_reduction_N();
 static database_type<row_wise_reduction_template::parameters_type> row_wise_reduction_T = init_row_wise_reduction_T();
 
-template<class T>
+template<class NumericT>
 device_specific::row_wise_reduction_template::parameters_type const & row_wise_reduction_params(ocl::device const & device, char A_trans)
 {
   assert(A_trans=='N' || A_trans=='T');
@@ -64,7 +66,7 @@ device_specific::row_wise_reduction_template::parameters_type const & row_wise_r
     db = &row_wise_reduction_T;
   else
     db = &row_wise_reduction_N;
-  return get_parameters<T>(*db, device);
+  return get_parameters<NumericT>(*db, device);
 }
 
 

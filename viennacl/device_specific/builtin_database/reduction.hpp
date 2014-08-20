@@ -12,9 +12,12 @@
 #include "viennacl/device_specific/builtin_database/devices/cpu/fallback.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/fallback.hpp"
 
-namespace viennacl{
-namespace device_specific{
-namespace builtin_database{
+namespace viennacl
+{
+namespace device_specific
+{
+namespace builtin_database
+{
 
 inline database_type<reduction_template::parameters_type> init_reduction()
 {
@@ -34,10 +37,10 @@ inline database_type<reduction_template::parameters_type> init_reduction()
 
 static database_type<reduction_template::parameters_type> reduction = init_reduction();
 
-template<class T>
+template<class NumericT>
 reduction_template::parameters_type const & reduction_params(ocl::device const & device)
 {
-  return get_parameters<T>(reduction, device);
+  return get_parameters<NumericT>(reduction, device);
 }
 
 

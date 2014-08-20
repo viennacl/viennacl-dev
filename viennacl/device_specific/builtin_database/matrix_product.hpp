@@ -12,10 +12,12 @@
 #include "viennacl/device_specific/builtin_database/devices/gpu/fallback.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gt_540m.hpp"
 
-namespace viennacl{
-namespace device_specific{
-namespace builtin_database{
-
+namespace viennacl
+{
+namespace device_specific
+{
+namespace builtin_database
+{
 
 inline database_type<matrix_product_template::parameters_type> init_matrix_product_N_N()
 {
@@ -90,7 +92,7 @@ static database_type<matrix_product_template::parameters_type> matrix_product_T_
 static database_type<matrix_product_template::parameters_type> matrix_product_N_T = init_matrix_product_N_T();
 static database_type<matrix_product_template::parameters_type> matrix_product_T_T = init_matrix_product_T_T();
 
-template<class T>
+template<class NumericT>
 matrix_product_template::parameters_type const & matrix_product_params(ocl::device const & device, char A_trans, char B_trans)
 {
   assert(A_trans=='N' || A_trans=='T');
@@ -104,7 +106,7 @@ matrix_product_template::parameters_type const & matrix_product_params(ocl::devi
     db = &matrix_product_N_T;
   else
     db = &matrix_product_T_T;
-  return get_parameters<T>(*db, device);
+  return get_parameters<NumericT>(*db, device);
 }
 
 
