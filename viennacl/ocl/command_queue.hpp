@@ -36,59 +36,57 @@
 
 namespace viennacl
 {
-  namespace ocl
+namespace ocl
+{
+
+/** @brief A class representing a command queue
+*
+*/
+class command_queue
+{
+public:
+  command_queue() {}
+  command_queue(viennacl::ocl::handle<cl_command_queue> h) : handle_(h) {}
+
+  //Copy constructor:
+  command_queue(command_queue const & other)
   {
+    handle_ = other.handle_;
+  }
 
-    /** @brief A class representing a command queue
-    *
-    */
-    class command_queue
-    {
-      public:
-        command_queue() {}
-        command_queue(viennacl::ocl::handle<cl_command_queue> h) : handle_(h) {}
+  //assignment operator:
+  command_queue & operator=(command_queue const & other)
+  {
+    handle_ = other.handle_;
+    return *this;
+  }
 
-        //Copy constructor:
-        command_queue(command_queue const & other)
-        {
-          handle_ = other.handle_;
-        }
+  bool operator==(command_queue const & other) const
+  {
+    return handle_ == other.handle_;
+  }
 
-        //assignment operator:
-        command_queue & operator=(command_queue const & other)
-        {
-          handle_ = other.handle_;
-          return *this;
-        }
+  /** @brief Waits until all kernels in the queue have finished their execution */
+  void finish() const
+  {
+    clFinish(handle_.get());
+  }
 
-        bool operator==(command_queue const & other) const
-        {
-          return handle_ == other.handle_;
-        }
+  /** @brief Waits until all kernels in the queue have started their execution */
+  void flush() const
+  {
+    clFlush(handle_.get());
+  }
 
-        /** @brief Waits until all kernels in the queue have finished their execution */
-        void finish() const
-        {
-          clFinish(handle_.get());
-        }
+  viennacl::ocl::handle<cl_command_queue> const & handle() const { return handle_; }
+  viennacl::ocl::handle<cl_command_queue>       & handle()       { return handle_; }
 
-        /** @brief Waits until all kernels in the queue have started their execution */
-        void flush() const
-        {
-          clFlush(handle_.get());
-        }
+private:
 
-        viennacl::ocl::handle<cl_command_queue> const & handle() const { return handle_; }
-        viennacl::ocl::handle<cl_command_queue>       & handle()       { return handle_; }
+  viennacl::ocl::handle<cl_command_queue> handle_;
+};
 
-      private:
-
-        viennacl::ocl::handle<cl_command_queue> handle_;
-    };
-
-
-
-  } //namespace ocl
+} //namespace ocl
 } //namespace viennacl
 
 #endif

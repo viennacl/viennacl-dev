@@ -30,7 +30,6 @@
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/device_utils.hpp"
-#include "viennacl/ocl/infos.hpp"
 
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/scheduler/io.hpp"

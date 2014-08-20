@@ -33,7 +33,6 @@
 #include "viennacl/ocl/program.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/local_mem.hpp"
-#include "viennacl/ocl/infos.hpp"
 
 namespace viennacl
 {
@@ -60,13 +59,6 @@ namespace viennacl
     {
       template<typename KernelType>
       friend void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue);
-
-      template<cl_kernel_info param>
-      friend typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k);
-
-      template<cl_kernel_info param>
-      friend typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k, viennacl::ocl::device const & d);
-
 
     public:
       typedef vcl_size_t            size_type;
@@ -806,29 +798,6 @@ namespace viennacl
       size_type local_work_size_[3];
       size_type global_work_size_[3];
     };
-
-    /** @brief Queries information about a kernel
-  *
-  * @param k Corresponding kernel
-  */
-    template<cl_kernel_info param>
-    typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k)
-    {
-        typedef typename detail::return_type<cl_kernel, param>::Result res_t;
-        return detail::get_info_impl<res_t>()(k.handle_.get(),param);
-    }
-
-  /** @brief Queries information about the execution of a kernel on a particular device
-   *
-   * @param k Corresponding kernel
-   * @param d Corresponding device
-   */
-    template<cl_kernel_info param>
-    typename detail::return_type<cl_kernel, param>::Result info(viennacl::ocl::kernel & k, viennacl::ocl::device const & d)
-    {
-        typedef typename detail::return_type<cl_kernel, param>::Result res_t;
-        return detail::get_info_impl<res_t>()(k.handle_.get(),d.id(),param);
-    }
 
   } //namespace ocl
 } //namespace viennacl
