@@ -78,7 +78,7 @@ namespace viennacl
       typename VectorType::value_type norm_lcl(VectorType const & x, vcl_size_t size)
       {
         typename VectorType::value_type x_norm = 0.0;
-        for(vcl_size_t i = 0; i < size; i++)
+        for (vcl_size_t i = 0; i < size; i++)
           x_norm += std::pow(x[i], 2);
         return std::sqrt(x_norm);
       }
@@ -87,7 +87,7 @@ namespace viennacl
       void normalize(VectorType & x, vcl_size_t size)
       {
         typename VectorType::value_type x_norm = norm_lcl(x, size);
-        for(vcl_size_t i = 0; i < size; i++)
+        for (vcl_size_t i = 0; i < size; i++)
             x[i] /= x_norm;
       }
 

@@ -125,7 +125,7 @@ int main()
   double opencl_double_alpha = 0;
   viennacl::vector<double> *opencl_double_x = NULL;
   viennacl::vector<double> *opencl_double_y = NULL;
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     opencl_double_x = new viennacl::vector<double>(viennacl::scalar_vector<double>(size, 1.0, viennacl::context(viennacl::ocl::get_context(context_id))));
     opencl_double_y = new viennacl::vector<double>(viennacl::scalar_vector<double>(size, 2.0, viennacl::context(viennacl::ocl::get_context(context_id))));
@@ -148,7 +148,7 @@ int main()
 #ifdef VIENNACL_WITH_OPENCL
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     check(ref_double_x, *opencl_double_x, eps_double);
     check(ref_double_y, *opencl_double_y, eps_double);
@@ -194,7 +194,7 @@ int main()
                       &opencl_float_alpha,
                       viennacl::traits::opencl_handle(opencl_float_x).get(), 2, 3);
   check(ref_float_alpha, opencl_float_alpha, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDasum(my_backend, ViennaCLInt(size/4),
                         &opencl_double_alpha,
@@ -252,7 +252,7 @@ int main()
                       viennacl::traits::opencl_handle(opencl_float_y).get(), 1, 2);
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDaxpy(my_backend, ViennaCLInt(size/3),
                         2.0,
@@ -307,7 +307,7 @@ int main()
                       viennacl::traits::opencl_handle(opencl_float_y).get(), 0, 2);
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDcopy(my_backend, ViennaCLInt(size/3),
                         viennacl::traits::opencl_handle(*opencl_double_x).get(), 1, 2,
@@ -363,7 +363,7 @@ int main()
                      viennacl::traits::opencl_handle(opencl_float_x).get(), 2, 1,
                      viennacl::traits::opencl_handle(opencl_float_y).get(), 3, 1);
   check(ref_float_alpha, opencl_float_alpha, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDdot(my_backend, ViennaCLInt(size/2),
                        &opencl_double_alpha,
@@ -416,7 +416,7 @@ int main()
                       &opencl_float_alpha,
                       viennacl::traits::opencl_handle(opencl_float_x).get(), 1, 2);
   check(ref_float_alpha, opencl_float_alpha, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDnrm2(my_backend, ViennaCLInt(size/3),
                         &opencl_double_alpha,
@@ -480,7 +480,7 @@ int main()
                      0.6f, 0.8f);
   check(ref_float_x, opencl_float_x, eps_float);
   check(ref_float_y, opencl_float_y, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDrot(my_backend, ViennaCLInt(size/4),
                        viennacl::traits::opencl_handle(*opencl_double_x).get(), 2, 3,
@@ -529,7 +529,7 @@ int main()
                       2.0f,
                       viennacl::traits::opencl_handle(opencl_float_x).get(), 1, 3);
   check(ref_float_x, opencl_float_x, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDscal(my_backend, ViennaCLInt(size/4),
                         2.0,
@@ -581,7 +581,7 @@ int main()
                       viennacl::traits::opencl_handle(opencl_float_x).get(), 2, 2,
                       viennacl::traits::opencl_handle(opencl_float_y).get(), 1, 2);
   check(ref_float_y, opencl_float_y, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDswap(my_backend, ViennaCLInt(size/3),
                         viennacl::traits::opencl_handle(*opencl_double_x).get(), 2, 2,
@@ -638,7 +638,7 @@ int main()
                        viennacl::traits::opencl_handle(opencl_float_x).get(), 0, 2);
   check(ref_float_x[2*static_cast<std::size_t>(ref_index)], ref_float_x[2*static_cast<std::size_t>(idx)], eps_float);
   idx = 0;
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLiDamax(my_backend, ViennaCLInt(size/3),
                          &idx,
@@ -649,7 +649,7 @@ int main()
 
 #ifdef VIENNACL_WITH_OPENCL
   //cleanup
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     delete opencl_double_x;
     delete opencl_double_y;

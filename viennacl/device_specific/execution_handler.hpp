@@ -70,11 +70,11 @@ namespace viennacl
 
       void add(std::string const & key, template_base const & T, statements_container const & statements)
       {
-        if(kernels_.insert(container_type::value_type(key, T.clone())).second)
+        if (kernels_.insert(container_type::value_type(key, T.clone())).second)
         {
           std::vector<std::string> sources = kernels_.at(key)->generate(append_prefix(key), statements, device_);
           assert(sources.size()<=2);
-          for(unsigned int i = 0 ; i < sources.size() ; ++i)
+          for (unsigned int i = 0 ; i < sources.size() ; ++i)
             lazy_programs_[i].add(sources[i]);
         }
       }

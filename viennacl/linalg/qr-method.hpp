@@ -259,10 +259,10 @@ namespace viennacl
                 SCALARTYPE a_ik_1 = 0;
                 SCALARTYPE a_ik_2 = 0;
 
-                if(start_k < n)
+                if (start_k < n)
                     a_ik_1 = a_row[start_k + 1];
 
-                for(int k = start_k; k < n; k++)
+                for (int k = start_k; k < n; k++)
                 {
                     bool notlast = (k != n - 1);
 
@@ -282,7 +282,7 @@ namespace viennacl
                     a_ik_1 = a_ik_2;
                 }
 
-                if(start_k < n)
+                if (start_k < n)
                     a_row[n] = a_ik;
             }
         }
@@ -795,7 +795,7 @@ namespace viennacl
         {
             viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
-            if(start + 2 >= A.size1())
+            if (start + 2 >= A.size1())
                 return false;
 
             prepare_householder_vector(A, D, A.size1(), start + 1, start, start + 1, true);
@@ -854,7 +854,7 @@ namespace viennacl
 
             viennacl::vector<SCALARTYPE> hh_vector(sz);
 
-            for(vcl_size_t i = 0; i < sz; i++)
+            for (vcl_size_t i = 0; i < sz; i++)
             {
                 householder_twoside(A, Q, hh_vector, i);
             }
@@ -888,7 +888,7 @@ namespace viennacl
             bidiag_pack(A, D, E);
 
             // find eigenvalues
-            if(is_symmetric)
+            if (is_symmetric)
             {
 
                 detail::tql2(Q, D, E);
@@ -906,7 +906,7 @@ namespace viennacl
 
             for (vcl_size_t i = 0; i < A.size1(); i++)
             {
-                if(std::fabs(E(i)) < EPS)
+                if (std::fabs(E(i)) < EPS)
                 {
                     eigen_values(i, i) = D(i);
                 }

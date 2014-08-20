@@ -61,11 +61,11 @@ namespace viennacl
           source.append("                         "); source.append(numeric_string); source.append(" sign) { \n");
           source.append("    const "); source.append(numeric_string); source.append(" NUM_PI = 3.14159265358979323846; \n");
           source.append(" \n");
-          source.append("    for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++) { \n");
-          source.append("        for(unsigned int k = get_global_id(0); k < size; k += get_global_size(0)) { \n");
+          source.append("    for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++) { \n");
+          source.append("        for (unsigned int k = get_global_id(0); k < size; k += get_global_size(0)) { \n");
           source.append("            "); source.append(numeric_string); source.append("2 f = 0.0f; \n");
           source.append(" \n");
-          source.append("            for(unsigned int n = 0; n < size; n++) { \n");
+          source.append("            for (unsigned int n = 0; n < size; n++) { \n");
           source.append("                "); source.append(numeric_string); source.append("2 in = ");
           if (is_row_major)
             source.append("input[batch_id * stride + n]; \n"); //input index here
@@ -107,8 +107,8 @@ namespace viennacl
           source.append("    unsigned int glb_id = get_global_id(0); \n");
           source.append("    unsigned int glb_sz = get_global_size(0); \n");
 
-          source.append("    for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++) { \n");
-          source.append("        for(unsigned int tid = glb_id; tid < half_size; tid += glb_sz) { \n");
+          source.append("    for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++) { \n");
+          source.append("        for (unsigned int tid = glb_id; tid < half_size; tid += glb_sz) { \n");
           source.append("            unsigned int group = (tid & (ss - 1)); \n");
           source.append("            unsigned int pos = ((tid >> s) << (s + 1)) + group; \n");
 
@@ -171,10 +171,10 @@ namespace viennacl
           source.append("     unsigned int lcl_id = get_local_id(0); \n");
           source.append("     const "); source.append(numeric_string); source.append(" NUM_PI = 3.14159265358979323846; \n");
 
-          source.append("     for(unsigned int batch_id = grp_id; batch_id < batch_num; batch_id += grp_num) { \n");
+          source.append("     for (unsigned int batch_id = grp_id; batch_id < batch_num; batch_id += grp_num) { \n");
                   //unsigned int base_offset = stride * batch_id; \n");
                   //copy chunk of global memory to local \n");
-          source.append("         for(unsigned int p = lcl_id; p < size; p += lcl_sz) { \n");
+          source.append("         for (unsigned int p = lcl_id; p < size; p += lcl_sz) { \n");
           source.append("             unsigned int v = get_reorder_num(p, bit_size); \n");
           if (is_row_major)
             source.append("             lcl_input[v] = input[batch_id * stride + p]; \n"); //index
@@ -185,12 +185,12 @@ namespace viennacl
           source.append("         barrier(CLK_LOCAL_MEM_FENCE); \n");
 
                   //performs Cooley-Tukey FFT on local array
-          source.append("         for(unsigned int s = 0; s < bit_size; s++) { \n");
+          source.append("         for (unsigned int s = 0; s < bit_size; s++) { \n");
           source.append("             unsigned int ss = 1 << s; \n");
 
           source.append("             "); source.append(numeric_string); source.append(" cs, sn; \n");
 
-          source.append("             for(unsigned int tid = lcl_id; tid < size; tid += lcl_sz) { \n");
+          source.append("             for (unsigned int tid = lcl_id; tid < size; tid += lcl_sz) { \n");
           source.append("                 unsigned int group = (tid & (ss - 1)); \n");
           source.append("                 unsigned int pos = ((tid >> s) << (s + 1)) + group; \n");
 
@@ -212,7 +212,7 @@ namespace viennacl
           source.append("         } \n");
 
                   //copy local array back to global memory
-          source.append("         for(unsigned int p = lcl_id; p < size; p += lcl_sz) { \n");
+          source.append("         for (unsigned int p = lcl_id; p < size; p += lcl_sz) { \n");
           if (is_row_major)
             source.append("             input[batch_id * stride + p] = lcl_input[p]; \n");//index
           else
@@ -248,11 +248,11 @@ namespace viennacl
           source.append("    unsigned int glb_id = get_global_id(0); \n");
           source.append("    unsigned int glb_sz = get_global_size(0); \n");
 
-          source.append("    for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++) { \n");
-          source.append("        for(unsigned int i = glb_id; i < size; i += glb_sz) { \n");
+          source.append("    for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++) { \n");
+          source.append("        for (unsigned int i = glb_id; i < size; i += glb_sz) { \n");
           source.append("            unsigned int v = get_reorder_num_2(i, bit_size); \n");
 
-          source.append("            if(i < v) {\n");
+          source.append("            if (i < v) {\n");
           if (is_row_major)
           {
             source.append("                "); source.append(numeric_string); source.append("2 tmp = input[batch_id * stride + i]; \n"); // index
@@ -457,7 +457,7 @@ namespace viennacl
             handler.add(prefix + "1000", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false));
             handler.add(prefix + "0100", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false));
             handler.add(prefix + "1100", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false));
-            if(b)
+            if (b)
             {
               handler.add(prefix + "0010", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false));
               handler.add(prefix + "1010", ds::matrix_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false));
@@ -499,7 +499,7 @@ namespace viennacl
             static std::map<std::pair<bool, cl_context>, device_specific::execution_handler> handlers_map;
             cl_context h = ctx.handle().get();
             std::pair<bool, cl_context> key(is_row_major, h);
-            if(handlers_map.find(key) == handlers_map.end())
+            if (handlers_map.find(key) == handlers_map.end())
             {
               namespace ds = viennacl::device_specific;
               viennacl::ocl::device const & device = ctx.current_device();
@@ -511,7 +511,7 @@ namespace viennacl
               ds::vector_axpy_template::parameters_type vector_axpy_params = ds::builtin_database::vector_axpy_params<TYPE>(device);
 
               tools::shared_ptr<viennacl::matrix_base<TYPE> > pA, pB, pC;
-              if(is_row_major)
+              if (is_row_major)
               {
                 pA.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
                 pB.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
@@ -566,7 +566,7 @@ namespace viennacl
             static std::map<std::pair<bool, cl_context>, device_specific::execution_handler> handlers_map;
             cl_context h = ctx.handle().get();
             std::pair<bool, cl_context> key(is_row_major, h);
-            if(handlers_map.find(key) == handlers_map.end())
+            if (handlers_map.find(key) == handlers_map.end())
             {
               namespace ds = viennacl::device_specific;
               using namespace scheduler;
@@ -580,7 +580,7 @@ namespace viennacl
               ds::matrix_axpy_template::parameters_type matrix_axpy_params = ds::builtin_database::matrix_axpy_params<TYPE>(device);
 
               tools::shared_ptr<viennacl::matrix_base<TYPE> > pA, pB, pC;
-              if(is_row_major)
+              if (is_row_major)
               {
                 pA.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
                 pB.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
@@ -650,7 +650,7 @@ namespace viennacl
           {
             static std::map<cl_context, device_specific::execution_handler> handlers_map;
             cl_context key = ctx.handle().get();
-            if(handlers_map.find(key) == handlers_map.end())
+            if (handlers_map.find(key) == handlers_map.end())
             {
               namespace ds = viennacl::device_specific;
               viennacl::ocl::device const & device = ctx.current_device();
@@ -679,7 +679,7 @@ namespace viennacl
             static std::map<std::pair<bool, cl_context>, device_specific::execution_handler> handlers_map;
             cl_context h = ctx.handle().get();
             std::pair<bool, cl_context> key(is_row_major, h);
-            if(handlers_map.find(key) == handlers_map.end())
+            if (handlers_map.find(key) == handlers_map.end())
             {
               namespace ds = viennacl::device_specific;
               viennacl::ocl::device const & device = ctx.current_device();
@@ -693,7 +693,7 @@ namespace viennacl
               ds::matrix_product_template::parameters_type matrix_product_params_TT = ds::builtin_database::matrix_product_params<TYPE>(device, 'T', 'T');
 
               tools::shared_ptr<viennacl::matrix_base<TYPE> > pC;
-              if(is_row_major)
+              if (is_row_major)
                 pC.reset(new viennacl::matrix<TYPE, viennacl::row_major>());
               else
                 pC.reset(new viennacl::matrix<TYPE, viennacl::column_major>());

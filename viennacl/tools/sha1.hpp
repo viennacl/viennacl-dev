@@ -65,7 +65,7 @@ namespace viennacl
         sha1& processByte(uint8_t octet) {
           this->m_block[this->m_blockByteIndex++] = octet;
           ++this->m_byteCount;
-          if(m_blockByteIndex == 64) {
+          if (m_blockByteIndex == 64) {
             this->m_blockByteIndex = 0;
             processBlock();
           }
@@ -74,7 +74,7 @@ namespace viennacl
         sha1& processBlock(const void* const start, const void* const end) {
           const uint8_t* begin = static_cast<const uint8_t*>(start);
           const uint8_t* finish = static_cast<const uint8_t*>(end);
-          while(begin != finish) {
+          while (begin != finish) {
             processByte(*begin);
             begin++;
           }
@@ -210,7 +210,7 @@ namespace viennacl
       sha1.getDigest(hash);
 
       std::ostringstream oss;
-      for(int i = 0 ; i < 5 ; ++i)
+      for (int i = 0 ; i < 5 ; ++i)
         oss << std::hex << std::setfill('0') << std::setw(8) << hash[i];
 
       return oss.str();

@@ -49,9 +49,9 @@ namespace viennacl
 
       viennacl::ocl::program & program()
       {
-        if(force_recompilation_ && ctx_->has_program(name_))
+        if (force_recompilation_ && ctx_->has_program(name_))
           ctx_->delete_program(name_);
-        if(!ctx_->has_program(name_))
+        if (!ctx_->has_program(name_))
         {
           #ifdef VIENNACL_BUILD_INFO
           std::cerr << "Creating program " << program_name << std::endl;

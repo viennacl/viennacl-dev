@@ -33,8 +33,8 @@ template<class T, class F>
 void init_random(viennacl::matrix<T, F> & M)
 {
   std::vector<T> cM(M.internal_size());
-  for(unsigned int i = 0 ; i < M.size1() ; ++i)
-    for(unsigned int j = 0 ; j < M.size2() ; ++j)
+  for (unsigned int i = 0 ; i < M.size1() ; ++i)
+    for (unsigned int j = 0 ; j < M.size2() ; ++j)
       cM[F::mem_index(i, j, M.internal_size1(), M.internal_size2())] = (T)(rand())/RAND_MAX;
   viennacl::fast_copy(&cM[0],&cM[0] + cM.size(),M);
 }
@@ -43,7 +43,7 @@ template<class T>
 void init_random(viennacl::vector<T> & x)
 {
   std::vector<T> cx(x.internal_size());
-  for(unsigned int i = 0 ; i < cx.size() ; ++i)
+  for (unsigned int i = 0 ; i < cx.size() ; ++i)
     cx[i] = (T)(rand())/RAND_MAX;
   viennacl::fast_copy(&cx[0], &cx[0] + cx.size(), x.begin());
 }
@@ -67,7 +67,7 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
   timer.start(); \
   Nruns = 0; \
   time_spent = 0; \
-  while(time_spent < time_per_benchmark) \
+  while (time_spent < time_per_benchmark) \
   { \
     time_previous = timer.get(); \
     OPERATION; \

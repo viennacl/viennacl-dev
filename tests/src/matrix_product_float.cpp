@@ -43,7 +43,7 @@ int main()
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: float" << std::endl;
       retval = run_test<NumericT>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else
         return retval;

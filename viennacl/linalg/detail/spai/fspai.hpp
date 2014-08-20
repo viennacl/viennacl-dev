@@ -94,11 +94,11 @@ namespace viennacl
               inline bool getIsRight() const
               { return is_right_; }
               inline void setResidualNormThreshold(double residual_norm_threshold){
-                  if(residual_norm_threshold > 0)
+                  if (residual_norm_threshold > 0)
                       residual_norm_threshold_ = residual_norm_threshold;
               }
               inline void setIterationLimit(unsigned long iteration_limit){
-                  if(iteration_limit > 0)
+                  if (iteration_limit > 0)
                       iteration_limit_ = iteration_limit;
               }
               inline void setIsRight(bool is_right){

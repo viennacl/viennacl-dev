@@ -620,7 +620,7 @@ int main()
   std::cout << "   -------------------------------" << std::endl;
   run_benchmark<float>(ctx);
 #ifdef VIENNACL_WITH_OPENCL
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
 #endif
   {
     std::cout << std::endl;

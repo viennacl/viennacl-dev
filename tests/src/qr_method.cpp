@@ -47,7 +47,7 @@ const ScalarType EPS = 0.0001f;
 
 void read_matrix_size(std::fstream& f, std::size_t& sz)
 {
-    if(!f.is_open())
+    if (!f.is_open())
     {
         throw std::invalid_argument("File is not opened");
     }
@@ -57,15 +57,15 @@ void read_matrix_size(std::fstream& f, std::size_t& sz)
 
 void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
 {
-    if(!f.is_open())
+    if (!f.is_open())
     {
         throw std::invalid_argument("File is not opened");
     }
 
     boost::numeric::ublas::matrix<ScalarType> h_A(A.size1(), A.size2());
 
-    for(std::size_t i = 0; i < h_A.size1(); i++) {
-        for(std::size_t j = 0; j < h_A.size2(); j++) {
+    for (std::size_t i = 0; i < h_A.size1(); i++) {
+        for (std::size_t j = 0; j < h_A.size2(); j++) {
             ScalarType val = 0.0;
             f >> val;
             h_A(i, j) = val;
@@ -76,10 +76,10 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
 }
 
 void read_vector_body(std::fstream& f, ublas::vector<ScalarType>& v) {
-    if(!f.is_open())
+    if (!f.is_open())
         throw std::invalid_argument("File is not opened");
 
-    for(std::size_t i = 0; i < v.size(); i++)
+    for (std::size_t i = 0; i < v.size(); i++)
     {
             ScalarType val = 0.0;
             f >> val;
@@ -127,9 +127,9 @@ ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
     ScalarType diff = 0.0;
     ScalarType mx = 0.0;
 
-    for(std::size_t i = 0; i < res.size1(); i++)
+    for (std::size_t i = 0; i < res.size1(); i++)
     {
-        for(std::size_t j = 0; j < res.size2(); j++)
+        for (std::size_t j = 0; j < res.size2(); j++)
         {
             diff = std::max(diff, std::abs(res(i, j) - ref(i, j)));
             mx = std::max(mx, res(i, j));
@@ -147,7 +147,7 @@ ScalarType vector_compare(ublas::vector<ScalarType>& res,
 
     ScalarType diff = 0.0;
     ScalarType mx = 0.0;
-    for(size_t i = 0; i < ref.size(); i++)
+    for (size_t i = 0; i < ref.size(); i++)
     {
         diff = std::max(diff, std::abs(res[i] - ref[i]));
         mx = std::max(mx, res[i]);
@@ -176,7 +176,7 @@ void test_eigen(const std::string& fn, bool is_symm)
 
     read_vector_body(f, eigen_ref_re);
 
-    if(!is_symm)
+    if (!is_symm)
         read_vector_body(f, eigen_ref_im);
 
     f.close();
@@ -188,7 +188,7 @@ void test_eigen(const std::string& fn, bool is_symm)
     Timer timer;
     timer.start();
 
-    if(is_symm)
+    if (is_symm)
         viennacl::linalg::qr_method_sym(A_input, Q, eigen_re);
     else
         viennacl::linalg::qr_method_nsm(A_input, Q, eigen_re, eigen_im);
@@ -232,7 +232,7 @@ void test_eigen(const std::string& fn, bool is_symm)
 
     bool is_ok = is_hessenberg;
 
-    if(is_symm)
+    if (is_symm)
         is_ok = is_ok && is_tridiag;
 
     is_ok = is_ok && (eigen_diff < EPS);

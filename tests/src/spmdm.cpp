@@ -51,7 +51,7 @@ int check_matrices(const ublas::matrix< ScalarType >& ref_mat, const ublas::matr
 
   std::size_t size1, size2;
   size1 = ref_mat.size1(); size2 = ref_mat.size2();
-  if( (size1 != mat.size1()) || (size2 != mat.size2()) )
+  if ( (size1 != mat.size1()) || (size2 != mat.size2()) )
     return EXIT_FAILURE;
 
   for (unsigned int i = 0; i < size1; i++)
@@ -200,7 +200,7 @@ int test(NumericT epsilon)
   check_matrices(ublas_result, temp, epsilon);
 
   /******************************************************************/
-  if(retVal == EXIT_SUCCESS) {
+  if (retVal == EXIT_SUCCESS) {
     std::cout << "Tests passed successfully" << std::endl;
   }
 
@@ -233,7 +233,7 @@ int main()
     std::cout << "  numeric: float" << std::endl;
     std::cout << "  layout:  row-major, row-major" << std::endl;
     retval = test<NumericT, viennacl::row_major, viennacl::row_major>(epsilon);
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
     else
         return retval;
@@ -243,7 +243,7 @@ int main()
     std::cout << "  numeric: float" << std::endl;
     std::cout << "  layout:  row-major, column-major" << std::endl;
     retval = test<NumericT, viennacl::row_major, viennacl::column_major>(epsilon);
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
     else
         return retval;
@@ -253,7 +253,7 @@ int main()
     std::cout << "  numeric: float" << std::endl;
     std::cout << "  layout:  column-major, row-major" << std::endl;
     retval = test<NumericT, viennacl::column_major, viennacl::row_major>(epsilon);
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
     else
         return retval;
@@ -263,7 +263,7 @@ int main()
     std::cout << "  numeric: float" << std::endl;
     std::cout << "  layout:  column-major, column-major" << std::endl;
     retval = test<NumericT, viennacl::column_major, viennacl::column_major>(epsilon);
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
     else
         return retval;
@@ -274,7 +274,7 @@ int main()
   std::cout << std::endl;
 
 #ifdef VIENNACL_WITH_OPENCL
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
 #endif
   {
     {
@@ -285,7 +285,7 @@ int main()
       std::cout << "  numeric: double" << std::endl;
       std::cout << "  layout:  row-major, row-major" << std::endl;
       retval = test<NumericT, viennacl::row_major, viennacl::row_major>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else
         return retval;
@@ -295,7 +295,7 @@ int main()
       std::cout << "  numeric: double" << std::endl;
       std::cout << "  layout:  row-major, column-major" << std::endl;
       retval = test<NumericT, viennacl::row_major, viennacl::column_major>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else
         return retval;
@@ -305,7 +305,7 @@ int main()
       std::cout << "  numeric: double" << std::endl;
       std::cout << "  layout:  column-major, row-major" << std::endl;
       retval = test<NumericT, viennacl::column_major, viennacl::row_major>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else
         return retval;
@@ -315,7 +315,7 @@ int main()
       std::cout << "  numeric: double" << std::endl;
       std::cout << "  layout:  column-major, column-major" << std::endl;
       retval = test<NumericT, viennacl::column_major, viennacl::column_major>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else
         return retval;

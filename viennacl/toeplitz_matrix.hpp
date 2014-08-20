@@ -207,8 +207,8 @@ namespace viennacl {
         std::vector<SCALARTYPE> tmp(tep_src.size1() * 2 - 1);
         copy(tep_src, tmp);
 
-        for(vcl_size_t i = 0; i < size; i++)
-            for(vcl_size_t j = 0; j < size; j++)
+        for (vcl_size_t i = 0; i < size; i++)
+            for (vcl_size_t j = 0; j < size; j++)
                 com_dst(i, j) = tmp[static_cast<vcl_size_t>(static_cast<int>(j) - static_cast<int>(i) + static_cast<int>(size) - 1)];
     }
 
@@ -228,10 +228,10 @@ namespace viennacl {
 
         std::vector<SCALARTYPE> tmp(2*size - 1);
 
-        for(long i = static_cast<long>(size) - 1; i >= 0; i--)
+        for (long i = static_cast<long>(size) - 1; i >= 0; i--)
             tmp[size - static_cast<vcl_size_t>(i) - 1] = com_src(static_cast<vcl_size_t>(i), 0);
 
-        for(vcl_size_t i = 1; i < size; i++)
+        for (vcl_size_t i = 1; i < size; i++)
             tmp[size + i - 1] = com_src(0, i);
 
         copy(tmp, tep_dst);
@@ -268,12 +268,12 @@ namespace viennacl {
         copy(gpu_matrix, tmp);
         s << "[" << size << "," << size << "](";
 
-        for(vcl_size_t i = 0; i < size; i++) {
+        for (vcl_size_t i = 0; i < size; i++) {
             s << "(";
-            for(vcl_size_t j = 0; j < size; j++) {
+            for (vcl_size_t j = 0; j < size; j++) {
                 s << tmp[static_cast<int>(j) - static_cast<int>(i) + static_cast<int>(size - 1)];
                 //s << (int)i - (int)j;
-                if(j < (size - 1)) s << ",";
+                if (j < (size - 1)) s << ",";
             }
             s << ")";
         }

@@ -536,7 +536,7 @@ int main()
   viennacl::vector<double> *opencl_A_double = NULL;
   viennacl::vector<double> *opencl_B_double = NULL;
 
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     opencl_C_double = new viennacl::vector<double>(size, viennacl::context(viennacl::ocl::get_context(context_id)));  viennacl::copy(C_double, *opencl_C_double);
     opencl_A_double = new viennacl::vector<double>(size, viennacl::context(viennacl::ocl::get_context(context_id)));  viennacl::copy(A_double, *opencl_A_double);
@@ -569,7 +569,7 @@ int main()
   check(A_float, opencl_A_float, eps_float);
   check(B_float, opencl_B_float, eps_float);
 
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     check(C_double, *opencl_C_double, eps_double);
     check(A_double, *opencl_A_double, eps_double);
@@ -602,7 +602,7 @@ int main()
 
 #ifdef VIENNACL_WITH_OPENCL
   //cleanup
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     delete opencl_C_double;
     delete opencl_A_double;

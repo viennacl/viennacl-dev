@@ -29,7 +29,7 @@ int main (int, const char **)
 
 
 #ifdef VIENNACL_WITH_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
+   if ( viennacl::ocl::current_device().double_support() )
 #endif
   {
     double epsilon = 1e-12;

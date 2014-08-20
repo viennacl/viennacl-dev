@@ -64,7 +64,7 @@ namespace viennacl
 
       virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
-          if(p_.fetch_policy==FETCH_FROM_LOCAL)
+          if (p_.fetch_policy==FETCH_FROM_LOCAL)
             return TEMPLATE_INVALID_FETCHING_POLICY_TYPE;
           return TEMPLATE_VALID;
       }
@@ -102,7 +102,7 @@ namespace viennacl
 
         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#ld *= #nldstride;", statements, mappings);
 
-        for(std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+        for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           stream << (*it)->process("__local #scalartype #name_buf[" + to_string(lsize0*lsize1) + "];") << std::endl;
 
         stream << "unsigned int lid0 = get_local_id(0);" << std::endl;
@@ -111,10 +111,10 @@ namespace viennacl
         stream << "for(unsigned int r = get_global_id(0) ; r < upper_bound_0; r += get_global_size(0)){" << std::endl;
         stream.inc_tab();
 
-        for(std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+        for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
           stream << (*it)->process("#scalartype #name_acc = " + neutral_element((*it)->root_op()) + ";") << std::endl;
 
-        stream << "if(r < M)" << std::endl;
+        stream << "if (r < M)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
         class loop_body : public loop_body_base
@@ -124,9 +124,9 @@ namespace viennacl
           void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const
           {
             std::set<std::string> already_fetched;
-            for(std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+            for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
             {
-              if(is_trans)
+              if (is_trans)
                 (*it)->process_recursive(stream, LHS_NODE_TYPE, "matrix_trans", utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width, "c*#stride1", "#pointer + r*#ld")+";", already_fetched);
               else
                 (*it)->process_recursive(stream, LHS_NODE_TYPE, "matrix", "#scalartype #namereg = #pointer[r*#stride1 + c*#ld];", already_fetched);
@@ -136,29 +136,29 @@ namespace viennacl
 
             //Update accumulators
             std::vector<std::string> str(simd_width);
-            if(simd_width==1)
+            if (simd_width==1)
               str[0] = "#namereg";
             else
-              for(unsigned int a = 0 ; a < simd_width ; ++a)
+              for (unsigned int a = 0 ; a < simd_width ; ++a)
                 str[a] = "#namereg.s" + to_string(a);
 
 
-            for(unsigned int k = 0 ; k < exprs.size() ; ++k)
+            for (unsigned int k = 0 ; k < exprs.size() ; ++k)
             {
-              for(unsigned int a = 0 ; a < simd_width ; ++a)
+              for (unsigned int a = 0 ; a < simd_width ; ++a)
               {
                 std::map<std::string, std::string> accessors;
-                if(is_trans)
+                if (is_trans)
                   accessors["matrix_trans"] = str[a];
                 else
                   accessors["matrix"] = str[a];
                 accessors["vector"] = str[a];
                 accessors["scalar"] = "#namereg";
                 std::string value = exprs[k]->evaluate_recursive(LHS_NODE_TYPE, accessors);
-                if(exprs[k]->root_node().op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+                if (exprs[k]->root_node().op.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE)
                   value+= "*" + exprs[k]->evaluate_recursive(RHS_NODE_TYPE, accessors);
 
-                if(exprs[k]->is_index_reduction())
+                if (exprs[k]->is_index_reduction())
                   compute_index_reduction(stream, exprs[k]->process("#name_acc"), "c*"+to_string(simd_width) + to_string(a), exprs[k]->process("#name_acc_value"), value,exprs[k]->root_op());
                 else
                   compute_reduction(stream, exprs[k]->process("#name_acc"), value,exprs[k]->root_op());
@@ -173,7 +173,7 @@ namespace viennacl
         stream.dec_tab();
         stream << "}" << std::endl;
 
-        for(unsigned int k = 0 ; k < exprs.size() ; ++k)
+        for (unsigned int k = 0 ; k < exprs.size() ; ++k)
           stream << exprs[k]->process("#name_buf[lid0*" + lsize1str + "+ lid1] = #name_acc;") << std::endl;
 
         stream << "#pragma unroll" << std::endl;
@@ -182,12 +182,12 @@ namespace viennacl
         stream.inc_tab();
 
         stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
-        stream <<  "if(lid1 < stride)" << std::endl;
+        stream <<  "if (lid1 < stride)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
 
-        for(unsigned int k = 0 ; k < exprs.size() ; k++)
-            if(exprs[k]->is_index_reduction())
+        for (unsigned int k = 0 ; k < exprs.size() ; k++)
+            if (exprs[k]->is_index_reduction())
                 compute_index_reduction(stream, exprs[k]->process("#name_buf[lid0*" + lsize1str + " + lid1]"), exprs[k]->process("#name_buf[lid0*" + lsize1str + " + lid1 + stride]")
                                     , exprs[k]->process("#name_buf_value[lid0*" + lsize1str + " + lid1]"), exprs[k]->process("#name_buf_value[lid0*" + lsize1str + " + lid1 + stride]"),
                                     exprs[k]->root_op());
@@ -201,7 +201,7 @@ namespace viennacl
         stream << "}" << std::endl;
 
 
-        stream <<  "if(lid1 == 0 && r < M)" ;
+        stream <<  "if (lid1 == 0 && r < M)" ;
         stream << "{" << std::endl;
         stream.inc_tab();
         std::map<std::string, std::string> accessors;
@@ -228,19 +228,19 @@ namespace viennacl
         bool row_major = false;
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
-        for(mit = mappings.begin(), sit = statements.data().begin() ; mit != mappings.end() ; ++mit, ++sit)
+        for (mit = mappings.begin(), sit = statements.data().begin() ; mit != mappings.end() ; ++mit, ++sit)
         {
           std::vector<size_t> idx;
           scheduler::lhs_rhs_element A;
           parse(*sit, idx, is_trans, A);
           row_major = utils::call_on_matrix(A, utils::row_major_fun());
-          for(unsigned int j = 0 ; j < idx.size() ; ++j)
+          for (unsigned int j = 0 ; j < idx.size() ; ++j)
             exprs.push_back((mapped_row_wise_reduction*)(mit->at(mapping_key(idx[j], PARENT_NODE_TYPE)).get()));
         }
         is_trans = is_trans ^ row_major;
 
         std::vector<std::string> res;
-        if(is_trans && p_.simd_width>1)
+        if (is_trans && p_.simd_width>1)
         {
           res.push_back(generate_impl(kernel_prefix, statements, mappings, p_.simd_width, is_trans, exprs));
           res.push_back(generate_impl(kernel_prefix, statements, mappings, 1, is_trans, exprs));
@@ -262,9 +262,9 @@ namespace viennacl
         bool row_major = utils::call_on_matrix(A, utils::row_major_fun());
 
         viennacl::ocl::kernel * kernel;
-        if((is_trans  ^ row_major)&& p_.simd_width>1)
+        if ((is_trans  ^ row_major)&& p_.simd_width>1)
         {
-          if(has_strided_access(statements))
+          if (has_strided_access(statements))
             kernel = &programs[1].program().get_kernel(kernel_prefix);
           else
             kernel = &programs[0].program().get_kernel(kernel_prefix);
@@ -278,7 +278,7 @@ namespace viennacl
         kernel->global_work_size(1,p_.local_size_1);
 
         unsigned int current_arg = 0;
-        if(is_trans)
+        if (is_trans)
         {
           kernel->arg(current_arg++, cl_uint(utils::call_on_matrix(A, utils::size2_fun())));
           kernel->arg(current_arg++, cl_uint(utils::call_on_matrix(A, utils::size1_fun())));

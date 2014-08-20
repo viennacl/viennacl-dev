@@ -91,7 +91,7 @@ namespace viennacl
         if (handle.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
           handle.switch_active_handle_id(ctx.memory_type());
 
-        switch(handle.get_active_handle_id())
+        switch (handle.get_active_handle_id())
         {
           case MAIN_MEMORY:
             handle.ram_handle() = cpu_ram::memory_create(size_in_bytes, host_ptr);
@@ -147,7 +147,7 @@ namespace viennacl
 
       if (bytes_to_copy > 0)
       {
-        switch(src_buffer.get_active_handle_id())
+        switch (src_buffer.get_active_handle_id())
         {
           case MAIN_MEMORY:
             cpu_ram::memory_copy(src_buffer.ram_handle(), dst_buffer.ram_handle(), src_offset, dst_offset, bytes_to_copy);
@@ -179,7 +179,7 @@ namespace viennacl
     {
       assert( (dst_buffer.get_active_handle_id() == MEMORY_NOT_INITIALIZED) && bool("Shallow copy on already initialized memory not supported!"));
 
-      switch(src_buffer.get_active_handle_id())
+      switch (src_buffer.get_active_handle_id())
       {
         case MAIN_MEMORY:
           dst_buffer.switch_active_handle_id(src_buffer.get_active_handle_id());
@@ -225,7 +225,7 @@ namespace viennacl
     {
       if (bytes_to_write > 0)
       {
-        switch(dst_buffer.get_active_handle_id())
+        switch (dst_buffer.get_active_handle_id())
         {
           case MAIN_MEMORY:
             cpu_ram::memory_write(dst_buffer.ram_handle(), dst_offset, bytes_to_write, ptr, async);
@@ -268,7 +268,7 @@ namespace viennacl
 
       if (bytes_to_read > 0)
       {
-        switch(src_buffer.get_active_handle_id())
+        switch (src_buffer.get_active_handle_id())
         {
           case MAIN_MEMORY:
             cpu_ram::memory_read(src_buffer.ram_handle(), src_offset, bytes_to_read, ptr, async);

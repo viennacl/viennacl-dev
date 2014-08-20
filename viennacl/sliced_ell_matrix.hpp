@@ -201,7 +201,7 @@ namespace viennacl
       assert( (viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
       assert( (viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
 
-      if(gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0)
+      if (gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0)
       {
         std::vector<SCALARTYPE> elements(gpu_matrix.internal_nnz());
         viennacl::backend::typesafe_host_array<unsigned int> coords(gpu_matrix.handle2(), gpu_matrix.internal_nnz());
@@ -209,16 +209,16 @@ namespace viennacl
         viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(SCALARTYPE) * elements.size(), &(elements[0]));
         viennacl::backend::memory_read(gpu_matrix.handle2(), 0, coords.raw_size(), coords.get());
 
-        for(vcl_size_t row = 0; row < gpu_matrix.size1(); row++)
+        for (vcl_size_t row = 0; row < gpu_matrix.size1(); row++)
         {
-          for(vcl_size_t ind = 0; ind < gpu_matrix.internal_maxnnz(); ind++)
+          for (vcl_size_t ind = 0; ind < gpu_matrix.internal_maxnnz(); ind++)
           {
             vcl_size_t offset = gpu_matrix.internal_size1() * ind + row;
 
-            if(elements[offset] == static_cast<SCALARTYPE>(0.0))
+            if (elements[offset] == static_cast<SCALARTYPE>(0.0))
                 continue;
 
-            if(coords[offset] >= gpu_matrix.size2())
+            if (coords[offset] >= gpu_matrix.size2())
             {
                 std::cerr << "ViennaCL encountered invalid data " << offset << " " << ind << " " << row << " " << coords[offset] << " " << gpu_matrix.size2() << std::endl;
                 return;

@@ -176,7 +176,7 @@ namespace viennacl
 
               // std::cout << "Hitted!" << l1 << " " << l2 << "\n";
 
-              // for(int i = l; i <= l2; i++)
+              // for (int i = l; i <= l2; i++)
               // {
               //   for (int j = 0; j < m; j++)
               //   {
@@ -292,7 +292,7 @@ namespace viennacl
         vcl_size_t row_start = start;
         vcl_size_t col_start = start;
 
-        if(row_start + 1 >= A.size1())
+        if (row_start + 1 >= A.size1())
           return false;
 
         std::vector<SCALARTYPE> tmp(A.size1(), 0);
@@ -332,7 +332,7 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
-        if(row_start + 1 >= A.size1())
+        if (row_start + 1 >= A.size1())
           return false;
 
         prepare_householder_vector(A, D, A.size1(), row_start, col_start, row_start, true);
@@ -379,7 +379,7 @@ namespace viennacl
         vcl_size_t row_start = start;
         vcl_size_t col_start = start + 1;
 
-        if(col_start + 1 >= A.size2())
+        if (col_start + 1 >= A.size2())
           return false;
 
         std::vector<SCALARTYPE> tmp(A.size2(), 0);
@@ -417,7 +417,7 @@ namespace viennacl
       {
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
-        if(col_start + 1 >= A.size2())
+        if (col_start + 1 >= A.size2())
           return false;
 
         prepare_householder_vector(A, D, A.size2(), row_start, col_start, col_start, false);
@@ -470,7 +470,7 @@ namespace viennacl
         QL = viennacl::identity_matrix<SCALARTYPE>(QL.size1(), viennacl::traits::context(QL));
         QR = viennacl::identity_matrix<SCALARTYPE>(QR.size1(), viennacl::traits::context(QR));
 
-        for(vcl_size_t i = 0; i < to; i++)
+        for (vcl_size_t i = 0; i < to; i++)
         {
           householder_c(Ai, QL, hh_vector, i, i);
           householder_r(Ai, QR, hh_vector, i, i+1);

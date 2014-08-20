@@ -59,7 +59,7 @@ std::vector<double> initEig(MatrixType const & A)
 {
   viennacl::linalg::lanczos_tag ltag(0.75, 10, viennacl::linalg::lanczos_tag::partial_reorthogonalization, 1700);
   std::vector<double> lanczos_eigenvalues = viennacl::linalg::eig(A, ltag);
-  for(std::size_t i = 0; i< lanczos_eigenvalues.size(); i++){
+  for (std::size_t i = 0; i< lanczos_eigenvalues.size(); i++){
           std::cout << "Eigenvalue " << i+1 << ": " << std::setprecision(10) << lanczos_eigenvalues[i] << std::endl;
   }
 

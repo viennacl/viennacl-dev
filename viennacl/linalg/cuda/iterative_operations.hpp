@@ -336,12 +336,12 @@ namespace viennacl
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int row = glb_id; row < size; row += glb_sz)
+        for (unsigned int row = glb_id; row < size; row += glb_sz)
         {
           T sum = 0;
 
           unsigned int offset = row;
-          for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+          for (unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
           {
             T val = elements[offset];
             sum += val ? p[coords[offset]] * val : T(0);
@@ -417,14 +417,14 @@ namespace viennacl
         unsigned int local_id = threadIdx.x;
         unsigned int local_size = blockDim.x;
 
-        for(unsigned int block_idx = blockIdx.x; block_idx <= size / local_size; block_idx += gridDim.x)
+        for (unsigned int block_idx = blockIdx.x; block_idx <= size / local_size; block_idx += gridDim.x)
         {
           unsigned int row         = block_idx * local_size + local_id;
           unsigned int offset      = block_start[block_idx];
           unsigned int num_columns = columns_per_block[block_idx];
 
           T sum = 0;
-          for(unsigned int item_id = 0; item_id < num_columns; item_id++)
+          for (unsigned int item_id = 0; item_id < num_columns; item_id++)
           {
             unsigned int index = offset + item_id * local_size + local_id;
             T val = elements[index];
@@ -508,12 +508,12 @@ namespace viennacl
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int row = glb_id; row < size; row += glb_sz)
+        for (unsigned int row = glb_id; row < size; row += glb_sz)
         {
           T sum = 0;
 
           unsigned int offset = row;
-          for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+          for (unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
           {
             T val = ell_elements[offset];
 
@@ -523,7 +523,7 @@ namespace viennacl
           unsigned int col_begin = csr_rows[row];
           unsigned int col_end   = csr_rows[row + 1];
 
-          for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
+          for (unsigned int item_id = col_begin; item_id < col_end; item_id++)
           {
             sum += p[csr_cols[item_id]] * csr_elements[item_id];
           }
@@ -1006,12 +1006,12 @@ namespace viennacl
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int row = glb_id; row < size; row += glb_sz)
+        for (unsigned int row = glb_id; row < size; row += glb_sz)
         {
           T sum = 0;
 
           unsigned int offset = row;
-          for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+          for (unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
           {
             T val = elements[offset];
             sum += val ? p[coords[offset]] * val : T(0);
@@ -1101,14 +1101,14 @@ namespace viennacl
         unsigned int local_id = threadIdx.x;
         unsigned int local_size = blockDim.x;
 
-        for(unsigned int block_idx = blockIdx.x; block_idx <= size / local_size; block_idx += gridDim.x)
+        for (unsigned int block_idx = blockIdx.x; block_idx <= size / local_size; block_idx += gridDim.x)
         {
           unsigned int row         = block_idx * local_size + local_id;
           unsigned int offset      = block_start[block_idx];
           unsigned int num_columns = columns_per_block[block_idx];
 
           T sum = 0;
-          for(unsigned int item_id = 0; item_id < num_columns; item_id++)
+          for (unsigned int item_id = 0; item_id < num_columns; item_id++)
           {
             unsigned int index = offset + item_id * local_size + local_id;
             T val = elements[index];
@@ -1206,12 +1206,12 @@ namespace viennacl
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int row = glb_id; row < size; row += glb_sz)
+        for (unsigned int row = glb_id; row < size; row += glb_sz)
         {
           T sum = 0;
 
           unsigned int offset = row;
-          for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+          for (unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
           {
             T val = ell_elements[offset];
 
@@ -1221,7 +1221,7 @@ namespace viennacl
           unsigned int col_begin = csr_rows[row];
           unsigned int col_end   = csr_rows[row + 1];
 
-          for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
+          for (unsigned int item_id = col_begin; item_id < col_end; item_id++)
           {
             sum += p[csr_cols[item_id]] * csr_elements[item_id];
           }

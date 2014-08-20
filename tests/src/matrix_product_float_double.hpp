@@ -114,22 +114,22 @@ int test_layout(CType & C, AType const & A, AType const & AT, BType const & B, B
 
   std::cout << "C = A.B" << std::endl;
   C = prod(A, B);
-  if(diff(ground, C)>epsilon)
+  if (diff(ground, C)>epsilon)
     return EXIT_FAILURE;
 
   std::cout << "C = A'.B" << std::endl;
   C = prod(trans(AT), B);
-  if(diff(ground, C)>epsilon)
+  if (diff(ground, C)>epsilon)
     return EXIT_FAILURE;
 
   std::cout << "C = A.B'" << std::endl;
   C = prod(A, trans(BT));
-  if(diff(ground, C)>epsilon)
+  if (diff(ground, C)>epsilon)
     return EXIT_FAILURE;
 
   std::cout << "C = A'.B'" << std::endl;
   C = prod(trans(AT), trans(BT));
-  if(diff(ground, C)>epsilon)
+  if (diff(ground, C)>epsilon)
     return EXIT_FAILURE;
 
   return EXIT_SUCCESS;
@@ -168,7 +168,7 @@ int test_all_layouts(int CM, int CN, RefCType & cC, int AM, int AK, RefAType & c
 
 #define TEST_LAYOUT(Clayout, Alayout, Blayout) \
   std::cout << "> "  #Clayout " = " #Alayout "." #Blayout << std::endl;  \
-  if(test_layout(C ## Clayout, A ## Alayout, AT ## Alayout, B ## Blayout, BT ## Blayout, ground, epsilon) != EXIT_SUCCESS) \
+  if (test_layout(C ## Clayout, A ## Alayout, AT ## Alayout, B ## Blayout, BT ## Blayout, ground, epsilon) != EXIT_SUCCESS) \
     return EXIT_FAILURE; \
 
   TEST_LAYOUT(row, row, row);
@@ -189,8 +189,8 @@ template<class MatrixType>
 void init_rand(MatrixType & A)
 {
   typedef typename MatrixType::value_type T;
-  for(unsigned int i = 0 ; i < A.size1() ; ++i)
-    for(unsigned int j = 0 ; j < A.size2() ; ++j)
+  for (unsigned int i = 0 ; i < A.size1() ; ++i)
+    for (unsigned int j = 0 ; j < A.size2() ; ++j)
       A(i, j) = static_cast<T>(0.1) * random<T>();
 }
 

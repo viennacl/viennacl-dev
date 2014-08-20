@@ -224,7 +224,7 @@ int test(Epsilon const& epsilon)
   }
   vcl_result = viennacl::linalg::prod(vcl_compressed_matrix, vcl_rhs);
 
-  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
@@ -240,7 +240,7 @@ int test(Epsilon const& epsilon)
   viennacl::scheduler::execute(my_statement);
   }
 
-  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product with coordinate_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
@@ -253,7 +253,7 @@ int test(Epsilon const& epsilon)
   viennacl::scheduler::execute(my_statement);
   }
 
-  if( std::fabs(diff(result, vcl_result2)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result2)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product (coordinate_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
@@ -276,7 +276,7 @@ int test(Epsilon const& epsilon)
   }
   vcl_result = viennacl::linalg::prod(vcl_ell_matrix, vcl_rhs);
 
-  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product with ell_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
@@ -298,7 +298,7 @@ int test(Epsilon const& epsilon)
   viennacl::scheduler::execute(my_statement);
   }
 
-  if( std::fabs(diff(result, vcl_result)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product with hyb_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
@@ -325,7 +325,7 @@ int test(Epsilon const& epsilon)
   viennacl::scheduler::execute(my_statement);
   }
 
-  if( std::fabs(diff(result, vcl_result2)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result2)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product (compressed_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
@@ -343,7 +343,7 @@ int test(Epsilon const& epsilon)
   viennacl::scheduler::execute(my_statement);
   }
 
-  if( std::fabs(diff(result, vcl_result2)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result2)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product (coordinate_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
@@ -360,7 +360,7 @@ int test(Epsilon const& epsilon)
   viennacl::scheduler::execute(my_statement);
   }
 
-  if( std::fabs(diff(result, vcl_result2)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result2)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product (ell_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
@@ -377,7 +377,7 @@ int test(Epsilon const& epsilon)
   viennacl::scheduler::execute(my_statement);
   }
 
-  if( std::fabs(diff(result, vcl_result2)) > epsilon )
+  if ( std::fabs(diff(result, vcl_result2)) > epsilon )
   {
     std::cout << "# Error at operation: matrix-vector product (hyb_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
@@ -413,7 +413,7 @@ int main()
     std::cout << "  eps:     " << epsilon << std::endl;
     std::cout << "  numeric: float" << std::endl;
     retval = test<NumericT>(epsilon);
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
     else
         return retval;
@@ -423,7 +423,7 @@ int main()
   std::cout << std::endl;
 
 #ifdef VIENNACL_WITH_OPENCL
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
 #endif
   {
     {
@@ -433,7 +433,7 @@ int main()
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: double" << std::endl;
       retval = test<NumericT>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else
         return retval;

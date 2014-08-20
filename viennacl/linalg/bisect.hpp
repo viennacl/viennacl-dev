@@ -86,14 +86,14 @@ namespace viennacl
       double rel_error = std::numeric_limits<CPU_ScalarType>::epsilon();
       beta_bisect.push_back(0);
 
-      for(vcl_size_t i = 1; i < size; i++){
+      for (vcl_size_t i = 1; i < size; i++){
               beta_bisect.push_back(betas[i] * betas[i]);
       }
 
       double xmin = alphas[size - 1] - std::fabs(betas[size - 1]);
       double xmax = alphas[size - 1] + std::fabs(betas[size - 1]);
 
-      for(vcl_size_t i = 0; i < size - 1; i++)
+      for (vcl_size_t i = 0; i < size - 1; i++)
       {
         double h = std::fabs(betas[i]) + std::fabs(betas[i + 1]);
         if (alphas[i] + h > xmax)
@@ -105,32 +105,32 @@ namespace viennacl
 
       double eps1 = 1e-6;
       /*double eps2 = (xmin + xmax > 0) ? (rel_error * xmax) : (-rel_error * xmin);
-      if(eps1 <= 0)
+      if (eps1 <= 0)
         eps1 = eps2;
       else
         eps2 = 0.5 * eps1 + 7.0 * eps2; */
 
       double x0 = xmax;
 
-      for(vcl_size_t i = 0; i < size; i++)
+      for (vcl_size_t i = 0; i < size; i++)
       {
         x_temp[i] = xmax;
         wu.push_back(xmin);
       }
 
-      for(long k = static_cast<long>(size) - 1; k >= 0; --k)
+      for (long k = static_cast<long>(size) - 1; k >= 0; --k)
       {
         double xu = xmin;
-        for(long i = k; i >= 0; --i)
+        for (long i = k; i >= 0; --i)
         {
-          if(xu < wu[k-i])
+          if (xu < wu[k-i])
           {
             xu = wu[i];
             break;
           }
         }
 
-        if(x0 > x_temp[k])
+        if (x0 > x_temp[k])
           x0 = x_temp[k];
 
         double x1 = (xu + x0) / 2.0;
@@ -138,26 +138,26 @@ namespace viennacl
         {
           vcl_size_t a = 0;
           double q = 1;
-          for(vcl_size_t i = 0; i < size; i++)
+          for (vcl_size_t i = 0; i < size; i++)
           {
-            if(q != 0)
+            if (q != 0)
               q = alphas[i] - x1 - beta_bisect[i] / q;
             else
               q = alphas[i] - x1 - std::fabs(betas[i] / rel_error);
 
-            if(q < 0)
+            if (q < 0)
               a++;
           }
 
           if (a <= static_cast<vcl_size_t>(k))
           {
             xu = x1;
-            if(a < 1)
+            if (a < 1)
               wu[0] = x1;
             else
             {
               wu[a] = x1;
-              if(x_temp[a - 1] > x1)
+              if (x_temp[a - 1] > x1)
                   x_temp[a - 1] = x1;
             }
           }

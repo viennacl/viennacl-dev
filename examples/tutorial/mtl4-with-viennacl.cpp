@@ -172,7 +172,7 @@ int main(int, char *[])
   run_test<float>();
   
 #ifdef VIENNACL_HAVE_OPENCL   
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
 #endif
   {
     std::cout << "----------------------------------------------" << std::endl;

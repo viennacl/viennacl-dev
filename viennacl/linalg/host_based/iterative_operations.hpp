@@ -181,12 +181,12 @@ namespace viennacl
           value_type inner_prod_ApAp = 0;
           value_type inner_prod_pAp = 0;
           value_type inner_prod_Ap_r0star = 0;
-          for(vcl_size_t row = 0; row < A.size1(); ++row)
+          for (vcl_size_t row = 0; row < A.size1(); ++row)
           {
             value_type sum = 0;
             value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
 
-            for(unsigned int item_id = 0; item_id < A.internal_maxnnz(); ++item_id)
+            for (unsigned int item_id = 0; item_id < A.internal_maxnnz(); ++item_id)
             {
               vcl_size_t offset = row + item_id * A.internal_size1();
               value_type val = elements[offset];
@@ -253,7 +253,7 @@ namespace viennacl
               vcl_size_t stride_start = block_start[block_idx] + column_entry_index * A.rows_per_block();
               // Note: This for-loop may be unrolled by hand for exploiting vectorization
               //       Careful benchmarking recommended first, memory channels may be saturated already!
-              for(IndexT row_in_block = 0; row_in_block < A.rows_per_block(); ++row_in_block)
+              for (IndexT row_in_block = 0; row_in_block < A.rows_per_block(); ++row_in_block)
               {
                 value_type val = elements[stride_start + row_in_block];
 
@@ -262,7 +262,7 @@ namespace viennacl
             }
 
             vcl_size_t first_row_in_matrix = block_idx * A.rows_per_block();
-            for(IndexT row_in_block = 0; row_in_block < A.rows_per_block(); ++row_in_block)
+            for (IndexT row_in_block = 0; row_in_block < A.rows_per_block(); ++row_in_block)
             {
               vcl_size_t row = first_row_in_matrix + row_in_block;
               if (row < Ap.size())
@@ -314,7 +314,7 @@ namespace viennacl
           value_type inner_prod_ApAp = 0;
           value_type inner_prod_pAp = 0;
           value_type inner_prod_Ap_r0star = 0;
-          for(vcl_size_t row = 0; row < A.size1(); ++row)
+          for (vcl_size_t row = 0; row < A.size1(); ++row)
           {
             value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
             value_type sum = 0;
@@ -322,7 +322,7 @@ namespace viennacl
             //
             // Part 1: Process ELL part
             //
-            for(index_type item_id = 0; item_id < A.internal_ellnnz(); ++item_id)
+            for (index_type item_id = 0; item_id < A.internal_ellnnz(); ++item_id)
             {
               vcl_size_t offset = row + item_id * A.internal_size1();
               value_type val = elements[offset];
@@ -337,7 +337,7 @@ namespace viennacl
             vcl_size_t col_begin = csr_row_buffer[row];
             vcl_size_t col_end   = csr_row_buffer[row + 1];
 
-            for(vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
+            for (vcl_size_t item_id = col_begin; item_id < col_end; item_id++)
               sum += p_buf[csr_col_buffer[item_id]] * csr_elements[item_id];
 
             Ap_buf[row] = sum;

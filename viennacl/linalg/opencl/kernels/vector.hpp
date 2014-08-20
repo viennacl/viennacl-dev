@@ -36,7 +36,7 @@ namespace viennacl
         {
           namespace ds = device_specific;
           ds::statements_container::data_type statements;
-          for(unsigned int i = 0 ; i < vector_num ; ++i)
+          for (unsigned int i = 0 ; i < vector_num ; ++i)
             statements.push_back(scheduler::preset::inner_prod(s, x, y));
           handler.add(prefix, ds::reduction_template(parameters), ds::statements_container(statements,ds::statements_container::INDEPENDENT));
         }
@@ -60,7 +60,7 @@ namespace viennacl
             handler.add(prefix + "1000", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false));
             handler.add(prefix + "0100", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false));
             handler.add(prefix + "1100", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false));
-            if(b)
+            if (b)
             {
               handler.add(prefix + "0010", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false));
               handler.add(prefix + "1010", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false));
@@ -100,7 +100,7 @@ namespace viennacl
           {
             static std::map<cl_context, device_specific::execution_handler> handlers_map;
             cl_context h = ctx.handle().get();
-            if(handlers_map.find(h) == handlers_map.end())
+            if (handlers_map.find(h) == handlers_map.end())
             {
               namespace ds = viennacl::device_specific;
               viennacl::ocl::device const & device = ctx.current_device();
@@ -129,7 +129,7 @@ namespace viennacl
               generate_inner_prod_impl(handler, "inner_prod", reduction_params, 1, &x, &y, &da);
 
               handler.add("norm_1", ds::reduction_template(reduction_params), scheduler::preset::norm_1(&da, &x));
-              if(is_floating_point<TYPE>::value)
+              if (is_floating_point<TYPE>::value)
                 //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
                 handler.add("norm_2", ds::reduction_template(reduction_params, ds::BIND_TO_HANDLE), scheduler::preset::norm_2(&da, &x));
               handler.add("norm_inf", ds::reduction_template(reduction_params), scheduler::preset::norm_inf(&da, &x));
@@ -150,7 +150,7 @@ namespace viennacl
           {
             static std::map<cl_context, device_specific::execution_handler> handlers_map;
             cl_context h = ctx.handle().get();
-            if(handlers_map.find(h) == handlers_map.end())
+            if (handlers_map.find(h) == handlers_map.end())
             {
               namespace ds = viennacl::device_specific;
               viennacl::ocl::device const & device = ctx.current_device();
@@ -187,7 +187,7 @@ namespace viennacl
             viennacl::ocl::DOUBLE_PRECISION_CHECKER<TYPE>::apply(ctx);
             static std::map<cl_context, device_specific::execution_handler> handlers_map;
             cl_context h = ctx.handle().get();
-            if(handlers_map.find(h) == handlers_map.end())
+            if (handlers_map.find(h) == handlers_map.end())
             {
               namespace ds = viennacl::device_specific;
               using namespace scheduler;

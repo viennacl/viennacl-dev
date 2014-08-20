@@ -102,7 +102,7 @@ namespace viennacl
                                                                                                                       R.size2() + A.size2())) +=
             boost::numeric::ublas::project(A, boost::numeric::ublas::range(0, R.size2()), boost::numeric::ublas::range(0, A.size2()));
             //adding decomposed(QR) block to Composite R
-            if(R_n.size1() > 0 && R_n.size2() > 0)
+            if (R_n.size1() > 0 && R_n.size2() > 0)
                 boost::numeric::ublas::project(C, boost::numeric::ublas::range(R.size2(), R.size1() + row_n),
                                               boost::numeric::ublas::range(R.size2(), R.size2() + A.size2())) += R_n;
             R = C;
@@ -129,7 +129,7 @@ namespace viennacl
           template<typename SparseVectorType, typename ScalarType>
           void sparse_norm_2(const SparseVectorType& v, ScalarType& norm)
           {
-            for(typename SparseVectorType::const_iterator vec_it  = v.begin(); vec_it != v.end(); ++vec_it)
+            for (typename SparseVectorType::const_iterator vec_it  = v.begin(); vec_it != v.end(); ++vec_it)
               norm += (vec_it->second)*(vec_it->second);
 
             norm = std::sqrt(norm);
@@ -145,15 +145,15 @@ namespace viennacl
           {
             typename SparseVectorType::const_iterator v_it1 = v1.begin();
             typename SparseVectorType::const_iterator v_it2 = v2.begin();
-            while((v_it1 != v1.end())&&(v_it2 != v2.end()))
+            while ((v_it1 != v1.end())&&(v_it2 != v2.end()))
             {
-              if(v_it1->first == v_it2->first)
+              if (v_it1->first == v_it2->first)
               {
                 res_v += (v_it1->second)*(v_it2->second);
                 ++v_it1;
                 ++v_it2;
               }
-              else if(v_it1->first < v_it2->first)
+              else if (v_it1->first < v_it2->first)
                 ++v_it1;
               else
                 ++v_it2;
@@ -178,9 +178,9 @@ namespace viennacl
             vcl_size_t cur_size = 0;
             ScalarType inprod, norm2;
             //print_sparse_vector(res);
-            for(typename SparseVectorType::const_iterator res_it = res.begin(); res_it != res.end(); ++res_it)
+            for (typename SparseVectorType::const_iterator res_it = res.begin(); res_it != res.end(); ++res_it)
             {
-              if(!isInIndexSet(J, res_it->first) && (std::fabs(res_it->second) > tag.getResidualThreshold()))
+              if (!isInIndexSet(J, res_it->first) && (std::fabs(res_it->second) > tag.getResidualThreshold()))
               {
                 inprod = norm2 = 0;
                 sparse_inner_prod(res, A_v_c[res_it->first], inprod);
@@ -210,11 +210,11 @@ namespace viennacl
           void buildNewRowSet(const std::vector<SparseVectorType>& A_v_c, const std::vector<unsigned int>& I,
                               const std::vector<unsigned int>& J_n, std::vector<unsigned int>& I_n)
           {
-            for(vcl_size_t i = 0; i < J_n.size(); ++i)
+            for (vcl_size_t i = 0; i < J_n.size(); ++i)
             {
-              for(typename SparseVectorType::const_iterator col_it = A_v_c[J_n[i]].begin(); col_it!=A_v_c[J_n[i]].end(); ++col_it)
+              for (typename SparseVectorType::const_iterator col_it = A_v_c[J_n[i]].begin(); col_it!=A_v_c[J_n[i]].end(); ++col_it)
               {
-                if(!isInIndexSet(I, col_it->first)&&!isInIndexSet(I_n, col_it->first))
+                if (!isInIndexSet(I, col_it->first)&&!isInIndexSet(I_n, col_it->first))
                   I_n.push_back(col_it->first);
               }
             }
@@ -278,11 +278,11 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
+            for (long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
-              if(g_is_update[static_cast<vcl_size_t>(i)])
+              if (g_is_update[static_cast<vcl_size_t>(i)])
               {
-                if(buildAugmentedIndexSet<SparseVectorType, ScalarType>(A_v_c, g_res[i], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
+                if (buildAugmentedIndexSet<SparseVectorType, ScalarType>(A_v_c, g_res[i], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
                 {
                   //initialize matrix A_I_\hatJ
                   initProjectSubMatrix(A, g_J_u[static_cast<vcl_size_t>(i)], g_I[static_cast<vcl_size_t>(i)], g_A_I_J_u[static_cast<vcl_size_t>(i)]);
@@ -371,12 +371,12 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(long i = 0; i < static_cast<long>(g_I.size()); ++i)
+            for (long i = 0; i < static_cast<long>(g_I.size()); ++i)
             {
-              for(vcl_size_t j = g_J[i].size(); j < g_I[i].size(); ++j)
+              for (vcl_size_t j = g_J[i].size(); j < g_I[i].size(); ++j)
                   g_I_q[i].push_back(g_I[i][j]);
 
-              for(vcl_size_t j = 0; j < g_I_u[i].size(); ++j)
+              for (vcl_size_t j = 0; j < g_I_u[i].size(); ++j)
                   g_I_q[i].push_back(g_I_u[i][j]);
             }
           }
@@ -441,7 +441,7 @@ namespace viennacl
                                                                                      &(g_is_update[0]));
 
             viennacl::linalg::opencl::kernels::spai<ScalarType>::init(opencl_ctx);
-            if(!is_empty_block)
+            if (!is_empty_block)
             {
               viennacl::ocl::kernel& qr_assembly_kernel = opencl_ctx.get_kernel(viennacl::linalg::opencl::kernels::spai<ScalarType>::program_name(), "block_qr_assembly");
               qr_assembly_kernel.local_work_size(0, 1);
@@ -602,11 +602,11 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
+            for (long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
-              if(g_is_update[static_cast<vcl_size_t>(i)])
+              if (g_is_update[static_cast<vcl_size_t>(i)])
               {
-                if(buildAugmentedIndexSet<SparseVectorType, ScalarType>(A_v_c, g_res[i], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
+                if (buildAugmentedIndexSet<SparseVectorType, ScalarType>(A_v_c, g_res[i], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
                     buildNewRowSet(A_v_c, g_I[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], g_I_u[static_cast<vcl_size_t>(i)]);
               }
             }
@@ -624,7 +624,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENMP
             #pragma omp parallel for
 #endif
-            for(long i = 0; i < static_cast<long>(g_J.size()); ++i)
+            for (long i = 0; i < static_cast<long>(g_J.size()); ++i)
             {
               g_J[static_cast<vcl_size_t>(i)].insert(g_J[static_cast<vcl_size_t>(i)].end(), g_J_u[static_cast<vcl_size_t>(i)].begin(), g_J_u[static_cast<vcl_size_t>(i)].end());
               g_I[static_cast<vcl_size_t>(i)].insert(g_I[static_cast<vcl_size_t>(i)].end(), g_I_u[static_cast<vcl_size_t>(i)].begin(), g_I_u[static_cast<vcl_size_t>(i)].end());

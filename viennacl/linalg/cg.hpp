@@ -216,7 +216,7 @@ namespace viennacl
         z = residual;
         precond.apply(z);
 
-        if(&residual==&z)
+        if (&residual==&z)
           new_ip_rr = std::pow(viennacl::linalg::norm_2(residual),2);
         else
           new_ip_rr = viennacl::linalg::inner_prod(residual, z);

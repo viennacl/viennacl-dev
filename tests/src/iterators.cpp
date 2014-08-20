@@ -47,13 +47,13 @@ int test()
    //typename VclVector::const_iterator const_iter_def_const;
    //typename VclVector::iterator       iter_def_const;
 
-   for(typename VclVector::const_iterator iter = vcl_cont.begin();
+   for (typename VclVector::const_iterator iter = vcl_cont.begin();
        iter != vcl_cont.end(); iter++)
    {
       std::cout << *iter << std::endl;
    }
 
-   for(typename VclVector::iterator iter = vcl_cont.begin();
+   for (typename VclVector::iterator iter = vcl_cont.begin();
        iter != vcl_cont.end(); iter++)
    {
       std::cout << *iter << std::endl;
@@ -83,7 +83,7 @@ int main()
       std::cout << "# Testing setup:" << std::endl;
       std::cout << "  numeric: float" << std::endl;
       retval = test<NumericT>();
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
          std::cout << "# Test passed" << std::endl;
       else
          return retval;
@@ -93,7 +93,7 @@ int main()
    std::cout << std::endl;
 
 #ifdef VIENNACL_WITH_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
+   if ( viennacl::ocl::current_device().double_support() )
 #endif
    {
       {
@@ -101,7 +101,7 @@ int main()
          std::cout << "# Testing setup:" << std::endl;
          std::cout << "  numeric: double" << std::endl;
          retval = test<NumericT>();
-            if( retval == EXIT_SUCCESS )
+            if ( retval == EXIT_SUCCESS )
               std::cout << "# Test passed" << std::endl;
             else
               return retval;

@@ -58,11 +58,11 @@ namespace viennacl{
         fun.call_before_expansion(statement, root_idx);
 
         //Lhs:
-        if(recurse)
+        if (recurse)
         {
-          if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if (root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
             traverse(statement, root_node.lhs.node_index, fun, inspect);
-          if(root_node.lhs.type_family != scheduler::INVALID_TYPE_FAMILY)
+          if (root_node.lhs.type_family != scheduler::INVALID_TYPE_FAMILY)
             fun(statement, root_idx, LHS_NODE_TYPE);
         }
 
@@ -70,11 +70,11 @@ namespace viennacl{
         fun(statement, root_idx, PARENT_NODE_TYPE);
 
         //Rhs:
-        if(recurse && root_node.rhs.type_family!=scheduler::INVALID_TYPE_FAMILY)
+        if (recurse && root_node.rhs.type_family!=scheduler::INVALID_TYPE_FAMILY)
         {
-          if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if (root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
             traverse(statement, root_node.rhs.node_index, fun, inspect);
-          if(root_node.rhs.type_family != scheduler::INVALID_TYPE_FAMILY)
+          if (root_node.rhs.type_family != scheduler::INVALID_TYPE_FAMILY)
             fun(statement, root_idx, RHS_NODE_TYPE);
         }
 
@@ -91,7 +91,7 @@ namespace viennacl{
           void operator()(scheduler::statement const & statement, size_t root_idx, leaf_t) const
           {
              scheduler::statement_node const * root_node = &statement.array()[root_idx];
-             if(pred_(*root_node))
+             if (pred_(*root_node))
                out_.push_back(root_idx);
           }
       private:
@@ -107,9 +107,9 @@ namespace viennacl{
           void operator()(scheduler::statement const & statement, size_t root_idx, leaf_t) const
           {
              scheduler::statement_node const * root_node = &statement.array()[root_idx];
-             if(root_node->lhs.subtype==subtype_)
+             if (root_node->lhs.subtype==subtype_)
                out_.push_back(root_node->lhs);
-             if(root_node->rhs.subtype==subtype_)
+             if (root_node->rhs.subtype==subtype_)
                out_.push_back(root_node->rhs);
           }
       private:
@@ -122,7 +122,7 @@ namespace viennacl{
       {
         using namespace scheduler;
         // unary expression
-        switch(type){
+        switch (type){
           //Function
           case OPERATION_UNARY_ABS_TYPE : return "abs";
           case OPERATION_UNARY_ACOS_TYPE : return "acos";
@@ -204,7 +204,7 @@ namespace viennacl{
       inline const char * operator_string(scheduler::operation_node_type type)
       {
         using namespace scheduler;
-        switch(type){
+        switch (type){
         case OPERATION_UNARY_CAST_CHAR_TYPE : return "char";
         case OPERATION_UNARY_CAST_UCHAR_TYPE : return "uchar";
         case OPERATION_UNARY_CAST_SHORT_TYPE : return "short";
@@ -246,7 +246,7 @@ namespace viennacl{
           void call_before_expansion(scheduler::statement const & statement, vcl_size_t root_idx) const
           {
               scheduler::statement_node const & root_node = statement.array()[root_idx];
-              if((root_node.op.type_family==scheduler::OPERATION_UNARY_TYPE_FAMILY || utils::elementwise_function(root_node.op))
+              if ((root_node.op.type_family==scheduler::OPERATION_UNARY_TYPE_FAMILY || utils::elementwise_function(root_node.op))
                   && !utils::node_leaf(root_node.op))
                   str_+=tree_parsing::evaluate(root_node.op.type);
               str_+="(";
@@ -261,26 +261,26 @@ namespace viennacl{
           {
             scheduler::statement_node const & root_node = statement.array()[root_idx];
             mapping_type::key_type key = std::make_pair(root_idx, leaf);
-            if(leaf==PARENT_NODE_TYPE)
+            if (leaf==PARENT_NODE_TYPE)
             {
-              if(utils::node_leaf(root_node.op))
+              if (utils::node_leaf(root_node.op))
                 str_ += mapping_.at(key)->evaluate(accessors_);
-              else if(utils::elementwise_operator(root_node.op))
+              else if (utils::elementwise_operator(root_node.op))
                 str_ += tree_parsing::evaluate(root_node.op.type);
-              else if(root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY && utils::elementwise_function(root_node.op))
+              else if (root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY && utils::elementwise_function(root_node.op))
                 str_ += ",";
             }
             else
             {
-              if(leaf==LHS_NODE_TYPE)
+              if (leaf==LHS_NODE_TYPE)
               {
-                if(root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                if (root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
                   str_ += mapping_.at(key)->evaluate(accessors_);
               }
 
-              if(leaf==RHS_NODE_TYPE)
+              if (leaf==RHS_NODE_TYPE)
               {
-                if(root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                if (root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
                   str_ += mapping_.at(key)->evaluate(accessors_);
               }
             }
@@ -294,16 +294,16 @@ namespace viennacl{
         evaluate_expression_traversal traversal_functor(accessors, res, mapping);
         scheduler::statement_node const & root_node = statement.array()[root_idx];
 
-        if(leaf==RHS_NODE_TYPE)
+        if (leaf==RHS_NODE_TYPE)
         {
-          if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if (root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
             tree_parsing::traverse(statement, root_node.rhs.node_index, traversal_functor, false);
           else
             traversal_functor(statement, root_idx, leaf);
         }
-        else if(leaf==LHS_NODE_TYPE)
+        else if (leaf==LHS_NODE_TYPE)
         {
-          if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if (root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
             tree_parsing::traverse(statement, root_node.lhs.node_index, traversal_functor, false);
           else
             traversal_functor(statement, root_idx, leaf);
@@ -320,7 +320,7 @@ namespace viennacl{
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
 
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+        for (mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
           stream << evaluate(leaf, accessors, *sit, sit->root(), *mit) << ";" << std::endl;
       }
 
@@ -335,12 +335,12 @@ namespace viennacl{
           void operator()(scheduler::statement const & /*statement*/, vcl_size_t root_idx, leaf_t leaf) const
           {
              mapping_type::const_iterator it = mapping_.find(std::make_pair(root_idx, leaf));
-             if(it!=mapping_.end())
+             if (it!=mapping_.end())
              {
                mapped_object * obj = it->second.get();
-               if(obj->type_key()==type_key_)
+               if (obj->type_key()==type_key_)
                {
-                 if(already_processed_.insert(obj->process("#name")).second)
+                 if (already_processed_.insert(obj->process("#name")).second)
                   stream_ << obj->process(to_process_) << std::endl;
                }
              }
@@ -359,16 +359,16 @@ namespace viennacl{
         process_traversal traversal_functor(type_key, to_process, stream, mapping, already_processed);
         scheduler::statement_node const & root_node = statement.array()[root_idx];
 
-        if(leaf==RHS_NODE_TYPE)
+        if (leaf==RHS_NODE_TYPE)
         {
-          if(root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if (root_node.rhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
             tree_parsing::traverse(statement, root_node.rhs.node_index, traversal_functor, true);
           else
             traversal_functor(statement, root_idx, leaf);
         }
-        else if(leaf==LHS_NODE_TYPE)
+        else if (leaf==LHS_NODE_TYPE)
         {
-          if(root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          if (root_node.lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
             tree_parsing::traverse(statement, root_node.lhs.node_index, traversal_functor, true);
           else
             traversal_functor(statement, root_idx, leaf);
@@ -386,7 +386,7 @@ namespace viennacl{
         std::vector<mapping_type>::const_iterator mit;
         std::set<std::string> already_processed;
 
-        for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+        for (mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
           process(stream, leaf, type_key, to_process, *sit, sit->root(), *mit, already_processed);
       }
 
@@ -394,10 +394,10 @@ namespace viennacl{
       class statement_representation_functor : public traversal_functor{
         private:
           static void append_id(char * & ptr, unsigned int val){
-            if(val==0)
+            if (val==0)
               *ptr++='0';
             else
-              while(val>0)
+              while (val>0)
               {
                   *ptr++= (char)('0' + (val % 10));
                   val /= 10;
@@ -473,11 +473,11 @@ namespace viennacl{
           inline void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf_t) const
           {
             scheduler::statement_node const & root_node = statement.array()[root_idx];
-            if(leaf_t==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+            if (leaf_t==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node.lhs, *this);
-            else if(root_node.op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY && leaf_t==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+            else if (root_node.op.type_family==scheduler::OPERATION_BINARY_TYPE_FAMILY && leaf_t==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
               utils::call_on_element(root_node.rhs, *this);
-            else if(leaf_t==PARENT_NODE_TYPE)
+            else if (leaf_t==PARENT_NODE_TYPE)
               append_id(ptr_,root_node.op.type);
           }
 
@@ -490,12 +490,12 @@ namespace viennacl{
       {
           std::vector<char> program_name_vector(256);
           char* program_name = program_name_vector.data();
-          if(statements.order()==statements_container::INDEPENDENT)
+          if (statements.order()==statements_container::INDEPENDENT)
             *program_name++='i';
           else
             *program_name++='s';
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
-          for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+          for (statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
               tree_parsing::traverse(*it, it->root(), tree_parsing::statement_representation_functor(*binder, program_name),true);
           *program_name='\0';
           return std::string(program_name_vector.data());

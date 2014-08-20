@@ -38,13 +38,13 @@ namespace viennacl
           source.append("  uint local_size = get_local_size(0); \n");
           source.append("  uint num_rows   = layout_result.z; \n");
 
-          source.append("  for(uint block_idx = get_group_id(0); block_idx <= num_rows / local_size; block_idx += get_num_groups(0)) { \n");
+          source.append("  for (uint block_idx = get_group_id(0); block_idx <= num_rows / local_size; block_idx += get_num_groups(0)) { \n");
           source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
           source.append("    uint row    = block_idx * local_size + local_id; \n");
           source.append("    uint offset = block_start[block_idx]; \n");
           source.append("    uint num_columns = columns_per_block[block_idx]; \n");
-          source.append("    for(uint item_id = 0; item_id < num_columns; item_id++) { \n");
+          source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
           source.append("      uint index = offset + item_id * local_size + local_id; \n");
           source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
           source.append("      sum += val ? (x[column_indices[index] * layout_x.y + layout_x.x] * val) : 0; \n");

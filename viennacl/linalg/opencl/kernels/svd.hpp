@@ -28,10 +28,10 @@ namespace viennacl
           source.append(") { \n");
           source.append("  uint size = min(size1, size2); \n");
 
-          source.append("  if(get_global_id(0) == 0) \n");
+          source.append("  if (get_global_id(0) == 0) \n");
           source.append("    S[0] = 0; \n");
 
-          source.append("  for(uint i = get_global_id(0); i < size ; i += get_global_size(0)) { \n");
+          source.append("  for (uint i = get_global_id(0); i < size ; i += get_global_size(0)) { \n");
           source.append("    D[i] = A[i*stride + i]; \n");
           source.append("    S[i + 1] = (i + 1 < size2) ? A[i*stride + (i + 1)] : 0; \n");
           source.append("  } \n");
@@ -45,8 +45,8 @@ namespace viennacl
           source.append("void col_reduce_lcl_array(__local "); source.append(numeric_string); source.append("* sums, uint lcl_id, uint lcl_sz) { \n");
           source.append("    uint step = lcl_sz >> 1; \n");
 
-          source.append("    while(step > 0) { \n");
-          source.append("        if(lcl_id < step) { \n");
+          source.append("    while (step > 0) { \n");
+          source.append("        if (lcl_id < step) { \n");
           source.append("            sums[lcl_id] += sums[lcl_id + step]; \n");
           source.append("        } \n");
           source.append("        step >>= 1; \n");
@@ -69,7 +69,7 @@ namespace viennacl
           source.append("    uint glb_id = get_global_id(0); \n");
           source.append("    uint glb_sz = get_global_size(0); \n");
 
-          source.append("    for(uint i = row_start + glb_id; i < size; i += glb_sz) { \n");
+          source.append("    for (uint i = row_start + glb_id; i < size; i += glb_sz) { \n");
           source.append("        V[i - row_start] = A[i * stride + col_start]; \n");
           source.append("    } \n");
           source.append("} \n");
@@ -89,7 +89,7 @@ namespace viennacl
           source.append("    uint glb_id = get_global_id(0); \n");
           source.append("    uint glb_sz = get_global_size(0); \n");
 
-          source.append("    for(uint i = col_start + glb_id; i < size; i += glb_sz) { \n");
+          source.append("    for (uint i = col_start + glb_id; i < size; i += glb_sz) { \n");
           source.append("        V[i - col_start] = A[row_start * stride + i]; \n");
           source.append("    } \n");
           source.append("} \n");
@@ -147,11 +147,11 @@ namespace viennacl
           source.append("    uint elems_num = end_i - start_i + 1; \n");
           source.append("    uint block_num = (elems_num + lcl_sz - 1) / lcl_sz; \n");
 
-          source.append("    for(uint block_id = 0; block_id < block_num; block_id++) \n");
+          source.append("    for (uint block_id = 0; block_id < block_num; block_id++) \n");
           source.append("    { \n");
           source.append("        uint to = min(elems_num - block_id * lcl_sz, lcl_sz); \n");
 
-          source.append("        if(lcl_id < to) \n");
+          source.append("        if (lcl_id < to) \n");
           source.append("        { \n");
           source.append("            cs_lcl[lcl_id] = cs[end_i - (lcl_id + block_id * lcl_sz)]; \n");
           source.append("            ss_lcl[lcl_id] = ss[end_i - (lcl_id + block_id * lcl_sz)]; \n");
@@ -159,9 +159,9 @@ namespace viennacl
 
           source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
 
-          source.append("        if(j < size) \n");
+          source.append("        if (j < size) \n");
           source.append("        { \n");
-          source.append("            for(uint ind = 0; ind < to; ind++) \n");
+          source.append("            for (uint ind = 0; ind < to; ind++) \n");
           source.append("            { \n");
           source.append("                uint i = end_i - (ind + block_id * lcl_sz); \n");
 
@@ -176,7 +176,7 @@ namespace viennacl
           source.append("        } \n");
           source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("    } \n");
-          source.append("    if(j < size) \n");
+          source.append("    if (j < size) \n");
           source.append("        matr[(start_i) * stride + j] = x; \n");
           source.append("} \n");
         }
@@ -209,11 +209,11 @@ namespace viennacl
           source.append("    uint elems_num = end_i - start_i; \n");
           source.append("    uint block_num = (elems_num + lcl_sz - 1) / lcl_sz; \n");
 
-          source.append("    for(uint block_id = 0; block_id < block_num; block_id++) \n");
+          source.append("    for (uint block_id = 0; block_id < block_num; block_id++) \n");
           source.append("    { \n");
           source.append("        uint to = min(elems_num - block_id * lcl_sz, lcl_sz); \n");
 
-          source.append("        if(lcl_id < to) \n");
+          source.append("        if (lcl_id < to) \n");
           source.append("        { \n");
           source.append("            cs_lcl[lcl_id] = cs[lcl_id + start_i + block_id * lcl_sz]; \n");
           source.append("            ss_lcl[lcl_id] = ss[lcl_id + start_i + block_id * lcl_sz]; \n");
@@ -221,9 +221,9 @@ namespace viennacl
 
           source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
 
-          source.append("        if(j < size) \n");
+          source.append("        if (j < size) \n");
           source.append("        { \n");
-          source.append("            for(uint ind = 0; ind < to; ind++) \n");
+          source.append("            for (uint ind = 0; ind < to; ind++) \n");
           source.append("            { \n");
           source.append("                uint i = ind + start_i + block_id * lcl_sz; \n");
 
@@ -238,7 +238,7 @@ namespace viennacl
           source.append("        } \n");
           source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
           source.append("    } \n");
-          source.append("    if(j < size) \n");
+          source.append("    if (j < size) \n");
           source.append("        matr[(end_i - 1) * stride + j] = x; \n");
           source.append("} \n");
         }
@@ -268,11 +268,11 @@ namespace viennacl
           source.append("    "); source.append(numeric_string); source.append(" ss = 0; \n");
 
               // doing it in slightly different way to avoid cache misses
-          source.append("    for(uint i = glb_id + col_start; i < size2; i += glb_sz) { \n");
+          source.append("    for (uint i = glb_id + col_start; i < size2; i += glb_sz) { \n");
           source.append("        ss = 0; \n");
-          source.append("        for(uint j = row_start; j < size1; j++) ss = ss + (V[j] * A[j * stride + i]); \n");
+          source.append("        for (uint j = row_start; j < size1; j++) ss = ss + (V[j] * A[j * stride + i]); \n");
 
-          source.append("        for(uint j = row_start; j < size1; j++) \n");
+          source.append("        for (uint j = row_start; j < size1; j++) \n");
           source.append("            A[j * stride + i] = A[j * stride + i] - (2 * V[j] * ss); \n");
           source.append("    } \n");
           source.append("} \n");
@@ -304,10 +304,10 @@ namespace viennacl
           source.append("    "); source.append(numeric_string); source.append(" ss = 0; \n");
 
               // update of A matrix
-          source.append("    for(uint i = grp_id + row_start; i < size1; i += grp_nm) { \n");
+          source.append("    for (uint i = grp_id + row_start; i < size1; i += grp_nm) { \n");
           source.append("        ss = 0; \n");
 
-          source.append("        for(uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * A[i * stride + j]); \n");
+          source.append("        for (uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * A[i * stride + j]); \n");
           source.append("        sums[lcl_id] = ss; \n");
 
           source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
@@ -316,7 +316,7 @@ namespace viennacl
 
           source.append("        "); source.append(numeric_string); source.append(" sum_Av = sums[0]; \n");
 
-          source.append("        for(uint j = lcl_id; j < size2; j += lcl_sz) \n");
+          source.append("        for (uint j = lcl_id; j < size2; j += lcl_sz) \n");
           source.append("            A[i * stride + j] = A[i * stride + j] - (2 * V[j] * sum_Av); \n");
           source.append("    } \n");
           source.append("} \n");
@@ -345,9 +345,9 @@ namespace viennacl
 
           source.append("    "); source.append(numeric_string); source.append(" ss = 0; \n");
               // update of left matrix
-          source.append("    for(uint i = grp_id; i < size1; i += grp_nm) { \n");
+          source.append("    for (uint i = grp_id; i < size1; i += grp_nm) { \n");
           source.append("        ss = 0; \n");
-          source.append("        for(uint j = lcl_id; j < size1; j += lcl_sz) ss = ss + (V[j] * QL[i * strideQ + j]); \n");
+          source.append("        for (uint j = lcl_id; j < size1; j += lcl_sz) ss = ss + (V[j] * QL[i * strideQ + j]); \n");
           source.append("        sums[lcl_id] = ss; \n");
 
           source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
@@ -356,7 +356,7 @@ namespace viennacl
 
           source.append("        "); source.append(numeric_string); source.append(" sum_Qv = sums[0]; \n");
 
-          source.append("        for(uint j = lcl_id; j < size1; j += lcl_sz) \n");
+          source.append("        for (uint j = lcl_id; j < size1; j += lcl_sz) \n");
           source.append("            QL[i * strideQ + j] = QL[i * strideQ + j] - (2 * V[j] * sum_Qv); \n");
           source.append("    } \n");
           source.append("} \n");
@@ -388,9 +388,9 @@ namespace viennacl
               // update of QR matrix
               // Actually, we are calculating a transpose of right matrix. This allows to avoid cache
               // misses.
-          source.append("    for(uint i = grp_id; i < size2; i += grp_nm) { \n");
+          source.append("    for (uint i = grp_id; i < size2; i += grp_nm) { \n");
           source.append("        ss = 0; \n");
-          source.append("        for(uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * QR[i * strideQ + j]); \n");
+          source.append("        for (uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * QR[i * strideQ + j]); \n");
           source.append("        sums[lcl_id] = ss; \n");
 
           source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
@@ -398,7 +398,7 @@ namespace viennacl
           source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
 
           source.append("        "); source.append(numeric_string); source.append(" sum_Qv = sums[0]; \n");
-          source.append("        for(uint j = lcl_id; j < size2; j += lcl_sz) \n");
+          source.append("        for (uint j = lcl_id; j < size2; j += lcl_sz) \n");
           source.append("            QR[i * strideQ + j] = QR[i * strideQ + j] - (2 * V[j] * sum_Qv); \n");
           source.append("    } \n");
           source.append("} \n");
@@ -416,7 +416,7 @@ namespace viennacl
           source.append("    uint glb_id_x = get_global_id(0); \n");
           source.append("    uint glb_id_y = get_global_id(1); \n");
 
-          source.append("    if((glb_id_x < size) && (glb_id_y < size)) \n");
+          source.append("    if ((glb_id_x < size) && (glb_id_y < size)) \n");
           source.append("        v[glb_id_x * stride + glb_id_y] *= signs[glb_id_x]; \n");
           source.append("} \n");
 
@@ -430,7 +430,7 @@ namespace viennacl
           source.append("                        unsigned int row_num, \n");
           source.append("                        unsigned int col_num) { \n");
           source.append("    unsigned int size = row_num * col_num; \n");
-          source.append("    for(unsigned int i = get_global_id(0); i < size; i+= get_global_size(0)) { \n");
+          source.append("    for (unsigned int i = get_global_id(0); i < size; i+= get_global_size(0)) { \n");
           source.append("        unsigned int row = i / col_num; \n");
           source.append("        unsigned int col = i - row*col_num; \n");
 
@@ -439,7 +439,7 @@ namespace viennacl
                   //new_pos = (col < row) ? 0 : 1;
                   //input[i] = new_pos;
 
-          source.append("        if(i < new_pos) { \n");
+          source.append("        if (i < new_pos) { \n");
           source.append("            "); source.append(numeric_string); source.append(" val = input[i]; \n");
           source.append("            input[i] = input[new_pos]; \n");
           source.append("            input[new_pos] = val; \n");
@@ -468,7 +468,7 @@ namespace viennacl
 
           source.append("        a_ik_1 = A[(m + 1) * stride + i]; \n");
 
-          source.append("        for(int k = m; k < n; k++) \n");
+          source.append("        for (int k = m; k < n; k++) \n");
           source.append("        { \n");
           source.append("            bool notlast = (k != n - 1); \n");
 

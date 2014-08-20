@@ -72,7 +72,7 @@ namespace viennacl
       template<class T>
       inline void _axpy(const T* x, T* y, vcl_size_t n, T a)
       {
-        for(vcl_size_t i=0;i<n;i++)
+        for (vcl_size_t i=0;i<n;i++)
           y[i]+=a*x[i];
       }
 
@@ -80,7 +80,7 @@ namespace viennacl
       inline T _dot(vcl_size_t n, const T* x, const T* y)
       {
         T sum(0);
-        for(vcl_size_t i=0;i<n;i++)
+        for (vcl_size_t i=0;i<n;i++)
           sum+=x[i]*y[i];
         return sum;
       }
@@ -89,7 +89,7 @@ namespace viennacl
       inline T _dotc(vcl_size_t n, const T* x, const T* y)
       {
         T sum(0);
-        for(vcl_size_t i=0;i<n;i++)
+        for (vcl_size_t i=0;i<n;i++)
           sum+=detail::conjIfComplex(x[i])*y[i];
         return sum;
       }
@@ -98,7 +98,7 @@ namespace viennacl
       inline void _swap(vcl_size_t n, T* sx, T* sy)
       {
         T t;
-        for(vcl_size_t i=0;i<n;i++)
+        for (vcl_size_t i=0;i<n;i++)
         {
           t=sx[i];
           sx[i]=sy[i];
@@ -109,7 +109,7 @@ namespace viennacl
       template<class T>
       inline void _copy(vcl_size_t n, T* cx, T* cy)
       {
-        for(vcl_size_t i=0;i<n;i++)
+        for (vcl_size_t i=0;i<n;i++)
           cx[i]=cy[i];
       }
 
@@ -118,16 +118,16 @@ namespace viennacl
       {
         //based on http://www.netlib.org/blas/snrm2.f, but works with std::complex
 
-        if(n<1)
+        if (n<1)
           return T(0);
-        if(n==1)
+        if (n==1)
           return std::abs(x[0]);
         T scale(0);
         T scaledSquareSum(1);
-        for(vcl_size_t i=0;i<n;i++){
-          if(x[i]!=T(0)){
+        for (vcl_size_t i=0;i<n;i++){
+          if (x[i]!=T(0)){
             T absXi=std::abs(x[i]);
-            if(std::abs(x[i])>std::abs(scale)){
+            if (std::abs(x[i])>std::abs(scale)){
               T temp=scale/absXi;
               scaledSquareSum=T(1)+scaledSquareSum*temp*temp;
               scale=absXi;
@@ -154,16 +154,16 @@ namespace viennacl
       {
         //based on http://www.netlib.org/blas/snrm2.f
 
-        if(n<1)
+        if (n<1)
           return std::complex<double>(0);
-        if(n==1)
+        if (n==1)
           return std::abs(x[0]);
         double scale=0.0;
         double scaledSquareSum=1.0;
-        for(vcl_size_t i=0;i<n;i++){
-          if(x[i].real()!=0.0){
+        for (vcl_size_t i=0;i<n;i++){
+          if (x[i].real()!=0.0){
             double absXi=std::abs(x[i].real());
-            if(absXi>scale){
+            if (absXi>scale){
               double temp=scale/absXi;
               scaledSquareSum=1.0+scaledSquareSum*temp*temp;
               scale=absXi;
@@ -173,9 +173,9 @@ namespace viennacl
               scaledSquareSum+=temp*temp;
             }
           }
-          if(x[i].imag()!=0.0){
+          if (x[i].imag()!=0.0){
             double absXi=std::abs(x[i].imag());
-            if(absXi>scale){
+            if (absXi>scale){
               double temp=scale/absXi;
               scaledSquareSum=1.0+scaledSquareSum*temp*temp;
               scale=absXi;
@@ -194,16 +194,16 @@ namespace viennacl
       {
         //based on http://www.netlib.org/blas/snrm2.f
 
-        if(n<1)
+        if (n<1)
           return std::complex<float>(0);
-        if(n==1)
+        if (n==1)
           return std::abs(x[0]);
         float scale=0.0;
         float scaledSquareSum=1.0;
-        for(vcl_size_t i=0;i<n;i++){
-          if(x[i].real()!=0.0){
+        for (vcl_size_t i=0;i<n;i++){
+          if (x[i].real()!=0.0){
             float absXi=std::abs(x[i].real());
-            if(absXi>scale){
+            if (absXi>scale){
               float temp=scale/absXi;
               scaledSquareSum=1.0f+scaledSquareSum*temp*temp;
               scale=absXi;
@@ -213,9 +213,9 @@ namespace viennacl
               scaledSquareSum+=temp*temp;
             }
           }
-          if(x[i].imag()!=0.0){
+          if (x[i].imag()!=0.0){
             float absXi=std::abs(x[i].imag());
-            if(absXi>scale){
+            if (absXi>scale){
               float temp=scale/absXi;
               scaledSquareSum=1.0f+scaledSquareSum*temp*temp;
               scale=absXi;
@@ -239,15 +239,15 @@ namespace viennacl
       {
 
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(float)!=0)
-          for(vcl_size_t i=0;i<n;i++)
+        if (n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(float)!=0)
+          for (vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
         else
         {
           //process unaligned section of arrays
-          while(((vcl_size_t)x)%16)
+          while (((vcl_size_t)x)%16)
           {
-            if(n<=0)
+            if (n<=0)
               return;
             y[0]+=a*x[0];
             x++;
@@ -262,7 +262,7 @@ namespace viennacl
           __m128 prod;
 
           //add floats 8 at a time
-          while(n>=8){
+          while (n>=8){
 
             //read floats into MMX registers (8 from each array)
             reg0=_mm_load_ps(x+0);
@@ -286,7 +286,7 @@ namespace viennacl
           }
 
           //add beyond the last multiple of 8
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
         }
       }
@@ -296,16 +296,16 @@ namespace viennacl
       inline void _axpy<double>(const double* x, double* y, vcl_size_t n, double a)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(double)!=0)
-          for(vcl_size_t i=0;i<n;i++)
+        if (n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(double)!=0)
+          for (vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
 
         else
         {
           //process unaligned section of arrays
-          while(((vcl_size_t)x)%16)
+          while (((vcl_size_t)x)%16)
           {
-            if(n<=0)
+            if (n<=0)
               return;
             y[0]+=a*x[0];
             x++;
@@ -320,7 +320,7 @@ namespace viennacl
           __m128d prod;
 
           //add doubles 4 at a time
-          while(n>=8){
+          while (n>=8){
 
             //read floats into MMX registers (4 from each array)
             reg0=_mm_load_pd(x+0);
@@ -344,7 +344,7 @@ namespace viennacl
           }
 
           //add beyond the last multiple of 4
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
         }
       }
@@ -355,10 +355,10 @@ namespace viennacl
       {
 
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(float)!=0)
+        if (n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(float)!=0)
         {
           float sum=0;
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
           return sum;
         }
@@ -367,9 +367,9 @@ namespace viennacl
 
           //process unaligned section of array
           float sum=0;
-          while(((vcl_size_t)x)%16)
+          while (((vcl_size_t)x)%16)
           {
-            if(n<=0)
+            if (n<=0)
               return sum;
             sum+=x[0]*y[0];
             y++;
@@ -381,7 +381,7 @@ namespace viennacl
           __m128 reg0,reg1,reg2,reg3;
 
           //add floats 8 at a time
-          while(n>=8)
+          while (n>=8)
           {
             //read floats into MMX registers (8 from each array)
             reg0=_mm_load_ps(x+0);
@@ -403,7 +403,7 @@ namespace viennacl
           }
 
           //add beyond where the inner loop stopped
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
 
           //move the sums from the xmm registers to aligned memory on the stack
@@ -420,10 +420,10 @@ namespace viennacl
       inline double _dot(vcl_size_t n, const double* x, const double* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(double)!=0)
+        if (n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(double)!=0)
         {
           double sum=0;
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
           return sum;
         }
@@ -431,9 +431,9 @@ namespace viennacl
         {
           //process unaligned section of array
           double sum=0;
-          while(((vcl_size_t)x)%16)
+          while (((vcl_size_t)x)%16)
           {
-            if(n<=0)
+            if (n<=0)
               return sum;
             sum+=x[0]*y[0];
             y++;
@@ -446,7 +446,7 @@ namespace viennacl
           __m128d reg0,reg1,reg2,reg3;
 
           //add doubles 4 at a time
-          while(n>=4)
+          while (n>=4)
           {
             //read doubles into MMX registers (4 from each array)
             reg0=_mm_load_pd(x+0);
@@ -468,7 +468,7 @@ namespace viennacl
           }
 
           //add beyond where the inner loop stopped
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
 
           //move the sums from the xmm registers to aligned memory on the stack
@@ -492,16 +492,16 @@ namespace viennacl
       inline void _axpy<std::complex<float> >(const std::complex<float>* x, std::complex<float>* y, vcl_size_t n, std::complex<float> a)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
-          for(vcl_size_t i=0;i<n;i++)
+        if (n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
+          for (vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
 
         else
         {
           //process unaligned section of arrays
-          while(((vcl_size_t)x)%16)
+          while (((vcl_size_t)x)%16)
           {
-            if(n<=0)
+            if (n<=0)
               return;
             y[0]+=a*x[0];
             x++;
@@ -517,7 +517,7 @@ namespace viennacl
   #endif
 
           //add complex floats 4 at a time
-          while(n>=4)
+          while (n>=4)
           {
             //read floats into MMX registers (8 from each array)
             reg0=_mm_load_ps((float*)(x+0));
@@ -565,7 +565,7 @@ namespace viennacl
           }
 
           //add beyond the last multiple of 4
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
         }
       }
@@ -575,8 +575,8 @@ namespace viennacl
       inline void _axpy<std::complex<double> >(const std::complex<double>* x, std::complex<double>* y, vcl_size_t n, std::complex<double> a)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
-          for(vcl_size_t i=0;i<n;i++)
+        if (n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
+          for (vcl_size_t i=0;i<n;i++)
             y[i]+=a*x[i];
 
         else
@@ -589,7 +589,7 @@ namespace viennacl
   #endif
 
           //add complex doubles 2 at a time
-          while(n>=2)
+          while (n>=2)
           {
             //read doubles into MMX registers (4 from each array)
             reg0=_mm_load_pd((double*)(x+0));
@@ -637,7 +637,7 @@ namespace viennacl
           }
 
           //add beyond the last multiple of 2
-          if(n)
+          if (n)
             y[0]+=a*x[0];
         }
       }
@@ -647,10 +647,10 @@ namespace viennacl
       inline std::complex<float> _dot<std::complex<float> >(vcl_size_t n, const std::complex<float>* x, const std::complex<float>* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
+        if (n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
         {
           std::complex<float> sum(0);
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
           return sum;
         }
@@ -658,9 +658,9 @@ namespace viennacl
         {
           //process unaligned section of arrays
           std::complex<float> sum(0);
-          while(((vcl_size_t)x)%16)
+          while (((vcl_size_t)x)%16)
           {
-            if(n<=0)
+            if (n<=0)
               return sum;
             sum+=x[0]*y[0];
             y++;
@@ -675,7 +675,7 @@ namespace viennacl
   #endif
 
           //add complex floats 4 at a time
-          while(n>=4)
+          while (n>=4)
           {
             //read floats into MMX registers (8 from each array)
             reg0=_mm_load_ps((float*)(x+0));
@@ -724,7 +724,7 @@ namespace viennacl
           }
 
           //add beyond where the inner loop stopped
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
 
           //move the sums from the xmm registers to aligned memory on the stack
@@ -743,10 +743,10 @@ namespace viennacl
       inline std::complex<double> _dot<std::complex<double> >(vcl_size_t n, const std::complex<double>* x, const std::complex<double>* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
+        if (n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
         {
           std::complex<double> sum(0);
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=x[i]*y[i];
           return sum;
         }
@@ -759,7 +759,7 @@ namespace viennacl
   #endif
 
           //add complex doubles 2 at a time
-          while(n>=2)
+          while (n>=2)
           {
             //read doubles into MMX registers (4 from each array)
             reg0=_mm_load_pd((double*)(x+0));
@@ -809,7 +809,7 @@ namespace viennacl
 
           //add beyond where the inner loop stopped
           std::complex<double> sum(0);
-          if(n)
+          if (n)
             sum=x[0]*y[0];
 
           //move the sums from the xmm registers to aligned memory on the stack
@@ -827,10 +827,10 @@ namespace viennacl
       inline std::complex<float> _dotc<std::complex<float> >(vcl_size_t n, const std::complex<float>* x, const std::complex<float>* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
+        if (n<16||((vcl_size_t)x)%16!=((vcl_size_t)y)%16||((vcl_size_t)x)%sizeof(std::complex<float>)!=0)
         {
           std::complex<float> sum(0);
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=conj(x[i])*y[i];
           return sum;
         }
@@ -838,9 +838,9 @@ namespace viennacl
         {
           //process unaligned section of arrays
           std::complex<float> sum(0);
-          while(((vcl_size_t)x)%16)
+          while (((vcl_size_t)x)%16)
           {
-            if(n<=0)
+            if (n<=0)
               return sum;
             sum+=conj(x[0])*y[0];
             y++;
@@ -855,7 +855,7 @@ namespace viennacl
   #endif
 
           //add complex floats 4 at a time
-          while(n>=4)
+          while (n>=4)
           {
             //read floats into MMX registers (8 from each array)
             reg0=_mm_load_ps((float*)(x+0));
@@ -904,7 +904,7 @@ namespace viennacl
           }
 
           //add beyond where the inner loop stopped
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=conj(x[i])*y[i];
 
           //move the sums from the xmm registers to aligned memory on the stack
@@ -922,10 +922,10 @@ namespace viennacl
       inline std::complex<double> _dotc<std::complex<double> >(vcl_size_t n, const std::complex<double>* x, const std::complex<double>* y)
       {
         //if the array is short or if either array is unaligned, perform the non-SSE code
-        if(n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
+        if (n<16||((vcl_size_t)x)%16||((vcl_size_t)y)%16)
         {
           std::complex<double> sum(0);
-          for(vcl_size_t i=0;i<n;i++)
+          for (vcl_size_t i=0;i<n;i++)
             sum+=conj(x[i])*y[i];
           return sum;
         }
@@ -938,7 +938,7 @@ namespace viennacl
   #endif
 
           //add complex doubles 2 at a time
-          while(n>=2)
+          while (n>=2)
           {
             //read doubles into MMX registers (4 from each array)
             reg0=_mm_load_pd((double*)(x+0));
@@ -989,7 +989,7 @@ namespace viennacl
 
           //add beyond where the inner loop stopped
           std::complex<double> sum(0);
-          if(n)
+          if (n)
             sum=conj(x[0])*y[0];
 
           //move the sums from the xmm registers to aligned memory on the stack

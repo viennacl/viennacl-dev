@@ -577,7 +577,7 @@ namespace viennacl
         /** @brief Device architecture family. */
         device_architecture_family architecture_family() const
         {
-          if( !architecture_family_valid_)
+          if ( !architecture_family_valid_)
           {
             architecture_family_ = get_architecture_family(vendor_id(), name());
             architecture_family_valid_ = true;

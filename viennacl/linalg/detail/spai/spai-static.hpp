@@ -114,10 +114,10 @@ namespace viennacl
         template<typename VectorType, typename ScalarType>
         void projectI(const std::vector<unsigned int>& I, VectorType& y, unsigned int ind)
         {
-          for(vcl_size_t i = 0; i < I.size(); ++i)
+          for (vcl_size_t i = 0; i < I.size(); ++i)
           {
             //y.resize(y.size()+1);
-            if(I[i] == ind)
+            if (I[i] == ind)
               y(i) = static_cast<ScalarType>(1.0);
             else
               y(i) = static_cast<ScalarType>(0.0);
@@ -133,7 +133,7 @@ namespace viennacl
         {
             //typedef typename VectorType::value_type ScalarType;
             //unsigned int tmp_v;
-            for(typename SparseVectorType::const_iterator vec_it = v.begin(); vec_it != v.end(); ++vec_it)
+            for (typename SparseVectorType::const_iterator vec_it = v.begin(); vec_it != v.end(); ++vec_it)
             {
                 //tmp_v = vec_it->first;
                 J.push_back(vec_it->first);
@@ -150,10 +150,10 @@ namespace viennacl
         {
           typedef typename SparseMatrixType::value_type ScalarType;
           M.resize(A.size1(), A.size2(), false);
-          for(typename SparseMatrixType::const_iterator1 row_it = A.begin1(); row_it!= A.end1(); ++row_it)
+          for (typename SparseMatrixType::const_iterator1 row_it = A.begin1(); row_it!= A.end1(); ++row_it)
           {
             //
-            for(typename SparseMatrixType::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it)
+            for (typename SparseMatrixType::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it)
             {
               M(col_it.index1(),col_it.index2()) = static_cast<ScalarType>(1);
             }
@@ -168,11 +168,11 @@ namespace viennacl
         template<typename SparseVectorType>
         void projectRows(const std::vector<SparseVectorType>& A_v_c, const std::vector<unsigned int>& J, std::vector<unsigned int>& I)
         {
-          for(vcl_size_t i = 0; i < J.size(); ++i)
+          for (vcl_size_t i = 0; i < J.size(); ++i)
           {
-            for(typename SparseVectorType::const_iterator col_it = A_v_c[J[i]].begin(); col_it!=A_v_c[J[i]].end(); ++col_it)
+            for (typename SparseVectorType::const_iterator col_it = A_v_c[J[i]].begin(); col_it!=A_v_c[J[i]].end(); ++col_it)
             {
-              if(!isInIndexSet(I, col_it->first))
+              if (!isInIndexSet(I, col_it->first))
                 I.push_back(col_it->first);
             }
           }

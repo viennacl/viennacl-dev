@@ -109,17 +109,17 @@ int test( Epsilon const& epsilon) {
 
     srand(0);
 
-    for(unsigned int i=0; i<size1; ++i){
-        for(unsigned int j=0 ; j<size2; ++j){
+    for (unsigned int i=0; i<size1; ++i){
+        for (unsigned int j=0 ; j<size2; ++j){
             cA(i,j)=j;
         }
     }
 
-    for(unsigned int i=0; i<size2; ++i){
+    for (unsigned int i=0; i<size2; ++i){
         cx(i) = i;
     }
 
-    for(unsigned int i=0; i<size1; ++i){
+    for (unsigned int i=0; i<size1; ++i){
         cy(i) = i;
     }
 
@@ -168,9 +168,9 @@ int test( Epsilon const& epsilon) {
 
     {
         std::cout << "y = reduce_rows<add>(A)..." << std::endl;
-        for(unsigned int i = 0 ; i < size1 ; ++i){
+        for (unsigned int i = 0 ; i < size1 ; ++i){
             NumericT acc = cA(i,0);
-            for(unsigned int j = 1 ; j < size2 ; ++j){
+            for (unsigned int j = 1 ; j < size2 ; ++j){
                 acc += cA(i,j);
             }
             cy(i) = acc;
@@ -185,9 +185,9 @@ int test( Epsilon const& epsilon) {
 
     {
         std::cout << "x = reduce_columns<add>(A)..." << std::endl;
-        for(unsigned int j = 0 ; j < size2 ; ++j){
+        for (unsigned int j = 0 ; j < size2 ; ++j){
             NumericT acc = cA(0,j);
-            for(unsigned int i = 1 ; i < size1 ; ++i){
+            for (unsigned int i = 1 ; i < size1 ; ++i){
                 acc += cA(i,j);
             }
             cx(j) = acc;
@@ -240,7 +240,7 @@ int main() {
 //    std::cout << "----------------------------------------------" << std::endl;
 //    std::cout << std::endl;
 //#ifdef VIENNACL_WITH_OPENCL
-//   if( viennacl::ocl::current_device().double_support() )
+//   if ( viennacl::ocl::current_device().double_support() )
 //#endif
 //    {
 //        double epsilon = 1.0E-4;

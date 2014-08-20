@@ -71,7 +71,7 @@ int main()
     std::cout << "# " << std::endl;
     std::cout << "# Available Devices: " << std::endl;
     std::cout << "# " << std::endl;
-    for(devices_type::iterator iter = devices.begin(); iter != devices.end(); iter++)
+    for (devices_type::iterator iter = devices.begin(); iter != devices.end(); iter++)
     {
         std::cout << std::endl;
 

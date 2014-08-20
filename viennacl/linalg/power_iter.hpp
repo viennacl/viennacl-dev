@@ -83,7 +83,7 @@ namespace viennacl
       VectorT r2(matrix_size);
       std::vector<CPU_ScalarType> s(matrix_size);
 
-      for(vcl_size_t i=0; i<s.size(); ++i)
+      for (vcl_size_t i=0; i<s.size(); ++i)
         s[i] = (i % 3) * CPU_ScalarType(0.1234) - CPU_ScalarType(0.5);   //'random' starting vector
 
       detail::copy_vec_to_vec(s,r);

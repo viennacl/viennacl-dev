@@ -265,7 +265,7 @@ namespace viennacl
 
           // Iterate over both lists at once. This makes sure that points are no checked twice when influence relation is symmetric (which is often the case).
           // Note: Only works because influencing and influenced lists are sorted by point-index.
-          while(iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
+          while (iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
           {
             if (iter2 == point1->end_influencing())
             {
@@ -469,7 +469,7 @@ namespace viennacl
 
           // Iterate over both lists at once. This makes sure that points are no checked twice when influence relation is symmetric (which is often the case).
           // Note: Only works because influencing and influenced lists are sorted by point-index.
-          while(iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
+          while (iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
           {
             if (iter2 == point1->end_influencing())
             {

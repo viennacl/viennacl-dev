@@ -149,15 +149,15 @@ namespace viennacl
 
         const SCALARTYPE NUM_PI = 3.14159265358979323846;
 
-        for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
+        for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
         {
-          for(unsigned int k = blockIdx.x * blockDim.x + threadIdx.x; k < size; k += gridDim.x * blockDim.x)
+          for (unsigned int k = blockIdx.x * blockDim.x + threadIdx.x; k < size; k += gridDim.x * blockDim.x)
           {
             T f;
             f.x = 0;
             f.y = 0;
 
-            for(unsigned int n = 0; n < size; n++)
+            for (unsigned int n = 0; n < size; n++)
             {
               T in;
               if (!is_row_major)
@@ -251,13 +251,13 @@ namespace viennacl
         unsigned int glb_id = blockIdx.x * blockDim.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
+        for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
         {
-          for(unsigned int i = glb_id; i < size; i += glb_sz)
+          for (unsigned int i = glb_id; i < size; i += glb_sz)
           {
             unsigned int v = get_reorder_num(i, bit_size);
 
-            if(i < v)
+            if (i < v)
             {
               if (!is_row_major)
               {
@@ -315,12 +315,12 @@ namespace viennacl
         unsigned int lcl_id = threadIdx.x;
         const SCALARTYPE NUM_PI = 3.14159265358979323846;
 
-        for(unsigned int batch_id = grp_id; batch_id < batch_num; batch_id += grp_num)
+        for (unsigned int batch_id = grp_id; batch_id < batch_num; batch_id += grp_num)
         {
-          for(unsigned int p = lcl_id; p < size; p += lcl_sz)
+          for (unsigned int p = lcl_id; p < size; p += lcl_sz)
           {
             unsigned int v = get_reorder_num(p, bit_size);
-            if(!is_row_major)
+            if (!is_row_major)
             lcl_input[v] = input[batch_id * stride + p];
             else
             lcl_input[v] = input[p * stride + batch_id];
@@ -329,11 +329,11 @@ namespace viennacl
           __syncthreads();
 
           //performs Cooley-Tukey FFT on local arrayfft
-          for(unsigned int s = 0; s < bit_size; s++)
+          for (unsigned int s = 0; s < bit_size; s++)
           {
             unsigned int ss = 1 << s;
             SCALARTYPE cs, sn;
-            for(unsigned int tid = lcl_id; tid < size; tid += lcl_sz)
+            for (unsigned int tid = lcl_id; tid < size; tid += lcl_sz)
             {
               unsigned int group = (tid & (ss - 1));
               unsigned int pos = ((tid >> s) << (s + 1)) + group;
@@ -360,9 +360,9 @@ namespace viennacl
           }
 
           //copy local array back to global memory
-          for(unsigned int p = lcl_id; p < size; p += lcl_sz)
+          for (unsigned int p = lcl_id; p < size; p += lcl_sz)
           {
-            if(!is_row_major)
+            if (!is_row_major)
             input[batch_id * stride + p] = lcl_input[p];   //index
             else
             input[p * stride + batch_id] = lcl_input[p];
@@ -392,9 +392,9 @@ namespace viennacl
         unsigned int glb_id = blockIdx.x * blockDim.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
+        for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
         {
-          for(unsigned int tid = glb_id; tid < half_size; tid += glb_sz)
+          for (unsigned int tid = glb_id; tid < half_size; tid += glb_sz)
           {
             unsigned int group = (tid & (ss - 1));
             unsigned int pos = ((tid >> s) << (s + 1)) + group;
@@ -563,7 +563,7 @@ namespace viennacl
         SCALARTYPE sn_a, cs_a;
         const SCALARTYPE NUM_PI = 3.14159265358979323846;
 
-        for(unsigned int i = glb_id; i < size; i += glb_sz)
+        for (unsigned int i = glb_id; i < size; i += glb_sz)
         {
           unsigned int rm = i * i % (double_size);
           SCALARTYPE angle = (SCALARTYPE )rm / size * (-NUM_PI);
@@ -596,7 +596,7 @@ namespace viennacl
         SCALARTYPE sn_a, cs_a;
         const SCALARTYPE NUM_PI = 3.14159265358979323846;
 
-        for(unsigned int i = glb_id; i < size; i += glb_sz)
+        for (unsigned int i = glb_id; i < size; i += glb_sz)
         {
           unsigned int rm = i * i % (double_size);
           SCALARTYPE angle = (SCALARTYPE)rm / size * NUM_PI;
@@ -617,7 +617,7 @@ namespace viennacl
           B[i] = b_i;
 
           // very bad instruction, to be fixed
-          if(i)
+          if (i)
           B[ext_size - i] = b_i;
         }
       }
@@ -753,7 +753,7 @@ namespace viennacl
           unsigned int col_num)
       {
         unsigned int size = row_num * col_num;
-        for(unsigned int i =blockIdx.x * blockDim.x + threadIdx.x; i < size; i+= gridDim.x * blockDim.x)
+        for (unsigned int i =blockIdx.x * blockDim.x + threadIdx.x; i < size; i+= gridDim.x * blockDim.x)
         {
           unsigned int row = i / col_num;
           unsigned int col = i - row*col_num;
@@ -786,12 +786,12 @@ namespace viennacl
           unsigned int col_num)
       {
         unsigned int size = row_num * col_num;
-        for(unsigned int i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i+= gridDim.x * blockDim.x)
+        for (unsigned int i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i+= gridDim.x * blockDim.x)
         {
           unsigned int row = i / col_num;
           unsigned int col = i - row*col_num;
           unsigned int new_pos = col * row_num + row;
-          if(i < new_pos)
+          if (i < new_pos)
           {
             T val = input[i];
             input[i] = input[new_pos];
@@ -877,7 +877,7 @@ namespace viennacl
           uint size)
       {
 
-        for(uint i = blockIdx.x * blockDim.x + threadIdx.x; i < (size >> 1); i+=gridDim.x * blockDim.x)
+        for (uint i = blockIdx.x * blockDim.x + threadIdx.x; i < (size >> 1); i+=gridDim.x * blockDim.x)
         {
           T val1 = vec[i];
           T val2 = vec[size - i - 1];

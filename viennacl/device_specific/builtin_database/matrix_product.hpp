@@ -96,11 +96,11 @@ matrix_product_template::parameters_type const & matrix_product_params(ocl::devi
   assert(A_trans=='N' || A_trans=='T');
   assert(B_trans=='N' || B_trans=='T');
   database_type<matrix_product_template::parameters_type> * db;
-  if(A_trans=='N' && B_trans=='N')
+  if (A_trans=='N' && B_trans=='N')
     db = &matrix_product_N_N;
-  else if(A_trans=='T' && B_trans=='N')
+  else if (A_trans=='T' && B_trans=='N')
     db = &matrix_product_T_N;
-  else if(A_trans=='N' && B_trans=='T')
+  else if (A_trans=='N' && B_trans=='T')
     db = &matrix_product_N_T;
   else
     db = &matrix_product_T_T;

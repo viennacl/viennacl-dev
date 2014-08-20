@@ -290,7 +290,7 @@ namespace viennacl
     template<typename NumericT>
     vcl_size_t ld(matrix_base<NumericT> const & mat)
     {
-      if(mat.row_major())
+      if (mat.row_major())
         return mat.internal_size2();
       return mat.internal_size1();
     }
@@ -298,7 +298,7 @@ namespace viennacl
     template<typename NumericT>
     vcl_size_t nld(matrix_base<NumericT> const & mat)
     {
-      if(mat.row_major())
+      if (mat.row_major())
         return mat.stride2();
       return mat.stride1();
     }

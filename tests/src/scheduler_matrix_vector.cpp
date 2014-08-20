@@ -135,7 +135,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -149,7 +149,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -163,7 +163,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -179,7 +179,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -195,7 +195,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -211,7 +211,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -232,7 +232,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -249,7 +249,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -266,7 +266,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
    {
       std::cout << "# Error at operation: matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
@@ -285,7 +285,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if ( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
@@ -299,7 +299,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if ( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
@@ -313,7 +313,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if ( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
@@ -328,7 +328,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if ( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
@@ -342,7 +342,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if ( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
@@ -356,7 +356,7 @@ int test_prod_rank1(Epsilon const & epsilon,
    viennacl::scheduler::execute(my_statement);
    }
 
-   if( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
+   if ( std::fabs(diff(ublas_v2, vcl_v2)) > epsilon )
    {
       std::cout << "# Error at operation: transposed matrix-vector product with scaled additions" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(ublas_v2, vcl_v2)) << std::endl;
@@ -442,7 +442,7 @@ int test(Epsilon const& epsilon)
    }
    vcl_matrix.resize(2*num_rows, 2*num_cols, true);
    viennacl::copy(vcl_matrix, matrix);
-   if( std::fabs(diff(matrix, vcl_matrix)) > epsilon )
+   if ( std::fabs(diff(matrix, vcl_matrix)) > epsilon )
    {
       std::cout << "# Error at operation: matrix resize (to larger)" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(matrix, vcl_matrix)) << std::endl;
@@ -459,7 +459,7 @@ int test(Epsilon const& epsilon)
    std::cout << "Matrix resizing (to smaller)" << std::endl;
    matrix.resize(result.size(), rhs.size(), true);
    vcl_matrix.resize(result.size(), rhs.size(), true);
-   if( std::fabs(diff(matrix, vcl_matrix)) > epsilon )
+   if ( std::fabs(diff(matrix, vcl_matrix)) > epsilon )
    {
       std::cout << "# Error at operation: matrix resize (to smaller)" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(matrix, vcl_matrix)) << std::endl;
@@ -872,7 +872,7 @@ int main()
       std::cout << "  numeric: float" << std::endl;
       std::cout << "  layout: row-major" << std::endl;
       retval = test<NumericT, viennacl::row_major>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
          std::cout << "# Test passed" << std::endl;
       else
          return retval;
@@ -888,7 +888,7 @@ int main()
       std::cout << "  numeric: float" << std::endl;
       std::cout << "  layout: column-major" << std::endl;
       retval = test<NumericT, viennacl::column_major>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
          std::cout << "# Test passed" << std::endl;
       else
          return retval;
@@ -899,7 +899,7 @@ int main()
 
 
 #ifdef VIENNACL_WITH_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
+   if ( viennacl::ocl::current_device().double_support() )
 #endif
    {
       {
@@ -910,7 +910,7 @@ int main()
          std::cout << "  numeric: double" << std::endl;
          std::cout << "  layout: row-major" << std::endl;
          retval = test<NumericT, viennacl::row_major>(epsilon);
-            if( retval == EXIT_SUCCESS )
+            if ( retval == EXIT_SUCCESS )
                std::cout << "# Test passed" << std::endl;
             else
               return retval;
@@ -926,7 +926,7 @@ int main()
          std::cout << "  numeric: double" << std::endl;
          std::cout << "  layout: column-major" << std::endl;
          retval = test<NumericT, viennacl::column_major>(epsilon);
-            if( retval == EXIT_SUCCESS )
+            if ( retval == EXIT_SUCCESS )
                std::cout << "# Test passed" << std::endl;
             else
               return retval;

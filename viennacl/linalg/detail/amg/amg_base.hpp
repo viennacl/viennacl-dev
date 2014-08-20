@@ -1336,7 +1336,7 @@ namespace viennacl
               InternalRowIterator row_iter2 = B.begin1();
               row_iter2 += y;
 
-              for(InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
+              for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
               {
                 z = static_cast<unsigned int>(col_iter2.index2());
                 prod = *col_iter * *col_iter2;
@@ -1378,7 +1378,7 @@ namespace viennacl
               InternalRowIterator row_iter2 = A.begin1();
               row_iter2 += y1;
 
-              for(InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
+              for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
               {
                 y2 = static_cast<long>(col_iter2.index2());
                 row.add (y2, *col_iter * *col_iter2);

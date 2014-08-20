@@ -206,7 +206,7 @@ namespace viennacl
 
         std::vector<SCALARTYPE> tmp(size);
 
-        for(vcl_size_t i = 0; i < size; i++) tmp[i] = com_src(i, 0);
+        for (vcl_size_t i = 0; i < size; i++) tmp[i] = com_src(i, 0);
 
         copy(tmp, circ_dst);
     }
@@ -242,14 +242,14 @@ namespace viennacl
         copy(gpu_matrix, tmp);
         s << "[" << size << "," << size << "](";
 
-        for(vcl_size_t i = 0; i < size; i++) {
+        for (vcl_size_t i = 0; i < size; i++) {
             s << "(";
-            for(vcl_size_t j = 0; j < size; j++) {
+            for (vcl_size_t j = 0; j < size; j++) {
                 long index = static_cast<long>(i) - static_cast<long>(j);
-                if(index < 0) index = static_cast<long>(size) + index;
+                if (index < 0) index = static_cast<long>(size) + index;
                 s << tmp[index];
                 //s << index;
-                if(j < (size - 1)) s << ",";
+                if (j < (size - 1)) s << ",";
             }
             s << ")";
         }

@@ -90,7 +90,7 @@ namespace viennacl{
       }
 
       static std::string numeric_type_to_string(scheduler::statement_node_numeric_type const & type){
-        switch(type)
+        switch (type)
         {
 //          case scheduler::CHAR_TYPE: return "char";
 //          case scheduler::UCHAR_TYPE: return "unsigned char";
@@ -110,7 +110,7 @@ namespace viennacl{
       template<class Fun>
       static typename Fun::result_type call_on_host_scalar(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.type_family == scheduler::SCALAR_TYPE_FAMILY && bool("Must be called on a host scalar"));
-        switch(element.numeric_type)
+        switch (element.numeric_type)
         {
 //          case scheduler::CHAR_TYPE: return fun(element.host_char);
 //          case scheduler::UCHAR_TYPE: return fun(element.host_uchar);
@@ -129,7 +129,7 @@ namespace viennacl{
       template<class Fun>
       static typename Fun::result_type call_on_scalar(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.type_family == scheduler::SCALAR_TYPE_FAMILY && bool("Must be called on a scalar"));
-        switch(element.numeric_type)
+        switch (element.numeric_type)
         {
 //          case scheduler::CHAR_TYPE: return fun(*element.scalar_char);
 //          case scheduler::UCHAR_TYPE: return fun(*element.scalar_uchar);
@@ -148,7 +148,7 @@ namespace viennacl{
       template<class Fun>
       static typename Fun::result_type call_on_vector(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.type_family == scheduler::VECTOR_TYPE_FAMILY && bool("Must be called on a vector"));
-        switch(element.numeric_type)
+        switch (element.numeric_type)
         {
 //          case scheduler::CHAR_TYPE: return fun(*element.vector_char);
 //          case scheduler::UCHAR_TYPE: return fun(*element.vector_uchar);
@@ -168,7 +168,7 @@ namespace viennacl{
       static typename Fun::result_type call_on_implicit_vector(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.type_family == scheduler::VECTOR_TYPE_FAMILY   && bool("Must be called on a implicit_vector"));
         assert(element.subtype     == scheduler::IMPLICIT_VECTOR_TYPE && bool("Must be called on a implicit_vector"));
-        switch(element.numeric_type)
+        switch (element.numeric_type)
         {
 //          case scheduler::CHAR_TYPE: return fun(*element.implicit_vector_char);
 //          case scheduler::UCHAR_TYPE: return fun(*element.implicit_vector_uchar);
@@ -187,7 +187,7 @@ namespace viennacl{
       template<class Fun>
       static typename Fun::result_type call_on_matrix(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.type_family == scheduler::MATRIX_TYPE_FAMILY && bool("Must be called on a matrix"));
-        switch(element.numeric_type)
+        switch (element.numeric_type)
         {
 //          case scheduler::CHAR_TYPE: return fun(*element.matrix_char);
 //          case scheduler::UCHAR_TYPE: return fun(*element.matrix_uchar);
@@ -207,7 +207,7 @@ namespace viennacl{
       template<class Fun>
       static typename Fun::result_type call_on_implicit_matrix(scheduler::lhs_rhs_element element, Fun const & fun){
         assert(element.subtype     == scheduler::IMPLICIT_MATRIX_TYPE && bool("Must be called on a implicit matrix"));
-        switch(element.numeric_type)
+        switch (element.numeric_type)
         {
 //          case scheduler::CHAR_TYPE: return fun(*element.implicit_matrix_char);
 //          case scheduler::UCHAR_TYPE: return fun(*element.implicit_matrix_uchar);
@@ -225,7 +225,7 @@ namespace viennacl{
 
       template<class Fun>
       static typename Fun::result_type call_on_element(scheduler::lhs_rhs_element const & element, Fun const & fun){
-        switch(element.type_family){
+        switch (element.type_family){
         case scheduler::SCALAR_TYPE_FAMILY:
           if (element.subtype == scheduler::HOST_SCALAR_TYPE)
             return call_on_host_scalar(element, fun);
@@ -384,7 +384,7 @@ namespace viennacl{
         public:
           kgenstream(std::ostringstream& oss,unsigned int const & tab_count) : oss_(oss), tab_count_(tab_count){ }
           int sync() {
-            for(unsigned int i=0 ; i<tab_count_;++i)
+            for (unsigned int i=0 ; i<tab_count_;++i)
               oss_ << "    ";
             oss_ << str();
             str("");
@@ -490,7 +490,7 @@ namespace viennacl{
       {
         using namespace tree_parsing;
         assert(leaf==LHS_NODE_TYPE || leaf==RHS_NODE_TYPE);
-        if(leaf==LHS_NODE_TYPE)
+        if (leaf==LHS_NODE_TYPE)
           return const_cast<scheduler::lhs_rhs_element &>(st.array()[idx].lhs);
         return const_cast<scheduler::lhs_rhs_element &>(st.array()[idx].rhs);
       }
@@ -498,7 +498,7 @@ namespace viennacl{
       inline unsigned int size_of(scheduler::statement_node_numeric_type type)
       {
         using namespace scheduler;
-        switch(type)
+        switch (type)
         {
           case UCHAR_TYPE:
           case CHAR_TYPE: return 1;
@@ -521,7 +521,7 @@ namespace viennacl{
 
       inline std::string append_width(std::string const & str, unsigned int width)
       {
-        if(width==1)
+        if (width==1)
           return str;
         return str + tools::to_string(width);
       }

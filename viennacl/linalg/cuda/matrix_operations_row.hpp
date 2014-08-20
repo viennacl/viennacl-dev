@@ -1277,13 +1277,13 @@ namespace viennacl
             dot_prod += A[(row * A_row_inc + A_row_start) * A_internal_cols + col * A_col_inc + A_col_start] * v[v_start + v_inc * col];
           work[lid] = dot_prod;
 
-          for(unsigned int stride = blockDim.x/2 ; stride>0 ; stride>>=1){
+          for (unsigned int stride = blockDim.x/2 ; stride>0 ; stride>>=1){
             __syncthreads();
-            if(lid < stride)
+            if (lid < stride)
               work[lid] += work[lid+stride];
           }
 
-          if(lid == 0)
+          if (lid == 0)
             result[row * result_inc + result_start] = work[0];
         }
       }

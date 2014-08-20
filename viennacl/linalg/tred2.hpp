@@ -48,13 +48,13 @@ namespace viennacl
 #endif
 
       vcl_size_t n=A.size1();
-      if(n!=A.size2())
+      if (n!=A.size2())
         std::cerr << "ViennaCL: Warning in inplace_tred2(): Matrix is not hermitian (or real symmetric)" << std::endl;
       block_size=std::min(n,block_size);
 
       //get pointers to the value arrays
       ScalarType** rows=new ScalarType*[n];
-      for(vcl_size_t i=0;i<n;i++)
+      for (vcl_size_t i=0;i<n;i++)
         rows[i]=(ScalarType*)&A(i,0);
 
       //call the optimized CPU code

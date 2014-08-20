@@ -22,7 +22,7 @@ namespace viennacl{
         array[0].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         array[0].op.type = ASSIGN_OP;
         array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
-        if(z)
+        if (z)
           array[0].rhs.node_index = 1;
         else
           array[0].rhs.node_index = flip_a?2:3;
@@ -55,7 +55,7 @@ namespace viennacl{
         array[4].op.type = OPERATION_UNARY_MINUS_TYPE;
 
         //5
-        if(z)
+        if (z)
         {
           statement::add_element(dummy, array[5].lhs, *z);
           array[5].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
@@ -163,7 +163,7 @@ namespace viennacl{
         array[1].op.type = OPERATION_UNARY_SQRT_TYPE;
 
 
-        if(x_abs)
+        if (x_abs)
         {
           array[2].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
           array[2].lhs.node_index = 3;
@@ -172,7 +172,7 @@ namespace viennacl{
         {
           statement::add_element(dummy, array[2].lhs, *x);
         }
-        if(y)
+        if (y)
         {
           array[2].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
           array[2].op.type = OPERATION_BINARY_INNER_PROD_TYPE;
@@ -184,7 +184,7 @@ namespace viennacl{
           array[2].op.type = ROP;
         }
 
-        if(is_floating_point<T>::value)
+        if (is_floating_point<T>::value)
         {
           statement::add_element(dummy, array[3].lhs, *x);
           array[3].op.type_family = OPERATION_UNARY_TYPE_FAMILY;
@@ -258,7 +258,7 @@ namespace viennacl{
         statement::add_element(dummy, array[1].lhs, *y);
         array[1].op.type_family = z?OPERATION_BINARY_TYPE_FAMILY:OPERATION_UNARY_TYPE_FAMILY;
         array[1].op.type = TYPE;
-        if(z)
+        if (z)
           statement::add_element(dummy, array[1].rhs, *z);
 
         return statement(array);
@@ -276,7 +276,7 @@ namespace viennacl{
         vcl_size_t dummy = 0;
         statement::container_type array(2);
 
-        if(op==3)
+        if (op==3)
           statement::add_element(dummy, array[0].lhs, *A);
         else
           statement::add_element(dummy, array[0].lhs, *x);
@@ -285,16 +285,16 @@ namespace viennacl{
         array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
         array[0].rhs.node_index = 1;
 
-        if(op==3)
+        if (op==3)
           statement::add_element(dummy, array[1].lhs, *x);
         else
           statement::add_element(dummy, array[1].lhs, *A);
         array[1].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
-        if(op==0)
+        if (op==0)
          array[1].op.type = OPERATION_BINARY_MATRIX_ROW_TYPE;
-        else if(op==1)
+        else if (op==1)
           array[1].op.type = OPERATION_BINARY_MATRIX_COLUMN_TYPE;
-        else if(op==2)
+        else if (op==2)
           array[1].op.type = OPERATION_BINARY_MATRIX_DIAG_TYPE;
         else
           array[1].op.type = OPERATION_BINARY_VECTOR_DIAG_TYPE;
@@ -340,7 +340,7 @@ namespace viennacl{
         array[0].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
         array[0].rhs.node_index = 1;
 
-        if(A_trans)
+        if (A_trans)
         {
           array[1].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
           array[1].lhs.node_index = 2;
@@ -354,7 +354,7 @@ namespace viennacl{
           statement::add_element(dummy, array[1].lhs, *A);
         }
 
-        if(x)
+        if (x)
         {
           array[1].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
           array[1].op.type = OPERATION_BINARY_MAT_VEC_PROD_TYPE;
@@ -403,7 +403,7 @@ namespace viennacl{
         scheduler::statement::add_element(dummy, array[2].rhs, alpha);
 
 
-        if(A_trans)
+        if (A_trans)
         {
           array[3].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
           array[3].lhs.node_index = 4;
@@ -420,7 +420,7 @@ namespace viennacl{
         array[3].op.type_family = OPERATION_BINARY_TYPE_FAMILY;
         array[3].op.type = OPERATION_BINARY_MAT_MAT_PROD_TYPE;
 
-        if(B_trans)
+        if (B_trans)
         {
           array[3].rhs.type_family = COMPOSITE_OPERATION_FAMILY;
           array[3].rhs.node_index = 5;

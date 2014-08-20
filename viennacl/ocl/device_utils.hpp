@@ -72,13 +72,13 @@ namespace viennacl
     inline device_architecture_family get_architecture_family(cl_uint vendor_id, std::string const & name)
     {
       /*-NVidia-*/
-      if(vendor_id==nvidia_id)
+      if (vendor_id==nvidia_id)
       {
         //GeForce
         vcl_size_t found=0;
-        if((found= name.find("GeForce",0)) != std::string::npos)
+        if ((found= name.find("GeForce",0)) != std::string::npos)
         {
-          if((found = name.find_first_of("123456789", found)) != std::string::npos)
+          if ((found = name.find_first_of("123456789", found)) != std::string::npos)
           {
             switch (name[found])
             {
@@ -101,11 +101,11 @@ namespace viennacl
         }
 
         //Tesla
-        else if((found = name.find("Tesla",0)) != std::string::npos)
+        else if ((found = name.find("Tesla",0)) != std::string::npos)
         {
-          if((found = name.find("CMK", found)) != std::string::npos)
+          if ((found = name.find("CMK", found)) != std::string::npos)
           {
-            switch(name[found])
+            switch (name[found])
             {
               case 'C' : return fermi;
               case 'M' : return fermi;
@@ -123,10 +123,10 @@ namespace viennacl
       }
 
       /*-AMD-*/
-      else if(vendor_id==amd_id)
+      else if (vendor_id==amd_id)
       {
 
-#define VIENNACL_DEVICE_MAP(device,arch)if(name.find(device,0)!=std::string::npos) return arch;
+#define VIENNACL_DEVICE_MAP(device,arch)if (name.find(device,0)!=std::string::npos) return arch;
 
         //Evergreen
         VIENNACL_DEVICE_MAP("Cedar",evergreen);

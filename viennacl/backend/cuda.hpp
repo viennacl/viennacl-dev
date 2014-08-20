@@ -57,7 +57,7 @@ namespace viennacl
 
         inline void cuda_error_check(cudaError error_code, const char *file, const int line )
         {
-          if(cudaSuccess != error_code)
+          if (cudaSuccess != error_code)
           {
             std::cerr << file << "(" << line << "): " << ": CUDA Runtime API error " << error_code << ": " << cudaGetErrorString( error_code ) << std::endl;
             throw "CUDA error";

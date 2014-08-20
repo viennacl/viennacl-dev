@@ -45,7 +45,7 @@ namespace viennacl
         {
           viennacl::ocl::context& ctx = traits::opencl_context(M);
           ocl::program* program;
-          if(M.row_major())
+          if (M.row_major())
           {
             typedef viennacl::linalg::opencl::kernels::matrix_legacy<T, row_major>  KernelClass;
             KernelClass::init(ctx);

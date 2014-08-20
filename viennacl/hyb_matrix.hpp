@@ -114,7 +114,7 @@ namespace viennacl
       assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
       assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
 
-      if(cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0)
+      if (cpu_matrix.size1() > 0 && cpu_matrix.size2() > 0)
       {
         //determine max capacity for row
         vcl_size_t max_entries_per_row = 0;
@@ -133,11 +133,11 @@ namespace viennacl
         }
 
         vcl_size_t sum = 0;
-        for(vcl_size_t ind = 0; ind <= max_entries_per_row; ind++)
+        for (vcl_size_t ind = 0; ind <= max_entries_per_row; ind++)
         {
             sum += hist_entries[ind];
 
-            if(sum >= gpu_matrix.csr_threshold() * cpu_matrix.size1())
+            if (sum >= gpu_matrix.csr_threshold() * cpu_matrix.size1())
             {
                 max_entries_per_row = ind;
                 break;
@@ -168,7 +168,7 @@ namespace viennacl
 
           for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it)
           {
-            if(data_index < max_entries_per_row)
+            if (data_index < max_entries_per_row)
             {
                 ell_coords.set(gpu_matrix.internal_size1() * data_index + col_it.index1(), col_it.index2());
                 ell_elements[gpu_matrix.internal_size1() * data_index + col_it.index1()] = *col_it;
@@ -186,7 +186,7 @@ namespace viennacl
 
         }
 
-        if(csr_cols.empty())
+        if (csr_cols.empty())
         {
           csr_cols.push_back(0);
           csr_elements.push_back(0);
@@ -215,7 +215,7 @@ namespace viennacl
       assert( (viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
       assert( (viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
 
-      if(gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0)
+      if (gpu_matrix.size1() > 0 && gpu_matrix.size2() > 0)
       {
         std::vector<SCALARTYPE> ell_elements(gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
         viennacl::backend::typesafe_host_array<unsigned int> ell_coords(gpu_matrix.handle2(), gpu_matrix.internal_size1() * gpu_matrix.internal_ellnnz());
@@ -231,18 +231,18 @@ namespace viennacl
         viennacl::backend::memory_read(gpu_matrix.handle5(), 0, sizeof(SCALARTYPE) * csr_elements.size(), &(csr_elements[0]));
 
 
-        for(vcl_size_t row = 0; row < gpu_matrix.size1(); row++)
+        for (vcl_size_t row = 0; row < gpu_matrix.size1(); row++)
         {
-          for(vcl_size_t ind = 0; ind < gpu_matrix.internal_ellnnz(); ind++)
+          for (vcl_size_t ind = 0; ind < gpu_matrix.internal_ellnnz(); ind++)
           {
             vcl_size_t offset = gpu_matrix.internal_size1() * ind + row;
 
-            if(ell_elements[offset] == static_cast<SCALARTYPE>(0.0))
+            if (ell_elements[offset] == static_cast<SCALARTYPE>(0.0))
             {
               continue;
             }
 
-            if(ell_coords[offset] >= gpu_matrix.size2())
+            if (ell_coords[offset] >= gpu_matrix.size2())
             {
               std::cerr << "ViennaCL encountered invalid data " << offset << " " << ind << " " << row << " " << ell_coords[offset] << " " << gpu_matrix.size2() << std::endl;
               return;
@@ -251,14 +251,14 @@ namespace viennacl
             cpu_matrix(row, ell_coords[offset]) = ell_elements[offset];
           }
 
-          for(vcl_size_t ind = csr_rows[row]; ind < csr_rows[row+1]; ind++)
+          for (vcl_size_t ind = csr_rows[row]; ind < csr_rows[row+1]; ind++)
           {
-            if(csr_elements[ind] == static_cast<SCALARTYPE>(0.0))
+            if (csr_elements[ind] == static_cast<SCALARTYPE>(0.0))
             {
               continue;
             }
 
-            if(csr_cols[ind] >= gpu_matrix.size2())
+            if (csr_cols[ind] >= gpu_matrix.size2())
             {
               std::cerr << "ViennaCL encountered invalid data " << std::endl;
               return;

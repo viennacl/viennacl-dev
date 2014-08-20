@@ -57,8 +57,8 @@ int main()
   boost::numeric::ublas::matrix<ScalarType> ublas_toeplitz(size, size);
   boost::numeric::ublas::matrix<ScalarType> ublas_vandermonde(size, size);
 
-  for(std::size_t i = 0; i < size; i++)
-    for(std::size_t j = 0; j < size; j++)
+  for (std::size_t i = 0; i < size; i++)
+    for (std::size_t j = 0; j < size; j++)
     {
       ublas_circulant(i,j)   = static_cast<ScalarType>((i - j + size) % size);
       ublas_hankel(i,j)      = static_cast<ScalarType>((i + j) % (2 * size));
@@ -83,7 +83,7 @@ int main()
   viennacl::copy(ublas_vandermonde, vcl_vandermonde);
 
   // fill vectors:
-  for(std::size_t i = 0; i < size; i++)
+  for (std::size_t i = 0; i < size; i++)
   {
     ublas_vec[i] = ScalarType(i);
     vcl_vec[i] = ScalarType(i);

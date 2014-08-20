@@ -121,7 +121,7 @@ template<typename RHSTypeRef, typename RHSTypeCheck, typename Epsilon >
 void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, Epsilon const & epsilon)
 {
    double act_diff = fabs(diff(B_ref, B_check));
-   if( act_diff > epsilon )
+   if ( act_diff > epsilon )
    {
      std::cout << " FAILED!" << std::endl;
      std::cout << "# Error at operation: matrix-matrix solve" << std::endl;
@@ -537,7 +537,7 @@ int main()
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: float" << std::endl;
       retval = test<NumericT>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else
         return retval;
@@ -546,7 +546,7 @@ int main()
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
 #ifdef VIENNACL_WITH_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
+   if ( viennacl::ocl::current_device().double_support() )
 #endif
    {
       {
@@ -556,7 +556,7 @@ int main()
         std::cout << "  eps:     " << epsilon << std::endl;
         std::cout << "  numeric: double" << std::endl;
         retval = test<NumericT>(epsilon);
-        if( retval == EXIT_SUCCESS )
+        if ( retval == EXIT_SUCCESS )
           std::cout << "# Test passed" << std::endl;
         else
           return retval;

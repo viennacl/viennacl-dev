@@ -66,7 +66,7 @@ namespace viennacl
     private:
       virtual int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
-          if(p_.fetching_policy==FETCH_FROM_LOCAL)
+          if (p_.fetching_policy==FETCH_FROM_LOCAL)
             return TEMPLATE_INVALID_FETCHING_POLICY_TYPE;
           return TEMPLATE_VALID;
       }
@@ -74,7 +74,7 @@ namespace viennacl
       std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
         std::vector<std::string> result;
-        for(unsigned int i = 0 ; i < 2 ; ++i)
+        for (unsigned int i = 0 ; i < 2 ; ++i)
         {
           utils::kernel_generation_stream stream;
           unsigned int simd_width = (i==0)?1:p_.simd_width;
@@ -142,7 +142,7 @@ namespace viennacl
       void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs,  statements_container const & statements)
       {
         viennacl::ocl::kernel * kernel;
-        if(has_strided_access(statements) && p_.simd_width > 1)
+        if (has_strided_access(statements) && p_.simd_width > 1)
           kernel = &programs[0].program().get_kernel(kernel_prefix+"_strided");
         else
           kernel = &programs[1].program().get_kernel(kernel_prefix);

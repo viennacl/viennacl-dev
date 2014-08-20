@@ -90,7 +90,7 @@ namespace viennacl
                 MatrixType pA(A.size1(), A.size2());
                 MatrixType At;
                 //std::cout<<A<<std::endl;
-                if(!tag_.getIsRight()){
+                if (!tag_.getIsRight()){
                     viennacl::linalg::detail::spai::sparse_transpose(A, At);
                 }else{
                     At = A;
@@ -145,7 +145,7 @@ namespace viennacl
                 UBLASSparseMatrixType ubls_A(A.size1(), A.size2()), ubls_spai_m;
                 UBLASSparseMatrixType ubls_At;
                 viennacl::copy(A, ubls_A);
-                if(!tag_.getIsRight()){
+                if (!tag_.getIsRight()){
                     viennacl::linalg::detail::spai::sparse_transpose(ubls_A, ubls_At);
                 }
                 else{

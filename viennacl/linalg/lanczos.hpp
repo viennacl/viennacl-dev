@@ -182,7 +182,7 @@ namespace viennacl
         betas.push_back(vcl_beta);
 
         long batches = 0;
-        for(i = 1;i < static_cast<long>(size); i++)
+        for (i = 1;i < static_cast<long>(size); i++)
         {
           r = u - vcl_alpha * r;
           vcl_beta = viennacl::linalg::norm_2(r);
@@ -195,20 +195,20 @@ namespace viennacl
           k = (i + 1) % 2;
           w[index][0] = (betas[1] * w[k][1] + (alphas[0] - vcl_alpha) * w[k][0] - betas[i - 1] * w[index][0]) / vcl_beta + eps * 0.3 * get_N() * (betas[1] + vcl_beta);
 
-          for(j = 1;j < i - 1;j++)
+          for (j = 1;j < i - 1;j++)
           {
                   w[index][j] = (betas[j + 1] * w[k][j + 1] + (alphas[j] - vcl_alpha) * w[k][j] + betas[j] * w[k][j - 1] - betas[i - 1] * w[index][j]) / vcl_beta + eps * 0.3 * get_N() * (betas[j + 1] + vcl_beta);
           }
           w[index][i - 1] = 0.6 * eps * n * get_N() * betas[1] / vcl_beta;
 
-          if(second_step)
+          if (second_step)
           {
-            for(j = 0;j < batches;j++)
+            for (j = 0;j < batches;j++)
             {
               l_bound[j]++;
               u_bound[j]--;
 
-              for(k = l_bound[j];k < u_bound[j];k++)
+              for (k = l_bound[j];k < u_bound[j];k++)
               {
                 detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
                 inner_rt = viennacl::linalg::inner_prod(r,t);
@@ -224,9 +224,9 @@ namespace viennacl
           }
           batches = 0;
 
-          for(j = 0;j < i;j++)
+          for (j = 0;j < i;j++)
           {
-            if(std::fabs(w[index][j]) >= squ_eps)
+            if (std::fabs(w[index][j]) >= squ_eps)
             {
               detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, j), t);
               inner_rt = viennacl::linalg::inner_prod(r,t);
@@ -234,7 +234,7 @@ namespace viennacl
               w[index][j] = 1.5 * eps * get_N();
               k = j - 1;
               reorths++;
-              while(k >= 0 && std::fabs(w[index][k]) > eta)
+              while (k >= 0 && std::fabs(w[index][k]) > eta)
               {
                 detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
                 inner_rt = viennacl::linalg::inner_prod(r,t);
@@ -246,7 +246,7 @@ namespace viennacl
               l_bound[batches] = k + 1;
               k = j + 1;
 
-              while(k < i && std::fabs(w[index][k]) > eta)
+              while (k < i && std::fabs(w[index][k]) > eta)
               {
                 detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
                 inner_rt = viennacl::linalg::inner_prod(r,t);
@@ -261,16 +261,16 @@ namespace viennacl
             }
           }
 
-          if(batches > 0)
+          if (batches > 0)
           {
             temp = viennacl::linalg::norm_2(r);
             r = r / temp;
             vcl_beta = vcl_beta * temp;
             second_step = true;
 
-            while(temp < retry_th)
+            while (temp < retry_th)
             {
-              for(j = 0;j < i;j++)
+              for (j = 0;j < i;j++)
               {
                 detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
                 inner_rt = viennacl::linalg::inner_prod(r,t);
@@ -331,7 +331,7 @@ namespace viennacl
         detail::copy_vec_to_vec(u_zero, u);
         norm = norm_2(r);
 
-        for(vcl_size_t i = 0;i < size; i++)
+        for (vcl_size_t i = 0;i < size; i++)
         {
           r /= norm;
           vcl_beta = norm;
@@ -389,11 +389,11 @@ namespace viennacl
           norm = norm_2(r);
 
 
-          for(vcl_size_t i = 0; i < size; i++)
+          for (vcl_size_t i = 0; i < size; i++)
           {
             r /= norm;
 
-            for(vcl_size_t j = 0; j < i; j++)
+            for (vcl_size_t j = 0; j < i; j++)
             {
               q = boost::numeric::ublas::column(Q, j);
               detail::copy_vec_to_vec(q, t);
@@ -452,7 +452,7 @@ namespace viennacl
       VectorT r(matrix_size);
       std::vector<CPU_ScalarType> s(matrix_size);
 
-      for(vcl_size_t i=0; i<s.size(); ++i)
+      for (vcl_size_t i=0; i<s.size(); ++i)
         s[i] = 3.0 * get_B() + get_T() - 1.5;
 
       detail::copy_vec_to_vec(s,r);
@@ -460,7 +460,7 @@ namespace viennacl
       vcl_size_t size_krylov = (matrix_size < tag.krylov_size()) ? matrix_size
                                                                   : tag.krylov_size();
 
-      switch(tag.method())
+      switch (tag.method())
       {
         case lanczos_tag::partial_reorthogonalization:
           eigenvalues = detail::lanczosPRO(matrix, r, size_krylov, tag);
@@ -475,7 +475,7 @@ namespace viennacl
 
       std::vector<CPU_ScalarType> largest_eigenvalues;
 
-      for(vcl_size_t i = 1; i<=tag.num_eigenvalues(); i++)
+      for (vcl_size_t i = 1; i<=tag.num_eigenvalues(); i++)
         largest_eigenvalues.push_back(eigenvalues[size_krylov-i]);
 
 

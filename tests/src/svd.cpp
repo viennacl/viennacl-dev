@@ -31,7 +31,7 @@
 
 void read_matrix_size(std::fstream& f, std::size_t & sz1, std::size_t & sz2)
 {
-  if(!f.is_open())
+  if (!f.is_open())
     throw std::invalid_argument("File is not opened");
 
   f >> sz1 >> sz2;
@@ -41,14 +41,14 @@ void read_matrix_size(std::fstream& f, std::size_t & sz1, std::size_t & sz2)
 template<typename ScalarType>
 void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
 {
-  if(!f.is_open())
+  if (!f.is_open())
     throw std::invalid_argument("File is not opened");
 
   boost::numeric::ublas::matrix<ScalarType> h_A(A.size1(), A.size2());
 
-  for(std::size_t i = 0; i < h_A.size1(); i++)
+  for (std::size_t i = 0; i < h_A.size1(); i++)
   {
-    for(std::size_t j = 0; j < h_A.size2(); j++)
+    for (std::size_t j = 0; j < h_A.size2(); j++)
     {
       ScalarType val = 0.0;
       f >> val;
@@ -63,10 +63,10 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
 template<typename ScalarType>
 void read_vector_body(std::fstream& f, std::vector<ScalarType>& v)
 {
-  if(!f.is_open())
+  if (!f.is_open())
     throw std::invalid_argument("File is not opened");
 
-  for(std::size_t i = 0; i < v.size(); i++)
+  for (std::size_t i = 0; i < v.size(); i++)
   {
     ScalarType val = 0.0;
     f >> val;
@@ -78,7 +78,7 @@ void read_vector_body(std::fstream& f, std::vector<ScalarType>& v)
 template<typename ScalarType>
 void random_fill(std::vector<ScalarType>& in)
 {
-  for(std::size_t i = 0; i < in.size(); i++)
+  for (std::size_t i = 0; i < in.size(); i++)
     in[i] = static_cast<ScalarType>(rand()) / RAND_MAX;
 }
 
@@ -91,12 +91,12 @@ bool check_bidiag(viennacl::matrix<ScalarType>& A)
   std::vector<ScalarType> aA(A.size1() * A.size2());
   viennacl::fast_copy(A, &aA[0]);
 
-  for(std::size_t i = 0; i < A.size1(); i++)
+  for (std::size_t i = 0; i < A.size1(); i++)
   {
-    for(std::size_t j = 0; j < A.size2(); j++)
+    for (std::size_t j = 0; j < A.size2(); j++)
     {
       ScalarType val = aA[i * A.size2() + j];
-      if((fabs(val) > EPS) && (i != j) && ((i + 1) != j))
+      if ((fabs(val) > EPS) && (i != j) && ((i + 1) != j))
       {
         std::cout << "Failed at " << i << " " << j << " " << val << std::endl;
         return false;
@@ -120,7 +120,7 @@ ScalarType matrix_compare(viennacl::matrix<ScalarType>& res,
   ScalarType diff = 0.0;
   ScalarType mx = 0.0;
 
-  for(std::size_t i = 0; i < res_std.size(); i++)
+  for (std::size_t i = 0; i < res_std.size(); i++)
   {
     diff = std::max(diff, std::abs(res_std[i] - ref_std[i]));
     mx = std::max(mx, res_std[i]);
@@ -136,7 +136,7 @@ ScalarType sigmas_compare(viennacl::matrix<ScalarType>& res,
 {
     std::vector<ScalarType> res_std(ref.size());
 
-    for(std::size_t i = 0; i < ref.size(); i++)
+    for (std::size_t i = 0; i < ref.size(); i++)
         res_std[i] = res(i, i);
 
     std::sort(ref.begin(), ref.end());
@@ -144,7 +144,7 @@ ScalarType sigmas_compare(viennacl::matrix<ScalarType>& res,
 
     ScalarType diff = 0.0;
     ScalarType mx = 0.0;
-    for(std::size_t i = 0; i < ref.size(); i++)
+    for (std::size_t i = 0; i < ref.size(); i++)
     {
         diff = std::max(diff, std::abs(res_std[i] - ref[i]));
         mx = std::max(mx, res_std[i]);
@@ -273,7 +273,7 @@ int main()
       std::cout << "  eps:     " << epsilon << std::endl;
       std::cout << "  numeric: float" << std::endl;
       retval = test<NumericT>(epsilon);
-      if( retval == EXIT_SUCCESS )
+      if ( retval == EXIT_SUCCESS )
         std::cout << "# Test passed" << std::endl;
       else
         return retval;
@@ -281,7 +281,7 @@ int main()
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
-   if( viennacl::ocl::current_device().double_support() )
+   if ( viennacl::ocl::current_device().double_support() )
    {
       {
         typedef double NumericT;
@@ -290,7 +290,7 @@ int main()
         std::cout << "  eps:     " << epsilon << std::endl;
         std::cout << "  numeric: double" << std::endl;
         retval = test<NumericT>(epsilon);
-        if( retval == EXIT_SUCCESS )
+        if ( retval == EXIT_SUCCESS )
           std::cout << "# Test passed" << std::endl;
         else
           return retval;

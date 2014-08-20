@@ -1494,7 +1494,7 @@ int main()
     std::cout << "# Testing setup:" << std::endl;
     std::cout << "  numeric: int" << std::endl;
     retval = test<int>();
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
       std::cout << "# Test passed" << std::endl;
     else
       return retval;
@@ -1506,7 +1506,7 @@ int main()
     std::cout << "# Testing setup:" << std::endl;
     std::cout << "  numeric: long" << std::endl;
     retval = test<long>();
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
       std::cout << "# Test passed" << std::endl;
     else
       return retval;

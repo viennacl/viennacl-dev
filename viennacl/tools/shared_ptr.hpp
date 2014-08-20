@@ -121,7 +121,7 @@ namespace viennacl
 
         shared_ptr& operator=(const shared_ptr& s)
         {
-            if(this!=&s)
+            if (this!=&s)
             {
                 dec();
                 pa = s.pa;
@@ -137,15 +137,15 @@ namespace viennacl
 
         T& operator*() const { return *pt; }
 
-        void inc() { if(pa) pa->count.inc(); }
+        void inc() { if (pa) pa->count.inc(); }
 
         void dec()
         {
-          if(pa)
+          if (pa)
           {
             pa->count.dec();
 
-            if(pa->count.is_null())
+            if (pa->count.is_null())
             {
                 pa->destroy();
                 delete pa;

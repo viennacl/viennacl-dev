@@ -42,14 +42,14 @@ namespace viennacl
           source.append("  uint glb_id = get_global_id(0); \n");
           source.append("  uint glb_sz = get_global_size(0); \n");
 
-          source.append("  for(uint row_id = glb_id; row_id < row_num; row_id += glb_sz) { \n");
+          source.append("  for (uint row_id = glb_id; row_id < row_num; row_id += glb_sz) { \n");
           source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
           source.append("    uint offset = row_id; \n");
-          source.append("    for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
+          source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
           source.append("      "); source.append(numeric_string); source.append(" val = ell_elements[offset]; \n");
 
-          source.append("      if(val != ("); source.append(numeric_string); source.append(")0) { \n");
+          source.append("      if (val != ("); source.append(numeric_string); source.append(")0) { \n");
           source.append("        int col = ell_coords[offset]; \n");
           source.append("        sum += (x[col * layout_x.y + layout_x.x] * val); \n");
           source.append("      } \n");
@@ -59,7 +59,7 @@ namespace viennacl
           source.append("    uint col_begin = csr_rows[row_id]; \n");
           source.append("    uint col_end   = csr_rows[row_id + 1]; \n");
 
-          source.append("    for(uint item_id = col_begin; item_id < col_end; item_id++) {  \n");
+          source.append("    for (uint item_id = col_begin; item_id < col_end; item_id++) {  \n");
           source.append("      sum += (x[csr_cols[item_id] * layout_x.y + layout_x.x] * csr_elements[item_id]); \n");
           source.append("    } \n");
 
@@ -108,15 +108,15 @@ namespace viennacl
             source.append("  uint glb_id = get_global_id(0); \n");
             source.append("  uint glb_sz = get_global_size(0); \n");
 
-            source.append("  for(uint result_col = 0; result_col < result_col_size; ++result_col) { \n");
-            source.append("   for(uint row_id = glb_id; row_id < row_num; row_id += glb_sz) { \n");
+            source.append("  for (uint result_col = 0; result_col < result_col_size; ++result_col) { \n");
+            source.append("   for (uint row_id = glb_id; row_id < row_num; row_id += glb_sz) { \n");
             source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
             source.append("    uint offset = row_id; \n");
-            source.append("    for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
+            source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
             source.append("      "); source.append(numeric_string); source.append(" val = ell_elements[offset]; \n");
 
-            source.append("      if(val != ("); source.append(numeric_string); source.append(")0) { \n");
+            source.append("      if (val != ("); source.append(numeric_string); source.append(")0) { \n");
             source.append("        int col = ell_coords[offset]; \n");
             if (B_transposed && B_row_major)
               source.append("      sum += d_mat[ (d_mat_row_start + result_col * d_mat_row_inc) * d_mat_internal_cols +  d_mat_col_start +        col * d_mat_col_inc                        ] * val; \n");
@@ -133,7 +133,7 @@ namespace viennacl
             source.append("    uint col_begin = csr_rows[row_id]; \n");
             source.append("    uint col_end   = csr_rows[row_id + 1]; \n");
 
-            source.append("    for(uint item_id = col_begin; item_id < col_end; item_id++) {  \n");
+            source.append("    for (uint item_id = col_begin; item_id < col_end; item_id++) {  \n");
             if (B_transposed && B_row_major)
               source.append("      sum += d_mat[ (d_mat_row_start +        result_col * d_mat_row_inc) * d_mat_internal_cols +  d_mat_col_start + csr_cols[item_id] * d_mat_col_inc                        ] * csr_elements[item_id]; \n");
             else if (B_transposed && !B_row_major)

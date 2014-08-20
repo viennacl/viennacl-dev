@@ -233,18 +233,18 @@ namespace viennacl
           vcl_size_t diff = vec_tuple.const_size() - current_index;
           vcl_size_t upper_bound;
           std::string kernel_prefix;
-          if(diff>=8) upper_bound = 8, kernel_prefix = "inner_prod_8";
-          else if(diff>=4) upper_bound = 4, kernel_prefix = "inner_prod_4";
-          else if(diff>=3) upper_bound = 3, kernel_prefix = "inner_prod_3";
-          else if(diff>=2) upper_bound = 2, kernel_prefix = "inner_prod_2";
+          if (diff>=8) upper_bound = 8, kernel_prefix = "inner_prod_8";
+          else if (diff>=4) upper_bound = 4, kernel_prefix = "inner_prod_4";
+          else if (diff>=3) upper_bound = 3, kernel_prefix = "inner_prod_3";
+          else if (diff>=2) upper_bound = 2, kernel_prefix = "inner_prod_2";
           else upper_bound = 1, kernel_prefix = "inner_prod_1";
 
           std::vector<range_t> ranges;
           ranges.reserve(upper_bound);
-          for(unsigned int i = 0 ; i < upper_bound ; ++i)
+          for (unsigned int i = 0 ; i < upper_bound ; ++i)
             ranges.push_back(range_t(result, viennacl::range(current_index+i, current_index+i+1)));
 
-          for(unsigned int i = 0 ; i < upper_bound ; ++i)
+          for (unsigned int i = 0 ; i < upper_bound ; ++i)
             statements.push_back(scheduler::preset::inner_prod(&ranges[i], &x, &vec_tuple.const_at(current_index+i)));
 
           kernels::vector_multi_inner_prod<T>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_prefix, device_specific::statements_container(statements, device_specific::statements_container::INDEPENDENT));

@@ -1520,16 +1520,16 @@ namespace viennacl
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
+        for (unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
         {
           T sum = 0;
 
           unsigned int offset = row_id;
-          for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+          for (unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
           {
             T val = elements[offset];
 
-            if(val != (T)0)
+            if (val != (T)0)
             {
               int col = coords[offset];
               sum += (x[col * inc_x + start_x] * val);
@@ -1601,19 +1601,19 @@ namespace viennacl
 
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
-        for( unsigned int rc = glb_id; rc < (sp_mat_row_num * d_mat_col_size); rc += glb_sz) {
+        for ( unsigned int rc = glb_id; rc < (sp_mat_row_num * d_mat_col_size); rc += glb_sz) {
           unsigned int row = rc % sp_mat_row_num;
           unsigned int col = rc / sp_mat_row_num;
 
           unsigned int offset = row;
           NumericT r = (NumericT)0;
 
-          for(unsigned int k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) {
+          for (unsigned int k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) {
 
             unsigned int j = sp_mat_coords[offset];
             NumericT x = static_cast<NumericT>(sp_mat_elements[offset]);
 
-            if(x != (NumericT)0) {
+            if (x != (NumericT)0) {
 
                 NumericT y = d_mat[ DMatIndexT::apply(j, col,
                                                       d_mat_row_start, d_mat_row_inc,
@@ -1773,19 +1773,19 @@ namespace viennacl
 
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
-        for( unsigned int rc = glb_id; rc < (sp_mat_row_num * d_mat_row_size); rc += glb_sz) {
+        for ( unsigned int rc = glb_id; rc < (sp_mat_row_num * d_mat_row_size); rc += glb_sz) {
           unsigned int row = rc % sp_mat_row_num;
           unsigned int col = rc / sp_mat_row_num;
 
           unsigned int offset = row;
           NumericT r = (NumericT)0;
 
-          for(unsigned int k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) {
+          for (unsigned int k = 0; k < sp_mat_items_per_row; k++, offset += sp_mat_internal_row_num) {
 
             unsigned int j = sp_mat_coords[offset];
             NumericT x = static_cast<NumericT>(sp_mat_elements[offset]);
 
-            if(x != (NumericT)0) {
+            if (x != (NumericT)0) {
 
                 NumericT y = d_mat[ DMatIndexT::apply(col, j,
                                                       d_mat_row_start, d_mat_row_inc,
@@ -1943,14 +1943,14 @@ namespace viennacl
         unsigned int local_size = blockDim.x;
         unsigned int num_rows = size_result;
 
-        for(unsigned int block_idx = blockIdx.x; block_idx <= num_rows / local_size; block_idx += gridDim.x)
+        for (unsigned int block_idx = blockIdx.x; block_idx <= num_rows / local_size; block_idx += gridDim.x)
         {
           unsigned int row         = block_idx * local_size + local_id;
           unsigned int offset      = block_start[block_idx];
           unsigned int num_columns = columns_per_block[block_idx];
 
           T sum = 0;
-          for(unsigned int item_id = 0; item_id < num_columns; item_id++)
+          for (unsigned int item_id = 0; item_id < num_columns; item_id++)
           {
             unsigned int index = offset + item_id * local_size + local_id;
             T val = elements[index];
@@ -2019,17 +2019,17 @@ namespace viennacl
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
+        for (unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
         {
           T sum = 0;
 
           unsigned int offset = row_id;
-          for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+          for (unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
           {
             T val = ell_elements[offset];
 
 
-            if(val != 0.0f)
+            if (val != 0.0f)
             {
               int col = ell_coords[offset];
               sum += (x[col * inc_x + start_x] * val);
@@ -2039,7 +2039,7 @@ namespace viennacl
           unsigned int col_begin = csr_rows[row_id];
           unsigned int col_end   = csr_rows[row_id + 1];
 
-          for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
+          for (unsigned int item_id = col_begin; item_id < col_end; item_id++)
           {
             sum += (x[csr_cols[item_id] * inc_x + start_x] * csr_elements[item_id]);
           }
@@ -2116,18 +2116,18 @@ namespace viennacl
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int result_col = 0; result_col < result_col_size; ++result_col)
+        for (unsigned int result_col = 0; result_col < result_col_size; ++result_col)
         {
-          for(unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
+          for (unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
           {
             NumericT sum = 0;
 
             unsigned int offset = row_id;
-            for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+            for (unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
             {
               NumericT val = ell_elements[offset];
 
-              if(val != 0.0f)
+              if (val != 0.0f)
               {
                 sum += d_mat[DMatIndexT::apply(ell_coords[offset], result_col,
                                                d_mat_row_start, d_mat_row_inc,
@@ -2139,7 +2139,7 @@ namespace viennacl
             unsigned int col_begin = csr_rows[row_id];
             unsigned int col_end   = csr_rows[row_id + 1];
 
-            for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
+            for (unsigned int item_id = col_begin; item_id < col_end; item_id++)
             {
               sum += d_mat[DMatIndexT::apply(csr_cols[item_id], result_col,
                                              d_mat_row_start, d_mat_row_inc,
@@ -2314,18 +2314,18 @@ namespace viennacl
         unsigned int glb_id = blockDim.x * blockIdx.x + threadIdx.x;
         unsigned int glb_sz = gridDim.x * blockDim.x;
 
-        for(unsigned int result_col = 0; result_col < result_col_size; ++result_col)
+        for (unsigned int result_col = 0; result_col < result_col_size; ++result_col)
         {
-          for(unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
+          for (unsigned int row_id = glb_id; row_id < row_num; row_id += glb_sz)
           {
             NumericT sum = 0;
 
             unsigned int offset = row_id;
-            for(unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
+            for (unsigned int item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num)
             {
               NumericT val = ell_elements[offset];
 
-              if(val != 0.0f)
+              if (val != 0.0f)
               {
                 sum += d_mat[DMatIndexT::apply(result_col, ell_coords[offset],
                                                d_mat_row_start, d_mat_row_inc,
@@ -2337,7 +2337,7 @@ namespace viennacl
             unsigned int col_begin = csr_rows[row_id];
             unsigned int col_end   = csr_rows[row_id + 1];
 
-            for(unsigned int item_id = col_begin; item_id < col_end; item_id++)
+            for (unsigned int item_id = col_begin; item_id < col_end; item_id++)
             {
               sum += d_mat[DMatIndexT::apply(result_col, csr_cols[item_id],
                                              d_mat_row_start, d_mat_row_inc,

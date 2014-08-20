@@ -138,7 +138,7 @@ std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
     viennacl::device_specific::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
     act_diff = std::fabs(diff(C, vcl_C));
-    if( act_diff > epsilon )
+    if ( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
       std::cout << "  diff: " << act_diff << std::endl;
@@ -156,7 +156,7 @@ std::cout << "Testing C = alpha*prod(A,B) + beta*C ..." << std::endl;
        viennacl::device_specific::generate_enqueue_statement(statement, statement.array()[0]);
        viennacl::backend::finish();
        act_diff = std::fabs(diff(C, vcl_C));
-       if( act_diff > epsilon )
+       if ( act_diff > epsilon )
        {
          std::cout << "# Error at operation: matrix-matrix product" << std::endl;
          std::cout << "  diff: " << act_diff << std::endl;
@@ -172,7 +172,7 @@ std::cout << "Testing C = alpha*A * trans(B) + beta*C ..." << std::endl;
     viennacl::device_specific::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
     act_diff = std::fabs(diff(C, vcl_C));
-    if( act_diff > epsilon )
+    if ( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
       std::cout << "  diff: " << act_diff << std::endl;
@@ -188,7 +188,7 @@ std::cout << "Testing C = alpha*trans(A) * trans(B) + beta*C ..." << std::endl;
     viennacl::device_specific::generate_enqueue_statement(statement, statement.array()[0]);
     viennacl::backend::finish();
     act_diff = std::fabs(diff(C, vcl_C));
-    if( act_diff > epsilon )
+    if ( act_diff > epsilon )
     {
       std::cout << "# Error at operation: matrix-matrix product" << std::endl;
       std::cout << "  diff: " << act_diff << std::endl;
@@ -356,7 +356,7 @@ int main(int argc, char* argv[])
     //size_t num_platforms = platforms.size();
 
     devices_type dev = viennacl::ocl::current_context().devices();
-    for(devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
+    for (devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
             std::cout << std::endl;
             std::cout << "----------------------------------------------" << std::endl;
             std::cout << "----------------------------------------------" << std::endl;
@@ -382,7 +382,7 @@ int main(int argc, char* argv[])
                std::cout << "  eps:     " << epsilon << std::endl;
                std::cout << "  numeric: float" << std::endl;
                retval = test<NumericT>(epsilon);
-               if( retval == EXIT_SUCCESS )
+               if ( retval == EXIT_SUCCESS )
                  std::cout << "# Test passed" << std::endl;
                else
                  return retval;
@@ -391,7 +391,7 @@ int main(int argc, char* argv[])
             std::cout << "----------------------------------------------" << std::endl;
             std::cout << std::endl;
          #ifdef VIENNACL_WITH_OPENCL
-            if( viennacl::ocl::current_device().double_support() )
+            if ( viennacl::ocl::current_device().double_support() )
          #endif
             {
                {
@@ -401,7 +401,7 @@ int main(int argc, char* argv[])
                  std::cout << "  eps:     " << epsilon << std::endl;
                  std::cout << "  numeric: double" << std::endl;
                  retval = test<NumericT>(epsilon);
-                 if( retval == EXIT_SUCCESS )
+                 if ( retval == EXIT_SUCCESS )
                    std::cout << "# Test passed" << std::endl;
                  else
                    return retval;

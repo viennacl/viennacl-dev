@@ -340,7 +340,7 @@ namespace viennacl
         state_end = false;
         while (!state_end)
         {
-            switch(state)
+            switch (state)
             {
               case 1:
                 l = 0;

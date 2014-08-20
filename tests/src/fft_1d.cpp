@@ -889,7 +889,7 @@ ScalarType multiply_complex(std::vector<ScalarType>& in, std::vector<ScalarType>
 ScalarType convolve(std::vector<ScalarType>& in1, std::vector<ScalarType>& in2,
     unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_size*/)
 {
-  //if(in1.size() > 2048) return -1;
+  //if (in1.size() > 2048) return -1;
   viennacl::vector<ScalarType> input1(in1.size());
   viennacl::vector<ScalarType> input2(in2.size());
   viennacl::vector<ScalarType> output(in1.size());

@@ -50,13 +50,13 @@ namespace viennacl
       bool has_index() const { return index_.first; }
 
       cpu_value_type operator()(vcl_size_t i) const {
-        if(index_.first)
+        if (index_.first)
           return (i==index_.second)?value_:0;
         return value_;
       }
 
       cpu_value_type operator[](vcl_size_t i) const {
-        if(index_.first)
+        if (index_.first)
           return (i==index_.second)?value_:0;
         return
             value_;

@@ -60,7 +60,7 @@ device_specific::row_wise_reduction_template::parameters_type const & row_wise_r
 {
   assert(A_trans=='N' || A_trans=='T');
   database_type<row_wise_reduction_template::parameters_type> * db;
-  if(A_trans)
+  if (A_trans)
     db = &row_wise_reduction_T;
   else
     db = &row_wise_reduction_N;

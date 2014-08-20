@@ -247,11 +247,11 @@ namespace viennacl
           source.append("  uint glb_id = get_global_id(0); \n");
           source.append("  uint glb_sz = get_global_size(0); \n");
 
-          source.append("  for(uint row = glb_id; row < size; row += glb_sz) { \n");
+          source.append("  for (uint row = glb_id; row < size; row += glb_sz) { \n");
           source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
           source.append("    uint offset = row; \n");
-          source.append("    for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
+          source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
           source.append("      "); source.append(numeric_string); source.append(" val = elements[offset]; \n");
           source.append("      sum += val ? p[coords[offset]] * val : ("); source.append(numeric_string); source.append(")0; \n");
           source.append("    } \n");
@@ -302,13 +302,13 @@ namespace viennacl
           source.append("  uint local_id   = get_local_id(0); \n");
           source.append("  uint local_size = get_local_size(0); \n");
 
-          source.append("  for(uint block_idx = get_group_id(0); block_idx <= size / local_size; block_idx += get_num_groups(0)) { \n");
+          source.append("  for (uint block_idx = get_group_id(0); block_idx <= size / local_size; block_idx += get_num_groups(0)) { \n");
           source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
           source.append("    uint row    = block_idx * local_size + local_id; \n");
           source.append("    uint offset = block_start[block_idx]; \n");
           source.append("    uint num_columns = columns_per_block[block_idx]; \n");
-          source.append("    for(uint item_id = 0; item_id < num_columns; item_id++) { \n");
+          source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
           source.append("      uint index = offset + item_id * local_size + local_id; \n");
           source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
           source.append("      sum += val ? (p[column_indices[index]] * val) : 0; \n");
@@ -366,11 +366,11 @@ namespace viennacl
           source.append("  uint glb_id = get_global_id(0); \n");
           source.append("  uint glb_sz = get_global_size(0); \n");
 
-          source.append("  for(uint row = glb_id; row < size; row += glb_sz) { \n");
+          source.append("  for (uint row = glb_id; row < size; row += glb_sz) { \n");
           source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
           source.append("    uint offset = row; \n");
-          source.append("    for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
+          source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
           source.append("      "); source.append(numeric_string); source.append(" val = ell_elements[offset]; \n");
           source.append("      sum += val ? (p[ell_coords[offset]] * val) : 0; \n");
           source.append("    } \n");
@@ -378,7 +378,7 @@ namespace viennacl
           source.append("    uint col_begin = csr_rows[row]; \n");
           source.append("    uint col_end   = csr_rows[row + 1]; \n");
 
-          source.append("    for(uint item_id = col_begin; item_id < col_end; item_id++) {  \n");
+          source.append("    for (uint item_id = col_begin; item_id < col_end; item_id++) {  \n");
           source.append("      sum += (p[csr_cols[item_id]] * csr_elements[item_id]); \n");
           source.append("    } \n");
 
@@ -726,11 +726,11 @@ namespace viennacl
           source.append("  uint glb_id = get_global_id(0); \n");
           source.append("  uint glb_sz = get_global_size(0); \n");
 
-          source.append("  for(uint row = glb_id; row < size; row += glb_sz) { \n");
+          source.append("  for (uint row = glb_id; row < size; row += glb_sz) { \n");
           source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
           source.append("    uint offset = row; \n");
-          source.append("    for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
+          source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
           source.append("      "); source.append(numeric_string); source.append(" val = elements[offset]; \n");
           source.append("      sum += val ? p[coords[offset]] * val : ("); source.append(numeric_string); source.append(")0; \n");
           source.append("    } \n");
@@ -789,13 +789,13 @@ namespace viennacl
           source.append("  uint local_id   = get_local_id(0); \n");
           source.append("  uint local_size = get_local_size(0); \n");
 
-          source.append("  for(uint block_idx = get_group_id(0); block_idx <= size / local_size; block_idx += get_num_groups(0)) { \n");
+          source.append("  for (uint block_idx = get_group_id(0); block_idx <= size / local_size; block_idx += get_num_groups(0)) { \n");
           source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
           source.append("    uint row    = block_idx * local_size + local_id; \n");
           source.append("    uint offset = block_start[block_idx]; \n");
           source.append("    uint num_columns = columns_per_block[block_idx]; \n");
-          source.append("    for(uint item_id = 0; item_id < num_columns; item_id++) { \n");
+          source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
           source.append("      uint index = offset + item_id * local_size + local_id; \n");
           source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
           source.append("      sum += val ? (p[column_indices[index]] * val) : 0; \n");
@@ -861,11 +861,11 @@ namespace viennacl
           source.append("  uint glb_id = get_global_id(0); \n");
           source.append("  uint glb_sz = get_global_size(0); \n");
 
-          source.append("  for(uint row = glb_id; row < size; row += glb_sz) { \n");
+          source.append("  for (uint row = glb_id; row < size; row += glb_sz) { \n");
           source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
           source.append("    uint offset = row; \n");
-          source.append("    for(uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
+          source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
           source.append("      "); source.append(numeric_string); source.append(" val = ell_elements[offset]; \n");
           source.append("      sum += val ? (p[ell_coords[offset]] * val) : 0; \n");
           source.append("    } \n");
@@ -873,7 +873,7 @@ namespace viennacl
           source.append("    uint col_begin = csr_rows[row]; \n");
           source.append("    uint col_end   = csr_rows[row + 1]; \n");
 
-          source.append("    for(uint item_id = col_begin; item_id < col_end; item_id++) {  \n");
+          source.append("    for (uint item_id = col_begin; item_id < col_end; item_id++) {  \n");
           source.append("      sum += (p[csr_cols[item_id]] * csr_elements[item_id]); \n");
           source.append("    } \n");
 

@@ -49,7 +49,7 @@ namespace viennacl
 
       const_reference operator()(size_type i, size_type j) const
       {
-        if(diag_) return (i == j) ? value_ : off_diag_;
+        if (diag_) return (i == j) ? value_ : off_diag_;
         return value_;
       }
     protected:

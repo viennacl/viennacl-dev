@@ -229,12 +229,12 @@ namespace viennacl {
         copy(gpu_matrix, tmp);
         s << "[" << size << "," << size << "](";
 
-        for(vcl_size_t i = 0; i < size; i++) {
+        for (vcl_size_t i = 0; i < size; i++) {
             s << "(";
-            for(vcl_size_t j = 0; j < size; j++) {
+            for (vcl_size_t j = 0; j < size; j++) {
                 s << tmp[i + j];
                 //s << (int)i - (int)j;
-                if(j < (size - 1)) s << ",";
+                if (j < (size - 1)) s << ",";
             }
             s << ")";
         }

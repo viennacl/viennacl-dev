@@ -53,20 +53,20 @@ namespace viennacl
           static void replace_offset(std::string & str, MorphBase const & morph)
           {
               size_t pos = 0;
-              while((pos=str.find("$OFFSET", pos))!=std::string::npos)
+              while ((pos=str.find("$OFFSET", pos))!=std::string::npos)
               {
                   std::string postprocessed;
                   size_t pos_po = str.find('{', pos);
                   size_t pos_pe = str.find('}', pos_po);
 
-                  if(MorphBase2D const * p = dynamic_cast<MorphBase2D const *>(&morph))
+                  if (MorphBase2D const * p = dynamic_cast<MorphBase2D const *>(&morph))
                   {
                     size_t pos_comma = str.find(',', pos_po);
                     std::string i = str.substr(pos_po + 1, pos_comma - pos_po - 1);
                     std::string j = str.substr(pos_comma + 1, pos_pe - pos_comma - 1);
                     postprocessed = (*p)(i, j);
                   }
-                  else if(MorphBase1D const * p = dynamic_cast<MorphBase1D const *>(&morph))
+                  else if (MorphBase1D const * p = dynamic_cast<MorphBase1D const *>(&morph))
                   {
                     std::string i = str.substr(pos_po + 1, pos_pe - pos_po - 1);
                     postprocessed = (*p)(i);
@@ -107,7 +107,7 @@ namespace viennacl
           std::string process(std::string const & in) const
           {
               std::string res(in);
-              for(std::map<std::string,std::string>::const_iterator it = keywords_.begin() ; it != keywords_.end() ; ++it)
+              for (std::map<std::string,std::string>::const_iterator it = keywords_.begin() ; it != keywords_.end() ; ++it)
                   tools::find_and_replace(res, it->first, it->second);
               postprocess(res);
               return res;
@@ -115,7 +115,7 @@ namespace viennacl
 
           std::string evaluate(std::map<std::string, std::string> const & accessors) const
           {
-              if(accessors.find(type_key_)==accessors.end())
+              if (accessors.find(type_key_)==accessors.end())
                   return name_;
               return process(accessors.at(type_key_));
           }
@@ -177,7 +177,7 @@ namespace viennacl
           scheduler::op_element root_op() const
           {
             scheduler::op_element res = info_.statement->array()[info_.root_idx].op;
-            if(res.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE
+            if (res.type==scheduler::OPERATION_BINARY_MAT_VEC_PROD_TYPE
                ||res.type==scheduler::OPERATION_BINARY_INNER_PROD_TYPE)
               res.type        = scheduler::OPERATION_BINARY_ADD_TYPE;
             return res;
@@ -215,7 +215,7 @@ namespace viennacl
 
           std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
           {
-            if(already_generated.insert(name_).second)
+            if (already_generated.insert(name_).second)
               str += generate_value_kernel_argument(scalartype_, name_);
             return str;
           }
@@ -238,7 +238,7 @@ namespace viennacl
 
           std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
           {
-            if(already_generated.insert(name_).second)
+            if (already_generated.insert(name_).second)
             {
               str += generate_pointer_kernel_argument("__global", scalartype_, pointer_);
               append_optional_arguments(str);
@@ -320,7 +320,7 @@ namespace viennacl
                 Morph(bool _is_row_major, std::string const & _ld) : is_row_major(_is_row_major), ld(_ld){ }
                 std::string operator()(std::string const & i, std::string const & j) const
                 {
-                  if(is_row_major)
+                  if (is_row_major)
                     return "(" + i + ") * " + ld +  " + (" + j + ")";
                   return "(" + i + ") +  (" + j + ") * " + ld ;
                 }
@@ -340,12 +340,12 @@ namespace viennacl
               register_attribute(start2_, "#start2", name_ + "_start2");
               register_attribute(stride1_, "#stride1", name_ + "_stride1");
               register_attribute(stride2_, "#stride2", name_ + "_stride2");
-              if(row_major_)
+              if (row_major_)
                 keywords_["#nldstride"] = "#stride1";
               else
                 keywords_["#nldstride"] = "#stride2";
 
-              if(row_major_)
+              if (row_major_)
               {
                 std::swap(start1_, start2_);
                 std::swap(stride1_, stride2_);

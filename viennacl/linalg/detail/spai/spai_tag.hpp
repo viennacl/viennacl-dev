@@ -107,19 +107,19 @@ namespace viennacl
 
               void setResidualNormThreshold(double residual_norm_threshold)
               {
-                  if(residual_norm_threshold > 0)
+                  if (residual_norm_threshold > 0)
                       residual_norm_threshold_ = residual_norm_threshold;
               }
 
               void setResidualThreshold(double residual_threshold)
               {
-                  if(residual_threshold > 0)
+                  if (residual_threshold > 0)
                       residual_threshold_ = residual_threshold;
               }
 
               void setIterationLimit(unsigned int iteration_limit)
               {
-                  if(iteration_limit > 0)
+                  if (iteration_limit > 0)
                       iteration_limit_ = iteration_limit;
               }
 

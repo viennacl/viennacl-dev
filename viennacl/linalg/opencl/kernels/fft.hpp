@@ -35,7 +35,7 @@ namespace viennacl
           source.append("  "); source.append(numeric_string); source.append(" sn_a, cs_a; \n");
           source.append("  const "); source.append(numeric_string); source.append(" NUM_PI = 3.14159265358979323846; \n");
 
-          source.append("  for(unsigned int i = glb_id; i < size; i += glb_sz) { \n");
+          source.append("  for (unsigned int i = glb_id; i < size; i += glb_sz) { \n");
           source.append("    unsigned int rm = i * i % (double_size); \n");
           source.append("    "); source.append(numeric_string); source.append(" angle = ("); source.append(numeric_string); source.append(")rm / size * (-NUM_PI); \n");
 
@@ -65,7 +65,7 @@ namespace viennacl
           source.append("  "); source.append(numeric_string); source.append(" sn_a, cs_a; \n");
           source.append("  const "); source.append(numeric_string); source.append(" NUM_PI = 3.14159265358979323846; \n");
 
-          source.append("  for(unsigned int i = glb_id; i < size; i += glb_sz) { \n");
+          source.append("  for (unsigned int i = glb_id; i < size; i += glb_sz) { \n");
           source.append("    unsigned int rm = i * i % (double_size); \n");
           source.append("    "); source.append(numeric_string); source.append(" angle = ("); source.append(numeric_string); source.append(")rm / size * NUM_PI; \n");
 
@@ -78,7 +78,7 @@ namespace viennacl
           source.append("    B[i] = b_i; \n");
 
                   // very bad instruction, to be fixed
-          source.append("    if(i) \n");
+          source.append("    if (i) \n");
           source.append("      B[ext_size - i] = b_i; \n");
           source.append("  } \n");
           source.append("} \n");
@@ -145,7 +145,7 @@ namespace viennacl
         void generate_fft_reverse_inplace(StringType & source, std::string const & numeric_string)
         {
           source.append("__kernel void reverse_inplace(__global "); source.append(numeric_string); source.append(" *vec, uint size) { \n");
-          source.append("  for(uint i = get_global_id(0); i < (size >> 1); i+=get_global_size(0)) { \n");
+          source.append("  for (uint i = get_global_id(0); i < (size >> 1); i+=get_global_size(0)) { \n");
           source.append("    "); source.append(numeric_string); source.append(" val1 = vec[i]; \n");
           source.append("    "); source.append(numeric_string); source.append(" val2 = vec[size - i - 1]; \n");
 
@@ -164,7 +164,7 @@ namespace viennacl
           source.append("  unsigned int row_num, \n");
           source.append("  unsigned int col_num) { \n");
           source.append("  unsigned int size = row_num * col_num; \n");
-          source.append("  for(unsigned int i = get_global_id(0); i < size; i+= get_global_size(0)) { \n");
+          source.append("  for (unsigned int i = get_global_id(0); i < size; i+= get_global_size(0)) { \n");
           source.append("    unsigned int row = i / col_num; \n");
           source.append("    unsigned int col = i - row*col_num; \n");
 
@@ -183,13 +183,13 @@ namespace viennacl
           source.append("  unsigned int row_num, \n");
           source.append("  unsigned int col_num) { \n");
           source.append("  unsigned int size = row_num * col_num; \n");
-          source.append("  for(unsigned int i = get_global_id(0); i < size; i+= get_global_size(0)) { \n");
+          source.append("  for (unsigned int i = get_global_id(0); i < size; i+= get_global_size(0)) { \n");
           source.append("    unsigned int row = i / col_num; \n");
           source.append("    unsigned int col = i - row*col_num; \n");
 
           source.append("    unsigned int new_pos = col * row_num + row; \n");
 
-          source.append("    if(i < new_pos) { \n");
+          source.append("    if (i < new_pos) { \n");
           source.append("      "); source.append(numeric_string); source.append("2 val = input[i]; \n");
           source.append("      input[i] = input[new_pos]; \n");
           source.append("      input[new_pos] = val; \n");
@@ -206,12 +206,12 @@ namespace viennacl
           source.append("  __global "); source.append(numeric_string); source.append(" *vector, \n");
           source.append("  __global "); source.append(numeric_string); source.append(" *result, \n");
           source.append("  uint size) { \n");
-          source.append("  for(uint i = get_global_id(0); i < size; i+= get_global_size(0)) { \n");
+          source.append("  for (uint i = get_global_id(0); i < size; i+= get_global_size(0)) { \n");
           source.append("    "); source.append(numeric_string); source.append(" mul = vander[i]; \n");
           source.append("    "); source.append(numeric_string); source.append(" pwr = 1; \n");
           source.append("    "); source.append(numeric_string); source.append(" val = 0; \n");
 
-          source.append("    for(uint j = 0; j < size; j++) { \n");
+          source.append("    for (uint j = 0; j < size; j++) { \n");
           source.append("      val = val + pwr * vector[j]; \n");
           source.append("      pwr *= mul; \n");
           source.append("    } \n");

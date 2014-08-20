@@ -937,7 +937,7 @@ int main()
     std::cout << "# Testing setup:" << std::endl;
     std::cout << "  numeric: unsigned int" << std::endl;
     retval = test<unsigned int>();
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
       std::cout << "# Test passed" << std::endl;
     else
       return retval;
@@ -949,7 +949,7 @@ int main()
     std::cout << "# Testing setup:" << std::endl;
     std::cout << "  numeric: long" << std::endl;
     retval = test<unsigned long>();
-    if( retval == EXIT_SUCCESS )
+    if ( retval == EXIT_SUCCESS )
       std::cout << "# Test passed" << std::endl;
     else
       return retval;

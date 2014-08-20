@@ -105,7 +105,7 @@ namespace viennacl
       std::string::size_type pos = 0;
       std::string result;
       std::string::size_type found;
-      while( (found = text.find(to_search, pos)) != std::string::npos )
+      while ( (found = text.find(to_search, pos)) != std::string::npos )
       {
         result.append(text.substr(pos,found-pos));
         result.append(to_replace);

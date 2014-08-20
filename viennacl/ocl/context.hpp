@@ -302,7 +302,7 @@ namespace viennacl
         /** @brief Returns the queue with the provided index for the given device */
         viennacl::ocl::command_queue & get_queue(cl_device_id dev, vcl_size_t i = 0)
         {
-          if(i >= queues_[dev].size())
+          if (i >= queues_[dev].size())
             throw invalid_command_queue();
 
           #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
@@ -395,14 +395,14 @@ namespace viennacl
           //
           // Retrieves the program in the cache
           //
-          if(cache_path_.size()){
+          if (cache_path_.size()){
             #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
             std::cout << "ViennaCL: Cache at " << cache_path_ << std::endl;
             #endif
 
             std::string sha1 =  tools::sha1(source);
             std::ifstream cached((cache_path_+sha1).c_str(),std::ios::binary);
-            if(cached){
+            if (cached){
               size_t len;
               std::vector<unsigned char> buffer;
 
@@ -418,7 +418,7 @@ namespace viennacl
             }
           }
 
-          if(!temp){
+          if (!temp){
             temp = clCreateProgramWithSource(h_.get(), 1, (const char **)&source_text, &source_size, &err);
             VIENNACL_ERR_CHECK(err);
           }
@@ -446,7 +446,7 @@ namespace viennacl
           }
           VIENNACL_ERR_CHECK(err);
 
-          if(cache_path_.size()){
+          if (cache_path_.size()){
             std::size_t len;
 
             std::vector<std::size_t> sizes(devices_.size());
@@ -454,7 +454,7 @@ namespace viennacl
             clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,len,(void*)sizes.data(),NULL);
 
             std::vector<unsigned char*> binaries;
-            for(std::size_t i = 0 ; i < devices_.size() ; ++i)
+            for (std::size_t i = 0 ; i < devices_.size() ; ++i)
               binaries.push_back(new unsigned char[sizes[i]]);
 
             clGetProgramInfo(temp,CL_PROGRAM_BINARIES,0,NULL,&len);
@@ -466,7 +466,7 @@ namespace viennacl
             cached.write((char*)&sizes[0], sizeof(size_t));
             cached.write((char*)binaries[0], std::streamsize(sizes[0]));
 
-            for(std::size_t i = 0 ; i < devices_.size() ; ++i)
+            for (std::size_t i = 0 ; i < devices_.size() ; ++i)
               delete[] binaries[i];
 
             VIENNACL_ERR_CHECK(err);
@@ -575,7 +575,7 @@ namespace viennacl
           std::cout << "ViennaCL: There are " << programs_.size() << " programs" << std::endl;
           #endif
 
-          if(id >= programs_.size())
+          if (id >= programs_.size())
             throw invalid_program();
 
           return *programs_[id];

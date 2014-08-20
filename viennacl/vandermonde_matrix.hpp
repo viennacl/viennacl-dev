@@ -177,8 +177,8 @@ namespace viennacl {
         std::vector<SCALARTYPE> tmp(size);
         copy(vander_src, tmp);
 
-        for(vcl_size_t i = 0; i < size; i++) {
-            for(vcl_size_t j = 0; j < size; j++) {
+        for (vcl_size_t i = 0; i < size; i++) {
+            for (vcl_size_t j = 0; j < size; j++) {
                 com_dst(i, j) = std::pow(tmp[i], static_cast<int>(j));
             }
         }
@@ -199,7 +199,7 @@ namespace viennacl {
         vcl_size_t size = vander_dst.size1();
         std::vector<SCALARTYPE> tmp(size);
 
-        for(vcl_size_t i = 0; i < size; i++)
+        for (vcl_size_t i = 0; i < size; i++)
             tmp[i] = com_src(i, 1);
 
         copy(tmp, vander_dst);
@@ -227,11 +227,11 @@ namespace viennacl {
         copy(gpu_matrix, tmp);
         s << "[" << size << "," << size << "](\n";
 
-        for(vcl_size_t i = 0; i < size; i++) {
+        for (vcl_size_t i = 0; i < size; i++) {
             s << "(";
-            for(vcl_size_t j = 0; j < size; j++) {
+            for (vcl_size_t j = 0; j < size; j++) {
                 s << pow(tmp[i], static_cast<SCALARTYPE>(j));
-                if(j < (size - 1)) s << ",";
+                if (j < (size - 1)) s << ",";
             }
             s << ")";
         }

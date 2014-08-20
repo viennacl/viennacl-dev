@@ -86,7 +86,7 @@ namespace viennacl{
     inline scheduler::statement_node const & lhs_most(scheduler::statement::container_type const & array, size_t root)
     {
       scheduler::statement_node const * current = &array[root];
-      while(current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+      while (current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
         current = &array[current->lhs.node_index];
       return *current;
     }
@@ -106,7 +106,7 @@ namespace viennacl{
     };
 
     inline const char * expression_type_to_string(expression_type type){
-      switch(type){
+      switch (type){
         case SCALAR_AXPY_TYPE : return "Scalar AXPY";
         case VECTOR_AXPY_TYPE : return "Vector AXPY";
         case MATRIX_AXPY_TYPE : return "Matrix AXPY";
@@ -228,7 +228,7 @@ namespace viennacl{
 
     inline tools::shared_ptr<symbolic_binder> make_binder(binding_policy_t policy)
     {
-      if(policy==BIND_TO_HANDLE)
+      if (policy==BIND_TO_HANDLE)
         return tools::shared_ptr<symbolic_binder>(new bind_to_handle());
       else
         return tools::shared_ptr<symbolic_binder>(new bind_all_unique());

@@ -79,14 +79,14 @@ namespace viennacl
         //debug function for print
         template<typename SparseVectorType>
         void print_sparse_vector(const SparseVectorType& v){
-            for(typename SparseVectorType::const_iterator vec_it = v.begin(); vec_it!= v.end(); ++vec_it){
+            for (typename SparseVectorType::const_iterator vec_it = v.begin(); vec_it!= v.end(); ++vec_it){
                 std::cout<<"[ "<<vec_it->first<<" ]:"<<vec_it->second<<std::endl;
             }
         }
         template<typename DenseMatrixType>
         void print_matrix( DenseMatrixType & m){
-            for(int i = 0; i < m.size2(); ++i){
-                for(int j = 0; j < m.size1(); ++j){
+            for (int i = 0; i < m.size2(); ++i){
+                for (int j = 0; j < m.size1(); ++j){
                     std::cout<<m(j, i)<<" ";
                 }
                 std::cout<<std::endl;
@@ -100,7 +100,7 @@ namespace viennacl
          */
         template<typename SparseVectorType, typename ScalarType>
         void add_sparse_vectors(const SparseVectorType& v, const ScalarType b,  SparseVectorType& res_v){
-            for(typename SparseVectorType::const_iterator v_it = v.begin(); v_it != v.end(); ++v_it){
+            for (typename SparseVectorType::const_iterator v_it = v.begin(); v_it != v.end(); ++v_it){
                 res_v[v_it->first] += b*v_it->second;
             }
         }
@@ -114,7 +114,7 @@ namespace viennacl
         template<typename SparseVectorType, typename ScalarType>
         void compute_spai_residual(const std::vector<SparseVectorType>& A_v_c, const SparseVectorType& v,
                                    const unsigned int ind, SparseVectorType& res){
-            for(typename SparseVectorType::const_iterator v_it = v.begin(); v_it != v.end(); ++v_it){
+            for (typename SparseVectorType::const_iterator v_it = v.begin(); v_it != v.end(); ++v_it){
                 add_sparse_vectors(A_v_c[v_it->first], v_it->second, res);
             }
             res[ind] -= static_cast<ScalarType>(1);
@@ -144,9 +144,9 @@ namespace viennacl
                                   DenseMatrixType& A_out)
         {
           A_out.resize(I.size(), J.size(), false);
-          for(vcl_size_t j = 0; j < J.size(); ++j)
+          for (vcl_size_t j = 0; j < J.size(); ++j)
           {
-            for(vcl_size_t i = 0; i < I.size(); ++i)
+            for (vcl_size_t i = 0; i < I.size(); ++i)
               A_out(i,j) = A_in(I[i],J[j]);
           }
         }
@@ -290,11 +290,11 @@ namespace viennacl
           init_start_inds(g_J, m_inds);
           //create y_v
           std::vector<ScalarType> y_v(y_sz, static_cast<ScalarType>(0));
-          for(vcl_size_t i = 0; i < M_v.size(); ++i)
+          for (vcl_size_t i = 0; i < M_v.size(); ++i)
           {
-            for(vcl_size_t j = 0; j < g_I[i].size(); ++j)
+            for (vcl_size_t j = 0; j < g_I[i].size(); ++j)
             {
-              if(g_I[i][j] == i)
+              if (g_I[i][j] == i)
                 y_v[y_inds[i] + j] = static_cast<ScalarType>(1.0);
             }
           }
@@ -334,9 +334,9 @@ namespace viennacl
           VIENNACL_ERR_CHECK(vcl_err);
           //fan out vector in parallel
           //#pragma omp parallel for
-          for(long i = 0; i < static_cast<long>(M_v.size()); ++i)
+          for (long i = 0; i < static_cast<long>(M_v.size()); ++i)
           {
-            if(g_is_update[static_cast<vcl_size_t>(i)])
+            if (g_is_update[static_cast<vcl_size_t>(i)])
             {
               //faned out onto sparse vector
               custom_fan_out(m_v, m_inds[static_cast<vcl_size_t>(i)], g_J[static_cast<vcl_size_t>(i)], M_v[static_cast<vcl_size_t>(i)]);
@@ -381,7 +381,7 @@ namespace viennacl
             #pragma omp parallel for
 #endif
             for (long i = 0; i < static_cast<long>(M_v.size()); ++i){
-                if(g_is_update[static_cast<vcl_size_t>(i)]){
+                if (g_is_update[static_cast<vcl_size_t>(i)]){
                     VectorType y = boost::numeric::ublas::zero_vector<ScalarType>(g_I[i].size());
                     //std::cout<<y<<std::endl;
                     projectI<VectorType, ScalarType>(g_I[i], y, static_cast<unsigned int>(tag.getBegInd() + i));
@@ -405,8 +405,8 @@ namespace viennacl
         template<typename VectorType>
         bool is_all_update(VectorType& parallel_is_update){
 
-            for(unsigned int i = 0; i < parallel_is_update.size(); ++i){
-                if(parallel_is_update[i])
+            for (unsigned int i = 0; i < parallel_is_update.size(); ++i){
+                if (parallel_is_update[i])
                     return true;
             }
             return false;
@@ -420,9 +420,9 @@ namespace viennacl
          */
         template<typename SparseMatrixType, typename SparseVectorType>
         void vectorize_column_matrix(const SparseMatrixType& M_in, std::vector<SparseVectorType>& M_v){
-            for(typename SparseMatrixType::const_iterator1 row_it = M_in.begin1(); row_it!= M_in.end1(); ++row_it){
+            for (typename SparseMatrixType::const_iterator1 row_it = M_in.begin1(); row_it!= M_in.end1(); ++row_it){
                 //
-                for(typename SparseMatrixType::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it){
+                for (typename SparseMatrixType::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it){
                     M_v[static_cast<unsigned int>(col_it.index2())][static_cast<unsigned int>(col_it.index1())] = *col_it;
                 }
                 //std::cout<<std::endl;
@@ -432,8 +432,8 @@ namespace viennacl
         //Matrix vectorization row based approach
         template<typename SparseMatrixType, typename SparseVectorType>
         void vectorize_row_matrix(const SparseMatrixType& M_in, std::vector<SparseVectorType>& M_v){
-            for(typename SparseMatrixType::const_iterator1 row_it = M_in.begin1(); row_it!= M_in.end1(); ++row_it){
-                for(typename SparseMatrixType::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it){
+            for (typename SparseMatrixType::const_iterator1 row_it = M_in.begin1(); row_it!= M_in.end1(); ++row_it){
+                for (typename SparseMatrixType::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it){
                     M_v[static_cast<unsigned int>(col_it.index1())][static_cast<unsigned int>(col_it.index2())] = *col_it;
                 }
             }
@@ -446,8 +446,8 @@ namespace viennacl
         void write_set_to_array(const std::vector<std::vector<SizeType> >& ind_set, std::vector<cl_uint>& a){
             vcl_size_t cnt = 0;
             //unsigned int tmp;
-            for(vcl_size_t i = 0; i < ind_set.size(); ++i){
-                for(vcl_size_t j = 0; j < ind_set[i].size(); ++j){
+            for (vcl_size_t i = 0; i < ind_set.size(); ++i){
+                for (vcl_size_t j = 0; j < ind_set[i].size(); ++j){
                     a[cnt++] = static_cast<cl_uint>(ind_set[i][j]);
                 }
             }
@@ -575,16 +575,16 @@ namespace viennacl
                                    bool is_right){
             if (is_right)
             {
-              for(unsigned int i = 0; i < M_v.size(); ++i){
-                  for(typename SparseVectorType::const_iterator vec_it = M_v[i].begin(); vec_it!=M_v[i].end(); ++vec_it){
+              for (unsigned int i = 0; i < M_v.size(); ++i){
+                  for (typename SparseVectorType::const_iterator vec_it = M_v[i].begin(); vec_it!=M_v[i].end(); ++vec_it){
                       M(vec_it->first, i) = vec_it->second;
                   }
               }
             }
             else  //transposed fill of M
             {
-              for(unsigned int i = 0; i < M_v.size(); ++i){
-                  for(typename SparseVectorType::const_iterator vec_it = M_v[i].begin(); vec_it!=M_v[i].end(); ++vec_it){
+              for (unsigned int i = 0; i < M_v.size(); ++i){
+                  for (typename SparseVectorType::const_iterator vec_it = M_v[i].begin(); vec_it!=M_v[i].end(); ++vec_it){
                       M(i, vec_it->first) = vec_it->second;
                   }
               }
@@ -627,7 +627,7 @@ namespace viennacl
 
 //        template<typename SparseVectorType>
 //        void custom_copy(std::vector<SparseVectorType> & M_v, std::vector<SparseVectorType> & l_M_v, const unsigned int beg_ind){
-//            for(int i = 0; i < l_M_v.size(); ++i){
+//            for (int i = 0; i < l_M_v.size(); ++i){
 //                l_M_v[i] = M_v[i + beg_ind];
 //            }
 //        }
@@ -654,7 +654,7 @@ namespace viennacl
             vectorize_column_matrix(M, M_v);
 
 
-            while(go_on){
+            while (go_on){
                 go_on = (tag.getEndInd() < static_cast<long>(M.size2()));
                 cur_iter = 0;
                 unsigned int l_sz = static_cast<unsigned int>(tag.getEndInd() - tag.getBegInd());
@@ -686,16 +686,16 @@ namespace viennacl
                 std::vector<std::vector<unsigned int> > g_I(l_sz);
                 //std::vector<std::vector<unsigned int> > g_J(M.size2());
                 std::vector<std::vector<unsigned int> > g_J(l_sz);
-                while((cur_iter < tag.getIterationLimit())&&is_all_update(g_is_update)){
+                while ((cur_iter < tag.getIterationLimit())&&is_all_update(g_is_update)){
                     // SET UP THE BLOCKS..
                     // PHASE ONE
-                    if(cur_iter == 0) block_set_up(A, A_v_c, l_M_v,  g_I, g_J, g_A_I_J, g_b_v);
+                    if (cur_iter == 0) block_set_up(A, A_v_c, l_M_v,  g_I, g_J, g_A_I_J, g_b_v);
                     else block_update(A, A_v_c, g_res, g_is_update, g_I, g_J, g_b_v, g_A_I_J, tag);
 
                     //PHASE TWO, LEAST SQUARE SOLUTION
                     least_square_solve(A_v_c, g_A_I_J, g_b_v, g_I, g_J, g_res, g_is_update, l_M_v, tag);
 
-                    if(tag.getIsStatic()) break;
+                    if (tag.getIsStatic()) break;
                     cur_iter++;
 
 
@@ -743,12 +743,12 @@ namespace viennacl
             //OpenCL variables
             block_matrix g_A_I_J_vcl;
             block_vector g_bv_vcl;
-            while((cur_iter < tag.getIterationLimit())&&is_all_update(g_is_update)){
+            while ((cur_iter < tag.getIterationLimit())&&is_all_update(g_is_update)){
                 // SET UP THE BLOCKS..
                 // PHASE ONE..
                 //timer.start();
                 //index set up on CPU
-                if(cur_iter == 0)
+                if (cur_iter == 0)
                   block_set_up(A, A_v_c, M_v, g_is_update, g_I, g_J, g_A_I_J_vcl, g_bv_vcl);
                 else
                   block_update(A, A_v_c, g_is_update, g_res, g_J, g_I, g_A_I_J_vcl, g_bv_vcl, tag);
@@ -758,7 +758,7 @@ namespace viennacl
                 //timer.start();
                 least_square_solve<SparseVectorType, ScalarType>(A_v_c, M_v, g_I, g_J, g_A_I_J_vcl, g_bv_vcl, g_res, g_is_update, tag, viennacl::traits::context(A));
                 //std::cout<<"Phase 3 timing: "<<timer.get()<<std::endl;
-                if(tag.getIsStatic()) break;
+                if (tag.getIsStatic()) break;
                 cur_iter++;
             }
             cpu_M.resize(cpu_M.size1(), cpu_M.size2(), false);

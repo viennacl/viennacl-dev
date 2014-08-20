@@ -43,7 +43,7 @@ namespace viennacl
         {
           cudaError_t error_code = cudaGetLastError();
 
-          if(cudaSuccess != error_code)
+          if (cudaSuccess != error_code)
           {
             std::cerr << file << "(" << line << "): " << ": getLastCudaError() CUDA error " << error_code << ": " << cudaGetErrorString( error_code ) << " @ " << message << std::endl;
             throw "CUDA error";

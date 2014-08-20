@@ -131,7 +131,7 @@ int main()
   viennacl::vector<double> *opencl_double_y = NULL;
   viennacl::vector<double> *opencl_double_A = NULL;
   viennacl::vector<double> *opencl_double_B = NULL;
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     opencl_double_x = new viennacl::vector<double>(viennacl::scalar_vector<double>(size1, 1.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size1; ++i) (*opencl_double_x)[i] = double(i);
     opencl_double_y = new viennacl::vector<double>(viennacl::scalar_vector<double>(size2, 2.0, viennacl::context(viennacl::ocl::get_context(context_id)))); for (std::size_t i=0; i<size2; ++i) (*opencl_double_y)[i] = double(size2 - i);
@@ -166,7 +166,7 @@ int main()
   check(ref_float_y, opencl_float_y, eps_float);
   check(ref_float_A, opencl_float_A, eps_float);
   check(ref_float_B, opencl_float_B, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     check(ref_double_x, *opencl_double_x, eps_double);
     check(ref_double_y, *opencl_double_y, eps_double);
@@ -232,7 +232,7 @@ int main()
                       0.1234f,
                       viennacl::traits::opencl_handle(opencl_float_x), 1, 2);
   check(ref_float_x, opencl_float_x, eps_float);
-  if( viennacl::ocl::current_device().double_support() )
+  if ( viennacl::ocl::current_device().double_support() )
   {
     ViennaCLOpenCLDgemv(my_backend,
                         ViennaCLRowMajor, ViennaCLNoTrans,

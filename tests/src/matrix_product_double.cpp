@@ -36,7 +36,7 @@ int main()
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
 #ifdef VIENNACL_WITH_OPENCL
-   if( viennacl::ocl::current_device().double_support() )
+   if ( viennacl::ocl::current_device().double_support() )
 #endif
    {
       {
@@ -46,7 +46,7 @@ int main()
         std::cout << "  eps:     " << epsilon << std::endl;
         std::cout << "  numeric: double" << std::endl;
         retval = run_test<NumericT>(epsilon);
-        if( retval == EXIT_SUCCESS )
+        if ( retval == EXIT_SUCCESS )
           std::cout << "# Test passed" << std::endl;
         else
           return retval;

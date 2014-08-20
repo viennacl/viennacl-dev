@@ -263,7 +263,7 @@ namespace viennacl
   template<class SCALARTYPE, typename SizeType, typename DistanceType>
   matrix_base<SCALARTYPE, SizeType, DistanceType> & matrix_base<SCALARTYPE, SizeType, DistanceType>::operator=(const self_type & other)  //enables implicit conversions
   {
-    if(&other==this)
+    if (&other==this)
       return *this;
 
     if (internal_size() == 0)

@@ -74,7 +74,7 @@ namespace viennacl
             scheduler::statement_node_numeric_type numeric_type(scheduler::statement const * statement, vcl_size_t root_idx) const
             {
                 scheduler::statement_node const * root_node = &statement->array()[root_idx];
-                while(root_node->lhs.numeric_type==scheduler::INVALID_NUMERIC_TYPE)
+                while (root_node->lhs.numeric_type==scheduler::INVALID_NUMERIC_TYPE)
                     root_node = &statement->array()[root_node->lhs.node_index];
                 return root_node->lhs.numeric_type;
             }
@@ -138,27 +138,27 @@ namespace viennacl
               mapping_type::key_type key(root_idx, leaf_t);
               scheduler::statement_node const & root_node = statement.array()[root_idx];
 
-              if(leaf_t == LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              if (leaf_t == LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                    mapping_.insert(mapping_type::value_type(key, utils::call_on_element(root_node.lhs, *this)));
-              else if(leaf_t == RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              else if (leaf_t == RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                    mapping_.insert(mapping_type::value_type(key,  utils::call_on_element(root_node.rhs, *this)));
-              else if( leaf_t== PARENT_NODE_TYPE)
+              else if ( leaf_t== PARENT_NODE_TYPE)
               {
-                  if(root_node.op.type==scheduler::OPERATION_BINARY_VECTOR_DIAG_TYPE)
+                  if (root_node.op.type==scheduler::OPERATION_BINARY_VECTOR_DIAG_TYPE)
                     mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_vector_diag>(&statement, root_idx, &mapping_)));
-                  else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_DIAG_TYPE)
+                  else if (root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_DIAG_TYPE)
                     mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_diag>(&statement, root_idx, &mapping_)));
-                  else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_ROW_TYPE)
+                  else if (root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_ROW_TYPE)
                     mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_row>(&statement, root_idx, &mapping_)));
-                  else if(root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_COLUMN_TYPE)
+                  else if (root_node.op.type==scheduler::OPERATION_BINARY_MATRIX_COLUMN_TYPE)
                     mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_column>(&statement, root_idx, &mapping_)));
-                  else if(is_scalar_reduction(root_node))
+                  else if (is_scalar_reduction(root_node))
                     mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_scalar_reduction>(&statement, root_idx, &mapping_)));
-                  else if(is_vector_reduction(root_node))
+                  else if (is_vector_reduction(root_node))
                     mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_row_wise_reduction>(&statement, root_idx, &mapping_)));
-                  else if(root_node.op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+                  else if (root_node.op.type == scheduler::OPERATION_BINARY_MAT_MAT_PROD_TYPE)
                     mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_matrix_product>(&statement, root_idx, &mapping_)));
-                  else if(root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE)
+                  else if (root_node.op.type == scheduler::OPERATION_UNARY_TRANS_TYPE)
                     mapping_.insert(mapping_type::value_type(key, binary_leaf<mapped_trans>(&statement, root_idx, &mapping_)));
              }
             }
@@ -181,7 +181,7 @@ namespace viennacl
             void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf) const
             {
                 scheduler::statement_node const & root_node = statement.array()[root_idx];
-                if( (leaf==LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
+                if ( (leaf==LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
                   ||(leaf==RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
                 {
                   mapped_object * obj = mapping_.at(std::make_pair(root_idx,leaf)).get();
@@ -209,14 +209,14 @@ namespace viennacl
             /** @brief Scalar mapping */
             template<class ScalarType>
             result_type operator()(scalar<ScalarType> const & scal) const {
-              if(binder_.bind(&viennacl::traits::handle(scal)))
+              if (binder_.bind(&viennacl::traits::handle(scal)))
                 kernel_.arg(current_arg_++, scal.handle().opencl_handle());
             }
 
             /** @brief Vector mapping */
             template<class ScalarType>
             result_type operator()(vector_base<ScalarType> const & vec) const {
-              if(binder_.bind(&viennacl::traits::handle(vec)))
+              if (binder_.bind(&viennacl::traits::handle(vec)))
               {
                 kernel_.arg(current_arg_++, vec.handle().opencl_handle());
                 kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start(vec)));
@@ -230,7 +230,7 @@ namespace viennacl
             {
               typedef typename viennacl::result_of::cl_type<ScalarType>::type cl_scalartype;
               kernel_.arg(current_arg_++, cl_scalartype(vec.value()));
-              if(vec.has_index())
+              if (vec.has_index())
                 kernel_.arg(current_arg_++, cl_uint(vec.index()));
             }
 
@@ -238,11 +238,11 @@ namespace viennacl
             template<class ScalarType>
             result_type operator()(matrix_base<ScalarType> const & mat) const
             {
-              if(binder_.bind(&viennacl::traits::handle(mat)))
+              if (binder_.bind(&viennacl::traits::handle(mat)))
               {
                 kernel_.arg(current_arg_++, mat.handle().opencl_handle());
                 kernel_.arg(current_arg_++, cl_uint(viennacl::traits::ld(mat)));
-                if(mat.row_major())
+                if (mat.row_major())
                 {
                   kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start2(mat)));
                   kernel_.arg(current_arg_++, cl_uint(viennacl::traits::start1(mat)));
@@ -270,9 +270,9 @@ namespace viennacl
             void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf_t) const
             {
               scheduler::statement_node const & root_node = statement.array()[root_idx];
-              if(leaf_t==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              if (leaf_t==LHS_NODE_TYPE && root_node.lhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                 utils::call_on_element(root_node.lhs, *this);
-              else if(leaf_t==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
+              else if (leaf_t==RHS_NODE_TYPE && root_node.rhs.type_family != scheduler::COMPOSITE_OPERATION_FAMILY)
                 utils::call_on_element(root_node.rhs, *this);
             }
 
@@ -291,7 +291,7 @@ namespace viennacl
           std::set<std::string> already_generated;
 
           std::string arguments = first_arguments;
-          for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          for (mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
             tree_parsing::traverse(*sit, sit->root(), prototype_generation_traversal(already_generated, arguments, *mit), true);
           arguments.erase(arguments.size()-1); //Last comma pruned
           stream << "__kernel " << "void " << name << "(" << arguments << ")" << std::endl;
@@ -300,7 +300,7 @@ namespace viennacl
         void set_arguments(statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & current_arg)
         {
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-          for(statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
+          for (statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
             tree_parsing::traverse(*itt, itt->root(), set_arguments_functor(*binder,current_arg,kernel), true);
         }
 
@@ -320,13 +320,13 @@ namespace viennacl
 
         static void fetching_loop_info(fetching_policy_type policy, std::string const & bound, utils::kernel_generation_stream & stream, std::string & init, std::string & upper_bound, std::string & inc, std::string const & domain_id, std::string const & domain_size)
         {
-          if(policy==FETCH_FROM_GLOBAL_STRIDED)
+          if (policy==FETCH_FROM_GLOBAL_STRIDED)
           {
             init = domain_id;
             upper_bound = bound;
             inc = domain_size;
           }
-          else if(policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
+          else if (policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
           {
             std::string chunk_size = "chunk_size";
             std::string chunk_start = "chunk_start";
@@ -345,14 +345,14 @@ namespace viennacl
         {
           bool res = false;
           scheduler::lhs_rhs_element scheduler::statement_node::*ptr;
-          if(leaf_type==LHS_NODE_TYPE)
+          if (leaf_type==LHS_NODE_TYPE)
             ptr = &scheduler::statement_node::lhs;
           else
             ptr = &scheduler::statement_node::rhs;
           scheduler::statement_node const * node = &array[root_idx];
-          while((node->*ptr).type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
+          while ((node->*ptr).type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
           {
-            if(array[(node->*ptr).node_index].op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
+            if (array[(node->*ptr).node_index].op.type==scheduler::OPERATION_UNARY_TRANS_TYPE)
               res = !res;
             node = &array[(node->*ptr).node_index];
           }
@@ -363,20 +363,20 @@ namespace viennacl
 
       static bool has_strided_access(statements_container const & statements)
       {
-        for(statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        for (statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
         {
           //checks for vectors
           std::vector<scheduler::lhs_rhs_element> vectors;
           tree_parsing::traverse(*it, it->root(), tree_parsing::filter_elements(scheduler::DENSE_VECTOR_TYPE, vectors), true);
-          for(std::vector<scheduler::lhs_rhs_element>::iterator itt = vectors.begin() ; itt != vectors.end() ; ++itt)
-            if(utils::call_on_vector(*itt, utils::stride_fun())>1)
+          for (std::vector<scheduler::lhs_rhs_element>::iterator itt = vectors.begin() ; itt != vectors.end() ; ++itt)
+            if (utils::call_on_vector(*itt, utils::stride_fun())>1)
               return true;
 
           //checks for matrix
           std::vector<scheduler::lhs_rhs_element> matrices;
           tree_parsing::traverse(*it, it->root(), tree_parsing::filter_elements(scheduler::DENSE_MATRIX_TYPE, matrices), true);
-          for(std::vector<scheduler::lhs_rhs_element>::iterator itt = matrices.begin() ; itt != matrices.end() ; ++itt)
-            if(utils::call_on_matrix(*itt, utils::stride1_fun())>1 || utils::call_on_matrix(*itt, utils::stride2_fun())>2)
+          for (std::vector<scheduler::lhs_rhs_element>::iterator itt = matrices.begin() ; itt != matrices.end() ; ++itt)
+            if (utils::call_on_matrix(*itt, utils::stride1_fun())>1 || utils::call_on_matrix(*itt, utils::stride2_fun())>2)
               return true;
         }
         return false;
@@ -386,15 +386,15 @@ namespace viennacl
       {
         using namespace scheduler;
         using namespace utils;
-        if(node.op.type==OPERATION_BINARY_MATRIX_DIAG_TYPE)
+        if (node.op.type==OPERATION_BINARY_MATRIX_DIAG_TYPE)
         {
           vcl_size_t size1 = up_to_internal_size?call_on_matrix(node.lhs, internal_size1_fun()):call_on_matrix(node.lhs, size1_fun());
           vcl_size_t size2 = up_to_internal_size?call_on_matrix(node.lhs, internal_size2_fun()):call_on_matrix(node.lhs, size2_fun());
           return std::min<vcl_size_t>(size1, size2);
         }
-        else if(node.op.type==OPERATION_BINARY_MATRIX_ROW_TYPE)
+        else if (node.op.type==OPERATION_BINARY_MATRIX_ROW_TYPE)
           return up_to_internal_size?call_on_matrix(node.lhs, internal_size2_fun()):call_on_matrix(node.lhs, size2_fun());
-        else if(node.op.type==OPERATION_BINARY_MATRIX_COLUMN_TYPE)
+        else if (node.op.type==OPERATION_BINARY_MATRIX_COLUMN_TYPE)
           return up_to_internal_size?call_on_matrix(node.lhs, internal_size1_fun()):call_on_matrix(node.lhs, size1_fun());
         else
           return up_to_internal_size?call_on_vector(node.lhs, internal_size_fun()):call_on_vector(node.lhs, size_fun());
@@ -420,7 +420,7 @@ namespace viennacl
         stream.dec_tab();
         stream << "}" << std::endl;
 
-        if(simd_width>1)
+        if (simd_width>1)
         {
           stream << "for(unsigned int " << i << " = " << boundround << "*" << strwidth << " + " << domain_id << " ; " << i << " < " << bound << "; " << i << " += " + domain_size + ")" << std::endl;
           stream << "{" << std::endl;
@@ -433,7 +433,7 @@ namespace viennacl
 
       static std::string vstore(unsigned int simd_width, std::string const & value, std::string const & offset, std::string const & ptr)
       {
-        if(simd_width==1)
+        if (simd_width==1)
           return "(" + ptr + ")[" + offset + "] = " + value;
         else
           return utils::append_width("vstore", simd_width) + "(" + value + ", " + offset + ", " + ptr + ")";
@@ -441,7 +441,7 @@ namespace viennacl
 
       static std::string vload(unsigned int simd_width, std::string const & offset, std::string const & ptr)
       {
-        if(simd_width==1)
+        if (simd_width==1)
           return "(" + ptr + ")[" + offset + "]";
         else
           return utils::append_width("vload", simd_width) + "(" + offset + ", " + ptr + ")";
@@ -464,7 +464,7 @@ namespace viennacl
           //Create mapping
           std::vector<mapping_type> mappings(statements.data().size());
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-          for(mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          for (mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
             tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
 
           return generate_impl(kernel_prefix, statements, mappings);
@@ -516,35 +516,35 @@ namespace viennacl
         //Query device informations
         size_t lmem_available = static_cast<size_t>(device.local_mem_size());
         size_t lmem_usage = scalartype_size*n_lmem_elements();
-        if(lmem_usage>lmem_available)
+        if (lmem_usage>lmem_available)
           return TEMPLATE_LOCAL_MEMORY_OVERFLOW;
 
         //Invalid work group size
         size_t max_workgroup_size = device.max_work_group_size();
         std::vector<size_t> max_work_item_sizes = device.max_work_item_sizes();
-        if(p_.local_size_0*p_.local_size_1 > max_workgroup_size)
+        if (p_.local_size_0*p_.local_size_1 > max_workgroup_size)
           return TEMPLATE_WORK_GROUP_SIZE_OVERFLOW;
-        if(p_.local_size_0 > max_work_item_sizes[0])
+        if (p_.local_size_0 > max_work_item_sizes[0])
           return TEMPLATE_LOCAL_SIZE_0_OVERFLOW;
 
-        if(p_.local_size_1 > max_work_item_sizes[1])
+        if (p_.local_size_1 > max_work_item_sizes[1])
           return TEMPLATE_LOCAL_SIZE_1_OVERFLOW;
 
         //Advice from the Intel guide
         unsigned int warp_size = 8;
-        if(device.type()==CL_DEVICE_TYPE_GPU)
+        if (device.type()==CL_DEVICE_TYPE_GPU)
         {
           //Advice from the nvidia guide
           warp_size = 32;
           //Advice from the AMD guide
-          if(device.vendor_id()==4098)
+          if (device.vendor_id()==4098)
             warp_size = 64;
         }
-        if(((p_.local_size_0*p_.local_size_1)%warp_size)>0)
+        if (((p_.local_size_0*p_.local_size_1)%warp_size)>0)
           return TEMPLATE_LOCAL_SIZE_NOT_WARP_MULTIPLE;
           
         //Invalid SIMD Width
-        if(p_.simd_width!=1 && p_.simd_width!=2 &&
+        if (p_.simd_width!=1 && p_.simd_width!=2 &&
                     p_.simd_width!=4 && p_.simd_width!=8 &&
                     p_.simd_width!=16)
           return TEMPLATE_INVALID_SIMD_WIDTH;

@@ -58,7 +58,7 @@ namespace viennacl{
     private:
       int check_invalid_impl(viennacl::ocl::device const & /*dev*/) const
       {
-          if(p_.simd_width>1)
+          if (p_.simd_width>1)
             return TEMPLATE_INVALID_SIMD_WIDTH;
           return TEMPLATE_VALID;
       }
@@ -136,7 +136,7 @@ namespace viennacl{
 
         scheduler::statement_node const & root = statements.data().front().array()[statements.data().front().root()];
         unsigned int current_arg = 0;
-        if(up_to_internal_size_)
+        if (up_to_internal_size_)
         {
           kernel.arg(current_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size1_fun())));
           kernel.arg(current_arg++, cl_uint(utils::call_on_matrix(root.lhs, utils::internal_size2_fun())));
