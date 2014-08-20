@@ -320,7 +320,7 @@ namespace viennacl{
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
 
-        for (mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+        for (mit = mappings.begin(), sit = statements.data().begin(); sit != statements.data().end(); ++mit, ++sit)
           stream << evaluate(leaf, accessors, *sit, sit->root(), *mit) << ";" << std::endl;
       }
 
@@ -386,7 +386,7 @@ namespace viennacl{
         std::vector<mapping_type>::const_iterator mit;
         std::set<std::string> already_processed;
 
-        for (mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++mit, ++sit)
+        for (mit = mappings.begin(), sit = statements.data().begin(); sit != statements.data().end(); ++mit, ++sit)
           process(stream, leaf, type_key, to_process, *sit, sit->root(), *mit, already_processed);
       }
 
@@ -495,7 +495,7 @@ namespace viennacl{
           else
             *program_name++='s';
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy);
-          for (statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+          for (statements_container::data_type::const_iterator it = statements.data().begin(); it != statements.data().end(); ++it)
               tree_parsing::traverse(*it, it->root(), tree_parsing::statement_representation_functor(*binder, program_name),true);
           *program_name='\0';
           return std::string(program_name_vector.data());

@@ -291,7 +291,7 @@ namespace viennacl
           std::set<std::string> already_generated;
 
           std::string arguments = first_arguments;
-          for (mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          for (mit = mappings.begin(), sit = statements.data().begin(); sit != statements.data().end(); ++sit, ++mit)
             tree_parsing::traverse(*sit, sit->root(), prototype_generation_traversal(already_generated, arguments, *mit), true);
           arguments.erase(arguments.size()-1); //Last comma pruned
           stream << "__kernel " << "void " << name << "(" << arguments << ")" << std::endl;
@@ -300,7 +300,7 @@ namespace viennacl
         void set_arguments(statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & current_arg)
         {
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-          for (statements_container::data_type::const_iterator itt = statements.data().begin() ; itt != statements.data().end() ; ++itt)
+          for (statements_container::data_type::const_iterator itt = statements.data().begin(); itt != statements.data().end(); ++itt)
             tree_parsing::traverse(*itt, itt->root(), set_arguments_functor(*binder,current_arg,kernel), true);
         }
 
@@ -363,19 +363,19 @@ namespace viennacl
 
       static bool has_strided_access(statements_container const & statements)
       {
-        for (statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        for (statements_container::data_type::const_iterator it = statements.data().begin(); it != statements.data().end(); ++it)
         {
           //checks for vectors
           std::vector<scheduler::lhs_rhs_element> vectors;
           tree_parsing::traverse(*it, it->root(), tree_parsing::filter_elements(scheduler::DENSE_VECTOR_TYPE, vectors), true);
-          for (std::vector<scheduler::lhs_rhs_element>::iterator itt = vectors.begin() ; itt != vectors.end() ; ++itt)
+          for (std::vector<scheduler::lhs_rhs_element>::iterator itt = vectors.begin(); itt != vectors.end(); ++itt)
             if (utils::call_on_vector(*itt, utils::stride_fun())>1)
               return true;
 
           //checks for matrix
           std::vector<scheduler::lhs_rhs_element> matrices;
           tree_parsing::traverse(*it, it->root(), tree_parsing::filter_elements(scheduler::DENSE_MATRIX_TYPE, matrices), true);
-          for (std::vector<scheduler::lhs_rhs_element>::iterator itt = matrices.begin() ; itt != matrices.end() ; ++itt)
+          for (std::vector<scheduler::lhs_rhs_element>::iterator itt = matrices.begin(); itt != matrices.end(); ++itt)
             if (utils::call_on_matrix(*itt, utils::stride1_fun())>1 || utils::call_on_matrix(*itt, utils::stride2_fun())>2)
               return true;
         }
@@ -413,7 +413,7 @@ namespace viennacl
 
         std::string init, upper_bound, inc;
         fetching_loop_info(fetch, boundround, stream, init, upper_bound, inc, domain_id, domain_size);
-        stream << "for(unsigned int " << i << " = " << init << "; " << i << " < " << upper_bound << " ; " << i << " += " << inc << ")" << std::endl;
+        stream << "for(unsigned int " << i << " = " << init << "; " << i << " < " << upper_bound << "; " << i << " += " << inc << ")" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
         loop_body(stream, simd_width);
@@ -422,7 +422,7 @@ namespace viennacl
 
         if (simd_width>1)
         {
-          stream << "for(unsigned int " << i << " = " << boundround << "*" << strwidth << " + " << domain_id << " ; " << i << " < " << bound << "; " << i << " += " + domain_size + ")" << std::endl;
+          stream << "for(unsigned int " << i << " = " << boundround << "*" << strwidth << " + " << domain_id << "; " << i << " < " << bound << "; " << i << " += " + domain_size + ")" << std::endl;
           stream << "{" << std::endl;
           stream.inc_tab();
           loop_body(stream, 1);
@@ -464,7 +464,7 @@ namespace viennacl
           //Create mapping
           std::vector<mapping_type> mappings(statements.data().size());
           tools::shared_ptr<symbolic_binder> binder = make_binder(binding_policy_);
-          for (mit = mappings.begin(), sit = statements.data().begin() ; sit != statements.data().end() ; ++sit, ++mit)
+          for (mit = mappings.begin(), sit = statements.data().begin(); sit != statements.data().end(); ++sit, ++mit)
             tree_parsing::traverse(*sit, sit->root(), map_functor(*binder,*mit), true);
 
           return generate_impl(kernel_prefix, statements, mappings);

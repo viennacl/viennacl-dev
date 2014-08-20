@@ -142,7 +142,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = scalar_vector(alpha) ..." << std::endl;
-//        for (unsigned int i = 0 ; i < size ; ++i)
+//        for (unsigned int i = 0; i < size; ++i)
 //          cw[i] = alpha;
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::scalar_vector<NumericT>(size,alpha));
 //        device_specific::execute(database::get<NumericT>(database::axpy), statement);
@@ -190,7 +190,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "[Independent] x = alpha*w + beta*y, y = alpha*x + beta*w ..." << std::endl;
-//        for (std::size_t i = 0 ; i < size ; ++i)
+//        for (std::size_t i = 0; i < size; ++i)
 //        {
 //          NumericT tmpcx = cx[i];
 //          NumericT tmpcy = cy[i];
@@ -220,7 +220,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = exp(y) ..." << std::endl;
-//        for (std::size_t i = 0 ; i < size ; ++i)
+//        for (std::size_t i = 0; i < size; ++i)
 //          cw[i] = std::exp(y[i]);
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_exp(y));
 //        device_specific::execute(database::get<NumericT>(database::axpy), statement);
@@ -230,7 +230,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = element_prod(x,y) ..." << std::endl;
-//        for (std::size_t i = 0 ; i < size ; ++i)
+//        for (std::size_t i = 0; i < size; ++i)
 //          cw[i] = x[i]*y[i];
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_prod(x,y));
 //        device_specific::execute(database::get<NumericT>(database::axpy), statement);
@@ -240,7 +240,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = x == x" << std::endl;
-//        for (unsigned int i=0 ; i < size ; ++i){
+//        for (unsigned int i=0; i < size; ++i){
 //            cw(i) = (cx(i) == cx(i));
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_eq(x,x));
@@ -251,7 +251,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = x != x" << std::endl;
-//        for (unsigned int i=0 ; i < size ; ++i){
+//        for (unsigned int i=0; i < size; ++i){
 //            cw(i) = cx(i) != cx(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_neq(x,x));
@@ -262,7 +262,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = x > y" << std::endl;
-//        for (unsigned int i=0 ; i < size ; ++i){
+//        for (unsigned int i=0; i < size; ++i){
 //            cw(i) = cx(i) > cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_greater(x,y));
@@ -273,7 +273,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = x >= y" << std::endl;
-//        for (unsigned int i=0 ; i < size ; ++i){
+//        for (unsigned int i=0; i < size; ++i){
 //            cw(i) = cx(i) >= cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_geq(x,y));
@@ -284,7 +284,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = x < y" << std::endl;
-//        for (unsigned int i=0 ; i < size ; ++i){
+//        for (unsigned int i=0; i < size; ++i){
 //            cw(i) = cx(i) < cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_less(x,y));
@@ -295,7 +295,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = x <= y" << std::endl;
-//        for (unsigned int i=0 ; i < size ; ++i){
+//        for (unsigned int i=0; i < size; ++i){
 //            cw(i) = cx(i) <= cy(i);
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_leq(x,y));
@@ -307,7 +307,7 @@ int test_vector ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "w = x.^y" << std::endl;
-//        for (unsigned int i=0 ; i < size ; ++i){
+//        for (unsigned int i=0; i < size; ++i){
 //            cw(i) = std::pow(cx(i),cy(i));
 //        }
 //        viennacl::scheduler::statement statement(w, viennacl::op_assign(), viennacl::linalg::element_pow(x,y));
@@ -319,7 +319,7 @@ int test_vector ( Epsilon const& epsilon) {
 //    {
 //        std::cout << "s = inner_prod(x,y)..." << std::endl;
 //        s = 0;
-//        for (unsigned int i=0 ; i<size ; ++i)  s+=cx[i]*cy[i];
+//        for (unsigned int i=0; i<size; ++i)  s+=cx[i]*cy[i];
 //        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::inner_prod(x,y));
 //        device_specific::execute(database::get<NumericT>(database::reduction), statement);
 //        viennacl::backend::finish();
@@ -329,7 +329,7 @@ int test_vector ( Epsilon const& epsilon) {
 //    {
 //        std::cout << "s = reduce<add>(x)..." << std::endl;
 //        s = 0;
-//        for (unsigned int i=0 ; i<size ; ++i)  s+=cx[i];
+//        for (unsigned int i=0; i<size; ++i)  s+=cx[i];
 //        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<viennacl::op_add>(x));
 //        device_specific::execute(profiles::get(REDUCTION_TYPE, NUMERIC_TYPE), statement);
 //        viennacl::backend::finish();
@@ -339,7 +339,7 @@ int test_vector ( Epsilon const& epsilon) {
 //    {
 //        std::cout << "s = reduce<fmax>(x)..." << std::endl;
 //        s = cx[0];
-//        for (unsigned int i=1 ; i<size ; ++i)  s=std::max(s,cx[i]);
+//        for (unsigned int i=1; i<size; ++i)  s=std::max(s,cx[i]);
 //        viennacl::scheduler::statement statement(gs, viennacl::op_assign(), viennacl::linalg::reduce<iennacl::op_fmax>(x));
 //        device_specific::execute(database::get<NumericT>(database::reduction), statement);
 //        viennacl::backend::finish();
@@ -350,7 +350,7 @@ int test_vector ( Epsilon const& epsilon) {
         std::cout << "s = reduce<argmax>(x)..." << std::endl;
         NumericT s = 0;
         NumericT val = cx[0];
-        for (unsigned int i=1 ; i<size ; ++i)
+        for (unsigned int i=1; i<size; ++i)
         {
             if (cx[i] > val)
             {
@@ -393,11 +393,11 @@ int test_matrix ( Epsilon const& epsilon) {
 
 
     for (unsigned int i=0; i<size1; ++i)
-        for (unsigned int j=0 ; j<size2; ++j)
+        for (unsigned int j=0; j<size2; ++j)
             cA(i,j)=(NumericT)std::rand()/RAND_MAX;
 
-    for (unsigned int i = 0 ; i < pattern_size1 ; ++i)
-        for (unsigned int j = 0 ; j < pattern_size2 ; ++j)
+    for (unsigned int i = 0; i < pattern_size1; ++i)
+        for (unsigned int j = 0; j < pattern_size2; ++j)
             cPattern(i,j) = (NumericT)std::rand()/RAND_MAX;
 
 
@@ -439,8 +439,8 @@ int test_matrix ( Epsilon const& epsilon) {
 
     {
       std::cout << "C = diag(x) ..." << std::endl;
-      for (unsigned int i = 0 ; i < size1 ; ++i)
-        for (unsigned int j = 0 ; j < size2 ; ++j)
+      for (unsigned int i = 0; i < size1; ++i)
+        for (unsigned int j = 0; j < size2; ++j)
           cC(i,j) = (i==j)?cx[i]:0;
       viennacl::scheduler::statement statement(C, viennacl::op_assign(), viennacl::diag(x));
       device_specific::execute<device_specific::matrix_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::matrix_axpy), statement);
@@ -450,7 +450,7 @@ int test_matrix ( Epsilon const& epsilon) {
 
     {
       std::cout << "x = diag(C) ..." << std::endl;
-      for (unsigned int i = 0 ; i < std::min(size1, size2) ; ++i)
+      for (unsigned int i = 0; i < std::min(size1, size2); ++i)
         cx[i] = cC(i,i);
       viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::diag(C));
       device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
@@ -460,7 +460,7 @@ int test_matrix ( Epsilon const& epsilon) {
 
     {
       std::cout << "y = row(C, 7) ..." << std::endl;
-      for (unsigned int j = 0 ; j < size2 ; ++j)
+      for (unsigned int j = 0; j < size2; ++j)
         cy[j] = cC(7,j);
       viennacl::scheduler::statement statement(y, viennacl::op_assign(), viennacl::row(C, 7));
       device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
@@ -470,7 +470,7 @@ int test_matrix ( Epsilon const& epsilon) {
 
 //    {
 //      std::cout << "x = diag(C) ..." << std::endl;
-//      for (unsigned int i = 0 ; i < std::min(size1, size2) ; ++i)
+//      for (unsigned int i = 0; i < std::min(size1, size2); ++i)
 //        cx[i] = cC(i,i);
 //      viennacl::scheduler::statement statement(x, viennacl::op_assign(), viennacl::diag(C));
 //      device_specific::execute<device_specific::vector_axpy_template>(device_specific::database::get<NumericT>(device_specific::database::vector_axpy), statement);
@@ -481,8 +481,8 @@ int test_matrix ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "C = diag(x) ..." << std::endl;
-//        for (unsigned int i = 0 ; i < size1 ; ++i){
-//          for (unsigned int j = 0 ; j < size2 ; ++j){
+//        for (unsigned int i = 0; i < size1; ++i){
+//          for (unsigned int j = 0; j < size2; ++j){
 //            cC(i,j) = (i==j)?cx[i]:0;
 //          }
 //        }
@@ -495,7 +495,7 @@ int test_matrix ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "x = diag(C) ..." << std::endl;
-//        for (unsigned int i = 0; i < size1 ; ++i){
+//        for (unsigned int i = 0; i < size1; ++i){
 //            cx(i) = cA(i,i);
 //        }
 //        generator::custom_operation op;
@@ -507,8 +507,8 @@ int test_matrix ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "C = repmat(P, M, N) ..." << std::endl;
-//        for (unsigned int i = 0 ; i < size1 ; ++i)
-//            for (unsigned int j = 0 ; j < size2 ; ++j)
+//        for (unsigned int i = 0; i < size1; ++i)
+//            for (unsigned int j = 0; j < size2; ++j)
 //                cC(i,j) = cPattern(i%pattern_size1, j%pattern_size2);
 //        generator::custom_operation op;
 //        op.add(mat(C) = generator::repmat(mat(pattern),n_rep1,n_rep2));
@@ -519,8 +519,8 @@ int test_matrix ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "C = repmat(x, 1, N) ..." << std::endl;
-//        for (unsigned int i = 0 ; i < size1 ; ++i)
-//            for (unsigned int j = 0 ; j < size2 ; ++j)
+//        for (unsigned int i = 0; i < size1; ++i)
+//            for (unsigned int j = 0; j < size2; ++j)
 //                cC(i,j) = cx(i);
 //        generator::custom_operation op;
 //        op.add(mat(C) = generator::repmat(vec(x),1, C.size2()));
@@ -531,8 +531,8 @@ int test_matrix ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "C = trans(repmat(x, 1, N)) ..." << std::endl;
-//        for (unsigned int i = 0 ; i < size1 ; ++i)
-//            for (unsigned int j = 0 ; j < size2 ; ++j)
+//        for (unsigned int i = 0; i < size1; ++i)
+//            for (unsigned int j = 0; j < size2; ++j)
 //                cC(i,j) = cx(j);
 //        generator::custom_operation op;
 //        op.add(mat(C) = generator::trans(generator::repmat(vec(x),1,C.size2())));
@@ -544,8 +544,8 @@ int test_matrix ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "C = -A ..." << std::endl;
-//        for (unsigned int i = 0 ; i < size1 ; ++i)
-//            for (unsigned int j = 0 ; j < size2 ; ++j)
+//        for (unsigned int i = 0; i < size1; ++i)
+//            for (unsigned int j = 0; j < size2; ++j)
 //                cC(i,j) = -cA(i,j);
 //        generator::custom_operation op;
 //        op.add(mat(C) = -mat(A));
@@ -557,8 +557,8 @@ int test_matrix ( Epsilon const& epsilon) {
 
 //    {
 //        std::cout << "C = 1/(1+EXP(-A)) ..." << std::endl;
-//        for (unsigned int i = 0 ; i < size1 ; ++i)
-//            for (unsigned int j = 0 ; j < size2 ; ++j)
+//        for (unsigned int i = 0; i < size1; ++i)
+//            for (unsigned int j = 0; j < size2; ++j)
 //                cC(i,j) = 1.0f/(1.0f+std::exp(-cA(i,j)));
 //        generator::custom_operation op;
 //        op.add(mat(C) = 1.0f/(1.0f+generator::exp(-mat(A))));
@@ -591,14 +591,14 @@ int main(int argc, char* argv[]){
 
     unsigned int current_device = 0;
 
-    for (unsigned int k=0 ; k < num_platforms ; ++k)
+    for (unsigned int k=0; k < num_platforms; ++k)
     {
         viennacl::ocl::platform pf(k);
         viennacl::ocl::set_context_device_type(k,CL_DEVICE_TYPE_ALL);
         viennacl::ocl::set_context_platform_index(k,k);
         viennacl::ocl::switch_context(k);
         devices_type dev = viennacl::ocl::current_context().devices();
-        for (devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
+        for (devices_type::iterator it = dev.begin(); it != dev.end(); ++it){
 
             if (current_device++ == requested_device ){
                 viennacl::ocl::switch_device(*it);

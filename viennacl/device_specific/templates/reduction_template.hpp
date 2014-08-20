@@ -74,7 +74,7 @@ namespace viennacl
                                          std::string const & buf_str, std::string const & buf_value_str) const
       {
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int stride = " << size/2 << "; stride >0 ; stride /=2)" << std::endl;
+        stream << "for(unsigned int stride = " << size/2 << "; stride >0; stride /=2)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
         stream << "barrier(CLK_LOCAL_MEM_FENCE); " << std::endl;
@@ -82,7 +82,7 @@ namespace viennacl
         stream << "{" << std::endl;
         stream.inc_tab();
 
-        for (unsigned int k = 0 ; k < exprs.size() ; k++)
+        for (unsigned int k = 0; k < exprs.size(); k++)
             if (exprs[k]->is_index_reduction())
                 compute_index_reduction(stream, exprs[k]->process(buf_str+"[lid]"), exprs[k]->process(buf_str+"[lid+stride]")
                                     , exprs[k]->process(buf_value_str+"[lid]"), exprs[k]->process(buf_value_str+"[lid+stride]"),
@@ -100,14 +100,14 @@ namespace viennacl
         utils::kernel_generation_stream stream;
 
         std::vector<mapped_scalar_reduction*> exprs;
-        for (std::vector<mapping_type>::const_iterator it = mappings.begin() ; it != mappings.end() ; ++it)
-          for (mapping_type::const_iterator iit = it->begin() ; iit != it->end() ; ++iit)
+        for (std::vector<mapping_type>::const_iterator it = mappings.begin(); it != mappings.end(); ++it)
+          for (mapping_type::const_iterator iit = it->begin(); iit != it->end(); ++iit)
             if (mapped_scalar_reduction * p = dynamic_cast<mapped_scalar_reduction*>(iit->second.get()))
               exprs.push_back(p);
         std::size_t N = exprs.size();
 
         std::string arguments = generate_value_kernel_argument("unsigned int", "N");
-        for (unsigned int k = 0 ; k < N ; ++k)
+        for (unsigned int k = 0; k < N; ++k)
         {
           std::string numeric_type = utils::numeric_type_to_string(lhs_most(exprs[k]->statement().array(),
                                                                             exprs[k]->statement().root()).lhs.numeric_type);
@@ -133,7 +133,7 @@ namespace viennacl
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
         tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", "#pointer += #start;", statements, mappings);
 
-        for (unsigned int k = 0 ; k < N ; ++k)
+        for (unsigned int k = 0; k < N; ++k)
         {
           if (exprs[k]->is_index_reduction())
           {
@@ -161,7 +161,7 @@ namespace viennacl
             {
             std::set<std::string> already_fetched;
             process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width,i,"#pointer")+";";
-            for (std::vector<mapped_scalar_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+            for (std::vector<mapped_scalar_reduction*>::const_iterator it = exprs.begin(); it != exprs.end(); ++it)
             {
               (*it)->process_recursive(stream, PARENT_NODE_TYPE, "vector", process_str, already_fetched);
               (*it)->process_recursive(stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = #pointer[$OFFSET{#row*#stride1, i*#stride2}];", already_fetched);
@@ -175,12 +175,12 @@ namespace viennacl
             if (simd_width==1)
               str[0] = "#namereg";
             else
-              for (unsigned int a = 0 ; a < simd_width ; ++a)
+              for (unsigned int a = 0; a < simd_width; ++a)
                 str[a] = "#namereg.s" + tools::to_string(a);
 
-            for (unsigned int k = 0 ; k < exprs.size() ; ++k)
+            for (unsigned int k = 0; k < exprs.size(); ++k)
             {
-              for (unsigned int a = 0 ; a < simd_width ; ++a)
+              for (unsigned int a = 0; a < simd_width; ++a)
               {
                 std::map<std::string, std::string> accessors;
                 accessors["vector"] = str[a];
@@ -205,7 +205,7 @@ namespace viennacl
         element_wise_loop_1D(stream, loop_body(exprs), p_.fetching_policy, simd_width, "i", "N", "get_global_id(0)", "get_global_size(0)");
 
         //Fills local memory
-        for (unsigned int k = 0 ; k < N ; ++k)
+        for (unsigned int k = 0; k < N; ++k)
         {
           if (exprs[k]->is_index_reduction())
             stream << exprs[k]->process("#name_buf_value[lid] = #name_acc_value;") << std::endl;
@@ -219,7 +219,7 @@ namespace viennacl
         stream << "if (lid==0)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        for (unsigned int k = 0 ; k < N ; ++k)
+        for (unsigned int k = 0; k < N; ++k)
         {
           if (exprs[k]->is_index_reduction())
             stream << exprs[k]->process("#name_temp_value[get_group_id(0)] = #name_buf_value[0];") << std::endl;
@@ -241,7 +241,7 @@ namespace viennacl
 
         stream << "unsigned int lid = get_local_id(0);" << std::endl;
 
-        for (unsigned int k = 0 ; k < N ; ++k)
+        for (unsigned int k = 0; k < N; ++k)
         {
           if (exprs[k]->is_index_reduction())
           {
@@ -257,10 +257,10 @@ namespace viennacl
           }
         }
 
-        stream << "for(unsigned int i = lid ; i < " << p_.num_groups << " ; i += get_local_size(0))" << std::endl;
+        stream << "for(unsigned int i = lid; i < " << p_.num_groups << "; i += get_local_size(0))" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        for (unsigned int k = 0 ; k < N ; ++k)
+        for (unsigned int k = 0; k < N; ++k)
           if (exprs[k]->is_index_reduction())
             compute_index_reduction(stream, exprs[k]->process("#name_acc"), exprs[k]->process("#name_temp[i]"),
                                             exprs[k]->process("#name_acc_value"),exprs[k]->process("#name_temp_value[i]"),exprs[k]->root_op());
@@ -270,7 +270,7 @@ namespace viennacl
         stream.dec_tab();
         stream << "}" << std::endl;
 
-        for (unsigned int k = 0 ; k < N ; ++k)
+        for (unsigned int k = 0; k < N; ++k)
         {
           if (exprs[k]->is_index_reduction())
             stream << exprs[k]->process("#name_buf_value[lid] = #name_acc_value;") << std::endl;
@@ -312,12 +312,12 @@ namespace viennacl
       {
         std::vector<scheduler::statement_node const *> reductions;
         cl_uint size = 0;
-        for (statements_container::data_type::const_iterator it = statements.data().begin() ; it != statements.data().end() ; ++it)
+        for (statements_container::data_type::const_iterator it = statements.data().begin(); it != statements.data().end(); ++it)
         {
           std::vector<size_t> reductions_idx;
           tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&utils::is_reduction, reductions_idx), false);
           size = static_cast<cl_uint>(vector_size(lhs_most(it->array(), reductions_idx[0]), false));
-          for (std::vector<size_t>::iterator itt = reductions_idx.begin() ; itt != reductions_idx.end() ; ++itt)
+          for (std::vector<size_t>::iterator itt = reductions_idx.begin(); itt != reductions_idx.end(); ++itt)
             reductions.push_back(&it->array()[*itt]);
         }
 
@@ -342,13 +342,13 @@ namespace viennacl
         kernels[1]->local_work_size(0, p_.local_size_0);
         kernels[1]->global_work_size(0,p_.local_size_0);
 
-        for (unsigned int k = 0 ; k < 2 ; k++)
+        for (unsigned int k = 0; k < 2; k++)
         {
             unsigned int n_arg = 0;
             kernels[k]->arg(n_arg++, size);
             unsigned int i = 0;
             unsigned int j = 0;
-            for (std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin() ; it != reductions.end() ; ++it)
+            for (std::vector<scheduler::statement_node const *>::const_iterator it = reductions.begin(); it != reductions.end(); ++it)
             {
               if (utils::is_index_reduction((*it)->op))
               {
@@ -366,7 +366,7 @@ namespace viennacl
             set_arguments(statements, *kernels[k], n_arg);
         }
 
-        for (unsigned int k = 0 ; k < 2 ; k++)
+        for (unsigned int k = 0; k < 2; k++)
             viennacl::ocl::enqueue(*kernels[k]);
 
       }

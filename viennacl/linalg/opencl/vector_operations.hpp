@@ -241,10 +241,10 @@ namespace viennacl
 
           std::vector<range_t> ranges;
           ranges.reserve(upper_bound);
-          for (unsigned int i = 0 ; i < upper_bound ; ++i)
+          for (unsigned int i = 0; i < upper_bound; ++i)
             ranges.push_back(range_t(result, viennacl::range(current_index+i, current_index+i+1)));
 
-          for (unsigned int i = 0 ; i < upper_bound ; ++i)
+          for (unsigned int i = 0; i < upper_bound; ++i)
             statements.push_back(scheduler::preset::inner_prod(&ranges[i], &x, &vec_tuple.const_at(current_index+i)));
 
           kernels::vector_multi_inner_prod<T>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_prefix, device_specific::statements_container(statements, device_specific::statements_container::INDEPENDENT));

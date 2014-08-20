@@ -107,7 +107,7 @@ namespace viennacl
           std::string process(std::string const & in) const
           {
               std::string res(in);
-              for (std::map<std::string,std::string>::const_iterator it = keywords_.begin() ; it != keywords_.end() ; ++it)
+              for (std::map<std::string,std::string>::const_iterator it = keywords_.begin(); it != keywords_.end(); ++it)
                   tools::find_and_replace(res, it->first, it->second);
               postprocess(res);
               return res;
@@ -322,7 +322,7 @@ namespace viennacl
                 {
                   if (is_row_major)
                     return "(" + i + ") * " + ld +  " + (" + j + ")";
-                  return "(" + i + ") +  (" + j + ") * " + ld ;
+                  return "(" + i + ") +  (" + j + ") * " + ld;
                 }
             private:
                 bool is_row_major;

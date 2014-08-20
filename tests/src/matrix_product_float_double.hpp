@@ -189,8 +189,8 @@ template<class MatrixType>
 void init_rand(MatrixType & A)
 {
   typedef typename MatrixType::value_type T;
-  for (unsigned int i = 0 ; i < A.size1() ; ++i)
-    for (unsigned int j = 0 ; j < A.size2() ; ++j)
+  for (unsigned int i = 0; i < A.size1(); ++i)
+    for (unsigned int j = 0; j < A.size2(); ++j)
       A(i, j) = static_cast<T>(0.1) * random<T>();
 }
 

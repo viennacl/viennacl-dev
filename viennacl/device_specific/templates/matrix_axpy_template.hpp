@@ -80,11 +80,11 @@ namespace viennacl{
          tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", "#pointer += #start;", statements, mappings);
 
          fetching_loop_info(p_.fetching_policy, "M", stream, init0, upper_bound0, inc0, "get_global_id(0)", "get_global_size(0)");
-         stream << "for(unsigned int i = " << init0 << "; i < " << upper_bound0 << " ; i += " << inc0 << ")" << std::endl;
+         stream << "for(unsigned int i = " << init0 << "; i < " << upper_bound0 << "; i += " << inc0 << ")" << std::endl;
          stream << "{" << std::endl;
          stream.inc_tab();
          fetching_loop_info(p_.fetching_policy, "N", stream, init1, upper_bound1, inc1, "get_global_id(1)", "get_global_size(1)");
-         stream << "for(unsigned int j = " << init1 << "; j < " << upper_bound1 << " ; j += " << inc1 << ")" << std::endl;
+         stream << "for(unsigned int j = " << init1 << "; j < " << upper_bound1 << "; j += " << inc1 << ")" << std::endl;
          stream << "{" << std::endl;
          stream.inc_tab();
 

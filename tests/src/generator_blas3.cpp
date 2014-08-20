@@ -356,7 +356,7 @@ int main(int argc, char* argv[])
     //size_t num_platforms = platforms.size();
 
     devices_type dev = viennacl::ocl::current_context().devices();
-    for (devices_type::iterator it = dev.begin() ; it != dev.end() ; ++it){
+    for (devices_type::iterator it = dev.begin(); it != dev.end(); ++it){
             std::cout << std::endl;
             std::cout << "----------------------------------------------" << std::endl;
             std::cout << "----------------------------------------------" << std::endl;

@@ -74,7 +74,7 @@ namespace viennacl
         {
           std::vector<std::string> sources = kernels_.at(key)->generate(append_prefix(key), statements, device_);
           assert(sources.size()<=2);
-          for (unsigned int i = 0 ; i < sources.size() ; ++i)
+          for (unsigned int i = 0; i < sources.size(); ++i)
             lazy_programs_[i].add(sources[i]);
         }
       }

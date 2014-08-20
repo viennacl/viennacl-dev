@@ -114,7 +114,7 @@ ScalarType diff(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
         norm_ref += ref[i] * ref[i];
     }
 
-    return std::sqrt(df / norm_ref) ;
+    return std::sqrt(df / norm_ref);
 }
 
 template<typename ScalarType>

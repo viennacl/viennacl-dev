@@ -74,7 +74,7 @@ namespace viennacl
       std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings) const
       {
         std::vector<std::string> result;
-        for (unsigned int i = 0 ; i < 2 ; ++i)
+        for (unsigned int i = 0; i < 2; ++i)
         {
           utils::kernel_generation_stream stream;
           unsigned int simd_width = (i==0)?1:p_.simd_width;

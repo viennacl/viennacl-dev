@@ -132,7 +132,7 @@ namespace viennacl
           source.append("} \n");
 
           source.append("void backwardSolve(__global "); source.append(numeric_string); source.append(" * R,  unsigned int row_n, unsigned int col_n, __global "); source.append(numeric_string); source.append(" * y, __global "); source.append(numeric_string); source.append(" * x){ \n");
-          source.append("  for (int i = col_n-1; i >= 0 ; i--) { \n");
+          source.append("  for (int i = col_n-1; i >= 0; i--) { \n");
           source.append("    x[ i] = y[ i]; \n");
           source.append("    for (int j = i+1; j < col_n; ++j) { \n");
           source.append("      x[ i] -= R[ i + j*row_n]*x[ j]; \n");

@@ -59,8 +59,8 @@ namespace viennacl{
     inline void process_all(std::string const & type_key, std::string const & str,
                             utils::kernel_generation_stream & stream, std::vector<mapping_type> const & mappings)
     {
-      for (std::vector<mapping_type>::const_iterator mit = mappings.begin() ; mit != mappings.end() ; ++mit)
-        for (mapping_type::const_iterator mmit = mit->begin() ; mmit != mit->end() ; ++mmit)
+      for (std::vector<mapping_type>::const_iterator mit = mappings.begin(); mit != mappings.end(); ++mit)
+        for (mapping_type::const_iterator mmit = mit->begin(); mmit != mit->end(); ++mmit)
           if (mmit->second->type_key()==type_key)
             stream << mmit->second->process(str) << std::endl;
     }
@@ -70,7 +70,7 @@ namespace viennacl{
                             utils::kernel_generation_stream & stream, std::vector<mapping_type> const & mappings,
                             size_t root_idx, leaf_t leaf)
     {
-      for (std::vector<mapping_type>::const_iterator mit = mappings.begin() ; mit != mappings.end() ; ++mit)
+      for (std::vector<mapping_type>::const_iterator mit = mappings.begin(); mit != mappings.end(); ++mit)
       {
          mapped_object * obj = mit->at(mapping_key(root_idx, leaf)).get();
          if (obj->type_key()==type_key)

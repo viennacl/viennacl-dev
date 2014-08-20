@@ -249,7 +249,7 @@ namespace viennacl
             }
 
             // inplace backward solve L^T x = b:
-            for (vcl_size_t i=L.size1()-1; ; --i)
+            for (vcl_size_t i=L.size1()-1;; --i)
             {
               for (vcl_size_t k=i+1; k<L.size1(); ++k)
                 b[i] -= L(k,i) * b[k];

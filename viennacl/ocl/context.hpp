@@ -454,7 +454,7 @@ namespace viennacl
             clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,len,(void*)sizes.data(),NULL);
 
             std::vector<unsigned char*> binaries;
-            for (std::size_t i = 0 ; i < devices_.size() ; ++i)
+            for (std::size_t i = 0; i < devices_.size(); ++i)
               binaries.push_back(new unsigned char[sizes[i]]);
 
             clGetProgramInfo(temp,CL_PROGRAM_BINARIES,0,NULL,&len);
@@ -466,7 +466,7 @@ namespace viennacl
             cached.write((char*)&sizes[0], sizeof(size_t));
             cached.write((char*)binaries[0], std::streamsize(sizes[0]));
 
-            for (std::size_t i = 0 ; i < devices_.size() ; ++i)
+            for (std::size_t i = 0; i < devices_.size(); ++i)
               delete[] binaries[i];
 
             VIENNACL_ERR_CHECK(err);

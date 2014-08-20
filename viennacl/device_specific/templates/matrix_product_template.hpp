@@ -284,7 +284,7 @@ private:
         {
           //Bounds checking for M (in A, C)
           stream << "bool in_bounds_m[" << p.mS << "];" << std::endl;
-          stream << "for(unsigned int m = 0 ; m < " << p.mS << " ; m++)" << std::endl;
+          stream << "for(unsigned int m = 0; m < " << p.mS << "; m++)" << std::endl;
           stream.inc_tab();
           switch (p.A_fetching_policy)
           {
@@ -302,7 +302,7 @@ private:
           {
             unsigned int fetch_size = (A_trans_=='N'?p.local_fetch_0*p.simd_width:p.local_fetch_1);
             stream << "bool in_bounds_m_local[" << p.mL/fetch_size << "];" << std::endl;
-            stream << "for(unsigned int m = 0 ; m < " << p.mL/fetch_size << " ; m++)" << std::endl;
+            stream << "for(unsigned int m = 0; m < " << p.mL/fetch_size << "; m++)" << std::endl;
             stream.inc_tab();
             stream << "in_bounds_m_local[m] = gidx*" << p.mL << " + " << (A_trans_=='N'?"idxT":"idyT") << " + m*" << fetch_size << " < M;" << std::endl;
             stream.dec_tab();
@@ -310,7 +310,7 @@ private:
 
           //Bounds checking for N (in B, C)
           stream << "bool in_bounds_n[" << p.nS << "];" << std::endl;
-          stream << "for(unsigned int n = 0 ; n < " << p.nS << " ; n++)" << std::endl;
+          stream << "for(unsigned int n = 0; n < " << p.nS << "; n++)" << std::endl;
           stream.inc_tab();
           switch (p.B_fetching_policy)
           {
@@ -328,7 +328,7 @@ private:
           {
             unsigned int fetch_size = (B_trans_=='T'?p.local_fetch_0*p.simd_width:p.local_fetch_1);
             stream << "bool in_bounds_n_local[" << p.nL/fetch_size << "];" << std::endl;
-            stream << "for(unsigned int n = 0 ; n < " <<  p.nL/fetch_size << " ; n++)" << std::endl;
+            stream << "for(unsigned int n = 0; n < " <<  p.nL/fetch_size << "; n++)" << std::endl;
             stream.inc_tab();
             stream << "in_bounds_n_local[n] = gidy*" << p.nL << " + " << (B_trans_=='T'?"idxT":"idyT") << " + n*" << fetch_size << " < N;" << std::endl;
             stream.dec_tab();
@@ -388,7 +388,7 @@ private:
         }
 
         stream << std::endl;
-        stream << "for(unsigned int block_k=0 ; block_k < K ; block_k+=" << p.kL << "){" << std::endl;
+        stream << "for(unsigned int block_k=0; block_k < K; block_k+=" << p.kL << "){" << std::endl;
         stream.inc_tab();
 
         if (p.A_fetching_policy==FETCH_FROM_LOCAL)
@@ -414,16 +414,16 @@ private:
 
         ///Fetch LHS to Local Memory
         if (p.A_fetching_policy==FETCH_FROM_LOCAL && A_trans_=='N')
-          for (unsigned int k = 0 ; k < p.kL ; k += p.local_fetch_1)
-              for (unsigned int m = 0 ; m < p.mL ; m += p.local_fetch_0*p.simd_width)
+          for (unsigned int k = 0; k < p.kL; k += p.local_fetch_1)
+              for (unsigned int m = 0; m < p.mL; m += p.local_fetch_0*p.simd_width)
               {
                   string in_bounds = "in_bounds_m_local[" + to_string(m/(p.local_fetch_0*p.simd_width)) + "]";
                   string to_load = VLOAD(to_string(m/p.simd_width) + MUL_STRIDE1, "#pointer + " + to_string(k) + "*#ld");
                   stream << A->process(VSTORE(HANDLE_BOUNDS(in_bounds, to_load), "0", "plA + " + to_string(k*(p.mL+1)+m))) << ";" << std::endl;
               }
         else if (p.A_fetching_policy==FETCH_FROM_LOCAL && A_trans_=='T')
-          for (unsigned int k = 0 ; k < p.mL ; k += p.local_fetch_1)
-              for (unsigned int m = 0 ; m < p.kL ; m += p.local_fetch_0*p.simd_width)
+          for (unsigned int k = 0; k < p.mL; k += p.local_fetch_1)
+              for (unsigned int m = 0; m < p.kL; m += p.local_fetch_0*p.simd_width)
               {
                   string in_bounds = "in_bounds_m_local[" + to_string(k/p.local_fetch_1) + "]";
                   string to_load = VLOAD(to_string(m/p.simd_width) + MUL_STRIDE1, "#pointer + " + to_string(k) + "*#ld");
@@ -431,16 +431,16 @@ private:
               }
 
         if (p.B_fetching_policy==FETCH_FROM_LOCAL && B_trans_=='T')
-          for (unsigned int k = 0 ; k < p.kL ; k += p.local_fetch_1)
-              for (unsigned int n = 0 ; n < p.nL ; n += p.local_fetch_0*p.simd_width)
+          for (unsigned int k = 0; k < p.kL; k += p.local_fetch_1)
+              for (unsigned int n = 0; n < p.nL; n += p.local_fetch_0*p.simd_width)
               {
                   string in_bounds = "in_bounds_n_local[" + to_string(n/(p.local_fetch_0*p.simd_width)) + "]";
                   string to_load = VLOAD(to_string(n/p.simd_width) + MUL_STRIDE1, "#pointer + " + to_string(k) + "*#ld");
                   stream << B->process(VSTORE(HANDLE_BOUNDS(in_bounds, to_load), "0", "plB + " + to_string(k*(p.nL+1)+n))) << ";" << std::endl;
               }
         else if (p.B_fetching_policy==FETCH_FROM_LOCAL && B_trans_=='N')
-          for (unsigned int k = 0 ; k < p.nL ; k += p.local_fetch_1)
-              for (unsigned int n = 0 ; n < p.kL ; n += p.local_fetch_0*p.simd_width)
+          for (unsigned int k = 0; k < p.nL; k += p.local_fetch_1)
+              for (unsigned int n = 0; n < p.kL; n += p.local_fetch_0*p.simd_width)
               {
                   string in_bounds = "in_bounds_n_local[" + to_string(k/p.local_fetch_1) + "]";
                   string to_load = VLOAD(to_string(n/p.simd_width) + MUL_STRIDE1, "#pointer + " + to_string(k) + "*#ld");
@@ -456,22 +456,22 @@ private:
 
         stream << "#pragma unroll" << std::endl;
         if (fallback)
-          stream << "for(unsigned int k = 0 ; k < " << p.kL << " && (block_k + k < K); k+=" << p.kS << "){" << std::endl;
+          stream << "for(unsigned int k = 0; k < " << p.kL << " && (block_k + k < K); k+=" << p.kS << "){" << std::endl;
         else
-          stream << "for(unsigned int k = 0 ; k < " << p.kL << "; k+=" << p.kS << "){" << std::endl;
+          stream << "for(unsigned int k = 0; k < " << p.kL << "; k+=" << p.kS << "){" << std::endl;
         stream.inc_tab();
 
         ///Fetch LHS to registers
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int kk = 0 ; kk < " << p.kS << "; kk++)" << std::endl;
+        stream << "for(unsigned int kk = 0; kk < " << p.kS << "; kk++)" << std::endl;
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int mm = 0 ; mm < " << p.mS/p.simd_width << "; mm++)" << std::endl;
+        stream << "for(unsigned int mm = 0; mm < " << p.mS/p.simd_width << "; mm++)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
         switch (p.A_fetching_policy)
         {
           case FETCH_FROM_LOCAL:
-            for (unsigned int ss = 0 ; ss < p.simd_width ; ++ss)
+            for (unsigned int ss = 0; ss < p.simd_width; ++ss)
                 stream << "rA[kk][mm*" << p.simd_width << "+" << ss << "] = lA[offA + mm*" << p.local_size_0*p.simd_width << "+" << ss << "+ kk*" << (p.mL+1) << "];" << std::endl;
             break;
 
@@ -502,15 +502,15 @@ private:
         stream << "}" << std::endl;
 
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int kk = 0 ; kk < " << p.kS << "; kk++)" << std::endl;
+        stream << "for(unsigned int kk = 0; kk < " << p.kS << "; kk++)" << std::endl;
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int nn = 0 ; nn < " << p.nS/p.simd_width << "; nn++)" << std::endl;
+        stream << "for(unsigned int nn = 0; nn < " << p.nS/p.simd_width << "; nn++)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
         switch (p.B_fetching_policy)
         {
           case FETCH_FROM_LOCAL:
-            for (unsigned int ss = 0 ; ss < p.simd_width ; ++ss)
+            for (unsigned int ss = 0; ss < p.simd_width; ++ss)
                 stream << "rB[kk][nn*" << p.simd_width << "+" << ss << "] = lB[offB + nn*" << p.local_size_1*p.simd_width << "+" << ss  << "+ kk*" << (p.nL+1) << "];" << std::endl;
             break;
 
@@ -570,11 +570,11 @@ private:
 
 
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int kk = 0 ; kk <" << p.kS << " ; ++kk)" << std::endl;
+        stream << "for(unsigned int kk = 0; kk <" << p.kS << "; ++kk)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
-        for (unsigned int nn=0 ; nn < p.nS ; ++nn)
-        for (unsigned int mm=0 ; mm < p.mS ; ++mm)
+        for (unsigned int nn=0; nn < p.nS; ++nn)
+        for (unsigned int mm=0; mm < p.mS; ++mm)
         {
             string res_str, lhs_str, rhs_str;
             res_str = "rC[" + tools::to_string(mm) + "][" + tools::to_string(nn) + "]";
@@ -629,9 +629,9 @@ private:
           stream << C->process("#pointer += gidy*" + to_string(p.nL) + "*#stride2;") << std::endl;
           stream << C->process("#pointer += idy*" + to_string(ministartstride1) + "*#stride2;") << std::endl;
 
-          for (unsigned int n=0 ; n < p.nS ; ++n)
+          for (unsigned int n=0; n < p.nS; ++n)
           {
-              for (unsigned int m=0 ; m < p.mS ; ++m)
+              for (unsigned int m=0; m < p.mS; ++m)
               {
                   unsigned int ministride1 = p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p.local_size_0;
                   string Cj = to_string((m/p.simd_width)*(ministride1*p.simd_width) + m%p.simd_width);
@@ -661,9 +661,9 @@ private:
           stream << C->process("#pointer += gidy*" + to_string(p.nL) + "*#ld;") << std::endl;
           stream << C->process("#pointer += idy*" + to_string(ministartstride1) + "*#ld;") << std::endl;
 
-          for (unsigned int m=0 ; m < p.mS ; ++m)
+          for (unsigned int m=0; m < p.mS; ++m)
           {
-              for (unsigned int n=0 ; n < p.nS ; ++n)
+              for (unsigned int n=0; n < p.nS; ++n)
               {
                   unsigned int ministride1 = p.B_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS?1:p.local_size_1;
                   string Cj = to_string((n/p.simd_width)*(ministride1*p.simd_width) + n%p.simd_width);
@@ -678,7 +678,7 @@ private:
               }
 
               if ((m+1)%p.simd_width>0 || p.A_fetching_policy==FETCH_FROM_GLOBAL_CONTIGUOUS)
-                  stream << C->process("#pointer += #stride1 ;") << std::endl;
+                  stream << C->process("#pointer += #stride1;") << std::endl;
               else
                   stream << C->process("#pointer += " + to_string((p.local_size_0*p.simd_width) - (p.simd_width-1)) + "*#stride1;") << std::endl;
           }

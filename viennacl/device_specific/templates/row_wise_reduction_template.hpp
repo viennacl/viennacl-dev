@@ -102,16 +102,16 @@ namespace viennacl
 
         tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix", "#ld *= #nldstride;", statements, mappings);
 
-        for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+        for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin(); it != exprs.end(); ++it)
           stream << (*it)->process("__local #scalartype #name_buf[" + to_string(lsize0*lsize1) + "];") << std::endl;
 
         stream << "unsigned int lid0 = get_local_id(0);" << std::endl;
         stream << "unsigned int lid1 = get_local_id(1);" << std::endl;
         stream << "unsigned int upper_bound_0 = ( M +" << p_.local_size_0 - 1 << ")/" << p_.local_size_0 << "*" << p_.local_size_0 << ";" << std::endl;
-        stream << "for(unsigned int r = get_global_id(0) ; r < upper_bound_0; r += get_global_size(0)){" << std::endl;
+        stream << "for(unsigned int r = get_global_id(0); r < upper_bound_0; r += get_global_size(0)){" << std::endl;
         stream.inc_tab();
 
-        for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+        for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin(); it != exprs.end(); ++it)
           stream << (*it)->process("#scalartype #name_acc = " + neutral_element((*it)->root_op()) + ";") << std::endl;
 
         stream << "if (r < M)" << std::endl;
@@ -124,7 +124,7 @@ namespace viennacl
           void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const
           {
             std::set<std::string> already_fetched;
-            for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin() ; it != exprs.end() ; ++it)
+            for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin(); it != exprs.end(); ++it)
             {
               if (is_trans)
                 (*it)->process_recursive(stream, LHS_NODE_TYPE, "matrix_trans", utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width, "c*#stride1", "#pointer + r*#ld")+";", already_fetched);
@@ -139,13 +139,13 @@ namespace viennacl
             if (simd_width==1)
               str[0] = "#namereg";
             else
-              for (unsigned int a = 0 ; a < simd_width ; ++a)
+              for (unsigned int a = 0; a < simd_width; ++a)
                 str[a] = "#namereg.s" + to_string(a);
 
 
-            for (unsigned int k = 0 ; k < exprs.size() ; ++k)
+            for (unsigned int k = 0; k < exprs.size(); ++k)
             {
-              for (unsigned int a = 0 ; a < simd_width ; ++a)
+              for (unsigned int a = 0; a < simd_width; ++a)
               {
                 std::map<std::string, std::string> accessors;
                 if (is_trans)
@@ -173,11 +173,11 @@ namespace viennacl
         stream.dec_tab();
         stream << "}" << std::endl;
 
-        for (unsigned int k = 0 ; k < exprs.size() ; ++k)
+        for (unsigned int k = 0; k < exprs.size(); ++k)
           stream << exprs[k]->process("#name_buf[lid0*" + lsize1str + "+ lid1] = #name_acc;") << std::endl;
 
         stream << "#pragma unroll" << std::endl;
-        stream << "for(unsigned int stride = " << p_.local_size_1/2 << "; stride >0 ; stride /=2)" << std::endl;
+        stream << "for(unsigned int stride = " << p_.local_size_1/2 << "; stride >0; stride /=2)" << std::endl;
         stream << "{" << std::endl;
         stream.inc_tab();
 
@@ -186,7 +186,7 @@ namespace viennacl
         stream << "{" << std::endl;
         stream.inc_tab();
 
-        for (unsigned int k = 0 ; k < exprs.size() ; k++)
+        for (unsigned int k = 0; k < exprs.size(); k++)
             if (exprs[k]->is_index_reduction())
                 compute_index_reduction(stream, exprs[k]->process("#name_buf[lid0*" + lsize1str + " + lid1]"), exprs[k]->process("#name_buf[lid0*" + lsize1str + " + lid1 + stride]")
                                     , exprs[k]->process("#name_buf_value[lid0*" + lsize1str + " + lid1]"), exprs[k]->process("#name_buf_value[lid0*" + lsize1str + " + lid1 + stride]"),
@@ -201,7 +201,7 @@ namespace viennacl
         stream << "}" << std::endl;
 
 
-        stream <<  "if (lid1 == 0 && r < M)" ;
+        stream <<  "if (lid1 == 0 && r < M)";
         stream << "{" << std::endl;
         stream.inc_tab();
         std::map<std::string, std::string> accessors;
@@ -228,13 +228,13 @@ namespace viennacl
         bool row_major = false;
         statements_container::data_type::const_iterator sit;
         std::vector<mapping_type>::const_iterator mit;
-        for (mit = mappings.begin(), sit = statements.data().begin() ; mit != mappings.end() ; ++mit, ++sit)
+        for (mit = mappings.begin(), sit = statements.data().begin(); mit != mappings.end(); ++mit, ++sit)
         {
           std::vector<size_t> idx;
           scheduler::lhs_rhs_element A;
           parse(*sit, idx, is_trans, A);
           row_major = utils::call_on_matrix(A, utils::row_major_fun());
-          for (unsigned int j = 0 ; j < idx.size() ; ++j)
+          for (unsigned int j = 0; j < idx.size(); ++j)
             exprs.push_back((mapped_row_wise_reduction*)(mit->at(mapping_key(idx[j], PARENT_NODE_TYPE)).get()));
         }
         is_trans = is_trans ^ row_major;

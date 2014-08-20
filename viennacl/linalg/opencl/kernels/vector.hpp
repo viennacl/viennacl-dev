@@ -36,7 +36,7 @@ namespace viennacl
         {
           namespace ds = device_specific;
           ds::statements_container::data_type statements;
-          for (unsigned int i = 0 ; i < vector_num ; ++i)
+          for (unsigned int i = 0; i < vector_num; ++i)
             statements.push_back(scheduler::preset::inner_prod(s, x, y));
           handler.add(prefix, ds::reduction_template(parameters), ds::statements_container(statements,ds::statements_container::INDEPENDENT));
         }
