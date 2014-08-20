@@ -30,45 +30,45 @@
 namespace viennacl
 {
 
-  /** @brief A range class that refers to an interval [start, stop), where 'start' is included, and 'stop' is excluded.
-   *
-   * Similar to the boost::numeric::ublas::basic_range class.
-   */
-  template<typename SizeType /* see forwards.h for default argument*/,
-            typename DistanceType /* see forwards.h for default argument*/>
-  class basic_range
+/** @brief A range class that refers to an interval [start, stop), where 'start' is included, and 'stop' is excluded.
+ *
+ * Similar to the boost::numeric::ublas::basic_range class.
+ */
+template<typename SizeT /* see forwards.h for default argument*/,
+         typename DistanceT /* see forwards.h for default argument*/>
+class basic_range
+{
+public:
+  typedef SizeT             size_type;
+  typedef DistanceT         difference_type;
+  typedef size_type            value_type;
+  typedef value_type           const_reference;
+  typedef const_reference      reference;
+
+  basic_range() : start_(0), size_(0) {}
+  basic_range(size_type start_index, size_type stop_index) : start_(start_index), size_(stop_index - start_index)
   {
-    public:
-      typedef SizeType             size_type;
-      typedef DistanceType         difference_type;
-      typedef size_type            value_type;
-      typedef value_type           const_reference;
-      typedef const_reference      reference;
-
-      basic_range() : start_(0), size_(0) {}
-      basic_range(size_type start_index, size_type stop_index) : start_(start_index), size_(stop_index - start_index)
-      {
-        assert(start_index <= stop_index);
-      }
+    assert(start_index <= stop_index);
+  }
 
 
-      size_type start() const { return start_; }
-      size_type size() const { return size_; }
+  size_type start() const { return start_; }
+  size_type size() const { return size_; }
 
-      const_reference operator()(size_type i) const
-      {
-        assert(i < size());
-        return start_ + i;
-      }
-      const_reference operator[](size_type i) const { return operator()(i); }
+  const_reference operator()(size_type i) const
+  {
+    assert(i < size());
+    return start_ + i;
+  }
+  const_reference operator[](size_type i) const { return operator()(i); }
 
-      bool operator==(const basic_range & r) const { return (start_ == r.start_) && (size_ == r.size_); }
-      bool operator!=(const basic_range & r) const { return !(*this == r); }
+  bool operator==(const basic_range & r) const { return (start_ == r.start_) && (size_ == r.size_); }
+  bool operator!=(const basic_range & r) const { return !(*this == r); }
 
-    private:
-      size_type start_;
-      size_type size_;
-  };
+private:
+  size_type start_;
+  size_type size_;
+};
 
 
 }
