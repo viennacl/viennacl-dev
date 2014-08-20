@@ -31,70 +31,71 @@
 
 namespace viennacl
 {
-  namespace traits
-  {
-    //
-    // start: Mostly for vectors
-    //
+namespace traits
+{
 
-    // Default: Try to get the start index from the .start() member function
-    template<typename T>
-    typename result_of::size_type<T>::type
-    start(T const & obj)
-    {
-      return obj.start();
-    }
+//
+// start: Mostly for vectors
+//
 
-    //ViennaCL vector leads to start index 0:
-    template<typename ScalarType, unsigned int ALIGNMENT>
-    typename result_of::size_type<viennacl::vector<ScalarType, ALIGNMENT> >::type
-    start(viennacl::vector<ScalarType, ALIGNMENT> const &)
-    {
-      return 0;
-    }
+// Default: Try to get the start index from the .start() member function
+template<typename T>
+typename result_of::size_type<T>::type
+start(T const & obj)
+{
+  return obj.start();
+}
 
-
-    //
-    // start1: Row start index
-    //
-
-    // Default: Try to get the start index from the .start1() member function
-    template<typename T>
-    typename result_of::size_type<T>::type
-    start1(T const & obj)
-    {
-      return obj.start1();
-    }
-
-    //ViennaCL matrix leads to start index 0:
-    template<typename ScalarType, typename F, unsigned int ALIGNMENT>
-    typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
-    start1(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
-    {
-      return 0;
-    }
+//ViennaCL vector leads to start index 0:
+template<typename ScalarType, unsigned int ALIGNMENT>
+typename result_of::size_type<viennacl::vector<ScalarType, ALIGNMENT> >::type
+start(viennacl::vector<ScalarType, ALIGNMENT> const &)
+{
+  return 0;
+}
 
 
-    //
-    // start2: Column start index
-    //
-    template<typename T>
-    typename result_of::size_type<T>::type
-    start2(T const & obj)
-    {
-      return obj.start2();
-    }
+//
+// start1: Row start index
+//
 
-    //ViennaCL matrix leads to start index 0:
-    template<typename ScalarType, typename F, unsigned int ALIGNMENT>
-    typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
-    start2(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
-    {
-      return 0;
-    }
+// Default: Try to get the start index from the .start1() member function
+template<typename T>
+typename result_of::size_type<T>::type
+start1(T const & obj)
+{
+  return obj.start1();
+}
+
+//ViennaCL matrix leads to start index 0:
+template<typename ScalarType, typename F, unsigned int ALIGNMENT>
+typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
+start1(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
+{
+  return 0;
+}
 
 
-  } //namespace traits
+//
+// start2: Column start index
+//
+template<typename T>
+typename result_of::size_type<T>::type
+start2(T const & obj)
+{
+  return obj.start2();
+}
+
+//ViennaCL matrix leads to start index 0:
+template<typename ScalarType, typename F, unsigned int ALIGNMENT>
+typename result_of::size_type<viennacl::matrix<ScalarType, F, ALIGNMENT> >::type
+start2(viennacl::matrix<ScalarType, F, ALIGNMENT> const &)
+{
+  return 0;
+}
+
+
+} //namespace traits
 } //namespace viennacl
 
 

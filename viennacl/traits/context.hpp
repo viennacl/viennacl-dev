@@ -31,35 +31,34 @@
 
 namespace viennacl
 {
-  namespace traits
-  {
-    //
-    // Context
-    //
-    /** @brief Returns an ID for the currently active memory domain of an object */
-    template<typename T>
-    viennacl::context context(T const & t)
-    {
+namespace traits
+{
+
+// Context
+/** @brief Returns an ID for the currently active memory domain of an object */
+template<typename T>
+viennacl::context context(T const & t)
+{
 #ifdef VIENNACL_WITH_OPENCL
-      if (traits::active_handle_id(t) == OPENCL_MEMORY)
-        return viennacl::context(traits::opencl_handle(t).context());
+  if (traits::active_handle_id(t) == OPENCL_MEMORY)
+    return viennacl::context(traits::opencl_handle(t).context());
 #endif
 
-      return viennacl::context(traits::active_handle_id(t));
-    }
+  return viennacl::context(traits::active_handle_id(t));
+}
 
-    /** @brief Returns an ID for the currently active memory domain of an object */
-    inline viennacl::context context(viennacl::backend::mem_handle const & h)
-    {
+/** @brief Returns an ID for the currently active memory domain of an object */
+inline viennacl::context context(viennacl::backend::mem_handle const & h)
+{
 #ifdef VIENNACL_WITH_OPENCL
-      if (h.get_active_handle_id() == OPENCL_MEMORY)
-        return viennacl::context(h.opencl_handle().context());
+  if (h.get_active_handle_id() == OPENCL_MEMORY)
+    return viennacl::context(h.opencl_handle().context());
 #endif
 
-      return viennacl::context(h.get_active_handle_id());
-    }
+  return viennacl::context(h.get_active_handle_id());
+}
 
-  } //namespace traits
+} //namespace traits
 } //namespace viennacl
 
 
