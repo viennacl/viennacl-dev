@@ -31,62 +31,60 @@
 
 namespace viennacl
 {
-  namespace linalg
+namespace linalg
+{
+namespace cuda
+{
+namespace detail
+{
+
+template<typename NumericT>
+__global__ void level_scheduling_substitute_kernel(
+          const unsigned int * row_index_array,
+          const unsigned int * row_indices,
+          const unsigned int * column_indices,
+          const NumericT * elements,
+          NumericT * vec,
+          unsigned int size)
+{
+  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                    row  < size;
+                    row += gridDim.x * blockDim.x)
   {
-    namespace cuda
-    {
+    unsigned int eq_row = row_index_array[row];
+    NumericT vec_entry = vec[eq_row];
+    unsigned int row_end = row_indices[row+1];
 
-      namespace detail
-      {
+    for (unsigned int j = row_indices[row]; j < row_end; ++j)
+      vec_entry -= vec[column_indices[j]] * elements[j];
 
-        template<typename T>
-        __global__ void level_scheduling_substitute_kernel(
-                  const unsigned int * row_index_array,
-                  const unsigned int * row_indices,
-                  const unsigned int * column_indices,
-                  const T * elements,
-                  T * vec,
-                  unsigned int size)
-        {
-          for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
-                            row  < size;
-                            row += gridDim.x * blockDim.x)
-          {
-            unsigned int eq_row = row_index_array[row];
-            T vec_entry = vec[eq_row];
-            unsigned int row_end = row_indices[row+1];
-
-            for (unsigned int j = row_indices[row]; j < row_end; ++j)
-              vec_entry -= vec[column_indices[j]] * elements[j];
-
-            vec[eq_row] = vec_entry;
-          }
-        }
+    vec[eq_row] = vec_entry;
+  }
+}
 
 
 
-        template<typename ScalarType>
-        void level_scheduling_substitute(vector<ScalarType> & vec,
-                                     viennacl::backend::mem_handle const & row_index_array,
-                                     viennacl::backend::mem_handle const & row_buffer,
-                                     viennacl::backend::mem_handle const & col_buffer,
-                                     viennacl::backend::mem_handle const & element_buffer,
-                                     vcl_size_t num_rows
-                                    )
-        {
-          level_scheduling_substitute_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(row_index_array.cuda_handle()),
-                                                       detail::cuda_arg<unsigned int>(row_buffer.cuda_handle()),
-                                                       detail::cuda_arg<unsigned int>(col_buffer.cuda_handle()),
-                                                       detail::cuda_arg<ScalarType>(element_buffer.cuda_handle()),
-                                                       detail::cuda_arg<ScalarType>(vec),
-                                                       static_cast<unsigned int>(num_rows)
-                                                      );
-        }
+template<typename NumericT>
+void level_scheduling_substitute(vector<NumericT> & vec,
+                             viennacl::backend::mem_handle const & row_index_array,
+                             viennacl::backend::mem_handle const & row_buffer,
+                             viennacl::backend::mem_handle const & col_buffer,
+                             viennacl::backend::mem_handle const & element_buffer,
+                             vcl_size_t num_rows
+                            )
+{
+  level_scheduling_substitute_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(row_index_array.cuda_handle()),
+                                                   detail::cuda_arg<unsigned int>(row_buffer.cuda_handle()),
+                                                   detail::cuda_arg<unsigned int>(col_buffer.cuda_handle()),
+                                                   detail::cuda_arg<NumericT>(element_buffer.cuda_handle()),
+                                                   detail::cuda_arg<NumericT>(vec),
+                                                   static_cast<unsigned int>(num_rows)
+                                                  );
+}
 
-      }
-
-    } // namespace cuda
-  } //namespace linalg
+} //namespace detail
+} //namespace cuda
+} //namespace linalg
 } //namespace viennacl
 
 
