@@ -471,8 +471,8 @@ public:
     statements_container::data_type::const_iterator sit;
     std::vector<mapping_type>::iterator mit;
 
-    if(check_invalid(statements, device)!=0)
-      throw generator_not_supported_exception("The supplied parameters for this template are invalid!");
+    if(int err = check_invalid(statements, device))
+      throw generator_not_supported_exception("The supplied parameters for this template are invalid : err " + tools::to_string(err));
 
     //Create mapping
     std::vector<mapping_type> mappings(statements.data().size());
