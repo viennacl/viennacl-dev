@@ -48,9 +48,8 @@ private:
 
   std::string define_extension(std::string const & ext)
   {
-    return    "#ifdef " + ext + "\n"
-        "#pragma OPENCL EXTENSION " + ext + " : enable\n"
-        "#endif\n";
+    // Note: On devices without double precision support, 'ext' is an empty string.
+    return (ext.length() > 1) ? std::string("#pragma OPENCL EXTENSION " + ext + " : enable\n") : std::string("\n");
   }
 
   void init_program_compiler(std::string const & name, bool force_recompilation)
