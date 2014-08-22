@@ -455,10 +455,13 @@ public:
 
   virtual ~template_base(){ }
 
-  std::vector<std::string> generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & /*device*/)
+  std::vector<std::string> generate(std::string const & kernel_prefix, statements_container const & statements, viennacl::ocl::device const & device)
   {
     statements_container::data_type::const_iterator sit;
     std::vector<mapping_type>::iterator mit;
+
+    if(check_invalid(statements, device)!=0)
+      throw generator_not_supported_exception("The supplied parameters for this template are invalid!");
 
     //Create mapping
     std::vector<mapping_type> mappings(statements.data().size());
