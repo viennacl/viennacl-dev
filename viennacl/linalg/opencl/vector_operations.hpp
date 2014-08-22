@@ -43,370 +43,370 @@
 
 namespace viennacl
 {
-  namespace linalg
+namespace linalg
+{
+namespace opencl
+{
+//
+// Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
+//
+
+template<typename NumericT, typename ScalarT1>
+void av(vector_base<NumericT> & x,
+        vector_base<NumericT> const & y, ScalarT1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  std::string kernel_name("assign_*v_**00");
+  kernel_name[7] = is_cpu_scalar<ScalarT1>::value?'h':'d';
+  kernel_name[10] = flip_sign_alpha?'1':'0';
+  kernel_name[11] = reciprocal_alpha?'1':'0';
+
+  scheduler::statement statement = scheduler::preset::av(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);
+}
+
+
+template<typename NumericT, typename ScalarT1, typename ScalarT2>
+void avbv(vector_base<NumericT> & x,
+          vector_base<NumericT> const & y, ScalarT1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
+          vector_base<NumericT> const & z, ScalarT2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  assert(viennacl::traits::opencl_handle(y).context() == viennacl::traits::opencl_handle(z).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  std::string kernel_name("assign_*v*v_****");
+  kernel_name[7] = is_cpu_scalar<ScalarT1>::value?'h':'d';
+  kernel_name[9] = is_cpu_scalar<ScalarT2>::value?'h':'d';
+  kernel_name[12] = flip_sign_alpha?'1':'0';
+  kernel_name[13] = reciprocal_alpha?'1':'0';
+  kernel_name[14] = flip_sign_beta?'1':'0';
+  kernel_name[15] = reciprocal_beta?'1':'0';
+
+  scheduler::statement statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha, &z, &beta, flip_sign_beta, reciprocal_beta);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);
+}
+
+
+template<typename NumericT, typename ScalarT1, typename ScalarT2>
+void avbv_v(vector_base<NumericT> & x,
+            vector_base<NumericT> const & y, ScalarT1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
+            vector_base<NumericT> const & z, ScalarT2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  assert(viennacl::traits::opencl_handle(y).context() == viennacl::traits::opencl_handle(z).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  std::string kernel_name("ip_add_*v*v_****");
+  kernel_name[7] = is_cpu_scalar<ScalarT1>::value?'h':'d';
+  kernel_name[9] = is_cpu_scalar<ScalarT2>::value?'h':'d';
+  kernel_name[12] = flip_sign_alpha?'1':'0';
+  kernel_name[13] = reciprocal_alpha?'1':'0';
+  kernel_name[14] = flip_sign_beta?'1':'0';
+  kernel_name[15] = reciprocal_beta?'1':'0';
+
+  scheduler::statement statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha, &z, &beta, flip_sign_beta, reciprocal_beta);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);
+}
+
+
+/** @brief Assign a constant value to a vector (-range/-slice)
+*
+* @param x   The vector to which the value should be assigned
+* @param alpha  The value to be assigned
+* @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
+*/
+template<typename NumericT>
+void vector_assign(vector_base<NumericT> & x, const NumericT & alpha, bool up_to_internal_size = false)
+{
+  scalar_vector<NumericT> y(viennacl::traits::size(x),alpha,viennacl::traits::context(x));
+  scheduler::statement statement = scheduler::preset::assign_cpu(&x, &y);
+
+  dynamic_cast<device_specific::vector_axpy_template*>(kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).template_of("assign_cpu"))->up_to_internal_size(up_to_internal_size);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("assign_cpu", statement);
+}
+
+
+/** @brief Swaps the contents of two vectors, data is copied
+*
+* @param x   The first vector (or -range, or -slice)
+* @param y   The second vector (or -range, or -slice)
+*/
+template<typename NumericT>
+void vector_swap(vector_base<NumericT> & x, vector_base<NumericT> & y)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  device_specific::statements_container statement = scheduler::preset::swap(&x, &y);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("swap", statement);
+}
+
+///////////////////////// Binary Elementwise operations /////////////
+
+/** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
+*
+* @param x   The result vector (or -range, or -slice)
+* @param proxy  The proxy object holding v2, v3 and the operation
+*/
+template<typename NumericT, typename OP>
+void element_op(vector_base<NumericT> & x,
+                vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_binary<OP> > const & proxy)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_binary<OP> >::id);
+  scheduler::statement statement = scheduler::preset::binary_element_op(&x, &proxy.lhs(), &proxy.rhs(),TYPE);
+  kernels::vector_element<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(device_specific::tree_parsing::operator_string(TYPE), statement);
+}
+
+///////////////////////// Unary Elementwise operations /////////////
+
+/** @brief Implementation of unary element-wise operations v1 = OP(v2)
+*
+* @param x   The result vector (or -range, or -slice)
+* @param proxy  The proxy object holding v2 and the operation
+*/
+template<typename NumericT, typename OP>
+void element_op(vector_base<NumericT> & x,
+                vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<OP> > const & proxy)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_unary<OP> >::id);
+  scheduler::statement statement = scheduler::preset::unary_element_op(&x, &proxy.lhs(),TYPE);
+  kernels::vector_element<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(device_specific::tree_parsing::operator_string(TYPE), statement);
+
+}
+
+///////////////////////// Norms and inner product ///////////////////
+
+/** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(x, y).
+*
+* @param x The first vector
+* @param y The second vector
+* @param result The result scalar (on the gpu)
+*/
+template<typename NumericT>
+void inner_prod_impl(vector_base<NumericT> const & x,
+                     vector_base<NumericT> const & y,
+                     scalar<NumericT> & result)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  scheduler::statement statement = scheduler::preset::inner_prod(&result, &x, &y);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("inner_prod", statement);
+}
+
+namespace detail
+{
+  template<typename NumericT>
+  viennacl::ocl::packed_cl_uint make_layout(vector_base<NumericT> const & vec)
   {
-    namespace opencl
-    {
-      //
-      // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
-      //
+    viennacl::ocl::packed_cl_uint ret;
+    ret.start           = cl_uint(viennacl::traits::start(vec));
+    ret.stride          = cl_uint(viennacl::traits::stride(vec));
+    ret.size            = cl_uint(viennacl::traits::size(vec));
+    ret.internal_size   = cl_uint(viennacl::traits::internal_size(vec));
+    return ret;
+  }
+}
 
-      template<typename T, typename ScalarType1>
-      void av(vector_base<T> & x,
-              vector_base<T> const & y, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        std::string kernel_name("assign_*v_**00");
-        kernel_name[7] = is_cpu_scalar<ScalarType1>::value?'h':'d';
-        kernel_name[10] = flip_sign_alpha?'1':'0';
-        kernel_name[11] = reciprocal_alpha?'1':'0';
+/** @brief Computes multiple inner products where one argument is common to all inner products. <x, y1>, <x, y2>, ..., <x, yN>
+*
+* @param x          The common vector
+* @param vec_tuple  The tuple of vectors y1, y2, ..., yN
+* @param result     The result vector
+*/
+template<typename NumericT>
+void inner_prod_impl(vector_base<NumericT> const & x,
+                     vector_tuple<NumericT> const & vec_tuple,
+                     vector_base<NumericT> & result)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  typedef viennacl::vector_range< viennacl::vector_base<NumericT> > range_t;
 
-        scheduler::statement statement = scheduler::preset::av(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);
-      }
+  vcl_size_t current_index = 0;
+  while (current_index < vec_tuple.const_size())
+  {
+    device_specific::statements_container::data_type statements;
 
+    vcl_size_t diff = vec_tuple.const_size() - current_index;
+    vcl_size_t upper_bound;
+    std::string kernel_prefix;
+    if (diff>=8) upper_bound = 8, kernel_prefix = "inner_prod_8";
+    else if (diff>=4) upper_bound = 4, kernel_prefix = "inner_prod_4";
+    else if (diff>=3) upper_bound = 3, kernel_prefix = "inner_prod_3";
+    else if (diff>=2) upper_bound = 2, kernel_prefix = "inner_prod_2";
+    else upper_bound = 1, kernel_prefix = "inner_prod_1";
 
-      template<typename T, typename ScalarType1, typename ScalarType2>
-      void avbv(vector_base<T> & x,
-                vector_base<T> const & y, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
-                vector_base<T> const & z, ScalarType2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::opencl_handle(y).context() == viennacl::traits::opencl_handle(z).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+    std::vector<range_t> ranges;
+    ranges.reserve(upper_bound);
+    for (unsigned int i = 0; i < upper_bound; ++i)
+      ranges.push_back(range_t(result, viennacl::range(current_index+i, current_index+i+1)));
 
-        std::string kernel_name("assign_*v*v_****");
-        kernel_name[7] = is_cpu_scalar<ScalarType1>::value?'h':'d';
-        kernel_name[9] = is_cpu_scalar<ScalarType2>::value?'h':'d';
-        kernel_name[12] = flip_sign_alpha?'1':'0';
-        kernel_name[13] = reciprocal_alpha?'1':'0';
-        kernel_name[14] = flip_sign_beta?'1':'0';
-        kernel_name[15] = reciprocal_beta?'1':'0';
+    for (unsigned int i = 0; i < upper_bound; ++i)
+      statements.push_back(scheduler::preset::inner_prod(&ranges[i], &x, &vec_tuple.const_at(current_index+i)));
 
-        scheduler::statement statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha, &z, &beta, flip_sign_beta, reciprocal_beta);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);
-      }
-
-
-      template<typename T, typename ScalarType1, typename ScalarType2>
-      void avbv_v(vector_base<T> & x,
-                  vector_base<T> const & y, ScalarType1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
-                  vector_base<T> const & z, ScalarType2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::opencl_handle(y).context() == viennacl::traits::opencl_handle(z).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-        std::string kernel_name("ip_add_*v*v_****");
-        kernel_name[7] = is_cpu_scalar<ScalarType1>::value?'h':'d';
-        kernel_name[9] = is_cpu_scalar<ScalarType2>::value?'h':'d';
-        kernel_name[12] = flip_sign_alpha?'1':'0';
-        kernel_name[13] = reciprocal_alpha?'1':'0';
-        kernel_name[14] = flip_sign_beta?'1':'0';
-        kernel_name[15] = reciprocal_beta?'1':'0';
-
-        scheduler::statement statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha, &z, &beta, flip_sign_beta, reciprocal_beta);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);
-      }
+    kernels::vector_multi_inner_prod<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_prefix, device_specific::statements_container(statements, device_specific::statements_container::INDEPENDENT));
+    current_index += upper_bound;
+  }
+}
 
 
-      /** @brief Assign a constant value to a vector (-range/-slice)
-      *
-      * @param x   The vector to which the value should be assigned
-      * @param alpha  The value to be assigned
-      * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
-      */
-      template<typename T>
-      void vector_assign(vector_base<T> & x, const T & alpha, bool up_to_internal_size = false)
-      {
-        scalar_vector<T> y(viennacl::traits::size(x),alpha,viennacl::traits::context(x));
-        scheduler::statement statement = scheduler::preset::assign_cpu(&x, &y);
-
-        dynamic_cast<device_specific::vector_axpy_template*>(kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).template_of("assign_cpu"))->up_to_internal_size(up_to_internal_size);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("assign_cpu", statement);
-      }
+template<typename NumericT>
+void inner_prod_cpu(vector_base<NumericT> const & x,
+                    vector_base<NumericT> const & y,
+                    NumericT & result)
+{
+  viennacl::scalar<NumericT> tmp(0, viennacl::traits::context(x));
+  inner_prod_impl(x, y, tmp);
+  result = tmp;
+}
 
 
-      /** @brief Swaps the contents of two vectors, data is copied
-      *
-      * @param x   The first vector (or -range, or -slice)
-      * @param y   The second vector (or -range, or -slice)
-      */
-      template<typename T>
-      void vector_swap(vector_base<T> & x, vector_base<T> & y)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        device_specific::statements_container statement = scheduler::preset::swap(&x, &y);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("swap", statement);
-      }
+//////////// Norm 1
 
-      ///////////////////////// Binary Elementwise operations /////////////
+/** @brief Computes the l^1-norm of a vector
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void norm_1_impl(vector_base<NumericT> const & x,
+                 scalar<NumericT> & result)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-      /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
-      *
-      * @param x   The result vector (or -range, or -slice)
-      * @param proxy  The proxy object holding v2, v3 and the operation
-      */
-      template<typename T, typename OP>
-      void element_op(vector_base<T> & x,
-                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  scheduler::statement statement = scheduler::preset::norm_1(&result, &x);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("norm_1", statement);
+}
 
-        scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_binary<OP> >::id);
-        scheduler::statement statement = scheduler::preset::binary_element_op(&x, &proxy.lhs(), &proxy.rhs(),TYPE);
-        kernels::vector_element<T>::execution_handler(viennacl::traits::opencl_context(x)).execute(device_specific::tree_parsing::operator_string(TYPE), statement);
-      }
-
-      ///////////////////////// Unary Elementwise operations /////////////
-
-      /** @brief Implementation of unary element-wise operations v1 = OP(v2)
-      *
-      * @param x   The result vector (or -range, or -slice)
-      * @param proxy  The proxy object holding v2 and the operation
-      */
-      template<typename T, typename OP>
-      void element_op(vector_base<T> & x,
-                      vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<OP> > const & proxy)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-        scheduler::operation_node_type TYPE = scheduler::operation_node_type(scheduler::result_of::op_type_info<op_element_unary<OP> >::id);
-        scheduler::statement statement = scheduler::preset::unary_element_op(&x, &proxy.lhs(),TYPE);
-        kernels::vector_element<T>::execution_handler(viennacl::traits::opencl_context(x)).execute(device_specific::tree_parsing::operator_string(TYPE), statement);
-
-      }
-
-      ///////////////////////// Norms and inner product ///////////////////
-
-      /** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(x, y).
-      *
-      * @param x The first vector
-      * @param y The second vector
-      * @param result The result scalar (on the gpu)
-      */
-      template<typename T>
-      void inner_prod_impl(vector_base<T> const & x,
-                           vector_base<T> const & y,
-                           scalar<T> & result)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-        scheduler::statement statement = scheduler::preset::inner_prod(&result, &x, &y);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("inner_prod", statement);
-      }
-
-      namespace detail
-      {
-        template<typename ScalarT>
-        viennacl::ocl::packed_cl_uint make_layout(vector_base<ScalarT> const & vec)
-        {
-          viennacl::ocl::packed_cl_uint ret;
-          ret.start           = cl_uint(viennacl::traits::start(vec));
-          ret.stride          = cl_uint(viennacl::traits::stride(vec));
-          ret.size            = cl_uint(viennacl::traits::size(vec));
-          ret.internal_size   = cl_uint(viennacl::traits::internal_size(vec));
-          return ret;
-        }
-      }
-
-      /** @brief Computes multiple inner products where one argument is common to all inner products. <x, y1>, <x, y2>, ..., <x, yN>
-      *
-      * @param x          The common vector
-      * @param vec_tuple  The tuple of vectors y1, y2, ..., yN
-      * @param result     The result vector
-      */
-      template<typename T>
-      void inner_prod_impl(vector_base<T> const & x,
-                           vector_tuple<T> const & vec_tuple,
-                           vector_base<T> & result)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        typedef viennacl::vector_range< viennacl::vector_base<T> > range_t;
-
-        vcl_size_t current_index = 0;
-        while (current_index < vec_tuple.const_size())
-        {
-          device_specific::statements_container::data_type statements;
-
-          vcl_size_t diff = vec_tuple.const_size() - current_index;
-          vcl_size_t upper_bound;
-          std::string kernel_prefix;
-          if (diff>=8) upper_bound = 8, kernel_prefix = "inner_prod_8";
-          else if (diff>=4) upper_bound = 4, kernel_prefix = "inner_prod_4";
-          else if (diff>=3) upper_bound = 3, kernel_prefix = "inner_prod_3";
-          else if (diff>=2) upper_bound = 2, kernel_prefix = "inner_prod_2";
-          else upper_bound = 1, kernel_prefix = "inner_prod_1";
-
-          std::vector<range_t> ranges;
-          ranges.reserve(upper_bound);
-          for (unsigned int i = 0; i < upper_bound; ++i)
-            ranges.push_back(range_t(result, viennacl::range(current_index+i, current_index+i+1)));
-
-          for (unsigned int i = 0; i < upper_bound; ++i)
-            statements.push_back(scheduler::preset::inner_prod(&ranges[i], &x, &vec_tuple.const_at(current_index+i)));
-
-          kernels::vector_multi_inner_prod<T>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_prefix, device_specific::statements_container(statements, device_specific::statements_container::INDEPENDENT));
-          current_index += upper_bound;
-        }
-      }
-
-
-      template<typename T>
-      void inner_prod_cpu(vector_base<T> const & x,
-                          vector_base<T> const & y,
-                          T & result)
-      {
-        scalar<T> tmp(0, viennacl::traits::context(x));
-        inner_prod_impl(x, y, tmp);
-        result = tmp;
-      }
-
-
-      //////////// Norm 1
-
-      /** @brief Computes the l^1-norm of a vector
-      *
-      * @param vec The vector
-      * @param result The result scalar
-      */
-      template<typename T>
-      void norm_1_impl(vector_base<T> const & x,
-                       scalar<T> & result)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-        scheduler::statement statement = scheduler::preset::norm_1(&result, &x);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("norm_1", statement);
-      }
-
-      /** @brief Computes the l^1-norm of a vector with final reduction on CPU
-      *
-      * @param vec The vector
-      * @param result The result scalar
-      */
-      template<typename T>
-      void norm_1_cpu(vector_base<T> const & x,
-                      T & result)
-      {
-        scalar<T> tmp(0, viennacl::traits::context(x));
-        norm_1_impl(x, tmp);
-        result = tmp;
-      }
+/** @brief Computes the l^1-norm of a vector with final reduction on CPU
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void norm_1_cpu(vector_base<NumericT> const & x,
+                NumericT & result)
+{
+  viennacl::scalar<NumericT> tmp(0, viennacl::traits::context(x));
+  norm_1_impl(x, tmp);
+  result = tmp;
+}
 
 
 
-      //////// Norm 2
+//////// Norm 2
 
 
-      /** @brief Computes the l^2-norm of a vector - implementation using OpenCL summation at second step
-      *
-      * @param vec The vector
-      * @param result The result scalar
-      */
-      template<typename T>
-      void norm_2_impl(vector_base<T> const & x,
-                       scalar<T> & result)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+/** @brief Computes the l^2-norm of a vector - implementation using OpenCL summation at second step
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void norm_2_impl(vector_base<NumericT> const & x,
+                 scalar<NumericT> & result)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        scheduler::statement statement = scheduler::preset::norm_2(&result, &x);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("norm_2", statement);
-      }
+  scheduler::statement statement = scheduler::preset::norm_2(&result, &x);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("norm_2", statement);
+}
 
-      /** @brief Computes the l^1-norm of a vector with final reduction on CPU
-      *
-      * @param vec The vector
-      * @param result The result scalar
-      */
-      template<typename T>
-      void norm_2_cpu(vector_base<T> const & x,
-                      T & result)
-      {
-        scalar<T> tmp(0, viennacl::traits::context(x));
-        norm_2_impl(x, tmp);
-        result = tmp;
-      }
-
-
-
-      ////////// Norm inf
-
-      /** @brief Computes the supremum-norm of a vector
-      *
-      * @param vec The vector
-      * @param result The result scalar
-      */
-      template<typename T>
-      void norm_inf_impl(vector_base<T> const & x,
-                         scalar<T> & result)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-
-        scheduler::statement statement = scheduler::preset::norm_inf(&result, &x);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("norm_inf", statement);
-      }
-
-      /** @brief Computes the supremum-norm of a vector
-      *
-      * @param vec The vector
-      * @param result The result scalar
-      */
-      template<typename T>
-      void norm_inf_cpu(vector_base<T> const & x,
-                        T & result)
-      {
-        scalar<T> tmp(0, viennacl::traits::context(x));
-        norm_inf_impl(x, tmp);
-        result = tmp;
-      }
+/** @brief Computes the l^1-norm of a vector with final reduction on CPU
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void norm_2_cpu(vector_base<NumericT> const & x,
+                NumericT & result)
+{
+  scalar<NumericT> tmp(0, viennacl::traits::context(x));
+  norm_2_impl(x, tmp);
+  result = tmp;
+}
 
 
-      /////////// index norm_inf
 
-      //This function should return a CPU scalar, otherwise statements like
-      // vcl_rhs[index_norm_inf(vcl_rhs)]
-      // are ambiguous
-      /** @brief Computes the index of the first entry that is equal to the supremum-norm in modulus.
-      *
-      * @param vec The vector
-      * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
-      */
-      template<typename T>
-      cl_uint index_norm_inf(vector_base<T> const & x)
-      {
-        viennacl::scalar<T> result(0, viennacl::traits::context(x));
-        scheduler::statement statement = scheduler::preset::index_norm_inf(&result, &x);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("index_norm_inf", statement);
-        T host_result = result;
-        return static_cast<cl_uint>(host_result);
-      }
+////////// Norm inf
 
-      //TODO: Special case x == y allows improvement!!
-      /** @brief Computes a plane rotation of two vectors.
-      *
-      * Computes (x,y) <- (alpha * x + beta * y, -beta * x + alpha * y)
-      *
-      * @param x   The first vector
-      * @param y   The second vector
-      * @param alpha  The first transformation coefficient
-      * @param beta   The second transformation coefficient
-      */
-      template<typename T>
-      void plane_rotation(vector_base<T> & x,
-                          vector_base<T> & y,
-                          T alpha, T beta)
-      {
-        assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
-        assert(viennacl::traits::size(x) == viennacl::traits::size(y));
+/** @brief Computes the supremum-norm of a vector
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void norm_inf_impl(vector_base<NumericT> const & x,
+                   scalar<NumericT> & result)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
-        device_specific::statements_container statement = scheduler::preset::plane_rotation(&x, &y, &alpha, &beta);
-        kernels::vector<T>::execution_handler(viennacl::traits::opencl_context(x)).execute("plane_rotation", statement);
-      }
+  scheduler::statement statement = scheduler::preset::norm_inf(&result, &x);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("norm_inf", statement);
+}
 
-    } //namespace opencl
-  } //namespace linalg
+/** @brief Computes the supremum-norm of a vector
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void norm_inf_cpu(vector_base<NumericT> const & x,
+                  NumericT & result)
+{
+  scalar<NumericT> tmp(0, viennacl::traits::context(x));
+  norm_inf_impl(x, tmp);
+  result = tmp;
+}
+
+
+/////////// index norm_inf
+
+//This function should return a CPU scalar, otherwise statements like
+// vcl_rhs[index_norm_inf(vcl_rhs)]
+// are ambiguous
+/** @brief Computes the index of the first entry that is equal to the supremum-norm in modulus.
+*
+* @param vec The vector
+* @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
+*/
+template<typename NumericT>
+cl_uint index_norm_inf(vector_base<NumericT> const & x)
+{
+  viennacl::scalar<NumericT> result(0, viennacl::traits::context(x));
+  scheduler::statement statement = scheduler::preset::index_norm_inf(&result, &x);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("index_norm_inf", statement);
+  NumericT host_result = result;
+  return static_cast<cl_uint>(host_result);
+}
+
+//TODO: Special case x == y allows improvement!!
+/** @brief Computes a plane rotation of two vectors.
+*
+* Computes (x,y) <- (alpha * x + beta * y, -beta * x + alpha * y)
+*
+* @param x   The first vector
+* @param y   The second vector
+* @param alpha  The first transformation coefficient
+* @param beta   The second transformation coefficient
+*/
+template<typename NumericT>
+void plane_rotation(vector_base<NumericT> & x,
+                    vector_base<NumericT> & y,
+                    NumericT alpha, NumericT beta)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+  assert(viennacl::traits::size(x) == viennacl::traits::size(y));
+
+  device_specific::statements_container statement = scheduler::preset::plane_rotation(&x, &y, &alpha, &beta);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("plane_rotation", statement);
+}
+
+} //namespace opencl
+} //namespace linalg
 } //namespace viennacl
 
 

@@ -34,38 +34,35 @@
 
 namespace viennacl
 {
-  namespace linalg
-  {
-    namespace opencl
-    {
+namespace linalg
+{
+namespace opencl
+{
+namespace detail
+{
 
-      namespace detail
-      {
+template<typename NumericT>
+void level_scheduling_substitute(vector<NumericT> & x,
+                                 viennacl::backend::mem_handle const & row_index_array,
+                                 viennacl::backend::mem_handle const & row_buffer,
+                                 viennacl::backend::mem_handle const & col_buffer,
+                                 viennacl::backend::mem_handle const & element_buffer,
+                                 vcl_size_t num_rows
+                                )
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
 
-        template<typename ScalarType>
-        void level_scheduling_substitute(vector<ScalarType> & x,
-                                     viennacl::backend::mem_handle const & row_index_array,
-                                     viennacl::backend::mem_handle const & row_buffer,
-                                     viennacl::backend::mem_handle const & col_buffer,
-                                     viennacl::backend::mem_handle const & element_buffer,
-                                     vcl_size_t num_rows
-                                    )
-        {
-          viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
+  viennacl::linalg::opencl::kernels::ilu<NumericT>::init(ctx);
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<NumericT>::program_name(), "level_scheduling_substitute");
 
-          viennacl::linalg::opencl::kernels::ilu<ScalarType>::init(ctx);
-          viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<ScalarType>::program_name(), "level_scheduling_substitute");
+  viennacl::ocl::enqueue(k(row_index_array.opencl_handle(), row_buffer.opencl_handle(), col_buffer.opencl_handle(), element_buffer.opencl_handle(),
+                           x,
+                           static_cast<cl_uint>(num_rows)));
+}
 
-          viennacl::ocl::enqueue(k(row_index_array.opencl_handle(), row_buffer.opencl_handle(), col_buffer.opencl_handle(), element_buffer.opencl_handle(),
-                                   x,
-                                   static_cast<cl_uint>(num_rows)));
-        }
-
-      } //namespace detail
-
-
-    } // namespace opencl
-  } //namespace linalg
+} //namespace detail
+} // namespace opencl
+} //namespace linalg
 } //namespace viennacl
 
 
