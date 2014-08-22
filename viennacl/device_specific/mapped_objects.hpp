@@ -102,7 +102,7 @@ public:
 
   virtual ~mapped_object(){ }
 
-  virtual std::string & append_kernel_arguments(std::set<std::string> &, std::string & str) const { return str; }
+  virtual std::string & append_kernel_arguments(std::set<std::string> &, std::string & str, unsigned int) const { return str; }
 
   std::string type_key() const { return type_key_; }
 
@@ -220,10 +220,10 @@ class mapped_host_scalar : public mapped_object
 public:
   mapped_host_scalar(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id, "host_scalar"){ }
 
-  std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
+  std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int width) const
   {
     if (already_generated.insert(name_).second)
-      str += generate_value_kernel_argument(scalartype_, name_);
+      str += generate_value_kernel_argument(utils::append_width(scalartype_, width), name_);
     return str;
   }
 };
@@ -243,11 +243,11 @@ public:
     register_attribute(pointer_, "#pointer", name_ + "_pointer");
   }
 
-  std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str) const
+  std::string & append_kernel_arguments(std::set<std::string> & already_generated, std::string & str, unsigned int width) const
   {
     if (already_generated.insert(name_).second)
     {
-      str += generate_pointer_kernel_argument("__global", scalartype_, pointer_);
+      str += generate_pointer_kernel_argument("__global", utils::append_width(scalartype_, width), pointer_);
       append_optional_arguments(str);
     }
     return str;
@@ -482,9 +482,9 @@ public:
   mapped_implicit_vector(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id, "implicit_vector")
   { }
 
-  std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str) const
+  std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str, unsigned int width) const
   {
-    str += generate_value_kernel_argument(scalartype_, name_);
+    str += generate_value_kernel_argument(utils::append_width(scalartype_, width), name_);
     return str;
   }
 };
@@ -499,9 +499,9 @@ public:
   mapped_implicit_matrix(std::string const & scalartype, unsigned int id) : mapped_object(scalartype, id, "implicit_matrix")
   { }
 
-  std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str) const
+  std::string & append_kernel_arguments(std::set<std::string> & /*already_generated*/, std::string & str, unsigned int width) const
   {
-    str += generate_value_kernel_argument(scalartype_, name_);
+    str += generate_value_kernel_argument(utils::append_width(scalartype_, width), name_);
     return str;
   }
 };

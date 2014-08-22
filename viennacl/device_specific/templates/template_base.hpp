@@ -173,8 +173,10 @@ private:
     std::set<std::string> & already_generated_;
     std::string & str_;
     mapping_type const & mapping_;
+    std::map<std::string, unsigned int> const & widths_;
   public:
-    prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping) : already_generated_(already_generated), str_(str),  mapping_(mapping){ }
+    prototype_generation_traversal(std::set<std::string> & already_generated, std::string & str, mapping_type const & mapping, std::map<std::string, unsigned int> const & widths) :
+      already_generated_(already_generated), str_(str),  mapping_(mapping), widths_(widths){ }
 
     void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t leaf) const
     {
@@ -183,7 +185,10 @@ private:
            ||(leaf==RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
       {
         mapped_object * obj = mapping_.at(std::make_pair(root_idx,leaf)).get();
-        obj->append_kernel_arguments(already_generated_, str_);
+        if(widths_.find(obj->name())!=widths_.end())
+          obj->append_kernel_arguments(already_generated_, str_, widths_.at(obj->name()));
+        else
+          obj->append_kernel_arguments(already_generated_, str_, 1);
       }
     }
   };
@@ -282,7 +287,8 @@ private:
 
 protected:
 
-  static void generate_prototype(utils::kernel_generation_stream & stream, std::string const & name, std::string const & first_arguments, std::vector<mapping_type> const & mappings, statements_container statements)
+  static void generate_prototype(utils::kernel_generation_stream & stream, std::string const & name, std::string const & first_arguments, std::vector<mapping_type> const & mappings, statements_container const &statements,
+                                 std::map<std::string, unsigned int> const & widths)
   {
     statements_container::data_type::const_iterator sit;
     std::vector<mapping_type>::const_iterator mit;
@@ -290,9 +296,14 @@ protected:
 
     std::string arguments = first_arguments;
     for (mit = mappings.begin(), sit = statements.data().begin(); sit != statements.data().end(); ++sit, ++mit)
-      tree_parsing::traverse(*sit, sit->root(), prototype_generation_traversal(already_generated, arguments, *mit), true);
+      tree_parsing::traverse(*sit, sit->root(), prototype_generation_traversal(already_generated, arguments, *mit, widths), true);
     arguments.erase(arguments.size()-1); //Last comma pruned
     stream << "__kernel " << "void " << name << "(" << arguments << ")" << std::endl;
+  }
+
+  static void generate_prototype(utils::kernel_generation_stream & stream, std::string const & name, std::string const & first_arguments, std::vector<mapping_type> const & mappings, statements_container const & statements)
+  {
+    generate_prototype(stream, name, first_arguments, mappings, statements, std::map<std::string, unsigned int>());
   }
 
   void set_arguments(statements_container const & statements, viennacl::ocl::kernel & kernel, unsigned int & current_arg)
