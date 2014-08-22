@@ -465,7 +465,6 @@ private:
       stream << "uint offB = " << p.simd_width << "*idy;" << std::endl;
     }
 
-    stream << "#pragma unroll" << std::endl;
     if (fallback)
       stream << "for(unsigned int k = 0; k < " << p.kL << " && (block_k + k < K); k+=" << p.kS << "){" << std::endl;
     else
