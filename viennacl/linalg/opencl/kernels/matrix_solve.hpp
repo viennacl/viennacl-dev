@@ -140,15 +140,14 @@ struct matrix_solve
 
   static void init(viennacl::ocl::context & ctx)
   {
-    viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
-    std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
-    bool matrix_row_major = viennacl::is_row_major<LayoutT1>::value;
-    bool rhs_row_major    = viennacl::is_row_major<LayoutT2>::value;
-
-
     static std::map<cl_context, bool> init_done;
     if (!init_done[ctx.handle().get()])
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+      std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
+      bool matrix_row_major = viennacl::is_row_major<LayoutT1>::value;
+      bool rhs_row_major    = viennacl::is_row_major<LayoutT2>::value;
+
       std::string source;
       source.reserve(8192);
 

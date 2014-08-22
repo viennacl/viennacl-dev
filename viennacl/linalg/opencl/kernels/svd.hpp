@@ -510,12 +510,12 @@ struct svd
 
   static void init(viennacl::ocl::context & ctx)
   {
-    viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
-    std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
-
     static std::map<cl_context, bool> init_done;
     if (!init_done[ctx.handle().get()])
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+      std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
+
       std::string source;
       source.reserve(1024);
 

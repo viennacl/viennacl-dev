@@ -26,13 +26,12 @@ namespace linalg
 {
 namespace opencl
 {
-
 namespace kernels
 {
 
-template<typename T, typename ScalarType>
+template<typename NumericT, typename ScalarT>
 static void generate_inner_prod_impl(device_specific::execution_handler & handler, std::string const & prefix, device_specific::reduction_template::parameters_type const & parameters, vcl_size_t vector_num,
-                               viennacl::vector<T> const * x, viennacl::vector<T> const * y, ScalarType const* s)
+                                     viennacl::vector<NumericT> const * x, viennacl::vector<NumericT> const * y, ScalarT const* s)
 {
   namespace ds = device_specific;
   ds::statements_container::data_type statements;
@@ -45,15 +44,15 @@ static void generate_inner_prod_impl(device_specific::execution_handler & handle
 
 // main kernel class
 /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
-template<class TYPE>
+template<typename NumericT>
 class vector
 {
 private:
 
-  template<typename T, typename ScalarType1, typename ScalarType2>
+  template<typename ScalarT1, typename ScalarT2>
   static void generate_avbv_impl2(device_specific::execution_handler & handler, std::string const & prefix, device_specific::vector_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
-                                 viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType1 const * a,
-                                 viennacl::vector_base<T> const * z, ScalarType2 const * b)
+                                 viennacl::vector_base<NumericT> const * x, viennacl::vector_base<NumericT> const * y, ScalarT1 const * a,
+                                 viennacl::vector_base<NumericT> const * z, ScalarT2 const * b)
   {
     namespace ds = device_specific;
     handler.add(prefix + "0000", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false));
@@ -79,14 +78,14 @@ private:
     }
   }
 
-  template<typename T, typename ScalarType>
+  template<typename ScalarT>
   static void generate_avbv_impl(device_specific::execution_handler & handler, std::string const & prefix, device_specific::vector_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
-                                 viennacl::vector_base<T> const * x, viennacl::vector_base<T> const * y, ScalarType const * ha, viennacl::scalar<ScalarType> const * da,
-                                 viennacl::vector_base<T> const * z, ScalarType const * hb, viennacl::scalar<ScalarType> const * db)
+                                 viennacl::vector_base<NumericT> const * x, viennacl::vector_base<NumericT> const * y, ScalarT const * ha, viennacl::scalar<NumericT> const * da,
+                                 viennacl::vector_base<NumericT> const * z, ScalarT const * hb, viennacl::scalar<NumericT> const * db)
   {
     //x ASSIGN_OP a*y
-    generate_avbv_impl2(handler, prefix + "hv_", parameters, ASSIGN_OP, x, y, ha, (viennacl::vector<T>*)NULL, (T*)NULL);
-    generate_avbv_impl2(handler, prefix + "dv_", parameters, ASSIGN_OP, x, y, da, (viennacl::vector<T>*)NULL, (T*)NULL);
+    generate_avbv_impl2(handler, prefix + "hv_", parameters, ASSIGN_OP, x, y, ha, (viennacl::vector<NumericT>*)NULL, (NumericT*)NULL);
+    generate_avbv_impl2(handler, prefix + "dv_", parameters, ASSIGN_OP, x, y, da, (viennacl::vector<NumericT>*)NULL, (NumericT*)NULL);
 
     //x ASSIGN_OP a*y + b*z
     generate_avbv_impl2(handler, prefix + "hvhv_", parameters, ASSIGN_OP, x, y, ha, z, hb);
@@ -102,22 +101,24 @@ public:
     cl_context h = ctx.handle().get();
     if (handlers_map.find(h) == handlers_map.end())
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+
       namespace ds = viennacl::device_specific;
       viennacl::ocl::device const & device = ctx.current_device();
-      handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<TYPE>::apply() + "_vector", ctx, device)));
+      handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<NumericT>::apply() + "_vector", ctx, device)));
       ds::execution_handler & handler = handlers_map.at(h);
 
-      viennacl::vector<TYPE> x;
-      viennacl::vector<TYPE> y;
-      viennacl::scalar_vector<TYPE> scalary(0,0,viennacl::context(ctx));
-      viennacl::vector<TYPE> z;
-      viennacl::scalar<TYPE> da;
-      viennacl::scalar<TYPE> db;
-      TYPE ha;
-      TYPE hb;
+      viennacl::vector<NumericT> x;
+      viennacl::vector<NumericT> y;
+      viennacl::scalar_vector<NumericT> scalary(0,0,viennacl::context(ctx));
+      viennacl::vector<NumericT> z;
+      viennacl::scalar<NumericT> da;
+      viennacl::scalar<NumericT> db;
+      NumericT ha;
+      NumericT hb;
 
-      ds::vector_axpy_template::parameters_type vector_axpy_params = ds::builtin_database::vector_axpy_params<TYPE>(device);
-      ds::reduction_template::parameters_type reduction_params = ds::builtin_database::reduction_params<TYPE>(device);
+      ds::vector_axpy_template::parameters_type vector_axpy_params = ds::builtin_database::vector_axpy_params<NumericT>(device);
+      ds::reduction_template::parameters_type     reduction_params = ds::builtin_database::reduction_params<NumericT>(device);
 
       generate_avbv_impl(handler, "assign_", vector_axpy_params, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
       generate_avbv_impl(handler, "ip_add_", vector_axpy_params, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
@@ -129,7 +130,7 @@ public:
       generate_inner_prod_impl(handler, "inner_prod", reduction_params, 1, &x, &y, &da);
 
       handler.add("norm_1", ds::reduction_template(reduction_params), scheduler::preset::norm_1(&da, &x));
-      if (is_floating_point<TYPE>::value)
+      if (is_floating_point<NumericT>::value)
         //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
         handler.add("norm_2", ds::reduction_template(reduction_params, ds::BIND_TO_HANDLE), scheduler::preset::norm_2(&da, &x));
       handler.add("norm_inf", ds::reduction_template(reduction_params), scheduler::preset::norm_inf(&da, &x));
@@ -142,7 +143,7 @@ public:
 
 // main kernel class
 /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
-template<class TYPE>
+template<typename NumericT>
 class vector_multi_inner_prod
 {
 public:
@@ -152,18 +153,21 @@ public:
     cl_context h = ctx.handle().get();
     if (handlers_map.find(h) == handlers_map.end())
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+
       namespace ds = viennacl::device_specific;
+
       viennacl::ocl::device const & device = ctx.current_device();
-      handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<TYPE>::apply() + "_vector_multi_inner_prod", ctx, device)));
+      handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<NumericT>::apply() + "_vector_multi_inner_prod", ctx, device)));
       ds::execution_handler & handler = handlers_map.at(h);
 
-      ds::reduction_template::parameters_type reduction_params = ds::builtin_database::reduction_params<TYPE>(device);
+      ds::reduction_template::parameters_type reduction_params = ds::builtin_database::reduction_params<NumericT>(device);
 
       //Dummy holders for the statements
-      viennacl::vector<TYPE> x;
-      viennacl::vector<TYPE> y;
-      viennacl::vector<TYPE> res;
-      viennacl::vector_range< viennacl::vector_base<TYPE> > da(res, viennacl::range(0,1));
+      viennacl::vector<NumericT> x;
+      viennacl::vector<NumericT> y;
+      viennacl::vector<NumericT> res;
+      viennacl::vector_range< viennacl::vector_base<NumericT> > da(res, viennacl::range(0,1));
 
       generate_inner_prod_impl(handler, "inner_prod_1", reduction_params, 1, &x, &y, &da);
       generate_inner_prod_impl(handler, "inner_prod_2", reduction_params, 2, &x, &y, &da);
@@ -184,11 +188,12 @@ struct vector_element
 public:
   static device_specific::execution_handler & execution_handler(viennacl::ocl::context & ctx)
   {
-    viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
     static std::map<cl_context, device_specific::execution_handler> handlers_map;
     cl_context h = ctx.handle().get();
     if (handlers_map.find(h) == handlers_map.end())
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+
       namespace ds = viennacl::device_specific;
       using namespace scheduler;
       using device_specific::tree_parsing::operator_string;

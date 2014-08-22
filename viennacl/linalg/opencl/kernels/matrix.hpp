@@ -501,6 +501,8 @@ public:
     std::pair<bool, cl_context> key(is_row_major, h);
     if (handlers_map.find(key) == handlers_map.end())
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+
       namespace ds = viennacl::device_specific;
       viennacl::ocl::device const & device = ctx.current_device();
       std::string program_name = viennacl::ocl::type_to_string<NumericT>::apply() + (is_row_major?"matrix_row":"matrix_col");
@@ -562,12 +564,13 @@ struct matrix_element
 public:
   static device_specific::execution_handler & execution_handler(bool is_row_major, viennacl::ocl::context & ctx)
   {
-    viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
     static std::map<std::pair<bool, cl_context>, device_specific::execution_handler> handlers_map;
     cl_context h = ctx.handle().get();
     std::pair<bool, cl_context> key(is_row_major, h);
     if (handlers_map.find(key) == handlers_map.end())
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+
       namespace ds = viennacl::device_specific;
       using namespace scheduler;
       using device_specific::tree_parsing::operator_string;
@@ -652,6 +655,8 @@ public:
     cl_context key = ctx.handle().get();
     if (handlers_map.find(key) == handlers_map.end())
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+
       namespace ds = viennacl::device_specific;
       viennacl::ocl::device const & device = ctx.current_device();
       std::string program_name = viennacl::ocl::type_to_string<NumericT>::apply() + "_matrix_row_wise";
@@ -681,6 +686,8 @@ public:
     std::pair<bool, cl_context> key(is_row_major, h);
     if (handlers_map.find(key) == handlers_map.end())
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+
       namespace ds = viennacl::device_specific;
       viennacl::ocl::device const & device = ctx.current_device();
       std::string program_name = viennacl::ocl::type_to_string<NumericT>::apply() + (is_row_major?"_matrix_prod_row":"_matrix_prod_col");
@@ -727,13 +734,13 @@ struct matrix_legacy
 
   static void init(viennacl::ocl::context & ctx)
   {
-    viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
-    std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
-    bool is_row_major = viennacl::is_row_major<LayoutT>::value;
-
     static std::map<cl_context, bool> init_done;
     if (!init_done[ctx.handle().get()])
     {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+      std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
+      bool is_row_major = viennacl::is_row_major<LayoutT>::value;
+
       std::string source;
       source.reserve(8192);
 
