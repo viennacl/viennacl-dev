@@ -292,6 +292,12 @@ struct leading_stride
   template<class T> result_type operator()(T const &t) const { return viennacl::traits::row_major(t)?viennacl::traits::stride2(t):viennacl::traits::stride1(t); }
 };
 
+struct leading_start
+{
+  typedef vcl_size_t result_type;
+  template<class T> result_type operator()(T const &t) const { return viennacl::traits::row_major(t)?viennacl::traits::start2(t):viennacl::traits::start1(t); }
+};
+
 struct stride1_fun
 {
   typedef vcl_size_t result_type;
