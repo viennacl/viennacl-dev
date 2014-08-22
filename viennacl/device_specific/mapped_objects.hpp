@@ -1,4 +1,4 @@
-﻿#ifndef VIENNACL_DEVICE_SPECIFIC_MAPPED_TYPE_HPP
+#ifndef VIENNACL_DEVICE_SPECIFIC_MAPPED_TYPE_HPP
 #define VIENNACL_DEVICE_SPECIFIC_MAPPED_TYPE_HPP
 
 /* =========================================================================
