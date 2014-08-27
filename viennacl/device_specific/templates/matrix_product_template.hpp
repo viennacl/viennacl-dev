@@ -782,6 +782,7 @@ private:
     using namespace device_specific::utils;
     vcl_size_t ldstrideA = call_on_matrix(A, leading_stride());
     vcl_size_t ldstrideB = call_on_matrix(B, leading_stride());
+    vcl_size_t ldstrideC = call_on_matrix(C, leading_stride());
     vcl_size_t ldstartA = call_on_matrix(A, leading_start());
     vcl_size_t ldstartB = call_on_matrix(B, leading_start());
     bool swap_A = ((A_trans_=='T') ^ utils::call_on_matrix(A, row_major_fun()));
@@ -795,7 +796,7 @@ private:
     else
       K = A_trans_=='N'?call_on_matrix(A, size2_fun()):call_on_matrix(A, size1_fun());
 
-    if (M < p_.mL || N < p_.nL || K < p_.kL || ldstrideA> 1 || ldstrideB > 1 ||
+    if (M < p_.mL || N < p_.nL || K < p_.kL || ldstrideA> 1 || ldstrideB > 1 || ldstrideC > 1 ||
         (p_.simd_width>1 && (ldstartA % p_.simd_width > 0 || ldstartB % p_.simd_width > 0)))
     {
       enqueue_block(statement, A, B, C, beta, create_slice(ptr_matrix, A, 0, M, 0, K, swap_A),
