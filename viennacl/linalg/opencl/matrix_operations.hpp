@@ -116,7 +116,24 @@ void ambm_m(matrix_base<NumericT> & A,
   kernels::matrix<NumericT>::execution_handler(A.row_major(), viennacl::traits::opencl_context(A)).execute(kernel_name, statement);
 }
 
+template<typename NumericT,
+          typename SizeT, typename DistanceT>
+void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>,const matrix_base<NumericT, SizeT, DistanceT>, op_trans> & proxy,
+           matrix_base<NumericT> & temp_trans)
+{
+  std::string kernel_name("trans_kernel");
+  viennacl::ocl::kernel& kernel = detail::legacy_kernel_for_matrix(proxy.lhs(),kernel_name);
+  viennacl::ocl::enqueue(kernel(proxy.lhs(),
+                                static_cast<cl_uint>(proxy.lhs().start1()),         static_cast<cl_uint>(proxy.lhs().start2()),
+                                static_cast<cl_uint>(proxy.lhs().internal_size1()), static_cast<cl_uint>(proxy.lhs().internal_size2()),
+                                static_cast<cl_uint>(proxy.lhs().size1()),          static_cast<cl_uint>(proxy.lhs().size2()),
+                                static_cast<cl_uint>(proxy.lhs().stride1()),        static_cast<cl_uint>(proxy.lhs().stride2()),
 
+                                temp_trans,
+                                static_cast<cl_uint>(temp_trans.start1()),         static_cast<cl_uint>(temp_trans.start2()),
+                                static_cast<cl_uint>(temp_trans.internal_size1()), static_cast<cl_uint>(temp_trans.internal_size2()),
+                                static_cast<cl_uint>(temp_trans.stride1()),        static_cast<cl_uint>(temp_trans.stride2())));
+}
 
 template<typename NumericT>
 void matrix_assign(matrix_base<NumericT> & A, NumericT s, bool up_to_internal_size = false)

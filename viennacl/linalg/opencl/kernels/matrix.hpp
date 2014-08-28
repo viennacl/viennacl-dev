@@ -432,6 +432,46 @@ void generate_triangular_substitute_inplace(StringT & source, std::string const 
   source.append("} \n");
 }
 
+template <typename StringT>
+void generate_trans_kernel(StringT & source, std::string const & numeric_string, bool is_row_major)
+{
+  source.append("__kernel void trans_kernel(\n");
+  source.append("           __global const ");source.append(numeric_string);source.append(" * A, \n");
+  source.append("           unsigned int A_start1,          unsigned int A_start2, \n");
+  source.append("           unsigned int A_internal_size1,  unsigned int A_internal_size2, \n");
+  source.append("           unsigned int A_size1,           unsigned int A_size2, \n");
+  source.append("           unsigned int A_stride1,         unsigned int A_stride2, \n");
+  source.append("           __global ");source.append(numeric_string);source.append(" * B, \n");
+  source.append("           unsigned int B_start1,          unsigned int B_start2, \n");
+  source.append("           unsigned int B_internal_size1,  unsigned int B_internal_size2, \n");
+  source.append("           unsigned int B_stride1,         unsigned int B_stride2) \n");
+  source.append("{ \n");
+  source.append("  unsigned int size = A_internal_size2*A_internal_size1; \n");
+  source.append("  for(unsigned int i = get_group_id(0); i < size/get_num_groups(0); i += get_num_groups(0))\n");
+  source.append("  {  \n");
+  source.append("    unsigned int matrix_index = i*get_local_size(0)+get_local_id(0);  \n");
+  source.append("    unsigned int row = matrix_index / A_internal_size2;  \n");
+  source.append("    unsigned int col = matrix_index % A_internal_size2;  \n");
+  source.append("    if (row < A_size1 && col < A_size2)  \n");
+  source.append("      {  \n");
+
+  if(is_row_major)
+  {
+    source.append("      unsigned int pos = (A_start1 + A_stride1 * row) * A_internal_size2 + (A_start2 + A_stride2 * col);  \n");
+    source.append("      unsigned int new_pos = (B_start2 + B_stride2 * col) * B_internal_size2 + (B_start1 + B_stride1 * row);  \n");
+    source.append("      B[new_pos] = A[pos];  \n");
+  } 
+  else
+  {
+    source.append("      unsigned int pos = (A_start1 + A_stride1 * row) + A_internal_size1 * (A_start2 + A_stride2 * col);  \n");
+    source.append("      unsigned int new_pos = (B_start2 + B_stride2 * col) + B_internal_size1 * (B_start1 + B_stride1 * row);  \n");
+    source.append("      B[new_pos] = A[pos];  \n");
+  }
+  source.append("     } \n");
+  source.append("   } \n");
+  source.append("}  \n");
+}
+
 namespace detail
 {
   inline std::string type_to_string(viennacl::row_major)    { return "row"; }
@@ -755,6 +795,7 @@ struct matrix_legacy
         generate_fft(source, numeric_string, is_row_major);
         generate_lu(source, numeric_string, is_row_major);
         generate_triangular_substitute_inplace(source, numeric_string, is_row_major);
+        generate_trans_kernel(source, numeric_string, is_row_major);
       }
 
       std::string prog_name = program_name();

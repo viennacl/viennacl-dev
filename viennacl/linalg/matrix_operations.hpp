@@ -50,6 +50,35 @@ namespace viennacl
   namespace linalg
   {
 
+
+    template<typename NumericT,
+              typename SizeT, typename DistanceT>
+    void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>,const matrix_base<NumericT, SizeT, DistanceT>, op_trans> & proxy,
+              matrix_base<NumericT> & temp_trans)
+    {
+      switch (viennacl::traits::handle(proxy).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::trans(proxy, temp_trans);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::trans(proxy,temp_trans);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::trans(proxy,temp_trans);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+
     template<typename NumericT,
               typename ScalarType1>
     void am(matrix_base<NumericT> & mat1,
