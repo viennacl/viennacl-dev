@@ -29,6 +29,64 @@ namespace viennacl
   {
     namespace cuda
     {
+
+      inline  __device__ unsigned int row_major_index(unsigned int row,unsigned int col, unsigned int /*num_rows*/,unsigned int num_cols)
+      {
+        return row*num_cols+col;
+      }
+      inline  __device__ unsigned int col_major_index(unsigned int row,unsigned int col, unsigned int num_rows, unsigned int /*num_cols*/)
+      {
+        return row+col*num_rows;
+      }
+      //Matrix transpsoe kernel
+      template<typename NumericT>
+      __global__ void trans_kernel(
+                const NumericT * A,
+                unsigned int A_start1,          unsigned int A_start2,
+                unsigned int A_internal_size1,  unsigned int A_internal_size2,
+                unsigned int A_size1,           unsigned int A_size2,
+                unsigned int A_stride1,         unsigned int A_stride2,
+
+                NumericT * B,
+                unsigned int B_start1,          unsigned int B_start2,
+                unsigned int B_internal_size1,  unsigned int B_internal_size2,
+                unsigned int B_stride1,         unsigned int B_stride2,
+                bool data_major)
+      {
+        unsigned int size = A_internal_size2*A_internal_size1;
+        for(unsigned int i = blockIdx.x; i<size/gridDim.x; i+=gridDim.x)
+        {
+          unsigned int matrix_index = i * blockDim.x + threadIdx.x;
+
+          unsigned int row = matrix_index / A_internal_size2;
+          unsigned int col = matrix_index % A_internal_size2;
+          if (row < A_size1 && col < A_size2)
+          {
+            if(data_major)
+            {
+              unsigned int pos = row_major_index(A_start1 + A_stride1 * row,
+                                                 A_start2 + A_stride2 * col,
+                                                 A_internal_size1, A_internal_size2);
+              unsigned int new_pos = row_major_index(B_start2 + B_stride2 * col,
+                                                 B_start1 + B_stride1 * row,
+                                                 B_internal_size1, B_internal_size2);
+              B[new_pos] = A[pos];
+
+            } else
+            {
+              unsigned int pos = col_major_index(A_start1 + A_stride1 * row,
+                                                 A_start2 + A_stride2 * col,
+                                                 A_internal_size1, A_internal_size2);
+              unsigned int new_pos = col_major_index(B_start2 + B_stride2 * col,
+                                                 B_start1 + B_stride1 * row,
+                                                 B_internal_size1, B_internal_size2);
+              B[new_pos] = A[pos];
+
+            }
+           }
+        }
+      }
+      
       //
       // am
       //

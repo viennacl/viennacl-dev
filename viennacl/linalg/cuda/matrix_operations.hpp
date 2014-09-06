@@ -53,6 +53,25 @@ namespace cuda
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //
 
+template<typename NumericT, typename SizeT, typename DistanceT>
+void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>,const matrix_base<NumericT, SizeT, DistanceT>, op_trans> & proxy,
+           matrix_base<NumericT> & temp_trans)
+{
+  trans_kernel<<<128,128>>>(detail::cuda_arg<NumericT>(proxy.lhs()),
+                            static_cast<unsigned int>(proxy.lhs().start1()),          static_cast<unsigned int>(proxy.lhs().start2()),
+                            static_cast<unsigned int>(proxy.lhs().internal_size1()),  static_cast<unsigned int>(proxy.lhs().internal_size2()),
+                            static_cast<unsigned int>(proxy.lhs().size1()),           static_cast<unsigned int>(proxy.lhs().size2()),
+                            static_cast<unsigned int>(proxy.lhs().stride1()),         static_cast<unsigned int>(proxy.lhs().stride2()),
+
+                            detail::cuda_arg<NumericT>(temp_trans),
+                            static_cast<unsigned int>(temp_trans.start1()),            static_cast<unsigned int>(temp_trans.start2()),
+                            static_cast<unsigned int>(temp_trans.internal_size1()),    static_cast<unsigned int>(temp_trans.internal_size2()),
+                            static_cast<unsigned int>(temp_trans.stride1()),           static_cast<unsigned int>(temp_trans.stride2()),
+                            static_cast<bool>(proxy.lhs().row_major()));
+  VIENNACL_CUDA_LAST_ERROR_CHECK("trans_kernel");
+}
+
+
 template<typename NumericT, typename ScalarT>
 void am(matrix_base<NumericT> & mat1,
         matrix_base<NumericT> const & mat2, ScalarT const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)

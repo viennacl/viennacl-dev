@@ -195,7 +195,6 @@ matrix_base<NumericT, SizeT, DistanceT>::matrix_base(NumericT * ptr_to_mem, vien
     elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
     elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
     elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
-lse
     throw cuda_not_available_exception();
 #endif
   }
@@ -312,20 +311,12 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
 }
 
 
-// A = trans(B). Currently achieved in CPU memory
+// A = trans(B)
 template<class NumericT, typename SizeT, typename DistanceT>
-matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator=(const matrix_expression< const self_type,
-                                                                                                   const self_type,
-                                                                                                   op_trans> & proxy)
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator=(const matrix_expression<const self_type, const self_type, op_trans> & proxy)
 {
-  assert( (handle() != proxy.lhs().handle()) && bool("Self-assignment of matrix transpose not implemented"));
-  assert( ( (proxy.lhs().size1() == size2()) || (size2() == 0) ) && bool("Matrix dimensions do not match!"));
-  assert( ( (proxy.lhs().size2() == size1()) || (size1() == 0) ) && bool("Matrix dimensions do not match!"));
-
-  bool copy_of_current_data_needed = true;
-  if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
+  if ( internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0 )
   {
-    copy_of_current_data_needed = false;
     size1_ = viennacl::traits::size1(proxy);
     size2_ = viennacl::traits::size2(proxy);
     internal_size1_ = viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size);
@@ -334,44 +325,33 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
       row_major_ = viennacl::traits::row_major(proxy);
   }
 
-  std::vector<NumericT> temp(proxy.lhs().internal_size());
-
-  viennacl::backend::memory_read(proxy.lhs().handle(), 0, sizeof(NumericT)*proxy.lhs().internal_size(), &(temp[0]));
-
-  // now transpose it
-  std::vector<NumericT> temp_trans(internal_size());
-  if (copy_of_current_data_needed)
-    viennacl::backend::memory_read(handle(), 0, sizeof(NumericT)*internal_size(), &(temp_trans[0]));
-
-  if (row_major_)
+  if ( handle() == proxy.lhs().handle() )
   {
-    for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
-      for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
-        temp_trans[row_major::mem_index(start2() + stride2() * j,
-                                        start1() + stride1() * i,
-                                        internal_size1(), internal_size2())]
-            = temp[row_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
-                                        proxy.lhs().start2() + proxy.lhs().stride2() * j,
-                                        proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
+    viennacl::matrix_base<NumericT> temp(proxy.lhs().size2(), proxy.lhs().size1(),proxy.lhs().row_major());
+    temp = *this;
+    if ( proxy.lhs().internal_size1() == proxy.lhs().internal_size2() )
+    {
+      viennacl::linalg::trans(proxy, temp);
+    }
+    else
+    {
+      viennacl::linalg::trans(proxy, temp);
+      this->resize(proxy.lhs().size2(), proxy.lhs().size1());
+      elements_ = temp.handle();
+    }
   }
   else
   {
-    for (vcl_size_t j=0; j<proxy.lhs().size2(); ++j)
-      for (vcl_size_t i=0; i<proxy.lhs().size1(); ++i)
-        temp_trans[column_major::mem_index(start2() + stride2() * j,
-                                           start1() + stride1() * i,
-                                           internal_size1(), internal_size2())]
-            = temp[column_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * i,
-                                           proxy.lhs().start2() + proxy.lhs().stride2() * j,
-                                           proxy.lhs().internal_size1(), proxy.lhs().internal_size2())];
+    if ( proxy.lhs().internal_size1() == proxy.lhs().internal_size2() )
+    {
+      viennacl::linalg::trans(proxy, *this);
+    } else
+    {
+      if(internal_size1()!= proxy.lhs().internal_size2() && internal_size2()!= proxy.lhs().internal_size1())
+        this->resize(proxy.lhs().size2(), proxy.lhs().size1());
+      viennacl::linalg::trans(proxy, *this);
+    }
   }
-
-  // write back
-  if (copy_of_current_data_needed)
-    viennacl::backend::memory_write(elements_, 0, sizeof(NumericT)*internal_size(), &(temp_trans[0]));
-  else
-    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(proxy), &(temp_trans[0]));
-
   return *this;
 }
 

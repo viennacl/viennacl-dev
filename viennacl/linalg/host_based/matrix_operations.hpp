@@ -48,6 +48,53 @@ namespace host_based
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //
 
+template<typename NumericT,
+         typename SizeT, typename DistanceT>
+void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>,
+           const matrix_base<NumericT, SizeT, DistanceT>, op_trans> & proxy, matrix_base<NumericT> & temp_trans)
+{
+  const NumericT * temp_proxy = detail::extract_raw_pointer<NumericT>(proxy.lhs());
+  NumericT * temp = detail::extract_raw_pointer<NumericT>(temp_trans);
+
+  unsigned int proxy_int_size1=proxy.lhs().internal_size1();
+  unsigned int proxy_int_size2=proxy.lhs().internal_size2();
+  unsigned int temp_int_size1=temp_trans.internal_size1();
+  unsigned int temp_int_size2=temp_trans.internal_size2();
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for shared(proxy_int_size1,proxy_int_size2,temp_int_size1,temp_int_size2)
+#endif
+  for (unsigned int i = 0; i < proxy_int_size1*proxy_int_size2;++i)
+  {
+    unsigned int row = i / proxy_int_size2;
+    unsigned int col = i % proxy_int_size2;
+
+    if (row < proxy.lhs().size1() && col < proxy.lhs().size2())
+    {
+      if (proxy.lhs().row_major())
+      {
+        unsigned int pos = row_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * row,
+                                                proxy.lhs().start2() + proxy.lhs().stride2() * col,
+                                                proxy_int_size1, proxy_int_size2);
+        unsigned int new_pos = row_major::mem_index(temp_trans.start2() + temp_trans.stride2() * col,
+                                                temp_trans.start1() + temp_trans.stride1() * row, temp_int_size1,
+                                                temp_int_size2);
+        temp[new_pos] = temp_proxy[pos];
+      }
+      else
+      {
+        unsigned int pos = column_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * row,
+                                                   proxy.lhs().start2() + proxy.lhs().stride2() * col, proxy_int_size1,
+                                                   proxy_int_size2);
+        unsigned int new_pos = column_major::mem_index(temp_trans.start2() + temp_trans.stride2() * col,
+                                                   temp_trans.start1() + temp_trans.stride1() * row, temp_int_size1,
+                                                   temp_int_size2);
+        temp[new_pos] = temp_proxy[pos];
+      }
+    }
+  }
+}
+
 template<typename NumericT, typename ScalarT1>
 void am(matrix_base<NumericT> & mat1,
         matrix_base<NumericT> const & mat2, ScalarT1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha)
