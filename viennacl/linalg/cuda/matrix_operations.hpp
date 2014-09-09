@@ -54,7 +54,7 @@ namespace cuda
 //
 
 template<typename NumericT, typename SizeT, typename DistanceT>
-void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>,const matrix_base<NumericT, SizeT, DistanceT>, op_trans> & proxy,
+void trans(matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>,const matrix_base<NumericT, SizeT, DistanceT>, op_trans> const & proxy,
            matrix_base<NumericT> & temp_trans)
 {
   trans_kernel<<<128,128>>>(detail::cuda_arg<NumericT>(proxy.lhs()),
