@@ -33,6 +33,10 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/entry_proxy.hpp"
 
+#ifdef VIENNACL_WITH_UBLAS
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+#endif
+
 namespace viennacl
 {
 namespace detail
