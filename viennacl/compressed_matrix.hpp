@@ -33,6 +33,10 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/tools/entry_proxy.hpp"
 
+#ifdef VIENNACL_WITH_UBLAS
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+#endif
+
 namespace viennacl
 {
 namespace detail
@@ -733,10 +737,6 @@ private:
     //get column indices for row i:
     viennacl::backend::typesafe_host_array<unsigned int> col_indices(col_buffer_, row_indices[1] - row_indices[0]);
     viennacl::backend::memory_read(col_buffer_, col_indices.element_size()*row_indices[0], row_indices.element_size()*col_indices.size(), col_indices.get());
-
-    //get entries for row i:
-    viennacl::backend::typesafe_host_array<NumericT> row_entries(elements_, row_indices[1] - row_indices[0]);
-    viennacl::backend::memory_read(elements_, sizeof(NumericT)*row_indices[0], sizeof(NumericT)*row_entries.size(), row_entries.get());
 
     for (vcl_size_t k=0; k<col_indices.size(); ++k)
     {
