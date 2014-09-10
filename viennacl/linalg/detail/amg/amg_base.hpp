@@ -743,28 +743,28 @@ public:
   const_iterator1 begin1() const
   {
     // Const_iterator of transposed can only be used if transposed matrix is already built and up to date.
-    assert((!transposed_mode || (transposed_mode_ && transposed_)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
+    assert((!transposed_mode_ || (transposed_mode_ && transposed_)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
     ConstAdapterType a_const(internal_mat_, s1_, s2_);
     return a_const.begin1();
   }
 
   const_iterator1 end1(bool trans = false) const
   {
-    assert((!transposed_mode || (transposed_mode_ && transposed_)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
+    assert((!transposed_mode_ || (transposed_mode_ && transposed_)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
     ConstAdapterType a_const(internal_mat_, trans ? s2_ : s1_, trans ? s1_ : s2_);
     return a_const.end1();
   }
 
   const_iterator2 begin2(bool trans = false) const
   {
-    assert((!transposed_mode || (transposed_mode_ && transposed_)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
+    assert((!transposed_mode_ || (transposed_mode_ && transposed_)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
     ConstAdapterType a_const(internal_mat_, trans ? s2_ : s1_, trans ? s1_ : s2_);
     return a_const.begin2();
   }
 
   const_iterator2 end2(bool trans = false) const
   {
-    assert((!transposed_mode || (transposed_mode_ && transposed_)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
+    assert((!transposed_mode_ || (transposed_mode_ && transposed_)) && bool("Error: Cannot build const_iterator when transposed has not been built yet!"));
     ConstAdapterType a_const(internal_mat_, trans ? s2_ : s1_, trans ? s1_ : s2_);
     return a_const.end2();
   }
