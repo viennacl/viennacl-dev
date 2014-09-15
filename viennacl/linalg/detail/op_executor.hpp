@@ -27,59 +27,60 @@
 
 namespace viennacl
 {
-  namespace linalg
-  {
-    namespace detail
-    {
-      template<typename T, typename B>
-      bool op_aliasing(vector_base<T> const & /*lhs*/, B const & /*b*/)
-      {
-        return false;
-      }
+namespace linalg
+{
+namespace detail
+{
 
-      template<typename T>
-      bool op_aliasing(vector_base<T> const & lhs, vector_base<T> const & b)
-      {
-        return lhs.handle() == b.handle();
-      }
+template<typename NumericT, typename B>
+bool op_aliasing(vector_base<NumericT> const & /*lhs*/, B const & /*b*/)
+{
+  return false;
+}
 
-      template<typename T, typename LHS, typename RHS, typename OP>
-      bool op_aliasing(vector_base<T> const & lhs, vector_expression<const LHS, const RHS, OP> const & rhs)
-      {
-        return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
-      }
+template<typename NumericT>
+bool op_aliasing(vector_base<NumericT> const & lhs, vector_base<NumericT> const & b)
+{
+  return lhs.handle() == b.handle();
+}
 
-
-      template<typename T, typename B>
-      bool op_aliasing(matrix_base<T> const & /*lhs*/, B const & /*b*/)
-      {
-        return false;
-      }
-
-      template<typename T>
-      bool op_aliasing(matrix_base<T> const & lhs, matrix_base<T> const & b)
-      {
-        return lhs.handle() == b.handle();
-      }
-
-      template<typename T, typename LHS, typename RHS, typename OP>
-      bool op_aliasing(matrix_base<T> const & lhs, matrix_expression<const LHS, const RHS, OP> const & rhs)
-      {
-        return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
-      }
+template<typename NumericT, typename LhsT, typename RhsT, typename OpT>
+bool op_aliasing(vector_base<NumericT> const & lhs, vector_expression<const LhsT, const RhsT, OpT> const & rhs)
+{
+  return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
+}
 
 
-      /** @brief Worker class for decomposing expression templates.
-        *
-        * @tparam A    Type to which is assigned to
-        * @tparam OP   One out of {op_assign, op_inplace_add, op_inplace_sub}
-        @ @tparam T    Right hand side of the assignment
-      */
-      template<typename A, typename OP, typename T>
-      struct op_executor {};
+template<typename NumericT, typename B>
+bool op_aliasing(matrix_base<NumericT> const & /*lhs*/, B const & /*b*/)
+{
+  return false;
+}
 
-    }
-  }
+template<typename NumericT>
+bool op_aliasing(matrix_base<NumericT> const & lhs, matrix_base<NumericT> const & b)
+{
+  return lhs.handle() == b.handle();
+}
+
+template<typename NumericT, typename LhsT, typename RhsT, typename OpT>
+bool op_aliasing(matrix_base<NumericT> const & lhs, matrix_expression<const LhsT, const RhsT, OpT> const & rhs)
+{
+  return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
+}
+
+
+/** @brief Worker class for decomposing expression templates.
+  *
+  * @tparam A    Type to which is assigned to
+  * @tparam OP   One out of {op_assign, op_inplace_add, op_inplace_sub}
+  @ @tparam T    Right hand side of the assignment
+*/
+template<typename A, typename OP, typename T>
+struct op_executor {};
+
+}
+}
 }
 
 #endif // VIENNACL_LINALG_DETAIL_OP_EXECUTOR_HPP

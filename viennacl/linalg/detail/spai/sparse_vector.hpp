@@ -32,75 +32,54 @@
 #include <vector>
 #include <math.h>
 #include <map>
-//local includes
-//#include <omp.h>
 
 
 namespace viennacl
 {
-  namespace linalg
-  {
-    namespace detail
-    {
-      namespace spai
-      {
+namespace linalg
+{
+namespace detail
+{
+namespace spai
+{
 
-        /**
-         * @brief Represents sparse vector based on std::map<unsigned int, ScalarType>
-         */
-        template<typename ScalarType>
-        class sparse_vector{
-        public:
-            typedef typename std::map<unsigned int, ScalarType>::iterator iterator;
-            typedef typename std::map<unsigned int, ScalarType>::const_iterator const_iterator;
-            sparse_vector() {}
+/**
+ * @brief Represents a sparse vector based on std::map<unsigned int, NumericT>
+ */
+template<typename NumericT>
+class sparse_vector
+{
+public:
+  typedef typename std::map<unsigned int, NumericT>::iterator        iterator;
+  typedef typename std::map<unsigned int, NumericT>::const_iterator  const_iterator;
 
-            /** @brief Set the index of the vector in the original matrix
-             * May only be called once.
-             */
-            //getter
-            ScalarType& operator[] (const unsigned int ind){
-                return v_[ind];
+  sparse_vector() {}
 
-            }
+  /** @brief Set the index of the vector in the original matrix
+   *
+   * May only be called once.
+   */
+  //getter
+  NumericT & operator[] (unsigned int ind) { return v_[ind]; }
 
-            void clear(){
-                v_.clear();
-            }
+  void clear() { v_.clear(); }
 
-            const_iterator find(const unsigned int var) const{
-                return v_.find(var);
-            }
+  const_iterator find(unsigned int var) const { return v_.find(var); }
+        iterator find(unsigned int var)       { return v_.find(var); }
 
-            iterator find(const unsigned int var){
-                return v_.find(var);
-            }
+  const_iterator begin() const { return v_.begin(); }
+        iterator begin()       { return v_.begin(); }
+  const_iterator end() const { return v_.end(); }
+        iterator end()       { return v_.end(); }
 
-            const_iterator begin() const{
-                return v_.begin();
-            }
+private:
+  unsigned int                      size_;
+  std::map<unsigned int, NumericT>  v_;
+};
 
-            const_iterator end() const{
-                return v_.end();
-            }
-
-
-            iterator begin(){
-                return v_.begin();
-            }
-
-            iterator end(){
-                return v_.end();
-            }
-
-
-        private:
-            unsigned int size_;
-            std::map<unsigned int, ScalarType> v_;
-        };
-      }
-    }
-  }
+}
+}
+}
 }
 
 #endif

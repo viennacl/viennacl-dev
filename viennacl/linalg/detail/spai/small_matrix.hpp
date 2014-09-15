@@ -43,68 +43,71 @@
 #include "boost/numeric/ublas/matrix_expression.hpp"
 #include "boost/numeric/ublas/detail/matrix_assign.hpp"
 
-
+#include "viennacl/forwards.h"
 
 namespace viennacl
 {
-    namespace linalg
+namespace linalg
+{
+namespace detail
+{
+namespace spai
+{
+
+//
+// Constructs an orthonormal sparse matrix M (with M^T M = Id). Is composed of elementary 2x2 rotation matrices with suitable renumbering.
+//
+template<typename MatrixT>
+void make_rotation_matrix(MatrixT & mat,
+                          vcl_size_t new_size,
+                          vcl_size_t off_diagonal_distance = 4)
+{
+  mat.resize(new_size, new_size, false);
+  mat.clear();
+
+  double val = 1.0 / std::sqrt(2.0);
+
+  for (vcl_size_t i=0; i<new_size; ++i)
+    mat(i,i) = val;
+
+  for (vcl_size_t i=off_diagonal_distance; i<new_size; ++i)
+  {
+    mat(i-off_diagonal_distance, i)                       = val;
+    mat(i,                       i-off_diagonal_distance) = -val;
+  }
+
+}
+
+
+//calcualtes matrix determinant
+template<typename MatrixT>
+double determinant(boost::numeric::ublas::matrix_expression<MatrixT> const & mat_r)
+{
+  double det = 1.0;
+
+  MatrixT mLu(mat_r());
+  boost::numeric::ublas::permutation_matrix<vcl_size_t> pivots(mat_r().size1());
+
+  int is_singular = static_cast<int>(lu_factorize(mLu, pivots));
+
+  if (!is_singular)
+  {
+    for (vcl_size_t i=0; i < pivots.size(); ++i)
     {
-      namespace detail
-      {
-        namespace spai
-        {
+      if (pivots(i) != i)
+        det *= -1.0;
 
-          //
-          // Constructs an orthonormal sparse matrix M (with M^T M = Id). Is composed of elementary 2x2 rotation matrices with suitable renumbering.
-          //
-          template<typename MatrixType>
-          void make_rotation_matrix(MatrixType & mat, vcl_size_t new_size, vcl_size_t off_diagonal_distance = 4)
-          {
-            mat.resize(new_size, new_size, false);
-            mat.clear();
-
-            double val = 1.0 / std::sqrt(2.0);
-
-            for (vcl_size_t i=0; i<new_size; ++i)
-              mat(i,i) = val;
-
-            for (vcl_size_t i=off_diagonal_distance; i<new_size; ++i)
-            {
-              mat(i-off_diagonal_distance, i) = val; mat(i, i-off_diagonal_distance) = -val;
-            }
-
-          }
-
-
-          //calcualtes matrix determinant
-          template<typename MatrixType>
-          double determinant(boost::numeric::ublas::matrix_expression<MatrixType> const& mat_r)
-          {
-              double det = 1.0;
-
-              MatrixType mLu(mat_r() );
-              boost::numeric::ublas::permutation_matrix<vcl_size_t> pivots(mat_r().size1() );
-
-              int is_singular = static_cast<int>(lu_factorize(mLu, pivots));
-
-              if (!is_singular)
-              {
-                  for (vcl_size_t i=0; i < pivots.size(); ++i)
-                  {
-                      if (pivots(i) != i)
-                          det *= -1.0;
-
-                      det *= mLu(i,i);
-                  }
-              }
-              else
-                  det = 0.0;
-
-              return det;
-          }
-
-        }
-      }
+      det *= mLu(i,i);
     }
+  }
+  else
+    det = 0.0;
+
+  return det;
+}
+
+}
+}
+}
 }
 #endif

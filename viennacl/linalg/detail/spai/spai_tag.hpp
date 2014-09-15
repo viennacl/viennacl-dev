@@ -49,100 +49,95 @@
 
 namespace viennacl
 {
-    namespace linalg
-    {
-      namespace detail
-      {
-        namespace spai
-        {
+namespace linalg
+{
+namespace detail
+{
+namespace spai
+{
 
-          /** @brief A tag for SPAI
-          * Contains values for the algorithm.
-          * Must be passed to spai_precond constructor
-          */
-          class spai_tag
-          {
-              /** @brief Constructor
-              * @param residual_norm_threshold Calculate until the norm of the residual falls below this threshold
-              * @param iteration_limit maximum number of iterations
-              * @param residual_threshold determines starting threshold in residual vector for including new indices into set J
-              * @param is_static determines if static version of SPAI should be used
-              * @param is_right determines if left or right preconditioner should be used
-              */
-            public:
-              spai_tag(
-                      double residual_norm_threshold = 1e-3,
-                      unsigned int iteration_limit = 5,
-                      double residual_threshold = 1e-2,
-                      bool is_static = false,
-                      bool is_right = false) :
-              residual_norm_threshold_(residual_norm_threshold),
-              iteration_limit_(iteration_limit),
-              residual_threshold_(residual_threshold),
-              is_static_(is_static),
-              is_right_(is_right) {}
+/** @brief A tag for SPAI
+ *
+ * Contains values for the algorithm.
+ * Must be passed to spai_precond constructor
+ */
+class spai_tag
+{
+  /** @brief Constructor
+   *
+   * @param residual_norm_threshold   Calculate until the norm of the residual falls below this threshold
+   * @param iteration_limit           maximum number of iterations
+   * @param residual_threshold        determines starting threshold in residual vector for including new indices into set J
+   * @param is_static                 determines if static version of SPAI should be used
+   * @param is_right                  determines if left or right preconditioner should be used
+   */
+public:
+  spai_tag(double residual_norm_threshold = 1e-3,
+           unsigned int iteration_limit = 5,
+           double residual_threshold = 1e-2,
+           bool is_static = false,
+           bool is_right = false)
+    : residual_norm_threshold_(residual_norm_threshold),
+      iteration_limit_(iteration_limit),
+      residual_threshold_(residual_threshold),
+      is_static_(is_static),
+      is_right_(is_right) {}
 
-              double getResidualNormThreshold() const
-              { return residual_norm_threshold_; }
+  double getResidualNormThreshold() const { return residual_norm_threshold_; }
 
-              double getResidualThreshold() const
-              { return residual_threshold_; }
+  double getResidualThreshold() const { return residual_threshold_; }
 
-              unsigned int getIterationLimit () const
-              { return iteration_limit_; }
+  unsigned int getIterationLimit () const { return iteration_limit_; }
 
-              bool getIsStatic() const
-              { return is_static_; }
+  bool getIsStatic() const { return is_static_; }
 
-              bool getIsRight() const
-              { return is_right_; }
+  bool getIsRight() const { return is_right_; }
 
-              long getBegInd() const
-              { return beg_ind_; }
+  long getBegInd() const { return beg_ind_; }
 
-              long getEndInd() const
-              { return end_ind_; }
+  long getEndInd() const { return end_ind_; }
 
 
 
-              void setResidualNormThreshold(double residual_norm_threshold)
-              {
-                  if (residual_norm_threshold > 0)
-                      residual_norm_threshold_ = residual_norm_threshold;
-              }
+  void setResidualNormThreshold(double residual_norm_threshold)
+  {
+    if (residual_norm_threshold > 0)
+      residual_norm_threshold_ = residual_norm_threshold;
+  }
 
-              void setResidualThreshold(double residual_threshold)
-              {
-                  if (residual_threshold > 0)
-                      residual_threshold_ = residual_threshold;
-              }
+  void setResidualThreshold(double residual_threshold)
+  {
+    if (residual_threshold > 0)
+      residual_threshold_ = residual_threshold;
+  }
 
-              void setIterationLimit(unsigned int iteration_limit)
-              {
-                  if (iteration_limit > 0)
-                      iteration_limit_ = iteration_limit;
-              }
+  void setIterationLimit(unsigned int iteration_limit)
+  {
+    if (iteration_limit > 0)
+      iteration_limit_ = iteration_limit;
+  }
 
-              void setIsRight(bool is_right) { is_right_ = is_right; }
+  void setIsRight(bool is_right) { is_right_ = is_right; }
 
-              void setIsStatic(bool is_static) { is_static_ = is_static; }
+  void setIsStatic(bool is_static) { is_static_ = is_static; }
 
-              void setBegInd(long beg_ind) { beg_ind_ = beg_ind; }
+  void setBegInd(long beg_ind) { beg_ind_ = beg_ind; }
 
-              void setEndInd(long end_ind){ end_ind_ = end_ind; }
+  void setEndInd(long end_ind){ end_ind_ = end_ind; }
 
 
-            private:
-              double residual_norm_threshold_;
-              unsigned int iteration_limit_;
-              long beg_ind_, end_ind_;
-              double residual_threshold_;
-              bool is_static_;
-              bool is_right_;
-          };
+private:
+  double        residual_norm_threshold_;
+  unsigned int  iteration_limit_;
+  long          beg_ind_;
+  long          end_ind_;
+  double        residual_threshold_;
+  bool          is_static_;
+  bool          is_right_;
+};
 
-        }
-      }
-    }
+}
+}
+}
 }
 #endif

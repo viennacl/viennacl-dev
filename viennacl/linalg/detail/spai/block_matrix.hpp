@@ -35,55 +35,52 @@
 
 namespace viennacl
 {
-    namespace linalg
-    {
-      namespace detail
-      {
-        namespace spai
-        {
+namespace linalg
+{
+namespace detail
+{
+namespace spai
+{
 
-          /**
-          * @brief Represents a contigious matrices on GPU
-          */
+/**
+* @brief Represents contigious matrices on GPU
+*/
 
-          class block_matrix
-          {
-            public:
+class block_matrix
+{
+public:
 
-              /**
-              * @brief Returns a handle to the elements
-              */
-              viennacl::ocl::handle<cl_mem>& handle(){ return elements_; }
-              /**
-              * @brief Returns a handle to the matrix dimensions
-              */
-              viennacl::ocl::handle<cl_mem>& handle1() { return matrix_dimensions_; }
-              /**
-              * @brief Returns a handle to the start indices of matrix
-              */
-              viennacl::ocl::handle<cl_mem>& handle2() { return start_block_inds_; }
+  ////////// non-const
 
-              /**
-              * @brief Returns a handle to the const elements
-              */
-              const viennacl::ocl::handle<cl_mem>& handle() const { return elements_; }
-              /**
-              * @brief Returns a handle to the const matrix dimensions
-              */
-              const viennacl::ocl::handle<cl_mem>& handle1() const { return matrix_dimensions_; }
-              /**
-              * @brief Returns a handle to the const start indices of matrix
-              */
-              const viennacl::ocl::handle<cl_mem>& handle2() const { return start_block_inds_; }
-            private:
-              viennacl::ocl::handle<cl_mem> elements_;
-              viennacl::ocl::handle<cl_mem> matrix_dimensions_;
-              viennacl::ocl::handle<cl_mem> start_block_inds_;
-          };
+  /** @brief Returns a handle to the elements */
+  viennacl::ocl::handle<cl_mem>& handle(){ return elements_; }
+
+  /** @brief Returns a handle to the matrix dimensions */
+  viennacl::ocl::handle<cl_mem>& handle1() { return matrix_dimensions_; }
+
+  /** @brief Returns a handle to the start indices of matrix */
+  viennacl::ocl::handle<cl_mem>& handle2() { return start_block_inds_; }
+
+  ////////// const
+
+  /** @brief Returns a handle to the const elements */
+  const viennacl::ocl::handle<cl_mem>& handle() const { return elements_; }
+
+  /** @brief Returns a handle to the const matrix dimensions */
+  const viennacl::ocl::handle<cl_mem>& handle1() const { return matrix_dimensions_; }
+
+  /** @brief Returns a handle to the const start indices of matrix */
+  const viennacl::ocl::handle<cl_mem>& handle2() const { return start_block_inds_; }
+
+private:
+  viennacl::ocl::handle<cl_mem> elements_;
+  viennacl::ocl::handle<cl_mem> matrix_dimensions_;
+  viennacl::ocl::handle<cl_mem> start_block_inds_;
+};
 
 
-        }
-      }
-    }
+}
+}
+}
 }
 #endif

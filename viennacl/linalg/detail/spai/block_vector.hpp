@@ -35,44 +35,43 @@
 
 namespace viennacl
 {
-    namespace linalg
-    {
-      namespace detail
-      {
-        namespace spai
-        {
+namespace linalg
+{
+namespace detail
+{
+namespace spai
+{
 
-          /**
-          * @brief Represents a contigious vector on GPU
-          */
+/**
+* @brief Represents a contiguous vector on the GPU to represent a concatentation of small vectors
+*/
+class block_vector
+{
+public:
 
-          class block_vector
-          {
-            public:
+  ///////////// non-const
 
-              /**
-              * @brief Return handle to the elements
-              */
-              viennacl::ocl::handle<cl_mem>& handle(){ return elements_; }
-              /**
-              * @brief Return handle to start indices
-              */
-              viennacl::ocl::handle<cl_mem>& handle1() { return start_block_inds_; }
+  /** @brief Return handle to the elements */
+  viennacl::ocl::handle<cl_mem> & handle(){ return elements_; }
 
-              /**
-              * @brief Return handle to the const elements
-              */
-              const viennacl::ocl::handle<cl_mem>& handle() const { return elements_; }
-              /**
-              * @brief Return handle to const start indices
-              */
-              const viennacl::ocl::handle<cl_mem>& handle1() const { return start_block_inds_; }
-            private:
-              viennacl::ocl::handle<cl_mem> elements_;
-              viennacl::ocl::handle<cl_mem> start_block_inds_;
-          };
-        }
-      }
-    }
+  /** @brief Return handle to start indices */
+  viennacl::ocl::handle<cl_mem> & handle1() { return start_block_inds_; }
+
+  ///////////// const
+
+  /** @brief Return handle to the const elements */
+  const viennacl::ocl::handle<cl_mem> & handle() const { return elements_; }
+
+  /** @brief Return handle to const start indices */
+  const viennacl::ocl::handle<cl_mem> & handle1() const { return start_block_inds_; }
+
+private:
+  viennacl::ocl::handle<cl_mem> elements_;
+  viennacl::ocl::handle<cl_mem> start_block_inds_;
+};
+
+}
+}
+}
 }
 #endif
