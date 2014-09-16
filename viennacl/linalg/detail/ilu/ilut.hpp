@@ -99,7 +99,7 @@ NumericT setup_w(viennacl::compressed_matrix<NumericT> const & A,
 
   SizeT row_i_begin = static_cast<SizeT>(row_buffer[row]);
   SizeT row_i_end   = static_cast<SizeT>(row_buffer[row+1]);
-  SizeT row_norm = 0;
+  NumericT row_norm = 0;
   for (SizeT buf_index_i = row_i_begin; buf_index_i < row_i_end; ++buf_index_i) //Note: We do not assume that the column indices within a row are sorted
   {
     NumericT entry = elements[buf_index_i];
