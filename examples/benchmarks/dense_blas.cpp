@@ -90,9 +90,9 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
     init_random(y);
     init_random(z);
 
-    BENCHMARK_OP(x = y, "COPY", std::setprecision(3) << 2*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
-    BENCHMARK_OP(x = y + alpha*x, "AXPY", std::setprecision(3) << 3*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
-    BENCHMARK_OP(s = inner_prod(x, y), "DOT", std::setprecision(3) << 2*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(x = y,                "COPY", std::setprecision(3) << 2*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(x = y + alpha*x,      "AXPY", std::setprecision(3) << 3*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(s = inner_prod(x, y), "DOT",  std::setprecision(3) << 2*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
   }
 
 
@@ -105,7 +105,7 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
     init_random(x);
     init_random(y);
 
-    BENCHMARK_OP(y = prod(A, x), "GEMV-N", std::setprecision(3) << (M + N + M*N)*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(y = prod(A, x),        "GEMV-N", std::setprecision(3) << (M + N + M*N)*sizeof(T)/time_spent * 1e-9, "GB/s")
     BENCHMARK_OP(x = prod(trans(A), y), "GEMV-T", std::setprecision(3) << (M + N + M*N)*sizeof(T)/time_spent * 1e-9, "GB/s")
   }
 
@@ -119,11 +119,11 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
     init_random(A);
     init_random(B);
 
-    BENCHMARK_OP(C = prod(A, B), "GEMM-NN", int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(A, trans(BT)), "GEMM-NT", int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(trans(AT), B), "GEMM-TN", int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(trans(AT), trans(BT)), "GEMM-TT", int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(lu_factorize(A), "LU-FACTORIZE", int(2*M*K*K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(A, B),                 "GEMM-NN",      int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(A, trans(BT)),         "GEMM-NT",      int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(trans(AT), B),         "GEMM-TN",      int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(trans(AT), trans(BT)), "GEMM-TT",      int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(lu_factorize(A),                "LU-FACTORIZE", int(2*M*K*K/time_spent*1e-9), "GFLOPs/s");
   }
 
 
@@ -131,11 +131,11 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
 
 int main()
 {
-  size_t M = 2432;
-  size_t N = 2432;
-  size_t K = 2432;
+  std::size_t M = 2432;
+  std::size_t N = 2432;
+  std::size_t K = 2432;
 
-  size_t xN = 1e7;
+  std::size_t xN = 5000000;
   std::cout << "Benchmark : BLAS" << std::endl;
   std::cout << "----------------" << std::endl;
   bench<float>(M, N, K, xN, "s");
