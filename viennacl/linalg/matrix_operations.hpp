@@ -846,6 +846,309 @@ namespace viennacl
       }
     }
 
+    /** @brief This function stores the diagonal and the superdiagonal of a matrix in two vectors.
+    *
+    *
+    * @param A    The matrix from which the vectors will be extracted of.
+    * @param D    The vector in which the diagonal of the matrix will be stored in.
+    * @param S    The vector in which the superdiagonal of the matrix will be stored in.
+    */
+
+    template <typename NumericT, typename VectorType>
+    void bidiag_pack(matrix_base<NumericT> & A,
+                     VectorType & dh,
+                     VectorType & sh
+                    )
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::bidiag_pack(A, dh, sh);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::bidiag_pack(A, dh, sh);
+          break;
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::bidiag_pack(A, dh, sh);
+          break;
+#endif
+
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+
+
+    }
+    /** @brief This function copies a row or a column from a matrix to a vector.
+    *
+    *
+    * @param A          The matrix where to copy from.
+    * @param V          The vector to fill with data.
+    * @param row_start  The number of the first row to copy.
+    * @param col_start  The number of the first column to copy.
+    * @param copy_col   Set to TRUE to copy a column, FALSE to copy a row.
+    */
+
+    template <typename SCALARTYPE>
+    void copy_vec(matrix_base<SCALARTYPE>& A,
+                  vector_base<SCALARTYPE>& V,
+                  vcl_size_t row_start,
+                  vcl_size_t col_start,
+                  bool copy_col
+    )
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::copy_vec(A, V, row_start, col_start, copy_col);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::copy_vec(A, V, row_start, col_start, copy_col);
+          break;
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::copy_vec(A, V, row_start, col_start, copy_col);
+          break;
+#endif
+
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+
+    }
+
+    /** @brief This function applies a householder transformation to a matrix. A <- P * A with a householder reflection P
+    *
+    * @param A       The matrix to be updated.
+    * @param D       The normalized householder vector.
+    * @param start   The repetition counter.
+    */
+  template <typename NumericT>
+  void house_update_A_left(matrix_base<NumericT> & A,
+                           vector_base<NumericT>    & D,
+                           vcl_size_t start)
+  {
+    switch (viennacl::traits::handle(A).get_active_handle_id())
+    {
+      case viennacl::MAIN_MEMORY:
+        viennacl::linalg::host_based::house_update_A_left(A, D, start);
+        break;
+#ifdef VIENNACL_WITH_OPENCL
+      case viennacl::OPENCL_MEMORY:
+        viennacl::linalg::opencl::house_update_A_left(A, D, start);
+        break;
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+      case viennacl::CUDA_MEMORY:
+        viennacl::linalg::cuda::house_update_A_left(A, D, start);
+        break;
+#endif
+
+      case viennacl::MEMORY_NOT_INITIALIZED:
+        throw memory_exception("not initialised!");
+      default:
+        throw memory_exception("not implemented");
+    }
+  }
+
+
+  /** @brief This function applies a householder transformation to a matrix: A <- A * P with a householder reflection P
+  *
+  *
+  * @param A        The matrix to be updated.
+  * @param D        The normalized householder vector.
+  */
+
+  template <typename NumericT>
+  void house_update_A_right(matrix_base<NumericT>& A,
+                            vector_base<NumericT>   & D)
+  {
+    switch (viennacl::traits::handle(A).get_active_handle_id())
+    {
+      case viennacl::MAIN_MEMORY:
+        viennacl::linalg::host_based::house_update_A_right(A, D);
+        break;
+#ifdef VIENNACL_WITH_OPENCL
+      case viennacl::OPENCL_MEMORY:
+        viennacl::linalg::opencl::house_update_A_right(A, D);
+        break;
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+      case viennacl::CUDA_MEMORY:
+        viennacl::linalg::cuda::house_update_A_right(A, D);
+        break;
+#endif
+
+      case viennacl::MEMORY_NOT_INITIALIZED:
+        throw memory_exception("not initialised!");
+      default:
+        throw memory_exception("not implemented");
+    }
+  }
+
+  /** @brief This function updates the matrix Q, which is needed for the computation of the eigenvectors.
+  *
+  * @param Q        The matrix to be updated.
+  * @param D        The householder vector.
+  * @param A_size1  size1 of matrix A
+  */
+
+  template <typename NumericT>
+  void house_update_QL(matrix_base<NumericT> & Q,
+                       vector_base<NumericT>    & D,
+                       vcl_size_t A_size1)
+  {
+    switch (viennacl::traits::handle(Q).get_active_handle_id())
+    {
+      case viennacl::MAIN_MEMORY:
+        viennacl::linalg::host_based::house_update_QL(Q, D, A_size1);
+        break;
+#ifdef VIENNACL_WITH_OPENCL
+      case viennacl::OPENCL_MEMORY:
+        viennacl::linalg::opencl::house_update_QL(Q, D, A_size1);
+        break;
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+      case viennacl::CUDA_MEMORY:
+        viennacl::linalg::cuda::house_update_QL(Q, D, A_size1);
+        break;
+#endif
+
+      case viennacl::MEMORY_NOT_INITIALIZED:
+        throw memory_exception("not initialised!");
+      default:
+        throw memory_exception("not implemented");
+    }
+  }
+
+
+  /** @brief This function updates the matrix Q. It is part of the tql2 algorithm.
+  *
+  *
+  * @param Q       The matrix to be updated.
+  * @param tmp1    Vector with data from the tql2 algorithm.
+  * @param tmp2    Vector with data from the tql2 algorithm.
+  * @param l       Data from the tql2 algorithm.
+  * @param m       Data from the tql2 algorithm.
+  */
+  template<typename NumericT>
+  void givens_next(matrix_base<NumericT> & matrix,
+                   vector_base<NumericT> & tmp1,
+                   vector_base<NumericT> & tmp2,
+                   int l,
+                   int m
+                )
+  {
+    switch (viennacl::traits::handle(matrix).get_active_handle_id())
+    {
+      case viennacl::MAIN_MEMORY:
+        viennacl::linalg::host_based::givens_next(matrix, tmp1, tmp2, l, m);
+        break;
+#ifdef VIENNACL_WITH_OPENCL
+      case viennacl::OPENCL_MEMORY:
+        viennacl::linalg::opencl::givens_next(matrix, tmp1, tmp2, l, m);
+        break;
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+      case viennacl::CUDA_MEMORY:
+        viennacl::linalg::cuda::givens_next(matrix, tmp1, tmp2, l, m);
+        break;
+#endif
+
+      case viennacl::MEMORY_NOT_INITIALIZED:
+        throw memory_exception("not initialised!");
+      default:
+        throw memory_exception("not implemented");
+    }
+  }
+
+  /** @brief This function implements an inclusive scan.
+  *
+  *
+  * @param vec1       Input vector: Gets overwritten by the routine.
+  * @param vec2       The output vector.
+  */
+  template<typename NumericT>
+  void inclusive_scan(
+                      vector_base<NumericT> & vec1,
+                      vector_base<NumericT> & vec2
+                )
+  {
+    switch (viennacl::traits::handle(vec1).get_active_handle_id())
+    {
+      case viennacl::MAIN_MEMORY:
+        viennacl::linalg::host_based::inclusive_scan(vec1, vec2);
+        break;
+#ifdef VIENNACL_WITH_OPENCL
+      case viennacl::OPENCL_MEMORY:
+        viennacl::linalg::opencl::inclusive_scan(vec1, vec2);
+        break;
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+      case viennacl::CUDA_MEMORY:
+        viennacl::linalg::cuda::inclusive_scan(vec1, vec2);
+        break;
+#endif
+
+      case viennacl::MEMORY_NOT_INITIALIZED:
+        throw memory_exception("not initialised!");
+      default:
+        throw memory_exception("not implemented");
+    }
+  }
+
+  /** @brief This function implements an exclusive scan.
+  *
+  *
+  * @param vec1       Input vector: Gets overwritten by the routine.
+  * @param vec2       The output vector.
+  */
+  template<typename NumericT>
+  void exclusive_scan(
+                      vector_base<NumericT> & vec1,
+                      vector_base<NumericT> & vec2
+                )
+  {
+    switch (viennacl::traits::handle(vec1).get_active_handle_id())
+    {
+      case viennacl::MAIN_MEMORY:
+        viennacl::linalg::host_based::exclusive_scan(vec1, vec2);
+        break;
+#ifdef VIENNACL_WITH_OPENCL
+      case viennacl::OPENCL_MEMORY:
+        viennacl::linalg::opencl::exclusive_scan(vec1, vec2);
+        break;
+#endif
+
+#ifdef VIENNACL_WITH_CUDA
+      case viennacl::CUDA_MEMORY:
+        viennacl::linalg::cuda::exclusive_scan(vec1, vec2);
+        break;
+#endif
+
+      case viennacl::MEMORY_NOT_INITIALIZED:
+        throw memory_exception("not initialised!");
+      default:
+        throw memory_exception("not implemented");
+    }
+  }
+
   } //namespace linalg
 
 

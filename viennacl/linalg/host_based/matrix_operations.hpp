@@ -1368,6 +1368,469 @@ void scaled_rank_1_update(matrix_base<NumericT> & mat1,
   }
 }
 
+
+/** @brief This function stores the diagonal and the superdiagonal of a matrix in two vectors.
+*
+*
+* @param A    The matrix from which the vectors will be extracted of.
+* @param D    The vector in which the diagonal of the matrix will be stored in.
+* @param S    The vector in which the superdiagonal of the matrix will be stored in.
+*/
+template <typename NumericT, typename S1>
+ void bidiag_pack_impl(matrix_base<NumericT> & A,
+                  vector_base<S1> & D,
+                  vector_base<S1> & S
+                  )
+
+ {
+   typedef NumericT        value_type;
+
+   value_type * data_A  = detail::extract_raw_pointer<value_type>(A);
+   value_type * data_D = detail::extract_raw_pointer<value_type>(D);
+   value_type * data_S = detail::extract_raw_pointer<value_type>(S);
+
+   vcl_size_t A_start1 = viennacl::traits::start1(A);
+   vcl_size_t A_start2 = viennacl::traits::start2(A);
+   vcl_size_t A_inc1   = viennacl::traits::stride1(A);
+   vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+   vcl_size_t A_size1  = viennacl::traits::size1(A);
+   vcl_size_t A_size2  = viennacl::traits::size2(A);
+   vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
+   vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
+
+   vcl_size_t start1 = viennacl::traits::start(D);
+   vcl_size_t inc1   = viennacl::traits::stride(D);
+   vcl_size_t size1  = viennacl::traits::size(D);
+
+   vcl_size_t start2 = viennacl::traits::start(S);
+   vcl_size_t inc2   = viennacl::traits::stride(S);
+   vcl_size_t size2  = viennacl::traits::size(S);
+
+   vcl_size_t size = std::min(size1, size2);
+   if (A.row_major())
+   {
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel for
+#endif
+       for(vcl_size_t i = 0;  i < size -1; i++)
+         {
+
+           data_D[start1 + inc1 * i] =        data_A[viennacl::row_major::mem_index(i * A_inc1 + A_start1, i * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+           data_S[start2 + inc2 * (i + 1)] =  data_A[viennacl::row_major::mem_index(i * A_inc1 + A_start1, (i + 1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+         }
+       data_D[start1 + inc1 * (size-1)] = data_A[viennacl::row_major::mem_index((size-1) * A_inc1 + A_start1, (size-1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+
+    }
+   else
+     {
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel for
+#endif
+       for(vcl_size_t i = 0;  i < size -1; i++)
+         {
+           data_D[start1 + inc1 * i] =        data_A[viennacl::column_major::mem_index(i * A_inc1 + A_start1, i * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+           data_S[start2 + inc2 * (i + 1)] =  data_A[viennacl::column_major::mem_index(i * A_inc1 + A_start1, (i + 1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+         }
+       data_D[start1 + inc1 * (size-1)] = data_A[viennacl::column_major::mem_index((size-1) * A_inc1 + A_start1, (size-1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+     }
+
+ }
+
+
+
+ template <typename NumericT, typename VectorType>
+  void bidiag_pack(matrix_base<NumericT> & A,
+                   VectorType & dh,
+                   VectorType & sh
+                  )
+  {
+
+    viennacl::linalg::host_based::bidiag_pack_impl(A, dh, sh);
+
+  }
+
+  /** @brief This function applies a householder transformation to a matrix. A <- P * A with a householder reflection P
+  *
+  * @param A       The matrix to be updated.
+  * @param D       The normalized householder vector.
+  * @param start   The repetition counter.
+  */
+ template <typename NumericT>
+ void house_update_A_left(matrix_base<NumericT>& A,
+                          vector_base<NumericT> & D,
+                          vcl_size_t start)
+ {
+   typedef NumericT        value_type;
+   NumericT ss = 0;
+   uint row_start = start + 1;
+
+   value_type * data_A  = detail::extract_raw_pointer<value_type>(A);
+   value_type * data_D = detail::extract_raw_pointer<value_type>(D);
+
+   vcl_size_t A_start1 = viennacl::traits::start1(A);
+   vcl_size_t A_start2 = viennacl::traits::start2(A);
+   vcl_size_t A_inc1   = viennacl::traits::stride1(A);
+   vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+   vcl_size_t A_size1  = viennacl::traits::size1(A);
+   vcl_size_t A_size2  = viennacl::traits::size2(A);
+   vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
+   vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
+
+   vcl_size_t start1 = viennacl::traits::start(D);
+   vcl_size_t inc1   = viennacl::traits::stride(D);
+   vcl_size_t size1  = viennacl::traits::size(D);
+
+   if (A.row_major())
+     {
+       for(uint i = 0; i < A_size2; i++)
+         {
+           ss = 0;
+           for(uint j = row_start; j < A_size1; j++)
+               ss = ss + data_D[start1 + inc1 * j] * data_A[viennacl::row_major::mem_index((j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel for
+#endif
+           for(uint j = row_start; j < A_size1; j++)
+               data_A[viennacl::row_major::mem_index((j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]=
+                   data_A[viennacl::row_major::mem_index((j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] -
+                   (2 * data_D[start1 + inc1 * j]* ss);
+         }
+     }
+   else
+     {
+       for(uint i = 0; i < A_size2; i++)
+         {
+           ss = 0;
+           for(uint j = row_start; j < A_size1; j++)
+               ss = ss + data_D[start1 + inc1 * j] * data_A[viennacl::column_major::mem_index((j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel for
+#endif
+           for(uint j = row_start; j < A_size1; j++)
+               data_A[viennacl::column_major::mem_index((j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]=
+                   data_A[viennacl::column_major::mem_index((j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] -
+                   (2 * data_D[start1 + inc1 * j]* ss);
+         }
+     }
+
+ }
+
+ /** @brief This function applies a householder transformation to a matrix: A <- A * P with a householder reflection P
+ *
+ *
+ * @param A        The matrix to be updated.
+ * @param D        The normalized householder vector.
+ */
+ template <typename NumericT>
+ void house_update_A_right(matrix_base<NumericT>& A,
+                           vector_base<NumericT> & D)
+ {
+   typedef NumericT        value_type;
+   NumericT ss = 0;
+
+   value_type * data_A  = detail::extract_raw_pointer<value_type>(A);
+   value_type * data_D = detail::extract_raw_pointer<value_type>(D);
+
+   vcl_size_t A_start1 = viennacl::traits::start1(A);
+   vcl_size_t A_start2 = viennacl::traits::start2(A);
+   vcl_size_t A_inc1   = viennacl::traits::stride1(A);
+   vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+   vcl_size_t A_size1  = viennacl::traits::size1(A);
+   vcl_size_t A_size2  = viennacl::traits::size2(A);
+   vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
+   vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
+
+   vcl_size_t start1 = viennacl::traits::start(D);
+   vcl_size_t inc1   = viennacl::traits::stride(D);
+   vcl_size_t size1  = viennacl::traits::size(D);
+
+   if (A.row_major())
+     {
+       for(uint i = 0; i < A_size1; i++)
+         {
+           ss = 0;
+           for(uint j = 0; j < A_size2; j++) // ss = ss + D[j] * A(i, j)
+               ss = ss + (data_D[start1 + inc1 * j] * data_A[viennacl::row_major::mem_index((i) * A_inc1 + A_start1, (j) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]);
+
+           NumericT sum_Av = ss;
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel for
+#endif
+           for(uint j = 0; j < A_size2; j++) // A(i, j) = A(i, j) - 2 * D[j] * sum_Av
+               data_A[viennacl::row_major::mem_index((i) * A_inc1 + A_start1, (j) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]  =
+                   data_A[viennacl::row_major::mem_index((i) * A_inc1 + A_start1, (j) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] - (2 * data_D[start1 + inc1 * j] * sum_Av);
+         }
+     }
+   else
+     {
+       for(uint i = 0; i < A_size1; i++)
+         {
+           ss = 0;
+           for(uint j = 0; j < A_size2; j++) // ss = ss + D[j] * A(i, j)
+               ss = ss + (data_D[start1 + inc1 * j] * data_A[viennacl::column_major::mem_index((i) * A_inc1 + A_start1, (j) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]);
+
+           NumericT sum_Av = ss;
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel for
+#endif
+           for(uint j = 0; j < A_size2; j++) // A(i, j) = A(i, j) - 2 * D[j] * sum_Av
+               data_A[viennacl::column_major::mem_index((i) * A_inc1 + A_start1, (j) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]  =
+                   data_A[viennacl::column_major::mem_index((i) * A_inc1 + A_start1, (j) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] - (2 * data_D[start1 + inc1 * j] * sum_Av);
+         }
+     }
+
+
+ }
+
+ /** @brief This function updates the matrix Q, which is needed for the computation of the eigenvectors.
+ *
+ * @param Q        The matrix to be updated.
+ * @param D        The householder vector.
+ * @param A_size1  size1 of matrix A
+ */
+ template <typename NumericT>
+ void house_update_QL(matrix_base<NumericT>& Q,
+                      vector_base<NumericT> & D,
+                      vcl_size_t A_size1)
+
+ {
+   NumericT beta = 2;
+   viennacl::matrix<NumericT> vcl_P = viennacl::identity_matrix<NumericT>(A_size1);
+   viennacl::matrix<NumericT> Q_temp = Q;
+   viennacl::vector<NumericT> vcl_D = D;
+
+
+   viennacl::linalg::host_based::scaled_rank_1_update(vcl_P, beta, 1, 0, 1, vcl_D, vcl_D);
+   Q = prod(Q_temp, vcl_P);
+
+ }
+
+ /** @brief This function updates the matrix Q. It is part of the tql2 algorithm.
+ *
+ *
+ * @param Q       The matrix to be updated.
+ * @param tmp1    Vector with data from the tql2 algorithm.
+ * @param tmp2    Vector with data from the tql2 algorithm.
+ * @param l       Data from the tql2 algorithm.
+ * @param m       Data from the tql2 algorithm.
+ */
+ template<typename NumericT>
+   void givens_next(matrix_base<NumericT>& Q,
+                   vector_base<NumericT> & tmp1,
+                   vector_base<NumericT> & tmp2,
+                   int l,
+                   int m
+                 )
+   {
+     typedef NumericT        value_type;
+
+     value_type * data_Q  = detail::extract_raw_pointer<value_type>(Q);
+     value_type * data_tmp1 = detail::extract_raw_pointer<value_type>(tmp1);
+     value_type * data_tmp2 = detail::extract_raw_pointer<value_type>(tmp2);
+
+     vcl_size_t Q_start1 = viennacl::traits::start1(Q);
+     vcl_size_t Q_start2 = viennacl::traits::start2(Q);
+     vcl_size_t Q_inc1   = viennacl::traits::stride1(Q);
+     vcl_size_t Q_inc2   = viennacl::traits::stride2(Q);
+     vcl_size_t Q_size1  = viennacl::traits::size1(Q);
+     vcl_size_t Q_size2  = viennacl::traits::size2(Q);
+     vcl_size_t Q_internal_size1  = viennacl::traits::internal_size1(Q);
+     vcl_size_t Q_internal_size2  = viennacl::traits::internal_size2(Q);
+
+     vcl_size_t start1 = viennacl::traits::start(tmp1);
+     vcl_size_t inc1   = viennacl::traits::stride(tmp1);
+     vcl_size_t size1  = viennacl::traits::size(tmp1);
+
+     vcl_size_t start2 = viennacl::traits::start(tmp2);
+     vcl_size_t inc2   = viennacl::traits::stride(tmp2);
+     vcl_size_t size2  = viennacl::traits::size(tmp2);
+
+
+     if (Q.row_major())
+     {
+         for( int i = m - 1; i >= l; i--)
+           {
+#ifdef VIENNACL_WITH_OPENMP
+             #pragma omp parallel for
+#endif
+             for(uint k = 0; k < Q_size1; k++)
+               {
+
+                 // h = data_Q(k, i+1);
+                 NumericT h = data_Q[viennacl::row_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)];
+
+                 // Q(k, i+1) = tmp2[i] * Q(k, i) + tmp1[i]*h;
+                 data_Q[viennacl::row_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = tmp2[start2 + inc2 * i] *
+                     data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + tmp1[start1 + inc1 * i] * h;
+
+                 // Q(k,   i) = tmp1[i] * Q(k, i) - tmp2[i]*h;
+                 data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = tmp1[start1 + inc1 * i] *
+                     data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - tmp2[start2 + inc2 * i]*h;
+               }
+           }
+     }
+     else       // column_major
+       {
+         for( int i = m - 1; i >= l; i--)
+           {
+#ifdef VIENNACL_WITH_OPENMP
+             #pragma omp parallel for
+#endif
+             for(uint k = 0; k < Q_size1; k++)
+               {
+
+                  // h = data_Q(k, i+1);
+                  NumericT h = data_Q[viennacl::column_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)];
+
+                   // Q(k, i+1) = tmp2[i] * Q(k, i) + tmp1[i]*h;
+                  data_Q[viennacl::column_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = tmp2[start2 + inc2 * i] *
+                      data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + tmp1[start1 + inc1 * i] * h;
+
+                  // Q(k,   i) = tmp1[i] * Q(k, i) - tmp2[i]*h;
+                  data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = tmp1[start1 + inc1 * i] *
+                      data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - tmp2[start2 + inc2 * i]*h;
+               }
+           }
+       }
+
+   }
+
+
+   /** @brief This function copies a row or a column from a matrix to a vector.
+   *
+   *
+   * @param A          The matrix where to copy from.
+   * @param V          The vector to fill with data.
+   * @param row_start  The number of the first row to copy.
+   * @param col_start  The number of the first column to copy.
+   * @param copy_col   Set to TRUE to copy a column, FALSE to copy a row.
+   */
+   template <typename NumericT, typename S1>
+   void copy_vec(matrix_base<NumericT>& A,
+                 vector_base<S1> & V,
+                 vcl_size_t row_start,
+                 vcl_size_t col_start,
+                 bool copy_col
+   )
+   {
+       typedef NumericT        value_type;
+
+       value_type * data_A  = detail::extract_raw_pointer<value_type>(A);
+       value_type * data_V = detail::extract_raw_pointer<value_type>(V);
+
+       vcl_size_t A_start1 = viennacl::traits::start1(A);
+       vcl_size_t A_start2 = viennacl::traits::start2(A);
+       vcl_size_t A_inc1   = viennacl::traits::stride1(A);
+       vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+       vcl_size_t A_size1  = viennacl::traits::size1(A);
+       vcl_size_t A_size2  = viennacl::traits::size2(A);
+       vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
+       vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
+
+       vcl_size_t start1 = viennacl::traits::start(V);
+       vcl_size_t inc1   = viennacl::traits::stride(V);
+       vcl_size_t size1  = viennacl::traits::size(V);
+
+
+     if(copy_col)
+     {
+       if (A.row_major())
+       {
+#ifdef VIENNACL_WITH_OPENMP
+       #pragma omp parallel for
+#endif
+         for(vcl_size_t i = row_start; i < A_size1; i++)
+         {
+           data_V[i - row_start] = data_A[viennacl::row_major::mem_index(i * A_inc1 + A_start1, col_start * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+         }
+        }
+        else
+        {
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
+          for(vcl_size_t i = row_start; i < A_size1; i++)
+          {
+            data_V[i - row_start] = data_A[viennacl::column_major::mem_index(i * A_inc1 + A_start1, col_start * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+          }
+       }
+      }
+      else
+      {
+        if (A.row_major())
+        {
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
+           for(vcl_size_t i = col_start; i < A_size1; i++)
+           {
+              data_V[i - col_start] = data_A[viennacl::row_major::mem_index(row_start * A_inc1 + A_start1, i * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+           }
+       }
+         else
+         {
+#ifdef VIENNACL_WITH_OPENMP
+         #pragma omp parallel for
+#endif
+             for(vcl_size_t i = col_start; i < A_size1; i++)
+             {
+                data_V[i - col_start] = data_A[viennacl::column_major::mem_index(row_start * A_inc1 + A_start1, i * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+             }
+         }
+      }
+   }
+
+   /** @brief This function implements an inclusive scan.
+   *
+   *
+   * @param vec1       Input vector: Gets overwritten by the routine.
+   * @param vec2       The output vector.
+   */
+   template<typename NumericT>
+   void inclusive_scan(vector_base<NumericT>& vec1,
+                       vector_base<NumericT>& vec2)
+   {
+     vcl_size_t start1 = viennacl::traits::start(vec1);
+     vcl_size_t inc1   = viennacl::traits::stride(vec1);
+     vcl_size_t size1  = viennacl::traits::size(vec1);
+
+     vcl_size_t start2 = viennacl::traits::start(vec2);
+     vcl_size_t inc2   = viennacl::traits::stride(vec2);
+
+     vec2[start2] = vec1[start1];
+     for(vcl_size_t i = 1; i < size1; i++)
+     {
+       vec2[i * inc2 + start2] = vec2[(i - 1) * inc2 + start2] + vec1[i * inc1 + start1];
+
+     }
+   }
+
+   /** @brief This function implements an exclusive scan.
+   *
+   *
+   * @param vec1       Input vector: Gets overwritten by the routine.
+   * @param vec2       The output vector.
+   */
+   template<typename NumericT>
+   void exclusive_scan(vector_base<NumericT>& vec1,
+                       vector_base<NumericT>& vec2)
+   {
+     vcl_size_t start1 = viennacl::traits::start(vec1);
+     vcl_size_t inc1   = viennacl::traits::stride(vec1);
+     vcl_size_t size1  = viennacl::traits::size(vec1);
+
+     vcl_size_t start2 = viennacl::traits::start(vec2);
+     vcl_size_t inc2   = viennacl::traits::stride(vec2);
+
+
+     vec2[start2] = 0;
+     for(vcl_size_t i = 1; i < size1; i++)
+     {
+       vec2[i * inc2 + start2] = vec2[(i - 1) * inc2 + start2] + vec1[(i - 1) * inc1 + start1];
+
+     }
+   }
+
 } // namespace host_based
 } //namespace linalg
 } //namespace viennacl

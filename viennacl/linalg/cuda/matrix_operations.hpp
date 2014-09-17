@@ -2477,6 +2477,356 @@ void scaled_rank_1_update(matrix_base<NumericT> & mat1,
   }
 }
 
+
+/** @brief This function stores the diagonal and the superdiagonal of a matrix in two vectors.
+*
+*
+* @param A    The matrix from which the vectors will be extracted of.
+* @param D    The vector in which the diagonal of the matrix will be stored in.
+* @param S    The vector in which the superdiagonal of the matrix will be stored in.
+*/
+template <typename NumericT, typename VectorType>
+void bidiag_pack(matrix_base<NumericT> & A,
+                 VectorType & dh,
+                 VectorType & sh
+                )
+{
+   if (A.row_major())
+    {
+      viennacl::linalg::cuda::bidiag_pack_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                                               viennacl::linalg::cuda::detail::cuda_arg<NumericT>(dh),
+                                                               viennacl::linalg::cuda::detail::cuda_arg<NumericT>(sh),
+                                                               static_cast<unsigned int>(viennacl::traits::size1(A)),
+                                                               static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                                               static_cast<unsigned int>(viennacl::traits::internal_size2(A)));
+    }
+  else
+    {
+      viennacl::linalg::cuda::bidiag_pack_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                                               viennacl::linalg::cuda::detail::cuda_arg<NumericT>(dh),
+                                                               viennacl::linalg::cuda::detail::cuda_arg<NumericT>(sh),
+                                                               static_cast<unsigned int>(viennacl::traits::size1(A)),
+                                                               static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                                               static_cast<unsigned int>(viennacl::traits::internal_size1(A)));
+    }
+}
+
+
+
+/** @brief This function copies a row or a column from a matrix to a vector.
+*
+*
+* @param A          The matrix where to copy from.
+* @param V          The vector to fill with data.
+* @param row_start  The number of the first row to copy.
+* @param col_start  The number of the first column to copy.
+* @param copy_col   Set to TRUE to copy a column, FALSE to copy a row.
+*/
+template <typename NumericT>
+void copy_vec(matrix_base<NumericT>& A,
+              vector_base<NumericT> & V,
+              vcl_size_t row_start,
+              vcl_size_t col_start,
+              bool copy_col
+)
+{
+  if(copy_col)
+    {
+      if (A.row_major())
+        {
+          copy_col_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                        detail::cuda_arg<NumericT>(V),
+                                        static_cast<unsigned int>(row_start),
+                                        static_cast<unsigned int>(col_start),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size2(A)));
+        }
+      else
+        {
+          copy_col_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                        detail::cuda_arg<NumericT>(V),
+                                        static_cast<unsigned int>(row_start),
+                                        static_cast<unsigned int>(col_start),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)));
+        }
+
+
+    }
+  else
+    {
+      if (A.row_major())
+        {
+          copy_row_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                        detail::cuda_arg<NumericT>(V),
+                                        static_cast<unsigned int>(row_start),
+                                        static_cast<unsigned int>(col_start),
+                                        static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size2(A)));
+        }
+      else
+        {
+          copy_row_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                        detail::cuda_arg<NumericT>(V),
+                                        static_cast<unsigned int>(row_start),
+                                        static_cast<unsigned int>(col_start),
+                                        static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)));
+        }
+    }
+}
+
+
+/** @brief This function applies a householder transformation to a matrix. A <- P * A with a householder reflection P
+*
+* @param A       The matrix to be updated.
+* @param D       The normalized householder vector.
+* @param start   The repetition counter.
+*/
+template <typename NumericT>
+void house_update_A_left(matrix_base<NumericT> & A,
+                         vector_base<NumericT> & D,
+                         vcl_size_t start)
+{
+  if (A.row_major())
+  {
+      house_update_A_left_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                               detail::cuda_arg<NumericT>(D),
+                                               static_cast<unsigned int>(start + 1),
+                                               static_cast<unsigned int>(start),
+                                               static_cast<unsigned int>(viennacl::traits::size1(A)),
+                                               static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                               static_cast<unsigned int>(viennacl::traits::internal_size2(A)));
+
+
+  }
+  else
+    {
+      house_update_A_left_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                               detail::cuda_arg<NumericT>(D),
+                                               static_cast<unsigned int>(start + 1),
+                                               static_cast<unsigned int>(start),
+                                               static_cast<unsigned int>(viennacl::traits::size1(A)),
+                                               static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                               static_cast<unsigned int>(viennacl::traits::internal_size1(A)));
+
+
+    }
+
+}
+
+
+/** @brief This function applies a householder transformation to a matrix: A <- A * P with a householder reflection P
+*
+*
+* @param A        The matrix to be updated.
+* @param D        The normalized householder vector.
+*/
+template <typename NumericT>
+void house_update_A_right(matrix_base<NumericT> & A,
+                         vector_base<NumericT> & D)
+{
+  if (A.row_major())
+    {
+      house_update_A_right_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                                detail::cuda_arg<NumericT>(D),
+                                                static_cast<unsigned int>(0),
+                                                static_cast<unsigned int>(0),
+                                                static_cast<unsigned int>(viennacl::traits::size1(A)),
+                                                static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                                static_cast<unsigned int>(viennacl::traits::internal_size2(A)));
+
+
+    }
+  else
+    {
+      house_update_A_right_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(A),
+                                                detail::cuda_arg<NumericT>(D),
+                                                static_cast<unsigned int>(0),
+                                                static_cast<unsigned int>(0),
+                                                static_cast<unsigned int>(viennacl::traits::size1(A)),
+                                                static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                                static_cast<unsigned int>(viennacl::traits::internal_size1(A)));
+
+    }
+
+}
+
+
+/** @brief This function updates the matrix Q, which is needed for the computation of the eigenvectors.
+*
+* @param Q        The matrix to be updated.
+* @param D        The householder vector.
+* @param A_size1  size1 of matrix A
+*/
+template <typename NumericT>
+void house_update_QL(matrix_base<NumericT> & Q,
+                     vector_base<NumericT> & D,
+                     vcl_size_t A_size1)
+
+{
+  if (Q.row_major())
+  {
+    house_update_QL_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(Q),
+                                           detail::cuda_arg<NumericT>(D),
+                                           static_cast<unsigned int>(A_size1),
+                                           static_cast<unsigned int>(viennacl::traits::internal_size2(Q)));
+  }
+  else
+  {
+    house_update_QL_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(Q),
+                                           detail::cuda_arg<NumericT>(D),
+                                           static_cast<unsigned int>(A_size1),
+                                           static_cast<unsigned int>(viennacl::traits::internal_size1(Q)));
+  }
+}
+
+/** @brief This function updates the matrix Q. It is part of the tql2 algorithm.
+*
+*
+* @param Q       The matrix to be updated.
+* @param tmp1    Vector with data from the tql2 algorithm.
+* @param tmp2    Vector with data from the tql2 algorithm.
+* @param l       Data from the tql2 algorithm.
+* @param m       Data from the tql2 algorithm.
+*/
+template<typename NumericT>
+void givens_next(matrix_base<NumericT> & matrix,
+                 vector_base<NumericT>& tmp1,
+                 vector_base<NumericT>& tmp2,
+                 int l,
+                 int m)
+  {
+  if (matrix.row_major())
+    givens_next_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(matrix),
+                                     detail::cuda_arg<NumericT>(tmp1),
+                                     detail::cuda_arg<NumericT>(tmp2),
+                                     static_cast<unsigned int>(viennacl::traits::size1(matrix)),
+                                     static_cast<unsigned int>(viennacl::traits::internal_size2(matrix)),
+                                     static_cast<unsigned int>(l),
+                                     static_cast<unsigned int>(m - 1));
+
+  else
+    givens_next_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(matrix),
+                                     detail::cuda_arg<NumericT>(tmp1),
+                                     detail::cuda_arg<NumericT>(tmp2),
+                                     static_cast<unsigned int>(viennacl::traits::size1(matrix)),
+                                     static_cast<unsigned int>(viennacl::traits::internal_size1(matrix)),
+                                     static_cast<unsigned int>(l),
+                                     static_cast<unsigned int>(m - 1));
+  }
+
+/** @brief This function implements an inclusive scan.
+*
+*
+* @param vec1       Input vector: Gets overwritten by the routine.
+* @param vec2       The output vector.
+*/
+template<typename NumericT>
+void inclusive_scan(vector_base<NumericT>& vec1,
+                 vector_base<NumericT>& vec2)
+{
+ viennacl::vector<NumericT> S( std::ceil(vec1.size() / static_cast<float>(SECTION_SIZE)) ), S_ref( std::ceil(vec1.size() / static_cast<float>(SECTION_SIZE)) );
+ inclusive_scan_kernel_1<<<S.size(), SECTION_SIZE>>>(
+                                   detail::cuda_arg<NumericT>(vec1),
+                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                   detail::cuda_arg<NumericT>(vec2),
+                                   static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(vec2)),
+
+                                   detail::cuda_arg<NumericT>(S),
+                                   static_cast<unsigned int>(viennacl::traits::start(S)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(S)));
+
+ scan_kernel_2<<<std::ceil(S.size()/static_cast<float>(SECTION_SIZE)), SECTION_SIZE>>>(
+                                    detail::cuda_arg<NumericT>(S_ref),
+                                    static_cast<unsigned int>(viennacl::traits::start(S_ref)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
+
+                                    detail::cuda_arg<NumericT>(S),
+                                    static_cast<unsigned int>(viennacl::traits::start(S)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(S)),
+                                    static_cast<unsigned int>(viennacl::traits::size(S)));
+
+ scan_kernel_3<<<std::ceil(S.size()/static_cast<float>(SECTION_SIZE)), SECTION_SIZE>>>(
+                                    detail::cuda_arg<NumericT>(S_ref),
+                                    static_cast<unsigned int>(viennacl::traits::start(S_ref)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
+
+                                    detail::cuda_arg<NumericT>(S),
+                                    static_cast<unsigned int>(viennacl::traits::start(S)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(S)));
+
+ scan_kernel_4<<<S.size(), SECTION_SIZE>>>(
+                                   detail::cuda_arg<NumericT>(S),
+                                   static_cast<unsigned int>(viennacl::traits::start(S)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(S)),
+
+                                   detail::cuda_arg<NumericT>(vec2),
+                                   static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(vec2)),
+                                   static_cast<unsigned int>(viennacl::traits::size(vec2)));
+}
+
+/** @brief This function implements an exclusive scan.
+*
+*
+* @param vec1       Input vector: Gets overwritten by the routine.
+* @param vec2       The output vector.
+*/
+template<typename NumericT, typename F>
+void exclusive_scan(vector_base<NumericT, F>& vec1,
+                 vector_base<NumericT, F>& vec2)
+{
+ viennacl::vector<NumericT> S(std::ceil(vec1.size() / (float)SECTION_SIZE)), S_ref(std::ceil(vec1.size() / (float)SECTION_SIZE));
+ exclusive_scan_kernel_1<<<S.size(), SECTION_SIZE>>>(
+                                   detail::cuda_arg<NumericT>(vec1),
+                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                   detail::cuda_arg<NumericT>(vec2),
+                                   static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(vec2)),
+
+                                   detail::cuda_arg<NumericT>(S),
+                                   static_cast<unsigned int>(viennacl::traits::start(S)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(S)));
+
+ scan_kernel_2<<<std::ceil(S.size()/static_cast<float>(SECTION_SIZE)), SECTION_SIZE>>>(
+                                    detail::cuda_arg<NumericT>(S_ref),
+                                    static_cast<unsigned int>(viennacl::traits::start(S_ref)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
+
+                                    detail::cuda_arg<NumericT>(S),
+                                    static_cast<unsigned int>(viennacl::traits::start(S)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(S)),
+                                    static_cast<unsigned int>(viennacl::traits::size(S)));
+
+ scan_kernel_3<<<std::ceil(S.size()/static_cast<float>(SECTION_SIZE)), SECTION_SIZE>>>(
+                                    detail::cuda_arg<NumericT>(S_ref),
+                                    static_cast<unsigned int>(viennacl::traits::start(S_ref)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
+
+                                    detail::cuda_arg<NumericT>(S),
+                                    static_cast<unsigned int>(viennacl::traits::start(S)),
+                                    static_cast<unsigned int>(viennacl::traits::stride(S)));
+
+ scan_kernel_4<<<S.size(), SECTION_SIZE>>>(
+                                   detail::cuda_arg<NumericT>(S),
+                                   static_cast<unsigned int>(viennacl::traits::start(S)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(S)),
+
+                                   detail::cuda_arg<NumericT>(vec2),
+                                   static_cast<unsigned int>(viennacl::traits::start(vec2)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(vec2)),
+                                   static_cast<unsigned int>(viennacl::traits::size(vec2)));
+}
+
+
 } // namespace cuda
 } //namespace linalg
 } //namespace viennacl

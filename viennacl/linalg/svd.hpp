@@ -350,6 +350,7 @@ namespace viennacl
                                         static_cast<cl_uint>(A.internal_size2()),
                                         viennacl::ocl::local_mem(static_cast<cl_uint>(128 * sizeof(SCALARTYPE)))
                                 ));
+
         }
 
         {
@@ -359,10 +360,11 @@ namespace viennacl
                                         Q,
                                         D,
                                         static_cast<cl_uint>(A.size1()),
-                                        static_cast<cl_uint>(A.size2()),
+                                      //  static_cast<cl_uint>(A.size2()),
                                         static_cast<cl_uint>(Q.internal_size2()),
                                         viennacl::ocl::local_mem(static_cast<cl_uint>(128 * sizeof(SCALARTYPE)))
                                 ));
+
         }
 
         return true;
@@ -512,7 +514,8 @@ namespace viennacl
       boost::numeric::ublas::vector<SCALARTYPE> dh = boost::numeric::ublas::scalar_vector<SCALARTYPE>(to, 0);
       boost::numeric::ublas::vector<SCALARTYPE> sh = boost::numeric::ublas::scalar_vector<SCALARTYPE>(to + 1, 0);
 
-      detail::bidiag_pack(A, dh, sh);
+
+      viennacl::linalg::opencl::bidiag_pack_svd(A, dh, sh);
 
       detail::svd_qr_shift( QL, QR, dh, sh);
 

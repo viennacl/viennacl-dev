@@ -17,8 +17,8 @@ namespace opencl
 namespace kernels
 {
 
-template<typename StringT>
-void generate_svd_bidiag_pack(StringT & source, std::string const & numeric_string)
+template <typename StringType>
+void generate_svd_bidiag_pack(StringType & source, std::string const & numeric_string, bool is_row_major)
 {
   source.append("__kernel void bidiag_pack(__global "); source.append(numeric_string); source.append("* A, \n");
   source.append("  __global "); source.append(numeric_string); source.append("* D, \n");
@@ -29,12 +29,20 @@ void generate_svd_bidiag_pack(StringT & source, std::string const & numeric_stri
   source.append(") { \n");
   source.append("  uint size = min(size1, size2); \n");
 
-  source.append("  if (get_global_id(0) == 0) \n");
+  source.append("  if(get_global_id(0) == 0) \n");
   source.append("    S[0] = 0; \n");
-
-  source.append("  for (uint i = get_global_id(0); i < size; i += get_global_size(0)) { \n");
-  source.append("    D[i] = A[i*stride + i]; \n");
-  source.append("    S[i + 1] = (i + 1 < size2) ? A[i*stride + (i + 1)] : 0; \n");
+  if(is_row_major)
+    {
+      source.append("  for(uint i = get_global_id(0); i < size ; i += get_global_size(0)) { \n");
+      source.append("    D[i] = A[i*stride + i]; \n");
+      source.append("    S[i + 1] = (i + 1 < size2) ? A[i*stride + (i + 1)] : 0; \n");
+    }
+  else
+    {
+      source.append("  for(uint i = get_global_id(0); i < size ; i += get_global_size(0)) { \n");
+      source.append("    D[i] = A[i*stride + i]; \n");
+      source.append("    S[i + 1] = (i + 1 < size2) ? A[i + (i + 1) * stride] : 0; \n");
+    }
   source.append("  } \n");
   source.append("} \n");
 }
@@ -56,8 +64,8 @@ void generate_svd_col_reduce_lcl_array(StringT & source, std::string const & num
   source.append("} \n");
 }
 
-template<typename StringT>
-void generate_svd_copy_col(StringT & source, std::string const & numeric_string)
+template <typename StringType>
+void generate_svd_copy_col(StringType & source, std::string const & numeric_string, bool is_row_major)
 {
   // probably, this is a ugly way
   source.append("__kernel void copy_col(__global "); source.append(numeric_string); source.append("* A, \n");
@@ -69,15 +77,24 @@ void generate_svd_copy_col(StringT & source, std::string const & numeric_string)
   source.append("                       ) { \n");
   source.append("    uint glb_id = get_global_id(0); \n");
   source.append("    uint glb_sz = get_global_size(0); \n");
+  if(is_row_major)
+    {
+      source.append("    for(uint i = row_start + glb_id; i < size; i += glb_sz) { \n");
+      source.append("        V[i - row_start] = A[i * stride + col_start]; \n");
+      source.append("    } \n");
+    }
+  else
+    {
+      source.append("    for(uint i = row_start + glb_id; i < size; i += glb_sz) { \n");
+      source.append("        V[i - row_start] = A[i + col_start * stride]; \n");
+      source.append("    } \n");
+    }
 
-  source.append("    for (uint i = row_start + glb_id; i < size; i += glb_sz) { \n");
-  source.append("        V[i - row_start] = A[i * stride + col_start]; \n");
-  source.append("    } \n");
   source.append("} \n");
 }
 
-template<typename StringT>
-void generate_svd_copy_row(StringT & source, std::string const & numeric_string)
+template <typename StringType>
+void generate_svd_copy_row(StringType & source, std::string const & numeric_string, bool is_row_major)
 {
   // probably, this is too
   source.append("__kernel void copy_row(__global "); source.append(numeric_string); source.append("* A, \n");
@@ -89,10 +106,19 @@ void generate_svd_copy_row(StringT & source, std::string const & numeric_string)
   source.append("                       ) { \n");
   source.append("    uint glb_id = get_global_id(0); \n");
   source.append("    uint glb_sz = get_global_size(0); \n");
+  if(is_row_major)
+    {
+      source.append("    for(uint i = col_start + glb_id; i < size; i += glb_sz) { \n");
+      source.append("        V[i - col_start] = A[row_start * stride + i]; \n");
+      source.append("    } \n");
+    }
+  else
+    {
+      source.append("    for(uint i = col_start + glb_id; i < size; i += glb_sz) { \n");
+      source.append("        V[i - col_start] = A[row_start + i * stride]; \n");
+      source.append("    } \n");
+    }
 
-  source.append("    for (uint i = col_start + glb_id; i < size; i += glb_sz) { \n");
-  source.append("        V[i - col_start] = A[row_start * stride + i]; \n");
-  source.append("    } \n");
   source.append("} \n");
 }
 
@@ -120,8 +146,8 @@ void generate_svd_final_iter_update(StringT & source, std::string const & numeri
   source.append("} \n");
 }
 
-template<typename StringT>
-void generate_svd_givens_next(StringT & source, std::string const & numeric_string)
+template <typename StringType>
+void generate_svd_givens_next(StringType & source, std::string const & numeric_string, bool is_row_major)
 {
   source.append("__kernel void givens_next(__global "); source.append(numeric_string); source.append("* matr, \n");
   source.append("                            __global "); source.append(numeric_string); source.append("* cs, \n");
@@ -142,43 +168,86 @@ void generate_svd_givens_next(StringT & source, std::string const & numeric_stri
 
   source.append("    __local "); source.append(numeric_string); source.append(" cs_lcl[256]; \n");
   source.append("    __local "); source.append(numeric_string); source.append(" ss_lcl[256]; \n");
+  if(is_row_major)
+    {
 
-  source.append("    "); source.append(numeric_string); source.append(" x = (j < size) ? matr[(end_i + 1) * stride + j] : 0; \n");
+      source.append("    "); source.append(numeric_string); source.append(" x = (j < size) ? matr[(end_i + 1) + j * stride] : 0; \n");
 
-  source.append("    uint elems_num = end_i - start_i + 1; \n");
-  source.append("    uint block_num = (elems_num + lcl_sz - 1) / lcl_sz; \n");
+      source.append("    uint elems_num = end_i - start_i + 1; \n");
+      source.append("    uint block_num = (elems_num + lcl_sz - 1) / lcl_sz; \n");
 
-  source.append("    for (uint block_id = 0; block_id < block_num; block_id++) \n");
-  source.append("    { \n");
-  source.append("        uint to = min(elems_num - block_id * lcl_sz, lcl_sz); \n");
+      source.append("    for(uint block_id = 0; block_id < block_num; block_id++) \n");
+      source.append("    { \n");
+      source.append("        uint to = min(elems_num - block_id * lcl_sz, lcl_sz); \n");
 
-  source.append("        if (lcl_id < to) \n");
-  source.append("        { \n");
-  source.append("            cs_lcl[lcl_id] = cs[end_i - (lcl_id + block_id * lcl_sz)]; \n");
-  source.append("            ss_lcl[lcl_id] = ss[end_i - (lcl_id + block_id * lcl_sz)]; \n");
-  source.append("        } \n");
+      source.append("        if(lcl_id < to) \n");
+      source.append("        { \n");
+      source.append("            cs_lcl[lcl_id] = cs[end_i - (lcl_id + block_id * lcl_sz)]; \n");
+      source.append("            ss_lcl[lcl_id] = ss[end_i - (lcl_id + block_id * lcl_sz)]; \n");
+      source.append("        } \n");
 
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
 
-  source.append("        if (j < size) \n");
-  source.append("        { \n");
-  source.append("            for (uint ind = 0; ind < to; ind++) \n");
-  source.append("            { \n");
-  source.append("                uint i = end_i - (ind + block_id * lcl_sz); \n");
+      source.append("        if(j < size) \n");
+      source.append("        { \n");
+      source.append("            for(uint ind = 0; ind < to; ind++) \n");
+      source.append("            { \n");
+      source.append("                uint i = end_i - (ind + block_id * lcl_sz); \n");
 
-  source.append("                "); source.append(numeric_string); source.append(" z = matr[i * stride + j]; \n");
+      source.append("                "); source.append(numeric_string); source.append(" z = matr[i + j * stride]; \n");
 
-  source.append("                "); source.append(numeric_string); source.append(" cs_val = cs_lcl[ind]; \n");
-  source.append("                "); source.append(numeric_string); source.append(" ss_val = ss_lcl[ind]; \n");
+      source.append("                "); source.append(numeric_string); source.append(" cs_val = cs_lcl[ind]; \n");
+      source.append("                "); source.append(numeric_string); source.append(" ss_val = ss_lcl[ind]; \n");
 
-  source.append("                matr[(i + 1) * stride + j] = x * cs_val + z * ss_val; \n");
-  source.append("                x = -x * ss_val + z * cs_val; \n");
-  source.append("            } \n");
-  source.append("        } \n");
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
-  source.append("    } \n");
-  source.append("    if (j < size) \n");
-  source.append("        matr[(start_i) * stride + j] = x; \n");
+      source.append("                matr[(i + 1) + j * stride] = x * cs_val + z * ss_val; \n");
+      source.append("                x = -x * ss_val + z * cs_val; \n");
+      source.append("            } \n");
+      source.append("        } \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+      source.append("    } \n");
+      source.append("    if(j < size) \n");
+      source.append("        matr[(start_i) + j * stride] = x; \n");
+    }
+  else
+    {
+
+      source.append("    "); source.append(numeric_string); source.append(" x = (j < size) ? matr[(end_i + 1) * stride + j] : 0; \n");
+
+      source.append("    uint elems_num = end_i - start_i + 1; \n");
+      source.append("    uint block_num = (elems_num + lcl_sz - 1) / lcl_sz; \n");
+
+      source.append("    for(uint block_id = 0; block_id < block_num; block_id++) \n");
+      source.append("    { \n");
+      source.append("        uint to = min(elems_num - block_id * lcl_sz, lcl_sz); \n");
+
+      source.append("        if(lcl_id < to) \n");
+      source.append("        { \n");
+      source.append("            cs_lcl[lcl_id] = cs[end_i - (lcl_id + block_id * lcl_sz)]; \n");
+      source.append("            ss_lcl[lcl_id] = ss[end_i - (lcl_id + block_id * lcl_sz)]; \n");
+      source.append("        } \n");
+
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+      source.append("        if(j < size) \n");
+      source.append("        { \n");
+      source.append("            for(uint ind = 0; ind < to; ind++) \n");
+      source.append("            { \n");
+      source.append("                uint i = end_i - (ind + block_id * lcl_sz); \n");
+
+      source.append("                "); source.append(numeric_string); source.append(" z = matr[i * stride + j]; \n");
+
+      source.append("                "); source.append(numeric_string); source.append(" cs_val = cs_lcl[ind]; \n");
+      source.append("                "); source.append(numeric_string); source.append(" ss_val = ss_lcl[ind]; \n");
+
+      source.append("                matr[(i + 1) * stride + j] = x * cs_val + z * ss_val; \n");
+      source.append("                x = -x * ss_val + z * cs_val; \n");
+      source.append("            } \n");
+      source.append("        } \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+      source.append("    } \n");
+      source.append("    if(j < size) \n");
+      source.append("        matr[(start_i) * stride + j] = x; \n");
+    }
   source.append("} \n");
 }
 
@@ -244,8 +313,8 @@ void generate_svd_givens_prev(StringT & source, std::string const & numeric_stri
   source.append("} \n");
 }
 
-template<typename StringT>
-void generate_svd_house_update_A_left(StringT & source, std::string const & numeric_string)
+template <typename StringType>
+void generate_svd_house_update_A_left(StringType & source, std::string const & numeric_string, bool is_row_major)
 {
   source.append("__kernel void house_update_A_left( \n");
   source.append("                        __global "); source.append(numeric_string); source.append("* A, \n");
@@ -269,18 +338,31 @@ void generate_svd_house_update_A_left(StringT & source, std::string const & nume
   source.append("    "); source.append(numeric_string); source.append(" ss = 0; \n");
 
       // doing it in slightly different way to avoid cache misses
-  source.append("    for (uint i = glb_id + col_start; i < size2; i += glb_sz) { \n");
-  source.append("        ss = 0; \n");
-  source.append("        for (uint j = row_start; j < size1; j++) ss = ss + (V[j] * A[j * stride + i]); \n");
+  if(is_row_major)
+    {
+      source.append("    for(uint i = glb_id + col_start; i < size2; i += glb_sz) { \n");
+      source.append("        ss = 0; \n");
+      source.append("        for(uint j = row_start; j < size1; j++) ss = ss + (V[j] * A[j * stride + i]); \n");
 
-  source.append("        for (uint j = row_start; j < size1; j++) \n");
-  source.append("            A[j * stride + i] = A[j * stride + i] - (2 * V[j] * ss); \n");
-  source.append("    } \n");
+      source.append("        for(uint j = row_start; j < size1; j++) \n");
+      source.append("            A[j * stride + i] = A[j * stride + i] - (2 * V[j] * ss); \n");
+      source.append("    } \n");
+    }
+  else
+    {
+      source.append("    for(uint i = glb_id + col_start; i < size2; i += glb_sz) { \n");
+      source.append("        ss = 0; \n");
+      source.append("        for(uint j = row_start; j < size1; j++) ss = ss + (V[j] * A[j + i * stride]); \n");
+
+      source.append("        for(uint j = row_start; j < size1; j++) \n");
+      source.append("            A[j + i * stride] = A[j + i * stride] - (2 * V[j] * ss); \n");
+      source.append("    } \n");
+    }
   source.append("} \n");
 }
 
-template<typename StringT>
-void generate_svd_house_update_A_right(StringT & source, std::string const & numeric_string)
+template <typename StringType>
+void generate_svd_house_update_A_right(StringType & source, std::string const & numeric_string, bool is_row_major)
 {
 
   source.append("__kernel void house_update_A_right( \n");
@@ -305,33 +387,54 @@ void generate_svd_house_update_A_right(StringT & source, std::string const & num
   source.append("    "); source.append(numeric_string); source.append(" ss = 0; \n");
 
       // update of A matrix
-  source.append("    for (uint i = grp_id + row_start; i < size1; i += grp_nm) { \n");
-  source.append("        ss = 0; \n");
+  if(is_row_major)
+    {
+      source.append("    for(uint i = grp_id + row_start; i < size1; i += grp_nm) { \n");
+      source.append("        ss = 0; \n");
 
-  source.append("        for (uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * A[i * stride + j]); \n");
-  source.append("        sums[lcl_id] = ss; \n");
+      source.append("        for(uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * A[i * stride + j]); \n");
+      source.append("        sums[lcl_id] = ss; \n");
 
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
-  source.append("        col_reduce_lcl_array(sums, lcl_id, lcl_sz); \n");
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+      source.append("        col_reduce_lcl_array(sums, lcl_id, lcl_sz); \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
 
-  source.append("        "); source.append(numeric_string); source.append(" sum_Av = sums[0]; \n");
+      source.append("        "); source.append(numeric_string); source.append(" sum_Av = sums[0]; \n");
 
-  source.append("        for (uint j = lcl_id; j < size2; j += lcl_sz) \n");
-  source.append("            A[i * stride + j] = A[i * stride + j] - (2 * V[j] * sum_Av); \n");
-  source.append("    } \n");
+      source.append("        for(uint j = lcl_id; j < size2; j += lcl_sz) \n");
+      source.append("            A[i * stride + j] = A[i * stride + j] - (2 * V[j] * sum_Av); \n");
+      source.append("    } \n");
+    }
+  else
+    {
+      source.append("    for(uint i = grp_id + row_start; i < size1; i += grp_nm) { \n");
+      source.append("        ss = 0; \n");
+
+      source.append("        for(uint j = lcl_id; j < size2; j += lcl_sz) ss = ss + (V[j] * A[i + j * stride]); \n");
+      source.append("        sums[lcl_id] = ss; \n");
+
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+      source.append("        col_reduce_lcl_array(sums, lcl_id, lcl_sz); \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+      source.append("        "); source.append(numeric_string); source.append(" sum_Av = sums[0]; \n");
+
+      source.append("        for(uint j = lcl_id; j < size2; j += lcl_sz) \n");
+      source.append("            A[i + j * stride] = A[i + j * stride] - (2 * V[j] * sum_Av); \n");
+      source.append("    } \n");
+    }
+
   source.append("} \n");
 
 }
 
-template<typename StringT>
-void generate_svd_house_update_QL(StringT & source, std::string const & numeric_string)
+template <typename StringType>
+void generate_svd_house_update_QL(StringType & source, std::string const & numeric_string, bool is_row_major)
 {
-  source.append("__kernel void house_update_QL( \n");
+  source.append("__kernel void house_update_QL(\n");
   source.append("                        __global "); source.append(numeric_string); source.append("* QL, \n");
   source.append("                        __constant "); source.append(numeric_string); source.append("* V, \n"); //householder vector
   source.append("                        uint size1, \n");
-  source.append("                        uint size2, \n");
   source.append("                        uint strideQ, \n");
   source.append("                        __local "); source.append(numeric_string); source.append("* sums \n");
   source.append("                        ) { \n");
@@ -345,21 +448,41 @@ void generate_svd_house_update_QL(StringT & source, std::string const & numeric_
   source.append("    uint lcl_sz = get_local_size(0); \n");
 
   source.append("    "); source.append(numeric_string); source.append(" ss = 0; \n");
-      // update of left matrix
-  source.append("    for (uint i = grp_id; i < size1; i += grp_nm) { \n");
-  source.append("        ss = 0; \n");
-  source.append("        for (uint j = lcl_id; j < size1; j += lcl_sz) ss = ss + (V[j] * QL[i * strideQ + j]); \n");
-  source.append("        sums[lcl_id] = ss; \n");
 
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
-  source.append("        col_reduce_lcl_array(sums, lcl_id, lcl_sz); \n");
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  if(is_row_major)
+    {
+      source.append("    for(uint i = grp_id; i < size1; i += grp_nm) { \n");
+      source.append("        ss = 0; \n");
+      source.append("        for(uint j = lcl_id; j < size1; j += lcl_sz) ss = ss + (V[j] * QL[i * strideQ + j]); \n");
+      source.append("        sums[lcl_id] = ss; \n");
 
-  source.append("        "); source.append(numeric_string); source.append(" sum_Qv = sums[0]; \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+      source.append("        col_reduce_lcl_array(sums, lcl_id, lcl_sz); \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
 
-  source.append("        for (uint j = lcl_id; j < size1; j += lcl_sz) \n");
-  source.append("            QL[i * strideQ + j] = QL[i * strideQ + j] - (2 * V[j] * sum_Qv); \n");
-  source.append("    } \n");
+      source.append("        "); source.append(numeric_string); source.append(" sum_Qv = sums[0]; \n");
+
+      source.append("        for(uint j = lcl_id; j < size1; j += lcl_sz) \n");
+      source.append("            QL[i * strideQ + j] = QL[i * strideQ + j] - (2 * V[j] * sum_Qv); \n");
+      source.append("    } \n");
+    }
+  else
+    {
+      source.append("    for(uint i = grp_id; i < size1; i += grp_nm) { \n");
+      source.append("        ss = 0; \n");
+      source.append("        for(uint j = lcl_id; j < size1; j += lcl_sz) ss = ss + (V[j] * QL[i + j * strideQ]); \n");
+      source.append("        sums[lcl_id] = ss; \n");
+
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+      source.append("        col_reduce_lcl_array(sums, lcl_id, lcl_sz); \n");
+      source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+      source.append("        "); source.append(numeric_string); source.append(" sum_Qv = sums[0]; \n");
+
+      source.append("        for(uint j = lcl_id; j < size1; j += lcl_sz) \n");
+      source.append("            QL[i + j * strideQ] = QL[i + j * strideQ] - (2 * V[j] * sum_Qv); \n");
+      source.append("    } \n");
+    }
   source.append("} \n");
 
 }
@@ -497,15 +620,235 @@ void generate_svd_update_qr_column(StringT & source, std::string const & numeric
 
 
 
+template <typename StringType>
+void generate_svd_inclusive_scan_kernel_1(StringType & source, std::string const & numeric_string)
+{
+    source.append("#define SECTION_SIZE 256\n");
+    source.append("__kernel void inclusive_scan_1(__global "); source.append(numeric_string); source.append("* X, \n");
+    source.append("                               uint startX, \n");
+    source.append("                               uint incX, \n");
+    source.append("                               uint InputSize, \n");
+
+    source.append("                               __global "); source.append(numeric_string); source.append("* Y, \n");
+    source.append("                               uint startY, \n");
+    source.append("                               uint incY, \n");
+
+    source.append("                               __global "); source.append(numeric_string); source.append("* S, \n");
+    source.append("                               uint startS, \n");
+    source.append("                               uint incS) \n");
+
+    source.append("{ \n");
+    source.append("    uint glb_id = get_global_id(0); \n");
+
+    source.append("    uint grp_id = get_group_id(0); \n");
+    source.append("    uint grp_nm = get_num_groups(0); \n");
+
+    source.append("    uint lcl_id = get_local_id(0); \n");
+    source.append("    uint lcl_sz = get_local_size(0); \n");
+    source.append("    __local "); source.append(numeric_string); source.append(" XY[SECTION_SIZE]; \n");  //section size
+
+    source.append("    if(glb_id < InputSize) \n");
+    source.append("       XY[lcl_id] = X[glb_id * incX + startX]; \n");
+    source.append(" \n");
+
+    source.append("    for(uint stride = 1; stride < lcl_sz; stride *= 2) \n");
+    source.append("    { \n");
+    source.append("         barrier(CLK_LOCAL_MEM_FENCE);   \n");
+    source.append("         int index = (lcl_id + 1) * 2 * stride - 1;  \n");
+    source.append("         if(index < lcl_sz)      \n");
+    source.append("             XY[index] += XY[index - stride];     \n");
+    source.append("    } \n");
+
+    source.append("     for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2) \n");             //Section size = 512
+    source.append("     { \n");
+    source.append("         barrier(CLK_LOCAL_MEM_FENCE); \n");
+    source.append("         int index = (lcl_id + 1) * 2 * stride - 1; \n");
+    source.append("         if(index + stride < lcl_sz)  \n");
+    source.append("             XY[index + stride] += XY[index];  \n");
+    source.append("     } \n");
+
+    source.append("     barrier(CLK_LOCAL_MEM_FENCE);       \n");
+    source.append("     Y[glb_id * incY + startY] = XY[lcl_id];  \n");
+    source.append("     barrier(CLK_LOCAL_MEM_FENCE);       \n");
+    source.append("     if(lcl_id == 0)     \n");
+    source.append("     { \n");
+    source.append("         S[grp_id * incS + startS] = XY[SECTION_SIZE - 1]; \n");                    //Section size = 512
+    source.append("     } \n");
+    source.append("} \n");
+}
+
+template <typename StringType>
+void generate_svd_exclusive_scan_kernel_1(StringType & source, std::string const & numeric_string)
+{
+    source.append("__kernel void exclusive_scan_1(__global "); source.append(numeric_string); source.append("* X, \n");
+    source.append("                               uint startX, \n");
+    source.append("                               uint incX, \n");
+    source.append("                               uint InputSize, \n");
+
+    source.append("                               __global "); source.append(numeric_string); source.append("* Y, \n");
+    source.append("                               uint startY, \n");
+    source.append("                               uint incY, \n");
+
+    source.append("                               __global "); source.append(numeric_string); source.append("* S, \n");
+    source.append("                               uint startS, \n");
+    source.append("                               uint incS) \n");
+
+    source.append("{ \n");
+    source.append("    uint glb_id = get_global_id(0); \n");
+
+    source.append("    uint grp_id = get_group_id(0); \n");
+    source.append("    uint grp_nm = get_num_groups(0); \n");
+
+    source.append("    uint lcl_id = get_local_id(0); \n");
+    source.append("    uint lcl_sz = get_local_size(0); \n");
+    source.append("    __local "); source.append(numeric_string); source.append(" XY[SECTION_SIZE]; \n");           //section size
+
+    source.append("    if(glb_id < InputSize + 1 && glb_id != 0) \n");
+    source.append("       XY[lcl_id] = X[(glb_id - 1) * incX + startX]; \n");
+    source.append("     if(glb_id == 0)     \n");
+    source.append("         XY[0] = 0;      \n");
+    source.append(" \n");
+
+    source.append("    for(uint stride = 1; stride < lcl_sz; stride *= 2) \n");
+    source.append("    { \n");
+    source.append("         barrier(CLK_LOCAL_MEM_FENCE);   \n");
+    source.append("         int index = (lcl_id + 1) * 2 * stride - 1;  \n");
+    source.append("         if(index < lcl_sz)      \n");
+    source.append("             XY[index] += XY[index - stride];     \n");
+    source.append("    } \n");
+
+    source.append("     for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2) \n");             //Section size = 512
+    source.append("     { \n");
+    source.append("         barrier(CLK_LOCAL_MEM_FENCE); \n");
+    source.append("         int index = (lcl_id + 1) * 2 * stride - 1; \n");
+    source.append("         if(index + stride < lcl_sz)  \n");
+    source.append("             XY[index + stride] += XY[index];  \n");
+    source.append("     } \n");
+    source.append("     barrier(CLK_LOCAL_MEM_FENCE);       \n");
+
+    source.append("     Y[glb_id * incY + startY] = XY[lcl_id];  \n");
+    source.append("     barrier(CLK_LOCAL_MEM_FENCE);       \n");
+    source.append("     if(lcl_id == 0)     \n");
+    source.append("     { \n");
+    source.append("         S[grp_id * incS + startS] = XY[SECTION_SIZE - 1]; \n");                    //Section size = 512
+    source.append("     } \n");
+    source.append("} \n");
+}
+
+template <typename StringType>
+void generate_svd_scan_kernel_2(StringType & source, std::string const & numeric_string)
+{   source.append("__kernel void scan_kernel_2(__global "); source.append(numeric_string); source.append("* S_ref, \n");
+    source.append("                            uint startS_ref, \n");
+    source.append("                            uint incS_ref, \n");
+
+    source.append("                            __global "); source.append(numeric_string); source.append("* S, \n");
+    source.append("                            uint startS, \n");
+    source.append("                            uint incS, \n");
+    source.append("                            uint InputSize) \n");
+
+    source.append(" { \n");
+    source.append("    uint glb_id = get_global_id(0); \n");
+
+    source.append("    uint grp_id = get_group_id(0); \n");
+    source.append("    uint grp_nm = get_num_groups(0); \n");
+
+    source.append("    uint lcl_id = get_local_id(0); \n");
+    source.append("    uint lcl_sz = get_local_size(0); \n");
+    source.append("    __local "); source.append(numeric_string); source.append(" XY[SECTION_SIZE]; \n");       //section size
+
+    source.append("     if(glb_id < InputSize)           \n");
+    source.append("         XY[lcl_id] = S[glb_id * incS + startS];     \n");
+
+    source.append("     for(uint stride = 1; stride < lcl_sz; stride *= 2)  \n");
+    source.append("     {   \n");
+    source.append("         barrier(CLK_LOCAL_MEM_FENCE);       \n");
+    source.append("         int index = (lcl_id + 1) * 2 * stride - 1;   \n");
+    source.append("         if(index < lcl_sz)  \n");
+    source.append("             XY[index] += XY[index - stride]; \n");
+    source.append("     }   \n");
+
+    source.append("     for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2)  \n");
+    source.append("     {   \n");
+    source.append("         barrier(CLK_LOCAL_MEM_FENCE);                   \n");
+    source.append("         int index = (lcl_id + 1) * 2 * stride - 1;      \n");
+    source.append("         if(index + stride < lcl_sz)                     \n");
+    source.append("             XY[index + stride] += XY[index];            \n");
+    source.append("     }   \n");
+
+    source.append("     barrier(CLK_LOCAL_MEM_FENCE);                       \n");
+    source.append("     if(glb_id < InputSize)           \n");
+    source.append("     {           \n");
+    source.append("         S[glb_id * incS + startS] = XY[lcl_id];              \n");
+    source.append("         S_ref[glb_id * incS_ref + startS_ref] = XY[lcl_id];  \n");
+    source.append("     }           \n");
+    source.append(" } \n");
+
+}
+
+template <typename StringType>
+void generate_svd_scan_kernel_3(StringType & source, std::string const & numeric_string)
+{   source.append("__kernel void scan_kernel_3(__global "); source.append(numeric_string); source.append("* S_ref, \n");
+    source.append("                            uint startS_ref, \n");
+    source.append("                            uint incS_ref, \n");
+
+    source.append("                            __global "); source.append(numeric_string); source.append("* S, \n");
+    source.append("                            uint startS, \n");
+    source.append("                            uint incS) \n");
+
+    source.append(" { \n");
+    source.append("    uint glb_id = get_global_id(0); \n");
+
+    source.append("    uint grp_id = get_group_id(0); \n");
+    source.append("    uint grp_nm = get_num_groups(0); \n");
+
+    source.append("    uint lcl_id = get_local_id(0); \n");
+    source.append("    uint lcl_sz = get_local_size(0); \n");
+
+
+    source.append("     for(int j = 1; j <= grp_id; j++)  \n");
+    source.append("         S[glb_id * incS + startS] += S_ref[(j * lcl_sz - 1) * incS_ref + startS_ref];    \n");
+    source.append(" } \n");
+}
+
+template <typename StringType>
+void generate_svd_scan_kernel_4(StringType & source, std::string const & numeric_string)
+{   source.append("__kernel void scan_kernel_4(__global "); source.append(numeric_string); source.append("* S, \n");
+    source.append("                            uint startS, \n");
+    source.append("                            uint incS, \n");
+
+    source.append("                            __global "); source.append(numeric_string); source.append("* Y, \n");
+    source.append("                            uint startY, \n");
+    source.append("                            uint incY, \n");
+    source.append("                            uint OutputSize) \n");
+
+    source.append(" { \n");
+    source.append("    barrier(CLK_LOCAL_MEM_FENCE);                   \n");
+    source.append("    uint glb_id = get_global_id(0); \n");
+
+    source.append("    uint grp_id = get_group_id(0); \n");
+    source.append("    uint grp_nm = get_num_groups(0); \n");
+
+    source.append("    uint lcl_id = get_local_id(0); \n");
+    source.append("    uint lcl_sz = get_local_size(0); \n");
+
+
+    source.append("    uint var = (grp_id + 1) * lcl_sz + lcl_id;          \n");
+    source.append("    if(var < OutputSize)         \n");
+    source.append("         Y[var * incY + startY] += S[grp_id * incS + startS]; \n");
+    source.append(" } \n");
+}
+
+
+
 
 // main kernel class
 /** @brief Main kernel class for generating OpenCL kernels for singular value decomposition of dense matrices. */
-template<typename NumericT>
+template<typename NumericT, typename MatrixLayout = row_major>
 struct svd
 {
   static std::string program_name()
   {
-    return viennacl::ocl::type_to_string<NumericT>::apply() + "_svd";
+    return (viennacl::ocl::type_to_string<NumericT>::apply() + "_svd_") + (viennacl::is_row_major<MatrixLayout>::value ? "row" : "col");
   }
 
   static void init(viennacl::ocl::context & ctx)
@@ -515,6 +858,7 @@ struct svd
     {
       viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
       std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
+      bool is_row_major = viennacl::is_row_major<MatrixLayout>::value;
 
       std::string source;
       source.reserve(1024);
@@ -528,19 +872,24 @@ struct svd
         generate_svd_col_reduce_lcl_array(source, numeric_string);
 
         //kernels:
-        generate_svd_bidiag_pack(source, numeric_string);
-        generate_svd_copy_col(source, numeric_string);
-        generate_svd_copy_row(source, numeric_string);
+        generate_svd_bidiag_pack(source, numeric_string, is_row_major);
+        generate_svd_copy_col(source, numeric_string, is_row_major);
+        generate_svd_copy_row(source, numeric_string, is_row_major);
         generate_svd_final_iter_update(source, numeric_string);
-        generate_svd_givens_next(source, numeric_string);
+        generate_svd_givens_next(source, numeric_string, is_row_major);
         generate_svd_givens_prev(source, numeric_string);
-        generate_svd_house_update_A_left(source, numeric_string);
-        generate_svd_house_update_A_right(source, numeric_string);
-        generate_svd_house_update_QL(source, numeric_string);
+        generate_svd_house_update_A_left(source, numeric_string, is_row_major);
+        generate_svd_house_update_A_right(source, numeric_string, is_row_major);
+        generate_svd_house_update_QL(source, numeric_string, is_row_major);
         generate_svd_house_update_QR(source, numeric_string);
         generate_svd_inverse_signs(source, numeric_string);
         generate_svd_transpose_inplace(source, numeric_string);
         generate_svd_update_qr_column(source, numeric_string);
+        generate_svd_inclusive_scan_kernel_1(source, numeric_string);
+        generate_svd_exclusive_scan_kernel_1(source, numeric_string);
+        generate_svd_scan_kernel_2(source, numeric_string);
+        generate_svd_scan_kernel_3(source, numeric_string);
+        generate_svd_scan_kernel_4(source, numeric_string);
       }
 
       std::string prog_name = program_name();
