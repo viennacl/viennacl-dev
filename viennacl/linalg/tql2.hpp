@@ -1,3 +1,6 @@
+#ifndef VIENNACL_LINALG_TQL2_HPP
+#define VIENNACL_LINALG_TQL2_HPP
+
 /* =========================================================================
    Copyright (c) 2010-2014, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
@@ -15,16 +18,17 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** @file viennacl/linalg/tql2.hpp
+    @brief Implementation of the tql2-algorithm for eigenvalue computations.
+*/
+
+
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include <iomanip>
 
 #include "viennacl/linalg/qr-method-common.hpp"
 #include "viennacl/linalg/prod.hpp"
-
-/** @file viennacl/linalg/qr-method.hpp
-    @brief Implementation of the QR method for eigenvalue computations. Experimental.
-*/
 
 namespace viennacl
 {
@@ -166,3 +170,4 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
 }
 } // namespace linalg
 } // namespace viennacl
+#endif
