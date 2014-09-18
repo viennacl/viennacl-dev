@@ -1409,6 +1409,593 @@ __global__ void scaled_rank1_update_col_kernel(
 }
 
 
+template <typename T>
+__global__ void bidiag_pack_row_major_kernel(
+            T * A,
+            T * D,
+            T * S,
+            uint size1,
+            uint size2,
+            uint stride)
+{
+  uint size = min(size1, size2);
+  if(blockIdx.x * blockDim.x + threadIdx.x == 0)
+    S[0] = 0;
+
+  for(uint i = blockIdx.x * blockDim.x + threadIdx.x;
+           i < size;
+           i += gridDim.x * blockDim.x)
+    {
+      D[i] = A[i*stride + i];
+      S[i+1] = (i + 1 < size2) ? A[i*stride + (i + 1)] : 0;
+    }
+}
+
+template <typename T>
+__global__ void bidiag_pack_column_major_kernel(
+            T * A,
+            T * D,
+            T * S,
+            uint size1,
+            uint size2,
+            uint stride)
+{
+  uint size = min(size1, size2);
+  if(blockIdx.x * blockDim.x + threadIdx.x == 0)
+    S[0] = 0;
+
+  for(uint i = blockIdx.x * blockDim.x + threadIdx.x;
+           i < size;
+           i += gridDim.x * blockDim.x)
+    {
+      D[i] = A[i*stride + i];
+      S[i+1] = (i + 1 < size2) ? A[i + (i + 1) * stride] : 0;
+    }
+}
+
+
+
+template<typename T>
+__global__ void copy_col_row_major_kernel(
+        T * A,
+        T * V,
+        uint row_start,
+        uint col_start,
+        uint size,
+        uint stride)
+{
+    uint x = blockIdx.x * blockDim.x + threadIdx.x;
+    uint sz = gridDim.x * blockDim.x;
+
+    for(uint i = row_start + x; i < size; i += sz)
+    {
+        V[i - row_start] = A[i * stride + col_start];
+    }
+}
+
+template<typename T>
+__global__ void copy_col_column_major_kernel(
+        T * A,
+        T * V,
+        uint row_start,
+        uint col_start,
+        uint size,
+        uint stride)
+{
+    uint x = blockIdx.x * blockDim.x + threadIdx.x;
+    uint sz = gridDim.x * blockDim.x;
+
+    for(uint i = row_start + x; i < size; i += sz)
+    {
+        V[i - row_start] = A[i + col_start * stride];
+    }
+}
+
+template<typename T>
+__global__ void copy_row_row_major_kernel(
+        T * A,
+        T * V,
+        uint row_start,
+        uint col_start,
+        uint size,
+        uint stride)
+{
+    uint x = blockIdx.x * blockDim.x + threadIdx.x;
+    uint sz = gridDim.x * blockDim.x;
+
+    for(uint i = col_start + x; i < size; i += sz)
+    {
+        V[i - col_start] = A[row_start * stride + i];
+    }
+
+}
+
+template<typename T>
+__global__ void copy_row_column_major_kernel(
+        T * A,
+        T * V,
+        uint row_start,
+        uint col_start,
+        uint size,
+        uint stride)
+{
+    uint x = blockIdx.x * blockDim.x + threadIdx.x;
+    uint sz = gridDim.x * blockDim.x;
+
+    for(uint i = col_start + x; i < size; i += sz)
+    {
+        V[i - col_start] = A[row_start + i * stride];
+    }
+
+}
+
+
+
+template<typename T>
+__global__ void house_update_A_left_row_major_kernel(
+        T * A,
+        T * V,        //householder vector
+        uint row_start,
+        uint col_start,
+        uint size1,
+        uint size2,
+        uint stride)
+{
+    T ss = 0;
+
+    for(uint i = blockIdx.x * blockDim.x + threadIdx.x + col_start;
+        i < size2;
+        i += gridDim.x * blockDim.x)
+    {
+        ss = 0;
+        for(uint j = row_start; j < size1; j++)
+            ss = ss +(V[j] * A[j * stride + i]);
+
+        for(uint j = row_start; j < size1; j++)
+            A[j * stride + i] = A[j * stride + i] - (2 * V[j] * ss);
+    }
+}
+
+template<typename T>
+__global__ void house_update_A_left_column_major_kernel(
+        T * A,
+        T * V,        //householder vector
+        uint row_start,
+        uint col_start,
+        uint size1,
+        uint size2,
+        uint stride)
+{
+    T ss = 0;
+
+    for(uint i = blockIdx.x * blockDim.x + threadIdx.x + col_start;
+        i < size2;
+        i += gridDim.x * blockDim.x)
+    {
+        ss = 0;
+        for(uint j = row_start; j < size1; j++)
+            ss = ss +(V[j] * A[j + i * stride]);
+
+        for(uint j = row_start; j < size1; j++)
+            A[j + i * stride] = A[j + i * stride] - (2 * V[j] * ss);
+    }
+}
+
+
+
+template<typename T>
+__global__ void house_update_A_right_row_major_kernel(
+        T * A,
+        T * V,  //householder vector
+        uint row_start,
+        uint col_start,
+        uint size1,
+        uint size2,
+        uint stride)
+{
+    __shared__ T sums[128];
+    T ss = 0;
+
+    for(uint i = blockIdx.x + row_start; i < size1; i+= gridDim.x)
+    {
+        ss = 0;
+        for(uint j = threadIdx.x; j < size2; j+= blockDim.x)
+            ss = ss + (V[j] * A[i * stride + j]);
+        sums[threadIdx.x] = ss;
+
+        __syncthreads();
+        col_reduce_lcl_array(sums, threadIdx.x, blockDim.x);
+        __syncthreads();
+
+        T sum_Av = sums[0];
+
+        for(uint j = threadIdx.x; j < size2; j+= blockDim.x)
+            A[i * stride + j] = A[i * stride + j] - (2 * V[j] * sum_Av);
+    }
+}
+
+template<typename T>
+__global__ void house_update_A_right_column_major_kernel(
+        T * A,
+        T * V,  //householder vector
+        uint row_start,
+        uint col_start,
+        uint size1,
+        uint size2,
+        uint stride)
+{
+    __shared__ T sums[128];
+    T ss = 0;
+
+    for(uint i = blockIdx.x + row_start; i < size1; i+= gridDim.x)
+    {
+        ss = 0;
+        for(uint j = threadIdx.x; j < size2; j+= blockDim.x)
+            ss = ss + (V[j] * A[i + j * stride]);
+        sums[threadIdx.x] = ss;
+
+        __syncthreads();
+        col_reduce_lcl_array(sums, threadIdx.x, blockDim.x);
+        __syncthreads();
+
+        T sum_Av = sums[0];
+
+        for(uint j = threadIdx.x; j < size2; j+= blockDim.x)
+            A[i + j * stride] = A[i + j * stride] - (2 * V[j] * sum_Av);
+    }
+}
+
+
+
+template<typename T>
+__device__ void col_reduce_lcl_array(
+        T * sums,
+        uint th_Idx,
+        uint bl_Dim)
+{
+    uint step = bl_Dim >> 1;
+
+    while(step > 0)
+    {
+        if(th_Idx < step)
+            sums[th_Idx] += sums[th_Idx + step];
+        step >>= 1;
+        __syncthreads();
+    }
+}
+
+
+template <typename T>
+__global__ void house_update_QL_row_major_kernel(
+        T * QL,
+        T * V,
+        uint size1,
+        uint strideQ)
+{
+  __shared__ T sums[128];
+  T ss = 0;
+  for(uint i = blockIdx.x; i < size1; i += gridDim.x)
+  {
+    ss = 0;
+    for(uint j = threadIdx.x; j < size1; j += blockDim.x)
+      ss = ss + (V[j] * QL[i * strideQ + j]);
+    sums[threadIdx.x] = ss;
+
+    __syncthreads();
+    col_reduce_lcl_array(sums, threadIdx.x, blockDim.x);
+    __syncthreads();
+
+    T sum_Qv = sums[0];
+
+    for(uint j = threadIdx.x; j < size1; j += blockDim.x)
+      QL[i * strideQ + j] = QL[i * strideQ + j] - (2 * V[j] * sum_Qv);
+  }
+}
+
+template <typename T>
+__global__ void house_update_QL_column_major_kernel(
+        T * QL,
+        T * V,
+        uint size1,
+        uint strideQ)
+{
+  __shared__ T sums[128];
+  T ss = 0;
+  for(uint i = blockIdx.x; i < size1; i += gridDim.x)
+  {
+    ss = 0;
+    for(uint j = threadIdx.x; j < size1; j += blockDim.x)
+      ss = ss + (V[j] * QL[i + j * strideQ]);
+    sums[threadIdx.x] = ss;
+
+    __syncthreads();
+    col_reduce_lcl_array(sums, threadIdx.x, blockDim.x);
+    __syncthreads();
+
+    T sum_Qv = sums[0];
+
+    for(uint j = threadIdx.x; j < size1; j += blockDim.x)
+      QL[i + j * strideQ] = QL[i + j * strideQ] - (2 * V[j] * sum_Qv);
+  }
+}
+
+
+template <typename T>
+__global__ void givens_next_row_major_kernel(
+        T * matr,
+        T * cs,
+        T * ss,
+        uint size,
+        uint stride,
+        uint start_i,
+        uint end_i)
+{
+    uint j = blockIdx.x * blockDim.x + threadIdx.x;
+    __shared__ T cs_lcl[256];
+    __shared__ T ss_lcl[256];
+
+    T x = (j < size) ? matr[(end_i + 1) + j * stride] : 0;
+
+    uint elems_num = end_i - start_i + 1;
+    uint block_num = (elems_num + blockDim.x - 1) / blockDim.x;
+
+    for(uint block_id = 0; block_id < block_num; block_id++)
+    {
+        uint to = min(elems_num - block_id * blockDim.x, blockDim.x);
+
+        if(threadIdx.x < to)
+        {
+            cs_lcl[threadIdx.x] = cs[end_i - (threadIdx.x + block_id * blockDim.x)];
+            ss_lcl[threadIdx.x] = ss[end_i - (threadIdx.x + block_id * blockDim.x)];
+        }
+        __syncthreads();
+        if(j < size)
+        {
+            for(uint ind = 0; ind < to; ind++)
+            {
+                uint i = end_i - (ind + block_id * blockDim.x);
+                T z = matr[i + j * stride];
+                T cs_val = cs_lcl[ind];
+                T ss_val = ss_lcl[ind];
+                matr[(i + 1) + j * stride] = x * cs_val + z * ss_val;
+                x = -x * ss_val + z * cs_val;
+            }
+        }
+        __syncthreads();
+     }
+     if(j < size)
+       matr[(start_i) + j * stride] = x;
+}
+
+template <typename T>
+__global__ void givens_next_column_major_kernel(
+        T * matr,
+        T * cs,
+        T * ss,
+        uint size,
+        uint stride,
+        uint start_i,
+        uint end_i)
+{
+    uint j = blockIdx.x * blockDim.x + threadIdx.x;
+    __shared__ T cs_lcl[256];
+    __shared__ T ss_lcl[256];
+
+    T x = (j < size) ? matr[(end_i + 1) *stride + j] : 0;
+
+    uint elems_num = end_i - start_i + 1;
+    uint block_num = (elems_num + blockDim.x - 1) / blockDim.x;
+
+    for(uint block_id = 0; block_id < block_num; block_id++)
+    {
+        uint to = min(elems_num - block_id * blockDim.x, blockDim.x);
+
+        if(threadIdx.x < to)
+        {
+            cs_lcl[threadIdx.x] = cs[end_i - (threadIdx.x + block_id * blockDim.x)];
+            ss_lcl[threadIdx.x] = ss[end_i - (threadIdx.x + block_id * blockDim.x)];
+        }
+        __syncthreads();
+        if(j < size)
+        {
+            for(uint ind = 0; ind < to; ind++)
+            {
+                uint i = end_i - (ind + block_id * blockDim.x);
+                T z = matr[i *stride + j];
+                T cs_val = cs_lcl[ind];
+                T ss_val = ss_lcl[ind];
+                matr[(i + 1) * stride + j] = x * cs_val + z * ss_val;
+                x = -x * ss_val + z * cs_val;
+            }
+        }
+        __syncthreads();
+     }
+     if(j < size)
+       matr[(start_i) * stride + j] = x;
+}
+
+
+
+
+#define SECTION_SIZE 512
+template <typename T>
+__global__ void inclusive_scan_kernel_1(
+                                        T * X,
+                                        unsigned int startX,
+                                        unsigned int incX,
+                                        unsigned int InputSize,
+
+                                        T * Y,
+                                        unsigned int startY,
+                                        unsigned int incY,
+
+                                        T * S,
+                                        unsigned int startS,
+                                        unsigned int incS)
+{
+
+  __shared__ T XY[SECTION_SIZE];
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if(i < InputSize)
+    XY[threadIdx.x] = X[i * incX + startX];
+
+  for(unsigned int stride = 1; stride < blockDim.x; stride *= 2)
+  {
+    __syncthreads();
+    int index = (threadIdx.x + 1) * 2 * stride - 1;
+    if(index < blockDim.x)
+      XY[index] += XY[index - stride];
+  }
+
+  for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    int index = (threadIdx.x + 1) * 2 * stride - 1;
+    if(index + stride < blockDim.x)
+      XY[index + stride] += XY[index];
+  }
+  __syncthreads();
+  Y[i * incY + startY] = XY[threadIdx.x];
+  __syncthreads();
+  if(threadIdx.x == 0)
+  {
+    S[blockIdx.x * incS + startS] = XY[SECTION_SIZE - 1];
+  }
+}
+
+
+template <typename T>
+__global__ void exclusive_scan_kernel_1(
+                                       T * X,
+                                       unsigned int startX,
+                                       unsigned int incX,
+                                       unsigned int InputSize,
+
+                                       T * Y,
+                                       unsigned int startY,
+                                       unsigned int incY,
+
+                                       T * S,
+                                       unsigned int startS,
+                                       unsigned int incS)
+{
+
+  __shared__ T XY[SECTION_SIZE];
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if(i < InputSize + 1 && i != 0)
+    XY[threadIdx.x] = X[(i - 1) * incX + startX];
+  if(i == 0)
+    XY[0] = 0;
+
+  for(unsigned int stride = 1; stride < blockDim.x; stride *= 2)
+  {
+    __syncthreads();
+    int index = (threadIdx.x + 1) * 2 * stride - 1;
+    if(index < blockDim.x)
+      XY[index] += XY[index - stride];
+  }
+
+  for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    int index = (threadIdx.x + 1) * 2 * stride - 1;
+    if(index + stride < blockDim.x)
+      XY[index + stride] += XY[index];
+  }
+  __syncthreads();
+
+  Y[i * incY + startY] = XY[threadIdx.x];
+
+  __syncthreads();
+  if(threadIdx.x == 0)
+  {
+    S[blockIdx.x * incS + startS] = XY[SECTION_SIZE - 1];
+
+  }
+}
+
+template <typename T>
+__global__ void scan_kernel_2(
+                              T * S_ref,
+                              unsigned int startS_ref,
+                              unsigned int incS_ref,
+
+                              T * S,
+                              unsigned int startS,
+                              unsigned int incS,
+                              unsigned int InputSize)
+
+{
+
+  __shared__ T XY[SECTION_SIZE];
+
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if(i < InputSize)
+    XY[threadIdx.x] = S[i * incS + startS];
+
+  for(unsigned int stride = 1; stride < blockDim.x; stride *= 2)
+   {
+    __syncthreads();
+    int index = (threadIdx.x + 1) * 2 * stride - 1;
+    if(index < blockDim.x)
+      XY[index] += XY[index - stride];
+   }
+
+  for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    int index = (threadIdx.x + 1) * 2 * stride - 1;
+    if(index + stride < blockDim.x)
+      XY[index + stride] += XY[index];
+  }
+  __syncthreads();
+  if(i < InputSize)
+  {
+      S[i * incS + startS]             = XY[threadIdx.x];
+      S_ref[i * incS_ref + startS_ref] = XY[threadIdx.x];
+  }
+}
+
+template <typename T>
+__global__ void scan_kernel_3(
+                              T * S_ref,
+                              unsigned int startS_ref,
+                              unsigned int incS_ref,
+
+                              T * S,
+                              unsigned int startS,
+                              unsigned int incS)
+
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  for(int j = 1; j <= blockIdx.x; j++)
+  {
+    S[i * incS + startS] += S_ref[(j * blockDim.x - 1) * incS_ref + startS_ref];
+  }
+}
+
+
+template <typename T>
+__global__ void scan_kernel_4(
+                            T * S,
+                            unsigned int startS,
+                            unsigned int incS,
+
+                            T * Y,
+                            unsigned int startY,
+                            unsigned int incY,
+                            unsigned int OutputSize)
+
+{
+  __syncthreads();
+  unsigned int i = (blockIdx.x + 1) * blockDim.x + threadIdx.x;
+
+  if(i < OutputSize)
+    Y[i * incY + startY] += S[blockIdx.x * incS + startS];
+
+}
+
+
 
 } // namespace cuda
 } //namespace linalg

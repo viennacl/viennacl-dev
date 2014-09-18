@@ -47,7 +47,7 @@ const ScalarType EPS = 0.0001f;
 
 void read_matrix_size(std::fstream& f, std::size_t& sz)
 {
-    if (!f.is_open())
+    if(!f.is_open())
     {
         throw std::invalid_argument("File is not opened");
     }
@@ -55,17 +55,18 @@ void read_matrix_size(std::fstream& f, std::size_t& sz)
     f >> sz;
 }
 
-void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
+template <typename MatrixLayout>
+void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType, MatrixLayout>& A)
 {
-    if (!f.is_open())
+    if(!f.is_open())
     {
         throw std::invalid_argument("File is not opened");
     }
 
     boost::numeric::ublas::matrix<ScalarType> h_A(A.size1(), A.size2());
 
-    for (std::size_t i = 0; i < h_A.size1(); i++) {
-        for (std::size_t j = 0; j < h_A.size2(); j++) {
+    for(std::size_t i = 0; i < h_A.size1(); i++) {
+        for(std::size_t j = 0; j < h_A.size2(); j++) {
             ScalarType val = 0.0;
             f >> val;
             h_A(i, j) = val;
@@ -75,11 +76,11 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType>& A)
     viennacl::copy(h_A, A);
 }
 
-void read_vector_body(std::fstream& f, ublas::vector<ScalarType>& v) {
-    if (!f.is_open())
+void read_vector_body(std::fstream& f, std::vector<ScalarType>& v) {
+    if(!f.is_open())
         throw std::invalid_argument("File is not opened");
 
-    for (std::size_t i = 0; i < v.size(); i++)
+    for(std::size_t i = 0; i < v.size(); i++)
     {
             ScalarType val = 0.0;
             f >> val;
@@ -87,7 +88,8 @@ void read_vector_body(std::fstream& f, ublas::vector<ScalarType>& v) {
     }
 }
 
-bool check_tridiag(viennacl::matrix<ScalarType>& A_orig)
+template <typename MatrixLayout>
+bool check_tridiag(viennacl::matrix<ScalarType, MatrixLayout>& A_orig)
 {
     ublas::matrix<ScalarType> A(A_orig.size1(), A_orig.size2());
     viennacl::copy(A_orig, A);
@@ -104,7 +106,8 @@ bool check_tridiag(viennacl::matrix<ScalarType>& A_orig)
     return true;
 }
 
-bool check_hessenberg(viennacl::matrix<ScalarType>& A_orig)
+template <typename MatrixLayout>
+bool check_hessenberg(viennacl::matrix<ScalarType, MatrixLayout>& A_orig)
 {
     ublas::matrix<ScalarType> A(A_orig.size1(), A_orig.size2());
     viennacl::copy(A_orig, A);
@@ -127,9 +130,9 @@ ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
     ScalarType diff = 0.0;
     ScalarType mx = 0.0;
 
-    for (std::size_t i = 0; i < res.size1(); i++)
+    for(std::size_t i = 0; i < res.size1(); i++)
     {
-        for (std::size_t j = 0; j < res.size2(); j++)
+        for(std::size_t j = 0; j < res.size2(); j++)
         {
             diff = std::max(diff, std::abs(res(i, j) - ref(i, j)));
             mx = std::max(mx, res(i, j));
@@ -139,15 +142,15 @@ ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
     return diff / mx;
 }
 
-ScalarType vector_compare(ublas::vector<ScalarType>& res,
-                          ublas::vector<ScalarType>& ref)
+ScalarType vector_compare(std::vector<ScalarType> & res,
+                          std::vector<ScalarType> & ref)
 {
     std::sort(ref.begin(), ref.end());
     std::sort(res.begin(), res.end());
 
     ScalarType diff = 0.0;
     ScalarType mx = 0.0;
-    for (size_t i = 0; i < ref.size(); i++)
+    for(size_t i = 0; i < res.size(); i++)
     {
         diff = std::max(diff, std::abs(res[i] - ref[i]));
         mx = std::max(mx, res[i]);
@@ -156,6 +159,17 @@ ScalarType vector_compare(ublas::vector<ScalarType>& res,
     return diff / mx;
 }
 
+template <typename MatrixLayout>
+void matrix_print(viennacl::matrix<ScalarType, MatrixLayout>& A)
+{
+    for (unsigned int i = 0; i < A.size1(); i++) {
+        for (unsigned int j = 0; j < A.size2(); j++)
+           std::cout << std::fixed << A(i, j) << "\t";
+        std::cout << "\n";
+    }
+}
+
+template <typename MatrixLayout>
 void test_eigen(const std::string& fn, bool is_symm)
 {
     std::cout << "Reading..." << "\n";
@@ -164,20 +178,25 @@ void test_eigen(const std::string& fn, bool is_symm)
     std::fstream f(fn.c_str(), std::fstream::in);
     //read size of input matrix
     read_matrix_size(f, sz);
-    std::cout << "Testing matrix of size " << sz << "-by-" << sz << std::endl;
+
+    if (viennacl::is_row_major<MatrixLayout>::value)
+      std::cout << "Testing row-major matrix of size " << sz << "-by-" << sz << std::endl;
+    else
+      std::cout << "Testing column-major matrix of size " << sz << "-by-" << sz << std::endl;
 
     viennacl::matrix<ScalarType> A_input(sz, sz), A_ref(sz, sz), Q(sz, sz);
-    ublas::vector<ScalarType> eigen_ref_re = ublas::scalar_vector<ScalarType>(sz, 0);
-    ublas::vector<ScalarType> eigen_ref_im = ublas::scalar_vector<ScalarType>(sz, 0);
-    ublas::vector<ScalarType> eigen_re = ublas::scalar_vector<ScalarType>(sz, 0);
-    ublas::vector<ScalarType> eigen_im = ublas::scalar_vector<ScalarType>(sz, 0);
+    // reference vector with reference values from file
+    std::vector<ScalarType> eigen_ref_re(sz);
+    // calculated real eigenvalues
+    std::vector<ScalarType> eigen_re(sz);
+    // calculated im. eigenvalues
+    std::vector<ScalarType> eigen_im(sz);
 
+    // read input matrix from file
     read_matrix_body(f, A_input);
-
+    // read reference eigenvalues from file
     read_vector_body(f, eigen_ref_re);
 
-    if (!is_symm)
-        read_vector_body(f, eigen_ref_im);
 
     f.close();
 
@@ -187,14 +206,21 @@ void test_eigen(const std::string& fn, bool is_symm)
 
     Timer timer;
     timer.start();
-
-    if (is_symm)
+    // Start the calculation
+    if(is_symm)
         viennacl::linalg::qr_method_sym(A_input, Q, eigen_re);
     else
         viennacl::linalg::qr_method_nsm(A_input, Q, eigen_re, eigen_im);
+/*
 
-    // std::cout << A_input << "\n";
-    viennacl::backend::finish();
+    std::cout << "\n\n Matrix A: \n\n";
+    matrix_print(A_input);
+    std::cout << "\n\n";
+
+    std::cout << "\n\n Matrix Q: \n\n";
+    matrix_print(Q);
+    std::cout << "\n\n";
+*/
 
     double time_spend = timer.get();
 
@@ -227,12 +253,14 @@ void test_eigen(const std::string& fn, bool is_symm)
         result2(i,j) = value;
       }
 
+
     ScalarType prods_diff = matrix_compare(result1, result2);
-    ScalarType eigen_diff = vector_compare(eigen_ref_re, eigen_re);
+    ScalarType eigen_diff = vector_compare(eigen_re, eigen_ref_re);
+
 
     bool is_ok = is_hessenberg;
 
-    if (is_symm)
+    if(is_symm)
         is_ok = is_ok && is_tridiag;
 
     is_ok = is_ok && (eigen_diff < EPS);
@@ -253,21 +281,28 @@ void test_eigen(const std::string& fn, bool is_symm)
 
     printf("%6s [%dx%d] %40s time = %.4f\n", is_ok?"[[OK]]":"[FAIL]", (int)A_ref.size1(), (int)A_ref.size2(), fn.c_str(), time_spend);
     printf("tridiagonal = %d, hessenberg = %d prod-diff = %f eigen-diff = %f\n", is_tridiag, is_hessenberg, prods_diff, eigen_diff);
+    std::cout << std::endl << std::endl;
 
     if (!is_ok)
       exit(EXIT_FAILURE);
+
 }
 
 int main()
 {
-  // test_eigen("../examples/testdata/eigen/symm1.example", true);
-  // test_eigen("../examples/testdata/eigen/symm2.example", true);
-  // test_eigen("../examples/testdata/eigen/symm3.example", true);
 
-  test_eigen("../examples/testdata/eigen/nsm1.example", false);
-  test_eigen("../examples/testdata/eigen/nsm2.example", false);
-  test_eigen("../examples/testdata/eigen/nsm3.example", false);
-  //test_eigen("../examples/testdata/eigen/nsm4.example", false); //Note: This test suffers from round-off errors in single precision, hence disabled
+  test_eigen<viennacl::row_major>("../../examples/testdata/eigen/symm5.example", true);
+ // test_eigen<viennacl::row_major>("../../examples/testdata/eigen/symm3.example", true);  // Computation of this matrix takes very long
+
+  test_eigen<viennacl::column_major>("../../examples/testdata/eigen/symm5.example", true);
+//  test_eigen<viennacl::column_major>("../../examples/testdata/eigen/symm3.example", true);
+
+#ifdef VIENNACL_WITH_OPENCL
+  test_eigen<viennacl::row_major>("../../examples/testdata/eigen/nsm2.example", false);
+#endif
+  //test_eigen<viennacl::row_major>("../../examples/testdata/eigen/nsm2.example", false);
+  //test_eigen("../../examples/testdata/eigen/nsm3.example", false);
+  //test_eigen("../../examples/testdata/eigen/nsm4.example", false); //Note: This test suffers from round-off errors in single precision, hence disabled
 
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
