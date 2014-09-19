@@ -50,7 +50,7 @@ endif ()
 # Part 2: Tutorials which work only with OpenCL enabled:
 #
 if (ENABLE_OPENCL)
-  foreach(tut custom-kernels custom-context viennacl-info)
+  foreach(tut bisect custom-kernels custom-context viennacl-info)
     add_executable(${tut} ${tut}.cpp)
     target_link_libraries(${tut} ${OPENCL_LIBRARIES})
     set_target_properties(${tut} PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
@@ -81,7 +81,7 @@ if (ENABLE_CUDA)
 
   if (ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
-    foreach(tut blas2 blas3 iterative least-squares matrix-range power-iter qr qr_method sparse vector-range tql2 )
+    foreach(tut bisect blas2 blas3 iterative least-squares matrix-range power-iter qr qr_method sparse vector-range tql2 )
         cuda_add_executable(${tut}-cuda ${tut}.cu)
         target_link_libraries(${tut}-cuda ${Boost_LIBRARIES})
     endforeach()
