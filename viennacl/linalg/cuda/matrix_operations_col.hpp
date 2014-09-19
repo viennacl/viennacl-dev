@@ -1817,7 +1817,7 @@ __global__ void givens_next_column_major_kernel(
 
 
 
-#define SECTION_SIZE 512
+#define VIENNACL_SECTION_SIZE 512
 template <typename T>
 __global__ void inclusive_scan_kernel_1(
                                         T * X,
@@ -1834,7 +1834,7 @@ __global__ void inclusive_scan_kernel_1(
                                         unsigned int incS)
 {
 
-  __shared__ T XY[SECTION_SIZE];
+  __shared__ T XY[VIENNACL_SECTION_SIZE];
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   if(i < InputSize)
     XY[threadIdx.x] = X[i * incX + startX];
@@ -1847,7 +1847,7 @@ __global__ void inclusive_scan_kernel_1(
       XY[index] += XY[index - stride];
   }
 
-  for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2)
+  for(int stride = VIENNACL_SECTION_SIZE / 4; stride > 0; stride /= 2)
   {
     __syncthreads();
     int index = (threadIdx.x + 1) * 2 * stride - 1;
@@ -1859,7 +1859,7 @@ __global__ void inclusive_scan_kernel_1(
   __syncthreads();
   if(threadIdx.x == 0)
   {
-    S[blockIdx.x * incS + startS] = XY[SECTION_SIZE - 1];
+    S[blockIdx.x * incS + startS] = XY[VIENNACL_SECTION_SIZE - 1];
   }
 }
 
@@ -1880,7 +1880,7 @@ __global__ void exclusive_scan_kernel_1(
                                        unsigned int incS)
 {
 
-  __shared__ T XY[SECTION_SIZE];
+  __shared__ T XY[VIENNACL_SECTION_SIZE];
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   if(i < InputSize + 1 && i != 0)
     XY[threadIdx.x] = X[(i - 1) * incX + startX];
@@ -1895,7 +1895,7 @@ __global__ void exclusive_scan_kernel_1(
       XY[index] += XY[index - stride];
   }
 
-  for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2)
+  for(int stride = VIENNACL_SECTION_SIZE / 4; stride > 0; stride /= 2)
   {
     __syncthreads();
     int index = (threadIdx.x + 1) * 2 * stride - 1;
@@ -1909,7 +1909,7 @@ __global__ void exclusive_scan_kernel_1(
   __syncthreads();
   if(threadIdx.x == 0)
   {
-    S[blockIdx.x * incS + startS] = XY[SECTION_SIZE - 1];
+    S[blockIdx.x * incS + startS] = XY[VIENNACL_SECTION_SIZE - 1];
 
   }
 }
@@ -1927,7 +1927,7 @@ __global__ void scan_kernel_2(
 
 {
 
-  __shared__ T XY[SECTION_SIZE];
+  __shared__ T XY[VIENNACL_SECTION_SIZE];
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   if(i < InputSize)
@@ -1941,7 +1941,7 @@ __global__ void scan_kernel_2(
       XY[index] += XY[index - stride];
    }
 
-  for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2)
+  for(int stride = VIENNACL_SECTION_SIZE / 4; stride > 0; stride /= 2)
   {
     __syncthreads();
     int index = (threadIdx.x + 1) * 2 * stride - 1;
@@ -1994,6 +1994,7 @@ __global__ void scan_kernel_4(
     Y[i * incY + startY] += S[blockIdx.x * incS + startS];
 
 }
+#undef VIENNACL_SECTION_SIZE
 
 
 

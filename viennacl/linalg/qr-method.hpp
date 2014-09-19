@@ -46,6 +46,7 @@ void final_iter_update_gpu(matrix_base<SCALARTYPE> & A,
                         SCALARTYPE p
                         )
 {
+  (void)A; (void)n; (void)last_n; (void)q; (void)p;
 #ifdef VIENNACL_WITH_OPENCL
     viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 
@@ -87,6 +88,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                         bool //is_triangular
                         )
 {
+  (void)A; (void)buf; (void)buf_vcl; (void)m; (void)n; (void)last_n;
 #ifdef VIENNACL_WITH_OPENCL
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
 

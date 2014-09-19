@@ -1,4 +1,4 @@
-﻿/* =========================================================================
+/* =========================================================================
    Copyright (c) 2010-2014, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.

@@ -1393,8 +1393,6 @@ template <typename NumericT, typename S1>
    vcl_size_t A_start2 = viennacl::traits::start2(A);
    vcl_size_t A_inc1   = viennacl::traits::stride1(A);
    vcl_size_t A_inc2   = viennacl::traits::stride2(A);
-   vcl_size_t A_size1  = viennacl::traits::size1(A);
-   vcl_size_t A_size2  = viennacl::traits::size2(A);
    vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
    vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
 
@@ -1478,7 +1476,6 @@ template <typename NumericT, typename S1>
 
    vcl_size_t start1 = viennacl::traits::start(D);
    vcl_size_t inc1   = viennacl::traits::stride(D);
-   vcl_size_t size1  = viennacl::traits::size(D);
 
    if (A.row_major())
      {
@@ -1542,7 +1539,6 @@ template <typename NumericT, typename S1>
 
    vcl_size_t start1 = viennacl::traits::start(D);
    vcl_size_t inc1   = viennacl::traits::stride(D);
-   vcl_size_t size1  = viennacl::traits::size(D);
 
    if (A.row_major())
      {
@@ -1633,18 +1629,14 @@ template <typename NumericT, typename S1>
      vcl_size_t Q_inc1   = viennacl::traits::stride1(Q);
      vcl_size_t Q_inc2   = viennacl::traits::stride2(Q);
      vcl_size_t Q_size1  = viennacl::traits::size1(Q);
-     vcl_size_t Q_size2  = viennacl::traits::size2(Q);
      vcl_size_t Q_internal_size1  = viennacl::traits::internal_size1(Q);
      vcl_size_t Q_internal_size2  = viennacl::traits::internal_size2(Q);
 
      vcl_size_t start1 = viennacl::traits::start(tmp1);
      vcl_size_t inc1   = viennacl::traits::stride(tmp1);
-     vcl_size_t size1  = viennacl::traits::size(tmp1);
 
      vcl_size_t start2 = viennacl::traits::start(tmp2);
      vcl_size_t inc2   = viennacl::traits::stride(tmp2);
-     vcl_size_t size2  = viennacl::traits::size(tmp2);
-
 
      if (Q.row_major())
      {
@@ -1660,12 +1652,12 @@ template <typename NumericT, typename S1>
                  NumericT h = data_Q[viennacl::row_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)];
 
                  // Q(k, i+1) = tmp2[i] * Q(k, i) + tmp1[i]*h;
-                 data_Q[viennacl::row_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = tmp2[start2 + inc2 * i] *
-                     data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + tmp1[start1 + inc1 * i] * h;
+                 data_Q[viennacl::row_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp2[start2 + inc2 * i] *
+                     data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + data_tmp1[start1 + inc1 * i] * h;
 
                  // Q(k,   i) = tmp1[i] * Q(k, i) - tmp2[i]*h;
-                 data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = tmp1[start1 + inc1 * i] *
-                     data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - tmp2[start2 + inc2 * i]*h;
+                 data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp1[start1 + inc1 * i] *
+                     data_Q[viennacl::row_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - data_tmp2[start2 + inc2 * i]*h;
                }
            }
      }
@@ -1683,12 +1675,12 @@ template <typename NumericT, typename S1>
                   NumericT h = data_Q[viennacl::column_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)];
 
                    // Q(k, i+1) = tmp2[i] * Q(k, i) + tmp1[i]*h;
-                  data_Q[viennacl::column_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = tmp2[start2 + inc2 * i] *
-                      data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + tmp1[start1 + inc1 * i] * h;
+                  data_Q[viennacl::column_major::mem_index(k * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp2[start2 + inc2 * i] *
+                      data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + data_tmp1[start1 + inc1 * i] * h;
 
                   // Q(k,   i) = tmp1[i] * Q(k, i) - tmp2[i]*h;
-                  data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = tmp1[start1 + inc1 * i] *
-                      data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - tmp2[start2 + inc2 * i]*h;
+                  data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp1[start1 + inc1 * i] *
+                      data_Q[viennacl::column_major::mem_index(k  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - data_tmp2[start2 + inc2 * i]*h;
                }
            }
        }
@@ -1723,13 +1715,8 @@ template <typename NumericT, typename S1>
        vcl_size_t A_inc1   = viennacl::traits::stride1(A);
        vcl_size_t A_inc2   = viennacl::traits::stride2(A);
        vcl_size_t A_size1  = viennacl::traits::size1(A);
-       vcl_size_t A_size2  = viennacl::traits::size2(A);
        vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
        vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
-
-       vcl_size_t start1 = viennacl::traits::start(V);
-       vcl_size_t inc1   = viennacl::traits::stride(V);
-       vcl_size_t size1  = viennacl::traits::size(V);
 
 
      if(copy_col)

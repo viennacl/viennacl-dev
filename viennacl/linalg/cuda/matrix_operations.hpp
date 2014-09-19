@@ -2716,6 +2716,9 @@ void givens_next(matrix_base<NumericT> & matrix,
                                      static_cast<unsigned int>(m - 1));
   }
 
+
+#define VIENNACL_SECTION_SIZE 512
+
 /** @brief This function implements an inclusive scan.
 *
 *
@@ -2726,8 +2729,11 @@ template<typename NumericT>
 void inclusive_scan(vector_base<NumericT>& vec1,
                  vector_base<NumericT>& vec2)
 {
- viennacl::vector<NumericT> S( std::ceil(vec1.size() / static_cast<float>(SECTION_SIZE)) ), S_ref( std::ceil(vec1.size() / static_cast<float>(SECTION_SIZE)) );
- inclusive_scan_kernel_1<<<S.size(), SECTION_SIZE>>>(
+  vcl_size_t N = static_cast<vcl_size_t>(std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE)));
+  viennacl::vector<NumericT> S    (N);
+  viennacl::vector<NumericT> S_ref(N);
+
+ inclusive_scan_kernel_1<<<S.size(), VIENNACL_SECTION_SIZE>>>(
                                    detail::cuda_arg<NumericT>(vec1),
                                    static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                    static_cast<unsigned int>(viennacl::traits::stride(vec1)),
@@ -2741,7 +2747,7 @@ void inclusive_scan(vector_base<NumericT>& vec1,
                                    static_cast<unsigned int>(viennacl::traits::start(S)),
                                    static_cast<unsigned int>(viennacl::traits::stride(S)));
 
- scan_kernel_2<<<std::ceil(S.size()/static_cast<float>(SECTION_SIZE)), SECTION_SIZE>>>(
+ scan_kernel_2<<<std::ceil(S.size()/static_cast<double>(VIENNACL_SECTION_SIZE)), VIENNACL_SECTION_SIZE>>>(
                                     detail::cuda_arg<NumericT>(S_ref),
                                     static_cast<unsigned int>(viennacl::traits::start(S_ref)),
                                     static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
@@ -2751,7 +2757,7 @@ void inclusive_scan(vector_base<NumericT>& vec1,
                                     static_cast<unsigned int>(viennacl::traits::stride(S)),
                                     static_cast<unsigned int>(viennacl::traits::size(S)));
 
- scan_kernel_3<<<std::ceil(S.size()/static_cast<float>(SECTION_SIZE)), SECTION_SIZE>>>(
+ scan_kernel_3<<<std::ceil(S.size()/static_cast<double>(VIENNACL_SECTION_SIZE)), VIENNACL_SECTION_SIZE>>>(
                                     detail::cuda_arg<NumericT>(S_ref),
                                     static_cast<unsigned int>(viennacl::traits::start(S_ref)),
                                     static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
@@ -2760,7 +2766,7 @@ void inclusive_scan(vector_base<NumericT>& vec1,
                                     static_cast<unsigned int>(viennacl::traits::start(S)),
                                     static_cast<unsigned int>(viennacl::traits::stride(S)));
 
- scan_kernel_4<<<S.size(), SECTION_SIZE>>>(
+ scan_kernel_4<<<S.size(), VIENNACL_SECTION_SIZE>>>(
                                    detail::cuda_arg<NumericT>(S),
                                    static_cast<unsigned int>(viennacl::traits::start(S)),
                                    static_cast<unsigned int>(viennacl::traits::stride(S)),
@@ -2781,8 +2787,10 @@ template<typename NumericT, typename F>
 void exclusive_scan(vector_base<NumericT, F>& vec1,
                  vector_base<NumericT, F>& vec2)
 {
- viennacl::vector<NumericT> S(std::ceil(vec1.size() / (float)SECTION_SIZE)), S_ref(std::ceil(vec1.size() / (float)SECTION_SIZE));
- exclusive_scan_kernel_1<<<S.size(), SECTION_SIZE>>>(
+ viennacl::vector<NumericT> S    (std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE));
+ viennacl::vector<NumericT> S_ref(std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE));
+
+ exclusive_scan_kernel_1<<<S.size(), VIENNACL_SECTION_SIZE>>>(
                                    detail::cuda_arg<NumericT>(vec1),
                                    static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                    static_cast<unsigned int>(viennacl::traits::stride(vec1)),
@@ -2796,7 +2804,7 @@ void exclusive_scan(vector_base<NumericT, F>& vec1,
                                    static_cast<unsigned int>(viennacl::traits::start(S)),
                                    static_cast<unsigned int>(viennacl::traits::stride(S)));
 
- scan_kernel_2<<<std::ceil(S.size()/static_cast<float>(SECTION_SIZE)), SECTION_SIZE>>>(
+ scan_kernel_2<<<std::ceil(S.size()/static_cast<float>(VIENNACL_SECTION_SIZE)), VIENNACL_SECTION_SIZE>>>(
                                     detail::cuda_arg<NumericT>(S_ref),
                                     static_cast<unsigned int>(viennacl::traits::start(S_ref)),
                                     static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
@@ -2806,7 +2814,7 @@ void exclusive_scan(vector_base<NumericT, F>& vec1,
                                     static_cast<unsigned int>(viennacl::traits::stride(S)),
                                     static_cast<unsigned int>(viennacl::traits::size(S)));
 
- scan_kernel_3<<<std::ceil(S.size()/static_cast<float>(SECTION_SIZE)), SECTION_SIZE>>>(
+ scan_kernel_3<<<std::ceil(S.size()/static_cast<float>(VIENNACL_SECTION_SIZE)), VIENNACL_SECTION_SIZE>>>(
                                     detail::cuda_arg<NumericT>(S_ref),
                                     static_cast<unsigned int>(viennacl::traits::start(S_ref)),
                                     static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
@@ -2815,7 +2823,7 @@ void exclusive_scan(vector_base<NumericT, F>& vec1,
                                     static_cast<unsigned int>(viennacl::traits::start(S)),
                                     static_cast<unsigned int>(viennacl::traits::stride(S)));
 
- scan_kernel_4<<<S.size(), SECTION_SIZE>>>(
+ scan_kernel_4<<<S.size(), VIENNACL_SECTION_SIZE>>>(
                                    detail::cuda_arg<NumericT>(S),
                                    static_cast<unsigned int>(viennacl::traits::start(S)),
                                    static_cast<unsigned int>(viennacl::traits::stride(S)),
@@ -2826,6 +2834,7 @@ void exclusive_scan(vector_base<NumericT, F>& vec1,
                                    static_cast<unsigned int>(viennacl::traits::size(vec2)));
 }
 
+#undef VIENNACL_SECTION_SIZE
 
 } // namespace cuda
 } //namespace linalg

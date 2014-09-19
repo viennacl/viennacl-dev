@@ -106,6 +106,7 @@ void householder_vector(VectorType & v, vcl_size_t start)
 template <typename SCALARTYPE>
 void transpose(matrix_base<SCALARTYPE> & A)
 {
+  (void)A;
 #ifdef VIENNACL_WITH_OPENCL
 
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
