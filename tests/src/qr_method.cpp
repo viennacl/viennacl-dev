@@ -291,14 +291,14 @@ void test_eigen(const std::string& fn, bool is_symm)
 int main()
 {
 
-  test_eigen<viennacl::row_major>("../../examples/testdata/eigen/symm5.example", true);
+  test_eigen<viennacl::row_major>("../examples/testdata/eigen/symm5.example", true);
  // test_eigen<viennacl::row_major>("../../examples/testdata/eigen/symm3.example", true);  // Computation of this matrix takes very long
 
-  test_eigen<viennacl::column_major>("../../examples/testdata/eigen/symm5.example", true);
+  test_eigen<viennacl::column_major>("../examples/testdata/eigen/symm5.example", true);
 //  test_eigen<viennacl::column_major>("../../examples/testdata/eigen/symm3.example", true);
 
 #ifdef VIENNACL_WITH_OPENCL
-  test_eigen<viennacl::row_major>("../../examples/testdata/eigen/nsm2.example", false);
+  test_eigen<viennacl::row_major>("../examples/testdata/eigen/nsm2.example", false);
 #endif
   //test_eigen<viennacl::row_major>("../../examples/testdata/eigen/nsm2.example", false);
   //test_eigen("../../examples/testdata/eigen/nsm3.example", false);

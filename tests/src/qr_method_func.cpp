@@ -386,10 +386,10 @@ int main()
 {
 
   std::cout << std::endl << "Test qr_method_sym for row_major matrix" << std::endl;
-  test_qr_method_sym<viennacl::row_major>("../../examples/testdata/eigen/symm5.example");
+  test_qr_method_sym<viennacl::row_major>("../examples/testdata/eigen/symm5.example");
 
   std::cout << std::endl << "Test qr_method_sym for column_major matrix" << std::endl;
-  test_qr_method_sym<viennacl::column_major>("../../examples/testdata/eigen/symm5.example");
+  test_qr_method_sym<viennacl::column_major>("../examples/testdata/eigen/symm5.example");
 
 
   std::cout << std::endl <<"--------TEST SUCCESSFULLY COMPLETED----------" << std::endl;

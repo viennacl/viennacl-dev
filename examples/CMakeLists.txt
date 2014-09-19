@@ -6,6 +6,7 @@ set(EXAMPLES_TESTDATA
    testdata/eigen/nsm1.example
    testdata/eigen/nsm2.example
    testdata/eigen/nsm3.example
+   testdata/eigen/symm5.example
    testdata/svd/qr.example
    testdata/svd/wiki.example
    testdata/svd/wiki.qr.example
