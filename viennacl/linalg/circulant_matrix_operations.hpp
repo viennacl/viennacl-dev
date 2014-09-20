@@ -32,45 +32,43 @@
 
 namespace viennacl
 {
-  namespace linalg
-  {
+namespace linalg
+{
 
-    // A * x
+// A * x
 
-    /** @brief Carries out matrix-vector multiplication with a circulant_matrix
-    *
-    * Implementation of the convenience expression result = prod(mat, vec);
-    *
-    * @param mat    The matrix
-    * @param vec    The vector
-    * @param result The result vector
-    */
-      template<class SCALARTYPE, unsigned int ALIGNMENT>
-      void prod_impl(const viennacl::circulant_matrix<SCALARTYPE, ALIGNMENT> & mat,
-                     const viennacl::vector_base<SCALARTYPE> & vec,
-                           viennacl::vector_base<SCALARTYPE> & result)
-      {
-        assert(mat.size1() == result.size());
-        assert(mat.size2() == vec.size());
-        //result.clear();
+/** @brief Carries out matrix-vector multiplication with a circulant_matrix
+*
+* Implementation of the convenience expression result = prod(mat, vec);
+*
+* @param mat    The matrix
+* @param vec    The vector
+* @param result The result vector
+*/
+template<typename NumericT, unsigned int AlignmentV>
+void prod_impl(viennacl::circulant_matrix<NumericT, AlignmentV> const & mat,
+               viennacl::vector_base<NumericT> const & vec,
+               viennacl::vector_base<NumericT>       & result)
+{
+  assert(mat.size1() == result.size() && bool("Dimension mismatch"));
+  assert(mat.size2() == vec.size() && bool("Dimension mismatch"));
+  //result.clear();
 
-        //std::cout << "prod(circulant_matrix" << ALIGNMENT << ", vector) called with internal_nnz=" << mat.internal_nnz() << std::endl;
+  //std::cout << "prod(circulant_matrix" << ALIGNMENT << ", vector) called with internal_nnz=" << mat.internal_nnz() << std::endl;
 
-        viennacl::vector<SCALARTYPE> circ(mat.elements().size() * 2);
-        viennacl::linalg::real_to_complex(mat.elements(), circ, mat.elements().size());
+  viennacl::vector<NumericT> circ(mat.elements().size() * 2);
+  viennacl::linalg::real_to_complex(mat.elements(), circ, mat.elements().size());
 
-        viennacl::vector<SCALARTYPE> tmp(vec.size() * 2);
-        viennacl::vector<SCALARTYPE> tmp2(vec.size() * 2);
+  viennacl::vector<NumericT> tmp(vec.size() * 2);
+  viennacl::vector<NumericT> tmp2(vec.size() * 2);
 
-         viennacl::linalg::real_to_complex(vec, tmp, vec.size());
-        viennacl::linalg::convolve(circ, tmp, tmp2);
-        viennacl::linalg::complex_to_real(tmp2, result, vec.size());
+  viennacl::linalg::real_to_complex(vec, tmp, vec.size());
+  viennacl::linalg::convolve(circ, tmp, tmp2);
+  viennacl::linalg::complex_to_real(tmp2, result, vec.size());
 
-      }
+}
 
-  } //namespace linalg
-
-
+} //namespace linalg
 } //namespace viennacl
 
 

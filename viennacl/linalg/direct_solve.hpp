@@ -38,349 +38,349 @@
 
 namespace viennacl
 {
-  namespace linalg
+namespace linalg
+{
+
+//
+// A \ B:
+//
+
+/** @brief Direct inplace solver for dense triangular systems. Matlab notation: A \ B
+*
+* @param A    The system matrix
+* @param B    The matrix of row vectors, where the solution is directly written to
+*/
+template<typename NumericT, typename SolverTagT>
+void inplace_solve(matrix_base<NumericT> const & A, matrix_base<NumericT> & B, SolverTagT)
+{
+  assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
+  assert( (viennacl::traits::size1(A) == viennacl::traits::size1(B)) && bool("Size check failed in inplace_solve(): size1(A) != size1(B)"));
+
+  switch (viennacl::traits::handle(A).get_active_handle_id())
   {
-
-    //
-    // A \ B:
-    //
-
-    /** @brief Direct inplace solver for dense triangular systems. Matlab notation: A \ B
-    *
-    * @param A    The system matrix
-    * @param B    The matrix of row vectors, where the solution is directly written to
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    void inplace_solve(const matrix_base<NumericT> & A, matrix_base<NumericT> & B, SOLVERTAG)
-    {
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(B)) && bool("Size check failed in inplace_solve(): size1(A) != size1(B)"));
-
-      switch (viennacl::traits::handle(A).get_active_handle_id())
-      {
-        case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(A, false, B, false, SOLVERTAG());
-          break;
+    case viennacl::MAIN_MEMORY:
+      viennacl::linalg::host_based::inplace_solve(A, false, B, false, SolverTagT());
+      break;
 #ifdef VIENNACL_WITH_OPENCL
-        case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(A, false, B, false, SOLVERTAG());
-          break;
+    case viennacl::OPENCL_MEMORY:
+      viennacl::linalg::opencl::inplace_solve(A, false, B, false, SolverTagT());
+      break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
-        case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(A, false, B, false, SOLVERTAG());
-          break;
+    case viennacl::CUDA_MEMORY:
+      viennacl::linalg::cuda::inplace_solve(A, false, B, false, SolverTagT());
+      break;
 #endif
-        case viennacl::MEMORY_NOT_INITIALIZED:
-          throw memory_exception("not initialised!");
-        default:
-          throw memory_exception("not implemented");
-      }
-    }
-
-    /** @brief Direct inplace solver for dense triangular systems with transposed right hand side
-    *
-    * @param A       The system matrix
-    * @param proxy_B The transposed matrix of row vectors, where the solution is directly written to
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    void inplace_solve(const matrix_base<NumericT> & A,
-                       matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> proxy_B,
-                       SOLVERTAG)
-    {
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A))       && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
-      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(proxy_B)) && bool("Size check failed in inplace_solve(): size1(A) != size1(B^T)"));
-
-      switch (viennacl::traits::handle(A).get_active_handle_id())
-      {
-        case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(A, false, const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SOLVERTAG());
-          break;
-#ifdef VIENNACL_WITH_OPENCL
-        case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(A, false, const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SOLVERTAG());
-          break;
-#endif
-#ifdef VIENNACL_WITH_CUDA
-        case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(A, false, const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SOLVERTAG());
-          break;
-#endif
-        case viennacl::MEMORY_NOT_INITIALIZED:
-          throw memory_exception("not initialised!");
-        default:
-          throw memory_exception("not implemented");
-      }
-    }
-
-    //upper triangular solver for transposed lower triangular matrices
-    /** @brief Direct inplace solver for dense triangular systems that stem from transposed triangular systems
-    *
-    * @param proxy_A  The system matrix proxy
-    * @param B        The matrix holding the load vectors, where the solution is directly written to
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
-                       matrix_base<NumericT> & B,
-                       SOLVERTAG)
-    {
-      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size2(proxy_A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
-      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size1(B))       && bool("Size check failed in inplace_solve(): size1(A^T) != size1(B)"));
-
-      switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
-      {
-        case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true, B, false, SOLVERTAG());
-          break;
-#ifdef VIENNACL_WITH_OPENCL
-        case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true, B, false, SOLVERTAG());
-          break;
-#endif
-#ifdef VIENNACL_WITH_CUDA
-        case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true, B, false, SOLVERTAG());
-          break;
-#endif
-        case viennacl::MEMORY_NOT_INITIALIZED:
-          throw memory_exception("not initialised!");
-        default:
-          throw memory_exception("not implemented");
-      }
-    }
-
-    /** @brief Direct inplace solver for dense transposed triangular systems with transposed right hand side. Matlab notation: A' \ B'
-    *
-    * @param proxy_A  The system matrix proxy
-    * @param proxy_B  The matrix holding the load vectors, where the solution is directly written to
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
-                             matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>   proxy_B,
-                       SOLVERTAG)
-    {
-      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size2(proxy_A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
-      assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size1(proxy_B)) && bool("Size check failed in inplace_solve(): size1(A^T) != size1(B^T)"));
-
-      switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
-      {
-        case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true,
-                                                      const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SOLVERTAG());
-          break;
-#ifdef VIENNACL_WITH_OPENCL
-        case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true,
-                                                  const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SOLVERTAG());
-          break;
-#endif
-#ifdef VIENNACL_WITH_CUDA
-        case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true,
-                                                const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SOLVERTAG());
-          break;
-#endif
-        case viennacl::MEMORY_NOT_INITIALIZED:
-          throw memory_exception("not initialised!");
-        default:
-          throw memory_exception("not implemented");
-      }
-    }
-
-    //
-    // A \ b
-    //
-
-    template<typename NumericT, typename SOLVERTAG>
-    void inplace_solve(const matrix_base<NumericT> & mat,
-                             vector_base<NumericT> & vec,
-                       SOLVERTAG)
-    {
-      assert( (mat.size1() == vec.size()) && bool("Size check failed in inplace_solve(): size1(A) != size(b)"));
-      assert( (mat.size2() == vec.size()) && bool("Size check failed in inplace_solve(): size2(A) != size(b)"));
-
-      switch (viennacl::traits::handle(mat).get_active_handle_id())
-      {
-        case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(mat, false, vec, SOLVERTAG());
-          break;
-#ifdef VIENNACL_WITH_OPENCL
-        case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(mat, false, vec, SOLVERTAG());
-          break;
-#endif
-#ifdef VIENNACL_WITH_CUDA
-        case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(mat, false, vec, SOLVERTAG());
-          break;
-#endif
-        case viennacl::MEMORY_NOT_INITIALIZED:
-          throw memory_exception("not initialised!");
-        default:
-          throw memory_exception("not implemented");
-      }
-    }
-
-    /** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
-    *
-    * @param proxy    The system matrix proxy
-    * @param vec    The load vector, where the solution is directly written to
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
-                       vector_base<NumericT> & vec,
-                       SOLVERTAG)
-    {
-      assert( (proxy.lhs().size1() == vec.size()) && bool("Size check failed in inplace_solve(): size1(A) != size(b)"));
-      assert( (proxy.lhs().size2() == vec.size()) && bool("Size check failed in inplace_solve(): size2(A) != size(b)"));
-
-      switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
-      {
-        case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::inplace_solve(proxy.lhs(), true, vec, SOLVERTAG());
-          break;
-#ifdef VIENNACL_WITH_OPENCL
-        case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::inplace_solve(proxy.lhs(), true, vec, SOLVERTAG());
-          break;
-#endif
-#ifdef VIENNACL_WITH_CUDA
-        case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::inplace_solve(proxy.lhs(), true, vec, SOLVERTAG());
-          break;
-#endif
-        case viennacl::MEMORY_NOT_INITIALIZED:
-          throw memory_exception("not initialised!");
-        default:
-          throw memory_exception("not implemented");
-      }
-    }
-
-    /////////////////// general wrappers for non-inplace solution //////////////////////
-
-
-    /** @brief Convenience functions for C = solve(A, B, some_tag()); Creates a temporary result matrix and forwards the request to inplace_solve()
-    *
-    * @param A    The system matrix
-    * @param B    The matrix of load vectors
-    * @param tag    Dispatch tag
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    matrix_base<NumericT> solve(const matrix_base<NumericT> & A,
-                                const matrix_base<NumericT> & B,
-                                SOLVERTAG tag)
-    {
-      // do an inplace solve on the result vector:
-      matrix_base<NumericT> result(B);
-
-      inplace_solve(A, result, tag);
-
-      return result;
-    }
-
-
-    //////////
-
-    /** @brief Convenience functions for C = solve(A, B^T, some_tag()); Creates a temporary result matrix and forwards the request to inplace_solve()
-    *
-    * @param A    The system matrix
-    * @param proxy  The transposed load vector
-    * @param tag    Dispatch tag
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    matrix_base<NumericT> solve(const matrix_base<NumericT> & A,
-                                const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
-                                SOLVERTAG tag)
-    {
-      // do an inplace solve on the result vector:
-      matrix_base<NumericT> result(proxy);
-
-      inplace_solve(A, result, tag);
-
-      return result;
-    }
-
-    /** @brief Convenience functions for result = solve(mat, vec, some_tag()); Creates a temporary result vector and forwards the request to inplace_solve()
-    *
-    * @param mat    The system matrix
-    * @param vec    The load vector
-    * @param tag    Dispatch tag
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    vector<NumericT> solve(const matrix_base<NumericT> & mat,
-                           const vector_base<NumericT> & vec,
-                           SOLVERTAG const & tag)
-    {
-      // do an inplace solve on the result vector:
-      vector<NumericT> result(vec);
-
-      inplace_solve(mat, result, tag);
-
-      return result;
-    }
-
-
-    ///////////// transposed system matrix:
-    /** @brief Convenience functions for result = solve(trans(mat), B, some_tag()); Creates a temporary result matrix and forwards the request to inplace_solve()
-    *
-    * @param proxy  The transposed system matrix proxy
-    * @param B      The matrix of load vectors
-    * @param tag    Dispatch tag
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    matrix_base<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
-                                const matrix_base<NumericT> & B,
-                                SOLVERTAG tag)
-    {
-      // do an inplace solve on the result vector:
-      matrix_base<NumericT> result(B);
-
-      inplace_solve(proxy, result, tag);
-
-      return result;
-    }
-
-
-    /** @brief Convenience functions for result = solve(trans(mat), vec, some_tag()); Creates a temporary result vector and forwards the request to inplace_solve()
-    *
-    * @param proxy_A  The transposed system matrix proxy
-    * @param proxy_B  The transposed matrix of load vectors, where the solution is directly written to
-    * @param tag    Dispatch tag
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    matrix_base<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
-                                const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_B,
-                                SOLVERTAG tag)
-    {
-      // run an inplace solve on the result vector:
-      matrix_base<NumericT> result(proxy_B);
-
-      inplace_solve(proxy_A, result, tag);
-
-      return result;
-    }
-
-    /** @brief Convenience functions for result = solve(trans(mat), vec, some_tag()); Creates a temporary result vector and forwards the request to inplace_solve()
-    *
-    * @param proxy  The transposed system matrix proxy
-    * @param vec    The load vector, where the solution is directly written to
-    * @param tag    Dispatch tag
-    */
-    template<typename NumericT, typename SOLVERTAG>
-    vector<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
-                           const vector_base<NumericT> & vec,
-                           SOLVERTAG const & tag)
-    {
-      // run an inplace solve on the result vector:
-      vector<NumericT> result(vec);
-
-      inplace_solve(proxy, result, tag);
-
-      return result;
-    }
-
-
+    case viennacl::MEMORY_NOT_INITIALIZED:
+      throw memory_exception("not initialised!");
+    default:
+      throw memory_exception("not implemented");
   }
+}
+
+/** @brief Direct inplace solver for dense triangular systems with transposed right hand side
+*
+* @param A       The system matrix
+* @param proxy_B The transposed matrix of row vectors, where the solution is directly written to
+*/
+template<typename NumericT, typename SolverTagT>
+void inplace_solve(matrix_base<NumericT> const & A,
+                   matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> proxy_B,
+                   SolverTagT)
+{
+  assert( (viennacl::traits::size1(A) == viennacl::traits::size2(A))       && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
+  assert( (viennacl::traits::size1(A) == viennacl::traits::size1(proxy_B)) && bool("Size check failed in inplace_solve(): size1(A) != size1(B^T)"));
+
+  switch (viennacl::traits::handle(A).get_active_handle_id())
+  {
+    case viennacl::MAIN_MEMORY:
+      viennacl::linalg::host_based::inplace_solve(A, false, const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SolverTagT());
+      break;
+#ifdef VIENNACL_WITH_OPENCL
+    case viennacl::OPENCL_MEMORY:
+      viennacl::linalg::opencl::inplace_solve(A, false, const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SolverTagT());
+      break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+    case viennacl::CUDA_MEMORY:
+      viennacl::linalg::cuda::inplace_solve(A, false, const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SolverTagT());
+      break;
+#endif
+    case viennacl::MEMORY_NOT_INITIALIZED:
+      throw memory_exception("not initialised!");
+    default:
+      throw memory_exception("not implemented");
+  }
+}
+
+//upper triangular solver for transposed lower triangular matrices
+/** @brief Direct inplace solver for dense triangular systems that stem from transposed triangular systems
+*
+* @param proxy_A  The system matrix proxy
+* @param B        The matrix holding the load vectors, where the solution is directly written to
+*/
+template<typename NumericT, typename SolverTagT>
+void inplace_solve(matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> const & proxy_A,
+                   matrix_base<NumericT> & B,
+                   SolverTagT)
+{
+  assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size2(proxy_A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
+  assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size1(B))       && bool("Size check failed in inplace_solve(): size1(A^T) != size1(B)"));
+
+  switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
+  {
+    case viennacl::MAIN_MEMORY:
+      viennacl::linalg::host_based::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true, B, false, SolverTagT());
+      break;
+#ifdef VIENNACL_WITH_OPENCL
+    case viennacl::OPENCL_MEMORY:
+      viennacl::linalg::opencl::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true, B, false, SolverTagT());
+      break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+    case viennacl::CUDA_MEMORY:
+      viennacl::linalg::cuda::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true, B, false, SolverTagT());
+      break;
+#endif
+    case viennacl::MEMORY_NOT_INITIALIZED:
+      throw memory_exception("not initialised!");
+    default:
+      throw memory_exception("not implemented");
+  }
+}
+
+/** @brief Direct inplace solver for dense transposed triangular systems with transposed right hand side. Matlab notation: A' \ B'
+*
+* @param proxy_A  The system matrix proxy
+* @param proxy_B  The matrix holding the load vectors, where the solution is directly written to
+*/
+template<typename NumericT, typename SolverTagT>
+void inplace_solve(matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> const & proxy_A,
+                   matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>         proxy_B,
+                   SolverTagT)
+{
+  assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size2(proxy_A)) && bool("Size check failed in inplace_solve(): size1(A) != size2(A)"));
+  assert( (viennacl::traits::size1(proxy_A) == viennacl::traits::size1(proxy_B)) && bool("Size check failed in inplace_solve(): size1(A^T) != size1(B^T)"));
+
+  switch (viennacl::traits::handle(proxy_A.lhs()).get_active_handle_id())
+  {
+    case viennacl::MAIN_MEMORY:
+      viennacl::linalg::host_based::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true,
+                                                  const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SolverTagT());
+      break;
+#ifdef VIENNACL_WITH_OPENCL
+    case viennacl::OPENCL_MEMORY:
+      viennacl::linalg::opencl::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true,
+                                              const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SolverTagT());
+      break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+    case viennacl::CUDA_MEMORY:
+      viennacl::linalg::cuda::inplace_solve(const_cast<matrix_base<NumericT> &>(proxy_A.lhs()), true,
+                                            const_cast<matrix_base<NumericT> &>(proxy_B.lhs()), true, SolverTagT());
+      break;
+#endif
+    case viennacl::MEMORY_NOT_INITIALIZED:
+      throw memory_exception("not initialised!");
+    default:
+      throw memory_exception("not implemented");
+  }
+}
+
+//
+// A \ b
+//
+
+template<typename NumericT, typename SolverTagT>
+void inplace_solve(matrix_base<NumericT> const & mat,
+                   vector_base<NumericT>       & vec,
+                   SolverTagT)
+{
+  assert( (mat.size1() == vec.size()) && bool("Size check failed in inplace_solve(): size1(A) != size(b)"));
+  assert( (mat.size2() == vec.size()) && bool("Size check failed in inplace_solve(): size2(A) != size(b)"));
+
+  switch (viennacl::traits::handle(mat).get_active_handle_id())
+  {
+    case viennacl::MAIN_MEMORY:
+      viennacl::linalg::host_based::inplace_solve(mat, false, vec, SolverTagT());
+      break;
+#ifdef VIENNACL_WITH_OPENCL
+    case viennacl::OPENCL_MEMORY:
+      viennacl::linalg::opencl::inplace_solve(mat, false, vec, SolverTagT());
+      break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+    case viennacl::CUDA_MEMORY:
+      viennacl::linalg::cuda::inplace_solve(mat, false, vec, SolverTagT());
+      break;
+#endif
+    case viennacl::MEMORY_NOT_INITIALIZED:
+      throw memory_exception("not initialised!");
+    default:
+      throw memory_exception("not implemented");
+  }
+}
+
+/** @brief Direct inplace solver for dense upper triangular systems that stem from transposed lower triangular systems
+*
+* @param proxy    The system matrix proxy
+* @param vec    The load vector, where the solution is directly written to
+*/
+template<typename NumericT, typename SolverTagT>
+void inplace_solve(matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> const & proxy,
+                   vector_base<NumericT> & vec,
+                   SolverTagT)
+{
+  assert( (proxy.lhs().size1() == vec.size()) && bool("Size check failed in inplace_solve(): size1(A) != size(b)"));
+  assert( (proxy.lhs().size2() == vec.size()) && bool("Size check failed in inplace_solve(): size2(A) != size(b)"));
+
+  switch (viennacl::traits::handle(proxy.lhs()).get_active_handle_id())
+  {
+    case viennacl::MAIN_MEMORY:
+      viennacl::linalg::host_based::inplace_solve(proxy.lhs(), true, vec, SolverTagT());
+      break;
+#ifdef VIENNACL_WITH_OPENCL
+    case viennacl::OPENCL_MEMORY:
+      viennacl::linalg::opencl::inplace_solve(proxy.lhs(), true, vec, SolverTagT());
+      break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+    case viennacl::CUDA_MEMORY:
+      viennacl::linalg::cuda::inplace_solve(proxy.lhs(), true, vec, SolverTagT());
+      break;
+#endif
+    case viennacl::MEMORY_NOT_INITIALIZED:
+      throw memory_exception("not initialised!");
+    default:
+      throw memory_exception("not implemented");
+  }
+}
+
+/////////////////// general wrappers for non-inplace solution //////////////////////
+
+
+/** @brief Convenience functions for C = solve(A, B, some_tag()); Creates a temporary result matrix and forwards the request to inplace_solve()
+*
+* @param A    The system matrix
+* @param B    The matrix of load vectors
+* @param tag    Dispatch tag
+*/
+template<typename NumericT, typename SolverTagT>
+matrix_base<NumericT> solve(const matrix_base<NumericT> & A,
+                            const matrix_base<NumericT> & B,
+                            SolverTagT tag)
+{
+  // do an inplace solve on the result vector:
+  matrix_base<NumericT> result(B);
+
+  inplace_solve(A, result, tag);
+
+  return result;
+}
+
+
+//////////
+
+/** @brief Convenience functions for C = solve(A, B^T, some_tag()); Creates a temporary result matrix and forwards the request to inplace_solve()
+*
+* @param A    The system matrix
+* @param proxy  The transposed load vector
+* @param tag    Dispatch tag
+*/
+template<typename NumericT, typename SolverTagT>
+matrix_base<NumericT> solve(const matrix_base<NumericT> & A,
+                            const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
+                            SolverTagT tag)
+{
+  // do an inplace solve on the result vector:
+  matrix_base<NumericT> result(proxy);
+
+  inplace_solve(A, result, tag);
+
+  return result;
+}
+
+/** @brief Convenience functions for result = solve(mat, vec, some_tag()); Creates a temporary result vector and forwards the request to inplace_solve()
+*
+* @param mat    The system matrix
+* @param vec    The load vector
+* @param tag    Dispatch tag
+*/
+template<typename NumericT, typename SolverTagT>
+vector<NumericT> solve(const matrix_base<NumericT> & mat,
+                       const vector_base<NumericT> & vec,
+                       SolverTagT const & tag)
+{
+  // do an inplace solve on the result vector:
+  vector<NumericT> result(vec);
+
+  inplace_solve(mat, result, tag);
+
+  return result;
+}
+
+
+///////////// transposed system matrix:
+/** @brief Convenience functions for result = solve(trans(mat), B, some_tag()); Creates a temporary result matrix and forwards the request to inplace_solve()
+*
+* @param proxy  The transposed system matrix proxy
+* @param B      The matrix of load vectors
+* @param tag    Dispatch tag
+*/
+template<typename NumericT, typename SolverTagT>
+matrix_base<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
+                            const matrix_base<NumericT> & B,
+                            SolverTagT tag)
+{
+  // do an inplace solve on the result vector:
+  matrix_base<NumericT> result(B);
+
+  inplace_solve(proxy, result, tag);
+
+  return result;
+}
+
+
+/** @brief Convenience functions for result = solve(trans(mat), vec, some_tag()); Creates a temporary result vector and forwards the request to inplace_solve()
+*
+* @param proxy_A  The transposed system matrix proxy
+* @param proxy_B  The transposed matrix of load vectors, where the solution is directly written to
+* @param tag    Dispatch tag
+*/
+template<typename NumericT, typename SolverTagT>
+matrix_base<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
+                            const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_B,
+                            SolverTagT tag)
+{
+  // run an inplace solve on the result vector:
+  matrix_base<NumericT> result(proxy_B);
+
+  inplace_solve(proxy_A, result, tag);
+
+  return result;
+}
+
+/** @brief Convenience functions for result = solve(trans(mat), vec, some_tag()); Creates a temporary result vector and forwards the request to inplace_solve()
+*
+* @param proxy  The transposed system matrix proxy
+* @param vec    The load vector, where the solution is directly written to
+* @param tag    Dispatch tag
+*/
+template<typename NumericT, typename SolverTagT>
+vector<NumericT> solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy,
+                       const vector_base<NumericT> & vec,
+                       SolverTagT const & tag)
+{
+  // run an inplace solve on the result vector:
+  vector<NumericT> result(vec);
+
+  inplace_solve(proxy, result, tag);
+
+  return result;
+}
+
+
+}
 }
 
 #endif

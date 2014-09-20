@@ -32,32 +32,32 @@
 
 namespace viennacl
 {
-  namespace linalg
-  {
+namespace linalg
+{
 
-    // A * x
+// A * x
 
-    /** @brief Carries out matrix-vector multiplication with a hankel_matrix
-    *
-    * Implementation of the convenience expression result = prod(mat, vec);
-    *
-    * @param mat    The matrix
-    * @param vec    The vector
-    * @param result The result vector
-    */
-    template<class SCALARTYPE, unsigned int ALIGNMENT>
-    void prod_impl(const viennacl::hankel_matrix<SCALARTYPE, ALIGNMENT> & mat,
-                   const viennacl::vector_base<SCALARTYPE> & vec,
-                         viennacl::vector_base<SCALARTYPE> & result)
-    {
-      assert(mat.size1() == result.size());
-      assert(mat.size2() == vec.size());
+/** @brief Carries out matrix-vector multiplication with a hankel_matrix
+*
+* Implementation of the convenience expression result = prod(mat, vec);
+*
+* @param mat    The matrix
+* @param vec    The vector
+* @param result The result vector
+*/
+template<typename NumericT, unsigned int AlignmentV>
+void prod_impl(viennacl::hankel_matrix<NumericT, AlignmentV> const & A,
+               viennacl::vector_base<NumericT> const & vec,
+               viennacl::vector_base<NumericT>       & result)
+{
+  assert(A.size1() == result.size() && bool("Dimension mismatch"));
+  assert(A.size2() == vec.size()    && bool("Dimension mismatch"));
 
-      prod_impl(mat.elements(), vec, result);
-      viennacl::linalg::reverse(result);
-    }
+  prod_impl(A.elements(), vec, result);
+  viennacl::linalg::reverse(result);
+}
 
-  } //namespace linalg
+} //namespace linalg
 
 
 } //namespace viennacl

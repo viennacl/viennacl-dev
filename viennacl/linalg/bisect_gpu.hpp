@@ -1,5 +1,5 @@
-#ifndef VIENNACL_LINAL_BISECT_GPU
-#define VIENNACL_LINAL_BISECT_GPU
+#ifndef VIENNACL_LINALG_BISECT_GPU
+#define VIENNACL_LINALG_BISECT_GPU
 
 /* =========================================================================
    Copyright (c) 2010-2014, Institute for Microelectronics,
@@ -56,13 +56,13 @@ namespace linalg
 ///
 //! overloaded function template: std::vectors as parameters
 template<typename NumericT>
-bool
-bisect(const std::vector<NumericT> & diagonal, const std::vector<NumericT> & superdiagonal, std::vector<NumericT> & eigenvalues)
+bool bisect(std::vector<NumericT> const & diagonal, std::vector<NumericT> const & superdiagonal, std::vector<NumericT> & eigenvalues)
 {
   assert(diagonal.size() == superdiagonal.size() &&
          diagonal.size() == eigenvalues.size()   &&
          bool("Input vectors do not have the same sizes!"));
   bool bResult = false;
+
   // flag if the matrix size is due to explicit user request
   // desired precision of eigenvalues
   NumericT  precision = 0.00001;
@@ -83,8 +83,7 @@ bisect(const std::vector<NumericT> & diagonal, const std::vector<NumericT> & sup
     viennacl::linalg::detail::ResultDataSmall<NumericT> result(mat_size);
 
     // run the kernel
-    viennacl::linalg::detail::computeEigenvaluesSmallMatrix(input, result, mat_size, lg, ug,
-                                  precision);
+    viennacl::linalg::detail::computeEigenvaluesSmallMatrix(input, result, mat_size, lg, ug, precision);
 
     // get the result from the device and do some sanity checks,
     viennacl::linalg::detail::processResultSmallMatrix(result, mat_size);
@@ -98,8 +97,7 @@ bisect(const std::vector<NumericT> & diagonal, const std::vector<NumericT> & sup
     viennacl::linalg::detail::ResultDataLarge<NumericT> result(mat_size);
 
     // run the kernel
-    viennacl::linalg::detail::computeEigenvaluesLargeMatrix(input, result, mat_size,
-                                  lg, ug, precision);
+    viennacl::linalg::detail::computeEigenvaluesLargeMatrix(input, result, mat_size, lg, ug, precision);
 
     // get the result from the device and do some sanity checks
     bResult = viennacl::linalg::detail::processResultDataLargeMatrix(result, mat_size);
@@ -120,8 +118,7 @@ bisect(const std::vector<NumericT> & diagonal, const std::vector<NumericT> & sup
 ///
 //! overloaded function template: viennacl::vectors as parameters
 template<typename NumericT>
-bool
-bisect(const viennacl::vector<NumericT> & diagonal, const viennacl::vector<NumericT> & superdiagonal, viennacl::vector<NumericT> & eigenvalues)
+bool bisect(viennacl::vector<NumericT> const & diagonal, viennacl::vector<NumericT> const & superdiagonal, viennacl::vector<NumericT> & eigenvalues)
 {
   assert(diagonal.size() == superdiagonal.size() &&
          diagonal.size() == eigenvalues.size()   &&
@@ -147,8 +144,7 @@ bisect(const viennacl::vector<NumericT> & diagonal, const viennacl::vector<Numer
     viennacl::linalg::detail::ResultDataSmall<NumericT> result(mat_size);
 
     // run the kernel
-    viennacl::linalg::detail::computeEigenvaluesSmallMatrix(input, result, mat_size, lg, ug,
-                                  precision);
+    viennacl::linalg::detail::computeEigenvaluesSmallMatrix(input, result, mat_size, lg, ug, precision);
 
     // get the result from the device and do some sanity checks,
     viennacl::linalg::detail::processResultSmallMatrix(result, mat_size);
@@ -162,8 +158,7 @@ bisect(const viennacl::vector<NumericT> & diagonal, const viennacl::vector<Numer
     viennacl::linalg::detail::ResultDataLarge<NumericT> result(mat_size);
 
     // run the kernel
-    viennacl::linalg::detail::computeEigenvaluesLargeMatrix(input, result, mat_size,
-                                  lg, ug, precision);
+    viennacl::linalg::detail::computeEigenvaluesLargeMatrix(input, result, mat_size, lg, ug, precision);
 
     // get the result from the device and do some sanity checks
     bResult = viennacl::linalg::detail::processResultDataLargeMatrix(result, mat_size);

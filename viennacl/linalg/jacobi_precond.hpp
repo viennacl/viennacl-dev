@@ -35,101 +35,101 @@
 
 namespace viennacl
 {
-  namespace linalg
-  {
+namespace linalg
+{
 
-    /** @brief A tag for a jacobi preconditioner
-    */
-    class jacobi_tag {};
+/** @brief A tag for a jacobi preconditioner
+*/
+class jacobi_tag {};
 
 
-    /** @brief Jacobi preconditioner class, can be supplied to solve()-routines. Generic version for non-ViennaCL matrices.
-    */
-    template<typename MatrixType,
-              bool is_viennacl = detail::row_scaling_for_viennacl<MatrixType>::value >
-    class jacobi_precond
+/** @brief Jacobi preconditioner class, can be supplied to solve()-routines. Generic version for non-ViennaCL matrices.
+*/
+template<typename MatrixT,
+          bool is_viennacl = detail::row_scaling_for_viennacl<MatrixT>::value >
+class jacobi_precond
+{
+  typedef typename MatrixT::value_type      NumericType;
+
+  public:
+    jacobi_precond(MatrixT const & mat, jacobi_tag const &) : diag_A_(viennacl::traits::size1(mat))
     {
-      typedef typename MatrixType::value_type      ScalarType;
+      init(mat);
+    }
 
-      public:
-        jacobi_precond(MatrixType const & mat, jacobi_tag const &) : diag_A(viennacl::traits::size1(mat))
+    void init(MatrixT const & mat)
+    {
+      diag_A_.resize(viennacl::traits::size1(mat));  //resize without preserving values
+
+      for (typename MatrixT::const_iterator1 row_it = mat.begin1();
+            row_it != mat.end1();
+            ++row_it)
+      {
+        bool diag_found = false;
+        for (typename MatrixT::const_iterator2 col_it = row_it.begin();
+              col_it != row_it.end();
+              ++col_it)
         {
-          init(mat);
-        }
-
-        void init(MatrixType const & mat)
-        {
-          diag_A.resize(viennacl::traits::size1(mat));  //resize without preserving values
-
-          for (typename MatrixType::const_iterator1 row_it = mat.begin1();
-                row_it != mat.end1();
-                ++row_it)
+          if (col_it.index1() == col_it.index2())
           {
-            bool diag_found = false;
-            for (typename MatrixType::const_iterator2 col_it = row_it.begin();
-                  col_it != row_it.end();
-                  ++col_it)
-            {
-              if (col_it.index1() == col_it.index2())
-              {
-                diag_A[col_it.index1()] = *col_it;
-                diag_found = true;
-              }
-            }
-            if (!diag_found)
-              throw "ViennaCL: Zero in diagonal encountered while setting up Jacobi preconditioner!";
+            diag_A_[col_it.index1()] = *col_it;
+            diag_found = true;
           }
         }
+        if (!diag_found)
+          throw "ViennaCL: Zero in diagonal encountered while setting up Jacobi preconditioner!";
+      }
+    }
 
 
-        /** @brief Apply to res = b - Ax, i.e. jacobi applied vec (right hand side),  */
-        template<typename VectorType>
-        void apply(VectorType & vec) const
-        {
-          assert(viennacl::traits::size(diag_A) == viennacl::traits::size(vec) && bool("Size mismatch"));
-          for (vcl_size_t i=0; i<diag_A.size(); ++i)
-            vec[i] /= diag_A[i];
-        }
-
-      private:
-        std::vector<ScalarType> diag_A;
-    };
-
-
-    /** @brief Jacobi preconditioner class, can be supplied to solve()-routines.
-    *
-    *  Specialization for compressed_matrix
-    */
-    template<typename MatrixType>
-    class jacobi_precond< MatrixType, true>
+    /** @brief Apply to res = b - Ax, i.e. jacobi applied vec (right hand side),  */
+    template<typename VectorT>
+    void apply(VectorT & vec) const
     {
-        typedef typename viennacl::result_of::cpu_value_type<typename MatrixType::value_type>::type  ScalarType;
+      assert(viennacl::traits::size(diag_A_) == viennacl::traits::size(vec) && bool("Size mismatch"));
+      for (vcl_size_t i=0; i<diag_A_.size(); ++i)
+        vec[i] /= diag_A_[i];
+    }
 
-      public:
-        jacobi_precond(MatrixType const & mat, jacobi_tag const &) : diag_A(mat.size1(), viennacl::traits::context(mat))
-        {
-          init(mat);
-        }
-
-
-        void init(MatrixType const & mat)
-        {
-          detail::row_info(mat, diag_A, detail::SPARSE_ROW_DIAGONAL);
-        }
+  private:
+    std::vector<NumericType> diag_A_;
+};
 
 
-        template<unsigned int ALIGNMENT>
-        void apply(viennacl::vector<ScalarType, ALIGNMENT> & vec) const
-        {
-          assert(viennacl::traits::size(diag_A) == viennacl::traits::size(vec) && bool("Size mismatch"));
-          vec = element_div(vec, diag_A);
-        }
+/** @brief Jacobi preconditioner class, can be supplied to solve()-routines.
+*
+*  Specialization for compressed_matrix
+*/
+template<typename MatrixT>
+class jacobi_precond<MatrixT, true>
+{
+    typedef typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type  NumericType;
 
-      private:
-        viennacl::vector<ScalarType> diag_A;
-    };
+  public:
+    jacobi_precond(MatrixT const & mat, jacobi_tag const &) : diag_A_(mat.size1(), viennacl::traits::context(mat))
+    {
+      init(mat);
+    }
 
-  }
+
+    void init(MatrixT const & mat)
+    {
+      detail::row_info(mat, diag_A_, detail::SPARSE_ROW_DIAGONAL);
+    }
+
+
+    template<unsigned int AlignmentV>
+    void apply(viennacl::vector<NumericType, AlignmentV> & vec) const
+    {
+      assert(viennacl::traits::size(diag_A_) == viennacl::traits::size(vec) && bool("Size mismatch"));
+      vec = element_div(vec, diag_A_);
+    }
+
+  private:
+    viennacl::vector<NumericType> diag_A_;
+};
+
+}
 }
 
 
