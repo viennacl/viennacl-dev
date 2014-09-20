@@ -52,11 +52,11 @@ typedef float NumericT;
 void
 initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, const unsigned int mat_size)
 {
- 
+
   srand(278217421);
   bool randomValues = false;
-  
-  
+
+
   if(randomValues == true)
   {
     // Initialize diagonal and superdiagonal elements with random values
@@ -68,9 +68,9 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
                                      / (double) RAND_MAX) - 0.5));
     }
   }
-  
+
   else
-  { 
+  {
     // Initialize diagonal and superdiagonal elements with modulo values
     // This will cause in many multiple eigenvalues.
     for(unsigned int i = 0; i < mat_size; ++i)
@@ -82,15 +82,14 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
   // the first element of s is used as padding on the device (thus the
   // whole vector is copied to the device but the kernels are launched
   // with (s+1) as start address
-  superdiagonal[0] = 0.0f; 
+  superdiagonal[0] = 0.0f;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Program main
 ////////////////////////////////////////////////////////////////////////////////
-int
-main(int argc, char **argv)
+int main()
 {
     bool bResult = false;
     unsigned int mat_size = 30;

@@ -610,6 +610,7 @@ namespace kernels
   template<typename StringType>
   void generate_bisect_kernel_createIndicesCompaction(StringType & source, std::string const & numeric_string)
   {
+    (void)numeric_string;
   source.append("       \n");
   source.append("     void  \n");
   source.append("     createIndicesCompaction(__local unsigned int *s_compaction_list_exc,  \n");
@@ -673,6 +674,7 @@ namespace kernels
   template<typename StringType>
   void generate_bisect_kernel_createIndicesCompactionShort(StringType & source, std::string const & numeric_string)
   {
+    (void)numeric_string;
   source.append("       \n");
   source.append("     void  \n");
   source.append("     createIndicesCompactionShort(__local unsigned short *s_compaction_list_exc,  \n");
@@ -1906,6 +1908,7 @@ namespace kernels
   template <typename StringType>
   void generate_bisect_kernel_scanCompactBlocksStartAddress(StringType & source, std::string const & numeric_string)
   {
+    (void)numeric_string;
       source.append("       \n");
       source.append("     void  \n");
       source.append("     scanCompactBlocksStartAddress(const unsigned int tid, const unsigned int tid_2,  \n");
@@ -1985,6 +1988,7 @@ namespace kernels
   template <typename StringType>
   void generate_bisect_kernel_scanSumBlocks(StringType & source, std::string const & numeric_string)
   {
+    (void)numeric_string;
       source.append("       \n");
       source.append("     void  \n");
       source.append("     scanSumBlocks(const unsigned int tid, const unsigned int tid_2,  \n");
@@ -2061,6 +2065,7 @@ namespace kernels
   template <typename StringType>
   void generate_bisect_kernel_scanInitial(StringType & source, std::string const & numeric_string)
   {
+    (void)numeric_string;
       source.append("       \n");
       source.append("     void  \n");
       source.append("     scanInitial(const unsigned int tid, const unsigned int tid_2,  \n");
