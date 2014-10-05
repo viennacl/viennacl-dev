@@ -90,7 +90,7 @@ inline void add_8B(database_type<vector_axpy_template::parameters_type> & db)
 
 inline void add_4B(database_type<vector_axpy_template::parameters_type> & db)
 {
-  db.add_4B(amd_id, CL_DEVICE_TYPE_GPU, ocl::evergreen, "Cypress", vector_axpy_template::parameters_type(2,256,1024,FETCH_FROM_GLOBAL_STRIDED));
+  db.add_4B(amd_id, CL_DEVICE_TYPE_GPU, ocl::evergreen, "Cypress", vector_axpy_template::parameters_type(1,256,1024,FETCH_FROM_GLOBAL_STRIDED));
 }
 
 }
