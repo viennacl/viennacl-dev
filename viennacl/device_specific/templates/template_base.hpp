@@ -370,6 +370,14 @@ protected:
 
 protected:
 
+  static std::string append_simd_suffix(std::string const & str, unsigned int i)
+  {
+    assert(i < 16);
+    static char suffixes[] = {'0','1','2','3','4','5','6','7','8','9',
+                             'a','b','c','d','e','f'};
+    return str + tools::to_string(suffixes[i]);
+  }
+
   static bool has_strided_access(statements_container const & statements)
   {
     for (statements_container::data_type::const_iterator it = statements.data().begin(); it != statements.data().end(); ++it)
