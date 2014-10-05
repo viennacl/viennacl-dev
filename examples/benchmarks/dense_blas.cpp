@@ -49,7 +49,7 @@ void init_random(viennacl::vector<T> & x)
 }
 
 template<class T>
-void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix)
+void bench(size_t BLAS1_N, size_t BLAS2_M, size_t BLAS2_N, size_t BLAS3_M, size_t BLAS3_N, size_t BLAS3_K, std::string const & prefix)
 {
   using viennacl::linalg::inner_prod;
   using viennacl::linalg::prod;
@@ -59,7 +59,7 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
   Timer timer;
   double time_previous, time_spent;
   size_t Nruns;
-  double time_per_benchmark = 1e-1;
+  double time_per_benchmark = 1;
 
 #define BENCHMARK_OP(OPERATION, NAME, PERF, INDEX) \
   OPERATION; \
@@ -82,48 +82,48 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
   {
     viennacl::scalar<T> s(0);
     T alpha = (T)2.4;
-    viennacl::vector<T> x(vecN);
-    viennacl::vector<T> y(vecN);
-    viennacl::vector<T> z(vecN);
+    viennacl::vector<T> x(BLAS1_N);
+    viennacl::vector<T> y(BLAS1_N);
+    viennacl::vector<T> z(BLAS1_N);
 
     init_random(x);
     init_random(y);
     init_random(z);
 
-    BENCHMARK_OP(x = y,                "COPY", std::setprecision(3) << 2*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
-    BENCHMARK_OP(x = y + alpha*x,      "AXPY", std::setprecision(3) << 3*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
-    BENCHMARK_OP(s = inner_prod(x, y), "DOT",  std::setprecision(3) << 2*vecN*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(x = y,                "COPY", std::setprecision(3) << 2*BLAS1_N*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(x = y + alpha*x,      "AXPY", std::setprecision(3) << 3*BLAS1_N*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(s = inner_prod(x, y), "DOT",  std::setprecision(3) << 2*BLAS1_N*sizeof(T)/time_spent * 1e-9, "GB/s")
   }
 
 
   //BLAS2
   {
-    viennacl::matrix<T> A(M, N);
-    viennacl::vector<T> x(N);
-    viennacl::vector<T> y(M);
+    viennacl::matrix<T,viennacl::column_major> A(BLAS2_M, BLAS2_N);
+    viennacl::vector<T> x(BLAS2_N);
+    viennacl::vector<T> y(BLAS2_M);
     init_random(A);
     init_random(x);
     init_random(y);
 
-    BENCHMARK_OP(y = prod(A, x),        "GEMV-N", std::setprecision(3) << (M + N + M*N)*sizeof(T)/time_spent * 1e-9, "GB/s")
-    BENCHMARK_OP(x = prod(trans(A), y), "GEMV-T", std::setprecision(3) << (M + N + M*N)*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(y = prod(A, x),        "GEMV-N", std::setprecision(3) << (BLAS3_M + BLAS3_N + BLAS3_M*BLAS3_N)*sizeof(T)/time_spent * 1e-9, "GB/s")
+    BENCHMARK_OP(x = prod(trans(A), y), "GEMV-T", std::setprecision(3) << (BLAS3_M + BLAS3_N + BLAS3_M*BLAS3_N)*sizeof(T)/time_spent * 1e-9, "GB/s")
   }
 
   //BLAS3
   {
-    viennacl::matrix<T> C(M, N);
-    viennacl::matrix<T> A(M, K);
-    viennacl::matrix<T> B(K, N);
-    viennacl::matrix<T> AT = trans(A);
-    viennacl::matrix<T> BT = trans(B);
+    viennacl::matrix<T,viennacl::column_major> C(BLAS3_M, BLAS3_N);
+    viennacl::matrix<T,viennacl::column_major> A(BLAS3_M, BLAS3_K);
+    viennacl::matrix<T,viennacl::column_major> B(BLAS3_K, BLAS3_N);
+    viennacl::matrix<T,viennacl::column_major> AT = trans(A);
+    viennacl::matrix<T,viennacl::column_major> BT = trans(B);
     init_random(A);
     init_random(B);
 
-    BENCHMARK_OP(C = prod(A, B),                 "GEMM-NN",      int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(A, trans(BT)),         "GEMM-NT",      int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(trans(AT), B),         "GEMM-TN",      int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(trans(AT), trans(BT)), "GEMM-TT",      int(2*M*N*K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(lu_factorize(A),                "LU-FACTORIZE", int(2*M*K*K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(A, B),                 "GEMM-NN",      int(2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(A, trans(BT)),         "GEMM-NT",      int(2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(trans(AT), B),         "GEMM-TN",      int(2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(trans(AT), trans(BT)), "GEMM-TT",      int(2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(lu_factorize(A),                "LU-FACTORIZE", int(2*BLAS3_M*BLAS3_K*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
   }
 
 
@@ -131,14 +131,18 @@ void bench(size_t M, size_t N, size_t K, size_t vecN, std::string const & prefix
 
 int main()
 {
-  std::size_t M = 2432;
-  std::size_t N = 2432;
-  std::size_t K = 2432;
+  std::size_t BLAS1_N = 10000000;
 
-  std::size_t xN = 5000000;
+  std::size_t BLAS2_M = 2560;
+  std::size_t BLAS2_N = 2560;
+
+  std::size_t BLAS3_M = 2560;
+  std::size_t BLAS3_N = 2560;
+  std::size_t BLAS3_K = 2560;
+
   std::cout << "Benchmark : BLAS" << std::endl;
   std::cout << "----------------" << std::endl;
-  bench<float>(M, N, K, xN, "s");
+  bench<float>(BLAS1_N, BLAS2_M, BLAS2_N, BLAS3_M, BLAS3_N, BLAS3_K, "s");
   std::cout << "----" << std::endl;
-  bench<double>(M, N, K, xN, "d");
+  bench<double>(BLAS1_N, BLAS2_M, BLAS2_N, BLAS3_M, BLAS3_N, BLAS3_K, "d");
 }
