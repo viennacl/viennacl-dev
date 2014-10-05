@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_AXPY_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_AXPY_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen/cypress.hpp"
+
 #include "viennacl/ocl/device_utils.hpp"
 
 #include "viennacl/scheduler/forwards.h"
@@ -31,6 +33,8 @@ inline database_type<matrix_axpy_template::parameters_type> init_matrix_axpy()
 
   devices::gpu::fallback::add_4B(result);
   devices::gpu::fallback::add_8B(result);
+  devices::gpu::amd::evergreen::cypress::add_4B(result);
+  devices::gpu::amd::evergreen::cypress::add_8B(result);
 
   return result;
 }

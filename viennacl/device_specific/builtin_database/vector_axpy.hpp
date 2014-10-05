@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_VECTOR_AXPY_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_VECTOR_AXPY_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen/cypress.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gt_540m.hpp"
 
 #include "viennacl/ocl/device_utils.hpp"
@@ -32,6 +34,8 @@ inline database_type<vector_axpy_template::parameters_type> init_vector_axpy()
   devices::gpu::fallback::add_8B(result);
   devices::gpu::nvidia::fermi::geforce_gt_540m::add_4B(result);
   devices::gpu::nvidia::fermi::geforce_gt_540m::add_8B(result);
+  devices::gpu::amd::evergreen::cypress::add_4B(result);
+  devices::gpu::amd::evergreen::cypress::add_8B(result);
 
   return result;
 }
