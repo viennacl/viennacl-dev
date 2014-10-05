@@ -378,6 +378,13 @@ protected:
     return str + tools::to_string(suffixes[i]);
   }
 
+  static bool is_striding_operator(scheduler::statement_node const & node)
+  {
+    return node.op.type==scheduler::OPERATION_BINARY_MATRIX_COLUMN_TYPE
+            || node.op.type==scheduler::OPERATION_BINARY_MATRIX_ROW_TYPE
+            || node.op.type==scheduler::OPERATION_BINARY_MATRIX_DIAG_TYPE;
+  }
+
   static bool has_strided_access(statements_container const & statements)
   {
     for (statements_container::data_type::const_iterator it = statements.data().begin(); it != statements.data().end(); ++it)
@@ -394,6 +401,11 @@ protected:
       tree_parsing::traverse(*it, it->root(), tree_parsing::filter_elements(scheduler::DENSE_MATRIX_TYPE, matrices), true);
       for (std::vector<scheduler::lhs_rhs_element>::iterator itt = matrices.begin(); itt != matrices.end(); ++itt)
         if (utils::call_on_matrix(*itt, utils::stride1_fun())>1 || utils::call_on_matrix(*itt, utils::stride2_fun())>2)
+          return true;
+
+      std::vector<size_t> striding_operators;
+      tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_striding_operator, striding_operators), false);
+      if(striding_operators.size() > 0)
           return true;
     }
     return false;
