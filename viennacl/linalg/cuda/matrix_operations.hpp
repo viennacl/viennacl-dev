@@ -2787,8 +2787,8 @@ template<typename NumericT, typename F>
 void exclusive_scan(vector_base<NumericT, F>& vec1,
                  vector_base<NumericT, F>& vec2)
 {
- viennacl::vector<NumericT> S    (std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE));
- viennacl::vector<NumericT> S_ref(std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE));
+ viennacl::vector<NumericT> S    (std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE)));
+ viennacl::vector<NumericT> S_ref(std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE)));
 
  exclusive_scan_kernel_1<<<S.size(), VIENNACL_SECTION_SIZE>>>(
                                    detail::cuda_arg<NumericT>(vec1),
