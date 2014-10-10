@@ -338,7 +338,7 @@ namespace viennacl
   //
   // Matrix types:
   //
-  static const std::size_t dense_padding_size = 128;
+  static const std::size_t dense_padding_size = 16;
 
   /** @brief A dense matrix class
   *
