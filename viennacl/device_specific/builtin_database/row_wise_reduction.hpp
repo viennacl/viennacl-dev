@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_ROW_WISE_REDUCTION_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_ROW_WISE_REDUCTION_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/volcanic_islands/hawaii.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen/cypress.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gt_540m.hpp"
@@ -37,6 +39,8 @@ inline database_type<row_wise_reduction_template::parameters_type> init_row_wise
   devices::gpu::nvidia::fermi::geforce_gt_540m::add_8B(result, char_to_type<'N'>());
   devices::gpu::amd::evergreen::cypress::add_4B(result, char_to_type<'N'>());
   devices::gpu::amd::evergreen::cypress::add_8B(result, char_to_type<'N'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_4B(result, char_to_type<'N'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_8B(result, char_to_type<'N'>());
 
   return result;
 }
@@ -56,6 +60,8 @@ inline database_type<row_wise_reduction_template::parameters_type> init_row_wise
   devices::gpu::nvidia::fermi::geforce_gt_540m::add_4B(result, char_to_type<'T'>());
   devices::gpu::amd::evergreen::cypress::add_4B(result, char_to_type<'T'>());
   devices::gpu::amd::evergreen::cypress::add_8B(result, char_to_type<'T'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_4B(result, char_to_type<'T'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_8B(result, char_to_type<'T'>());
 
   return result;
 }

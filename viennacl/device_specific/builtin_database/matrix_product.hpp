@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_PRODUCT_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_PRODUCT_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/volcanic_islands/hawaii.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen/cypress.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gt_540m.hpp"
@@ -35,6 +37,8 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::fallback::add_8B(result, char_to_type<'N'>(), char_to_type<'N'>());
 
   devices::gpu::amd::evergreen::cypress::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_8B(result, char_to_type<'N'>(), char_to_type<'N'>());
 
   return result;
 }
@@ -53,6 +57,8 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::fallback::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
   devices::gpu::nvidia::fermi::geforce_gt_540m::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
   devices::gpu::amd::evergreen::cypress::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
 
   return result;
 }
@@ -72,6 +78,8 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
 
   devices::gpu::nvidia::fermi::geforce_gt_540m::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
   devices::gpu::amd::evergreen::cypress::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_8B(result, char_to_type<'N'>(), char_to_type<'T'>());
 
   return result;
 }
@@ -89,6 +97,8 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::fallback::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
   devices::gpu::fallback::add_8B(result, char_to_type<'T'>(), char_to_type<'T'>());
   devices::gpu::amd::evergreen::cypress::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
+  devices::gpu::amd::volcanic_islands::hawaii::add_8B(result, char_to_type<'T'>(), char_to_type<'T'>());
 
   return result;
 }
