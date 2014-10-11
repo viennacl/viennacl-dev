@@ -35,7 +35,7 @@ inline void add_8B(database_type<matrix_product_template::parameters_type> & db,
 
 inline void add_8B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'N'>, char_to_type<'T'>)
 {
-  db.add_8B(amd_id, CL_DEVICE_TYPE_GPU, ocl::volcanic_islands, "Hawaii", matrix_product_template::parameters_type(1,4,8,16,8,1,2,FETCH_FROM_LOCAL,FETCH_FROM_LOCAL,16,4));
+  db.add_8B(amd_id, CL_DEVICE_TYPE_GPU, ocl::volcanic_islands, "Hawaii", matrix_product_template::parameters_type(2,8,8,8,6,1,6,FETCH_FROM_LOCAL,FETCH_FROM_LOCAL,8,8));
 }
 
 inline void add_8B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'N'>, char_to_type<'N'>)
@@ -55,7 +55,7 @@ inline void add_4B(database_type<matrix_product_template::parameters_type> & db,
 
 inline void add_4B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'N'>, char_to_type<'T'>)
 {
-  db.add_4B(amd_id, CL_DEVICE_TYPE_GPU, ocl::volcanic_islands, "Hawaii", matrix_product_template::parameters_type(1,8,8,8,4,2,4,FETCH_FROM_LOCAL,FETCH_FROM_LOCAL,32,2));
+  db.add_4B(amd_id, CL_DEVICE_TYPE_GPU, ocl::volcanic_islands, "Hawaii", matrix_product_template::parameters_type(2,16,16,16,6,1,6,FETCH_FROM_LOCAL,FETCH_FROM_LOCAL,16,16));
 }
 
 inline void add_4B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'N'>, char_to_type<'N'>)
