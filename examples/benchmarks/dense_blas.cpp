@@ -133,12 +133,12 @@ int main()
 {
   std::size_t BLAS1_N = 10000000;
 
-  std::size_t BLAS2_M = 2560;
-  std::size_t BLAS2_N = 2560;
+  std::size_t BLAS2_M = 3840;
+  std::size_t BLAS2_N = 3840;
 
-  std::size_t BLAS3_M = 2560;
-  std::size_t BLAS3_N = 2560;
-  std::size_t BLAS3_K = 2560;
+  std::size_t BLAS3_M = 2976;
+  std::size_t BLAS3_N = 2976;
+  std::size_t BLAS3_K = 2976;
 
   std::cout << "Benchmark : BLAS" << std::endl;
   std::cout << "----------------" << std::endl;
