@@ -43,6 +43,7 @@ class vector_range : public vector_base<typename VectorType::cpu_value_type>
 
 public:
   typedef typename VectorType::value_type      value_type;
+  typedef typename VectorType::handle_type     handle_type;
   typedef range::size_type                     size_type;
   typedef range::difference_type               difference_type;
   typedef value_type                           reference;
@@ -52,31 +53,63 @@ public:
 
   typedef typename VectorType::cpu_value_type    cpu_value_type;
 
-  vector_range(VectorType & v, range const & entry_range)
-    : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
+  vector_range(base_type const & v)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                v.size(), v.start(), v.stride()) {}
 
+  vector_range(VectorType const & v, range const & entry_range)
+    : base_type(const_cast<handle_type &>(v.handle()), entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
+
+  vector_range(self_type const & other)
+    : base_type(const_cast<handle_type &>(other.handle()), other.size(), other.start(), other.stride()) {}
 
   using base_type::operator=;
 };
 
 
 
-/////////////////////////////////////////////////////////////
-///////////////////////// CPU to GPU ////////////////////////
-/////////////////////////////////////////////////////////////
-
-template<typename VectorType, typename NumericT>
-void copy(const VectorType & cpu_vector,
-          vector_range<vector<NumericT> > & gpu_vector_range )
+namespace detail
 {
-  assert(cpu_vector.end() - cpu_vector.begin() >= 0 && bool("Range must have nonnegative length!"));
 
-  if (cpu_vector.end() - cpu_vector.begin() > 0)
+  /////////////////////////////////////////////////////////////
+  ///////////////////////// CPU to GPU ////////////////////////
+  /////////////////////////////////////////////////////////////
+
+  template<typename VectorType, typename NumericT>
+  void copy_range(VectorType const & cpu_vector,
+                  vector_base<NumericT> & gpu_vector_range )
   {
-    //we require that the size of the gpu_vector is larger or equal to the cpu-size
-    std::vector<NumericT> temp_buffer(static_cast<std::size_t>(cpu_vector.end() - cpu_vector.begin()));
-    std::copy(cpu_vector.begin(), cpu_vector.end(), temp_buffer.begin());
-    viennacl::backend::memory_write(gpu_vector_range.handle(), sizeof(NumericT)*gpu_vector_range.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
+    assert(cpu_vector.end() - cpu_vector.begin() >= 0 && bool("Range must have nonnegative length!"));
+
+    if (cpu_vector.end() - cpu_vector.begin() > 0)
+    {
+      //we require that the size of the gpu_vector is larger or equal to the cpu-size
+      std::vector<NumericT> temp_buffer(static_cast<std::size_t>(cpu_vector.end() - cpu_vector.begin()));
+      std::copy(cpu_vector.begin(), cpu_vector.end(), temp_buffer.begin());
+      viennacl::backend::memory_write(gpu_vector_range.handle(), sizeof(NumericT)*gpu_vector_range.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
+    }
+  }
+
+
+  /////////////////////////////////////////////////////////////
+  ///////////////////////// GPU to CPU ////////////////////////
+  /////////////////////////////////////////////////////////////
+
+
+  template<typename NumericT, typename VectorType>
+  void copy_range(vector_base<NumericT> const & gpu_vector_range,
+                  VectorType & cpu_vector)
+  {
+    assert(cpu_vector.end() - cpu_vector.begin() >= 0 && bool("Range must have nonnegative length!"));
+
+    if (cpu_vector.end() > cpu_vector.begin())
+    {
+      std::vector<NumericT> temp_buffer(static_cast<vcl_size_t>(cpu_vector.end() - cpu_vector.begin()));
+      viennacl::backend::memory_read(gpu_vector_range.handle(), sizeof(NumericT)*gpu_vector_range.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
+
+      //now copy entries to cpu_vec:
+      std::copy(temp_buffer.begin(), temp_buffer.end(), cpu_vector.begin());
+    }
   }
 }
 
@@ -87,30 +120,9 @@ void copy(const VectorType & cpu_vector,
 * @param gpu_vec    The gpu vector.
 */
 template<typename CPUVECTOR, typename VectorType>
-void fast_copy(const CPUVECTOR & cpu_vec, vector_range<VectorType> & gpu_vec)
+void fast_copy(CPUVECTOR const & cpu_vec, vector_range<VectorType> & gpu_vec)
 {
   viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
-}
-
-/////////////////////////////////////////////////////////////
-///////////////////////// GPU to CPU ////////////////////////
-/////////////////////////////////////////////////////////////
-
-
-template<typename NumericT, typename VectorType>
-void copy(vector_range<vector<NumericT> > const & gpu_vector_range,
-          VectorType & cpu_vector)
-{
-  assert(cpu_vector.end() - cpu_vector.begin() >= 0 && bool("Range must have nonnegative length!"));
-
-  if (cpu_vector.end() > cpu_vector.begin())
-  {
-    std::vector<NumericT> temp_buffer(static_cast<vcl_size_t>(cpu_vector.end() - cpu_vector.begin()));
-    viennacl::backend::memory_read(gpu_vector_range.handle(), sizeof(NumericT)*gpu_vector_range.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
-
-    //now copy entries to cpu_vec:
-    std::copy(temp_buffer.begin(), temp_buffer.end(), cpu_vector.begin());
-  }
 }
 
 
@@ -126,22 +138,15 @@ void fast_copy(vector_range< VectorType > const & gpu_vec,
   viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
 }
 
-
-
 //
 // Convenience function
 //
-template<typename VectorType>
-vector_range<VectorType> project(VectorType & vec, viennacl::range const & r1)
-{
-  return vector_range<VectorType>(vec, r1);
-}
 
-template<typename VectorType>
-vector_range<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::range const & r1)
+template<typename NumericT>
+viennacl::vector_base<NumericT> project(viennacl::vector_base<NumericT> const & vec, viennacl::range const & r1)
 {
   assert(r1.size() <= vec.size() && bool("Size of range invalid!"));
-  return vector_range<VectorType>(vec, viennacl::range(vec.start() + r1.start(), vec.start() + r1.start() + r1.size()));
+  return vector_range<viennacl::vector_base<NumericT> >(vec, r1);
 }
 
 //
@@ -151,8 +156,6 @@ vector_range<VectorType> project(viennacl::vector_range<VectorType> & vec, vienn
 //
 //
 //
-
-
 
 /** @brief Class for representing strided subvectors of a bigger vector x.
   *
@@ -166,6 +169,7 @@ class vector_slice : public vector_base<typename VectorType::cpu_value_type>
 
 public:
   typedef typename VectorType::value_type      value_type;
+  typedef typename VectorType::handle_type     handle_type;
   typedef slice::size_type                     size_type;
   typedef slice::difference_type               difference_type;
   typedef value_type                           reference;
@@ -175,96 +179,102 @@ public:
 
   typedef typename VectorType::cpu_value_type  cpu_value_type;
 
-  vector_slice(VectorType & v, slice const & entry_slice)
-    : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
+  vector_slice(base_type const & v)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                v.size(), v.start(), v.stride()) {}
 
+  vector_slice(VectorType const & v, slice const & entry_slice)
+    : base_type(const_cast<handle_type &>(v.handle()), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
+
+  vector_slice(self_type const & other)
+    : base_type(const_cast<handle_type &>(other.handle()), other.size(), other.start(), other.stride()) {}
 
   using base_type::operator=;
 
 };
 
-
-/////////////////////////////////////////////////////////////
-///////////////////////// CPU to GPU ////////////////////////
-/////////////////////////////////////////////////////////////
-
-template<typename VectorType, typename NumericT>
-void copy(const VectorType & cpu_vector,
-          vector_slice<vector<NumericT> > & gpu_vector_slice )
+namespace detail
 {
-  if (cpu_vector.size() > 0)
+  /////////////////////////////////////////////////////////////
+  ///////////////////////// CPU to GPU ////////////////////////
+  /////////////////////////////////////////////////////////////
+
+  template<typename VectorType, typename NumericT>
+  void copy_slice(VectorType const & cpu_vector,
+                  vector_base<NumericT> & gpu_vector_slice )
   {
-    std::vector<NumericT> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
+    if (cpu_vector.size() > 0)
+    {
+      std::vector<NumericT> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
 
-    viennacl::backend::memory_read(gpu_vector_slice.handle(), sizeof(NumericT)*gpu_vector_slice.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
+      viennacl::backend::memory_read(gpu_vector_slice.handle(), sizeof(NumericT)*gpu_vector_slice.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
 
-    for (vcl_size_t i=0; i<cpu_vector.size(); ++i)
-      temp_buffer[i * gpu_vector_slice.stride()] = cpu_vector[i];
+      for (vcl_size_t i=0; i<cpu_vector.size(); ++i)
+        temp_buffer[i * gpu_vector_slice.stride()] = cpu_vector[i];
 
-    viennacl::backend::memory_write(gpu_vector_slice.handle(), sizeof(NumericT)*gpu_vector_slice.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
+      viennacl::backend::memory_write(gpu_vector_slice.handle(), sizeof(NumericT)*gpu_vector_slice.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
+    }
   }
-}
 
 
 
-/////////////////////////////////////////////////////////////
-///////////////////////// GPU to CPU ////////////////////////
-/////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////
+  ///////////////////////// GPU to CPU ////////////////////////
+  /////////////////////////////////////////////////////////////
 
 
-template<typename VectorType, typename NumericT>
-void copy(vector_slice<vector<NumericT> > const & gpu_vector_slice,
-          VectorType & cpu_vector)
-{
-  assert(gpu_vector_slice.end() - gpu_vector_slice.begin() >= 0 && bool("Range must have nonnegative length!"));
-
-  if (gpu_vector_slice.end() - gpu_vector_slice.begin() > 0)
+  template<typename VectorType, typename NumericT>
+  void copy_slice(vector_base<NumericT> const & gpu_vector_slice,
+                  VectorType & cpu_vector)
   {
-    std::vector<NumericT> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
-    viennacl::backend::memory_read(gpu_vector_slice.handle(), sizeof(NumericT)*gpu_vector_slice.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
+    assert(gpu_vector_slice.end() - gpu_vector_slice.begin() >= 0 && bool("Range must have nonnegative length!"));
 
-    for (vcl_size_t i=0; i<cpu_vector.size(); ++i)
-      cpu_vector[i] = temp_buffer[i * gpu_vector_slice.stride()];
+    if (gpu_vector_slice.end() - gpu_vector_slice.begin() > 0)
+    {
+      std::vector<NumericT> temp_buffer(gpu_vector_slice.stride() * gpu_vector_slice.size());
+      viennacl::backend::memory_read(gpu_vector_slice.handle(), sizeof(NumericT)*gpu_vector_slice.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
+
+      for (vcl_size_t i=0; i<cpu_vector.size(); ++i)
+        cpu_vector[i] = temp_buffer[i * gpu_vector_slice.stride()];
+    }
   }
+
 }
-
-
 
 
 
 //
 // Convenience functions
 //
-template<typename VectorType>
-vector_slice<VectorType> project(VectorType & vec, viennacl::slice const & s1)
-{
-  assert(s1.size() <= vec.size() && bool("Size of slice larger than vector size!"));
-  return vector_slice<VectorType>(vec, s1);
-}
 
-template<typename VectorType>
-vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::slice const & s1)
+template<typename NumericT>
+viennacl::vector_base<NumericT> project(viennacl::vector_base<NumericT> & vec, viennacl::slice const & s1)
 {
   assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-  return vector_slice<VectorType>(vec, viennacl::slice(vec.start() + s1.start(), vec.stride() * s1.stride(), s1.size()));
+  return vector_slice<viennacl::vector_base<NumericT> >(vec, viennacl::slice(vec.start() + s1.start(), vec.stride() * s1.stride(), s1.size()));
 }
 
-// interaction with range and vector_range:
 
-template<typename VectorType>
-vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::range const & r1)
+template<typename VectorType, typename NumericT>
+void copy_slice(VectorType const & cpu_vector,
+                vector_base<NumericT> & gpu_vector )
 {
-  assert(r1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-  return vector_slice<VectorType>(vec, viennacl::slice(vec.start() + r1.start(), vec.stride(), r1.size()));
+  if (gpu_vector.stride1() != 1)
+    detail::copy_slice(cpu_vector, gpu_vector);
+  else
+    detail::copy_range(cpu_vector, gpu_vector);
 }
 
-template<typename VectorType>
-vector_slice<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::slice const & s1)
+
+template<typename VectorType, typename NumericT>
+void copy_slice(vector_base<NumericT> const & gpu_vector,
+                VectorType & cpu_vector)
 {
-  assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-  return vector_slice<VectorType>(vec, viennacl::range(vec.start() + s1.start(), s1.stride(), s1.size()));
+  if (gpu_vector.stride1() != 1)
+    detail::copy_slice(gpu_vector, cpu_vector);
+  else
+    detail::copy_range(gpu_vector, cpu_vector);
 }
-
 
 }
 
