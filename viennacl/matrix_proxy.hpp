@@ -50,12 +50,20 @@ public:
   typedef const value_type &                  const_reference;
 
 
-  matrix_range(MatrixType & A,
+  matrix_range(MatrixType const & A,
                range const & row_range,
-               range const & col_range) : base_type(A.handle(),
-                                                    row_range.size(), row_range.start(), 1, A.internal_size1(),
-                                                    col_range.size(), col_range.start(), 1, A.internal_size2(),
+               range const & col_range) : base_type(const_cast<handle_type &>(A.handle()),
+                                                    row_range.size(), row_range.start() * A.stride1() + A.start1(), A.stride1(), A.internal_size1(),
+                                                    col_range.size(), col_range.start() * A.stride2() + A.start2(), A.stride2(), A.internal_size2(),
                                                     A.row_major()) {}
+
+  matrix_range(self_type const & A,
+               range const & row_range,
+               range const & col_range) : base_type(const_cast<handle_type &>(A.handle()),
+                                                    row_range.size(), row_range.start() * A.stride1() + A.start1(), A.stride1(), A.internal_size1(),
+                                                    col_range.size(), col_range.start() * A.stride2() + A.start2(), A.stride2(), A.internal_size2(),
+                                                    A.row_major()) {}
+
 
   matrix_range(self_type const & other) : base_type(const_cast<handle_type &>(other.handle()),
                                                     other.size1(), other.start1(), other.stride1(), other.internal_size1(),
@@ -66,6 +74,27 @@ public:
 
 };
 
+template<typename MatrixType>
+class matrix_range<matrix_range<MatrixType> > : public matrix_base<typename MatrixType::cpu_value_type>
+{
+  typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
+public:
+  typedef typename MatrixType::handle_type    handle_type;
+
+  matrix_range(MatrixType const & A,
+               range const & row_range,
+               range const & col_range) : base_type(const_cast<handle_type &>(A.handle()),
+                                                    row_range.size(), row_range.start() * A.stride1() + A.start1(), A.stride1(), A.internal_size1(),
+                                                    col_range.size(), col_range.start() * A.stride2() + A.start2(), A.stride2(), A.internal_size2(),
+                                                    A.row_major()) {}
+
+  matrix_range(matrix_range<MatrixType> const & A,
+               range const & row_range,
+               range const & col_range) : base_type(const_cast<handle_type &>(A.handle()),
+                                                    row_range.size(), row_range.start() * A.stride1() + A.start1(), A.stride1(), A.internal_size1(),
+                                                    col_range.size(), col_range.start() * A.stride2() + A.start2(), A.stride2(), A.internal_size2(),
+                                                    A.row_major()) {}
+};
 
 /////////////////////////////////////////////////////////////
 ///////////////////////// CPU to GPU ////////////////////////
@@ -252,7 +281,7 @@ void copy(matrix_range<matrix<NumericT, column_major, 1> > const & gpu_matrix_ra
 // Convenience function
 //
 template<typename MatrixType>
-matrix_range<MatrixType> project(MatrixType & A, viennacl::range const & r1, viennacl::range const & r2)
+matrix_range<MatrixType> project(MatrixType const & A, viennacl::range const & r1, viennacl::range const & r2)
 {
   assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of range invalid!"));
 
@@ -261,14 +290,11 @@ matrix_range<MatrixType> project(MatrixType & A, viennacl::range const & r1, vie
 
 
 template<typename MatrixType>
-matrix_range<MatrixType> project(matrix_range<MatrixType> & A, viennacl::range const & r1, viennacl::range const & r2)
+matrix_range<MatrixType> project(matrix_range<MatrixType> const & A, viennacl::range const & r1, viennacl::range const & r2)
 {
   assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of range invalid!"));
 
-  return matrix_range<MatrixType>(A,
-                                  viennacl::range(A.start1() + r1.start(), A.start1() + r1.start() + r1.size()),
-                                  viennacl::range(A.start2() + r2.start(), A.start2() + r2.start() + r2.size())
-                                  );
+  return matrix_range<MatrixType>(A, r1, r2);
 }
 
 
@@ -306,12 +332,20 @@ public:
   typedef value_type                          reference;
   typedef const value_type &                  const_reference;
 
-  matrix_slice(MatrixType & A,
+  matrix_slice(MatrixType const & A,
                slice const & row_slice,
-               slice const & col_slice) : base_type(A.handle(),
-                                                    row_slice.size(), row_slice.start(), row_slice.stride(), A.internal_size1(),
-                                                    col_slice.size(), col_slice.start(), col_slice.stride(), A.internal_size2(),
+               slice const & col_slice) : base_type(const_cast<handle_type &>(A.handle()),
+                                                    row_slice.size(), row_slice.start() * A.stride1() + A.start1(), row_slice.stride() * A.stride1(), A.internal_size1(),
+                                                    col_slice.size(), col_slice.start() * A.stride2() + A.start2(), col_slice.stride() * A.stride2(), A.internal_size2(),
                                                     A.row_major()) {}
+
+  matrix_slice(self_type const & A,
+               slice const & row_slice,
+               slice const & col_slice) : base_type(const_cast<handle_type &>(A.handle()),
+                                                    row_slice.size(), row_slice.start() * A.stride1() + A.start1(), row_slice.stride() * A.stride1(), A.internal_size1(),
+                                                    col_slice.size(), col_slice.start() * A.stride2() + A.start2(), col_slice.stride() * A.stride2(), A.internal_size2(),
+                                                    A.row_major()) {}
+
 
   matrix_slice(self_type const & other) : base_type(const_cast<handle_type &>(other.handle()),
                                                     other.size1(), other.start1(), other.stride1(), other.internal_size1(),
@@ -322,6 +356,27 @@ public:
 
 };
 
+template<typename MatrixType>
+class matrix_slice<matrix_range<MatrixType> > : public matrix_base<typename MatrixType::cpu_value_type>
+{
+  typedef matrix_base<typename MatrixType::cpu_value_type>    base_type;
+public:
+  typedef typename MatrixType::handle_type    handle_type;
+
+  matrix_slice(MatrixType const & A,
+               slice const & row_slice,
+               slice const & col_slice) : base_type(const_cast<handle_type &>(A.handle()),
+                                                    row_slice.size(), row_slice.start() * A.stride1() + A.start1(), row_slice.stride() * A.stride1(), A.internal_size1(),
+                                                    col_slice.size(), col_slice.start() * A.stride2() + A.start2(), col_slice.stride() * A.stride2(), A.internal_size2(),
+                                                    A.row_major()) {}
+
+  matrix_slice(matrix_slice<MatrixType> const & A,
+               slice const & row_slice,
+               slice const & col_slice) : base_type(const_cast<handle_type &>(A.handle()),
+                                                    row_slice.size(), row_slice.start() * A.stride1() + A.start1(), row_slice.stride() * A.stride1(), A.internal_size1(),
+                                                    col_slice.size(), col_slice.start() * A.stride2() + A.start2(), col_slice.stride() * A.stride2(), A.internal_size2(),
+                                                    A.row_major()) {}
+};
 
 
 /////////////////////////////////////////////////////////////
@@ -459,7 +514,7 @@ void copy(matrix_slice<matrix<NumericT, column_major, 1> > const & gpu_matrix_sl
 // Convenience function
 //
 template<typename MatrixType>
-matrix_slice<MatrixType> project(MatrixType & A, viennacl::slice const & r1, viennacl::slice const & r2)
+matrix_slice<MatrixType> project(MatrixType const & A, viennacl::slice const & r1, viennacl::slice const & r2)
 {
   assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));
 
@@ -467,25 +522,19 @@ matrix_slice<MatrixType> project(MatrixType & A, viennacl::slice const & r1, vie
 }
 
 template<typename MatrixType>
-matrix_slice<MatrixType> project(matrix_range<MatrixType> & A, viennacl::slice const & r1, viennacl::slice const & r2)
+matrix_slice<MatrixType> project(matrix_range<MatrixType> const & A, viennacl::slice const & r1, viennacl::slice const & r2)
 {
   assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));
 
-  return matrix_slice<MatrixType>(A,
-                                  viennacl::slice(A.start1() + r1.start(), r1.stride(), r1.size()),
-                                  viennacl::slice(A.start2() + r2.start(), r2.stride(), r2.size())
-                                  );
+  return matrix_slice<MatrixType>(A, r1, r2);
 }
 
 template<typename MatrixType>
-matrix_slice<MatrixType> project(matrix_slice<MatrixType> & A, viennacl::slice const & r1, viennacl::slice const & r2)
+matrix_slice<MatrixType> project(matrix_slice<MatrixType> const & A, viennacl::slice const & r1, viennacl::slice const & r2)
 {
   assert(r1.size() <= A.size1() && r2.size() <= A.size2() && bool("Size of slice invalid!"));
 
-  return matrix_slice<MatrixType>(A,
-                                  viennacl::slice(A.start1() + r1.start(), A.stride1() * r1.stride(), r1.size()),
-                                  viennacl::slice(A.start2() + r2.start(), A.stride2() * r2.stride(), r2.size())
-                                  );
+  return matrix_slice<MatrixType>(A, r1, r2);
 }
 
 // TODO: Allow mix of range/slice

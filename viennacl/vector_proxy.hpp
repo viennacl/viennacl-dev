@@ -49,17 +49,37 @@ public:
   typedef const value_type &                   const_reference;
   typedef typename VectorType::const_iterator  const_iterator;
   typedef typename VectorType::iterator        iterator;
+  typedef typename VectorType::handle_type     handle_type;
 
   typedef typename VectorType::cpu_value_type    cpu_value_type;
 
-  vector_range(VectorType & v, range const & entry_range)
-    : base_type(v.handle(), entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
+  vector_range(VectorType const & v, range const & entry_range)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
 
+  vector_range(self_type const & v, range const & entry_range)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
 
   using base_type::operator=;
 };
 
+template<typename VectorType>
+class vector_range<vector_range<VectorType> > : public vector_base<typename VectorType::cpu_value_type>
+{
+  typedef vector_base<typename VectorType::cpu_value_type>   base_type;
 
+public:
+  typedef typename VectorType::handle_type     handle_type;
+
+  vector_range(VectorType const & v, range const & entry_range)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
+
+  vector_range(vector_range<VectorType> const & v, range const & entry_range)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
+};
 
 /////////////////////////////////////////////////////////////
 ///////////////////////// CPU to GPU ////////////////////////
@@ -132,16 +152,16 @@ void fast_copy(vector_range< VectorType > const & gpu_vec,
 // Convenience function
 //
 template<typename VectorType>
-vector_range<VectorType> project(VectorType & vec, viennacl::range const & r1)
+vector_range<VectorType> project(VectorType const & vec, viennacl::range const & r1)
 {
   return vector_range<VectorType>(vec, r1);
 }
 
 template<typename VectorType>
-vector_range<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::range const & r1)
+vector_range<VectorType> project(viennacl::vector_range<VectorType> const & vec, viennacl::range const & r1)
 {
   assert(r1.size() <= vec.size() && bool("Size of range invalid!"));
-  return vector_range<VectorType>(vec, viennacl::range(vec.start() + r1.start(), vec.start() + r1.start() + r1.size()));
+  return vector_range<VectorType>(vec, r1);
 }
 
 //
@@ -172,17 +192,39 @@ public:
   typedef const value_type &                   const_reference;
   typedef typename VectorType::const_iterator  const_iterator;
   typedef typename VectorType::iterator        iterator;
+  typedef typename VectorType::handle_type     handle_type;
 
   typedef typename VectorType::cpu_value_type  cpu_value_type;
 
-  vector_slice(VectorType & v, slice const & entry_slice)
-    : base_type(v.handle(), entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
+  vector_slice(VectorType const & v, slice const & entry_slice)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
 
+  vector_slice(self_type const & v, slice const & entry_slice)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
 
   using base_type::operator=;
 
 };
 
+
+template<typename VectorType>
+class vector_slice<vector_slice<VectorType> > : public vector_base<typename VectorType::cpu_value_type>
+{
+  typedef vector_base<typename VectorType::cpu_value_type>   base_type;
+
+public:
+  typedef typename VectorType::handle_type     handle_type;
+
+  vector_slice(VectorType const & v, slice const & entry_slice)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                entry_slice.size(), v.start() + v.stride() * entry_slice.start(), entry_slice.stride() * v.stride()) {}
+
+  vector_slice(vector_slice<VectorType> const & v, slice const & entry_slice)
+    : base_type(const_cast<handle_type &>(v.handle()),
+                entry_slice.size(), v.start() + v.stride() * entry_slice.start(), entry_slice.stride() * v.stride()) {}
+};
 
 /////////////////////////////////////////////////////////////
 ///////////////////////// CPU to GPU ////////////////////////
@@ -236,33 +278,33 @@ void copy(vector_slice<vector<NumericT> > const & gpu_vector_slice,
 // Convenience functions
 //
 template<typename VectorType>
-vector_slice<VectorType> project(VectorType & vec, viennacl::slice const & s1)
+vector_slice<VectorType> project(VectorType const & vec, viennacl::slice const & s1)
 {
   assert(s1.size() <= vec.size() && bool("Size of slice larger than vector size!"));
   return vector_slice<VectorType>(vec, s1);
 }
 
 template<typename VectorType>
-vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::slice const & s1)
+vector_slice<VectorType> project(viennacl::vector_slice<VectorType> const & vec, viennacl::slice const & s1)
 {
   assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-  return vector_slice<VectorType>(vec, viennacl::slice(vec.start() + s1.start(), vec.stride() * s1.stride(), s1.size()));
+  return vector_slice<VectorType>(vec, s1);
 }
 
 // interaction with range and vector_range:
 
 template<typename VectorType>
-vector_slice<VectorType> project(viennacl::vector_slice<VectorType> & vec, viennacl::range const & r1)
+vector_slice<VectorType> project(viennacl::vector_slice<VectorType> const & vec, viennacl::range const & r1)
 {
   assert(r1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-  return vector_slice<VectorType>(vec, viennacl::slice(vec.start() + r1.start(), vec.stride(), r1.size()));
+  return vector_slice<VectorType>(vec, viennacl::slice(r1.start(), 1, r1.size()));
 }
 
 template<typename VectorType>
-vector_slice<VectorType> project(viennacl::vector_range<VectorType> & vec, viennacl::slice const & s1)
+vector_slice<VectorType> project(viennacl::vector_range<VectorType> const & vec, viennacl::slice const & s1)
 {
   assert(s1.size() <= vec.size() && bool("Size of slice larger than vector proxy!"));
-  return vector_slice<VectorType>(vec, viennacl::range(vec.start() + s1.start(), s1.stride(), s1.size()));
+  return vector_slice<VectorType>(vec, s1);
 }
 
 
