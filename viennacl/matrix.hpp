@@ -336,7 +336,7 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
     else
     {
       viennacl::linalg::trans(proxy, temp);
-      this->resize(proxy.lhs().size2(), proxy.lhs().size1());
+      this->resize(proxy.lhs().size2(), proxy.lhs().size1(), false);
       elements_ = temp.handle();
     }
   }
@@ -345,10 +345,10 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
     if ( proxy.lhs().internal_size1() == proxy.lhs().internal_size2() )
     {
       viennacl::linalg::trans(proxy, *this);
-    } else
+    }
+    else
     {
-      if(internal_size1()!= proxy.lhs().internal_size2() && internal_size2()!= proxy.lhs().internal_size1())
-        this->resize(proxy.lhs().size2(), proxy.lhs().size1());
+      this->resize(proxy.lhs().size2(), proxy.lhs().size1(), false);
       viennacl::linalg::trans(proxy, *this);
     }
   }
