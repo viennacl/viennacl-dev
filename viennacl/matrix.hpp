@@ -290,7 +290,6 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
   assert(  (viennacl::traits::size1(proxy) == size1() || size1() == 0)
            && (viennacl::traits::size2(proxy) == size2() || size2() == 0)
            && bool("Incompatible matrix sizes!"));
-
   if (internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0)
   {
     size1_ = viennacl::traits::size1(proxy);
@@ -328,29 +327,16 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
   if ( handle() == proxy.lhs().handle() )
   {
     viennacl::matrix_base<NumericT> temp(proxy.lhs().size2(), proxy.lhs().size1(),proxy.lhs().row_major());
-    temp = *this;
-    if ( proxy.lhs().internal_size1() == proxy.lhs().internal_size2() )
-    {
-      viennacl::linalg::trans(proxy, temp);
-    }
-    else
-    {
-      viennacl::linalg::trans(proxy, temp);
-      this->resize(proxy.lhs().size2(), proxy.lhs().size1(), false);
-      elements_ = temp.handle();
-    }
+    viennacl::linalg::trans(proxy, temp);
+    if ( proxy.lhs().size1() != proxy.lhs().size2() )
+      this->resize(proxy.lhs().size2(), proxy.lhs().size1());
+    elements_ = temp.handle();
   }
   else
   {
-    if ( proxy.lhs().internal_size1() == proxy.lhs().internal_size2() )
-    {
-      viennacl::linalg::trans(proxy, *this);
-    }
-    else
-    {
-      this->resize(proxy.lhs().size2(), proxy.lhs().size1(), false);
-      viennacl::linalg::trans(proxy, *this);
-    }
+  	viennacl::linalg::trans(proxy, *this);
+    if ( proxy.lhs().size1() != proxy.lhs().size2() )
+      this->resize(proxy.lhs().size2(), proxy.lhs().size1());
   }
   return *this;
 }
