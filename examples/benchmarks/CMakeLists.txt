@@ -1,5 +1,5 @@
 # Targets using CPU-based execution
-foreach(bench dense_blas scheduler)
+foreach(bench dense_blas scheduler direct_solve)
    add_executable(${bench}-bench-cpu ${bench}.cpp)
 endforeach()
 
@@ -15,7 +15,7 @@ endif (ENABLE_UBLAS)
 # Targets using OpenCL
 if (ENABLE_OPENCL)
 
-  foreach(bench dense_blas opencl)
+  foreach(bench dense_blas opencl direct_solve)
     add_executable(${bench}-bench-opencl ${bench}.cpp)
     target_link_libraries(${bench}-bench-opencl ${OPENCL_LIBRARIES})
     set_target_properties(${bench}-bench-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
@@ -35,7 +35,7 @@ endif (ENABLE_OPENCL)
 # Targets using CUDA
 if (ENABLE_CUDA)
 
-  foreach(bench dense_blas)
+  foreach(bench dense_blas direct_solve)
      cuda_add_executable(${bench}-bench-cuda ${bench}.cu)
   endforeach()
 
