@@ -25,7 +25,10 @@
 #include "viennacl/forwards.h"
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/vector.hpp"
+#include "viennacl/vector_proxy.hpp"
 #include "viennacl/matrix.hpp"
+#include "viennacl/matrix_proxy.hpp"
+#include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/host_based/direct_solve.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
@@ -262,17 +265,16 @@ void inplace_solve_vec_kernel(matrix_expression<const matrix_base<NumericT>, con
 template<typename MatrixT1, typename MatrixT2, typename SolverTagT>
 void inplace_solve_lower_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
 {
-  unsigned int blockSize = BLOCKSIZE;
-  unsigned int numBlocks = A.size1() / blockSize;	//numbef of diagonal blocks
+  vcl_size_t blockSize = BLOCKSIZE;
   if (A.size1() <= blockSize)
     inplace_solve_kernel(A, B, SolverTagT());
   else
   {
-    for (int i = 0; i < A.size1(); i = i + blockSize)
+    for (vcl_size_t i = 0; i < A.size1(); i = i + blockSize)
     {
-      unsigned int Apos1 = i;
-      unsigned int Apos2 = i + blockSize;
-      unsigned int Bpos = B.size2();
+      vcl_size_t Apos1 = i;
+      vcl_size_t Apos2 = i + blockSize;
+      vcl_size_t Bpos = B.size2();
       if (Apos2 > A.size1())
       {
         inplace_solve_kernel(viennacl::project(A, viennacl::range(Apos1, A.size1()), viennacl::range(Apos1, A.size2())),
@@ -308,8 +310,7 @@ void inplace_solve_impl(MatrixT1 const & A, MatrixT2 & B, viennacl::linalg::unit
 template<typename MatrixT1, typename MatrixT2, typename SolverTagT>
 void inplace_solve_upper_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
 {
-  unsigned int blockSize = BLOCKSIZE;
-  unsigned int numBlocks = A.size1() / blockSize;	//numbef of diagonal blocks
+  vcl_size_t blockSize = BLOCKSIZE;
   if (A.size1() <= blockSize)
     inplace_solve_kernel(A, B, SolverTagT());
   else
@@ -317,8 +318,8 @@ void inplace_solve_upper_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
     for (int i = A.size1(); i > 0; i = i - blockSize)
     {
       int Apos1 = i - blockSize;
-      unsigned int Apos2 = i;
-      unsigned int Bpos = B.size2();
+      vcl_size_t Apos2 = i;
+      vcl_size_t Bpos = B.size2();
       if (Apos1 < 0)
       {
         inplace_solve_kernel(viennacl::project(A, viennacl::range(0, Apos2), viennacl::range(0, Apos2)),
@@ -326,14 +327,14 @@ void inplace_solve_upper_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
                              SolverTagT());
         break;
       }
-      inplace_solve_kernel(viennacl::project(A, viennacl::range(Apos1, Apos2), viennacl::range(Apos1, Apos2)),
-                           viennacl::project(B, viennacl::range(Apos1, Apos2), viennacl::range(0, Bpos)),
+      inplace_solve_kernel(viennacl::project(A, viennacl::range(vcl_size_t(Apos1), Apos2), viennacl::range(vcl_size_t(Apos1), Apos2)),
+                           viennacl::project(B, viennacl::range(vcl_size_t(Apos1), Apos2), viennacl::range(0, Bpos)),
                            SolverTagT());
       if (Apos1 > 0)
       {
-        viennacl::project(B, viennacl::range(0, Apos1), viennacl::range(0, Bpos)) -=
-                          viennacl::linalg::prod(viennacl::project(const_cast<MatrixT1 &>(A), viennacl::range(0, Apos1), viennacl::range(Apos1, Apos2)),
-                                                 viennacl::project(B, viennacl::range(Apos1, Apos2), viennacl::range(0, Bpos)));
+        viennacl::project(B, viennacl::range(0, vcl_size_t(Apos1)), viennacl::range(0, Bpos)) -=
+                          viennacl::linalg::prod(viennacl::project(const_cast<MatrixT1 &>(A), viennacl::range(0, vcl_size_t(Apos1)), viennacl::range(vcl_size_t(Apos1), Apos2)),
+                                                 viennacl::project(B, viennacl::range(vcl_size_t(Apos1), Apos2), viennacl::range(0, Bpos)));
       }
     }
   }
@@ -489,16 +490,15 @@ matrix_base<NumericT> solve(const matrix_expression< const matrix_base<NumericT>
 template<typename MatrixT1, typename VectorT, typename SolverTagT>
 void inplace_solve_lower_vec_impl(MatrixT1 const & A, VectorT & B, SolverTagT)
 {
-  unsigned int blockSize = BLOCKSIZE;
-  unsigned int numBlocks = A.size1() / blockSize;	//numbef of diagonal blocks
-  if (A.size1() < blockSize) 
+  vcl_size_t blockSize = BLOCKSIZE;
+  if (A.size1() < blockSize)
     inplace_solve_vec_kernel(A, B, SolverTagT());
   else
   {
-    for (int i = 0; i < A.size1(); i = i + blockSize)
+    for (vcl_size_t i = 0; i < A.size1(); i = i + blockSize)
     {
-      unsigned int Apos1 = i;
-      unsigned int Apos2 = i + blockSize;
+      vcl_size_t Apos1 = i;
+      vcl_size_t Apos2 = i + blockSize;
       if (i > A.size2())
       {
         inplace_solve_vec_kernel(viennacl::project(A, viennacl::range(Apos1, A.size1()), viennacl::range(Apos1, A.size2())),
@@ -535,7 +535,6 @@ template<typename MatrixT1, typename VectorT, typename SolverTagT>
 void inplace_solve_upper_vec_impl(MatrixT1 const & A, VectorT & B, SolverTagT)
 {
   unsigned int blockSize = BLOCKSIZE;
-  unsigned int numBlocks = A.size1() / blockSize;	//numbef of diagonal blocks
   if (A.size1() < blockSize)
     inplace_solve_vec_kernel(A, B, SolverTagT());
   else
@@ -543,22 +542,22 @@ void inplace_solve_upper_vec_impl(MatrixT1 const & A, VectorT & B, SolverTagT)
     for (int i = A.size1(); i > 0; i = i - blockSize)
     {
       int Apos1 = i - blockSize;
-      unsigned int Apos2 = i;
-      if (Apos1 < 0) 
+      vcl_size_t Apos2 = vcl_size_t(i);
+      if (Apos1 < 0)
       {
         inplace_solve_vec_kernel(viennacl::project(A, viennacl::range(0, Apos2), viennacl::range(0, Apos2)),
                                  viennacl::project(B, viennacl::range(0, Apos2)),
                                  SolverTagT());
         break;
       }
-      inplace_solve_vec_kernel(viennacl::project(A, viennacl::range(Apos1, Apos2), viennacl::range(Apos1, Apos2)),
-                               viennacl::project(B, viennacl::range(Apos1, Apos2)),
+      inplace_solve_vec_kernel(viennacl::project(A, viennacl::range(vcl_size_t(Apos1), Apos2), viennacl::range(vcl_size_t(Apos1), Apos2)),
+                               viennacl::project(B, viennacl::range(vcl_size_t(Apos1), Apos2)),
                                SolverTagT());
       if (Apos1 > 0)
       {
-        VectorT temp(viennacl::linalg::prod(viennacl::project(A, viennacl::range(0, Apos1), viennacl::range(Apos1, Apos2)),
-                     viennacl::project(B, viennacl::range(Apos1, Apos2))));
-        viennacl::project(B, viennacl::range(0, Apos1)) -= temp;
+        VectorT temp(viennacl::linalg::prod(viennacl::project(A, viennacl::range(0, vcl_size_t(Apos1)), viennacl::range(vcl_size_t(Apos1), Apos2)),
+                     viennacl::project(B, viennacl::range(vcl_size_t(Apos1), Apos2))));
+        viennacl::project(B, viennacl::range(0, vcl_size_t(Apos1))) -= temp;
       }
     }
   }
