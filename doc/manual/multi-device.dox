@@ -1,0 +1,106 @@
+
+
+
+/**
+
+   \page manual-page-multi-device    Configuring OpenCL Contexts and Devices
+
+Support for multiple devices was officially added in OpenCL 1.1.
+Among other things, this allows for e.g. using all CPUs in a multi-socket CPU mainboard as a single OpenCL compute device.
+Nevertheless, the efficient use of multiple OpenCL devices is far from trivial, because algorithms have to be designed such that they take distributed memory and synchronization issues into account.
+
+\note There is no native support for automatically executing operations over multiple GPUs in ViennaCL. Partition of data is left to the user.
+
+\section manual-multi-device-context Context Setup
+Unless specified otherwise (see \ref manual-page-custom-contexts "User-Provided OpenCL Contexts"), ViennaCL silently creates its own context and adds all available default devices with a single queue per device to it.
+All operations are then carried out on this (or the user-provided) context, which can be obtained with the call
+\code
+ viennacl::ocl::current_context();
+\endcode
+This default context is identified by the ID `0` (of type `long`).
+ViennaCL uses the first platform returned by the OpenCL backend for the context.
+If a different platform should be used on a machine with multiple platforms available, this can be achieved with
+\code
+ viennacl::ocl::set_context_platform_index(id, platform_index);
+\endcode
+where the context ID is `id` and `platform_index` refers to the array index of the platform as returned by `clGetPlatformIDs()`.
+
+By default, only the first device in the context is used for all operations. This device can be obtained via
+\code
+ viennacl::ocl::current_context().current_device();
+ viennacl::ocl::current_device(); //equivalent to above
+\endcode
+A user may wish to use multiple OpenCL contexts, where each context consists of a subset of the available devices.
+To setup a context with ID `id` with a particular device type only, the user has to specify this \em prior to any other ViennaCL related statements:
+\code
+// use only GPUs:
+viennacl::ocl::set_context_device_type(id, viennacl::ocl::gpu_tag());
+// use only CPUs:
+viennacl::ocl::set_context_device_type(id, viennacl::ocl::cpu_tag());
+// use only the default device type
+viennacl::ocl::set_context_device_type(id, viennacl::ocl::default_tag());
+// use only accelerators:
+viennacl::ocl::set_context_device_type(id, viennacl::ocl::accelerator_tag());
+\endcode
+Instead of using the tag classes, the respective OpenCL constants `CL_DEVICE_TYPE_GPU` etc. can be supplied as second argument.
+
+Another possibility is to query all devices from the current platform:
+\code
+std::vector< viennacl::ocl::device > devices = viennacl::ocl::platform().devices();
+\endcode
+and create a custom subset of devices, which is then passed to the context setup routine:
+\code
+// take the first and the third available device from 'devices'
+std::vector< viennacl::ocl::device > my_devices;
+my_devices.push_back(devices[0]);
+my_devices.push_back(devices[2]);
+
+// Initialize the context with ID 'id' with these devices:
+viennacl::ocl::setup_context(id, my_devices);
+\endcode
+Similarly, contexts with other IDs can be set up.
+
+\note For details on how to initialize ViennaCL with already existing contexts, see \ref manual-page-custom-contexts "User-Provided OpenCL Contexts".
+
+The user is reminded that memory objects within an OpenCL context are allocated for all devices within a context.
+Thus, setting up contexts with one device each is optimal in terms of memory usage, because each memory object is then bound to a single device only.
+However, memory transfer between contexts (and thus devices) has to be done manually by the library user then.
+Moreover, the user has to keep track in which context the individual ViennaCL objects have been created, because all operands are assumed to be in the currently active context.
+
+\section manual-multi-device-switching Switching Contexts and Devices
+ViennaCL always uses the currently active OpenCL context with the currently active device to enqueue compute kernels.
+The default context is identified by ID `0`.
+The context with ID `id` can be set as active context with the line.
+\code
+viennacl::ocl::switch_context(id);
+\endcode
+Subsequent kernels are then enqueued on the active device for that particular context.
+
+Similar to setting contexts active, the active device can be set for each context.
+For example, setting the second device in the context to be the active device, the lines
+\code
+viennacl::ocl::current_context().switch_device(1);
+\endcode
+are required.
+In some circumstances one may want to pass the device object directly, e.g. to set the second device of the platform active:
+\code
+std::vector<viennacl::ocl::device> const & devices = viennacl::ocl::platform().devices();
+viennacl::ocl::current_context().switch_device(devices[1]);
+\endcode
+If the supplied device is not part of the context, an error message is printed and the active device remains unchanged.
+
+
+\section manual-multi-device-compiler Setting OpenCL Compiler Flags
+Each OpenCL context provides a member function `.build_options()`, which can be used to pass OpenCL compiler flags \em prior to compilation.
+Flags need to be passed to the context prior to the compilation of the respective kernels, i.e. prior the first instantiation of the respective matrix or vector types.
+
+To pass the `-cl-mad-enable` flag to the current context, the line
+\code
+ viennacl::ocl::current_context().build_options("-cl-mad-enable");
+\endcode
+is sufficient.
+Confer to the OpenCL standard for a full list of flags.
+
+\note Our experience is that performance is usually not affected significantly by additional OpenCL compiler flags.
+
+*/

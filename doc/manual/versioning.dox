@@ -1,0 +1,31 @@
+
+
+
+/**
+
+   \page manual-page-versioning    Versioning
+
+
+Each release of ViennaCL carries a three-fold version number:
+
+     ViennaCL X.Y.Z
+
+For users migrating from an older release of ViennaCL to a new one, the following guidelines apply:
+
+ - `X` is the <em>major version number</em>, starting with `1`.
+    A change in the major version number is not necessarily API-compatible with any versions of ViennaCL carrying a different major version number.
+    In particular, end users of ViennaCL have to expect considerable code changes when changing between different major versions of ViennaCL.
+
+ - `Y` denotes the <em>minor version number</em>, restarting with zero whenever the major version number changes.
+   The minor version number is incremented whenever significant functionality is added to ViennaCL.
+   The API of an older release of ViennaCL with smaller minor version number (but same major version number) is \em essentially compatible to the new version.
+   Users of ViennaCL usually do not have to alter their application code, unless they have used a certain functionality that was not intended to be used and removed in the new version.
+
+ - `Z` is the <em>revision number</em>.
+   If either the major or the minor version number changes, the revision number is reset to zero.
+   Releases of ViennaCL, which only differ in their revision number, are API compatible.
+   Typically, the revision number is increased whenever bugfixes are applied, compute kernels are improved or some extra, not significant functionality is added.
+
+<em>Always try to use the latest version of ViennaCL before submitting bug reports!</em>
+
+*/

@@ -24,12 +24,16 @@
 */
 
 /**
- @mainpage Source Code Documentation for ViennaCL 1.5.1
+ @mainpage Main Page
 
- This is the source code documentation of ViennaCL. Detailed information about the functions in ViennaCL can be found here.
+ Here you can find all the documentation on how to use the GPU-accelerated linear algebra library ViennaCL.
+ The formerly separate \ref usermanual "user manual" is no longer available as a standalone PDF, but all integrated into the HTML-based documentation.
 
- For a general overview over the types and functionality provided by ViennaCL, please refer to the file doc/viennacl.pdf
-
+ Quick links:
+     - \ref manual-page-installation "Installation and building the examples"
+     - \ref manual-page-types        "Basic types"
+     - \ref manual-page-operations   "Basic operations"
+     - \ref manual-page-algorithms   "Algorithms"
 */
 
 

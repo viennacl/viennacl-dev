@@ -1,0 +1,108 @@
+
+
+
+/**
+
+   \page manual-page-custom-contexts    User-Provided OpenCL Contexts
+
+Many projects need similar basic linear algebra operations, but essentially operate in their own OpenCL context.
+To provide the functionality and convenience of ViennaCL to such existing projects, existing contexts can be passed to ViennaCL and memory objects can be wrapped into the basic linear algebra types `vector`, `matrix`, or `compressed_matrix`.
+This chapter is devoted to the description of the necessary steps to use ViennaCL on contexts provided by the library user.
+
+\note An example of providing a custom context to ViennaCL can be found in `examples/tutorial/custom-contexts.cpp`
+
+\section manual-custom-contexts-passing Passing Contexts to ViennaCL
+ViennaCL is able to handle an arbitrary number of contexts, which are identified by a key value of type `long`.
+By default, ViennaCL operates on the context identified by `0`, unless the user switches the context, cf. \ref manual-page-multi-device "Configuring OpenCL Contexts and Devices".
+
+According to the OpenCL standard, a context contains devices and queues for each device.
+Thus, it is assumed in the following that the user has successfully created a context with one or more devices and one or more queues per device.
+
+In the case that the context contains only one device \lstinline|my_device| and one queue \lstinline|my_queue|, the context can be passed to ViennaCL with the code
+\code
+ cl_context my_context = ...;     //a context
+ cl_device_id my_device = ...;    //a device in my_context
+ cl_command_queue my_queue = ...; //a queue for my_device
+
+ //supply existing context 'my_context'
+ // with one device and one queue to ViennaCL using id '0':
+ viennacl::ocl::setup_context(0, my_context, my_device, my_queue);
+\endcode
+If a context ID other than `0`, say, `id` is used, the user-defined context has to be selected using
+\code
+ viennacl::ocl::switch_context(id);
+\endcode
+
+It is also possible to provide a context with several devices and multiple queues per device.
+To do so, the device IDs have to be stored in a STL vector and the queues in a STL map:
+\code
+ cl_context my_context = ...;   //a context
+
+ cl_device_id my_device1 = ...; //a device in my_context
+ cl_device_id my_device2 = ...; //another device in my_context
+ ...
+
+ cl_command_queue my_queue1 = ...; //a queue for my_device1
+ cl_command_queue my_queue2 = ...; //another queue for my_device1
+ cl_command_queue my_queue3 = ...; //a queue for my_device2
+ ...
+
+ // setup existing devices for ViennaCL:
+ std::vector<cl_device_id> my_devices;
+ my_devices.push_back(my_device1);
+ my_devices.push_back(my_device2);
+ ...
+
+ // setup existing queues for ViennaCL:
+ std::map<cl_device_id,
+          std::vector<cl_command_queue> > my_queues;
+ my_queues[my_device1].push_back(my_queue1);
+ my_queues[my_device1].push_back(my_queue2);
+ my_queues[my_device2].push_back(my_queue3);
+ ...
+
+ // supply existing context with multiple devices
+ // and queues to ViennaCL using id '0':
+ viennacl::ocl::setup_context(0, my_context, my_devices, my_queues);
+\endcode
+It is not necessary to pass all devices and queues created within a particular context to ViennaCL, only those which ViennaCL should use have to be passed.
+ViennaCL will by default use the first queue on each device.
+The user has to care for appropriate synchronization between different queues.
+
+\note ViennaCL does not destroy the provided context automatically upon exit. The user should thus call `clReleaseContext()` as usual for destroying the context.
+
+\section manual-custom-contexts-wrapping Wrapping Existing Memory with ViennaCL Types
+Now as the user provided context is supplied to ViennaCL, user-created memory objects have to be wrapped into ViennaCL data-types in order to use the full functionality.
+Typically, one of the types `scalar`, `vector`, `matrix` and `compressed_matrix` are used:
+\code
+ cl_mem my_memory1 = ...;
+ cl_mem my_memory2 = ...;
+ cl_mem my_memory3 = ...;
+ cl_mem my_memory4 = ...;
+ cl_mem my_memory5 = ...;
+
+ // wrap my_memory1 into a vector of size 10
+ viennacl::vector<float> my_vec(my_memory1, 10);
+
+ // wrap my_memory2 into a row-major matrix of size 10x10
+ viennacl::matrix<float> my_matrix(my_memory2, 10, 10);
+
+ // wrap my_memory3 into a CSR sparse matrix with 10 rows and 20 nonzeros
+ viennacl::compressed_matrix<float> my_sparse(my_memory3,
+                                              my_memory4,
+                                              my_memory5, 10, 10, 20);
+
+ // use my_vec, my_matrix, my_sparse as usual
+\endcode
+The following has to be emphasized:
+  - Resize operations on ViennaCL data types typically results in the object owning a new piece of memory.
+  - copy() operations from CPU RAM usually allocate new memory, so wrapped memory is ``forgotten''
+  - On construction of the ViennaCL object, \lstinline|clRetainMem()| is called once for the provided memory handle. Similarly, \lstinline|clReleaseMem()| is called as soon as the memory is not used any longer.
+
+\note The user has to ensure that the provided memory is larger or equal to the size of the wrapped object.
+
+\warning Be aware the wrapping the same memory object into several different ViennaCL objects can have unwanted side-effects.
+\warning In particular, wrapping the same memory in two ViennaCL vectors implies that if the entries of one of the vectors is modified, this is also the case for the second.
+
+
+*/

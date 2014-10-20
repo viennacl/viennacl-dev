@@ -1,0 +1,88 @@
+
+
+
+/**
+
+   \page manual-page-custom-kernels    Custom OpenCL Compute Kernels
+
+For custom algorithms the built-in functionality of ViennaCL may not be sufficient or not fast enough.
+In such cases it can be desirable to write a custom OpenCL compute kernel, which is explained in this chapter.
+The following steps are necessary and explained one after another:
+  - Write the OpenCL source code
+  - Compile the compute kernel
+  - Launching the kernel
+
+A tutorial on this topic can be found at `examples/tutorial/custom-kernels.cpp`.
+
+\section manual-custom-kernels-opencl-source Setting up the OpenCL Source Code
+
+The OpenCL source code has to be provided as a string.
+One can either write the source code directly into a string within C++ files, or one can read the OpenCL source from a file.
+For demonstration purposes, we write the source directly as a string constant:
+\code
+const char * my_compute_program =
+"__kernel void elementwise_prod(\n"
+"          __global const float * vec1,\n"
+"          __global const float * vec2, \n"
+"          __global float * result,\n"
+"          unsigned int size) \n"
+"{ \n"
+"  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0))\n"
+"    result[i] = vec1[i] * vec2[i];\n"
+"};\n";
+\endcode
+The kernel takes three vector arguments `vec1`, `vec2` and `result` and the vector length variable `size`.
+It computes the entry-wise product of the vectors `vec1` and `vec2` and writes the result to the vector \lstinline|result|.
+For more detailed explanation of the OpenCL source code, please refer to the specification available at the Khronos group webpage \cite khronoscl .
+
+\section manual-custom-kernels-opencl-build Compilation of the OpenCL Source Code
+The source code in the string constant `my_compute_kernel` has to be compiled to an OpenCL program.
+An OpenCL program is a compilation unit and may contain several different compute kernels,
+For example, one could also include another kernel function `inplace_elementwise_prod` which writes the result directly to one of the two operands `vec1` or `vec2` in the same program.
+\code
+viennacl::ocl::program & my_prog = viennacl::ocl::current_context().add_program(my_compute_program, "my_compute_program");
+\endcode
+The next step is to extract the kernel object `my_kernel` from the compiled program (an explicit kernel registration was needed prior to ViennaCL 1.5.0, but is no longer needed):
+\code
+viennacl::ocl::kernel & my_kernel = my_prog.get_kernel("elementwise_prod");
+\endcode
+Now, the kernel is set up to use the function `elementwise_prod` compiled into the program `my_prog`.
+
+\warning Note that C++ references to kernels and programs may become invalid as other kernels or programs are added.
+\warning Therefore, first allocate the required ViennaCL objects and compile/add all custom kernels, before you start taking references to custom programs or kernels.
+
+Instead of extracting references to programs and kernels directly at program compilation, one can obtain them at other places within the application source code by
+\code
+viennacl::ocl::program & prog      = viennacl::ocl::current_context().get_program("my_compute_program");
+viennacl::ocl::kernel  & my_kernel = my_prog.get_kernel("elementwise_prod");
+\endcode
+This simplifies application development considerably, since no program and kernel objects need to be passed around.
+
+\section manual-custom-kernels-opencl-launch Launching the OpenCL Kernel
+Before launching the kernel, one may adjust the global and local work sizes (readers not familiar with that are encouraged to read the OpenCL standard \cite khronoscl ).
+The following code specifies a one-dimensional execution model with 16 local workers and 128 global workers:
+\code
+ my_kernel.local_work_size(0, 16);
+ my_kernel.global_work_size(0, 128);
+\endcode
+In order to use a two-dimensional execution, additionally parameters for the second dimension are set by
+\code
+ my_kernel.local_work_size(1, 16);
+ my_kernel.global_work_size(1, 128);
+\endcode
+However, for the simple kernel in this example it is not necessary to specify any work sizes at all.
+The default work sizes (which can be found in `viennacl/ocl/kernel.hpp`) suffice for most cases.
+We recommend to write kernels which do \em NOT depend on a particular thread configuration, as this will usually lead to non-portability of performance.
+
+Kernel arguments are set in the same way as for ordinary functions.
+We assume that three ViennaCL vectors `vec1`, `vec2` and `result` have already been set up:
+\code
+  viennacl::ocl::enqueue(my_kernel(vec1, vec2, result, cl_uint(vec1.size())));
+\endcode
+Per default, the kernel is enqueued in the first queue of the currently active device.
+A custom queue can be specified as optional second argument.
+
+\note Integer arguments need to be provided using the corresponding OpenCL types `cl_int`, `cl_uint`, etc.
+\note Do not pass arguments of type `size_t`, because `size_t` might differ on the host and the compute device.
+
+*/

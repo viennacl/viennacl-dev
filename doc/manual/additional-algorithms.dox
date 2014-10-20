@@ -1,0 +1,291 @@
+
+
+
+/**
+
+   \page manual-page-additional-algorithms    Additional Algorithms
+
+
+The implementations of the algorithms described in this chapter are still not yet mature enough to be considered core-functionality, and/or are available with the OpenCL backend only.
+
+\warning The implementations of the algorithms described in this chapter are not considered mature yet.
+
+\section manual-additional-algorithms-iterative-solvers Additional Iterative Solvers
+The following iterative solvers are only available on selected computing backends.
+
+\subsection manual-additional-algorithms-iterative-solvers-mixed-cg Mixed-Precision Conjugate Gradients
+A two-stage mixed-precision CG algorithm is available as follows:
+\code
+viennacl::linalg::mixed_precision_cg_tag   mixed_prec_cg_config;
+vcl_result = viennacl::linalg::solve(vcl_matrix,
+                                     vcl_rhs,
+                                     mixed_prec_cg_config);
+\endcode
+As usual, the first parameter to the constructor of `mixed_precision_cg_tag` is the relative tolerance for the residual, while the second parameter denotes the maximum number of solver iterations.
+The third parameter denotes the relative tolerance for the inner low-precision CG iterations and defaults to `0.01`.
+
+\note Have a look at `examples/banchmarks/solver.cpp` for an example.
+
+\note A mixed-precision solver makes sense only if the matrix and right-hand-side vector are supplied in `double` precision.
+
+\note The mixed-precision solver is currently available with the OpenCL compute backend only.
+
+\section manual-additional-algorithms-preconditioners Additional Preconditioners
+In addition to the \ref manual-algorithms-preconditioners "Preconditioners available in the ViennaCL core", two more preconditioners are available with the OpenCL backend and are described in the following.
+
+\subsection manual-additional-algorithms-preconditioners-amg Algebraic Multigrid
+
+\note Algebraic Multigrid preconditioners are only available with the OpenCL backend and are still experimental in ViennaCL. Interface changes as well as considerable performance improvements may be included in future releases!
+
+\note Algebraic Multigrid preconditioners depend on Boost.uBLAS.
+
+Algebraic multigrid mimics the behavior of geometric multigrid on the algebraic level and is thus suited for black-box purposes, where only the system matrix and the right hand side vector are available \cite trottenberg:multigrid .
+Many different flavors of the individual multigrid ingredients exist \cite yang:parallel-amg, of which the most common ones are implemented in ViennaCL.
+
+The two main ingredients of algebraic multigrid are a coarsening algorithm and an interpolation algorithm.
+The available coarsening methods are:
+
+<center>
+<table>
+<tr><th>Description                     </th><th> ViennaCL option constant </th></tr>
+<tr><td>Classical Ruge-St&uuml;ben (RS) </td><td> `VIENNACL_AMG_COARSE_RS` </td></tr>
+<tr><td>One-Pass                        </td><td> `VIENNACL_AMG_COARSE_ONEPASS` </td></tr>
+<tr><td>RS0                             </td><td> `VIENNACL_AMG_COARSE_RS0` </td></tr>
+<tr><td>RS3                             </td><td> `VIENNACL_AMG_COARSE_RS3` </td></tr>
+<tr><td>Aggregation                     </td><td> `VIENNACL_AMG_COARSE_AG` </td></tr>
+<tr><td>Smoothed aggregation            </td><td> `VIENNACL_AMG_COARSE_SA` </td></tr>
+</table>
+<b>AMG coarsening methods available in ViennaCL. Per default, classical RS coarsening is used. </b>
+</center>
+
+The available interpolation methods are:
+<center>
+<table>
+<tr><th>Description    </th><th> ViennaCL option constant </th></tr>
+<tr><td>Direct         </td><td> `VIENNACL_AMG_INTERPOL_DIRECT` </td></tr>
+<tr><td>Classic        </td><td> `VIENNACL_AMG_INTERPOL_ONEPASS` </td></tr>
+<tr><td>RS0 coarsening </td><td> `VIENNACL_AMG_INTERPOL_RS0` </td></tr>
+<tr><td>RS3 coarsening </td><td> `VIENNACL_AMG_INTERPOL_RS3` </td></tr>
+</table>
+<b>AMG interpolation methods available in ViennaCL. Per default, direct interpolation is used.</b>
+</center>
+
+In addition, the following parameters can be controlled in the `amg_tag` and can be passed to the constructor:
+  - Strength of dependence threshold (default: `0.25`)
+  - Interpolation weight (default: `1`)
+  - Jacobi smoother weight (default: `1`)
+  - Number of pre-smoothing steps (default: `1`)
+  - Number of post-smoothing steps (default: `1`)
+  - Number of coarse levels
+
+
+\note Note that the efficiency of the various AMG flavors are typically highly problem-specific. Therefore, failure of one method for a particular problem does NOT imply that other coarsening or interpolation strategies will fail as well.
+
+\subsection manual-additional-algorithms-preconditioners-spai Sparse Approximate Inverses
+
+\note Sparse Approximate Inverse preconditioners are only available with the OpenCL backend and are experimental in ViennaCL. Interface changes as well as considerable performance improvements may be included in future releases!
+
+\note Sparse Approximate Inverse preconditioners depend on Boost.uBLAS.
+
+An alternative construction of a preconditioner for a sparse system matrix \f$ A \f$ is to compute a matrix \f$ M \f$ with a prescribed sparsity pattern such that
+\f[
+ \Vert AM - I \Vert_F \rightarrow \min \ ,
+\f]
+where \f$ \Vert \cdot \Vert_F \f$ denotes the Frobenius norm.
+This is the basic idea of sparse approximate inverse (SPAI) preconditioner.
+It becomes increasingly attractive because of their inherent high degree of parallelism, since the minimization problem can be solved independently for each column of \f$ M \f$.
+ViennaCL provides two preconditioners of this family:
+The first is the classical SPAI algorithm as described by Grote and Huckle \cite grote:spai , the second is the factored SPAI (FSPAI) for symmetric matrices as proposed by Huckle \cite huckle:fspai .
+
+SPAI can be employed for a CPU matrix `A` of type `MatrixType` as follows:
+\code
+// setup SPAI preconditioner, purely CPU-based
+viennacl::linalg::spai_precond<MatrixType> spai_cpu(A, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
+
+//solve (e.g. using stab. Bi-conjugate gradient solver)
+vcl_result = viennacl::linalg::solve(A, rhs,
+                                     viennacl::linalg::bicgstab_tag(),
+                                     spai_cpu);
+\endcode
+The first parameter denotes the residual norm threshold for the full matrix, the second parameter the maximum number of pattern updates, and the third parameter is the threshold for the residual of each minimization problem.
+
+For GPU-matrices, only parts of the setup phase are computed on the CPU, because compute-intensive tasks can be carried out on the GPU:
+\code
+// setup SPAI preconditioner, GPU-assisted
+viennacl::linalg::spai_precond<GPUMatrixType> spai_gpu(vcl_matrix, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
+
+//solve (e.g. using conjugate gradient solver)
+vcl_result = viennacl::linalg::solve(vcl_matrix,
+                                     vcl_rhs,
+                                     viennacl::linalg::bicgstab_tag(),
+                                     spai_gpu);
+\endcode
+The `GPUMatrixType` is typically a `viennacl::compressed_matrix` type.
+
+For symmetric matrices, FSPAI can be used with the conjugate gradient solver:
+\code
+viennacl::linalg::fspai_precond<MatrixType> fspai_cpu(A, viennacl::linalg::fspai_tag());
+
+//solve (e.g. using stab. Bi-conjugate gradient solver)
+vcl_result = viennacl::linalg::solve(A,
+                                     rhs,
+                                     viennacl::linalg::cg_tag(),
+                                     fspai_cpu);
+\endcode
+Our experience is that FSPAI is typically more efficient than SPAI when applied to the same matrix, both in computational effort and in terms of convergence acceleration of the iterative solvers.
+
+\note At present, there is no GPU-accelerated FSPAI included in ViennaCL.
+
+Note that FSPAI depends on the ordering of the unknowns, thus bandwidth reduction algorithms may be employed first, cf. \ref manual-additional-algorithms-bandwidth-reduction "Bandwidth Reduction".
+
+
+\section manual-additional-algorithms-fft Fast Fourier Transform
+
+Since there is no standardized complex type in OpenCL at the time of the release of ViennaCL, vectors need to be set up with real- and imaginary part before computing a fast Fourier transform (FFT).
+In order to store complex numbers \f$ z_0 \f$, \f$ z_1 \f$, etc. in a `viennacl::vector`, say `v`, the real and imaginary parts are mapped to even and odd entries of \lstinline|v| respectively:
+`v[0] = Real(z_0)`, `v[1] = Imag(z_0)`, `v[2] = Real(z_1)`, `v[3] = Imag(z_1)`, etc.
+
+The FFT of `v` can then be computed either by writing to a second vector `output` or by directly writing the result to `v`
+\code
+ viennacl::fft(v, output);
+ viennacl::inplace_fft(v);
+\endcode
+Conversely, the inverse FFT is computed as
+\code
+ viennacl::ifft(v, output);
+ viennacl::inplace_ifft(v);
+\endcode
+
+The second option for computing the FFT is with Bluestein algorithm.
+Currently, the implementation supports only input sizes less than \f$ 2^{16} = 65536 \f$.
+The Bluestein algorithm uses at least three-times more additional memory than another algorithms, but should be fast for any size of data.
+As with any efficient FFT algorithm, the sequential implementation has a complexity of \f$ \mathcal{O}(n * \lg n) \f$.
+To compute the FFT with the Bluestein algorithm from a complex vector `v` and store the result in a vector `output`, one uses the code
+\code
+  viennacl::linalg::bluestein(v, output,batch_size);
+\endcode
+
+\warning In ViennaCL the FFT with complexity \f$ N \log N \f$ is only computed for vectors with a size of a power of two. For other vector sizes, a standard discrete Fourier transform with complexity \f$ N^2 \f$ is employed. This is subject to change in future versions.
+
+Some of the FFT functions are also suitable for matrices and can be computed in 2D.
+The computation of an FFT for objects of type `viennacl::matrix`, say `mat`, require that even entries are real parts and odd entries are imaginary parts of complex numbers.
+In order to store complex numbers \f$ z_0 \f$, \f$ z_1 \f$, etc.~in `mat`:
+`mat(0,0) = Real(z_0)`, `mat(0,1) = Imag(z_0)`,`mat(0,2) = Real(z_0)`, `mat(0,3) = Imag(z_0)` etc.
+
+Than user can compute FFT  either by writing to a second matrix `output` or by directly writing the result to `mat`
+\code
+ viennacl::fft(mat, output);
+ viennacl::inplace_fft(v);
+\endcode
+
+\note In ViennaCL the FFT with complexity \f$ N \log N \f$ is computed for matrices with a number of rows and columns a power of two only. For other matrix sizes, a standard discrete Fourier transform with complexity \f$ N^2 \f$ is employed. This is subject to change in future versions.
+
+
+There are two additional functions to calculate the convolution of two vectors.
+It expresses the amount of overlap of one function represented by vector `v` as it is shifted over another function represented by vector `u`.
+Formerly a convolution is defined by the integral
+\f[
+ (v*u)(t) = \int_{-\infty}^\infty f(x)g(t-x) dx
+\f]
+Define \f$ \mathcal{F} \f$ as the Fast Fourier Transform operator, there holds for a convolution of two infinite sequences `v` and `u`
+\f[
+ \mathcal{F}\{v*u\} = \mathcal{F}\{u\} \mathcal{F}\{v\} \rightarrow v*u = \mathcal{F}^{-1}\{ \mathcal{F}\{v\} \mathcal{F}\{u\} \}
+\f]
+To compute the convolution of two complex vectors `v` and `u`, where the result will be stored in `output`, one can use
+\code
+ viennacl::linalg::convolve(v, u, output);
+\endcode
+which does not modify the input.
+If a modification of the input vectors is acceptable,
+\code
+ viennacl::linalg::convolve_i(v, u, output);
+\endcode
+can be used, reducing the overall memory requirements.
+
+Multiplication of two complex vectors `u`, `v` where the result will be stored in `output`, is provided by
+\code
+ viennacl::linalg::multiply_complex(u, v, output);
+\endcode
+
+For creating a complex vector `v` from a real vector `u` with suitable sizes (`size = v.size() / 2`), use
+\code
+ viennacl::linalg::real_to_complex(u, v, size);
+\endcode
+Conversely, computing a real vector `v` from a complex vector `u` with length `size = v.size() / 2` is achieved through
+\code
+ viennacl::linalg::complex_to_real(u, v, size);
+\endcode
+
+To reverse a vector `v` inplace, use
+\code
+ viennacl::linalg::reverse(v);
+\endcode
+
+
+\section manual-additional-algorithms-bandwidth-reduction Bandwidth Reduction
+
+\note Bandwidth reduction algorithms are experimental in ViennaCL. Interface changes as well as considerable performance improvements may be included in future releases!
+
+The bandwidth of a sparse matrix is defined as the maximum difference of the indices of nonzero entries in a row, taken over all rows.
+A low bandwidth may allows for the use of efficient banded matrix solvers instead of iterative solvers.
+Moreover, better cache utilization as well as lower fill-in in LU-factorization based algorithms can be expected.
+
+For a given sparse matrix with large bandwidth, ViennaCL provides routines for renumbering the unknowns such that the reordered system matrix shows much smaller bandwidth.
+Typical applications stem from the discretization of partial differential equations by means of the finite element or the finite difference method.
+The algorithms employed are as follows:
+  - Classical Cuthill-McKee algorithm \cite cuthill:reducing-bandwidth
+  - Iterated Cuthill-McKee algorithm with different seeds \cite cuthill:reducing-bandwidth
+  - Gibbs-Poole-Stockmeyer algorithm \cite lewis:gps-algorithm
+
+The iterated Cuthill-McKee algorithm applies the classical Cuthill-McKee algorithm to different starting nodes with small, but not necessarily minimal degree as root node into account.
+While this iterated application is more expensive in times of execution times, it may lead to better results than the classical Cuthill-McKee algorithm.
+A parameter \f$ a \in [0,1] \f$ controls the number of nodes considered:
+All nodes with degree \f$ d \f$ fulfilling
+\f[
+ d_{\min} \leq d \leq d_{\min} + a(d_{\max} - d_{\min})
+\f]
+are considered, where \f$ d_{\min} \f$ and \f$ d_{\max} \f$ are the miminum and maximum nodal degrees in the graph.
+A second parameter `gmax` specifies the number of additional root nodes considered.
+
+The algorithms are called for a matrix `A` of a type compatible with `std::vector< std::map<int, double> >` by
+\code
+ r = viennacl::reorder(A, viennacl::cuthill_mckee_tag());
+ r = viennacl::reorder(A, viennacl::advanced_cuthill_mckee_tag(a, gmax));
+ r = viennacl::reorder(A, viennacl::gibbs_poole_stockmeyer_tag());
+\endcode
+and return the permutation array.
+In ViennaCL, the user then needs to manually reorder the sparse matrix based on the permutation array.
+Example code can be found in `examples/tutorial/bandwidth-reduction.cpp`.
+
+
+\section manual-additional-algorithms-nmf Nonnegative Matrix Factorization
+
+In various fields such as text mining, a matrix `V` needs to be factored into factors `W` and `H` with the property that all three matrices have no negative elements, such that the function
+\f[
+ f(W, H) = \Vert V - WH \Vert_{\mathrm{F}}^2
+\f]
+is minimized.
+This can be achieved using the algorithm proposed by Lee and Seoung \cite lee:nmf with the following code:
+\code
+ #include "viennacl/matrix.hpp"
+ #include "viennacl/linalg/nmf_operations.hpp"
+
+ viennacl::matrix<ScalarType> V(size1, size2);
+ viennacl::matrix<ScalarType> W(size1, k);
+ viennacl::matrix<ScalarType> H(k, size2);
+
+ viennacl::linalg::nmf_config conf;
+ viennacl::linalg::nmf(V, W, H, conf);
+\endcode
+
+The fourth and last parameter to the function `nmf()` is an object of type `viennacl::linalg::nmf_config` containing all necessary parameters of NMF routine:
+  - `eps_`: Relative tolerance for convergence
+  - `stagnation_eps_`: Relative tolerance for the stagnation check
+  - `max_iters_`: Maximum number of iterations for the NMF algorithm
+  - `iters_`: The number of iterations of the last NMF run using this configuration object
+  - `print_relative_error_`: Flag specifying whether the relative tolerance should be printed in each iteration
+  - `check_after_steps_`: Number of steps after which the convergence of NMF should be checked (again)
+
+Multiple tests can be found in file `viennacl/test/src/nmf.cpp` and tutorial in file `viennacl/examples/tutorial/nmf.cpp`
+
+*/

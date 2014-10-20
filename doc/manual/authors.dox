@@ -1,0 +1,45 @@
+
+
+
+/**
+
+   \page manual-page-authors    Authors and Contributors
+
+ViennaCL is a collaborative result of several coders.
+The following is an (possibly incomplete) list of contributors, not to mention the many stimuli received via the mailing lists or the issue tracker on GitHub, for which we are very grateful.
+
+\section manual-authors-head Project Head
+
+If you look for someone to blame if something does not work:
+  - <a href="http://www.karlrupp.net/">Karl Rupp</a>
+
+\section manual-authors-authors Authors
+
+Significant parts of the ViennaCL ecosystem are contributed and influenced by (in alphabetical order):
+  - <a href="http://zalomiga.ba/">Namik Karovic</a>
+  - <a href="http://www.iue.tuwien.ac.at/index.php?id=105&user_iuestaff_pi1[showUid]=185&no_cache=1">Florian Rudolf</a>
+  - <a href="http://tsmithe.net/">Toby St Clere Smithe</a>
+  - <a href="http://phil-tillet.net/">Philippe Tillet</a>
+  - <a href="http://www.josefweinbub.net/">Josef Weinbub</a>
+
+Praise them for all the things that <em>do work</em> ;-)
+
+\section manual-authors-contributors Additional Contributors
+
+Precious code contributions have also been provided by (in alphabetical order):
+  - Evan Bollig
+  - Alex Christensen
+  - Philipp Grabenweger
+  - Volodymyr Kysenko
+  - Nikolay Lukash
+  - G&uuml;nther Mader
+  - Denis Ojdanic
+  - Vittorio Patriarca
+  - Astrid Rupp
+  - Andreas Selinger
+  - Markus Wagner
+  - Michael Wild
+
+Please let us know if we have acidentally missed your name!
+
+*/

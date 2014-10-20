@@ -1,0 +1,159 @@
+
+
+
+/**
+
+   \page manual-page-operations    Basic Operations
+
+The basic types have been introduced in the previous chapter, so we move on with the description of the basic BLAS operations.
+Almost all operations supported by Boost.uBLAS are available, including element-wise operations on vectors.
+Thus, consider the <a href="http://www.boost.org/doc/libs/1_52_0/libs/numeric/ublas/doc/operations_overview.htm">Boost.uBLAS documentation</a> as a reference as well.
+
+\section manual-operations-blas1 Elementary Vector and Matrix Operations (BLAS Level 1)
+
+ViennaCL provides all vector-vector operations defined at level 1 of BLAS as well as the most important element-wise operations:
+
+<center>
+<table>
+<tr><th>Verbal                    </th><th> Mathematics                                    </th><th> ViennaCL Code            </th></tr>
+<tr><td>swap                      </td><td> \f$ x \leftrightarrow y \f$                    </td><td> `swap(x,y);`             </td></tr>
+<tr><td>stretch                   </td><td> \f$ x \leftarrow \alpha x \f$                  </td><td> `x *= alpha;`            </td></tr>
+<tr><td>assignment                </td><td> \f$ y \leftarrow x \f$                         </td><td> `y = x;`                 </td></tr>
+<tr><td>multiply add              </td><td> \f$ y \leftarrow \alpha x + y \f$              </td><td> `y += alpha * x;`        </td></tr>
+<tr><td>multiply subtract         </td><td> \f$ y \leftarrow \alpha x - y \f$              </td><td> `y -= alpha * x;`        </td></tr>
+<tr><td>inner dot product         </td><td> \f$ \alpha \leftarrow x^{\mathrm{T}} y \f$     </td><td> `inner_prod(x,y);`       </td></tr>
+<tr><td>\f$L^1\f$ norm            </td><td> \f$ \alpha \leftarrow \Vert x \Vert_1 \f$      </td><td> `alpha = norm_1(x);`     </td></tr>
+<tr><td>\f$L^2\f$ norm            </td><td> \f$ \alpha \leftarrow \Vert x \Vert_2 \f$      </td><td> `alpha = norm_2(x);`     </td></tr>
+<tr><td>\f$L^\infty\f$ norm       </td><td> \f$ \alpha \leftarrow \Vert x \Vert_\infty \f$ </td><td> `alpha = norm_inf(x);`   </td></tr>
+<tr><td>\f$L^\infty\f$ norm index </td><td> \f$ i \leftarrow \max_i \vert x_i \vert \f$    </td><td> `i = index_norm_inf(x);` </td></tr>
+<tr><td>plane rotation            </td><td>\f$(x,y) \leftarrow (\alpha x + \beta y, -\beta x + \alpha y) \f$ </td><td> `plane_rotation(a, b, x, y);` </td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>elementwise product  </td><td> \f$ y_i \leftarrow x_i \cdot z_i \f$ </td><td> `y = element_prod(x,z);` </td></tr>
+<tr><td>elementwise division </td><td> \f$ y_i \leftarrow x_i \cdot z_i \f$ </td><td> `y = element_div(x,z);`  </td></tr>
+<tr><td>elementwise power    </td><td> \f$ y_i \leftarrow x_i^{z_i} \f$     </td><td> `y = element_pow(x,z);`  </td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>elementwise modulus (ints)   </td><td> \f$ y_i \leftarrow `x_i` \f$ </td><td> `y = element_abs(x);` </td></tr>
+<tr><td>elementwise modulus (floats) </td><td> \f$ y_i \leftarrow `x_i` \f$ </td><td> `y = element_fabs(x);` </td></tr>
+<tr><td>elementwise acos             </td><td> \f$ y_i \leftarrow \textrm{acos}(x_i) \f$    </td><td> `y = element_acos(x);`  </td></tr>
+<tr><td>elementwise asin             </td><td> \f$ y_i \leftarrow \textrm{asin}(x_i) \f$    </td><td> `y = element_asin(x);`  </td></tr>
+<tr><td>elementwise atan             </td><td> \f$ y_i \leftarrow \textrm{atan}(x_i) \f$    </td><td> `y = element_atan(x);`  </td></tr>
+<tr><td>elementwise ceil             </td><td> \f$ y_i \leftarrow \lceil x_i \rceil  \f$    </td><td> `y = element_ceil(x);`  </td></tr>
+<tr><td>elementwise cos              </td><td> \f$ y_i \leftarrow \textrm{cos}(x_i)  \f$    </td><td> `y = element_cos(x);`   </td></tr>
+<tr><td>elementwise cosh             </td><td> \f$ y_i \leftarrow \textrm{cosh}(x_i) \f$    </td><td> `y = element_cosh(x);`  </td></tr>
+<tr><td>elementwise exp              </td><td> \f$ y_i \leftarrow \textrm{exp}(x_i)  \f$    </td><td> `y = element_exp(x);`   </td></tr>
+<tr><td>elementwise floor            </td><td> \f$ y_i \leftarrow \lfloor x_i \rfloor \f$   </td><td> `y = element_floor(x);` </td></tr>
+<tr><td>elementwise log (base e)     </td><td> \f$ y_i \leftarrow \textrm{ln}(x_i)   \f$    </td><td> `y = element_log(x);`   </td></tr>
+<tr><td>elementwise log (base 10)    </td><td> \f$ y_i \leftarrow \textrm{log}_{10}(x_i)\f$ </td><td> `y = element_log10(x);` </td></tr>
+<tr><td>elementwise sin              </td><td> \f$ y_i \leftarrow \textrm{sin}(x_i)  \f$    </td><td> `y = element_sin(x);`   </td></tr>
+<tr><td>elementwise sinh             </td><td> \f$ y_i \leftarrow \textrm{sinh}(x_i) \f$    </td><td> `y = element_sinh(x);`  </td></tr>
+<tr><td>elementwise sqrt             </td><td> \f$ y_i \leftarrow \textrm{sqrt}(x_i) \f$    </td><td> `y = element_sqrt(x);`  </td></tr>
+<tr><td>elementwise tan              </td><td> \f$ y_i \leftarrow \textrm{tan}(x_i)  \f$    </td><td> `y = element_tan(x);`   </td></tr>
+<tr><td>elementwise tanh             </td><td> \f$ y_i \leftarrow \textrm{tanh}(x_i) \f$    </td><td> `y = element_tanh(x);`  </td></tr>
+</table>
+<b>BLAS level 1 routines mapped to ViennaCL. Note that the free functions reside in namespace `viennacl::linalg`</b>
+</center>
+
+The function interface is compatible with Boost.uBLAS, thus allowing quick code migration for Boost.uBLAS users.
+Element-wise operations and standard operator overloads are available for dense matrices as well.
+The only dense matrix norm provided is `norm_frobenius()` for the Frobenius norm.
+
+\note Mixing operations between objects of different scalar types is not supported. Convert the data manually on the host if needed.
+
+
+\section manual-operations-blas2 Matrix-Vector Operations (BLAS Level 2)
+The interface for level 2 BLAS functions in ViennaCL is similar to that of Boost.uBLAS:
+
+\note Mixing operations between objects of different scalar types is not supported. Convert the data manually on the host if needed.
+
+<center>
+<table>
+<tr><th>Verbal                </th><th> Mathematics                       </th><th> ViennaCL Code            </th></tr>
+<tr><td>matrix vector product </td><td> \f$ y \leftarrow A x \f$            </td><td> `y = prod(A, x);`        </td></tr>
+<tr><td>matrix vector product </td><td> \f$ y \leftarrow A^\mathrm{T} x \f$ </td><td> `y = prod(trans(A), x);` </td></tr>
+<tr><td>inplace mv product    </td><td> \f$ x \leftarrow A x \f$            </td><td> `x = prod(A, x);`        </td></tr>
+<tr><td>inplace mv product    </td><td> \f$ x \leftarrow A^\mathrm{T} x \f$ </td><td> `x = prod(trans(A), x);` </td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>scaled product add    </td><td> \f$ y \leftarrow \alpha A x + \beta y \f$             </td><td> `y = alpha * prod(A, x) + beta * y`        </td></tr>
+<tr><td>scaled product add    </td><td> \f$ y \leftarrow \alpha A^{\mathrm T} x + \beta y \f$ </td><td> `y = alpha * prod(trans(A), x) + beta * y` </td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>tri. matrix solve     </td><td> \f$ y \leftarrow A^{-1} x \f$            </td><td> `y = solve(A, x, tag);`            </td></tr>
+<tr><td>tri. matrix solve     </td><td> \f$ y \leftarrow A^\mathrm{T^{-1}} x \f$ </td><td> `y = solve(trans(A), x, tag);`     </td></tr>
+<tr><td>inplace solve         </td><td> \f$ x \leftarrow A^{-1} x \f$            </td><td> `inplace_solve(A, x, tag);`        </td></tr>
+<tr><td>inplace solve         </td><td> \f$ x \leftarrow A^\mathrm{T^{-1}} x \f$ </td><td> `inplace_solve(trans(A), x, tag);` </td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>rank 1 update         </td><td> \f$ A \leftarrow \alpha x y^{\mathrm T} + A \f$ </td><td> `A += alpha * outer_prod(x,y);` </td></tr>
+<tr><td>symm. rank 1 update   </td><td> \f$ A \leftarrow \alpha x x^{\mathrm T} + A \f$ </td><td> `A += alpha * outer_prod(x,x);` </td></tr>
+<tr><td>rank 2 update         </td><td> \f$ A \leftarrow \alpha (x y^{\mathrm T} + y x^{\mathrm T}) + A \f$ </td><td> `A += alpha * outer_prod(x,y);` `A += alpha * outer_prod(y,x);` </td></tr>
+</table>
+<b>BLAS level 2 routines mapped to ViennaCL. Note that the free functions reside in namespace `viennacl::linalg`.<br /> `tag` is one out of `lower_tag`, `unit_lower_tag`, `upper_tag`, and `unit_upper_tag`.</b>
+</center>
+
+\section manual-operations-blas3 Matrix-Matrix Operations (BLAS Level 3)
+
+While BLAS levels 1 and 2 are mostly memory-bandwidth-limited, BLAS level 3 is mostly limited by the available computational power of the respective device.
+Hence, matrix-matrix products regularly show impressive performance gains on mid- to high-end GPUs when compared to a single CPU core (which is apparently not a fair comparison...)
+
+Again, the ViennaCL API is identical to that of Boost.uBLAS and comparisons can be carried out immediately, as is shown in the tutorial located in `examples/tutorial/blas3.cpp`.
+
+As for performance, ViennaCL yields decent performance gains at BLAS level 3 on mid- to high-end GPUs.
+However, highest performance is usually obtained only with careful tuning to the respective target device.
+ViennaCL provides kernels that are device-specific and thus achieve high efficiency, without sacrificing the portability of OpenCL.
+Best performance is usually obtained with the OpenCL backend.
+The CUDA backend provides good performance for NVIDIA GPUs.
+The OpenMP backend, however, currently provides only moderate performance and is not recommended for BLAS level 3 operations (as well as algorithms depending on them).
+
+
+\note Mixing operations between objects of different scalar types is not supported. Convert the data manually on the host if needed.
+
+<center>
+<table>
+<tr><th>Verbal                </th><th> Mathematics                                           </th><th> ViennaCL                        </th></tr>
+<tr><td>matrix-matrix product </td><td> \f$ C \leftarrow A \times B \f$                       </td><td> `C = prod(A, B);`               </td></tr>
+<tr><td>matrix-matrix product </td><td> \f$ C \leftarrow A \times B^\mathrm{T} \f$            </td><td> `C = prod(A, trans(B));`        </td></tr>
+<tr><td>matrix-matrix product </td><td> \f$ C \leftarrow A^\mathrm{T} \times B \f$            </td><td> `C = prod(trans(A), B);`        </td></tr>
+<tr><td>matrix-matrix product </td><td> \f$ C \leftarrow A^\mathrm{T} \times B^\mathrm{T} \f$ </td><td> `C = prod(trans(A), trans(B));` </td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>tri. matrix solve     </td><td> \f$ C \leftarrow A^{-1} B \f$                         </td><td> `C = solve(A, B, tag);`               </td></tr>
+<tr><td>tri. matrix solve     </td><td> \f$ C \leftarrow A^\mathrm{T^{-1}} B \f$              </td><td> `C = solve(trans(A), B, tag);`        </td></tr>
+<tr><td>tri. matrix solve     </td><td> \f$ C \leftarrow A^{-1} B^\mathrm{T} \f$              </td><td> `C = solve(A, trans(B), tag);`        </td></tr>
+<tr><td>tri. matrix solve     </td><td> \f$ C \leftarrow A^\mathrm{T^{-1}} B^\mathrm{T} \f$   </td><td> `C = solve(trans(A), trans(B), tag);` </td></tr>
+<tr><td></td><td></td><td></td></tr>
+<tr><td>inplace solve         </td><td> \f$ B \leftarrow A^{-1} B \f$                         </td><td> `inplace_solve(A, trans(B), tag);` </td></tr>
+<tr><td>inplace solve         </td><td> \f$ B \leftarrow A^\mathrm{T^{-1}} B \f$              </td><td> `inplace_solve(trans(A), x, tag);` </td></tr>
+<tr><td>inplace solve         </td><td> \f$ B \leftarrow A^{-1} B^\mathrm{T} \f$              </td><td> `inplace_solve(A, trans(B), tag);` </td></tr>
+<tr><td>inplace solve         </td><td> \f$ B \leftarrow A^\mathrm{T^{-1}} B^\mathrm{T} \f$   </td><td> `inplace_solve(trans(A), x, tag);` </td></tr>
+</table>
+<b>BLAS level 3 routines mapped to ViennaCL. Note that the free functions reside in namespace `viennacl::linalg`</b>
+</center>
+
+\section manual-operations-row-column-diagonal Row, Column, and Diagonal Extraction
+For many algorithms it is of interest to extract a single row or column of a dense matrix, or to access the matrix diagonal.
+This is provided in the same way as for Boost.uBLAS through the free functions `row()`, `column()`, and `diag()`:
+\code
+ // A is a viennacl::matrix<T>
+ // Extract 5-th row of A, then overwrite with 6-th diagonal:
+ viennacl::vector<T> r = viennacl::row(A, 4);
+ r = viennacl::row(A, 5);
+
+ // Extract 4-th column of A, then overwrite with second column:
+ viennacl::vector<T> c = viennacl::column(A, 3);
+ c = viennacl::column(A, 1);
+
+ // Extract diagonal:
+ viennacl::vector<T> d = viennacl::diag(A);
+\endcode
+The function `diag` can also be used to create a matrix which has the provided vector entries in the off-diagonal:
+\code
+ // Create the matrix
+ // 0 1 0 0
+ // 0 0 2 0
+ // 0 0 0 3
+ viennacl::vector<float> v(3);
+ v[0] = 1.0f; v[1] = 2.0f; v[2] = 3.0f;
+ viennacl::matrix<float> A = viennacl::diag(v, 1);
+\endcode
+This is similar to MATLAB's `diag()` function.
+
+
+
+*/
