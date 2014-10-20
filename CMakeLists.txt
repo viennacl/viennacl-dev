@@ -12,7 +12,7 @@ project(ViennaCL)
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 5)
 set(VERSION_PATCH 2)
-set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
 SET(CMAKE_VERBOSE_MAKEFILE ON)   #uncomment this line to increase CMake verbosity
 
@@ -36,7 +36,7 @@ include(ViennaCLCommon)
 
 # Set release build:
 IF(DEFINED CMAKE_BUILD_TYPE)
- SET (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE})
+ SET (CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 ELSE()
  SET (CMAKE_BUILD_TYPE Release)
 ENDIF()
@@ -66,7 +66,7 @@ endif()
 # Compile options
 #################
 
-include_directories(BEFORE ${PROJECT_SOURCE_DIR})
+include_directories(BEFORE "${PROJECT_SOURCE_DIR}")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   INCLUDE_DIRECTORIES("/opt/local/include")
@@ -93,8 +93,8 @@ add_subdirectory(libviennacl)
 # Install
 #########
 
-install(DIRECTORY viennacl ${CMAKE_CURRENT_BINARY_DIR}/viennacl
-   DESTINATION ${INSTALL_INCLUDE_DIR} COMPONENT dev
+install(DIRECTORY viennacl "${CMAKE_CURRENT_BINARY_DIR}/viennacl"
+   DESTINATION "${INSTALL_INCLUDE_DIR}" COMPONENT dev
    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
 # Dist target

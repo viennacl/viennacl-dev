@@ -12,7 +12,7 @@ if(WIN32 AND NOT CYGWIN)
 else()
    set(DEF_INSTALL_CMAKE_DIR lib/cmake/viennacl)
 endif()
-set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
+set(INSTALL_CMAKE_DIR "${DEF_INSTALL_CMAKE_DIR}" CACHE PATH
    "Installation directory for CMake files")
 
 if(NOT IS_ABSOLUTE "${INSTALL_CMAKE_DIR}")
@@ -68,9 +68,9 @@ mark_as_advanced(BOOSTPATH ENABLE_VIENNAPROFILER ENABLE_EIGEN
 
 # Boost:
 IF (BOOSTPATH)
- SET(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} ${BOOSTPATH})
- SET(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${BOOSTPATH}/lib")
- SET(BOOST_ROOT ${BOOSTPATH})
+ SET(CMAKE_INCLUDE_PATH "${CMAKE_INCLUDE_PATH}" "${BOOSTPATH}")
+ SET(CMAKE_LIBRARY_PATH "${CMAKE_LIBRARY_PATH}" "${BOOSTPATH}/lib")
+ SET(BOOST_ROOT "${BOOSTPATH}")
 ENDIF (BOOSTPATH)
 
 
@@ -124,9 +124,13 @@ if(ENABLE_MTL4)
    find_package(MTL REQUIRED)
 endif()
 
-include_directories(
-   ${PROJECT_SOURCE_DIR}
-   ${OPENCL_INCLUDE_DIRS})
+if (ENABLE_OPENCL)
+  include_directories(
+   "${PROJECT_SOURCE_DIR}"
+   "${OPENCL_INCLUDE_DIRS}")
+else (ENABLE_OPENCL)
+  include_directories("${PROJECT_SOURCE_DIR}")
+endif(ENABLE_OPENCL)
 
 # Set high warning level on GCC
 if(ENABLE_PEDANTIC_FLAGS)
@@ -143,13 +147,13 @@ endif()
 ########
 
 configure_file(cmake/FindOpenCL.cmake
-   ${PROJECT_BINARY_DIR}/FindOpenCL.cmake COPYONLY)
+   "${PROJECT_BINARY_DIR}/FindOpenCL.cmake" COPYONLY)
 
 configure_file(cmake/ViennaCLConfig.cmake.in
-   ${PROJECT_BINARY_DIR}/ViennaCLConfig.cmake @ONLY)
+   "${PROJECT_BINARY_DIR}/ViennaCLConfig.cmake" @ONLY)
 
 configure_file(cmake/ViennaCLConfigVersion.cmake.in
-   ${PROJECT_BINARY_DIR}/ViennaCLConfigVersion.cmake @ONLY)
+   "${PROJECT_BINARY_DIR}/ViennaCLConfigVersion.cmake" @ONLY)
 
 if (CMAKE_MINOR_VERSION GREATER 6)  # export(PACKAGE ...) introduced with CMake 2.8.0
   export(PACKAGE ViennaCL)
@@ -159,7 +163,7 @@ endif()
 #########
 
 install(FILES
-   ${PROJECT_BINARY_DIR}/FindOpenCL.cmake
-   ${PROJECT_BINARY_DIR}/ViennaCLConfig.cmake
-   ${PROJECT_BINARY_DIR}/ViennaCLConfigVersion.cmake
-   DESTINATION ${INSTALL_CMAKE_DIR} COMPONENT dev)
+   "${PROJECT_BINARY_DIR}/FindOpenCL.cmake"
+   "${PROJECT_BINARY_DIR}/ViennaCLConfig.cmake"
+   "${PROJECT_BINARY_DIR}/ViennaCLConfigVersion.cmake"
+   DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)

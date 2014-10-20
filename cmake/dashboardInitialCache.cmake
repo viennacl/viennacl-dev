@@ -4,7 +4,7 @@
 
 # include custom initial cache
 get_filename_component(_VIENNACL_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-include(${_VIENNACL_CMAKE_DIR}/dashboardCustomInitialCache.cmake OPTIONAL)
+include("${_VIENNACL_CMAKE_DIR}/dashboardCustomInitialCache.cmake" OPTIONAL)
 
 # COMPILER INFORMATION
 ######################

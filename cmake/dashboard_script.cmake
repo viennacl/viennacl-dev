@@ -13,7 +13,7 @@ foreach(var_val IN LISTS CTEST_SCRIPT_ARG)
    endif()
 endforeach()
 foreach(var CTEST_BUILD_NAME DASHBOARD_TYPE CTEST_NIGHTLY_START_TIME)
-   if(NOT DEFINED ${var})
+   if(NOT DEFINED "${var}")
       message(FATAL_ERROR
          "The variable ${var} is not defined on the command line.")
    endif()
@@ -57,7 +57,7 @@ set(ENV{LC_ALL} C)
 
 while(1)
    ctest_empty_binary_directory("${CTEST_BINARY_DIRECTORY}")
-   ctest_start(${DASHBOARD_TYPE})
+   ctest_start("${DASHBOARD_TYPE}")
 
    if(CTEST_UPDATE_COMMAND AND NOT DASHBOARD_TYPE STREQUAL "Experimental")
       ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}" RETURN_VALUE result)
