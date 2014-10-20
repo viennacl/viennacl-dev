@@ -55,6 +55,7 @@
 #include <string>
 
 #include "viennacl/meta/enable_if.hpp"
+#include "viennacl/version.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
 #include "CL/cl.h"
