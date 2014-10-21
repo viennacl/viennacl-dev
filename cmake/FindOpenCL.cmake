@@ -46,7 +46,7 @@ if(ENV_OPENCLROOT)
           "${OPENCL_LIB_SEARCH_PATH}"
           "${ENV_OPENCLROOT}/lib/x86_64")
     endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-  endif(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Windows"))
+  endif(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") OR ("${CMAKE_SYSTEM_NAME}" MATCHES "Windows"))
   find_library(
     OPENCL_LIBRARY
     NAMES OpenCL
