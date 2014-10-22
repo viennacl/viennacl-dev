@@ -755,17 +755,8 @@ private:
                                                                           vcl_size_t s0_0, vcl_size_t s0_1, vcl_size_t s1_0, vcl_size_t s1_1, bool swap)
   {
     matrix_base<NumericT> & M = *(element.*ptr);
-    vcl_size_t start1 = M.start1();
-    vcl_size_t start2 = M.start2();
-    vcl_size_t stride1 = M.stride1();
-    vcl_size_t stride2 = M.stride2();
-    if (swap)
-    {
-      std::swap(start1, start2);
-      std::swap(stride1, stride2);
-    }
-    slice s0(start1 + s0_0, stride1, s0_1 - s0_0);
-    slice s1(start2 + s1_0, stride2, s1_1 - s1_0);
+    slice s0(s0_0, 1, s0_1 - s0_0);
+    slice s1(s1_0, 1, s1_1 - s1_0);
     if (swap)
       std::swap(s0, s1);
     return matrix_slice<viennacl::matrix_base<NumericT> >(M, s0, s1);
