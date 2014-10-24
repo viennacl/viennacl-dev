@@ -127,7 +127,7 @@ endif()
 if (ENABLE_OPENCL)
   include_directories(
    "${PROJECT_SOURCE_DIR}"
-   "${OPENCL_INCLUDE_DIRS}")
+   ${OPENCL_INCLUDE_DIRS})
 else (ENABLE_OPENCL)
   include_directories("${PROJECT_SOURCE_DIR}")
 endif(ENABLE_OPENCL)
