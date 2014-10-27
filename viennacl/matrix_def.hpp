@@ -114,9 +114,10 @@ public:
   typedef viennacl::backend::mem_handle                                       handle_type;
 
   /** @brief The default constructor. Does not allocate any memory. */
-  explicit matrix_base();
+  explicit matrix_base(): size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(false), row_major_(true) {}
+
   /** @brief The layout constructor. Does not allocate any memory. */
-  explicit matrix_base(bool is_row_major);
+  explicit matrix_base(bool is_row_major) : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(true), row_major_(is_row_major) {}
 
   /** @brief Creates the matrix with the given dimensions
     *
@@ -130,7 +131,14 @@ public:
   explicit matrix_base(viennacl::backend::mem_handle & h,
                        size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
                        size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
-                       bool is_row_major);
+                       bool is_row_major): size1_(mat_size1), size2_(mat_size2),
+        start1_(mat_start1), start2_(mat_start2),
+        stride1_(mat_stride1), stride2_(mat_stride2),
+        internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
+        row_major_fixed_(true), row_major_(is_row_major),
+        elements_(h) {}
+
+
   template<typename LHS, typename RHS, typename OP>
   explicit matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy);
 

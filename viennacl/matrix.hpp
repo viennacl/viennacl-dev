@@ -118,15 +118,6 @@ private:
   vcl_size_t col_;
 };
 
-
-/** @brief The default constructor. Does not allocate any memory. */
-template<class NumericT, typename SizeT, typename DistanceT>
-matrix_base<NumericT, SizeT, DistanceT>::matrix_base() : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(false), row_major_(true) {}
-
-/** @brief The layout constructor. Does not allocate any memory. */
-template<class NumericT, typename SizeT, typename DistanceT>
-matrix_base<NumericT, SizeT, DistanceT>::matrix_base(bool is_row_major) : size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(true), row_major_(is_row_major) {}
-
 /** @brief Creates the matrix with the given dimensions
 *
 * @param rows     Number of rows
@@ -148,17 +139,6 @@ matrix_base<NumericT, SizeT, DistanceT>::matrix_base(size_type rows, size_type c
 }
 
 /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
-template<class NumericT, typename SizeT, typename DistanceT>
-matrix_base<NumericT, SizeT, DistanceT>::matrix_base(viennacl::backend::mem_handle & h,
-                                                        size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
-                                                        size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
-                                                        bool is_row_major)
-  : size1_(mat_size1), size2_(mat_size2),
-    start1_(mat_start1), start2_(mat_start2),
-    stride1_(mat_stride1), stride2_(mat_stride2),
-    internal_size1_(mat_internal_size1), internal_size2_(mat_internal_size2),
-    row_major_fixed_(true), row_major_(is_row_major),
-    elements_(h) {}
 
 template<class NumericT, typename SizeT, typename DistanceT>
 template<typename LHS, typename RHS, typename OP>
