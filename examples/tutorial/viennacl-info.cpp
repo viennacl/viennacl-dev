@@ -15,12 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Device Informations"
 *
-*   Tutorial: Prints informations about the OpenCL backend. Requires compilation with VIENNACL_WITH_OPENCL being defined.
+*   This tutorial prints informations about the OpenCL backend and therefore only works with OpenCL enabled.
+*   See the viennacl::ocl::device class for full information about which information can be queried from devices.
 *
-*
-*/
+*   We start with including required headers:
+**/
 
 // include necessary system headers
 #include <iostream>
@@ -30,26 +31,28 @@
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/platform.hpp"
 
-
+/**
+*  In the main() routine we iterate over all OpenCL platforms and print the full device information for each OpenCL device found.
+**/
 int main()
 {
-   //
-   //  retrieve the devices
-   //
-   typedef std::vector< viennacl::ocl::platform > platforms_type;
-   platforms_type platforms = viennacl::ocl::get_platforms();
+  /**
+  *  Retrieve the platforms and iterate:
+  **/
+  typedef std::vector< viennacl::ocl::platform > platforms_type;
+  platforms_type platforms = viennacl::ocl::get_platforms();
 
-   bool is_first_element = true;
-   for (platforms_type::iterator platform_iter  = platforms.begin();
-                                 platform_iter != platforms.end();
-                               ++platform_iter)
-   {
+  bool is_first_element = true;
+  for (platforms_type::iterator platform_iter  = platforms.begin();
+                                platform_iter != platforms.end();
+                              ++platform_iter)
+  {
     typedef std::vector<viennacl::ocl::device> devices_type;
     devices_type devices = platform_iter->devices(CL_DEVICE_TYPE_ALL);
 
-    //
-    // print some platform info
-    //
+    /**
+    *  Print some platform information
+    **/
     std::cout << "# =========================================" << std::endl;
     std::cout << "#         Platform Information             " << std::endl;
     std::cout << "# =========================================" << std::endl;
@@ -65,26 +68,26 @@ int main()
     }
 
 
-    //
-    //  traverse the devices and print the information
-    //
+    /**
+    *  Traverse the devices and print all information available using the convenience member function full_info():
+    **/
     std::cout << "# " << std::endl;
     std::cout << "# Available Devices: " << std::endl;
     std::cout << "# " << std::endl;
     for (devices_type::iterator iter = devices.begin(); iter != devices.end(); iter++)
     {
-        std::cout << std::endl;
+      std::cout << std::endl;
 
-        std::cout << "  -----------------------------------------" << std::endl;
-        std::cout << iter->full_info();
-        std::cout << "  -----------------------------------------" << std::endl;
+      std::cout << "  -----------------------------------------" << std::endl;
+      std::cout << iter->full_info();
+      std::cout << "  -----------------------------------------" << std::endl;
     }
     std::cout << std::endl;
     std::cout << "###########################################" << std::endl;
     std::cout << std::endl;
-   }
+  }
 
-   return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }
 
 

@@ -15,6 +15,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** \file tests/src/vector_int.cpp  Tests vector operations (BLAS level 1) for signed integer arithmetic.
+*   \test  Tests vector operations (BLAS level 1) for signed integer arithmetic.
+**/
+
 //
 // *** System
 //

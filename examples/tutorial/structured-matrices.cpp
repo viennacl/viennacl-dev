@@ -15,42 +15,44 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/**  \example "Structured Matrices"
 *
-*   Tutorial:  Handling structured dense matrices (experimental, only available with OpenCL backend)
+*   In this tutorial we demonstrate the use of structured dense matrices (Circulant matrix, Hankel matrix, Toeplitz matrix, Vandermonde matrix).
 *
-*/
+*   \warning Structured matrices in ViennaCL are experimental and only available with the OpenCL backend.
+*
+*   We start with including the necessary headers:
+**/
 
 // include necessary system headers
 #include <iostream>
 
-//
-// ViennaCL includes
-//
+// ViennaCL headers
 #include "viennacl/toeplitz_matrix.hpp"
 #include "viennacl/circulant_matrix.hpp"
 #include "viennacl/vandermonde_matrix.hpp"
 #include "viennacl/hankel_matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 
-//
-// Boost includes
-//
+// Boost headers
 #include "boost/numeric/ublas/vector.hpp"
 #include "boost/numeric/ublas/matrix.hpp"
 #include "boost/numeric/ublas/matrix_proxy.hpp"
 #include "boost/numeric/ublas/io.hpp"
 
-
+/**
+*   We first setup the respective matrices in uBLAS matrices and then copy them over to the respective ViennaCL objects.
+*   After that we run a couple of operations (mostly matrix-vector products).
+**/
 int main()
 {
   typedef float      ScalarType;
 
   std::size_t size = 4;
 
-  //
-  // Set up ublas objects
-  //
+  /**
+  * Set up ublas objects
+  **/
   boost::numeric::ublas::vector<ScalarType> ublas_vec(size);
   boost::numeric::ublas::matrix<ScalarType> ublas_circulant(size, size);
   boost::numeric::ublas::matrix<ScalarType> ublas_hankel(size, size);
@@ -66,9 +68,9 @@ int main()
       ublas_vandermonde(i,j) = pow(ScalarType(1.0 + i/1000.0), ScalarType(j));
     }
 
-  //
-  // Set up ViennaCL objects
-  //
+  /**
+  * Set up ViennaCL objects
+  **/
   viennacl::vector<ScalarType>             vcl_vec(size);
   viennacl::vector<ScalarType>             vcl_result(size);
   viennacl::circulant_matrix<ScalarType>   vcl_circulant(size, size);
@@ -89,16 +91,17 @@ int main()
     vcl_vec[i] = ScalarType(i);
   }
 
-  //
-  // Add matrices:
-  //
+  /**
+  * Add circulant matrices using operator overloads:
+  **/
   std::cout << "Circulant matrix before addition: " << vcl_circulant << std::endl << std::endl;
   vcl_circulant += vcl_circulant;
   std::cout << "Circulant matrix after addition: " << vcl_circulant << std::endl << std::endl;
 
-  //
-  // Manipulate single entry
-  //
+  /**
+  * Manipulate single entries of structured matrices.
+  * These manipulations are structure-preserving, so any other affected entries are manipulated as well.
+  **/
   std::cout << "Hankel matrix before manipulation: " << vcl_hankel << std::endl << std::endl;
   vcl_hankel(1, 2) = ScalarType(3.14);
   std::cout << "Hankel matrix after manipulation: " << vcl_hankel << std::endl << std::endl;
@@ -107,17 +110,17 @@ int main()
   vcl_vandermonde(1) = ScalarType(1.1); //NOTE: Write access only via row index
   std::cout << "Vandermonde matrix after manipulation: " << vcl_vandermonde << std::endl << std::endl;
 
-  //
-  // Compute matrix-vector product (FFT-accelerated)
-  //
+  /**
+  * Compute matrix-vector product for a Toeplitz matrix (FFT-accelerated). Similarly for the other matrices.
+  **/
   std::cout << "Toeplitz matrix: " << vcl_toeplitz << std::endl;
   std::cout << "Vector: " << vcl_vec << std::endl << std::endl;
   vcl_result = viennacl::linalg::prod(vcl_toeplitz, vcl_vec);
   std::cout << "Result of matrix-vector product: " << vcl_result << std::endl << std::endl;
 
-  //
-  //  That's it.
-  //
+  /**
+  *  That's it. Print success message and exit.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

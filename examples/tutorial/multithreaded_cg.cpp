@@ -15,11 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Multiple Conjugate Gradient Solvers (one per Context)"
 *
-*   Tutorial: Using ViennaCL with multiple threads for a conjugate gradient solver, one thread per GPU
+*   This tutorial shows how to run multiple instances of a conjugate gradient solver, one instance per GPU.
 *
-*/
+*   We start with including the necessary headers:
+**/
 
 #ifndef VIENNACL_WITH_OPENCL
   #define VIENNACL_WITH_OPENCL
@@ -65,26 +66,36 @@
 
 using namespace boost::numeric;
 
+/**
+*   This tutorial uses Boost.Thread for threading. Other threading approaches (e.g. pthreads) also work.
+**/
 #include <boost/thread.hpp>
 
+/**
+*   This functor represents the work carried out in each thread.
+*   It creates the necessary objects, loads the data, and executes the CG solver.
+**/
 template<typename NumericT>
 class worker
 {
 public:
   worker(std::size_t tid) : thread_id_(tid) {}
 
+  /**
+  *   The functor interface, entry point for each thread.
+  **/
   void operator()()
   {
-    //
-    // Set up some ublas objects
-    //
+    /**
+    * Set up some ublas objects
+    **/
     ublas::vector<NumericT> rhs;
     ublas::vector<NumericT> ref_result;
     ublas::compressed_matrix<NumericT> ublas_matrix;
 
-    //
-    // Read system from file
-    //
+    /**
+    * Read system from file. You may also assemble everything on the fly here.
+    **/
     if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
     {
       std::cout << "Error reading Matrix file" << std::endl;
@@ -103,9 +114,10 @@ public:
       return;
     }
 
-    //
-    // Set up some ViennaCL objects in the respective context
-    //
+    /**
+    *  Set up some ViennaCL objects in the respective context.
+    *  It is important to place the objects in the correct context (associated with each thread)
+    **/
     viennacl::context ctx(viennacl::ocl::get_context(static_cast<long>(thread_id_)));
 
     std::size_t vcl_size = rhs.size();
@@ -117,9 +129,9 @@ public:
     viennacl::copy(ref_result.begin(), ref_result.end(), vcl_ref_result.begin());
 
 
-    //
-    // Transfer ublas-matrix to GPU:
-    //
+    /**
+    * Transfer ublas-matrix to ViennaCL objects sitting on the GPU:
+    **/
     viennacl::copy(ublas_matrix, vcl_compressed_matrix);
 
     viennacl::vector<NumericT> vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::cg_tag());
@@ -136,7 +148,9 @@ private:
   std::size_t thread_id_;
 };
 
-
+/**
+*   In the main routine we create two OpenCL contexts and then use one thread per context to run the CG solver in the functor defined above.
+**/
 int main()
 {
   //Change this type definition to double if your gpu supports that
@@ -148,9 +162,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  //
-  // Part 1: Setup first device for first context, second device for second context:
-  //
+  /**
+  * Part 1: Setup first device for first context, second device for second context:
+  **/
   viennacl::ocl::platform pf = viennacl::ocl::get_platforms()[0];
   std::vector<viennacl::ocl::device> const & devices = pf.devices();
 
@@ -163,9 +177,9 @@ int main()
   else
     viennacl::ocl::setup_context(1, devices[0]);
 
-  //
-  // Part 2: Now let two threads operate on two GPUs in parallel
-  //
+  /**
+  * Part 2: Now let two threads operate on two GPUs in parallel, each running a CG solver
+  **/
 
   worker<ScalarType> work_functor0(0);
   worker<ScalarType> work_functor1(1);
@@ -178,6 +192,9 @@ int main()
   std::cout << work_functor0.message() << std::endl;
   std::cout << work_functor1.message() << std::endl;
 
+  /**
+  *  That's it. Print a success message and exit.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

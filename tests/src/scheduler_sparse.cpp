@@ -15,6 +15,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** \file tests/src/scheduler_sparse.cpp  Tests the scheduler for sparse matrix operations.
+*   \test Tests the scheduler for sparse matrix operations.
+**/
+
 #ifndef NDEBUG
  #define NDEBUG
 #endif

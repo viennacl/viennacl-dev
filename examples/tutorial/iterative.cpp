@@ -15,11 +15,14 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Iterative Solvers"
 *
-*   Tutorial:  Iterative solvers in ViennaCL (iterative.cpp and iterative.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   This tutorial explains the use of iterative solvers in ViennaCL.
 *
-*/
+*   \note iterative.cpp and iterative.cu are identical, the latter being required for compilation using CUDA nvcc
+*
+*   We start with including the necessary system headers:
+**/
 
 //
 // include necessary system headers
@@ -69,50 +72,53 @@
 #include "Random.hpp"
 #include "vector-io.hpp"
 
-
+/**
+*  A shortcut for convience (use `ublas::` instead of `boost::numeric::ublas::`)
+**/
 using namespace boost::numeric;
 
 
+/**
+*  In the main() routine we create matrices and vectors using Boost.uBLAS types and fill them with data.
+*  Then, ViennaCL types are created and the data is copied from the respective Boost.uBLAS objects.
+*  Various preconditioners are set up and finally the iterative solvers get called.
+**/
 int main()
 {
   typedef float       ScalarType;
 
-  //
-  // Set up some ublas objects
-  //
+  /**
+  * Set up some ublas objects
+  **/
   ublas::vector<ScalarType> rhs;
-  ublas::vector<ScalarType> rhs2;
   ublas::vector<ScalarType> ref_result;
   ublas::vector<ScalarType> result;
   ublas::compressed_matrix<ScalarType> ublas_matrix;
 
-  //
-  // Read system from file
-  //
+  /**
+  * Read system matrix from a matrix-market file
+  **/
   if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
   {
     std::cout << "Error reading Matrix file" << std::endl;
-    return 0;
+    return EXIT_FAILURE;
   }
-  //std::cout << "done reading matrix" << std::endl;
 
   if (!readVectorFromFile("../examples/testdata/rhs65025.txt", rhs))
   {
     std::cout << "Error reading RHS file" << std::endl;
-    return 0;
+    return EXIT_FAILURE;
   }
-  //std::cout << "done reading rhs" << std::endl;
 
   if (!readVectorFromFile("../examples/testdata/result65025.txt", ref_result))
   {
     std::cout << "Error reading Result file" << std::endl;
-    return 0;
+    return EXIT_FAILURE;
   }
-  //std::cout << "done reading result" << std::endl;
 
-  //
-  // Set up some ViennaCL objects
-  //
+  /**
+  * Set up some ViennaCL objects
+  **/
   std::size_t vcl_size = rhs.size();
   viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix;
   viennacl::coordinate_matrix<ScalarType> vcl_coordinate_matrix;
@@ -124,14 +130,17 @@ int main()
   viennacl::copy(ref_result.begin(), ref_result.end(), vcl_ref_result.begin());
 
 
-  //
-  // Transfer ublas-matrix to GPU:
-  //
+  /**
+  * Transfer ublas-matrix to GPU:
+  **/
   viennacl::copy(ublas_matrix, vcl_compressed_matrix);
 
-  //
-  // alternative way: via STL. Sparse matrix as std::vector< std::map< unsigned int, ScalarType> >
-  //
+  /**
+  * An alternative way is to use the C++ STL.
+  * In such case, the sparse matrix is represented as a std::vector< std::map< unsigned int, ScalarType> >
+  * After the instantiation, the data from the uBLAS matrix is copied over to the STL-matrix, which is then copied over to a ViennaCL matrix.
+  * This step is just for demonstration purposes.
+  **/
   std::vector< std::map< unsigned int, ScalarType> > stl_matrix(rhs.size());
   for (ublas::compressed_matrix<ScalarType>::iterator1 iter1 = ublas_matrix.begin1();
        iter1 != ublas_matrix.end1();
@@ -145,9 +154,9 @@ int main()
   viennacl::copy(stl_matrix, vcl_coordinate_matrix);
   viennacl::copy(vcl_coordinate_matrix, stl_matrix);
 
-  //
-  // set up ILUT preconditioners for ublas and ViennaCL objects:
-  //
+  /**
+  * Set up ILUT preconditioners for ublas and ViennaCL objects:
+  **/
   std::cout << "Setting up preconditioners for uBLAS-matrix..." << std::endl;
   viennacl::linalg::ilut_precond< ublas::compressed_matrix<ScalarType> >    ublas_ilut(ublas_matrix, viennacl::linalg::ilut_tag());
   viennacl::linalg::ilu0_precond< ublas::compressed_matrix<ScalarType> >    ublas_ilu0(ublas_matrix, viennacl::linalg::ilu0_tag());
@@ -160,76 +169,81 @@ int main()
   viennacl::linalg::block_ilu_precond< viennacl::compressed_matrix<ScalarType>,
                                        viennacl::linalg::ilu0_tag>          vcl_block_ilu0(vcl_compressed_matrix, viennacl::linalg::ilu0_tag());
 
-  //
-  // set up Jacobi preconditioners for ViennaCL and ublas objects:
-  //
+  /**
+  * set up Jacobi preconditioners for ViennaCL and ublas objects:
+  **/
   viennacl::linalg::jacobi_precond< ublas::compressed_matrix<ScalarType> >    ublas_jacobi(ublas_matrix, viennacl::linalg::jacobi_tag());
   viennacl::linalg::jacobi_precond< viennacl::compressed_matrix<ScalarType> > vcl_jacobi(vcl_compressed_matrix, viennacl::linalg::jacobi_tag());
 
-  //
-  // Conjugate gradient solver:
-  //
-  std::cout << "----- CG Test -----" << std::endl;
+  /**
+  * <h2>Conjugate Gradient Solver</h2>
+  **/
+  std::cout << "----- CG Method -----" << std::endl;
 
-  //
-  // for ublas objects:
-  //
+  /**
+  * Run the CG method with uBLAS objects.
+  * Use a relative tolerance of \f$ 10^{-6} \f$ and a maximum of 20 iterations when using ILUT or Jacobi preconditioners.
+  * You might need higher iteration counts for poorly conditioned systems.
+  **/
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::cg_tag());
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::cg_tag(1e-6, 20), ublas_ilut);
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::cg_tag(1e-6, 20), ublas_jacobi);
 
 
-  //
-  // for ViennaCL objects:
-  //
+  /**
+  * Run the CG method for ViennaCL objects.
+  * The results here should be the same as with uBLAS objects (at least up to round-off error).
+  **/
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::cg_tag());
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::cg_tag(1e-6, 20), vcl_ilut);
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::cg_tag(1e-6, 20), vcl_jacobi);
 
-  //
-  // Stabilized BiConjugate gradient solver:
-  //
-  std::cout << "----- BiCGStab Test -----" << std::endl;
+  /**
+  * <h2>Stabilized BiConjugate Gradient Solver</h2>
+  **/
+  std::cout << "----- BiCGStab Method -----" << std::endl;
 
-  //
-  // for ublas objects:
-  //
+  /**
+  * Run BiCGStab for Boost.uBLAS objects. Parameters are the same as for the CG method.
+  **/
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::bicgstab_tag());          //without preconditioner
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), ublas_ilut); //with preconditioner
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), ublas_jacobi); //with preconditioner
 
 
-  //
-  // for ViennaCL objects:
-  //
+  /**
+  * Run the BiCGStab method for ViennaCL objects.
+  * The results here should be the same as with uBLAS objects (at least up to round-off error).
+  **/
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::bicgstab_tag());   //without preconditioner
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), vcl_ilut); //with preconditioner
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), vcl_jacobi); //with preconditioner
 
-  //
-  // GMRES solver:
-  //
-  std::cout << "----- GMRES Test -----" << std::endl;
+  /**
+  * <h2>GMRES Solver</h2>
+  **/
+  std::cout << "----- GMRES Method -----" << std::endl;
 
-  //
-  // for ublas objects:
-  //
+  /**
+  * Run GMRES for Boost.uBLAS objects. Parameters are the same as for the CG method.
+  **/
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::gmres_tag());   //without preconditioner
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::gmres_tag(1e-6, 20), ublas_ilut);//with preconditioner
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::gmres_tag(1e-6, 20), ublas_jacobi);//with preconditioner
 
-  //
-  // for ViennaCL objects:
-  //
+  /**
+  * Run the BiCGStab method for ViennaCL objects.
+  * The results here should be the same as with uBLAS objects (at least up to round-off error).
+  **/
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::gmres_tag());   //without preconditioner
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::gmres_tag(1e-6, 20), vcl_ilut);//with preconditioner
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::gmres_tag(1e-6, 20), vcl_jacobi);//with preconditioner
 
-  //
-  //  That's it.
-  //
+  /**
+  *  That's it, the tutorial is completed.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 

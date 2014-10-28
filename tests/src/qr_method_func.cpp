@@ -15,6 +15,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** \file tests/src/qr_method_func.cpp  Tests the individual building blocks of the eigenvalue routines based on the QR method.
+*   \test Tests the individual building blocks of the eigenvalue routines based on the QR method.
+**/
+
 /*
 *
 *   Test file for qr-method
@@ -187,7 +192,7 @@ void house_update_A_right(ublas::matrix<NumericT> & A,
                           std::vector<NumericT> D)
 {
   NumericT ss = 0;
-  
+
   for(uint i = 0; i < A.size1(); i++)
     {
       ss = 0;

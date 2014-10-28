@@ -16,12 +16,13 @@
 ============================================================================= */
 
 
-/*
+/** \example "Algebraic Multigrid Preconditioners"
 *
-*   Tutorial: Algebraic multigrid preconditioner (only available with the OpenCL backend, experimental)
+*   This tutorial shows the use of algebraic multigrid (AMG) preconditioners.
+*   \warning AMG is currently only experimentally available with the OpenCL backend and depends on Boost.uBLAS
 *
-*/
-
+*   We start with some rather general includes and preprocessor variables:
+**/
 
 
 #ifndef NDEBUG     //without NDEBUG the performance of sparse ublas matrices is poor.
@@ -49,14 +50,25 @@
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 
+/**
+* Import the AMG functionality:
+**/
 #include "viennacl/linalg/amg.hpp"
 
+/**
+* Some more includes:
+**/
 #include <iostream>
 #include <vector>
 #include <ctime>
 #include "vector-io.hpp"
 
 
+/** <h2>Part 1: Worker routines</h2>
+*
+*  <h3>Run the Solver</h3>
+*   Runs the provided solver specified in the `solver` object with the provided preconditioner `precond`
+**/
 template<typename MatrixType, typename VectorType, typename SolverTag, typename PrecondTag>
 void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType const & ref_result, SolverTag const & solver, PrecondTag const & precond)
 {
@@ -71,6 +83,11 @@ void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType co
   std::cout << "  > Relative deviation from result: " << viennacl::linalg::norm_2(result) / viennacl::linalg::norm_2(ref_result) << std::endl;
 }
 
+/** <h3>Compare AMG preconditioner for uBLAS and ViennaCL types</h3>
+*
+*  The AMG implementations in ViennaCL can be used with uBLAS types as well as ViennaCL types.
+*  This function compares the two in terms of execution time.
+**/
 template<typename ScalarType>
 void run_amg(viennacl::linalg::cg_tag & cg_solver,
              boost::numeric::ublas::vector<ScalarType> & /*ublas_vec*/,
@@ -111,11 +128,16 @@ void run_amg(viennacl::linalg::cg_tag & cg_solver,
 
 }
 
+/**
+*  <h2>Part 2: Run Solvers with AMG Preconditioners</h2>
+*
+*  In this
+**/
 int main()
 {
-  //
-  // Print some device info
-  //
+  /**
+  * Print some device info at the beginning. If there is more than one OpenCL device available, use the second device.
+  **/
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << "               Device Info" << std::endl;
@@ -144,15 +166,11 @@ int main()
   typedef float    ScalarType;  // feel free to change this to double if supported by your device
 
 
-  //
-  // Set up the matrices and vectors for the iterative solvers (cf. iterative.cpp)
-  //
+  /**
+  * Set up the matrices and vectors for the iterative solvers (cf. iterative.cpp)
+  **/
   boost::numeric::ublas::vector<ScalarType> ublas_vec, ublas_result;
   boost::numeric::ublas::compressed_matrix<ScalarType> ublas_matrix;
-
-  viennacl::linalg::cg_tag cg_solver;
-  viennacl::linalg::amg_tag amg_tag;
-  viennacl::linalg::amg_precond<boost::numeric::ublas::compressed_matrix<ScalarType> > ublas_amg;
 
   // Read matrix
   if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
@@ -183,18 +201,25 @@ int main()
   viennacl::copy(ublas_vec, vcl_vec);
   viennacl::copy(ublas_result, vcl_result);
 
-  //
-  // Run solver without preconditioner
-  //
+  /**
+  * Instantiate a tag for the conjugate gradient solver, the AMG preconditioner tag, and create an AMG preconditioner object:
+  **/
+  viennacl::linalg::cg_tag cg_solver;
+  viennacl::linalg::amg_tag amg_tag;
+
+  /**
+  * Run solver without preconditioner. This serves as a baseline for comparison.
+  * Note that iterative solvers without preconditioner on GPUs can be very efficient because they map well to the massively parallel hardware.
+  **/
   std::cout << "-- CG solver (CPU, no preconditioner) --" << std::endl;
   run_solver(ublas_matrix, ublas_vec, ublas_result, cg_solver, viennacl::linalg::no_precond());
 
   std::cout << "-- CG solver (GPU, no preconditioner) --" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, viennacl::linalg::no_precond());
 
-  //
-  // With AMG Preconditioner RS+DIRECT
-  //
+  /**
+  * Generate the setup for an AMG preconditioner of Ruge-Stueben type with direct interpolation (RS+DIRECT) and run the solver:
+  **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_RS,       // coarsening strategy
                                       VIENNACL_AMG_INTERPOL_DIRECT, // interpolation strategy
                                       0.25, // strength of dependence threshold
@@ -205,46 +230,46 @@ int main()
                                       0);   // number of coarse levels to be used (0: automatically use as many as reasonable)
   run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS COARSENING, DIRECT INTERPOLATION", amg_tag);
 
-  //
-  // With AMG Preconditioner RS+CLASSIC
-  //
+  /**
+  * Generate the setup for an AMG preconditioner of Ruge-Stueben type with classic interpolation (RS+CLASSIC) and run the solver:
+  **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_RS, VIENNACL_AMG_INTERPOL_CLASSIC, 0.25, 0.2, 0.67, 3, 3, 0);
   run_amg ( cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS COARSENING, CLASSIC INTERPOLATION", amg_tag);
 
-  //
-  // With AMG Preconditioner ONEPASS+DIRECT
-  //
+  /**
+  * Generate the setup for an AMG preconditioner of Ruge-Stueben type with only one pass and direct interpolation (ONEPASS+DIRECT)
+  **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_ONEPASS, VIENNACL_AMG_INTERPOL_DIRECT,0.25, 0.2, 0.67, 3, 3, 0);
   run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag);
 
-  //
-  // With AMG Preconditioner RS0+DIRECT
-  //
+  /**
+  * Generate the setup for an AMG preconditioner of parallel Ruge-Stueben type with direct interpolation (RS0+DIRECT)
+  **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_RS0, VIENNACL_AMG_INTERPOL_DIRECT, 0.25, 0.2, 0.67, 3, 3, 0);
   run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS0 COARSENING, DIRECT INTERPOLATION", amg_tag);
 
-  //
-  // With AMG Preconditioner RS3+DIRECT
-  //
+  /**
+  * Generate the setup for an AMG preconditioner of parallel Ruge-Stueben type (with communication across domains) and use direct interpolation (RS3+DIRECT)
+  **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_RS3, VIENNACL_AMG_INTERPOL_DIRECT, 0.25, 0.2, 0.67, 3, 3, 0);
   run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS3 COARSENING, DIRECT INTERPOLATION", amg_tag);
 
-  //
-  // With AMG Preconditioner AG
-  //
+  /**
+  * Generate the setup for an AMG preconditioner which as aggregation-based (AG)
+  **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.08, 0, 0.67, 3, 3, 0);
   run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION", amg_tag);
 
-  //
-  // With AMG Preconditioner SA
-  //
+  /**
+  * Generate the setup for an AMG preconditioner with smoothed aggregation (SA)
+  **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 3, 3, 0);
   run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, SA INTERPOLATION",amg_tag);
 
 
-  //
-  //  That's it.
-  //
+  /**
+  *  That's it.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

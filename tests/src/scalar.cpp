@@ -15,6 +15,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** \file tests/src/scalar.cpp  Tests operations for viennacl::scalar objects.
+*   \test Tests operations for viennacl::scalar objects.
+**/
+
 //
 // *** System
 //

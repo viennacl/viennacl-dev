@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+
+/** \file tests/src/sparse.cpp  Tests sparse matrix operations.
+*   \test  Tests sparse matrix operations.
+**/
+
 #ifndef NDEBUG
  #define NDEBUG
 #endif

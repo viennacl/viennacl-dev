@@ -15,6 +15,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** \file tests/src/blas3_solve.cpp   Tests the BLAS level 3 triangular solvers
+*   \test  Tests the BLAS level 3 triangular solvers
+**/
+
 //#define NDEBUG
 //#define VIENNACL_DEBUG_BUILD
 

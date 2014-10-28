@@ -15,6 +15,10 @@
  License:         MIT (X11), see file LICENSE in the base directory
  ============================================================================= */
 
+/** \file tests/src/fft_1d.cpp  Tests the one-dimensional FFT routines.
+*   \test Tests the one-dimensional FFT routines.
+**/
+
 #include <iostream>
 #include <vector>
 #include <cmath>

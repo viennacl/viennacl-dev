@@ -15,11 +15,15 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Multithreaded Use of ViennaCL"
 *
-*   Tutorial: Using ViennaCL with multiple threads, one thread per GPU
+*   This tutorial shows how to use ViennaCL with multiple threads, one thread per GPU.
+*   The use of one thread per context (host, CUDA, OpenCL) is supported.
+*   However, using more than one thread per context is not fully covered by the OpenCL standard.
+*   It is, however, perfectly fine to use multiple OpenCL contexts simultaneously, each using one thread.
 *
-*/
+*   We start with including the necessary headers:
+**/
 
 #ifndef VIENNACL_WITH_OPENCL
   #define VIENNACL_WITH_OPENCL
@@ -46,6 +50,10 @@
 #include <boost/thread.hpp>
 
 
+/**
+*  Each thread runs a separate task, for which we provide the following functor.
+*  For each thread, vector operations and a vector norm gets computed.
+**/
 template<typename NumericT>
 class worker
 {
@@ -79,9 +87,12 @@ private:
   std::size_t thread_id_;
 };
 
+/**
+*   In the main routine we create two OpenCL contexts and then use one thread per context to run the operations in the functor defined above.
+**/
 int main()
 {
-  //Change this type definition to double if your gpu supports that
+  // Change this type definition to double if your gpu supports that
   typedef float       ScalarType;
 
   if (viennacl::ocl::get_platforms().size() == 0)
@@ -90,9 +101,9 @@ int main()
     return EXIT_FAILURE;
   }
 
-  //
-  // Part 1: Setup first device for first context, second device for second context:
-  //
+  /**
+  *   Part 1: Setup first device for first context, second device for second context:
+  **/
   viennacl::ocl::platform pf = viennacl::ocl::get_platforms()[0];
   std::vector<viennacl::ocl::device> const & devices = pf.devices();
 
@@ -105,9 +116,9 @@ int main()
   else
     viennacl::ocl::setup_context(1, devices[0]);
 
-  //
-  // Part 2: Now let two threads operate on two GPUs in parallel
-  //
+  /**
+  *   Part 2: Now let two threads operate on two GPUs in parallel.
+  **/
 
   worker<ScalarType> work_functor0(0);
   worker<ScalarType> work_functor1(1);
@@ -120,6 +131,9 @@ int main()
   std::cout << work_functor0.message() << std::endl;
   std::cout << work_functor1.message() << std::endl;
 
+  /**
+  *  We're done - print a success message.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

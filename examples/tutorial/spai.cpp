@@ -15,11 +15,14 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Sparse Approximate Inverse Preconditioner"
 *
-*   Tutorial: Sparse approximate inverse preconditioner (only available with the OpenCL backend, experimental)
+*   This tutorial shows how to use the sparse approximate inverse (SPAI) preconditioner.
 *
-*/
+*   \warning SPAI is currently only available with the OpenCL backend and is experimental. API-changes may happen any time in the future.
+*
+*   We start with including the necessary headers:
+**/
 
 // enable Boost.uBLAS support
 #define VIENNACL_WITH_UBLAS
@@ -28,6 +31,7 @@
  #define NDEBUG
 #endif
 
+// System headers:
 #include <utility>
 #include <iostream>
 #include <fstream>
@@ -35,7 +39,8 @@
 #include <cmath>
 #include <algorithm>
 #include <stdio.h>
-#include <time.h>
+
+// ViennaCL headers:
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"
@@ -47,31 +52,49 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/linalg/spai.hpp"
+
+// Boost headers:
 #include "boost/numeric/ublas/vector.hpp"
 #include "boost/numeric/ublas/matrix.hpp"
 #include "boost/numeric/ublas/io.hpp"
 
+// auxiliary functionality:
 #include "vector-io.hpp"
 
-template<typename MatrixType, typename VectorType, typename SolverTag, typename Preconditioner>
-void run_solver(MatrixType const & A, VectorType const & b, SolverTag const & solver_tag, Preconditioner const & precond)
+/**
+*  The following helper routine is used to run a solver with the provided preconditioner and to print the resulting residual norm.
+**/
+template<typename MatrixT, typename VectorT, typename SolverTagT, typename PreconditionerT>
+void run_solver(MatrixT const & A, VectorT const & b, SolverTagT const & solver_tag, PreconditionerT const & precond)
 {
-    VectorType result = viennacl::linalg::solve(A, b, solver_tag, precond);
-    std::cout << " * Solver iterations: " << solver_tag.iters() << std::endl;
-    VectorType residual = viennacl::linalg::prod(A, result);
-    residual -= b;
-    std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(b) << std::endl;
+  VectorT result = viennacl::linalg::solve(A, b, solver_tag, precond);
+  std::cout << " * Solver iterations: " << solver_tag.iters() << std::endl;
+  VectorT residual = viennacl::linalg::prod(A, result);
+  residual -= b;
+  std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(b) << std::endl;
 }
 
-
+/**
+*  The main steps in this tutorial are the following:
+*  - Setup the systems
+*  - Run solvers without preconditioner and with ILUT preconditioner for comparison
+*  - Run solver with SPAI preconditioner on CPU
+*  - Run solver with SPAI preconditioner on GPU
+*  - Run solver with factored SPAI preconditioner on CPU
+*  - Run solver with factored SPAI preconditioner on GPU
+*
+**/
 int main (int, const char **)
 {
-    typedef float               ScalarType;
-    typedef boost::numeric::ublas::compressed_matrix<ScalarType>        MatrixType;
-    typedef boost::numeric::ublas::vector<ScalarType>                   VectorType;
-    typedef viennacl::compressed_matrix<ScalarType>                     GPUMatrixType;
-    typedef viennacl::vector<ScalarType>                                GPUVectorType;
+  typedef float               ScalarType;
+  typedef boost::numeric::ublas::compressed_matrix<ScalarType>        MatrixType;
+  typedef boost::numeric::ublas::vector<ScalarType>                   VectorType;
+  typedef viennacl::compressed_matrix<ScalarType>                     GPUMatrixType;
+  typedef viennacl::vector<ScalarType>                                GPUVectorType;
 
+  /**
+  *  If you have multiple OpenCL-capable devices in your system, we pick the second device for this tutorial.
+  **/
 #ifdef VIENNACL_WITH_OPENCL
   // Optional: Customize OpenCL backend
   viennacl::ocl::platform pf = viennacl::ocl::get_platforms()[0];
@@ -92,99 +115,111 @@ int main (int, const char **)
   viennacl::context ctx;
 #endif
 
-    MatrixType M;
+  /**
+  * Create uBLAS-based sparse matrix and read system matrix from file
+  **/
+  MatrixType M;
 
-    //
-    // Read system matrix from file
-    //
-    if (!viennacl::io::read_matrix_market_file(M, "../examples/testdata/mat65k.mtx"))
-    {
-      std::cerr<<"ERROR: Could not read matrix file " << std::endl;
-      exit(EXIT_FAILURE);
-    }
+  if (!viennacl::io::read_matrix_market_file(M, "../examples/testdata/mat65k.mtx"))
+  {
+    std::cerr<<"ERROR: Could not read matrix file " << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
-    std::cout << "Size of matrix: " << M.size1() << std::endl;
-    std::cout << "Avg. Entries per row: " << M.nnz() / static_cast<double>(M.size1()) << std::endl;
+  std::cout << "Size of matrix: " << M.size1() << std::endl;
+  std::cout << "Avg. Entries per row: " << M.nnz() / static_cast<double>(M.size1()) << std::endl;
 
-    //
-    // Use uniform load vector:
-    //
-    VectorType rhs(M.size2());
-    for (std::size_t i=0; i<rhs.size(); ++i)
-      rhs(i) = 1;
+  /**
+  *   Use a constant load vector for simplicity
+  **/
+  VectorType rhs(M.size2());
+  for (std::size_t i=0; i<rhs.size(); ++i)
+    rhs(i) = ScalarType(1);
 
-    GPUMatrixType  gpu_M(M.size1(), M.size2(), ctx);
-    GPUVectorType  gpu_rhs(M.size1(), ctx);
-    viennacl::copy(M, gpu_M);
-    viennacl::copy(rhs, gpu_rhs);
+  /**
+  *   Create the ViennaCL matrix and vector and initialize with uBLAS data:
+  **/
+  GPUMatrixType  gpu_M(M.size1(), M.size2(), ctx);
+  GPUVectorType  gpu_rhs(M.size1(), ctx);
+  viennacl::copy(M, gpu_M);
+  viennacl::copy(rhs, gpu_rhs);
 
-    ///////////////////////////////// Tests to follow /////////////////////////////
+  /**
+  *  <h2>Solver Runs</h2>
+  *  We use a relative tolerance of \f$ 10^{-10} \f$ with a maximum of 50 iterations for each use case.
+  *  Usually more than 50 solver iterations are required for convergence, but this choice ensures shorter execution times and suffices for this tutorial.
+  **/
 
-    viennacl::linalg::bicgstab_tag solver_tag(1e-10, 50); //for simplicity and reasonably short execution times we use only 50 iterations here
+  viennacl::linalg::bicgstab_tag solver_tag(1e-10, 50); //for simplicity and reasonably short execution times we use only 50 iterations here
 
-    //
-    // Reference: No preconditioner:
-    //
-    std::cout << "--- Reference 1: Pure BiCGStab on CPU ---" << std::endl;
-    VectorType result = viennacl::linalg::solve(M, rhs, solver_tag);
-    std::cout << " * Solver iterations: " << solver_tag.iters() << std::endl;
-    VectorType residual = viennacl::linalg::prod(M, result) - rhs;
-    std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(rhs) << std::endl;
+  /**
+  *  The first reference is to use no preconditioner (CPU and GPU):
+  **/
+  std::cout << "--- Reference 1: Pure BiCGStab on CPU ---" << std::endl;
+  VectorType result = viennacl::linalg::solve(M, rhs, solver_tag);
+  std::cout << " * Solver iterations: " << solver_tag.iters() << std::endl;
+  VectorType residual = viennacl::linalg::prod(M, result) - rhs;
+  std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(rhs) << std::endl;
 
-    std::cout << "--- Reference 2: Pure BiCGStab on GPU ---" << std::endl;
-    GPUVectorType gpu_result = viennacl::linalg::solve(gpu_M, gpu_rhs, solver_tag);
-    std::cout << " * Solver iterations: " << solver_tag.iters() << std::endl;
-    GPUVectorType gpu_residual = viennacl::linalg::prod(gpu_M, gpu_result);
-    gpu_residual -= gpu_rhs;
-    std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(gpu_residual) / viennacl::linalg::norm_2(gpu_rhs) << std::endl;
-
-
-    //
-    // Reference: ILUT preconditioner:
-    //
-    std::cout << "--- Reference 2: BiCGStab with ILUT on CPU ---" << std::endl;
-    std::cout << " * Preconditioner setup..." << std::endl;
-    viennacl::linalg::ilut_precond<MatrixType> ilut(M, viennacl::linalg::ilut_tag());
-    std::cout << " * Iterative solver run..." << std::endl;
-    run_solver(M, rhs, solver_tag, ilut);
+  std::cout << "--- Reference 2: Pure BiCGStab on GPU ---" << std::endl;
+  GPUVectorType gpu_result = viennacl::linalg::solve(gpu_M, gpu_rhs, solver_tag);
+  std::cout << " * Solver iterations: " << solver_tag.iters() << std::endl;
+  GPUVectorType gpu_residual = viennacl::linalg::prod(gpu_M, gpu_result);
+  gpu_residual -= gpu_rhs;
+  std::cout << " * Rel. Residual: " << viennacl::linalg::norm_2(gpu_residual) / viennacl::linalg::norm_2(gpu_rhs) << std::endl;
 
 
-    //
-    // Test 1: SPAI with CPU:
-    //
-    std::cout << "--- Test 1: CPU-based SPAI ---" << std::endl;
-    std::cout << " * Preconditioner setup..." << std::endl;
-    viennacl::linalg::spai_precond<MatrixType> spai_cpu(M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
-    std::cout << " * Iterative solver run..." << std::endl;
-    run_solver(M, rhs, solver_tag, spai_cpu);
+  /**
+  * The second reference is a standard ILUT preconditioner (only CPU):
+  **/
+  std::cout << "--- Reference 2: BiCGStab with ILUT on CPU ---" << std::endl;
+  std::cout << " * Preconditioner setup..." << std::endl;
+  viennacl::linalg::ilut_precond<MatrixType> ilut(M, viennacl::linalg::ilut_tag());
+  std::cout << " * Iterative solver run..." << std::endl;
+  run_solver(M, rhs, solver_tag, ilut);
 
-    //
-    // Test 2: FSPAI with CPU:
-    //
-    std::cout << "--- Test 2: CPU-based FSPAI ---" << std::endl;
-    std::cout << " * Preconditioner setup..." << std::endl;
-    viennacl::linalg::fspai_precond<MatrixType> fspai_cpu(M, viennacl::linalg::fspai_tag());
-    std::cout << " * Iterative solver run..." << std::endl;
-    run_solver(M, rhs, solver_tag, fspai_cpu);
 
-    //
-    // Test 3: SPAI with GPU:
-    //
-    std::cout << "--- Test 3: GPU-based SPAI ---" << std::endl;
-    std::cout << " * Preconditioner setup..." << std::endl;
-    viennacl::linalg::spai_precond<GPUMatrixType> spai_gpu(gpu_M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
-    std::cout << " * Iterative solver run..." << std::endl;
-    run_solver(gpu_M, gpu_rhs, solver_tag, spai_gpu);
+  /**
+  * <h2>Step 1: SPAI with CPU</h2>
+  **/
+  std::cout << "--- Test 1: CPU-based SPAI ---" << std::endl;
+  std::cout << " * Preconditioner setup..." << std::endl;
+  viennacl::linalg::spai_precond<MatrixType> spai_cpu(M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
+  std::cout << " * Iterative solver run..." << std::endl;
+  run_solver(M, rhs, solver_tag, spai_cpu);
 
-    //
-    // Test 4: FSPAI with GPU:
-    //
-    std::cout << "--- Test 4: GPU-based FSPAI ---" << std::endl;
-    std::cout << " * Preconditioner setup..." << std::endl;
-    viennacl::linalg::fspai_precond<GPUMatrixType> fspai_gpu(gpu_M, viennacl::linalg::fspai_tag());
-    std::cout << " * Iterative solver run..." << std::endl;
-    run_solver(gpu_M, gpu_rhs, solver_tag, fspai_gpu);
+  /**
+  * <h2>Step 2: FSPAI with CPU</h2>
+  **/
+  std::cout << "--- Test 2: CPU-based FSPAI ---" << std::endl;
+  std::cout << " * Preconditioner setup..." << std::endl;
+  viennacl::linalg::fspai_precond<MatrixType> fspai_cpu(M, viennacl::linalg::fspai_tag());
+  std::cout << " * Iterative solver run..." << std::endl;
+  run_solver(M, rhs, solver_tag, fspai_cpu);
 
-    return EXIT_SUCCESS;
+  /**
+  * <h2>Step 3: SPAI with GPU</h2>
+  **/
+  std::cout << "--- Test 3: GPU-based SPAI ---" << std::endl;
+  std::cout << " * Preconditioner setup..." << std::endl;
+  viennacl::linalg::spai_precond<GPUMatrixType> spai_gpu(gpu_M, viennacl::linalg::spai_tag(1e-3, 3, 5e-2));
+  std::cout << " * Iterative solver run..." << std::endl;
+  run_solver(gpu_M, gpu_rhs, solver_tag, spai_gpu);
+
+  /**
+  * <h2>Step 4: FSPAI with GPU</h2>
+  **/
+  std::cout << "--- Test 4: GPU-based FSPAI ---" << std::endl;
+  std::cout << " * Preconditioner setup..." << std::endl;
+  viennacl::linalg::fspai_precond<GPUMatrixType> fspai_gpu(gpu_M, viennacl::linalg::fspai_tag());
+  std::cout << " * Iterative solver run..." << std::endl;
+  run_solver(gpu_M, gpu_rhs, solver_tag, fspai_gpu);
+
+  /**
+  *   That's it! Print success message and exit.
+  **/
+  std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
+
+  return EXIT_SUCCESS;
 }
 

@@ -16,6 +16,11 @@
 ============================================================================= */
 
 
+
+/** \file tests/src/scheduler_matrix_vector.cpp  Tests the scheduler for matrix-vector-operations.
+*   \test Tests the scheduler for matrix-vector-operations.
+**/
+
 //
 // *** System
 //

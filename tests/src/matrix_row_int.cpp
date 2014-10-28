@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** \file tests/src/matrix_row_int.cpp  Tests routines for dense matrices, row-major, signed integers.
+*   \test Tests routines for dense matrices, row-major, signed integers.
+**/
+
+
 #include "matrix_int.hpp"
 
 int main (int, const char **)

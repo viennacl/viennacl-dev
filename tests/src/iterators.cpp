@@ -15,6 +15,10 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** \file tests/src/iterators.cpp  Tests the iterators in ViennaCL.
+*   \test Tests the iterators in ViennaCL.
+**/
+
 //
 // *** System
 //

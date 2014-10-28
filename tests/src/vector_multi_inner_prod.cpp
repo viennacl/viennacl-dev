@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+
+/** \file tests/src/vector_multiple_inner_prod.cpp  Tests the performance of multiple inner products with a common vector.
+*   \test   Tests the performance of multiple inner products with a common vector.
+**/
+
 //
 // *** System
 //

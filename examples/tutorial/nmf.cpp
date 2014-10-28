@@ -15,57 +15,75 @@
  License:         MIT (X11), see file LICENSE in the base directory
  ============================================================================= */
 
-/*
- *
- *   Tutorial: NMF functionality
- *
- */
+/** \example "Nonnegative Matrix Factorization"
+*
+*   This tutorial explains how to use the nonnegative matrix factorization (NMF) functionality in ViennaCL.
+*
+*   The first step is to include the necessary headers and define the floating point type used for the computations:
+**/
 
-//include header file for NMF computation
+
+#include "viennacl/matrix.hpp"
 #include "viennacl/linalg/nmf_operations.hpp"
 
+// feel free to change this to 'double' if supported by your hardware.
 typedef float ScalarType;
-template<typename MAJOR>
-void fill_random(viennacl::matrix<ScalarType, MAJOR>& v)
+
+/**
+*   The following routine fills a matrix with uniformly distributed random values from the interval [0,1].
+*   This is used to initialize the matrices to be factored
+**/
+template<typename MajorT>
+void fill_random(viennacl::matrix<ScalarType, MajorT> & A)
 {
-  for (std::size_t i = 0; i < v.size1(); i++)
-  {
-    for (std::size_t j = 0; j < v.size2(); ++j)
-      v(i, j) = static_cast<ScalarType>(rand()) / RAND_MAX;
-  }
+  for (std::size_t i = 0; i < A.size1(); i++)
+    for (std::size_t j = 0; j < A.size2(); ++j)
+      A(i, j) = static_cast<ScalarType>(rand()) / RAND_MAX;
 }
 
+/**
+*  In the main routine we set up a matrix V and compute approximate factors W and H such that \f$V \approx W H \f$, where all three matrices carry nonnegative entries only.
+*  Since W and H are usually chosen to represent a rank-k-approximation of V, we use a similar low-rank approximation here.
+**/
 int main()
 {
   std::cout << std::endl;
   std::cout << "------- Tutorial NMF --------" << std::endl;
   std::cout << std::endl;
 
-  unsigned int m = 3; //size1 of W and size1 of V
-  unsigned int n = 3; //size2 of V and size2 of H
-  unsigned int k = 3; //size2 of W and sze 1 of H
+  /**
+  *   Approximate the 7-by-6-matrix V by a 7-by-3-matrix W and a 3-by-6-matrix H
+  **/
+  unsigned int m = 7; //size1 of W and size1 of V
+  unsigned int n = 6; //size2 of V and size2 of H
+  unsigned int k = 3; //size2 of W and size1 of H
 
-  //create V,W,H matrix where the result will be computed V.size1() == W.size1() && V.size2() == H.size2() ==> m == m && n = n
   viennacl::matrix<ScalarType, viennacl::column_major> V(m, n);
   viennacl::matrix<ScalarType, viennacl::column_major> W(m, k);
   viennacl::matrix<ScalarType, viennacl::column_major> H(k, n);
 
-  //fill the matrix randomly the can not be zero!NON-NEGATIV
+  /**
+  *  Fill the matrices randomly. Initial guesses for W and H consisting of only zeros won't work.
+  **/
   fill_random(V);
   fill_random(W);
   fill_random(H);
 
-  std::cout << "INPUT MATRIX:" << std::endl;
+  std::cout << "Input matrices:" << std::endl;
   std::cout << "V" << V << std::endl;
   std::cout << "W" << W << std::endl;
   std::cout << "H" << H << "\n" << std::endl;
 
-  //create configuration class this hold all neceserry informations about computing
+  /**
+  *  Create configuration object to hold (and adjust) the respective parameters.
+  **/
   viennacl::linalg::nmf_config conf;
   conf.print_relative_error(false);
-  conf.max_iterations(5000); //5000 iterations are enough for the test
+  conf.max_iterations(50); // 50 iterations are enough here
 
-  //call the NMF rutine
+  /**
+  *  Call the NMF routine and print the results
+  **/
   std::cout << "Computing NMF" << std::endl;
   viennacl::linalg::nmf(V, W, H, conf);
 
@@ -74,7 +92,10 @@ int main()
   std::cout << "W" << W << std::endl;
   std::cout << "H" << H << "\n" << std::endl;
 
-  std::cout << "RESULT AFTER MULTIPLIKATION W*H:" << std::endl;
+  /**
+  *   Print the product W*H approximating V for comparison and exit:
+  **/
+  std::cout << "W*H:" << std::endl;
   viennacl::matrix<ScalarType> resultCorrect = viennacl::linalg::prod(W, H);
   std::cout << resultCorrect << std::endl;
 

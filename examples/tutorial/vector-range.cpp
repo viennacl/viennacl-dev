@@ -15,51 +15,50 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Vector Ranges"
 *
-*   Tutorial: Explains the use of vector ranges with simple BLAS level 1 and 2 operations.
-*             (vector-range.cpp and vector-range.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   This tutorial explains the use of vector ranges with simple BLAS level 1 and 2 operations.
+*   Vector slices are used similarly and not further considered in this tutorial.
 *
-*/
+*   We start with including the required headers:
+**/
 
-// activate ublas support in ViennaCL
+// Activate ublas support in ViennaCL
 #define VIENNACL_WITH_UBLAS
 
-//
-// include necessary system headers
-//
+// System headers
 #include <iostream>
 #include <string>
 
-//
-// ViennaCL includes
-//
+// ViennaCL headers
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/vector_proxy.hpp"
 
-//
-// Boost includes
-//
+// Boost headers
 #include "boost/numeric/ublas/vector.hpp"
 #include "boost/numeric/ublas/vector_proxy.hpp"
 #include "boost/numeric/ublas/io.hpp"
 
-
+/**
+*  In the main() routine a couple of vectors from both Boost.uBLAS and ViennaCL are set up.
+*  Then, subvectors are extracted and manipulated using the usual operator overloads.
+**/
 int main (int, const char **)
 {
-  typedef float                                           ScalarType;    //feel free to change this to 'double' if supported by your hardware
-  typedef boost::numeric::ublas::vector<ScalarType>       VectorType;
+  //feel free to change the floating point type to 'double' if supported by your hardware
+  typedef float                                           ScalarType;
 
+  typedef boost::numeric::ublas::vector<ScalarType>       VectorType;
   typedef viennacl::vector<ScalarType>                    VCLVectorType;
 
   std::size_t dim_large = 7;
   std::size_t dim_small = 3;
 
-  //
-  // Setup ublas objects and fill with data:
-  //
+  /**
+  * Setup ublas objects and fill with data:
+  **/
   VectorType ublas_v1(dim_large);
   VectorType ublas_v2(dim_small);
 
@@ -70,9 +69,9 @@ int main (int, const char **)
     ublas_v2(i) = ScalarType(dim_large + i);
 
 
-  //
-  // Extract submatrices using the ranges in ublas
-  //
+  /**
+  * Extract submatrices using the ranges in ublas
+  **/
   boost::numeric::ublas::range ublas_r1(0, dim_small); //the first 'dim_small' entries
   boost::numeric::ublas::range ublas_r2(dim_small - 1, 2*dim_small - 1); // 'dim_small' entries somewhere from the middle
   boost::numeric::ublas::range ublas_r3(dim_large - dim_small, dim_large); // the last 'dim_small' entries
@@ -81,9 +80,9 @@ int main (int, const char **)
   boost::numeric::ublas::vector_range<VectorType> ublas_v1_sub3(ublas_v1, ublas_r3); // tail of vector v_1
 
 
-  //
-  // Setup ViennaCL objects
-  //
+  /**
+  *  Create ViennaCL objects and copy data over from uBLAS objects.
+  **/
   VCLVectorType vcl_v1(dim_large);
   VCLVectorType vcl_v2(dim_small);
 
@@ -91,9 +90,9 @@ int main (int, const char **)
   viennacl::copy(ublas_v2, vcl_v2);
 
 
-  //
-  // Extract submatrices using the ranges in ViennaCL
-  //
+  /**
+  * Extract submatrices using the range-functionality in ViennaCL. This works exactly the same way as for uBLAS.
+  **/
   viennacl::range vcl_r1(0, dim_small); //the first 'dim_small' entries
   viennacl::range vcl_r2(dim_small - 1, 2*dim_small - 1);  // 'dim_small' entries somewhere from the middle
   viennacl::range vcl_r3(dim_large - dim_small, dim_large);  // the last 'dim_small' entries
@@ -102,17 +101,16 @@ int main (int, const char **)
   viennacl::vector_range<VCLVectorType>   vcl_v1_sub3(vcl_v1, vcl_r3); // tail of vector v_1
 
 
-  //
-  // Copy from ublas to submatrices and back:
-  //
-
+  /**
+  * Copy from ublas to submatrices and back:
+  **/
   ublas_v1_sub1 = ublas_v2;
   viennacl::copy(ublas_v2, vcl_v1_sub1);
   viennacl::copy(vcl_v1_sub1, ublas_v2);
 
-  //
-  // Addition:
-  //
+  /**
+  * Addition of subvectors:
+  **/
 
   ublas_v1_sub1 += ublas_v1_sub1;
   vcl_v1_sub1 += vcl_v1_sub1;
@@ -123,15 +121,15 @@ int main (int, const char **)
   ublas_v1_sub3 += ublas_v1_sub3;
   vcl_v1_sub3 += vcl_v1_sub3;
 
-  //
-  // print vectors:
-  //
+  /**
+  * Print full vectors. Notice that the various entries have changed according to the subvector manipulations above.
+  **/
   std::cout << "ublas:    " << ublas_v1 << std::endl;
   std::cout << "ViennaCL: " << vcl_v1 << std::endl;
 
-  //
-  //  That's it.
-  //
+  /**
+  *  That's it. Print success message and exit.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

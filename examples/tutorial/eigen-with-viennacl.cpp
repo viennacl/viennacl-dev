@@ -9,52 +9,46 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Eigen: Exchange data with ViennaCL"
 *
-*   Tutorial:  Shows how to exchange data between ViennaCL and Eigen (http://eigen.tuxfamily.org/) objects.
-*   
-*/
+*   This tutorial shows how data can be directly transferred from the <a href="http://eigen.tuxfamily.org/">Eigen Library</a> to ViennaCL objects using the built-in convenience wrappers.
+*
+*   The first step is to include the necessary headers and activate the Eigen convenience functions in ViennaCL:
+**/
 
-//
-// include necessary system headers
-//
+// System headers
 #include <iostream>
 
-//
-// Include Eigen headers
-//
+// Eigen headers
 #include <Eigen/Core>
 #include <Eigen/Sparse>
 
-//
 // IMPORTANT: Must be set prior to any ViennaCL includes if you want to use ViennaCL algorithms on Eigen objects
-//
 #define VIENNACL_WITH_EIGEN 1
 
-//
+
 // ViennaCL includes
-//
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 
 
-
-// Some helper functions for this tutorial:
+// Helper functions for this tutorial:
 #include "Random.hpp"
 #include "vector-io.hpp"
 #include "../benchmarks/benchmark-utils.hpp"
 
-//
-// A little bit of template magic follows (to get rid of the hard-wired scalar types in Eigen)
-//
+/**
+*   The following is a set of auxiliary dispatchers for obtaining the right Eigen types for a given floating point type.
+*   This is merely an implementation detail, so feel free to skip over it.
+**/
 
 //dense matrix:
 template<typename T>
@@ -66,13 +60,13 @@ struct Eigen_dense_matrix
 template<>
 struct Eigen_dense_matrix<float>
 {
-  typedef Eigen::MatrixXf  type; 
+  typedef Eigen::MatrixXf  type;
 };
 
 template<>
 struct Eigen_dense_matrix<double>
 {
-  typedef Eigen::MatrixXd  type; 
+  typedef Eigen::MatrixXd  type;
 };
 
 
@@ -86,31 +80,40 @@ struct Eigen_vector
 template<>
 struct Eigen_vector<float>
 {
-  typedef Eigen::VectorXf  type; 
+  typedef Eigen::VectorXf  type;
 };
 
 template<>
 struct Eigen_vector<double>
 {
-  typedef Eigen::VectorXd  type; 
+  typedef Eigen::VectorXd  type;
 };
 
 
 
-
-
+/**
+*    The following function contains the main code for this tutorial.
+*    It consists of the following steps:
+*      - Creates Eigen matrices and vectors
+*      - Initializes them with data
+*      - Create ViennaCL objects
+*      - Copy them over to the respective ViennaCL objects
+*      - Compute matrix-vector products in both Eigen and ViennaCL and compare results.
+*
+**/
 template<typename ScalarType>
-void run_test()
+void run_tutorial()
 {
-  //
-  // get Eigen matrix and vector types for the provided ScalarType:
-  //
+  /**
+  * Get Eigen matrix and vector types for the provided ScalarType.
+  * Involves a little bit of template-metaprogramming.
+  **/
   typedef typename Eigen_dense_matrix<ScalarType>::type  EigenMatrix;
   typedef typename Eigen_vector<ScalarType>::type        EigenVector;
-  
-  //
-  // Create and fill dense matrices from the Eigen library:
-  //
+
+  /**
+  * Create and fill dense matrices from the Eigen library:
+  **/
   EigenMatrix eigen_densemat(6, 5);
   EigenMatrix eigen_densemat2(6, 5);
   eigen_densemat(0,0) = 2.0;   eigen_densemat(0,1) = -1.0;
@@ -119,9 +122,9 @@ void run_test()
   eigen_densemat(3,2) = -1.0;  eigen_densemat(3,3) =  2.0;  eigen_densemat(3,4) = -1.0;
                                eigen_densemat(5,4) = -1.0;  eigen_densemat(4,4) = -1.0;
 
-  //
-  // Create and fill sparse matrices from the Eigen library:
-  //
+  /**
+  * Create and fill sparse matrices from the Eigen library:
+  **/
   Eigen::SparseMatrix<ScalarType, Eigen::RowMajor> eigen_sparsemat(6, 5);
   Eigen::SparseMatrix<ScalarType, Eigen::RowMajor> eigen_sparsemat2(6, 5);
   eigen_sparsemat.reserve(5*2);
@@ -131,10 +134,10 @@ void run_test()
   eigen_sparsemat.insert(3,3) = 2.0;   eigen_sparsemat.insert(3,4) = -1.0;
   eigen_sparsemat.insert(5,4) = -1.0;
   //eigen_sparsemat.endFill();
-  
-  //
-  // Create and fill a few vectors from the Eigen library:
-  //
+
+  /**
+  * Create and fill a few vectors from the Eigen library:
+  **/
   EigenVector eigen_rhs(5);
   EigenVector eigen_result(6);
   EigenVector eigen_temp(6);
@@ -144,76 +147,79 @@ void run_test()
   eigen_rhs(2) = 12.0;
   eigen_rhs(3) = 13.0;
   eigen_rhs(4) = 14.0;
-  
-  
-  //
-  // Let us create the ViennaCL analogues:
-  //
+
+
+  /**
+  * Create the corresponding ViennaCL objects:
+  **/
   viennacl::vector<ScalarType> vcl_rhs(5);
   viennacl::vector<ScalarType> vcl_result(6);
   viennacl::matrix<ScalarType> vcl_densemat(6, 5);
   viennacl::compressed_matrix<ScalarType> vcl_sparsemat(6, 5);
-  
-  
-  //
-  // Directly copy the Eigen objects to ViennaCL objects
-  //
+
+
+  /**
+  * Directly copy the Eigen objects to ViennaCL objects
+  **/
   viennacl::copy(&(eigen_rhs[0]), &(eigen_rhs[0]) + 5, vcl_rhs.begin());  //method 1: via iterator interface (cf. std::copy())
   viennacl::copy(eigen_rhs, vcl_rhs);  //method 2: via built-in wrappers (convenience layer)
-  
+
   viennacl::copy(eigen_densemat, vcl_densemat);
   viennacl::copy(eigen_sparsemat, vcl_sparsemat);
   std::cout << "VCL sparsematrix dimensions: " << vcl_sparsemat.size1() << ", " << vcl_sparsemat.size2() << std::endl;
-  
+
   // For completeness: Copy matrices from ViennaCL back to Eigen:
   viennacl::copy(vcl_densemat, eigen_densemat2);
   viennacl::copy(vcl_sparsemat, eigen_sparsemat2);
-  
-  
-  //
-  // Run matrix-vector products and compare results:
-  //
+
+
+  /**
+  * Run dense matrix-vector products and compare results:
+  **/
   eigen_result = eigen_densemat * eigen_rhs;
   vcl_result = viennacl::linalg::prod(vcl_densemat, vcl_rhs);
   viennacl::copy(vcl_result, eigen_temp);
   std::cout << "Difference for dense matrix-vector product: " << (eigen_result - eigen_temp).norm() << std::endl;
   std::cout << "Difference for dense matrix-vector product (Eigen->ViennaCL->Eigen): "
             << (eigen_densemat2 * eigen_rhs - eigen_temp).norm() << std::endl;
-  
-  //
-  // Same for sparse matrix:
-  //          
+
+  /**
+  * Run sparse matrix-vector products and compare results:
+  **/
   eigen_result = eigen_sparsemat * eigen_rhs;
   vcl_result = viennacl::linalg::prod(vcl_sparsemat, vcl_rhs);
   viennacl::copy(vcl_result, eigen_temp);
   std::cout << "Difference for sparse matrix-vector product: " << (eigen_result - eigen_temp).norm() << std::endl;
   std::cout << "Difference for sparse matrix-vector product (Eigen->ViennaCL->Eigen): "
             << (eigen_sparsemat2 * eigen_rhs - eigen_temp).norm() << std::endl;
-            
-  //
-  // Please have a look at the other tutorials on how to use the ViennaCL types
-  //
 }
 
+
+/**
+*   In the main() routine we only call the worker function defined above with both single and double precision arithmetic.
+**/
 int main(int, char *[])
 {
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << "## Single precision" << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
-  run_test<float>();
-  
-#ifdef VIENNACL_HAVE_OPENCL   
+  run_tutorial<float>();
+
+#ifdef VIENNACL_HAVE_OPENCL
   if ( viennacl::ocl::current_device().double_support() )
 #endif
   {
     std::cout << "----------------------------------------------" << std::endl;
     std::cout << "## Double precision" << std::endl;
     std::cout << "----------------------------------------------" << std::endl;
-    run_test<double>();
+    run_tutorial<double>();
   }
-  
+
+  /**
+  *   That's it. Print a success message and exit.
+  **/
   std::cout << std::endl;
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
   std::cout << std::endl;
-  
+
 }

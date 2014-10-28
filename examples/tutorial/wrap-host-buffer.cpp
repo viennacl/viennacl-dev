@@ -15,41 +15,33 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Wrapping User-provided Buffers"
 *
-*   Tutorial:  Use ViennaCL within user-provided memory buffers on the host
+*   This tutorial shows how ViennaCL can be used to wrap user-provided memory buffers allocated on the host.
+*   The benefit of such a wrapper is that the algorithms in ViennaCL can directly be run without pre- or postprocessing the data.
 *
-*/
+*   We start with including the required headers:
+**/
 
-
-//
-// include necessary system headers
-//
+// System headers
 #include <iostream>
 #include <cstdlib>
 #include <string>
 
-//
-// ViennaCL includes
-//
+// ViennaCL headers
 #include "viennacl/vector.hpp"
-#include "viennacl/matrix.hpp"
-#include "viennacl/linalg/matrix_operations.hpp"
-#include "viennacl/linalg/norm_2.hpp"
-#include "viennacl/linalg/prod.hpp"
 
-
-// Some helper functions for this tutorial:
-#include "Random.hpp"
-
-
+/**
+*   We setup two STL-vectors and add them up as a reference.
+*   Then the buffer get wrapped by ViennaCL and added up.
+**/
 int main()
 {
   typedef float       ScalarType;
 
-  //
-  // Part 1: Allocate some buffers on the host
-  //
+  /**
+  *  <h2>Part 1: Allocate some buffers on the host</h2>
+  **/
   std::size_t size = 10;
 
   std::vector<ScalarType> host_x(size, 1.0);
@@ -60,27 +52,28 @@ int main()
     std::cout << host_x[i] + host_y[i] << " ";
   std::cout << std::endl;
 
-  //
-  // Part 2: Now do the same computations within ViennaCL
-  //
+  /**
+  *   <h2>Part 2: Now do the same computations within ViennaCL</h2>
+  **/
 
   // wrap host buffer within ViennaCL vectors:
   viennacl::vector<ScalarType> vcl_vec1(&(host_x[0]), viennacl::MAIN_MEMORY, size); // Second parameter specifies that this is host memory rather than CUDA memory
   viennacl::vector<ScalarType> vcl_vec2(&(host_y[0]), viennacl::MAIN_MEMORY, size); // Second parameter specifies that this is host memory rather than CUDA memory
 
-  // reset values to 0 and 1, respectively
-  vcl_vec1 = viennacl::scalar_vector<ScalarType>(size, ScalarType(1.0));
-  vcl_vec2 = viennacl::scalar_vector<ScalarType>(size, ScalarType(2.0));
-
   vcl_vec1 += vcl_vec2;
 
   std::cout << "Result with ViennaCL: " << vcl_vec1 << std::endl;
 
-  //
-  //  That's it.
-  //
+  std::cout << "Data in STL-vector: ";
+  for (std::size_t i=0; i<size; ++i)
+    std::cout << host_x[i] << " ";
+  std::cout << std::endl;
+
+  /**
+  *  That's it. Print success message and exit.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 

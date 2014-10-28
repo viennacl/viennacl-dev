@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+
+/** \file tests/src/scheduler_vector.cpp  Tests the scheduler for vector-operations.
+*   \test Tests the scheduler for vector-operations.
+**/
+
 //
 // *** System
 //

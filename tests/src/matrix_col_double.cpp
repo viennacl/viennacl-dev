@@ -15,6 +15,10 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** \file tests/src/matrix_col_double.cpp  Tests routines for dense matrices, column-major, double precision.
+*   \test Tests routines for dense matrices, column-major, double precision.
+**/
+
 
 #include "matrix_float_double.hpp"
 

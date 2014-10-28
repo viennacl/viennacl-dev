@@ -15,16 +15,14 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "OpenCL: User-Provided Contexts"
 *
-*   Tutorial:  Use ViennaCL within user-defined (i.e. your own) OpenCL contexts
+*   This tutorial shows how you can use your own OpenCL contexts with ViennaCL.
 *
-*/
+*   We begin with including the necessary headers:
+**/
 
-
-//
-// include necessary system headers
-//
+// System headers
 #include <iostream>
 #include <string>
 
@@ -32,9 +30,8 @@
   #define VIENNACL_WITH_OPENCL
 #endif
 
-//
-// ViennaCL includes
-//
+
+// ViennaCL headers
 #include "viennacl/ocl/backend.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
@@ -49,15 +46,16 @@
 
 
 
-//
-// A custom compute kernel which computes an elementwise product of two vectors
-// Input: v1 ... vector
-//        v2 ... vector
-// Output: result ... vector
-//
-// Algorithm: set result[i] <- v1[i] * v2[i]
-//            (in MATLAB notation this is something like 'result = v1 .* v2');
-//
+/** <h2>Defining a Compute Kernel</h2>
+*
+* In the following we define a custom compute kernel which computes an elementwise product of two vectors. <br />
+* Input: v1 ... vector<br />
+*        v2 ... vector<br />
+* Output: result ... vector<br />
+*
+* Algorithm: set result[i] <- v1[i] * v2[i]<br />
+*            (in MATLAB notation this is 'result = v1 .* v2');<br />
+**/
 
 const char * my_compute_program =
 "__kernel void elementwise_prod(\n"
@@ -70,18 +68,21 @@ const char * my_compute_program =
 "    result[i] = vec1[i] * vec2[i];\n"
 "};\n";
 
-
+/**
+* With this let us go right to main():
+**/
 int main()
 {
   typedef float       ScalarType;
 
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////// Part 1: Set up a custom context and perform a sample operation. ////////////////
-  ////////////////////////         This is rather lengthy due to the OpenCL framework.     ////////////////
-  ////////////////////////         The following does essentially the same as the          ////////////////
-  ////////////////////////         'custom_kernels'-tutorial!                               ////////////////
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /**
+  * <h2>Part 1: Set up a custom context</h2>
+  *
+  * The following is rather lengthy because OpenCL is a fairly low-level framework.
+  * For comparison, the subsequent code explicitly performs the OpenCL setup that is done
+  * in the background within the 'custom_kernels'-tutorial
+  **/
 
   //manually set up a custom OpenCL context:
   std::vector<cl_device_id> device_id_array;
@@ -205,24 +206,24 @@ int main()
     std::cout << result[i] << " ";
   std::cout << std::endl;
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////
-  /////////////////////// Part 2: Let ViennaCL use the already created context: //////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  //Tell ViennaCL to use the previously created context.
-  //This context is assigned an id '0' when using viennacl::ocl::switch_context().
+  /**
+  * <h2>Part 2: Reuse Custom OpenCL Context with ViennaCL</h2>
+  *
+  * To let ViennaCL reuse the previously created context, we need to make it known to ViennaCL \em before any ViennaCL objects are created.
+  * We inject the custom context as the context with default id '0' when using viennacl::ocl::switch_context().
+  **/
   viennacl::ocl::setup_context(0, my_context, device_id_array, queues);
   viennacl::ocl::switch_context(0); //activate the new context (only mandatory with context-id not equal to zero)
 
-  //
-  // Proof that ViennaCL really uses the new context:
-  //
+  /**
+  * Check that ViennaCL really uses the new context:
+  **/
   std::cout << "Existing context: " << my_context << std::endl;
   std::cout << "ViennaCL uses context: " << viennacl::ocl::current_context().handle().get() << std::endl;
 
-  //
-  // Wrap existing OpenCL objects into ViennaCL:
-  //
+  /**
+  * Wrap existing OpenCL objects into ViennaCL:
+  **/
   viennacl::vector<ScalarType> vcl_vec1(mem_vec1, vector_size);
   viennacl::vector<ScalarType> vcl_vec2(mem_vec2, vector_size);
   viennacl::vector<ScalarType> vcl_result(mem_result, vector_size);
@@ -240,11 +241,11 @@ int main()
   std::cout << "result: ";
   std::cout << vcl_result << std::endl;
 
-  //
-  // We can also reuse the existing elementwise_prod kernel.
-  // Therefore, we first have to make the existing program known to ViennaCL
-  // For more details on the three lines, see tutorial 'custom-kernels'
-  //
+  /**
+  * We can also reuse the existing elementwise_prod kernel.
+  * Therefore, we first have to make the existing program known to ViennaCL
+  * For more details on the three lines, see tutorial 'custom-kernels'
+  **/
   std::cout << "Using existing kernel within the OpenCL backend of ViennaCL:" << std::endl;
   viennacl::ocl::program & my_vcl_prog = viennacl::ocl::current_context().add_program(my_prog, "my_compute_program");
   viennacl::ocl::kernel & my_vcl_kernel = my_vcl_prog.add_kernel(my_kernel, "elementwise_prod");
@@ -260,11 +261,11 @@ int main()
   std::cout << vcl_result << std::endl;
 
 
-  //
-  // Since a linear piece of memory can be interpreted in several ways,
-  // we will now create a 3x3 row-major matrix out of the linear memory in mem_vec1/
-  // The first three entries in vcl_vec2 and vcl_result are used to carry out matrix-vector products:
-  //
+  /**
+  * Since a linear piece of memory can be interpreted in several ways,
+  * we will now create a 3x3 row-major matrix out of the linear memory in mem_vec1/
+  * The first three entries in vcl_vec2 and vcl_result are used to carry out matrix-vector products:
+  **/
   viennacl::matrix<ScalarType> vcl_matrix(mem_vec1, 3, 3);
 
   vcl_vec2.resize(3);   //note that the resize operation leads to new memory, thus vcl_vec2 is now at a different memory location (values are copied)
@@ -274,11 +275,12 @@ int main()
   std::cout << "result of matrix-vector product: ";
   std::cout << vcl_result << std::endl;
 
-  //
-  //  That's it.
-  //
+  /**
+  *  Any further operations can be carried out in the same way.
+  *  Just keep in mind that any resizing of vectors or matrices leads to a reallocation of the underlying memory buffer, through which the 'wrapper' is lost.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 

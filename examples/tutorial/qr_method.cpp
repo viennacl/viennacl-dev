@@ -15,86 +15,107 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** \example "Eigenvalues: QR method for dense systems"
+*
+* In this tutorial the eigenvalues and eigenvectors of a symmetric 9-by-9 matrix are calculated using the QR-method.
+*
+* The first step is to include the necessary headers and to define the floating point type used.
+**/
 
-
-#ifndef NDEBUG
-  #define NDEBUG
-#endif
-
-//#define VIENNACL_DEBUG_ALL
+// System headers:
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
 #include <vector>
 
+// ViennaCL headers:
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/qr-method.hpp"
 
-#include <boost/numeric/ublas/matrix.hpp>
-
-namespace ublas = boost::numeric::ublas;
-
+// Change to 'double' if supported by your hardware.
 typedef float ScalarType;
 
 
-void initialize(viennacl::matrix<ScalarType>& A, std::vector<ScalarType>& v);
-void vector_print(std::vector<ScalarType>& v );
-void matrix_print(viennacl::matrix<ScalarType>& A_orig);
-
-
-
-
-void qr_method()
+/**
+* Helper routine for initializing a ViennaCL matrix and returning its associated eigenvalues
+**/
+void initialize(viennacl::matrix<ScalarType> & A, std::vector<ScalarType> & v)
 {
-    /*
-     *                      Tutorial for the qr-method
-     *
-     * The eigenvalues and eigenvectors of a symmetric 9 by 9 matrix are calculated
-     * by the QR-method.
-     *
-     */
+  // System matrix:
+  ScalarType M[9][9] = {{ 4,  1, -2, 2, -7,  3,  9, -6, -2},
+                        { 1, -2,  0, 1, -1,  5,  4,  7,  3},
+                        {-2,  0,  3, 2,  0,  3,  6,  1, -1},
+                        { 2,  1,  2, 1,  4,  5,  6,  7,  8},
+                        {-7, -1,  0, 4,  5,  4,  9,  1, -8},
+                        { 3,  5,  3, 5,  4,  9, -3,  3,  3},
+                        { 9,  4,  6, 6,  9, -3,  3,  6, -7},
+                        {-6,  7,  1, 7,  1,  3,  6,  2,  6},
+                        {-2,  3, -1, 8, -8,  3, -7,  6,  1}};
 
-    std::cout << "Testing matrix of size " << 9 << "-by-" << 9 << std::endl;
+  for(std::size_t i = 0; i < 9; i++)
+    for(std::size_t j = 0; j < 9; j++)
+      A(i, j) = M[i][j];
 
-    viennacl::matrix<ScalarType> A_input(9,9);
-    viennacl::matrix<ScalarType> Q(9, 9);
-    std::vector<ScalarType> eigenvalues_ref(9);
-    std::vector<ScalarType> eigenvalues(9);
+  // Known eigenvalues:
+  ScalarType V[9] = {12.6005, 19.5905, 8.06067, 2.95074, 0.223506, 24.3642, -9.62084, -13.8374, -18.3319};
 
-    initialize(A_input, eigenvalues_ref);  //initialize with data for tutorial
-
-    std::cout << std::endl <<"Input matrix: " << std::endl;
-    matrix_print(A_input);
-
-
-    std::cout << std::endl << "Starting QR-method" << std::endl;
-    std::cout << "Calculation..." << std::endl;
-
-    /*
-     * Call function qr_method_sym to calculate eigenvalues and eigenvectors
-     * Parameters:
-     *       A_input     - input matrix to find eigenvalues and eigenvectors from
-     *       Q           - matrix, where the calculated eigenvectors will be stored in
-     *       eigenvalues - vector, where the calculated eigenvalues will be stored in
-     */
-
-    viennacl::linalg::qr_method_sym(A_input, Q, eigenvalues);
-
-    std::cout << std::endl << "Eigenvalues:" << std::endl;
-    vector_print(eigenvalues);
-    std::cout << std::endl << "Reference eigenvalues:" << std::endl;
-    vector_print(eigenvalues_ref);
-    std::cout << std::endl << "Eigenvectors - each column is an eigenvector" << std::endl;
-
-    matrix_print(Q);
-
+  for(std::size_t i = 0; i < 9; i++)
+    v[i] = V[i];
 }
 
+/**
+*  Helper routine: Print an STL vector
+**/
+void vector_print(std::vector<ScalarType>& v )
+{
+  for (unsigned int i = 0; i < v.size(); i++)
+    std::cout << std::setprecision(6) << std::fixed << v[i] << "\t";
+  std::cout << std::endl;
+}
+
+/**
+*   Create a system of size 9-by-9 with known eigenvalues and compare it with the eigenvalues computed from the QR method implemented in ViennaCL.
+**/
 int main()
 {
+  std::cout << "Testing matrix of size " << 9 << "-by-" << 9 << std::endl;
 
-  qr_method();
+  viennacl::matrix<ScalarType> A_input(9,9);
+  viennacl::matrix<ScalarType> Q(9, 9);
+  std::vector<ScalarType> eigenvalues_ref(9);
+  std::vector<ScalarType> eigenvalues(9);
 
+  initialize(A_input, eigenvalues_ref);
+
+  std::cout << std::endl <<"Input matrix: " << std::endl;
+  std::cout << A_input << std::endl;
+
+
+  /**
+  * Call the function qr_method_sym() to calculate eigenvalues and eigenvectors
+  * Parameters:
+  *  -     A_input      - input matrix to find eigenvalues and eigenvectors from
+  *  -     Q            - matrix, where the calculated eigenvectors will be stored in
+  *  -     eigenvalues  - vector, where the calculated eigenvalues will be stored in
+  **/
+
+  std::cout << "Calculation..." << std::endl;
+  viennacl::linalg::qr_method_sym(A_input, Q, eigenvalues);
+
+  /**
+  *   Print the computed eigenvalues and eigenvectors:
+  **/
+  std::cout << std::endl << "Eigenvalues:" << std::endl;
+  vector_print(eigenvalues);
+  std::cout << std::endl << "Reference eigenvalues:" << std::endl;
+  vector_print(eigenvalues_ref);
+  std::cout << std::endl;
+  std::cout << "Eigenvectors - each column is an eigenvector" << std::endl;
+  std::cout << Q << std::endl;
+
+  /**
+  *  That's it. Print a success message and exit.
+  **/
   std::cout << std::endl;
   std::cout << "------- Tutorial completed --------" << std::endl;
   std::cout << std::endl;
@@ -102,37 +123,3 @@ int main()
   return EXIT_SUCCESS;
 }
 
-//initialize vector and matrix
-void initialize(viennacl::matrix<ScalarType>& A, std::vector<ScalarType>& v)
-{
-    ScalarType M[9][9] = {{4, 1, -2, 2, -7, 3, 9, -6, -2}, {1, -2, 0, 1, -1, 5, 4, 7, 3}, {-2, 0, 3, 2, 0, 3, 6, 1, -1},   {2, 1, 2, 1, 4, 5, 6, 7, 8},
-               {-7, -1, 0, 4, 5, 4, 9, 1, -8},  {3, 5, 3, 5, 4, 9, -3, 3, 3}, {9, 4, 6, 6, 9, -3, 3, 6, -7},   {-6, 7, 1, 7, 1, 3, 6, 2, 6},
-               {-2, 3, -1, 8, -8, 3, -7, 6, 1}};
-
-    for(int i = 0; i < 9; i++)
-        for(int j = 0; j < 9; j++)
-            A(i, j) = M[i][j];
-
-    ScalarType V[9] = {12.6005, 19.5905, 8.06067, 2.95074, 0.223506, 24.3642, -9.62084, -13.8374, -18.3319};
-
-    for(int i = 0; i < 9; i++)
-        v[i] = V[i];
-}
-
-void matrix_print(viennacl::matrix<ScalarType>& A_orig)
-{
-    ublas::matrix<ScalarType> A(A_orig.size1(), A_orig.size2());
-    viennacl::copy(A_orig, A);
-    for (unsigned int i = 0; i < A.size1(); i++) {
-        for (unsigned int j = 0; j < A.size2(); j++)
-           std::cout << A(i, j) << "\t";
-        std::cout << std::endl;
-    }
-}
-
-void vector_print(std::vector<ScalarType>& v )
-{
-  for (unsigned int i = 0; i < v.size(); i++)
-      std::cout << std::setprecision(6) << std::fixed << v[i] << "\t";
-    std::cout << std::endl;
-}

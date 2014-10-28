@@ -15,6 +15,11 @@
  License:         MIT (X11), see file LICENSE in the base directory
  ============================================================================= */
 
+
+/** \file tests/src/nmf.cpp  Tests the nonnegative matrix factorization.
+*   \test Tests the nonnegative matrix factorization.
+**/
+
 #include <ctime>
 #include <cmath>
 

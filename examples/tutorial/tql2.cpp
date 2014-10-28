@@ -15,18 +15,19 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "Eigenvalues: Symmetric Tridiagonal Matrices"
 *
-*   Test file for tql-algorithm
+*   This tutorial explains how one can use the tql-algorithm to compute the eigenvalues of tridiagonal matrices.
 *
-*/
+*   We start with including the necessary headers:
+**/
 
 // include necessary system headers
 #include <iostream>
-
-#ifndef NDEBUG
-  #define NDEBUG
-#endif
+#include <fstream>
+#include <limits>
+#include <string>
+#include <iomanip>
 
 #define VIENNACL_WITH_UBLAS
 
@@ -34,50 +35,23 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/compressed_matrix.hpp"
-
 #include "viennacl/io/matrix_market.hpp"
-
-#include <iostream>
-#include <fstream>
-#include <limits>
-#include <string>
-#include <iomanip>
 
 #include "viennacl/linalg/qr-method.hpp"
 #include "viennacl/linalg/qr-method-common.hpp"
 #include "viennacl/linalg/host_based/matrix_operations.hpp"
 #include "Random.hpp"
 
-#define EPS 10.0e-5
-
-
-
+// Use the shortcut 'ublas::' instead of 'boost::numeric::ublas::'
 namespace ublas = boost::numeric::ublas;
+
+// Run in single precision. Change to double precision if provided by your GPU.
 typedef float     ScalarType;
 
-
-template <typename MatrixLayout>
-void matrix_print(viennacl::matrix<ScalarType, MatrixLayout>& A_orig)
-{
-    ublas::matrix<ScalarType> A(A_orig.size1(), A_orig.size2());
-    viennacl::copy(A_orig, A);
-    for (unsigned int i = 0; i < A.size1(); i++) {
-        for (unsigned int j = 0; j < A.size2(); j++)
-           std::cout << std::setprecision(6) << std::fixed << A(i, j) << "\t";
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-}
-
-void vector_print(std::vector<ScalarType>& v )
-{
-    for (unsigned int i = 0; i < v.size(); i++)
-      std::cout << std::setprecision(6) << std::fixed << v[i] << "\t";
-    std::cout << "\n";
-}
-
-template <typename MatrixLayout>
-void eig_tutorial()
+/**
+*  We generate a symmetric tridiagonal matrix with known eigenvalues, call the tql-algorithm, and then print the results.
+**/
+int main()
 {
   std::size_t sz = 10;
   std::cout << "Compute eigenvalues and eigenvectors of matrix of size " << sz << "-by-" << sz << std::endl << std::endl;
@@ -95,26 +69,32 @@ void eig_tutorial()
   d[8] = 3; e[8] = 5;
   d[9] = 8; e[9] = 2;
 
-  // Initialize Q as the identity matrix
-  viennacl::matrix<ScalarType, MatrixLayout> Q = viennacl::identity_matrix<ScalarType>(sz);
+  /**
+  * Initialize the matrix Q as the identity matrix. It will hold the eigenvectors.
+  **/
+  viennacl::matrix<ScalarType> Q = viennacl::identity_matrix<ScalarType>(sz);
 
-  //--------------------------------------------------------
-  // Compute the eigenvalues and eigenvectors
+  /**
+  * Compute the eigenvalues and eigenvectors
+  **/
   viennacl::linalg::tql2(Q, d, e);
 
-  // Eigenvalues are stored in d:
+  /**
+  * Print the results:
+  **/
   std::cout << "Eigenvalues: " << std::endl;
-  vector_print(d);
+  for (unsigned int i = 0; i < d.size(); i++)
+    std::cout << std::setprecision(6) << std::fixed << d[i] << " ";
+  std::cout << std::endl;
 
-  std::cout << std::endl << "Eigenvectors corresponding to the eigenvalues above are the columns: " << std::endl << std::endl;
-  matrix_print(Q);
-}
+  std::cout << std::endl;
+  std::cout << "Eigenvectors corresponding to the eigenvalues above are the columns: " << std::endl << std::endl;
+  std::cout << Q << std::endl;
 
-int main()
-{
-
-  std::cout << std::endl << "Starting tutorial for symmetric tridiagonal matrices..." << std::endl;
-  eig_tutorial<viennacl::row_major>();
-
+  /**
+  * That's it. Print success message and exit.
+  **/
   std::cout << std::endl <<"--------TUTORIAL COMPLETED----------" << std::endl;
+
+  return EXIT_SUCCESS;
 }

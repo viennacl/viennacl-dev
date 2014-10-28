@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+
+/** \file tests/src/svd.cpp  Tests the singular value decomposition.
+*   \test  Tests the singular value decomposition.
+**/
+
 #include <stdexcept>
 #include <iostream>
 #include <string>

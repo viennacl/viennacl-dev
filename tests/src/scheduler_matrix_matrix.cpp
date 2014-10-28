@@ -15,8 +15,10 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-//#define NDEBUG
-//#define VIENNACL_DEBUG_BUILD
+
+/** \file tests/src/scheduler_matrix_matrix.cpp  Tests the scheduler for dense matrix-matrix-operations.
+*   \test Tests the scheduler for dense matrix-matrix-operations.
+**/
 
 //
 // *** System

@@ -15,26 +15,23 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "BLAS Level 3 Functionality"
 *
-*   Tutorial: BLAS level 3 functionality (blas3.cpp and blas3.cu are identical, the latter being required for compilation using CUDA nvcc)
+*  In this tutorial it is shown how BLAS level 3 functionality in ViennaCL can be used.
 *
-*/
+*  We begin with defining preprocessor constants and including the necessary headers.
+**/
 
 //disable debug mechanisms to have a fair comparison with ublas:
 #ifndef NDEBUG
  #define NDEBUG
 #endif
 
-
-//
-// include necessary system headers
-//
+// System headers
 #include <iostream>
 
-//
-// ublas includes
-//
+
+// ublas headers
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
@@ -47,13 +44,13 @@
 // Must be set if you want to use ViennaCL algorithms on ublas objects
 #define VIENNACL_WITH_UBLAS 1
 
-//
-// ViennaCL includes
-//
+
+// ViennaCL headers
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
+
 
 // Some helper functions for this tutorial:
 #include "Random.hpp"
@@ -66,6 +63,10 @@
 using namespace boost::numeric;
 
 
+/**
+*  Later in this tutorial we will iterate over all available OpenCL devices.
+*  To ensure that this tutorial also works if no OpenCL backend is activated, we need this dummy-struct.
+**/
 #ifndef VIENNACL_WITH_OPENCL
   struct dummy
   {
@@ -73,7 +74,9 @@ using namespace boost::numeric;
   };
 #endif
 
-
+/**
+* We don't need additional auxiliary routines, so let us start straight away with main():
+*/
 int main()
 {
   typedef float     ScalarType;
@@ -81,53 +84,45 @@ int main()
   Timer timer;
   double exec_time;
 
-  //
-  // Set up some ublas objects
-  //
+  /**
+  * Set up some ublas objects and initialize with data:
+  **/
   ublas::matrix<ScalarType> ublas_A(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   ublas::matrix<ScalarType, ublas::column_major> ublas_B(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   ublas::matrix<ScalarType> ublas_C(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   ublas::matrix<ScalarType> ublas_C1(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
 
-  //
-  // Fill the matrix
-  //
   for (unsigned int i = 0; i < ublas_A.size1(); ++i)
     for (unsigned int j = 0; j < ublas_A.size2(); ++j)
-    {
       ublas_A(i,j) = random<ScalarType>();
-    }
 
   for (unsigned int i = 0; i < ublas_B.size1(); ++i)
     for (unsigned int j = 0; j < ublas_B.size2(); ++j)
-    {
       ublas_B(i,j) = random<ScalarType>();
-    }
 
-  //
-  // Set up some ViennaCL objects
-  //
+  /**
+  * Set up some ViennaCL objects. Data initialization will happen later.
+  **/
   //viennacl::ocl::set_context_device_type(0, viennacl::ocl::gpu_tag());  //uncomment this is you wish to use GPUs only
   viennacl::matrix<ScalarType> vcl_A(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   viennacl::matrix<ScalarType, viennacl::column_major> vcl_B(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
   viennacl::matrix<ScalarType> vcl_C(BLAS3_MATRIX_SIZE, BLAS3_MATRIX_SIZE);
 
-  /////////////////////////////////////////////////
-  //////////// Matrix-matrix products /////////////
-  /////////////////////////////////////////////////
-
-  //
-  // Compute reference product using ublas:
-  //
+  /**
+  * <h2>Matrix-matrix Products</h2>
+  *
+  * First compute the reference product using uBLAS:
+  **/
   std::cout << "--- Computing matrix-matrix product using ublas ---" << std::endl;
   timer.start();
   ublas_C = ublas::prod(ublas_A, ublas_B);
   exec_time = timer.get();
   std::cout << " - Execution time: " << exec_time << std::endl;
 
-  //
-  // Now iterate over all OpenCL devices in the context and compute the matrix-matrix product
-  //
+  /**
+  * Now iterate over all OpenCL devices in the context and compute the matrix-matrix product.
+  * If the OpenCL backend is disabled, we use the dummy-struct defined above.
+  **/
   std::cout << std::endl << "--- Computing matrix-matrix product on each available compute device using ViennaCL ---" << std::endl;
 #ifdef VIENNACL_WITH_OPENCL
   std::vector<viennacl::ocl::device> devices = viennacl::ocl::current_context().devices();
@@ -142,6 +137,9 @@ int main()
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
 #endif
 
+    /**
+    * Copy the data from the uBLAS objects, compute one matrix-matrix-product as a 'warm up', then take timings:
+    **/
     viennacl::copy(ublas_A, vcl_A);
     viennacl::copy(ublas_B, vcl_B);
     vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
@@ -152,9 +150,9 @@ int main()
     exec_time = timer.get();
     std::cout << " - Execution time on device (no setup time included): " << exec_time << std::endl;
 
-    //
-    // Verify the result
-    //
+    /**
+    * Verify the result
+    **/
     viennacl::copy(vcl_C, ublas_C1);
 
     std::cout << " - Checking result... ";
@@ -179,9 +177,9 @@ int main()
 
   }
 
-  //
-  //  That's it.
-  //
+  /**
+  *  That's it. A more extensive benchmark for dense BLAS routines is also available.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
   return EXIT_SUCCESS;
 }

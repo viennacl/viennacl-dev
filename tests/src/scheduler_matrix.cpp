@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+
+/** \file tests/src/scheduler_matrix.cpp  Tests the scheduler for matrix-operations (no matrix-matrix).
+*   \test Tests the scheduler for matrix-operations (no matrix-matrix).
+**/
+
 #define VIENNACL_WITH_UBLAS
 //#define NDEBUG
 //#define VIENNACL_BUILD_INFO

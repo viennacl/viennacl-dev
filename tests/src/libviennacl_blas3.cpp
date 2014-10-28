@@ -15,12 +15,9 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-
-/*
-*
-*   Testing the ViennaCL BLAS-like shared library
-*
-*/
+/** \file tests/src/libviennacl_blas3.cpp  Testing the BLAS level 3 routines in the ViennaCL BLAS-like shared library
+*   \test Testing the BLAS level 3 routines in the ViennaCL BLAS-like shared library
+**/
 
 
 // include necessary system headers

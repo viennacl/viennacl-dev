@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+
+/** \file tests/src/structured-matrices.cpp  Tests structured matrices.
+*   \test   Tests structured matrices.
+**/
+
 #include <iostream>
 #include <vector>
 #include <cmath>

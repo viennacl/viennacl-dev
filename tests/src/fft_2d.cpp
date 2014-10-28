@@ -15,6 +15,10 @@
  License:         MIT (X11), see file LICENSE in the base directory
  ============================================================================= */
 
+/** \file tests/src/fft_2d.cpp  Tests the two-dimensional FFT routines.
+*   \test Tests the two-dimensional FFT routines.
+**/
+
 #include <iostream>
 #include <vector>
 #include <cmath>

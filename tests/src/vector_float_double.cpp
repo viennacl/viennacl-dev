@@ -15,6 +15,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** \file tests/src/vector_float_double.cpp  Tests vector operations (BLAS level 1) for floating point arithmetic.
+*   \test  Tests vector operations (BLAS level 1) for floating point arithmetic.
+**/
+
 //
 // *** System
 //

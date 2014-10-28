@@ -15,6 +15,10 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** \file tests/src/matrix_vector_int.cpp  Tests routines for matrix-vector operaions (BLAS level 2) using integer arithmetic.
+*   \test Tests routines for matrix-vector operaions (BLAS level 2) using integer arithmetic.
+**/
+
 
 //
 // *** System

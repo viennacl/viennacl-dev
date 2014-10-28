@@ -16,11 +16,9 @@
 ============================================================================= */
 
 
-/*
-*
-*   Testing the ViennaCL BLAS-like shared library
-*
-*/
+/** \file tests/src/libviennacl_blas1.cpp  Testing the BLAS level 1 routines in the ViennaCL BLAS-like shared library
+*   \test Testing the BLAS level 1 routines in the ViennaCL BLAS-like shared library
+**/
 
 
 // include necessary system headers

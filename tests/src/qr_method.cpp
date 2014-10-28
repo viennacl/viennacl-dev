@@ -15,6 +15,11 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+/** \file tests/src/qr_method.cpp  Tests the eigenvalue routines based on the QR method.
+*   \test Tests the eigenvalue routines based on the QR method.
+**/
+
 /*
 Solutions for testdata were generated with Scilab line:
 

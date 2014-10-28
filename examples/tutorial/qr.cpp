@@ -16,23 +16,25 @@
 ============================================================================= */
 
 
-/*
+/** \example "QR Factorization of Dense Matrices"
 *
-*   Tutorial: QR factorization of matrices from ViennaCL or Boost.uBLAS (qr.cpp and qr.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   This tutorial shows how the QR factorization of matrices from ViennaCL or Boost.uBLAS can be computed.
 *
-*/
+**/
 
-// activate ublas support in ViennaCL
+// Activate ublas support in ViennaCL
 #define VIENNACL_WITH_UBLAS
 
 //
-// include necessary system headers
+// Include necessary system headers
 //
 #include <iostream>
 
 //
-// ViennaCL includes: We only need the qr-header
+// ViennaCL includes
 //
+#include "viennacl/matrix.hpp"
+#include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/qr.hpp"
 
 //
@@ -43,18 +45,9 @@
 #include <boost/numeric/ublas/io.hpp>
 
 
-//
-// Testing
-//
-#include "viennacl/range.hpp"
-#include "viennacl/linalg/prod.hpp"
-#include "viennacl/matrix.hpp"
-#include "viennacl/matrix_proxy.hpp"
-
-
-//
-// A helper function checking the result
-//
+/**
+* A helper function comparing two matrices and returning the maximum entry-wise relative error encountered.
+**/
 template<typename MatrixType>
 double check(MatrixType const & qr, MatrixType const & ref)
 {
@@ -88,20 +81,22 @@ double check(MatrixType const & qr, MatrixType const & ref)
   return max_error;
 }
 
-
+/**
+*  We set up a random matrix using Boost.uBLAS and use it to initialize a ViennaCL matrix.
+*  Then we compute the QR factorization directly for the uBLAS matrix as well as the ViennaCL matrix.
+**/
 int main (int, const char **)
 {
   typedef double               ScalarType;     //feel free to change this to 'double' if supported by your hardware
-  typedef boost::numeric::ublas::matrix<ScalarType>        MatrixType;
-  typedef viennacl::matrix<ScalarType, viennacl::column_major>        VCLMatrixType;
-  typedef viennacl::vector<ScalarType>        VCLVectorType;
+  typedef boost::numeric::ublas::matrix<ScalarType>              MatrixType;
+  typedef viennacl::matrix<ScalarType, viennacl::column_major>   VCLMatrixType;
 
-  std::size_t rows = 113;   //number of rows in the matrix
-  std::size_t cols = 54;   //number of columns
+  std::size_t rows = 113;   // number of rows in the matrix
+  std::size_t cols = 54;    // number of columns
 
-  //
-  // Create matrices with some data
-  //
+  /**
+  * Create uBLAS matrices with some random input data.
+  **/
   MatrixType ublas_A(rows, cols);
   MatrixType Q(rows, rows);
   MatrixType R(rows, cols);
@@ -128,51 +123,51 @@ int main (int, const char **)
   MatrixType ublas_A_backup(ublas_A);
 
 
-  //
-  // Setup the matrix in ViennaCL:
-  //
-  VCLVectorType dummy(10);
+  /**
+  *   Setup the matrix in ViennaCL and copy the data from the uBLAS matrix:
+  **/
   VCLMatrixType vcl_A(ublas_A.size1(), ublas_A.size2());
 
   viennacl::copy(ublas_A, vcl_A);
 
-  //
-  // Compute QR factorization of A. A is overwritten with Householder vectors. Coefficients are returned and a block size of 3 is used.
-  // Note that at the moment the number of columns of A must be divisible by the block size
-  //
+  /**
+  *  <h2>QR Factorization with Boost.uBLAS Matrices</h2>
+  * Compute QR factorization of A. A is overwritten with Householder vectors. Coefficients are returned and a block size of 3 is used.
+  * Note that at the moment the number of columns of A must be divisible by the block size
+  **/
 
   std::cout << "--- Boost.uBLAS ---" << std::endl;
   std::vector<ScalarType> ublas_betas = viennacl::linalg::inplace_qr(ublas_A);  //computes the QR factorization
 
-  //
-  // A check for the correct result:
-  //
+  /**
+  *  Let us check for the correct result:
+  **/
   viennacl::linalg::recoverQ(ublas_A, ublas_betas, Q, R);
   MatrixType ublas_QR = prod(Q, R);
   double ublas_error = check(ublas_QR, ublas_A_backup);
-  std::cout << "Max rel error (ublas): " << ublas_error << std::endl;
+  std::cout << "Maximum relative error (ublas): " << ublas_error << std::endl;
 
-  //
-  // QR factorization in ViennaCL using Boost.uBLAS for the panel factorization
-  //
+  /**
+  *  <h2>QR Factorization with Boost.uBLAS Matrices</h2>
+  *  We now compute the QR factorization from a ViennaCL matrix. Internally it uses Boost.uBLAS for the panel factorization.
+  **/
   std::cout << "--- Hybrid (default) ---" << std::endl;
   viennacl::copy(ublas_A_backup, vcl_A);
   std::vector<ScalarType> hybrid_betas = viennacl::linalg::inplace_qr(vcl_A);
 
-
-  //
-  // A check for the correct result:
-  //
+  /**
+  *  Let us check for the correct result:
+  **/
   viennacl::copy(vcl_A, ublas_A);
   Q.clear(); R.clear();
   viennacl::linalg::recoverQ(ublas_A, hybrid_betas, Q, R);
   double hybrid_error = check(ublas_QR, ublas_A_backup);
-  std::cout << "Max rel error (hybrid): " << hybrid_error << std::endl;
+  std::cout << "Maximum relative error (hybrid): " << hybrid_error << std::endl;
 
 
-  //
-  //  That's it.
-  //
+  /**
+  *  That's it. Print a success message and exit.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

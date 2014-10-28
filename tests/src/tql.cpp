@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+
+/** \file tests/src/tql.cpp  Tests the tql algorithm for eigenvalue computations for symmetric tridiagonal matrices.
+*   \test  Tests the tql algorithm for eigenvalue computations for symmetric tridiagonal matrices.
+**/
+
 /*
 *
 *   Test file for tql-algorithm

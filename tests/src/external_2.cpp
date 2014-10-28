@@ -15,9 +15,9 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-//
-// A check for the absence of external linkage (otherwise, library is not truly 'header-only')
-//
+/** \file tests/src/external_2.cpp  Test for external linkage.
+*   \test A check for the absence of external linkage (otherwise, library is not truly 'header-only')
+**/
 
 
 //#define VIENNACL_WITH_EIGEN

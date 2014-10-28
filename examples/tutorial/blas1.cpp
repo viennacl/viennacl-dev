@@ -15,11 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
+/** \example "BLAS Level 1 Functionality"
 *
-*   Tutorial: BLAS level 1 functionality (blas1.cpp and blas1.cu are identical, the latter being required for compilation using CUDA nvcc)
+*   This tutorial shows how the BLAS level 1 functionality available in ViennaCL can be used.
+*   Operator overloading in C++ is used extensively to provide an intuitive syntax.
 *
-*/
+*   We start off with including necessary headers:
+**/
 
 
 // include necessary system headers
@@ -40,49 +42,51 @@
 // Some helper functions for this tutorial:
 #include "Random.hpp"
 
+
+/**
+* In this tutorial we do not need additional auxiliary functions, allowing us to start right with main():
+**/
 int main()
 {
   //Change this type definition to double if your gpu supports that
   typedef float       ScalarType;
 
-  /////////////////////////////////////////////////
-  ///////////// Scalar operations /////////////////
-  /////////////////////////////////////////////////
-
-  //
-  // Define a few CPU scalars:
-  //
+  /**
+  * <h2> Scalar Operations </h2>
+  *
+  * Although usually not very efficient because of PCI-Express latency, ViennaCL enables you to directly manipulate individual scalar values.
+  * As such, a viennacl::scalar<double> behaves very similar to a normal `double`.
+  *
+  * Let us define a few CPU and ViennaCL scalars:
+  *
+  **/
   ScalarType s1 = ScalarType(3.1415926);   //note: writing ScalarType s1 = 3.1415926; leads to warnings with some compilers if ScalarType is 'float'.
   ScalarType s2 = ScalarType(2.71763);
   ScalarType s3 = ScalarType(42.0);
 
-  //
-  // ViennaCL scalars are defined in the same way:
-  //
-  //std::cout << "Creating a few scalars..." << std::endl;
   viennacl::scalar<ScalarType> vcl_s1;
   viennacl::scalar<ScalarType> vcl_s2 = ScalarType(1.0);
   viennacl::scalar<ScalarType> vcl_s3 = ScalarType(1.0);
 
-  //
-  // CPU scalars can be transparently assigned to GPU scalars and vice versa:
-  //
+  /**
+  * CPU scalars can be transparently assigned to GPU scalars and vice versa:
+  **/
   std::cout << "Copying a few scalars..." << std::endl;
   vcl_s1 = s1;
   s2 = vcl_s2;
   vcl_s3 = s3;
 
-  //
-  // Operations between GPU scalars work just as for CPU scalars:
-  // (Note that such single compute kernels on the GPU are considerably slower than on the CPU)
-  //
+  /**
+  * Operations between GPU scalars work just as for CPU scalars:
+  * (Note that such single compute kernels on the GPU are considerably slower than on the CPU)
+  **/
 
   std::cout << "Manipulating a few scalars..." << std::endl;
   std::cout << "operator +=" << std::endl;
   s1 += s2;
   vcl_s1 += vcl_s2;
 
-  /*std::cout << "operator *=" << std::endl;
+  std::cout << "operator *=" << std::endl;
   s1 *= s2;
   vcl_s1 *= vcl_s2;
 
@@ -92,7 +96,7 @@ int main()
 
   std::cout << "operator /=" << std::endl;
   s1 /= s2;
-  vcl_s1 /= vcl_s2;*/
+  vcl_s1 /= vcl_s2;
 
   std::cout << "operator +" << std::endl;
   s1 = s2 + s3;
@@ -103,29 +107,26 @@ int main()
   vcl_s1 = vcl_s2 + vcl_s3 * vcl_s2 - vcl_s3 / vcl_s1;
 
 
-  //
-  // Operations can also be mixed:
-  //
-
+  /**
+  * Operations can also be mixed:
+  **/
   std::cout << "mixed operations" << std::endl;
   vcl_s1 = s1 * vcl_s2 + s3 - vcl_s3;
 
 
-  //
-  // Output stream is overloaded as well:
-  //
+  /**
+  * The output stream is overloaded as well for direct printing to e.g. a terminal:
+  **/
 
   std::cout << "CPU scalar s3: " << s3 << std::endl;
   std::cout << "GPU scalar vcl_s3: " << vcl_s3 << std::endl;
 
 
-  /////////////////////////////////////////////////
-  ///////////// Vector operations /////////////////
-  /////////////////////////////////////////////////
-
-  //
-  // Define a few vectors (from STL and plain C) and viennacl::vectors
-  //
+  /**
+  *  <h2>Vector Operations
+  *
+  * Define a few vectors (from STL and plain C) and viennacl::vectors
+  **/
   std::vector<ScalarType>      std_vec1(10);
   std::vector<ScalarType>      std_vec2(10);
   ScalarType                   plain_vec3[10];  //plain C array
@@ -134,10 +135,10 @@ int main()
   viennacl::vector<ScalarType> vcl_vec2(10);
   viennacl::vector<ScalarType> vcl_vec3(10);
 
-  //
-  // Let us fill the CPU vectors with random values:
-  // (random<> is a helper function from Random.hpp)
-  //
+  /**
+  * Let us fill the CPU vectors with random values:
+  * (random<> is a helper function from Random.hpp)
+  **/
 
   for (unsigned int i = 0; i < 10; ++i)
   {
@@ -146,46 +147,44 @@ int main()
     plain_vec3[i] = random<ScalarType>();
   }
 
-  //
-  // Copy the CPU vectors to the GPU vectors and vice versa
-  //
+  /**
+  * Copy the CPU vectors to the GPU vectors and vice versa
+  **/
   viennacl::copy(std_vec1.begin(), std_vec1.end(), vcl_vec1.begin()); //either the STL way
   viennacl::copy(vcl_vec2.begin(), vcl_vec2.end(), std_vec2.begin()); //either the STL way
   viennacl::copy(vcl_vec2, std_vec2);                                 //using the short hand notation for objects that provide .begin() and .end() members
   viennacl::copy(vcl_vec2.begin(), vcl_vec2.end(), plain_vec3);       //copy to plain C vector
 
-  //
-  // Also partial copies by providing the corresponding iterators are possible:
-  //
+  /**
+  * Also partial copies by providing the corresponding iterators are possible:
+  **/
   viennacl::copy(std_vec1.begin() + 4, std_vec1.begin() + 8, vcl_vec1.begin() + 4);   //cpu to gpu
   viennacl::copy(vcl_vec1.begin() + 4, vcl_vec1.begin() + 8, vcl_vec2.begin() + 1);   //gpu to gpu
   viennacl::copy(vcl_vec1.begin() + 4, vcl_vec1.begin() + 8, std_vec1.begin() + 1);   //gpu to cpu
 
-  //
-  // Compute the inner product of two GPU vectors and write the result to either CPU or GPU
-  //
-
+  /**
+  * Compute the inner product of two GPU vectors and write the result to either CPU or GPU
+  **/
   vcl_s1 = viennacl::linalg::inner_prod(vcl_vec1, vcl_vec2);
   s1 = viennacl::linalg::inner_prod(vcl_vec1, vcl_vec2);
   s2 = viennacl::linalg::inner_prod(std_vec1, std_vec2); //inner prod can also be used with std::vector (computations are carried out on CPU then)
 
-  //
-  // Compute norms:
-  //
-
+  /**
+  * Compute norms:
+  **/
   s1 = viennacl::linalg::norm_1(vcl_vec1);
   vcl_s2 = viennacl::linalg::norm_2(vcl_vec2);
   s3 = viennacl::linalg::norm_inf(vcl_vec3);
 
-  //
-  // Plane rotation of two vectors:
-  //
 
+  /**
+  * Plane rotation of two vectors:
+  **/
   viennacl::linalg::plane_rotation(vcl_vec1, vcl_vec2, 1.1f, 2.3f);
 
-  //
-  // Use viennacl::vector via the overloaded operators just as you would write it on paper:
-  //
+  /**
+  * Use viennacl::vector via the overloaded operators just as you would write it on paper:
+  **/
 
   //simple expression:
   vcl_vec1 = vcl_s1 * vcl_vec2 / vcl_s3;
@@ -193,22 +192,22 @@ int main()
   //more complicated expression:
   vcl_vec1 = vcl_vec2 / vcl_s3 + vcl_s2 * (vcl_vec1 - vcl_s2 * vcl_vec2);
 
-  //
-  // Swap the content of two vectors without a temporary vector:
-  //
 
+  /**
+  * Swap the content of two vectors without a temporary vector:
+  **/
   viennacl::swap(vcl_vec1, vcl_vec2);  //swaps all entries in memory
   viennacl::fast_swap(vcl_vec1, vcl_vec2); //swaps OpenCL memory handles only
 
-  //
-  // The vectors can also be cleared directly:
-  //
+  /**
+  * The vectors can also be cleared directly:
+  **/
   vcl_vec1.clear();
   vcl_vec2.clear();
 
-  //
-  //  That's it.
-  //
+  /**
+  *  That's it, the tutorial is completed.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

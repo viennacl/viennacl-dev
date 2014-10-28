@@ -15,9 +15,13 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/*
-*   Tutorial: Matrix bandwidth reduction algorithms
-*/
+/** \example "Matrix Bandwidth Reduction"
+*
+*  This tutorial shows how the bandwidth of the nonzero pattern of a sparse matrix can be reduced by renumbering the unknowns (i.e. rows and columns).
+*  Such a reordering can significantly improve cache reuse for algorithms such as sparse matrix-vector products and may also reduce the iteration required in iterative solvers.
+*
+*  There are two parts: The first part defines a couple of helper function. Feel free to directly go to the second part, which shows the actual tutorial code.
+**/
 
 
 #include <iostream>
@@ -32,12 +36,16 @@
 #include "viennacl/misc/bandwidth_reduction.hpp"
 
 
-//
-// Part 1: Helper functions
-//
-
-// Reorders a matrix according to a previously generated node
-// number permutation vector r
+/**
+*   <h2>Part 1: Helper functions</h2>
+*
+*  We start by defining a couple of helper functions for sparse matrices represented by C++ STL containers, i.e. std::vector<std::map<T,U> >
+*
+* <h3>Reorder Matrix</h3>
+*
+*
+* Reorders a matrix according to a previously generated node number permutation vector r
+**/
 inline std::vector< std::map<int, double> > reorder_matrix(std::vector< std::map<int, double> > const & matrix, std::vector<int> const & r)
 {
     std::vector< std::map<int, double> > matrix2(r.size());
@@ -49,7 +57,10 @@ inline std::vector< std::map<int, double> > reorder_matrix(std::vector< std::map
     return matrix2;
 }
 
-// Calculates the bandwidth of a matrix
+/** <h3>Bandwidth Calculation</h3>
+*
+* Calculates the bandwidth of a matrix
+**/
 inline int calc_bw(std::vector< std::map<int, double> > const & matrix)
 {
     int bw = 0;
@@ -73,8 +84,10 @@ inline int calc_bw(std::vector< std::map<int, double> > const & matrix)
     return bw;
 }
 
-
-// Calculate the bandwidth of a reordered matrix
+/** <h3> Bandwidth Calculation </h3>
+*
+* Calculate the bandwidth of a reordered matrix
+**/
 template<typename IndexT>
 int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std::vector<IndexT> const & r)
 {
@@ -99,10 +112,12 @@ int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std:
     return bw;
 }
 
-
-// Generates a random permutation by Knuth shuffle algorithm
-// reference: http://en.wikipedia.org/wiki/Knuth_shuffle
-//  (URL taken on July 2nd, 2011)
+/** <h3>Generate Random Permutation</h3>
+*
+* Generates a random permutation by Knuth shuffle algorithm
+* reference: http://en.wikipedia.org/wiki/Knuth_shuffle
+*  (URL taken on July 2nd, 2011)
+**/
 inline std::vector<int> generate_random_reordering(std::size_t n)
 {
     std::vector<int> r(n);
@@ -125,13 +140,15 @@ inline std::vector<int> generate_random_reordering(std::size_t n)
     return r;
 }
 
-
-// function for the generation of a three-dimensional mesh incidence matrix
-//  l:  x dimension
-//  m:  y dimension
-//  n:  z dimension
-//  tri: true for tetrahedral mesh, false for cubic mesh
-//  return value: matrix of size l * m * n
+/** <h3>Matrix Generation for 3D Meshes</h3>
+*
+* This function generates an incidence matrix from of an underlying three-dimensional mesh
+*  l:  x dimension
+*  m:  y dimension
+*  n:  z dimension
+*  tri: true for tetrahedral mesh, false for cubic mesh
+*  return value: matrix of size l * m * n
+**/
 inline std::vector< std::map<int, double> > gen_3d_mesh_matrix(std::size_t l, std::size_t m, std::size_t n, bool tri)
 {
     std::vector< std::map<int, double> > matrix;
@@ -226,11 +243,11 @@ inline std::vector< std::map<int, double> > gen_3d_mesh_matrix(std::size_t l, st
 }
 
 
-//
-// Part 2: Tutorial code
-//
-
-
+/**
+*    <h2>Part 2: Tutorial code</h2>
+*
+*   After all the helper functions have been defined, we are now ready to see how reordering routines are called.
+**/
 
 int main(int, char **)
 {
@@ -240,47 +257,47 @@ int main(int, char **)
   std::size_t n = dof_per_dim * dof_per_dim * dof_per_dim; //total number of unknowns
   std::vector< std::map<int, double> > matrix = gen_3d_mesh_matrix(dof_per_dim, dof_per_dim, dof_per_dim, false);  //If last parameter is 'true', a tetrahedral grid instead of a hexahedral grid is used.
 
-  //
-  // Shuffle the generated matrix
-  //
+  /**
+  * Shuffle the generated matrix
+  **/
   std::vector<int> r = generate_random_reordering(n);
   std::vector< std::map<int, double> > matrix2 = reorder_matrix(matrix, r);
 
 
-  //
-  // Print some statistics:
-  //
+  /**
+  * Print some statistics about the generated matrix:
+  **/
   std::cout << " * Unknowns: " << n << std::endl;
   std::cout << " * Initial bandwidth: " << calc_bw(matrix) << std::endl;
   std::cout << " * Randomly reordered bandwidth: " << calc_bw(matrix2) << std::endl;
 
-  //
-  // Reorder using Cuthill-McKee algorithm
-  //
+  /**
+  * Reorder using Cuthill-McKee algorithm and print new bandwidth:
+  **/
   std::cout << "-- Cuthill-McKee algorithm --" << std::endl;
   r = viennacl::reorder(matrix2, viennacl::cuthill_mckee_tag());
   r = viennacl::reorder(matrix2, viennacl::cuthill_mckee_tag());
   std::cout << " * Reordered bandwidth: " << calc_reordered_bw(matrix2, r) << std::endl;
 
-  //
-  // Reorder using advanced Cuthill-McKee algorithm
-  //
+  /**
+  * Reorder using advanced Cuthill-McKee algorithm and print new bandwidth:
+  **/
   std::cout << "-- Advanced Cuthill-McKee algorithm --" << std::endl;
   double a = 0.0;
   std::size_t gmax = 1;
   r = viennacl::reorder(matrix2, viennacl::advanced_cuthill_mckee_tag(a, gmax));
   std::cout << " * Reordered bandwidth: " << calc_reordered_bw(matrix2, r) << std::endl;
 
-  //
-  // Reorder using Gibbs-Poole-Stockmeyer algorithm
-  //
+  /**
+  * Reorder using Gibbs-Poole-Stockmeyer algorithm and print new bandwidth:
+  **/
   std::cout << "-- Gibbs-Poole-Stockmeyer algorithm --" << std::endl;
   r = viennacl::reorder(matrix2, viennacl::gibbs_poole_stockmeyer_tag());
   std::cout << " * Reordered bandwidth: " << calc_reordered_bw(matrix2, r) << std::endl;
 
-  //
-  //  That's it.
-  //
+  /**
+  *  That's it.
+  **/
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
   return EXIT_SUCCESS;

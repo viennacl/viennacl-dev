@@ -16,6 +16,10 @@
 ============================================================================= */
 
 
+/** \file tests/src/matrix_vector.cpp  Tests routines for matrix-vector operaions (BLAS level 2) using floating point arithmetic.
+*   \test Tests routines for matrix-vector operaions (BLAS level 2) using floating point arithmetic.
+**/
+
 //
 // *** System
 //

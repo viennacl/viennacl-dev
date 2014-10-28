@@ -16,21 +16,19 @@
 ============================================================================= */
 
 
-/* Computation of eigenvalues of symmetric, tridiagonal matrix using
- * bisection.
- */
+/** \example "Eigenvalues: Bisection Method"
+*
+* This tutorial shows how the eigenvalues of a symmetric, tridiagonal matrix can be computed using bisection.
+* We begin with the usual header inclusions:
+**/
 
-#ifndef NDEBUG
-  #define NDEBUG
-#endif
-
-// includes, system
+// System headers
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 
-// includes, project
+// ViennaCL headers
 
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
@@ -40,6 +38,10 @@
 
 
 typedef float NumericT;
+
+/**
+* The first step is to generate a suitable input tridiagonal input matrix in the function initInputData():
+**/
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief initInputData   Initialize the diagonal and superdiagonal elements of
@@ -86,28 +88,37 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
-// Program main
-////////////////////////////////////////////////////////////////////////////////
+/**
+* The main program is now as follows:
+**/
 int main()
 {
     bool bResult = false;
     unsigned int mat_size = 30;
 
+/**
+*   Create STL-vectors holding the diagonal, the superdiagonal, and the computed eigenvalues:
+**/
     std::vector<NumericT> diagonal(mat_size);
     std::vector<NumericT> superdiagonal(mat_size);
     std::vector<NumericT> eigenvalues_bisect(mat_size);
 
-    // -------------Initialize data-------------------
-    // Fill the diagonal and superdiagonal elements of the vector
+/**
+* Initialize the data with the helper routine defined earlier:
+**/
     initInputData(diagonal, superdiagonal, mat_size);
 
 
-    // -------Start the bisection algorithm------------
+/**
+* Run the bisection algorithm for the provided input
+**/
     std::cout << "Start the bisection algorithm" << std::endl;
     bResult = viennacl::linalg::bisect(diagonal, superdiagonal, eigenvalues_bisect);
     std::cout << std::endl << "---TUTORIAL COMPLETED---" << std::endl;
 
+/**
+* Uncomment the following code to also have the results printed:
+**/
 /*
     // ------------Print the results---------------
     std::cout << "mat_size = " << mat_size << std::endl;

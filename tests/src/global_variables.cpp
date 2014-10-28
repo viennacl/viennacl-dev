@@ -15,6 +15,10 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** \file tests/src/global_variables.cpp  Ensures that ViennaCL works properly when objects are used as global variables.
+*   \test Ensures that ViennaCL works properly when objects are used as global variables.
+**/
+
 //
 // *** System
 //

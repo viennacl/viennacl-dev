@@ -15,9 +15,9 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/* Computation of eigenvalues of a symmetric, tridiagonal matrix using
- * bisection.
- */
+/** \file  tests/src/bisect.cpp  Computation of eigenvalues of a symmetric, tridiagonal matrix using bisection.
+*   \test Tests the bisection implementation for symmetric tridiagonal matrices.
+**/
 
 #ifndef NDEBUG
   #define NDEBUG

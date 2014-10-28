@@ -15,6 +15,12 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+
+
+/** \file tests/src/scan.cpp  Tests inclusive and exclusive scan operations.
+*   \test Tests inclusive and exclusive scan operations.
+**/
+
 /*
 *
 *   Test file for inclusive and exclusive scan

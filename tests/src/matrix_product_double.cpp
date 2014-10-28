@@ -15,6 +15,10 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
+/** \file tests/src/matrix_product_double.cpp  Tests dense matrix-matrix products in double precision.
+*   \test Tests dense matrix-matrix products in double precision.
+**/
+
 #include "matrix_product_float_double.hpp"
 
 //
