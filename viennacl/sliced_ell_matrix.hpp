@@ -77,7 +77,20 @@ public:
 #endif
   }
 
-public:
+  /** @brief Resets all entries in the matrix back to zero without changing the matrix size. Resets the sparsity pattern. */
+  void clear()
+  {
+    viennacl::backend::typesafe_host_array<IndexT> host_columns_per_block_buffer(columns_per_block_, rows_ / rows_per_block_ + 1);
+    viennacl::backend::typesafe_host_array<IndexT> host_column_buffer(column_indices_, internal_size1());
+    viennacl::backend::typesafe_host_array<IndexT> host_block_start_buffer(block_start_, (rows_ - 1) / rows_per_block_ + 1);
+    std::vector<ScalarT> host_elements(1);
+
+    viennacl::backend::memory_create(columns_per_block_, host_columns_per_block_buffer.element_size() * (rows_ / rows_per_block_ + 1), viennacl::traits::context(columns_per_block_), host_columns_per_block_buffer.get());
+    viennacl::backend::memory_create(column_indices_,    host_column_buffer.element_size() * internal_size1(),                         viennacl::traits::context(column_indices_),    host_column_buffer.get());
+    viennacl::backend::memory_create(block_start_,       host_block_start_buffer.element_size() * ((rows_ - 1) / rows_per_block_ + 1), viennacl::traits::context(block_start_),       host_block_start_buffer.get());
+    viennacl::backend::memory_create(elements_,          sizeof(ScalarT) * 1,                                                          viennacl::traits::context(elements_),          &(host_elements[0]));
+  }
+
   vcl_size_t internal_size1() const { return viennacl::tools::align_to_multiple<vcl_size_t>(rows_, rows_per_block_); }
   vcl_size_t internal_size2() const { return cols_; }
 

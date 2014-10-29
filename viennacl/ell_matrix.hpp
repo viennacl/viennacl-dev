@@ -73,7 +73,18 @@ public:
 #endif
   }
 
-public:
+  /** @brief Resets all entries in the matrix back to zero without changing the matrix size. Resets the sparsity pattern. */
+  void clear()
+  {
+    maxnnz_ = 0;
+
+    viennacl::backend::typesafe_host_array<unsigned int> host_coords_buffer(coords_, internal_size1());
+    std::vector<NumericT> host_elements(internal_size1());
+
+    viennacl::backend::memory_create(coords_,   host_coords_buffer.element_size() * internal_size1(), viennacl::traits::context(coords_),   host_coords_buffer.get());
+    viennacl::backend::memory_create(elements_, sizeof(NumericT) * internal_size1(),                  viennacl::traits::context(elements_), &(host_elements[0]));
+  }
+
   vcl_size_t internal_size1() const { return viennacl::tools::align_to_multiple<vcl_size_t>(rows_, AlignmentV); }
   vcl_size_t internal_size2() const { return viennacl::tools::align_to_multiple<vcl_size_t>(cols_, AlignmentV); }
 

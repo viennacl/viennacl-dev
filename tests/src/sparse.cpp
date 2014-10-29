@@ -673,7 +673,6 @@ int test(Epsilon const& epsilon)
     retval = EXIT_FAILURE;
   }
 
-
   std::cout << "Testing products: compressed_compressed_matrix" << std::endl;
   result     = viennacl::linalg::prod(ublas_cc_matrix, rhs);
   vcl_result = viennacl::linalg::prod(vcl_compressed_compressed_matrix, vcl_rhs);
@@ -848,6 +847,87 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product (hyb_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  ////////////// Test of .clear() ////////////////
+  ublas_matrix.clear();
+
+  std::cout << "Testing products after clear(): compressed_matrix" << std::endl;
+  vcl_compressed_matrix.clear();
+  result     = ublas::scalar_vector<NumericT>(result.size(), NumericT(1));
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  vcl_result = viennacl::linalg::prod(vcl_compressed_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with compressed_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  std::cout << "Testing products after clear(): compressed_compressed_matrix" << std::endl;
+  vcl_compressed_compressed_matrix.clear();
+  result     = ublas::scalar_vector<NumericT>(result.size(), NumericT(1));
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  vcl_result = viennacl::linalg::prod(vcl_compressed_compressed_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  std::cout << "Testing products after clear(): coordinate_matrix" << std::endl;
+  vcl_coordinate_matrix.clear();
+  result     = ublas::scalar_vector<NumericT>(result.size(), NumericT(1));
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  vcl_result = viennacl::linalg::prod(vcl_coordinate_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with coordinate_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  std::cout << "Testing products after clear(): ell_matrix" << std::endl;
+  vcl_ell_matrix.clear();
+  result     = ublas::scalar_vector<NumericT>(result.size(), NumericT(1));
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  vcl_result = viennacl::linalg::prod(vcl_ell_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with ell_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  std::cout << "Testing products after clear(): hyb_matrix" << std::endl;
+  vcl_hyb_matrix.clear();
+  result     = ublas::scalar_vector<NumericT>(result.size(), NumericT(1));
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  vcl_result = viennacl::linalg::prod(vcl_hyb_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with hyb_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  std::cout << "Testing products after clear(): sliced_ell_matrix" << std::endl;
+  vcl_sliced_ell_matrix.clear();
+  result     = ublas::scalar_vector<NumericT>(result.size(), NumericT(1));
+  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  vcl_result = viennacl::linalg::prod(vcl_sliced_ell_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with sliced_ell_matrix" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
     retval = EXIT_FAILURE;
   }
 

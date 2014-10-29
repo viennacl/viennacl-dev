@@ -65,6 +65,30 @@ public:
 #endif
   }
 
+  /** @brief Resets all entries in the matrix back to zero without changing the matrix size. Resets the sparsity pattern. */
+  void clear()
+  {
+    // ELL part:
+    ellnnz_ = 0;
+
+    viennacl::backend::typesafe_host_array<unsigned int> host_coords_buffer(ell_coords_, internal_size1());
+    std::vector<NumericT> host_elements(internal_size1());
+
+    viennacl::backend::memory_create(ell_coords_,   host_coords_buffer.element_size() * internal_size1(), viennacl::traits::context(ell_coords_),   host_coords_buffer.get());
+    viennacl::backend::memory_create(ell_elements_, sizeof(NumericT) * internal_size1(),                  viennacl::traits::context(ell_elements_), &(host_elements[0]));
+
+    // CSR part:
+    csrnnz_ = 0;
+
+    viennacl::backend::typesafe_host_array<unsigned int> host_row_buffer(csr_rows_, rows_ + 1);
+    viennacl::backend::typesafe_host_array<unsigned int> host_col_buffer(csr_cols_, 1);
+    host_elements.resize(1);
+
+    viennacl::backend::memory_create(csr_rows_,     host_row_buffer.element_size() * (rows_ + 1), viennacl::traits::context(csr_rows_),     host_row_buffer.get());
+    viennacl::backend::memory_create(csr_cols_,     host_col_buffer.element_size() * 1,           viennacl::traits::context(csr_cols_),     host_col_buffer.get());
+    viennacl::backend::memory_create(csr_elements_, sizeof(NumericT) * 1,                         viennacl::traits::context(csr_elements_), &(host_elements[0]));
+  }
+
   NumericT  csr_threshold()  const { return csr_threshold_; }
   void csr_threshold(NumericT thr) { csr_threshold_ = thr; }
 

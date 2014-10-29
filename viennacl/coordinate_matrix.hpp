@@ -326,6 +326,20 @@ public:
     cols_ = new_size2;
   }
 
+  /** @brief Resets all entries in the matrix back to zero without changing the matrix size. Resets the sparsity pattern. */
+  void clear()
+  {
+    viennacl::backend::typesafe_host_array<unsigned int> host_group_buffer(group_boundaries_, 65);
+    viennacl::backend::typesafe_host_array<unsigned int> host_coord_buffer(coord_buffer_, 2);
+    std::vector<NumericT> host_elements(1);
+
+    viennacl::backend::memory_create(group_boundaries_, host_group_buffer.element_size() * 65, viennacl::traits::context(group_boundaries_), host_group_buffer.get());
+    viennacl::backend::memory_create(coord_buffer_,     host_coord_buffer.element_size() * 2,   viennacl::traits::context(coord_buffer_),     host_coord_buffer.get());
+    viennacl::backend::memory_create(elements_,         sizeof(NumericT) * 1,                   viennacl::traits::context(elements_),         &(host_elements[0]));
+
+    nonzeros_ = 0;
+    group_num_ = 64;
+  }
 
   /** @brief  Returns the number of rows */
   vcl_size_t size1() const { return rows_; }

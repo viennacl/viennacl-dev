@@ -668,6 +668,20 @@ public:
     }
   }
 
+  /** @brief Resets all entries in the matrix back to zero without changing the matrix size. Resets the sparsity pattern. */
+  void clear()
+  {
+    viennacl::backend::typesafe_host_array<unsigned int> host_row_buffer(row_buffer_, rows_ + 1);
+    viennacl::backend::typesafe_host_array<unsigned int> host_col_buffer(col_buffer_, 1);
+    std::vector<NumericT> host_elements(1);
+
+    viennacl::backend::memory_create(row_buffer_, host_row_buffer.element_size() * (rows_ + 1), viennacl::traits::context(row_buffer_), host_row_buffer.get());
+    viennacl::backend::memory_create(col_buffer_, host_col_buffer.element_size() * 1,           viennacl::traits::context(col_buffer_), host_col_buffer.get());
+    viennacl::backend::memory_create(elements_,   sizeof(NumericT) * 1,                         viennacl::traits::context(elements_), &(host_elements[0]));
+
+    nonzeros_ = 0;
+  }
+
   /** @brief Returns a reference to the (i,j)-th entry of the sparse matrix. If (i,j) does not exist (zero), it is inserted (slow!) */
   entry_proxy<NumericT> operator()(vcl_size_t i, vcl_size_t j)
   {
