@@ -350,11 +350,24 @@ int test(Epsilon const& epsilon,
   NumericT alpha = static_cast<NumericT>(1.7182);
   viennacl::scalar<NumericT> gpu_alpha = alpha;
 
-  ublas_v1  *= alpha;
-  vcl_v1    *= alpha;
+  ublas_v1  *= long(alpha);
+  vcl_v1    *= long(alpha);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+
+  ublas_v1  *= float(alpha);
+  vcl_v1    *= float(alpha);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1  *= double(alpha);
+  vcl_v1    *= double(alpha);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
 
   std::cout << "Testing scaling with GPU scalar..." << std::endl;
   ublas_v1  *= alpha;
@@ -374,11 +387,24 @@ int test(Epsilon const& epsilon,
   viennacl::scalar<NumericT> gpu_beta = beta;
 
   std::cout << "Testing shrinking with CPU scalar..." << std::endl;
-  ublas_v1 /= beta;
-  vcl_v1   /= beta;
+  ublas_v1 /= long(beta);
+  vcl_v1   /= long(beta);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+
+  ublas_v1 /= float(beta);
+  vcl_v1   /= float(beta);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 /= double(beta);
+  vcl_v1   /= double(beta);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
 
   std::cout << "Testing shrinking with GPU scalar..." << std::endl;
   ublas_v1 /= beta;
@@ -463,8 +489,14 @@ int test(Epsilon const& epsilon,
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-  ublas_v1 = ublas_v1 + alpha * ublas_v2;
-  vcl_v1   = vcl_v1   + alpha *   vcl_v2;
+  ublas_v1 = ublas_v1 + ublas_v2 * float(alpha);
+  vcl_v1   = vcl_v1   +   vcl_v2 * float(alpha);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = ublas_v1 + ublas_v2 * double(alpha);
+  vcl_v1   = vcl_v1   +   vcl_v2 * double(alpha);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -475,19 +507,44 @@ int test(Epsilon const& epsilon,
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-  ublas_v1 = alpha * ublas_v1 + ublas_v2;
-  vcl_v1   = alpha *   vcl_v1 +   vcl_v2;
+  ublas_v1 = long(alpha) * ublas_v1 + ublas_v2;
+  vcl_v1   = long(alpha) *   vcl_v1 +   vcl_v2;
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+
+  ublas_v1 = float(alpha) * ublas_v1 + ublas_v2;
+  vcl_v1   = float(alpha) *   vcl_v1 +   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = double(alpha) * ublas_v1 + ublas_v2;
+  vcl_v1   = double(alpha) *   vcl_v1 +   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
 
   std::cout << "Testing multiply-add on vector with CPU scalar (both)..." << std::endl;
   ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-  ublas_v1 = alpha * ublas_v1 + beta * ublas_v2;
-  vcl_v1   = alpha *   vcl_v1 + beta *   vcl_v2;
+  ublas_v1 = long(alpha) * ublas_v1 + long(beta) * ublas_v2;
+  vcl_v1   = long(alpha) *   vcl_v1 + long(beta) *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = float(alpha) * ublas_v1 + float(beta) * ublas_v2;
+  vcl_v1   = float(alpha) *   vcl_v1 + float(beta) *   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = double(alpha) * ublas_v1 + double(beta) * ublas_v2;
+  vcl_v1   = double(alpha) *   vcl_v1 + double(beta) *   vcl_v2;
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -498,8 +555,20 @@ int test(Epsilon const& epsilon,
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-  ublas_v1 += alpha * ublas_v2;
-  vcl_v1   += alpha *   vcl_v2;
+  ublas_v1 += ublas_v2 * long(alpha);
+  vcl_v1   +=   vcl_v2 * long(alpha);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 += ublas_v2 * float(alpha);
+  vcl_v1   +=   vcl_v2 * float(alpha);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 += double(alpha) * ublas_v2;
+  vcl_v1   += double(alpha) *   vcl_v2;
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -585,8 +654,20 @@ int test(Epsilon const& epsilon,
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-  ublas_v1 = ublas_v1 + ublas_v2 / alpha;
-  vcl_v1   = vcl_v1   + vcl_v2 / alpha;
+  ublas_v1 = ublas_v1 + ublas_v2 / long(alpha);
+  vcl_v1   = vcl_v1   + vcl_v2 / long(alpha);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = ublas_v1 + ublas_v2 / float(alpha);
+  vcl_v1   = vcl_v1   + vcl_v2 / float(alpha);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = ublas_v1 + ublas_v2 / double(alpha);
+  vcl_v1   = vcl_v1   + vcl_v2 / double(alpha);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -597,19 +678,32 @@ int test(Epsilon const& epsilon,
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-  ublas_v1 = ublas_v1 / alpha + ublas_v2;
-  vcl_v1   =   vcl_v1 / alpha +   vcl_v2;
+  ublas_v1 = ublas_v1 / float(alpha) + ublas_v2;
+  vcl_v1   =   vcl_v1 / float(alpha) +   vcl_v2;
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+
+  ublas_v1 = ublas_v1 / double(alpha) + ublas_v2;
+  vcl_v1   =   vcl_v1 / double(alpha) +   vcl_v2;
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
 
   std::cout << "Testing division-add on vector with CPU scalar (both)..." << std::endl;
   ublas_v2 = NumericT(3.1415) * ublas_v1;
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
   viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
 
-  ublas_v1 = ublas_v1 / alpha + ublas_v2 / beta;
-  vcl_v1   =   vcl_v1 / alpha +   vcl_v2 / beta;
+  ublas_v1 = ublas_v1 / float(alpha) + ublas_v2 / float(beta);
+  vcl_v1   =   vcl_v1 / float(alpha) +   vcl_v2 / float(beta);
+
+  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  ublas_v1 = ublas_v1 / double(alpha) + ublas_v2 / double(beta);
+  vcl_v1   =   vcl_v1 / double(alpha) +   vcl_v2 / double(beta);
 
   if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;

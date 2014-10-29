@@ -233,8 +233,20 @@ int run_test(double epsilon,
 
 
   std::cout << "Scaled add (left): ";
-  ublas_C = alpha * ublas_A + ublas_B;
-  vcl_C   = alpha *   vcl_A +   vcl_B;
+  ublas_C = long(alpha) * ublas_A + ublas_B;
+  vcl_C   = long(alpha) *   vcl_A +   vcl_B;
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_C = float(alpha) * ublas_A + ublas_B;
+  vcl_C   = float(alpha) *   vcl_A +   vcl_B;
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_C = double(alpha) * ublas_A + ublas_B;
+  vcl_C   = double(alpha) *   vcl_A +   vcl_B;
 
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
@@ -246,8 +258,20 @@ int run_test(double epsilon,
 
 
   std::cout << "Scaled add (right): ";
-  ublas_C = ublas_A + beta * ublas_B;
-  vcl_C   =   vcl_A + beta *   vcl_B;
+  ublas_C = ublas_A + ublas_B * long(beta);
+  vcl_C   =   vcl_A + vcl_B   * long(beta);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_C = ublas_A + ublas_B * float(beta);
+  vcl_C   =   vcl_A + vcl_B   * float(beta);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_C = ublas_A + ublas_B * double(beta);
+  vcl_C   =   vcl_A + vcl_B   * double(beta);
 
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
@@ -257,6 +281,24 @@ int run_test(double epsilon,
   if (!check_for_equality(ublas_C, vcl_C, epsilon))
     return EXIT_FAILURE;
 
+  std::cout << "Scaled add (right, with division): ";
+  ublas_C = ublas_A + ublas_B / long(beta);
+  vcl_C   =   vcl_A + vcl_B   / long(beta);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_C = ublas_A + ublas_B / float(beta);
+  vcl_C   =   vcl_A + vcl_B   / float(beta);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_C = ublas_A + ublas_B / double(beta);
+  vcl_C   =   vcl_A + vcl_B   / double(beta);
+
+  if (!check_for_equality(ublas_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
 
 
   std::cout << "Scaled add (both): ";
@@ -364,8 +406,20 @@ int run_test(double epsilon,
   viennacl::copy(ublas_A, vcl_A);
 
   std::cout << "Multiplication with CPU scalar: ";
-  ublas_A *= alpha;
-  vcl_A   *= alpha;
+  ublas_A *= long(alpha);
+  vcl_A   *= long(alpha);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A *= float(alpha);
+  vcl_A   *= float(alpha);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A *= double(alpha);
+  vcl_A   *= double(alpha);
 
   if (!check_for_equality(ublas_A, vcl_A, epsilon))
     return EXIT_FAILURE;
@@ -379,8 +433,20 @@ int run_test(double epsilon,
 
 
   std::cout << "Division with CPU scalar: ";
-  ublas_A /= alpha;
-  vcl_A /= alpha;
+  ublas_A /= long(alpha);
+  vcl_A   /= long(alpha);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A /= float(alpha);
+  vcl_A   /= float(alpha);
+
+  if (!check_for_equality(ublas_A, vcl_A, epsilon))
+    return EXIT_FAILURE;
+
+  ublas_A /= double(alpha);
+  vcl_A   /= double(alpha);
 
   if (!check_for_equality(ublas_A, vcl_A, epsilon))
     return EXIT_FAILURE;

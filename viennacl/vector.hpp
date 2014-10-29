@@ -594,46 +594,203 @@ vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT
   return *this;
 }
 
-/** @brief Scales a vector (or proxy) by a CPU scalar value
-*/
+/** @brief Scales a vector (or proxy) by a char (8-bit integer) value */
 template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (NumericT val)
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (char val)
 {
   if (size() > 0)
     viennacl::linalg::av(*this,
-                         *this, val, 1, false, false);
+                         *this, NumericT(val), 1, false, false);
   return *this;
 }
-
-/** @brief Scales this vector by a CPU scalar value
-*/
+/** @brief Scales a vector (or proxy) by a short integer value */
 template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (NumericT val)
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (short val)
 {
   if (size() > 0)
     viennacl::linalg::av(*this,
-                         *this, val, 1, true, false);
+                         *this, NumericT(val), 1, false, false);
+  return *this;
+}
+/** @brief Scales a vector (or proxy) by an integer value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (int val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, false, false);
+  return *this;
+}
+/** @brief Scales a vector (or proxy) by a long integer value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (long val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, false, false);
+  return *this;
+}
+/** @brief Scales a vector (or proxy) by a single precision floating point value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (float val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, false, false);
+  return *this;
+}
+/** @brief Scales a vector (or proxy) by a double precision floating point value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (double val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, false, false);
   return *this;
 }
 
 
-/** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
-*/
+/** @brief Scales this vector by a char (8-bit) value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (char val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, true, false);
+  return *this;
+}
+/** @brief Scales this vector by a short integer value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (short val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, true, false);
+  return *this;
+}
+/** @brief Scales this vector by an integer value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (int val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, true, false);
+  return *this;
+}
+/** @brief Scales this vector by a long integer value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (long val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, true, false);
+  return *this;
+}
+/** @brief Scales this vector by a single precision floating point value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (float val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, true, false);
+  return *this;
+}
+/** @brief Scales this vector by a double precision floating point value */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (double val)
+{
+  if (size() > 0)
+    viennacl::linalg::av(*this,
+                         *this, NumericT(val), 1, true, false);
+  return *this;
+}
+
+
+/** @brief Scales the vector by a char (8-bit value) 'alpha' and returns an expression template */
 template<class NumericT, typename SizeT, typename DistanceT>
 vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
-vector_base<NumericT, SizeT, DistanceT>::operator * (NumericT value) const
+vector_base<NumericT, SizeT, DistanceT>::operator * (char value) const
 {
-  return vector_expression< const self_type, const NumericT, op_mult>(*this, value);
+  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+}
+/** @brief Scales the vector by a short integer 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, SizeT, DistanceT>::operator * (short value) const
+{
+  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+}
+/** @brief Scales the vector by an integer 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, SizeT, DistanceT>::operator * (int value) const
+{
+  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+}
+/** @brief Scales the vector by a long integer 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, SizeT, DistanceT>::operator * (long value) const
+{
+  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+}
+/** @brief Scales the vector by a single precision floating point number 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, SizeT, DistanceT>::operator * (float value) const
+{
+  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+}
+/** @brief Scales the vector by a single precision floating point number 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, SizeT, DistanceT>::operator * (double value) const
+{
+  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
 }
 
 
-/** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template
-*/
+/** @brief Scales the vector by a char (8-bit value) 'alpha' and returns an expression template */
 template<class NumericT, typename SizeT, typename DistanceT>
 vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
-vector_base<NumericT, SizeT, DistanceT>::operator / (NumericT value) const
+vector_base<NumericT, SizeT, DistanceT>::operator / (char value) const
 {
-  return vector_expression< const self_type, const NumericT, op_div>(*this, value);
+  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+}
+/** @brief Scales the vector by a short integer 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, SizeT, DistanceT>::operator / (short value) const
+{
+  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+}
+/** @brief Scales the vector by an integer 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, SizeT, DistanceT>::operator / (int value) const
+{
+  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+}
+/** @brief Scales the vector by a long integer 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, SizeT, DistanceT>::operator / (long value) const
+{
+  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+}
+/** @brief Scales the vector by a single precision floating point number 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, SizeT, DistanceT>::operator / (float value) const
+{
+  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+}
+/** @brief Scales the vector by a double precision floating point number 'alpha' and returns an expression template */
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, SizeT, DistanceT>::operator / (double value) const
+{
+  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
 }
 
 
@@ -1725,6 +1882,29 @@ operator * (long value, vector_base<T> const & vec)
   return vector_expression< const vector_base<T>, const T, op_mult>(vec, T(value));
 }
 
+/** @brief Operator overload for the expression alpha * v1, where alpha is a float
+*
+* @param value   The host scalar (float or double)
+* @param vec     A ViennaCL vector
+*/
+template<typename T>
+vector_expression< const vector_base<T>, const T, op_mult>
+operator * (float value, vector_base<T> const & vec)
+{
+  return vector_expression< const vector_base<T>, const T, op_mult>(vec, T(value));
+}
+
+/** @brief Operator overload for the expression alpha * v1, where alpha is a double
+*
+* @param value   The host scalar (float or double)
+* @param vec     A ViennaCL vector
+*/
+template<typename T>
+vector_expression< const vector_base<T>, const T, op_mult>
+operator * (double value, vector_base<T> const & vec)
+{
+  return vector_expression< const vector_base<T>, const T, op_mult>(vec, T(value));
+}
 
 
 

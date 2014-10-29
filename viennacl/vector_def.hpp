@@ -211,16 +211,72 @@ public:
   const_entry_proxy<NumericT> operator[](size_type index) const;
   self_type & operator += (const self_type & vec);
   self_type & operator -= (const self_type & vec);
-  /** @brief Scales a vector (or proxy) by a CPU scalar value */
-  self_type & operator *= (NumericT val);
-  /** @brief Scales this vector by a CPU scalar value */
-  self_type & operator /= (NumericT val);
-  /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template */
+
+  /** @brief Scales a vector (or proxy) by a char (8-bit integer) */
+  self_type & operator *= (char val);
+  /** @brief Scales a vector (or proxy) by a short integer */
+  self_type & operator *= (short val);
+  /** @brief Scales a vector (or proxy) by an integer */
+  self_type & operator *= (int val);
+  /** @brief Scales a vector (or proxy) by a long integer */
+  self_type & operator *= (long val);
+  /** @brief Scales a vector (or proxy) by a single precision floating point value */
+  self_type & operator *= (float val);
+  /** @brief Scales a vector (or proxy) by a double precision floating point value */
+  self_type & operator *= (double val);
+
+
+  /** @brief Scales a vector (or proxy) by a char (8-bit integer) */
+  self_type & operator /= (char val);
+  /** @brief Scales a vector (or proxy) by a short integer */
+  self_type & operator /= (short val);
+  /** @brief Scales a vector (or proxy) by an integer */
+  self_type & operator /= (int val);
+  /** @brief Scales a vector (or proxy) by a long integer */
+  self_type & operator /= (long val);
+  /** @brief Scales a vector (or proxy) by a single precision floating point value */
+  self_type & operator /= (float val);
+  /** @brief Scales a vector (or proxy) by a double precision floating point value */
+  self_type & operator /= (double val);
+
+  /** @brief Scales the vector by a char (8-bit integer) 'alpha' and returns an expression template */
   vector_expression< const self_type, const NumericT, op_mult>
-  operator * (NumericT value) const;
-  /** @brief Scales the vector by a CPU scalar 'alpha' and returns an expression template */
+  operator * (char value) const;
+  /** @brief Scales the vector by a short integer 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_mult>
+  operator * (short value) const;
+  /** @brief Scales the vector by an integer 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_mult>
+  operator * (int value) const;
+  /** @brief Scales the vector by a long integer 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_mult>
+  operator * (long value) const;
+  /** @brief Scales the vector by a single precision floating point value 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_mult>
+  operator * (float value) const;
+  /** @brief Scales the vector by a double precision floating point value 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_mult>
+  operator * (double value) const;
+
+  /** @brief Scales the vector by a char (8-bit integer) 'alpha' and returns an expression template */
   vector_expression< const self_type, const NumericT, op_div>
-  operator / (NumericT value) const;
+  operator / (char value) const;
+  /** @brief Scales the vector by a short integer 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_div>
+  operator / (short value) const;
+  /** @brief Scales the vector by an integer 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_div>
+  operator / (int value) const;
+  /** @brief Scales the vector by a long integer 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_div>
+  operator / (long value) const;
+  /** @brief Scales the vector by a single precision floating point value 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_div>
+  operator / (float value) const;
+  /** @brief Scales the vector by a double precision floating point value 'alpha' and returns an expression template */
+  vector_expression< const self_type, const NumericT, op_div>
+  operator / (double value) const;
+
   /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
   vector_expression<const self_type, const NumericT, op_mult> operator-() const;
   /** @brief Returns an iterator pointing to the beginning of the vector  (STL like)*/
