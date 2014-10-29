@@ -777,7 +777,7 @@ void copy(const CPUMatrixT & cpu_matrix,
       data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
   }
 
-  viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(NumericT) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
+  viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(NumericT) * data.size(), &(data[0]));
   //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
   //std::cout << "Size at end: " << gpu_matrix.size1() << ", " << gpu_matrix.size2() << std::endl;
 }
@@ -814,7 +814,7 @@ void copy(const std::vector< std::vector<NumericT, A1>, A2> & cpu_matrix,
       data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix[i][j];
   }
 
-  viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(NumericT) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
+  viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(NumericT) * data.size(), &(data[0]));
   //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
 }
 
@@ -833,10 +833,13 @@ void fast_copy(NumericT * cpu_matrix_begin,
                NumericT * cpu_matrix_end,
                matrix<NumericT, F, AlignmentV> & gpu_matrix)
 {
-  viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(NumericT) * static_cast<vcl_size_t>(cpu_matrix_end - cpu_matrix_begin), viennacl::traits::context(gpu_matrix), cpu_matrix_begin);
-  /*gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE,
-                                                                        sizeof(NumericT) * (cpu_matrix_end - cpu_matrix_begin),
-                                                                        cpu_matrix_begin);*/
+  if (gpu_matrix.internal_size() == 0)
+    viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(NumericT) * static_cast<vcl_size_t>(cpu_matrix_end - cpu_matrix_begin), viennacl::traits::context(gpu_matrix), cpu_matrix_begin);
+  else
+  {
+    assert( (gpu_matrix.internal_size() > cpu_matrix_end - cpu_matrix_begin) && bool("fast_copy(): Matrix not large enough to fit data!"));
+    viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(NumericT) * static_cast<vcl_size_t>(cpu_matrix_end - cpu_matrix_begin), cpu_matrix_begin);
+  }
 }
 
 
@@ -873,7 +876,7 @@ void copy(const Eigen::MatrixXf & cpu_matrix,
       data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
   }
 
-  viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(float) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
+  viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(float) * data.size(), &(data[0]));
   //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
 }
 
@@ -909,7 +912,7 @@ void copy(const Eigen::MatrixXd & cpu_matrix,
       data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
   }
 
-  viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(double) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
+  viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(double) * data.size(), &(data[0]));
   //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
 }
 #endif
@@ -947,7 +950,7 @@ void copy(const mtl::dense2D<NumericT, T>& cpu_matrix,
       data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix[i][j];
   }
 
-  viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(NumericT) * data.size(), viennacl::traits::context(gpu_matrix), &(data[0]));
+  viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(NumericT) * data.size(), &(data[0]));
   //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
 }
 #endif
