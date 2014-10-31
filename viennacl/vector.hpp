@@ -1471,14 +1471,27 @@ void copy(CPU_ITERATOR const & cpu_begin,
 
 // for things like copy(std_vec.begin(), std_vec.end(), vcl_vec.begin() + 1);
 
-/** @brief Transfer from a cpu vector to a gpu vector. Convenience wrapper for viennacl::linalg::copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+/** @brief Transfer from a host vector object to a ViennaCL vector proxy. Requires the vector proxy to have the necessary size. Convenience wrapper for viennacl::linalg::copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
 *
 * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
 * @param gpu_vec    The gpu vector.
 */
-template<typename CPUVECTOR, typename T>
-void copy(const CPUVECTOR & cpu_vec, vector_base<T> & gpu_vec)
+template<typename HostVectorT, typename T>
+void copy(HostVectorT const & cpu_vec, vector_base<T> & gpu_vec)
 {
+  viennacl::copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+}
+
+/** @brief Transfer from a host vector object to a ViennaCL vector. Resizes the ViennaCL vector if it has zero size. Convenience wrapper for viennacl::linalg::copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
+*
+* @param cpu_vec    A host vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
+* @param gpu_vec    The gpu (ViennaCL) vector.
+*/
+template<typename HostVectorT, typename T>
+void copy(HostVectorT const & cpu_vec, vector<T> & gpu_vec)
+{
+  if (gpu_vec.size() == 0)
+    gpu_vec.resize(static_cast<vcl_size_t>(cpu_vec.end() - cpu_vec.begin()));
   viennacl::copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
 }
 
