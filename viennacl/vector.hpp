@@ -1487,8 +1487,8 @@ void copy(HostVectorT const & cpu_vec, vector_base<T> & gpu_vec)
 * @param cpu_vec    A host vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
 * @param gpu_vec    The gpu (ViennaCL) vector.
 */
-template<typename HostVectorT, typename T>
-void copy(HostVectorT const & cpu_vec, vector<T> & gpu_vec)
+template<typename HostVectorT, typename T, unsigned int AlignmentV>
+void copy(HostVectorT const & cpu_vec, vector<T, AlignmentV> & gpu_vec)
 {
   if (gpu_vec.size() == 0)
     gpu_vec.resize(static_cast<vcl_size_t>(cpu_vec.end() - cpu_vec.begin()));

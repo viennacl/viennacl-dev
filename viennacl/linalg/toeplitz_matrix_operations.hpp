@@ -61,11 +61,11 @@ namespace viennacl
 
 
 
-      copy(vec, tmp);
+      viennacl::copy(vec.begin(), vec.end(), tmp.begin());
       viennacl::linalg::real_to_complex(tmp, tmp2, vec.size() * 2);
       viennacl::linalg::convolve(tep, tmp2, tmp);
       viennacl::linalg::complex_to_real(tmp, tmp2, vec.size() * 2);
-      copy(tmp2.begin(), tmp2.begin() + static_cast<vcl_ptrdiff_t>(vec.size()), result.begin());
+      viennacl::copy(tmp2.begin(), tmp2.begin() + static_cast<vcl_ptrdiff_t>(vec.size()), result.begin());
     }
 
   } //namespace linalg
