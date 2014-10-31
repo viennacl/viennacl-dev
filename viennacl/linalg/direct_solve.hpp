@@ -39,7 +39,7 @@
   #include "viennacl/linalg/cuda/direct_solve.hpp"
 #endif
 
-#define BLOCKSIZE 64
+#define VIENNACL_DIRECT_SOLVE_BLOCKSIZE 64
 
 namespace viennacl
 {
@@ -265,7 +265,7 @@ void inplace_solve_vec_kernel(matrix_expression<const matrix_base<NumericT>, con
 template<typename MatrixT1, typename MatrixT2, typename SolverTagT>
 void inplace_solve_lower_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
 {
-  vcl_size_t blockSize = BLOCKSIZE;
+  vcl_size_t blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
   if (A.size1() <= blockSize)
     inplace_solve_kernel(A, B, SolverTagT());
   else
@@ -310,7 +310,7 @@ void inplace_solve_impl(MatrixT1 const & A, MatrixT2 & B, viennacl::linalg::unit
 template<typename MatrixT1, typename MatrixT2, typename SolverTagT>
 void inplace_solve_upper_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
 {
-  vcl_size_t blockSize = BLOCKSIZE;
+  vcl_size_t blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
   if (A.size1() <= blockSize)
     inplace_solve_kernel(A, B, SolverTagT());
   else
@@ -490,7 +490,7 @@ matrix_base<NumericT> solve(const matrix_expression< const matrix_base<NumericT>
 template<typename MatrixT1, typename VectorT, typename SolverTagT>
 void inplace_solve_lower_vec_impl(MatrixT1 const & A, VectorT & B, SolverTagT)
 {
-  vcl_size_t blockSize = BLOCKSIZE;
+  vcl_size_t blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
   if (A.size1() < blockSize)
     inplace_solve_vec_kernel(A, B, SolverTagT());
   else
@@ -534,7 +534,7 @@ void inplace_solve_vec_impl(MatrixT1 const & A, VectorT & B, viennacl::linalg::u
 template<typename MatrixT1, typename VectorT, typename SolverTagT>
 void inplace_solve_upper_vec_impl(MatrixT1 const & A, VectorT & B, SolverTagT)
 {
-  unsigned int blockSize = BLOCKSIZE;
+  unsigned int blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
   if (A.size1() < blockSize)
     inplace_solve_vec_kernel(A, B, SolverTagT());
   else

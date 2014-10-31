@@ -135,12 +135,12 @@ template<> struct is_any_dense_matrix< TYPE > { enum { value = 1 }; };
   VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float>)\
   VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double>)
 
-#define COMMA ,
+#define VIENNACL_COMMA ,
 #define VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT(TYPE) \
-  VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float COMMA viennacl::row_major>)\
-  VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double COMMA viennacl::row_major>)\
-  VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float COMMA viennacl::column_major>)\
-  VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double COMMA viennacl::column_major>)
+  VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float VIENNACL_COMMA viennacl::row_major>)\
+  VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double VIENNACL_COMMA viennacl::row_major>)\
+  VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<float VIENNACL_COMMA viennacl::column_major>)\
+  VIENNACL_MAKE_ANY_MATRIX_TRUE(TYPE<double VIENNACL_COMMA viennacl::column_major>)
 
   VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT(viennacl::matrix)
   //    VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT(viennacl::matrix_range)
@@ -152,6 +152,7 @@ template<> struct is_any_dense_matrix< TYPE > { enum { value = 1 }; };
 #undef VIENNACL_MAKE_FOR_ALL_NumericT_LAYOUT
 #undef VIENNACL_MAKE_FOR_ALL_NumericT
 #undef VIENNACL_MAKE_ANY_MATRIX_TRUE
+#undef VIENNACL_COMMA
 /** \endcond */
 
 //

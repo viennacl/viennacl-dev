@@ -460,7 +460,7 @@ void generate_trans_kernel(StringT & source, std::string const & numeric_string,
     source.append("      unsigned int pos = (A_start1 + A_stride1 * row) * A_internal_size2 + (A_start2 + A_stride2 * col);  \n");
     source.append("      unsigned int new_pos = (B_start2 + B_stride2 * col) * B_internal_size2 + (B_start1 + B_stride1 * row);  \n");
     source.append("      B[new_pos] = A[pos];  \n");
-  } 
+  }
   else
   {
     source.append("      unsigned int pos = (A_start1 + A_stride1 * row) + A_internal_size1 * (A_start2 + A_stride2 * col);  \n");
@@ -642,41 +642,41 @@ public:
 
 
       // unary operations
-#define ADD_UNARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::unary_element_op(&A, &B, OPTYPE))
+#define VIENNACL_ADD_UNARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::unary_element_op(&A, &B, OPTYPE))
       if (numeric_string == "float" || numeric_string == "double")
       {
-        ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
-        ADD_UNARY(OPERATION_UNARY_ASIN_TYPE);
-        ADD_UNARY(OPERATION_UNARY_ATAN_TYPE);
-        ADD_UNARY(OPERATION_UNARY_CEIL_TYPE);
-        ADD_UNARY(OPERATION_UNARY_COS_TYPE);
-        ADD_UNARY(OPERATION_UNARY_COSH_TYPE);
-        ADD_UNARY(OPERATION_UNARY_EXP_TYPE);
-        ADD_UNARY(OPERATION_UNARY_FABS_TYPE);
-        ADD_UNARY(OPERATION_UNARY_FLOOR_TYPE);
-        ADD_UNARY(OPERATION_UNARY_LOG_TYPE);
-        ADD_UNARY(OPERATION_UNARY_LOG10_TYPE);
-        ADD_UNARY(OPERATION_UNARY_SIN_TYPE);
-        ADD_UNARY(OPERATION_UNARY_SINH_TYPE);
-        ADD_UNARY(OPERATION_UNARY_SQRT_TYPE);
-        ADD_UNARY(OPERATION_UNARY_TAN_TYPE);
-        ADD_UNARY(OPERATION_UNARY_TANH_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_ASIN_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_ATAN_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_CEIL_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_COS_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_COSH_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_EXP_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_FABS_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_FLOOR_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_LOG_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_LOG10_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_SIN_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_SINH_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_SQRT_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_TAN_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_TANH_TYPE);
       }
       else
       {
-        ADD_UNARY(OPERATION_UNARY_ABS_TYPE);
+        VIENNACL_ADD_UNARY(OPERATION_UNARY_ABS_TYPE);
       }
-#undef ADD_UNARY
+#undef VIENNACL_ADD_UNARY
 
       // binary operations
-#define ADD_BINARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::binary_element_op(&A, &B, &C, OPTYPE))
-      ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
-      ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
+#define VIENNACL_ADD_BINARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::matrix_axpy_template(matrix_axpy_params),scheduler::preset::binary_element_op(&A, &B, &C, OPTYPE))
+      VIENNACL_ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
+      VIENNACL_ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
       if (numeric_string == "float" || numeric_string == "double")
       {
-        ADD_BINARY(OPERATION_BINARY_ELEMENT_POW_TYPE);
+        VIENNACL_ADD_BINARY(OPERATION_BINARY_ELEMENT_POW_TYPE);
       }
-#undef ADD_BINARY
+#undef VIENNACL_ADD_BINARY
 
     }
     return handlers_map.at(key);

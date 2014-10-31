@@ -184,7 +184,7 @@ private:
     beta_leaf = RHS_NODE_TYPE;
   }
 
-  void handle_bounds(bool fallback, utils::kernel_generation_stream & stream, std::string const & inbounds, std::string const & do_if, std::string do_else) const
+  void VIENNACL_HANDLE_BOUNDS(bool fallback, utils::kernel_generation_stream & stream, std::string const & inbounds, std::string const & do_if, std::string do_else) const
   {
     if (fallback)
     {
@@ -210,10 +210,9 @@ private:
     parameters_type pfallback(1, p_.local_size_0, p_.kL, p_.local_size_1, p_.mS, 1, p_.nS, p_.A_fetching_policy, p_.B_fetching_policy, p_.local_fetch_0, p_.local_fetch_1);
     parameters_type const & p = fallback?pfallback:p_;
 
-#define MUL_STRIDE1 string(fallback?"*#stride1":"")
-#define HANDLE_BOUNDS(in_bounds, to_load) (!fallback?string(to_load):string( string(in_bounds) + "?" + string(to_load) + ":0"))
-#define VLOAD(offset, ptr) vload(p.simd_width, offset, ptr)
-#define VSTORE(value, offset, ptr) vstore(p.simd_width, value, offset, ptr)
+#define VIENNACL_MUL_STRIDE1 string(fallback?"*#stride1":"")
+#define VIENNACL_HANDLE_BOUNDS(in_bounds, to_load) (!fallback?string(to_load):string( string(in_bounds) + "?" + string(to_load) + ":0"))
+#define VIENNACL_VSTORE(value, offset, ptr) vstore(p.simd_width, value, offset, ptr)
 
     string widthstr = tools::to_string(p.simd_width);
 
@@ -347,21 +346,21 @@ private:
     {
     case FETCH_FROM_LOCAL:
       if (A_trans_=='N')
-        stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + " + idxT)" + MUL_STRIDE1 + " + idyT*#ld;") << std::endl;
+        stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + " + idxT)" + VIENNACL_MUL_STRIDE1 + " + idyT*#ld;") << std::endl;
       else
-        stream << A->process("#pointer += idxT" + MUL_STRIDE1 + " + gidx*" + to_string(p.mL/p.simd_width) + "*#ld + idyT*#ld;") << std::endl;
+        stream << A->process("#pointer += idxT" + VIENNACL_MUL_STRIDE1 + " + gidx*" + to_string(p.mL/p.simd_width) + "*#ld + idyT*#ld;") << std::endl;
       break;
 
     case FETCH_FROM_GLOBAL_CONTIGUOUS:
       if (A_trans_=='N')
-        stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + "+ idx*" + to_string(p.mS/p.simd_width) + ")" + MUL_STRIDE1 + ";") << std::endl;
+        stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + "+ idx*" + to_string(p.mS/p.simd_width) + ")" + VIENNACL_MUL_STRIDE1 + ";") << std::endl;
       else
         stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + "+ idx*" + to_string(p.mS/p.simd_width) + ")*#ld;") << std::endl;
       break;
 
     case FETCH_FROM_GLOBAL_STRIDED:
       if (A_trans_=='N')
-        stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + "+ idx" + ")" + MUL_STRIDE1 + ";") << std::endl;
+        stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + "+ idx" + ")" + VIENNACL_MUL_STRIDE1 + ";") << std::endl;
       else
         stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + "+ idx)*#ld;") << std::endl;
       break;
@@ -373,21 +372,21 @@ private:
     {
     case FETCH_FROM_LOCAL:
       if (B_trans_=='T')
-        stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + " + idxT" + ")" + MUL_STRIDE1 + " + idyT*#ld;") << std::endl;
+        stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + " + idxT" + ")" + VIENNACL_MUL_STRIDE1 + " + idyT*#ld;") << std::endl;
       else
-        stream << B->process("#pointer += idxT" + MUL_STRIDE1 + " + gidy*" + to_string(p.nL/p.simd_width) + "*#ld + idyT*#ld;") << std::endl;
+        stream << B->process("#pointer += idxT" + VIENNACL_MUL_STRIDE1 + " + gidy*" + to_string(p.nL/p.simd_width) + "*#ld + idyT*#ld;") << std::endl;
       break;
 
     case FETCH_FROM_GLOBAL_CONTIGUOUS:
       if (B_trans_=='T')
-        stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + "+ idy*" + to_string(p.nS/p.simd_width) + ")" + MUL_STRIDE1 + ";") << std::endl;
+        stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + "+ idy*" + to_string(p.nS/p.simd_width) + ")" + VIENNACL_MUL_STRIDE1 + ";") << std::endl;
       else
         stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + "+ idy*" + to_string(p.nS/p.simd_width) + ")*#ld;") << std::endl;
       break;
 
     case FETCH_FROM_GLOBAL_STRIDED:
       if (B_trans_=='T')
-        stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + "+ idy" + ")" + MUL_STRIDE1 + ";") << std::endl;
+        stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + "+ idy" + ")" + VIENNACL_MUL_STRIDE1 + ";") << std::endl;
       else
         stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + "+ idy)*#ld;") << std::endl;
       break;
@@ -426,16 +425,16 @@ private:
         for (unsigned int m = 0; m < p.mL; m += p.local_fetch_0*p.simd_width)
         {
           string in_bounds = "in_bounds_m_local[" + to_string(m/(p.local_fetch_0*p.simd_width)) + "]";
-          string to_load = "#pointer[" + to_string(k) + "*#ld + " + to_string(m/p.simd_width) + MUL_STRIDE1 + "]";
-          stream << A->process(VSTORE(HANDLE_BOUNDS(in_bounds, to_load), "0", "plA + " + to_string(k*(p.mL+1)+m))) << ";" << std::endl;
+          string to_load = "#pointer[" + to_string(k) + "*#ld + " + to_string(m/p.simd_width) + VIENNACL_MUL_STRIDE1 + "]";
+          stream << A->process(VIENNACL_VSTORE(VIENNACL_HANDLE_BOUNDS(in_bounds, to_load), "0", "plA + " + to_string(k*(p.mL+1)+m))) << ";" << std::endl;
         }
     else if (p.A_fetching_policy==FETCH_FROM_LOCAL && A_trans_=='T')
       for (unsigned int k = 0; k < p.mL; k += p.local_fetch_1)
         for (unsigned int m = 0; m < p.kL; m += p.local_fetch_0*p.simd_width)
         {
           string in_bounds = "in_bounds_m_local[" + to_string(k/p.local_fetch_1) + "]";
-          string to_load = "#pointer[" + to_string(k) + "*#ld + " + to_string(m/p.simd_width) + MUL_STRIDE1 + "]";
-          stream << A->process(VSTORE(HANDLE_BOUNDS(in_bounds, to_load), "0", "plA + " + to_string(m*(p.mL+1)+k))) << ";" << std::endl;
+          string to_load = "#pointer[" + to_string(k) + "*#ld + " + to_string(m/p.simd_width) + VIENNACL_MUL_STRIDE1 + "]";
+          stream << A->process(VIENNACL_VSTORE(VIENNACL_HANDLE_BOUNDS(in_bounds, to_load), "0", "plA + " + to_string(m*(p.mL+1)+k))) << ";" << std::endl;
         }
 
     if (p.B_fetching_policy==FETCH_FROM_LOCAL && B_trans_=='T')
@@ -443,16 +442,16 @@ private:
         for (unsigned int n = 0; n < p.nL; n += p.local_fetch_0*p.simd_width)
         {
           string in_bounds = "in_bounds_n_local[" + to_string(n/(p.local_fetch_0*p.simd_width)) + "]";
-          string to_load = "#pointer[" + to_string(k) + "*#ld + " + to_string(n/p.simd_width) + MUL_STRIDE1 + "]";
-          stream << B->process(VSTORE(HANDLE_BOUNDS(in_bounds, to_load), "0", "plB + " + to_string(k*(p.nL+1)+n))) << ";" << std::endl;
+          string to_load = "#pointer[" + to_string(k) + "*#ld + " + to_string(n/p.simd_width) + VIENNACL_MUL_STRIDE1 + "]";
+          stream << B->process(VIENNACL_VSTORE(VIENNACL_HANDLE_BOUNDS(in_bounds, to_load), "0", "plB + " + to_string(k*(p.nL+1)+n))) << ";" << std::endl;
         }
     else if (p.B_fetching_policy==FETCH_FROM_LOCAL && B_trans_=='N')
       for (unsigned int k = 0; k < p.nL; k += p.local_fetch_1)
         for (unsigned int n = 0; n < p.kL; n += p.local_fetch_0*p.simd_width)
         {
           string in_bounds = "in_bounds_n_local[" + to_string(k/p.local_fetch_1) + "]";
-          string to_load = "#pointer[" + to_string(k) + "*#ld + " + to_string(n/p.simd_width) + MUL_STRIDE1 + "]";
-          stream << B->process(VSTORE(HANDLE_BOUNDS(in_bounds, to_load), "0", "plB + " + to_string(n*(p.nL+1)+k))) << ";" << std::endl;
+          string to_load = "#pointer[" + to_string(k) + "*#ld + " + to_string(n/p.simd_width) + VIENNACL_MUL_STRIDE1 + "]";
+          stream << B->process(VIENNACL_VSTORE(VIENNACL_HANDLE_BOUNDS(in_bounds, to_load), "0", "plB + " + to_string(n*(p.nL+1)+k))) << ";" << std::endl;
         }
 
     if (p.A_fetching_policy==FETCH_FROM_LOCAL || p.B_fetching_policy == FETCH_FROM_LOCAL)
@@ -485,18 +484,18 @@ private:
     case FETCH_FROM_GLOBAL_CONTIGUOUS:
     {
       if (A_trans_=='N')
-        stream << "rA[kk][mm] = " << A->process(HANDLE_BOUNDS("in_bounds_m[mm]", "#pointer[kk*#ld + mm" + MUL_STRIDE1 + "]")) << ";" << std::endl;
+        stream << "rA[kk][mm] = " << A->process(VIENNACL_HANDLE_BOUNDS("in_bounds_m[mm]", "#pointer[kk*#ld + mm" + VIENNACL_MUL_STRIDE1 + "]")) << ";" << std::endl;
       else
-        stream << "rA[kk][mm] = " << A->process(HANDLE_BOUNDS("in_bounds_m[mm]", "#pointer[mm*#ld + kk" + MUL_STRIDE1 + "]")) << ";" << std::endl;
+        stream << "rA[kk][mm] = " << A->process(VIENNACL_HANDLE_BOUNDS("in_bounds_m[mm]", "#pointer[mm*#ld + kk" + VIENNACL_MUL_STRIDE1 + "]")) << ";" << std::endl;
       break;
     }
 
     case FETCH_FROM_GLOBAL_STRIDED:
     {
       if (A_trans_=='N')
-        stream << "rA[kk][mm] = " << A->process(HANDLE_BOUNDS("in_bounds_m[mm]", "#pointer[kk*#ld + mm*" + to_string(p.local_size_0) + MUL_STRIDE1 + "]")) << ";" << std::endl;
-      else        
-        stream << "rA[kk][mm] = " << A->process(HANDLE_BOUNDS("in_bounds_m[mm]", "#pointer[mm*#ld*" + to_string(p.local_size_0) + " + kk" + MUL_STRIDE1 + "]")) << ";" << std::endl;
+        stream << "rA[kk][mm] = " << A->process(VIENNACL_HANDLE_BOUNDS("in_bounds_m[mm]", "#pointer[kk*#ld + mm*" + to_string(p.local_size_0) + VIENNACL_MUL_STRIDE1 + "]")) << ";" << std::endl;
+      else
+        stream << "rA[kk][mm] = " << A->process(VIENNACL_HANDLE_BOUNDS("in_bounds_m[mm]", "#pointer[mm*#ld*" + to_string(p.local_size_0) + " + kk" + VIENNACL_MUL_STRIDE1 + "]")) << ";" << std::endl;
       break;
     }
 
@@ -523,18 +522,18 @@ private:
     case FETCH_FROM_GLOBAL_CONTIGUOUS:
     {
       if (B_trans_=='T')
-        stream << "rB[kk][nn] = " << B->process(HANDLE_BOUNDS("in_bounds_n[nn]", "#pointer[kk*#ld + nn" + MUL_STRIDE1 + "]")) << ";" << std::endl;
+        stream << "rB[kk][nn] = " << B->process(VIENNACL_HANDLE_BOUNDS("in_bounds_n[nn]", "#pointer[kk*#ld + nn" + VIENNACL_MUL_STRIDE1 + "]")) << ";" << std::endl;
       else
-        stream << "rB[kk][nn] = " << B->process(HANDLE_BOUNDS("in_bounds_n[nn]", "#pointer[nn*#ld + kk" + MUL_STRIDE1 + "]")) << ";" << std::endl;
+        stream << "rB[kk][nn] = " << B->process(VIENNACL_HANDLE_BOUNDS("in_bounds_n[nn]", "#pointer[nn*#ld + kk" + VIENNACL_MUL_STRIDE1 + "]")) << ";" << std::endl;
       break;
     }
 
     case FETCH_FROM_GLOBAL_STRIDED:
     {
       if (B_trans_=='T')
-        stream << "rB[kk][nn] = " << B->process(HANDLE_BOUNDS("in_bounds_n[nn]", "#pointer[kk*#ld + nn*" + to_string(p.local_size_1) + MUL_STRIDE1 + "]")) << ";" << std::endl;
+        stream << "rB[kk][nn] = " << B->process(VIENNACL_HANDLE_BOUNDS("in_bounds_n[nn]", "#pointer[kk*#ld + nn*" + to_string(p.local_size_1) + VIENNACL_MUL_STRIDE1 + "]")) << ";" << std::endl;
       else
-        stream << "rB[kk][nn] = " << B->process(HANDLE_BOUNDS("in_bounds_n[nn]", "#pointer[nn*#ld*" + to_string(p.local_size_1) + " + kk" + MUL_STRIDE1 + "]")) << ";" << std::endl;
+        stream << "rB[kk][nn] = " << B->process(VIENNACL_HANDLE_BOUNDS("in_bounds_n[nn]", "#pointer[nn*#ld*" + to_string(p.local_size_1) + " + kk" + VIENNACL_MUL_STRIDE1 + "]")) << ";" << std::endl;
       break;
     }
 
@@ -555,7 +554,7 @@ private:
       if (A_trans_=='N')
         stream << A->process("#pointer += " + to_string(p.kS) + "*#ld;") << std::endl;
       else
-        stream << A->process("#pointer += " + to_string(p.kS) + "" + MUL_STRIDE1 + ";") << std::endl;
+        stream << A->process("#pointer += " + to_string(p.kS) + "" + VIENNACL_MUL_STRIDE1 + ";") << std::endl;
       break;
     }
 
@@ -570,7 +569,7 @@ private:
       if (B_trans_=='T')
         stream << B->process("#pointer += " + to_string(p.kS) + "*#ld;") << std::endl;
       else
-        stream << B->process("#pointer += " + to_string(p.kS) + "" + MUL_STRIDE1 + ";") << std::endl;
+        stream << B->process("#pointer += " + to_string(p.kS) + "" + VIENNACL_MUL_STRIDE1 + ";") << std::endl;
       break;
     }
 
@@ -610,7 +609,7 @@ private:
       if (A_trans_=='N')
         stream << A->process("#pointer += " + to_string(p.kL) + "*#ld;") << std::endl;
       else
-        stream << A->process("#pointer += " + to_string(p.kL) + "" + MUL_STRIDE1 + ";") << std::endl;
+        stream << A->process("#pointer += " + to_string(p.kL) + "" + VIENNACL_MUL_STRIDE1 + ";") << std::endl;
     }
 
     if (p.B_fetching_policy==FETCH_FROM_LOCAL)
@@ -618,7 +617,7 @@ private:
       if (B_trans_=='T')
         stream << B->process("#pointer += " + to_string(p.kL) + "*#ld;") << std::endl;
       else
-        stream << B->process("#pointer += " + to_string(p.kL) + "" + MUL_STRIDE1 + ";") << std::endl;
+        stream << B->process("#pointer += " + to_string(p.kL) + "" + VIENNACL_MUL_STRIDE1 + ";") << std::endl;
     }
 
     stream.dec_tab();
@@ -695,10 +694,9 @@ private:
 
     return stream.str();
 
-#undef MUL_STRIDE1
-#undef HANDLE_BOUNDS
-#undef VLOAD
-#undef VST0RE
+#undef VIENNACL_MUL_STRIDE1
+#undef VIENNACL_HANDLE_BOUNDS
+#undef VIENNACL_VSTORE
   }
 
   std::vector<std::string> generate_impl(std::string const & kernel_prefix, statements_container const & statements, std::vector<mapping_type> const & mappings) const
