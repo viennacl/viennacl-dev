@@ -181,10 +181,33 @@ public:
   const_entry_proxy<NumericT> operator()(size_type row_index, size_type col_index) const;
   self_type & operator += (const self_type & other);
   self_type & operator -= (const self_type & other);
-  /** @brief Scales a matrix by a CPU scalar value */
-  self_type & operator *= (NumericT val);
-  /** @brief Scales this matrix by a CPU scalar value */
-  self_type & operator /= (NumericT val);
+
+  /** @brief Scales the matrix by a char (8-bit integer) */
+  self_type & operator *= (char val);
+  /** @brief Scales the matrix by a short integer */
+  self_type & operator *= (short val);
+  /** @brief Scales the matrix by an integer */
+  self_type & operator *= (int val);
+  /** @brief Scales the matrix by a long integer */
+  self_type & operator *= (long val);
+  /** @brief Scales the matrix by a single precision floating point value */
+  self_type & operator *= (float val);
+  /** @brief Scales the matrix by a double precision floating point value */
+  self_type & operator *= (double val);
+
+  /** @brief Scales the matrix by a char (8-bit integer) */
+  self_type & operator /= (char val);
+  /** @brief Scales the matrix by a short integer */
+  self_type & operator /= (short val);
+  /** @brief Scales the matrix by an integer */
+  self_type & operator /= (int val);
+  /** @brief Scales the matrix by a long integer */
+  self_type & operator /= (long val);
+  /** @brief Scales the matrix by a single precision floating point value */
+  self_type & operator /= (float val);
+  /** @brief Scales the matrix by a double precision floating point value */
+  self_type & operator /= (double val);
+
   /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
   matrix_expression<const self_type, const NumericT, op_mult> operator-() const;
   /** @brief Returns the number of rows */

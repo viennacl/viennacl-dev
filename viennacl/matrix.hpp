@@ -475,25 +475,113 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
   return *this;
 }
 
-/** @brief Scales a matrix by a CPU scalar value
-*/
+/** @brief Scales a matrix by a char (8-bit integer) value */
 template<class NumericT, typename SizeT, typename DistanceT>
-matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (NumericT val)
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (char val)
 {
-  //viennacl::linalg::inplace_mult(*this, val);
   viennacl::linalg::am(*this,
-                       *this, val, 1, false, false);
+                       *this, NumericT(val), 1, false, false);
   return *this;
 }
 
-/** @brief Scales this matrix by a CPU scalar value
-*/
+/** @brief Scales a matrix by a char (8-bit integer) value */
 template<class NumericT, typename SizeT, typename DistanceT>
-matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (NumericT val)
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (short val)
 {
-  //viennacl::linalg::inplace_mult(*this, static_cast<NumericT>(1) / val);
   viennacl::linalg::am(*this,
-                       *this, val, 1, true, false);
+                       *this, NumericT(val), 1, false, false);
+  return *this;
+}
+
+/** @brief Scales a matrix by a char (8-bit integer) value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (int val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, false, false);
+  return *this;
+}
+
+/** @brief Scales a matrix by a char (8-bit integer) value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (long val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, false, false);
+  return *this;
+}
+
+/** @brief Scales a matrix by a char (8-bit integer) value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (float val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, false, false);
+  return *this;
+}
+
+/** @brief Scales a matrix by a char (8-bit integer) value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (double val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, false, false);
+  return *this;
+}
+
+
+
+/** @brief Scales this matrix by a char (8-bit integer) value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (char val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, true, false);
+  return *this;
+}
+
+/** @brief Scales this matrix by a short integer value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (short val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, true, false);
+  return *this;
+}
+
+/** @brief Scales this matrix by an integer value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (int val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, true, false);
+  return *this;
+}
+
+/** @brief Scales this matrix by a long integer value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (long val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, true, false);
+  return *this;
+}
+
+/** @brief Scales this matrix by a single precision floating point value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (float val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, true, false);
+  return *this;
+}
+
+/** @brief Scales this matrix by a double precision floating point value */
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (double val)
+{
+  viennacl::linalg::am(*this,
+                       *this, NumericT(val), 1, true, false);
   return *this;
 }
 
@@ -1174,6 +1262,55 @@ operator * (S1 const & value, matrix_base<NumericT> const & m1)
   return matrix_expression< const matrix_base<NumericT>, const S1, op_mult>(m1, value);
 }
 
+/** @brief Operator overload for the expression alpha * m1, where alpha is a char (8-bit integer) */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (char value, matrix_base<NumericT> const & m1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
+}
+
+/** @brief Operator overload for the expression alpha * m1, where alpha is a short integer */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (short value, matrix_base<NumericT> const & m1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
+}
+
+/** @brief Operator overload for the expression alpha * m1, where alpha is an integer */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (int value, matrix_base<NumericT> const & m1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
+}
+
+/** @brief Operator overload for the expression alpha * m1, where alpha is a long integer */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (long value, matrix_base<NumericT> const & m1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
+}
+
+/** @brief Operator overload for the expression alpha * m1, where alpha is a single precision floating point value */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (float value, matrix_base<NumericT> const & m1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
+}
+
+/** @brief Operator overload for the expression alpha * m1, where alpha is a double precision floating point value */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (double value, matrix_base<NumericT> const & m1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
+}
+
+
 
 /** @brief Operator overload for the multiplication of a matrix expression with a scalar from the right, e.g. (beta * m1) * alpha. Here, beta * m1 is wrapped into a matrix_expression and then multiplied with alpha from the right.
 *
@@ -1214,22 +1351,127 @@ operator * (matrix_base<NumericT> const & m1, S1 const & s1)
   return matrix_expression< const matrix_base<NumericT>, const S1, op_mult>(m1, s1);
 }
 
+/** @brief Scales the matrix by a char (8-bit integer) 'alpha' and returns an expression template. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, char s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
+}
+
+/** @brief Scales the matrix by a short integer 'alpha' and returns an expression template. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, short s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
+}
+
+/** @brief Scales the matrix by an integer 'alpha' and returns an expression template. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, int s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
+}
+
+/** @brief Scales the matrix by a long integer 'alpha' and returns an expression template. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, long s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
+}
+
+/** @brief Scales the matrix by a single precision floating point number 'alpha' and returns an expression template. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, float s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
+}
+
+/** @brief Scales the matrix by a double precision floating point number 'alpha' and returns an expression template. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, double s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
+}
+
 
 // operator *=
 
-/** @brief Scales a matrix by a GPU scalar value
-*/
+/** @brief Scales a matrix by a GPU scalar value */
 template<typename NumericT, typename S1>
-typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
-matrix_base<NumericT> &
->::type
+typename viennacl::enable_if< viennacl::is_scalar<S1>::value, matrix_base<NumericT> & >::type
 operator *= (matrix_base<NumericT> & m1, S1 const & gpu_val)
 {
-  //viennacl::linalg::inplace_mult(*this, gpu_val);
   viennacl::linalg::am(m1,
                        m1, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
   return m1;
 }
+
+/** @brief Scales a matrix by a char (8-bit) value. */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, char gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, NumericT(gpu_val), 1, false, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a short integer value. */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, short gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, NumericT(gpu_val), 1, false, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by an integer value. */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, int gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, NumericT(gpu_val), 1, false, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a long integer value. */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, long gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, NumericT(gpu_val), 1, false, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a single precision floating point value. */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, float gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, NumericT(gpu_val), 1, false, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a double precision floating point value. */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, double gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, NumericT(gpu_val), 1, false, false);
+  return m1;
+}
+
 
 
 // operator /
@@ -1250,8 +1492,7 @@ operator / (matrix_expression<const LHS, const RHS, OP> const & proxy,
 }
 
 
-/** @brief Returns an expression template for scaling the matrix by a GPU scalar 'alpha'
-*/
+/** @brief Returns an expression template for scaling the matrix by a GPU scalar 'alpha' */
 template<typename NumericT, typename S1>
 typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
 matrix_expression< const matrix_base<NumericT>, const S1, op_div> >::type
@@ -1260,20 +1501,125 @@ operator / (matrix_base<NumericT> const & m1, S1 const & s1)
   return matrix_expression< const matrix_base<NumericT>, const S1, op_div>(m1, s1);
 }
 
+/** @brief Returns an expression template for scaling the matrix by a char (8-bit integer) 'alpha'. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, char s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
+}
+
+/** @brief Returns an expression template for scaling the matrix by a short integer 'alpha'. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, short s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
+}
+
+/** @brief Returns an expression template for scaling the matrix by an integer 'alpha'. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, int s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
+}
+
+/** @brief Returns an expression template for scaling the matrix by a long integer 'alpha'. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, long s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
+}
+
+/** @brief Returns an expression template for scaling the matrix by a single precision floating point number 'alpha'. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, float s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
+}
+
+/** @brief Returns an expression template for scaling the matrix by a double precision floating point number 'alpha'. */
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, double s1)
+{
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
+}
+
+
 
 // operator /=
 
-/** @brief Scales a matrix by a GPU scalar value
-*/
+/** @brief Scales a matrix by a GPU scalar value */
 template<typename NumericT, typename S1>
-typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
-matrix_base<NumericT> &
->::type
+typename viennacl::enable_if< viennacl::is_scalar<S1>::value, matrix_base<NumericT> & >::type
 operator /= (matrix_base<NumericT> & m1, S1 const & gpu_val)
 {
-  //viennacl::linalg::inplace_divide(*this, gpu_val);
   viennacl::linalg::am(m1,
-                       m1, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+                       m1, gpu_val, 1, true, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a char (8-bit integer) value */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, char gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, NumericT(gpu_val), 1, true, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a short integer value */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, short gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, gpu_val, 1, true, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by an integer value */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, int gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, gpu_val, 1, true, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a long integer value */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, long gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, gpu_val, 1, true, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a single precision floating point value */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, float gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, gpu_val, 1, true, false);
+  return m1;
+}
+
+/** @brief Scales a matrix by a double precision floating point value */
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, double gpu_val)
+{
+  viennacl::linalg::am(m1,
+                       m1, gpu_val, 1, true, false);
   return m1;
 }
 
