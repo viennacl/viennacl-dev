@@ -37,7 +37,9 @@
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
+#include "viennacl/fft.hpp"
 #include "viennacl/hyb_matrix.hpp"
+#include "viennacl/sliced_ell_matrix.hpp"
 #ifdef VIENNACL_WITH_OPENCL
   #include "viennacl/circulant_matrix.hpp"
   #include "viennacl/hankel_matrix.hpp"
@@ -45,14 +47,26 @@
   #include "viennacl/vandermonde_matrix.hpp"
 #endif
 
-#include "viennacl/linalg/ilu.hpp"
-#include "viennacl/linalg/row_scaling.hpp"
-#include "viennacl/linalg/jacobi_precond.hpp"
-#include "viennacl/linalg/cg.hpp"
 #include "viennacl/linalg/bicgstab.hpp"
-#include "viennacl/linalg/gmres.hpp"
+#include "viennacl/linalg/bisect.hpp"
+#include "viennacl/linalg/bisect_gpu.hpp"
+#include "viennacl/linalg/cg.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
+#include "viennacl/linalg/gmres.hpp"
+#include "viennacl/linalg/ichol.hpp"
+#include "viennacl/linalg/ilu.hpp"
+#include "viennacl/linalg/inner_prod.hpp"
+#include "viennacl/linalg/jacobi_precond.hpp"
+#include "viennacl/linalg/norm_1.hpp"
+#include "viennacl/linalg/norm_2.hpp"
+#include "viennacl/linalg/norm_inf.hpp"
+#include "viennacl/linalg/norm_frobenius.hpp"
+#include "viennacl/linalg/lanczos.hpp"
 #include "viennacl/linalg/qr.hpp"
+#include "viennacl/linalg/qr-method.hpp"
+#include "viennacl/linalg/reduce.hpp"
+#include "viennacl/linalg/row_scaling.hpp"
+#include "viennacl/linalg/tql2.hpp"
 
 #include "viennacl/misc/bandwidth_reduction.hpp"
 
@@ -60,7 +74,6 @@
   #include "viennacl/linalg/amg.hpp"
   #include "viennacl/linalg/spai.hpp"
   #include "viennacl/linalg/svd.hpp"
-  #include "viennacl/fft.hpp"
   #include "viennacl/device_specific/execute.hpp"
 #endif
 
