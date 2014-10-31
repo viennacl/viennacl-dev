@@ -837,7 +837,7 @@ void fast_copy(NumericT * cpu_matrix_begin,
     viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(NumericT) * static_cast<vcl_size_t>(cpu_matrix_end - cpu_matrix_begin), viennacl::traits::context(gpu_matrix), cpu_matrix_begin);
   else
   {
-    assert( (gpu_matrix.internal_size() > cpu_matrix_end - cpu_matrix_begin) && bool("fast_copy(): Matrix not large enough to fit data!"));
+    assert( (gpu_matrix.internal_size() >= static_cast<vcl_size_t>(cpu_matrix_end - cpu_matrix_begin)) && bool("fast_copy(): Matrix not large enough to fit data!"));
     viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(NumericT) * static_cast<vcl_size_t>(cpu_matrix_end - cpu_matrix_begin), cpu_matrix_begin);
   }
 }
