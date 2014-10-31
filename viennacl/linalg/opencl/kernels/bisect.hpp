@@ -43,7 +43,7 @@ namespace kernels
   void generate_bisect_kernel_config(StringType & source)
   {
     /* Global configuration parameter */
-    source.append("     #define  MAX_THREADS_BLOCK                256\n");
+    source.append("     #define  MAX_THREADS_BLOCK                128\n");
     source.append("     #define  MAX_SMALL_MATRIX                 512\n");
     source.append("     #define  MAX_THREADS_BLOCK_SMALL_MATRIX   512\n");
     source.append("     #define  MIN_ABS_INTERVAL                 5.0e-37\n");

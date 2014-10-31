@@ -77,7 +77,7 @@ bool bisect(std::vector<NumericT> const & diagonal, std::vector<NumericT> const 
   viennacl::linalg::detail::computeGerschgorin(input.std_a, input.std_b, mat_size, lg, ug);
 
   // decide wheter the algorithm for small or for large matrices will be started
-  if (mat_size <= MAX_SMALL_MATRIX)
+  if (mat_size <= VIENNACL_BISECT_MAX_SMALL_MATRIX)
   {
     // initialize memory for result
     viennacl::linalg::detail::ResultDataSmall<NumericT> result(mat_size);
@@ -138,7 +138,7 @@ bool bisect(viennacl::vector<NumericT> const & diagonal, viennacl::vector<Numeri
   viennacl::linalg::detail::computeGerschgorin(input.std_a, input.std_b, mat_size, lg, ug);
 
   // decide wheter the algorithm for small or for large matrices will be started
-  if (mat_size <= MAX_SMALL_MATRIX)
+  if (mat_size <= VIENNACL_BISECT_MAX_SMALL_MATRIX)
   {
     // initialize memory for result
     viennacl::linalg::detail::ResultDataSmall<NumericT> result(mat_size);
