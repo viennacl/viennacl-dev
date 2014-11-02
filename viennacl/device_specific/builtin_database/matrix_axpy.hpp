@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_AXPY_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_AXPY_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/southern_islands/tahiti.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/kepler/tesla_k20m.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gtx_580.hpp"
 
@@ -46,6 +48,8 @@ inline database_type<matrix_axpy_template::parameters_type> init_matrix_axpy()
   devices::gpu::nvidia::fermi::geforce_gtx_580::add_8B(result);
   devices::gpu::nvidia::kepler::tesla_k20m::add_4B(result);
   devices::gpu::nvidia::kepler::tesla_k20m::add_8B(result);
+  devices::gpu::amd::southern_islands::tahiti::add_4B(result);
+  devices::gpu::amd::southern_islands::tahiti::add_8B(result);
 
   return result;
 }
