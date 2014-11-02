@@ -1,6 +1,7 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_VECTOR_AXPY_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_VECTOR_AXPY_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/kepler/tesla_k20m.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gtx_580.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/volcanic_islands/hawaii.hpp"
@@ -44,6 +45,8 @@ inline database_type<vector_axpy_template::parameters_type> init_vector_axpy()
   devices::gpu::amd::volcanic_islands::hawaii::add_8B(result);
   devices::gpu::nvidia::fermi::geforce_gtx_580::add_4B(result);
   devices::gpu::nvidia::fermi::geforce_gtx_580::add_8B(result);
+  devices::gpu::nvidia::kepler::tesla_k20m::add_4B(result);
+  devices::gpu::nvidia::kepler::tesla_k20m::add_8B(result);
 
   return result;
 }
