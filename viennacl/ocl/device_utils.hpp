@@ -111,7 +111,7 @@ inline device_architecture_family get_architecture_family(cl_uint vendor_id, std
     //Tesla
     else if ((found = name.find("Tesla",0)) != std::string::npos)
     {
-      if ((found = name.find("CMK", found)) != std::string::npos)
+      if ((found = name.find_first_of("CMK", found)) != std::string::npos)
       {
         switch (name[found])
         {
