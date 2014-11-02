@@ -2,6 +2,7 @@
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_PRODUCT_HPP_
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/southern_islands/tahiti.hpp"
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/northern_islands/devastator.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/kepler/tesla_k20m.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gtx_580.hpp"
@@ -50,6 +51,7 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::nvidia::kepler::tesla_k20m::add_8B(result, char_to_type<'N'>(), char_to_type<'N'>());
   devices::gpu::amd::southern_islands::tahiti::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
   devices::gpu::amd::southern_islands::tahiti::add_8B(result, char_to_type<'N'>(), char_to_type<'N'>());
+  devices::gpu::amd::northern_islands::devastator::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
 
   return result;
 }
@@ -76,6 +78,7 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::nvidia::kepler::tesla_k20m::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
   devices::gpu::amd::southern_islands::tahiti::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
   devices::gpu::amd::southern_islands::tahiti::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
+  devices::gpu::amd::northern_islands::devastator::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
 
   return result;
 }
@@ -103,6 +106,7 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::nvidia::kepler::tesla_k20m::add_8B(result, char_to_type<'N'>(), char_to_type<'T'>());
   devices::gpu::amd::southern_islands::tahiti::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
   devices::gpu::amd::southern_islands::tahiti::add_8B(result, char_to_type<'N'>(), char_to_type<'T'>());
+  devices::gpu::amd::northern_islands::devastator::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
 
   return result;
 }
@@ -128,6 +132,7 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::nvidia::kepler::tesla_k20m::add_8B(result, char_to_type<'T'>(), char_to_type<'T'>());
   devices::gpu::amd::southern_islands::tahiti::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
   devices::gpu::amd::southern_islands::tahiti::add_8B(result, char_to_type<'T'>(), char_to_type<'T'>());
+  devices::gpu::amd::northern_islands::devastator::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
 
   return result;
 }
