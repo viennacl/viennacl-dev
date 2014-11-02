@@ -1,5 +1,5 @@
-#ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_DEVICES_GPU_NVIDIA_UNKNOWN_HPP_
-#define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_DEVICES_GPU_NVIDIA_UNKNOWN_HPP_
+#ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_DEVICES_GPU_NVIDIA_KEPLER_K20M_HPP_
+#define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_DEVICES_GPU_NVIDIA_KEPLER_K20M_HPP_
 
 #include "viennacl/device_specific/templates/matrix_product_template.hpp"
 
@@ -20,7 +20,7 @@ namespace builtin_database{
 namespace devices{
 namespace gpu{
 namespace nvidia{
-namespace unknown{
+namespace kepler{
 namespace tesla_k20m{
 
 inline void add_8B(database_type<matrix_product_template::parameters_type> & db, char_to_type<'T'>, char_to_type<'T'>)
