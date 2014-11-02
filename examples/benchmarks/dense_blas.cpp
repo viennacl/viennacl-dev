@@ -119,11 +119,11 @@ void bench(size_t BLAS1_N, size_t BLAS2_M, size_t BLAS2_N, size_t BLAS3_M, size_
     init_random(A);
     init_random(B);
 
-    BENCHMARK_OP(C = prod(A, B),                 "GEMM-NN",      int(2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(A, trans(BT)),         "GEMM-NT",      int(2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(trans(AT), B),         "GEMM-TN",      int(2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(C = prod(trans(AT), trans(BT)), "GEMM-TT",      int(2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
-    BENCHMARK_OP(lu_factorize(A),                "LU-FACTORIZE", int(2*BLAS3_M*BLAS3_K*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(A, B),                 "GEMM-NN",      (2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(A, trans(BT)),         "GEMM-NT",      (2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(trans(AT), B),         "GEMM-TN",      (2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(C = prod(trans(AT), trans(BT)), "GEMM-TT",      (2*BLAS3_M*BLAS3_N*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
+    BENCHMARK_OP(lu_factorize(A),                "LU-FACTORIZE", (2*BLAS3_M*BLAS3_K*BLAS3_K/time_spent*1e-9), "GFLOPs/s");
   }
 
 
@@ -136,9 +136,9 @@ int main()
   std::size_t BLAS2_M = 3840;
   std::size_t BLAS2_N = 3840;
 
-  std::size_t BLAS3_M = 2976;
-  std::size_t BLAS3_N = 2976;
-  std::size_t BLAS3_K = 2976;
+  std::size_t BLAS3_M = 1976;
+  std::size_t BLAS3_N = 1976;
+  std::size_t BLAS3_K = 1976;
 
   std::cout << "Benchmark : BLAS" << std::endl;
   std::cout << "----------------" << std::endl;
