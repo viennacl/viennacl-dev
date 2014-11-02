@@ -1,0 +1,54 @@
+
+
+
+/**
+*
+*  \page faq FAQ - Frequently Asked Questions
+*
+*  <h3>Does ViennaCL use multiple GPUs automatically?</h3>
+*  No. Although ViennaCL provides all the facilities for the user to build her own multi-GPU implementations,
+*  the efficient use of multiple GPUs is very algorithm-dependent and may even be impossible due to overheads of PCI-Express-communication.
+*
+*  <h3>Why do I get poor performance when inverting my 4-by-4 matrices?</h3>
+*  Accelerators are based on throughput-oriented architectures and can only show their full potential for sufficiently large data sizes.
+*  As a rule of thumb, a compute kernel needs to work on at least 100KB of data to hide PCI-Express latency.
+*  Even for integrated GPUs such as AMD's APU product line, the cost of launching a kernel is still on the same order of magnitude.
+*
+*  <h3>Why do I see no speed-up when dealing with sparse matrices using the GPU on my APU?</h3>
+*  Many compute kernels (in particular: all BLAS Level 1 and 2 operations) are limited by the available memory bandwidth.
+*  This typically holds true for sparse matrices as well.
+*  GPUs which are integrated with the CPU on the same chip use the same memory link as the CPU, so the limiting resource is the same.
+*
+*  <h3>Why do I see only mild performance gains on my Laptop GPU?</h3>
+*  Laptop GPUs are optimized for low power consumption.
+*  You may use Laptop GPUs to debug your implementations, but you need to run on high-end discrete GPUs for best performance.
+*
+*  <h3>Can I use ViennaCL from C/Fortran/Python/etc.?</h3>
+*  Yes, you can, but with the exception of the Python-wrapper PyViennaCL we do not provide complete wrappers for other languages yet.
+*  A shared library callable from C (and thus any other language which is able to call C functions) is currently under development, but will require more time for maturity.
+*
+*  <h3>Who provides funding for ViennaCL?</h3>
+*  There is no explicit single source of funding.
+*  We develop ViennaCL in our scientific spare time within more application-oriented projects, from which we extract the developed components and make them available in a library context.
+*  These projects have been funded by <a href="http://www.fwf.ac.at/">Austrian Science Fund (FWF)</a>, the European Research Council, and the FASTMath project within the US Department of Energy.
+*  Generous support has also been received in the course of the <a href="http://www.google-melange.com/">Google Summer of Code</a> since 2011.
+*
+*  <h3>I'm using OpenCL and my program seems to hang for about a second when I call ViennaCL functions?</h3>
+*  This is due to the just-in-time compilation of OpenCL kernels.
+*  The NVIDIA graphics driver caches the compiled kernels, therefore the overhead is only seen at the first run on a particular machine.
+*  The OpenCL SDKs of AMD and Intel, however, recompile all kernels with each program launch.
+*  Other OpenCL SDKs most likely show similar behavior.
+*
+*  <h3>Can I use ViennaCL on a cluster?</h3>
+*  ViennaCL is available as add-on package for the solver library <a href="http://www.mcs.anl.gov/petsc/">PETSc</a>, through which you can run the iterative solvers with full MPI-parallelization across nodes.
+*  Not all features of ViennaCL are available through PETSc, though.
+*
+*  <h3>How can I contribute?</h3>
+*  The are multiple options available:
+*    - Provide feedback: Which operations should be added? What should be simplified? What needs to be more flexible? Any feedback is welcome.
+*    - If you want to submit updated documentation, new code, or a bugfix, please issue a pull request on the <a href="https://github.com/viennacl/viennacl-dev/">ViennaCL developer repository on GitHub</a>.
+*    - Hardware donations. Please contact Karl Rupp directly: \f$ \mathtt{rupp @ iue.tuwien.ac.at} \f$
+*
+*
+*/
+
