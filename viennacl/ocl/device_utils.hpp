@@ -89,9 +89,17 @@ inline device_architecture_family get_architecture_family(cl_uint vendor_id, std
         case '5' : return fermi;
 
         case '6' : return kepler;
-        case '7' : return kepler;
+        case '7' : if (name[found+1] == '5')
+                     return maxwell; // GeForce 750 (Ti) are Maxwell-based on desktop GPUs.
+                   return kepler;
 
-        case '8' : return maxwell;
+        case '8' : if (name[found+3] == '0') // Geforce 8600 and friends
+                     return tesla;
+                   return kepler;  // high-end mobile GPUs tend to be Kepler, low-end GPUs are Maxwell. What a mess. Better be conservative here and pick Kepler.
+
+        case '9' : if (name[found+3] == '0') // Geforce 9600 and friends
+                     return tesla;
+                   return maxwell;  // GeForce 980, etc.
 
         default: return unknown;
         }
