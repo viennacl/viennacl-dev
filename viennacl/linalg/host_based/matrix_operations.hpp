@@ -962,26 +962,83 @@ namespace detail
             vcl_size_t C_size1, vcl_size_t C_size2, vcl_size_t A_size2,
             NumericT alpha, NumericT beta)
   {
+    if (C_size1 == 0 || C_size2 == 0 || A_size2 == 0)
+      return;
+
+    static const vcl_size_t blocksize = 64;
+
+    vcl_size_t num_blocks_C1 = (C_size1 - 1) / blocksize + 1;
+    vcl_size_t num_blocks_C2 = (C_size2 - 1) / blocksize + 1;
+    vcl_size_t num_blocks_A2 = (A_size2 - 1) / blocksize + 1;
+
+    std::vector<NumericT> buffer_A(blocksize * blocksize); // row-major
+    std::vector<NumericT> buffer_B(blocksize * blocksize); // column-major
+    std::vector<NumericT> buffer_C(blocksize * blocksize); // row-major
+
+    //
+    // outer loop pair: Run over all blocks with indices (block_idx_i, block_idx_j) of the result matrix C:
+    //
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for
 #endif
-    for (long i=0; i<static_cast<long>(C_size1); ++i)
+    for (long block_idx_i2=0; block_idx_i2<static_cast<long>(num_blocks_C1); ++block_idx_i2)
     {
-      for (vcl_size_t j=0; j<C_size2; ++j)
+      vcl_size_t block_idx_i = static_cast<vcl_size_t>(block_idx_i2);
+      for (vcl_size_t block_idx_j=0; block_idx_j<num_blocks_C2; ++block_idx_j)
       {
-        NumericT temp = 0;
-        for (vcl_size_t k=0; k<A_size2; ++k)
-          temp += A(static_cast<vcl_size_t>(i), k) * B(k, j);
+        // Reset block matrix:
+        std::fill(buffer_C.begin(), buffer_C.end(), NumericT(0));
 
-        temp *= alpha;
-        if (beta != 0)
-          temp += beta * C(static_cast<vcl_size_t>(i),j);
-        C(static_cast<vcl_size_t>(i),j) = temp;
-      }
-    }
-  }
+        vcl_size_t offset_i = block_idx_i*blocksize;
+        vcl_size_t offset_j = block_idx_j*blocksize;
 
-}
+        //  C(block_idx_i, block_idx_i) += A(block_idx_i, block_idx_k) * B(block_idx_k, block_idx_j)
+        for (vcl_size_t block_idx_k=0; block_idx_k<num_blocks_A2; ++block_idx_k)
+        {
+          // flush buffers:
+          std::fill(buffer_A.begin(), buffer_A.end(), NumericT(0));
+          std::fill(buffer_B.begin(), buffer_B.end(), NumericT(0));
+
+          vcl_size_t offset_k = block_idx_k*blocksize;
+
+          // load current data:
+          for (vcl_size_t i = offset_i; i < std::min(offset_i + blocksize, C_size1); ++i)
+            for (vcl_size_t k = offset_k; k < std::min(offset_k + blocksize, A_size2); ++k)
+              buffer_A[(i - offset_i) * blocksize + (k - offset_k)] = A(i, k);
+
+          for (vcl_size_t j = offset_j; j < std::min(offset_j + blocksize, C_size2); ++j)
+            for (vcl_size_t k = offset_k; k < std::min(offset_k + blocksize, A_size2); ++k)
+              buffer_B[(k - offset_k) + (j - offset_j) * blocksize] = B(k, j);
+
+          // multiply (this is the hot spot in terms of flops)
+          for (vcl_size_t i = 0; i < blocksize; ++i)
+          {
+            NumericT const * ptrA = &(buffer_A[i*blocksize]);
+            for (vcl_size_t j = 0; j < blocksize; ++j)
+            {
+              NumericT const * ptrB = &(buffer_B[j*blocksize]);
+
+              NumericT temp = NumericT(0);
+              for (vcl_size_t k = 0; k < blocksize; ++k)
+                temp += ptrA[k] * ptrB[k];  // buffer_A[i*blocksize + k] * buffer_B[k + j*blocksize];
+
+              buffer_C[i*blocksize + j] += temp;
+            }
+          }
+        }
+
+        // write result:
+        for (vcl_size_t i = offset_i; i < std::min(offset_i + blocksize, C_size1); ++i)
+          for (vcl_size_t j = offset_j; j < std::min(offset_j + blocksize, C_size2); ++j)
+            C(i,j) =  (beta ? beta * C(i,j) : NumericT(0))
+                     + alpha * buffer_C[(i - offset_i) * blocksize + (j - offset_j)];
+
+      } // for block j
+    } // for block i
+
+  } // prod()
+
+} // namespace detail
 
 /** @brief Carries out matrix-matrix multiplication
 *
