@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_AXPY_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_AXPY_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/tesla/geforce_gtx_260.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/southern_islands/tahiti.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/northern_islands/devastator.hpp"
 
@@ -52,7 +54,9 @@ inline database_type<matrix_axpy_template::parameters_type> init_matrix_axpy()
   devices::gpu::amd::southern_islands::tahiti::add_4B(result);
   devices::gpu::amd::southern_islands::tahiti::add_8B(result);
   devices::gpu::amd::northern_islands::devastator::add_4B(result);
-  
+    devices::gpu::nvidia::tesla::geforce_gtx_260::add_4B(result);
+  devices::gpu::nvidia::tesla::geforce_gtx_260::add_8B(result);
+
   return result;
 }
 
