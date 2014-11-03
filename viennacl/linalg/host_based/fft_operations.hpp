@@ -788,8 +788,7 @@ void real_to_complex(viennacl::vector_base<NumericT> const & in,
   for (vcl_size_t i = 0; i < size; i++)
   {
     std::complex<NumericT> val = 0;
-    val.real() = in[i];
-    out_complex[i] = val;
+	 out_complex[i] = (in[i], 0); 
   }
   viennacl::linalg::host_based::detail::fft::copy_to_vector(&out_complex[0], out, int(size));
 }
