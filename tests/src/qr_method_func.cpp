@@ -175,14 +175,14 @@ void house_update_A_left(ublas::matrix<NumericT> & A,
 {
   NumericT ss = 0;
 
-  uint row_start = start + 1;
-  for(uint i = 0; i < A.size2(); i++)
+  std::size_t row_start = start + 1;
+  for(std::size_t i = 0; i < A.size2(); i++)
     {
       ss = 0;
-      for(uint j = row_start; j < A.size1(); j++)
+      for(std::size_t j = row_start; j < A.size1(); j++)
           ss = ss +(D[j] * A(j, i));
 
-      for(uint j = row_start; j < A.size1(); j++)
+      for(std::size_t j = row_start; j < A.size1(); j++)
           A(j, i) = A(j, i) - (2 * D[j] * ss);
     }
 }
@@ -193,15 +193,15 @@ void house_update_A_right(ublas::matrix<NumericT> & A,
 {
   NumericT ss = 0;
 
-  for(uint i = 0; i < A.size1(); i++)
+  for(std::size_t i = 0; i < A.size1(); i++)
     {
       ss = 0;
-      for(uint j = 0; j < A.size2(); j++)
+      for(std::size_t j = 0; j < A.size2(); j++)
           ss = ss + (D[j] * A(i, j));
 
       NumericT sum_Av = ss;
 
-      for(uint j = 0; j < A.size2(); j++)
+      for(std::size_t j = 0; j < A.size2(); j++)
           A(i, j) = A(i, j) - (2 * D[j] * sum_Av);
     }
 }
@@ -210,7 +210,7 @@ void house_update_A_right(ublas::matrix<NumericT> & A,
 template <typename NumericT>
 void house_update_QL(ublas::matrix<NumericT> & Q,
                      std::vector<NumericT> D,
-                     unsigned int A_size1)
+                     std::size_t A_size1)
 
 {
   NumericT beta = 2;
@@ -218,9 +218,9 @@ void house_update_QL(ublas::matrix<NumericT> & Q,
   ublas::matrix<ScalarType> I = ublas::identity_matrix<ScalarType>(Q.size1());
   ublas::matrix<NumericT> Q_temp(Q.size1(), Q.size2());
 
-  for(unsigned int i = 0; i < Q.size1(); i++)
+  for(std::size_t i = 0; i < Q.size1(); i++)
   {
-      for(unsigned int j = 0; j < Q.size2(); j++)
+      for(std::size_t j = 0; j < Q.size2(); j++)
       {
           Q_temp(i, j) = Q(i, j);
       }
@@ -229,9 +229,9 @@ void house_update_QL(ublas::matrix<NumericT> & Q,
   ubl_P = ublas::identity_matrix<NumericT>(A_size1);
 
   //scaled_rank_1 update
-  for(unsigned int i = 0; i < A_size1; i++)
+  for(std::size_t i = 0; i < A_size1; i++)
   {
-      for(unsigned int j = 0; j < A_size1; j++)
+      for(std::size_t j = 0; j < A_size1; j++)
       {
           ubl_P(i, j) = I(i, j) - beta * (D[i] * D[j]);
       }
@@ -246,15 +246,16 @@ void givens_next(ublas::matrix<NumericT> & Q,
                  int l,
                  int m)
 {
-    for(int i = m - 1; i >= l; i--)
-      {
-        for(uint k = 0; k < Q.size1(); k++)
-          {
-            NumericT h = Q(k, i+1);
-            Q(k, i+1) = tmp2[i] * Q(k, i) + tmp1[i]*h;
-            Q(k, i) = tmp1[i] * Q(k, i) - tmp2[i]*h;
-          }
-      }
+  for(int i2 = m - 1; i2 >= l; i2--)
+  {
+    std::size_t i = static_cast<std::size_t>(i2);
+    for(std::size_t k = 0; k < Q.size1(); k++)
+    {
+      NumericT h = Q(k, i+1);
+      Q(k, i+1) = tmp2[i] * Q(k, i) + tmp1[i]*h;
+      Q(k, i) = tmp1[i] * Q(k, i) - tmp2[i]*h;
+    }
+  }
 }
 
 

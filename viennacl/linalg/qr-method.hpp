@@ -244,9 +244,9 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
 
         FastMatrix<SCALARTYPE> H(nn, vcl_H.internal_size2());//, V(nn);
 
-        std::vector<float>  buf(5 * nn);
+        std::vector<float>  buf(5 * vcl_size_t(nn));
         //boost::numeric::ublas::vector<float>  buf(5 * nn);
-        viennacl::vector<SCALARTYPE> buf_vcl(5 * nn);
+        viennacl::vector<SCALARTYPE> buf_vcl(5 * vcl_size_t(nn));
 
         viennacl::fast_copy(vcl_H, H.begin());
 
@@ -513,11 +513,11 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                     }
                     else
                     {
-                        buf[5 * k] = 0;
-                        buf[5 * k + 1] = 0;
-                        buf[5 * k + 2] = 0;
-                        buf[5 * k + 3] = 0;
-                        buf[5 * k + 4] = 0;
+                        buf[5 * vcl_size_t(k)] = 0;
+                        buf[5 * vcl_size_t(k) + 1] = 0;
+                        buf[5 * vcl_size_t(k) + 2] = 0;
+                        buf[5 * vcl_size_t(k) + 3] = 0;
+                        buf[5 * vcl_size_t(k) + 4] = 0;
                     }
                 }
 

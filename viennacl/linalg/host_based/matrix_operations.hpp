@@ -1544,7 +1544,7 @@ template <typename NumericT, typename S1>
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for
 #endif
-           for(long j = row_start; j < static_cast<long>(A_size1); j++)
+           for(long j = static_cast<long>(row_start); j < static_cast<long>(A_size1); j++)
                data_A[viennacl::row_major::mem_index(static_cast<vcl_size_t>(j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] =
                    data_A[viennacl::row_major::mem_index(static_cast<vcl_size_t>(j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] -
                    (2 * data_D[start1 + inc1 * static_cast<vcl_size_t>(j)]* ss);
@@ -1560,7 +1560,7 @@ template <typename NumericT, typename S1>
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for
 #endif
-           for(long j = row_start; j < static_cast<long>(A_size1); j++)
+           for(long j = static_cast<long>(row_start); j < static_cast<long>(A_size1); j++)
                data_A[viennacl::column_major::mem_index(static_cast<vcl_size_t>(j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]=
                    data_A[viennacl::column_major::mem_index(static_cast<vcl_size_t>(j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] -
                    (2 * data_D[start1 + inc1 * static_cast<vcl_size_t>(j)]* ss);
@@ -1706,15 +1706,15 @@ template <typename NumericT, typename S1>
                {
 
                  // h = data_Q(k, i+1);
-                 NumericT h = data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k) * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)];
+                 NumericT h = data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k) * Q_inc1 + Q_start1, vcl_size_t(i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)];
 
                  // Q(k, i+1) = tmp2[i] * Q(k, i) + tmp1[i]*h;
-                 data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k) * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp2[start2 + inc2 * i] *
-                     data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + data_tmp1[start1 + inc1 * i] * h;
+                 data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k) * Q_inc1 + Q_start1, vcl_size_t(i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp2[start2 + inc2 * vcl_size_t(i)] *
+                     data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, vcl_size_t(i) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + data_tmp1[start1 + inc1 * vcl_size_t(i)] * h;
 
                  // Q(k,   i) = tmp1[i] * Q(k, i) - tmp2[i]*h;
-                 data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp1[start1 + inc1 * i] *
-                     data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - data_tmp2[start2 + inc2 * i]*h;
+                 data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, vcl_size_t(i) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp1[start1 + inc1 * vcl_size_t(i)] *
+                     data_Q[viennacl::row_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, vcl_size_t(i) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - data_tmp2[start2 + inc2 * vcl_size_t(i)]*h;
                }
            }
      }
@@ -1729,15 +1729,15 @@ template <typename NumericT, typename S1>
                {
 
                   // h = data_Q(k, i+1);
-                  NumericT h = data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k) * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)];
+                  NumericT h = data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k) * Q_inc1 + Q_start1, vcl_size_t(i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)];
 
                    // Q(k, i+1) = tmp2[i] * Q(k, i) + tmp1[i]*h;
-                  data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k) * Q_inc1 + Q_start1, (i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp2[start2 + inc2 * i] *
-                      data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + data_tmp1[start1 + inc1 * i] * h;
+                  data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k) * Q_inc1 + Q_start1, vcl_size_t(i + 1) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp2[start2 + inc2 * vcl_size_t(i)] *
+                      data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, vcl_size_t(i) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] + data_tmp1[start1 + inc1 * vcl_size_t(i)] * h;
 
                   // Q(k,   i) = tmp1[i] * Q(k, i) - tmp2[i]*h;
-                  data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp1[start1 + inc1 * i] *
-                      data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, i * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - data_tmp2[start2 + inc2 * i]*h;
+                  data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, vcl_size_t(i) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] = data_tmp1[start1 + inc1 * vcl_size_t(i)] *
+                      data_Q[viennacl::column_major::mem_index(static_cast<vcl_size_t>(k)  * Q_inc1 + Q_start1, vcl_size_t(i) * Q_inc2 + Q_start2, Q_internal_size1, Q_internal_size2)] - data_tmp2[start2 + inc2 * vcl_size_t(i)]*h;
                }
            }
        }
@@ -1783,9 +1783,9 @@ template <typename NumericT, typename S1>
 #ifdef VIENNACL_WITH_OPENMP
        #pragma omp parallel for
 #endif
-         for(long i = row_start; i < static_cast<long>(A_size1); i++)
+         for(long i = static_cast<long>(row_start); i < static_cast<long>(A_size1); i++)
          {
-           data_V[i - row_start] = data_A[viennacl::row_major::mem_index(static_cast<vcl_size_t>(i) * A_inc1 + A_start1, col_start * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+           data_V[i - static_cast<long>(row_start)] = data_A[viennacl::row_major::mem_index(static_cast<vcl_size_t>(i) * A_inc1 + A_start1, col_start * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
          }
         }
         else
@@ -1793,9 +1793,9 @@ template <typename NumericT, typename S1>
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-          for(long i = row_start; i < static_cast<long>(A_size1); i++)
+          for(long i = static_cast<long>(row_start); i < static_cast<long>(A_size1); i++)
           {
-            data_V[i - row_start] = data_A[viennacl::column_major::mem_index(static_cast<vcl_size_t>(i) * A_inc1 + A_start1, col_start * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+            data_V[i - static_cast<long>(row_start)] = data_A[viennacl::column_major::mem_index(static_cast<vcl_size_t>(i) * A_inc1 + A_start1, col_start * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
           }
        }
       }
@@ -1806,9 +1806,9 @@ template <typename NumericT, typename S1>
 #ifdef VIENNACL_WITH_OPENMP
         #pragma omp parallel for
 #endif
-           for(long i = col_start; i < static_cast<long>(A_size1); i++)
+           for(long i = static_cast<long>(col_start); i < static_cast<long>(A_size1); i++)
            {
-              data_V[i - col_start] = data_A[viennacl::row_major::mem_index(row_start * A_inc1 + A_start1, static_cast<vcl_size_t>(i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+              data_V[i - static_cast<long>(col_start)] = data_A[viennacl::row_major::mem_index(row_start * A_inc1 + A_start1, static_cast<vcl_size_t>(i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
            }
        }
          else
@@ -1816,9 +1816,9 @@ template <typename NumericT, typename S1>
 #ifdef VIENNACL_WITH_OPENMP
          #pragma omp parallel for
 #endif
-             for(long i = col_start; i < static_cast<long>(A_size1); i++)
+             for(long i = static_cast<long>(col_start); i < static_cast<long>(A_size1); i++)
              {
-                data_V[i - col_start] = data_A[viennacl::column_major::mem_index(row_start * A_inc1 + A_start1, static_cast<vcl_size_t>(i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+                data_V[i - static_cast<long>(col_start)] = data_A[viennacl::column_major::mem_index(row_start * A_inc1 + A_start1, static_cast<vcl_size_t>(i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
              }
          }
       }
