@@ -57,10 +57,6 @@
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/version.hpp"
 
-#ifdef VIENNACL_WITH_OPENCL
-#include "CL/cl.h"
-#endif
-
 /** @brief Main namespace in ViennaCL. Holds all the basic types such as vector, matrix, etc. and defines operations upon them. */
 namespace viennacl
 {

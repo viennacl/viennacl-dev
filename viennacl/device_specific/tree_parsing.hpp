@@ -25,8 +25,6 @@
 
 #include <set>
 
-#include "CL/cl.h"
-
 #include "viennacl/forwards.h"
 
 #include "viennacl/scheduler/forwards.h"
