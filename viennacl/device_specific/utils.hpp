@@ -376,13 +376,13 @@ inline bool is_index_reduction(scheduler::op_element const & op)
 }
 template<class T>
 struct type_to_string;
-template<> struct type_to_string<unsigned char> { static const char * value() { return "unsigned char"; } };
+template<> struct type_to_string<unsigned char> { static const char * value() { return "uchar"; } };
 template<> struct type_to_string<char> { static const char * value() { return "char"; } };
-template<> struct type_to_string<unsigned short> { static const char * value() { return "unsigned short"; } };
+template<> struct type_to_string<unsigned short> { static const char * value() { return "ushort"; } };
 template<> struct type_to_string<short> { static const char * value() { return "short"; } };
-template<> struct type_to_string<unsigned int> { static const char * value() { return "unsigned int"; } };
+template<> struct type_to_string<unsigned int> { static const char * value() { return "uint"; } };
 template<> struct type_to_string<int> { static const char * value() { return "int"; } };
-template<> struct type_to_string<unsigned long> { static const char * value() { return "unsigned long"; } };
+template<> struct type_to_string<unsigned long> { static const char * value() { return "ulong"; } };
 template<> struct type_to_string<long> { static const char * value() { return "long"; } };
 template<> struct type_to_string<float> { static const char * value() { return "float"; } };
 template<> struct type_to_string<double> { static const char * value() { return "double"; } };
