@@ -161,7 +161,7 @@ void copy(const CPUMatrixT& cpu_matrix, hyb_matrix<NumericT, AlignmentV>& gpu_ma
     {
       sum += hist_entries[ind];
 
-      if (sum >= gpu_matrix.csr_threshold() * cpu_matrix.size1())
+      if (NumericT(sum) >= NumericT(gpu_matrix.csr_threshold()) * NumericT(cpu_matrix.size1()))
       {
         max_entries_per_row = ind;
         break;

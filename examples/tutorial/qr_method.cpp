@@ -57,7 +57,8 @@ void initialize(viennacl::matrix<ScalarType> & A, std::vector<ScalarType> & v)
       A(i, j) = M[i][j];
 
   // Known eigenvalues:
-  ScalarType V[9] = {12.6005, 19.5905, 8.06067, 2.95074, 0.223506, 24.3642, -9.62084, -13.8374, -18.3319};
+  ScalarType V[9] = {ScalarType(12.6005), ScalarType(19.5905), ScalarType(8.06067), ScalarType(2.95074), ScalarType(0.223506),
+                     ScalarType(24.3642), ScalarType(-9.62084), ScalarType(-13.8374), ScalarType(-18.3319)};
 
   for(std::size_t i = 0; i < 9; i++)
     v[i] = V[i];

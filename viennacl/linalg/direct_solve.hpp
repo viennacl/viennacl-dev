@@ -310,12 +310,12 @@ void inplace_solve_impl(MatrixT1 const & A, MatrixT2 & B, viennacl::linalg::unit
 template<typename MatrixT1, typename MatrixT2, typename SolverTagT>
 void inplace_solve_upper_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
 {
-  vcl_size_t blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
-  if (A.size1() <= blockSize)
+  int blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
+  if (static_cast<int>(A.size1()) <= blockSize)
     inplace_solve_kernel(A, B, SolverTagT());
   else
   {
-    for (int i = A.size1(); i > 0; i = i - blockSize)
+    for (int i = static_cast<int>(A.size1()); i > 0; i = i - blockSize)
     {
       int Apos1 = i - blockSize;
       vcl_size_t Apos2 = i;
@@ -539,7 +539,7 @@ void inplace_solve_upper_vec_impl(MatrixT1 const & A, VectorT & B, SolverTagT)
     inplace_solve_vec_kernel(A, B, SolverTagT());
   else
   {
-    for (int i = A.size1(); i > 0; i = i - blockSize)
+    for (int i = static_cast<int>(A.size1()); i > 0; i = i - blockSize)
     {
       int Apos1 = i - blockSize;
       vcl_size_t Apos2 = vcl_size_t(i);

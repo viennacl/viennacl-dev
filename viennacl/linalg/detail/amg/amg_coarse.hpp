@@ -73,7 +73,6 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
   typedef typename InternalT1::value_type             SparseMatrixType;
   typedef typename InternalT2::value_type             PointVectorType;
   typedef typename SparseMatrixType::value_type       ScalarType;
-  typedef typename SparseMatrixType::value_type       ScalarType;
   typedef typename SparseMatrixType::const_iterator1  ConstRowIterator;
   typedef typename SparseMatrixType::const_iterator2  ConstColIterator;
 
@@ -86,11 +85,11 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
   for (long i=0; i<static_cast<long>(A[level].size1()); ++i)
   {
     diag_sign = 1;
-    if (A[level](i,i) < 0)
+    if (A[level](static_cast<unsigned int>(i),static_cast<unsigned int>(i)) < 0)
       diag_sign = -1;
 
     ConstRowIterator row_iter = A[level].begin1();
-    row_iter += i;
+    row_iter += static_cast<unsigned int>(i);
     // Find greatest non-diagonal negative value (positive if diagonal is negative) in row
     max = 0;
     for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
@@ -114,10 +113,10 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
       if (i == j)
         continue;
 
-      if (diag_sign * (-*col_iter) >= tag.get_threshold() * (diag_sign * (-max)))
+      if (ScalarType(diag_sign) * (-*col_iter) >= tag.get_threshold() * (ScalarType(diag_sign) * (-max)))
       {
         // Strong influence from j to i found, save information
-        pointvector[level][i]->add_influencing_point(pointvector[level][j]);
+        pointvector[level][static_cast<unsigned int>(i)]->add_influencing_point(pointvector[level][static_cast<unsigned int>(j)]);
       }
     }
   }
@@ -167,7 +166,7 @@ void amg_coarse_classic_onepass(unsigned int level, InternalT1 & A, InternalT2 &
   #pragma omp parallel for private (i)
   #endif
   for (i=0; i<static_cast<long>(pointvector[level].size()); ++i)
-  pointvector[level][i]->calc_influence();
+  pointvector[level][static_cast<unsigned int>(i)]->calc_influence();
 
   // Do initial sorting
   pointvector[level].sort();
@@ -594,14 +593,14 @@ void amg_coarse_ag(unsigned int level, InternalT1 & A, InternalT2 & pointvector,
   {
     InternalRowIterator row_iter = A[level].begin1();
     row_iter += x;
-    diag = A[level](x,x);
+    diag = A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(x));
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
       y = static_cast<long>(col_iter.index2());
-      if (y == x || (std::fabs(*col_iter) >= tag.get_threshold()*pow(0.5, static_cast<double>(level-1)) * std::sqrt(std::fabs(diag*A[level](y,y)))))
+      if (y == x || (std::fabs(*col_iter) >= tag.get_threshold()*pow(0.5, static_cast<double>(level-1)) * std::sqrt(std::fabs(diag*A[level](static_cast<unsigned int>(y),static_cast<unsigned int>(y))))))
       {
         // Neighborhood x includes point y
-        pointvector[level][x]->add_influencing_point(pointvector[level][y]);
+        pointvector[level][static_cast<unsigned int>(x)]->add_influencing_point(pointvector[level][static_cast<unsigned int>(y)]);
       }
     }
   }

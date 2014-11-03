@@ -432,9 +432,9 @@ public:
           level_coefficients++;
         }
       }
-      avgstencil[level] = level_coefficients/static_cast<NumericType>(A_setup_[level].size1());
+      avgstencil[level] = static_cast<NumericType>(level_coefficients)/static_cast<NumericType>(A_setup_[level].size1());
     }
-    return nonzero / static_cast<NumericType>(systemmat_nonzero);
+    return static_cast<NumericType>(nonzero) / static_cast<NumericType>(systemmat_nonzero);
   }
 
   /** @brief Precondition Operation

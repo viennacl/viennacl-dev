@@ -1340,7 +1340,7 @@ void amg_mat_prod (SparseMatrixT & A, SparseMatrixT & B, SparseMatrixT & RES)
       {
         z = static_cast<unsigned int>(col_iter2.index2());
         prod = *col_iter * *col_iter2;
-        RES.add(x,z,prod);
+        RES.add(static_cast<unsigned int>(x),static_cast<unsigned int>(z),prod);
       }
     }
   }
@@ -1381,7 +1381,7 @@ void amg_galerkin_prod (SparseMatrixT & A, SparseMatrixT & P, SparseMatrixT & RE
       for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
       {
         y2 = static_cast<long>(col_iter2.index2());
-        row.add (y2, *col_iter * *col_iter2);
+        row.add (static_cast<unsigned int>(y2), *col_iter * *col_iter2);
       }
     }
     for (typename amg_sparsevector<ScalarType>::iterator iter = row.begin(); iter != row.end(); ++iter)
@@ -1393,7 +1393,7 @@ void amg_galerkin_prod (SparseMatrixT & A, SparseMatrixT & P, SparseMatrixT & RE
       for (InternalColIterator col_iter3 = row_iter3.begin(); col_iter3 != row_iter3.end(); ++col_iter3)
       {
         z = static_cast<long>(col_iter3.index2());
-        RES.add (x, z, *col_iter3 * *iter);
+        RES.add (static_cast<unsigned int>(x), static_cast<unsigned int>(z), *col_iter3 * *iter);
       }
     }
   }

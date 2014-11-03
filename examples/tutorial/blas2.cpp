@@ -224,7 +224,7 @@ int main()
   //put some more weight on diagonal elements:
   for (std::size_t j=0; j<lu_dim; ++j)
   {
-    square_matrix(j,j) += 10.0;
+    square_matrix(j,j) += ScalarType(10.0);
     lu_rhs(j) = random<ScalarType>();
   }
 

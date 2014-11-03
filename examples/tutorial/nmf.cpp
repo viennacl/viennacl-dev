@@ -38,7 +38,7 @@ void fill_random(viennacl::matrix<ScalarType, MajorT> & A)
 {
   for (std::size_t i = 0; i < A.size1(); i++)
     for (std::size_t j = 0; j < A.size2(); ++j)
-      A(i, j) = static_cast<ScalarType>(rand()) / RAND_MAX;
+      A(i, j) = static_cast<ScalarType>(rand()) / ScalarType(RAND_MAX);
 }
 
 /**

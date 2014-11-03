@@ -520,7 +520,7 @@ std::vector<IndexT> reorder(std::vector< std::map<IndexT, ValueT> > const & matr
       if (deg_max == 0 || deg > deg_max)
         deg_max = deg;
     }
-    deg_a = deg_min + static_cast<vcl_size_t>(a * (deg_max - deg_min));
+    deg_a = deg_min + static_cast<vcl_size_t>(a * double(deg_max - deg_min));
 
     // fill array of parent nodes:
     parent_nodes.resize(0);

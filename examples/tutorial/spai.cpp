@@ -127,7 +127,7 @@ int main (int, const char **)
   }
 
   std::cout << "Size of matrix: " << M.size1() << std::endl;
-  std::cout << "Avg. Entries per row: " << M.nnz() / static_cast<double>(M.size1()) << std::endl;
+  std::cout << "Avg. Entries per row: " << double(M.nnz()) / static_cast<double>(M.size1()) << std::endl;
 
   /**
   *   Use a constant load vector for simplicity

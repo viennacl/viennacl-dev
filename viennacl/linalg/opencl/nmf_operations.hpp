@@ -115,7 +115,7 @@ void nmf(viennacl::matrix_base<NumericT> const & V,
         break;
 
       // Stagnation check
-      if (std::fabs(diff_val - last_diff) / (diff_val * conf.check_after_steps()) < conf.stagnation_tolerance()) //avoid situations where convergence stagnates
+      if (std::fabs(diff_val - last_diff) / (diff_val * NumericT(conf.check_after_steps())) < conf.stagnation_tolerance()) //avoid situations where convergence stagnates
       {
         if (stagnation_flag)    // iteration stagnates (two iterates with no notable progress)
           break;

@@ -56,39 +56,39 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
   const NumericT * temp_proxy = detail::extract_raw_pointer<NumericT>(proxy.lhs());
   NumericT * temp = detail::extract_raw_pointer<NumericT>(temp_trans);
 
-  unsigned int proxy_int_size1=proxy.lhs().internal_size1();
-  unsigned int proxy_int_size2=proxy.lhs().internal_size2();
-  unsigned int temp_int_size1=temp_trans.internal_size1();
-  unsigned int temp_int_size2=temp_trans.internal_size2();
+  vcl_size_t proxy_int_size1=proxy.lhs().internal_size1();
+  vcl_size_t proxy_int_size2=proxy.lhs().internal_size2();
+  vcl_size_t temp_int_size1=temp_trans.internal_size1();
+  vcl_size_t temp_int_size2=temp_trans.internal_size2();
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for shared(proxy_int_size1,proxy_int_size2,temp_int_size1,temp_int_size2)
 #endif
-  for (unsigned int i = 0; i < proxy_int_size1*proxy_int_size2;++i)
+  for (vcl_size_t i = 0; i < proxy_int_size1*proxy_int_size2;++i)
   {
-    unsigned int row = i / proxy_int_size2;
-    unsigned int col = i % proxy_int_size2;
+    vcl_size_t row = i / proxy_int_size2;
+    vcl_size_t col = i % proxy_int_size2;
 
     if (row < proxy.lhs().size1() && col < proxy.lhs().size2())
     {
       if (proxy.lhs().row_major())
       {
-        unsigned int pos = row_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * row,
-                                                proxy.lhs().start2() + proxy.lhs().stride2() * col,
-                                                proxy_int_size1, proxy_int_size2);
-        unsigned int new_pos = row_major::mem_index(temp_trans.start2() + temp_trans.stride2() * col,
-                                                temp_trans.start1() + temp_trans.stride1() * row, temp_int_size1,
-                                                temp_int_size2);
+        vcl_size_t pos = row_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * row,
+                                              proxy.lhs().start2() + proxy.lhs().stride2() * col,
+                                              proxy_int_size1, proxy_int_size2);
+        vcl_size_t new_pos = row_major::mem_index(temp_trans.start2() + temp_trans.stride2() * col,
+                                                  temp_trans.start1() + temp_trans.stride1() * row, temp_int_size1,
+                                                  temp_int_size2);
         temp[new_pos] = temp_proxy[pos];
       }
       else
       {
-        unsigned int pos = column_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * row,
-                                                   proxy.lhs().start2() + proxy.lhs().stride2() * col, proxy_int_size1,
-                                                   proxy_int_size2);
-        unsigned int new_pos = column_major::mem_index(temp_trans.start2() + temp_trans.stride2() * col,
-                                                   temp_trans.start1() + temp_trans.stride1() * row, temp_int_size1,
-                                                   temp_int_size2);
+        vcl_size_t pos = column_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * row,
+                                                 proxy.lhs().start2() + proxy.lhs().stride2() * col, proxy_int_size1,
+                                                 proxy_int_size2);
+        vcl_size_t new_pos = column_major::mem_index(temp_trans.start2() + temp_trans.stride2() * col,
+                                                     temp_trans.start1() + temp_trans.stride1() * row, temp_int_size1,
+                                                     temp_int_size2);
         temp[new_pos] = temp_proxy[pos];
       }
     }
@@ -1517,7 +1517,7 @@ template <typename NumericT, typename S1>
  {
    typedef NumericT        value_type;
    NumericT ss = 0;
-   unsigned int row_start = start + 1;
+   vcl_size_t row_start = start + 1;
 
    value_type * data_A  = detail::extract_raw_pointer<value_type>(A);
    value_type * data_D = detail::extract_raw_pointer<value_type>(D);

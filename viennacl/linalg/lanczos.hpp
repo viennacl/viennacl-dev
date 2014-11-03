@@ -197,7 +197,7 @@ namespace detail
       {
               w[index][j] = (betas[j + 1] * w[k][j + 1] + (alphas[j] - vcl_alpha) * w[k][j] + betas[j] * w[k][j - 1] - betas[i - 1] * w[index][j]) / vcl_beta + eps * 0.3 * get_N() * (betas[j + 1] + vcl_beta);
       }
-      w[index][i - 1] = 0.6 * eps * n * get_N() * betas[1] / vcl_beta;
+      w[index][i - 1] = 0.6 * eps * CPU_ScalarType(n) * get_N() * betas[1] / vcl_beta;
 
       if (second_step)
       {

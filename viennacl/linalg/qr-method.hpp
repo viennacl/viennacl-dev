@@ -739,7 +739,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
         }
 
         */
-        unsigned int mat_size = A.size1();
+        vcl_size_t mat_size = A.size1();
         D.resize(A.size1());
         E.resize(A.size1());
 

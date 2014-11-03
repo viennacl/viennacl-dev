@@ -65,7 +65,7 @@ int main()
       ublas_circulant(i,j)   = static_cast<ScalarType>((i - j + size) % size);
       ublas_hankel(i,j)      = static_cast<ScalarType>((i + j) % (2 * size));
       ublas_toeplitz(i,j)    = static_cast<ScalarType>(i) - static_cast<ScalarType>(j);
-      ublas_vandermonde(i,j) = pow(ScalarType(1.0 + i/1000.0), ScalarType(j));
+      ublas_vandermonde(i,j) = std::pow(ScalarType(1.0) + ScalarType(i)/ScalarType(1000.0), ScalarType(j));
     }
 
   /**

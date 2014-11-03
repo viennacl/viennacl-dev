@@ -81,7 +81,7 @@ namespace detail
       return n + 1;
     }
 
-    inline unsigned int get_reorder_num(unsigned int v, unsigned int bit_size)
+    inline vcl_size_t get_reorder_num(vcl_size_t v, vcl_size_t bit_size)
     {
       v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
       v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
@@ -94,12 +94,12 @@ namespace detail
 
     template<typename NumericT, unsigned int AlignmentV>
     void copy_to_complex_array(std::complex<NumericT> * input_complex,
-                               viennacl::vector<NumericT, AlignmentV> const & in, int size)
+                               viennacl::vector<NumericT, AlignmentV> const & in, vcl_size_t size)
     {
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (int i = 0; i < size * 2; i += 2)
+      for (vcl_size_t i = 0; i < size * 2; i += 2)
       { //change array to complex array
         input_complex[i / 2] = std::complex<NumericT>(in[i], in[i + 1]);
       }
@@ -107,12 +107,12 @@ namespace detail
 
     template<typename NumericT>
     void copy_to_complex_array(std::complex<NumericT> * input_complex,
-                               viennacl::vector_base<NumericT> const & in, int size)
+                               viennacl::vector_base<NumericT> const & in, vcl_size_t size)
     {
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (int i = 0; i < size * 2; i += 2)
+      for (vcl_size_t i = 0; i < size * 2; i += 2)
       { //change array to complex array
         input_complex[i / 2] = std::complex<NumericT>(in[i], in[i + 1]);
       }
@@ -120,12 +120,12 @@ namespace detail
 
     template<typename NumericT, unsigned int AlignmentV>
     void copy_to_vector(std::complex<NumericT> * input_complex,
-                        viennacl::vector<NumericT, AlignmentV> & in, int size)
+                        viennacl::vector<NumericT, AlignmentV> & in, vcl_size_t size)
     {
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (int i = 0; i < size; i += 1)
+      for (vcl_size_t i = 0; i < size; i += 1)
       {
         in(i * 2)     = static_cast<NumericT>(std::real(input_complex[i]));
         in(i * 2 + 1) = static_cast<NumericT>(std::imag(input_complex[i]));
@@ -134,24 +134,24 @@ namespace detail
 
     template<typename NumericT>
     void copy_to_complex_array(std::complex<NumericT> * input_complex,
-                               NumericT const * in, int size)
+                               NumericT const * in, vcl_size_t size)
     {
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (int i = 0; i < size * 2; i += 2)
+      for (vcl_size_t i = 0; i < size * 2; i += 2)
       { //change array to complex array
         input_complex[i / 2] = std::complex<NumericT>(in[i], in[i + 1]);
       }
     }
 
     template<typename NumericT>
-    void copy_to_vector(std::complex<NumericT> * input_complex, NumericT * in, unsigned int size)
+    void copy_to_vector(std::complex<NumericT> * input_complex, NumericT * in, vcl_size_t size)
     {
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (unsigned int i = 0; i < size; i += 1)
+      for (vcl_size_t i = 0; i < size; i += 1)
       {
         in[i * 2]     = static_cast<NumericT>(std::real(input_complex[i]));
         in[i * 2 + 1] = static_cast<NumericT>(std::imag(input_complex[i]));
@@ -160,13 +160,13 @@ namespace detail
 
     template<typename NumericT>
     void copy_to_vector(std::complex<NumericT> * input_complex,
-                        viennacl::vector_base<NumericT> & in, unsigned int size)
+                        viennacl::vector_base<NumericT> & in, vcl_size_t size)
     {
       std::vector<NumericT> temp(2 * size);
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (unsigned int i = 0; i < size; i += 1)
+      for (vcl_size_t i = 0; i < size; i += 1)
       {
         temp[i * 2]     = static_cast<NumericT>(std::real(input_complex[i]));
         temp[i * 2 + 1] = static_cast<NumericT>(std::imag(input_complex[i]));
@@ -175,12 +175,12 @@ namespace detail
     }
 
     template<typename NumericT>
-    void zero2(NumericT *input1, NumericT *input2, unsigned int size)
+    void zero2(NumericT *input1, NumericT *input2, vcl_size_t size)
     {
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (unsigned int i = 0; i < size; i += 1)
+      for (vcl_size_t i = 0; i < size; i += 1)
       {
         input1[i] = 0;
         input2[i] = 0;
@@ -196,28 +196,28 @@ namespace detail
  */
 template<typename NumericT>
 void fft_direct(std::complex<NumericT> * input_complex, std::complex<NumericT> * output,
-                unsigned int size, unsigned int stride, unsigned int batch_num, NumericT sign,
+                vcl_size_t size, vcl_size_t stride, vcl_size_t batch_num, NumericT sign,
                 viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::DATA_ORDER data_order = viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
 {
   NumericT const NUM_PI = NumericT(3.14159265358979323846);
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel
 #endif
-  for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
+  for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
   {
-    for (unsigned int k = 0; k < size; k += 1)
+    for (vcl_size_t k = 0; k < size; k += 1)
     {
       std::complex<NumericT> f = 0;
-      for (unsigned int n = 0; n < size; n++)
+      for (vcl_size_t n = 0; n < size; n++)
       {
         std::complex<NumericT> input;
         if (!data_order)
           input = input_complex[batch_id * stride + n]; //input index here
         else
           input = input_complex[n * stride + batch_id];
-        NumericT arg = sign * 2 * NUM_PI * k / size * n;
-        NumericT sn  = sin(arg);
-        NumericT cs  = cos(arg);
+        NumericT arg = sign * 2 * NUM_PI * NumericT(k) / NumericT(size * n);
+        NumericT sn  = std::sin(arg);
+        NumericT cs  = std::cos(arg);
 
         std::complex<NumericT> ex(cs, sn);
         std::complex<NumericT> tmp(input.real() * ex.real() - input.imag() * ex.imag(),
@@ -268,10 +268,10 @@ void direct(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> const & 
             vcl_size_t stride, vcl_size_t batch_num, NumericT sign = NumericT(-1),
             viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::DATA_ORDER data_order = viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
 {
-  unsigned int row_num = in.internal_size1();
-  unsigned int col_num = in.internal_size2() >> 1;
+  vcl_size_t row_num = in.internal_size1();
+  vcl_size_t col_num = in.internal_size2() >> 1;
 
-  unsigned int size_mat = row_num * col_num;
+  vcl_size_t size_mat = row_num * col_num;
 
   std::vector<std::complex<NumericT> > input_complex(size_mat);
   std::vector<std::complex<NumericT> > output(size_mat);
@@ -300,11 +300,11 @@ void reorder(viennacl::vector<NumericT, AlignmentV>& in, vcl_size_t size, vcl_si
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
+  for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
   {
-    for (unsigned int i = 0; i < size; i++)
+    for (vcl_size_t i = 0; i < size; i++)
     {
-      unsigned int v = viennacl::linalg::host_based::detail::fft::get_reorder_num(i, bits_datasize);
+      vcl_size_t v = viennacl::linalg::host_based::detail::fft::get_reorder_num(i, bits_datasize);
       if (i < v)
       {
         if (!data_order)
@@ -336,9 +336,9 @@ void reorder(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV>& in,
 {
 
   NumericT * data = detail::extract_raw_pointer<NumericT>(in);
-  unsigned int row_num = in.internal_size1();
-  unsigned int col_num = in.internal_size2() >> 1;
-  unsigned int size_mat = row_num * col_num;
+  vcl_size_t row_num = in.internal_size1();
+  vcl_size_t col_num = in.internal_size2() >> 1;
+  vcl_size_t size_mat = row_num * col_num;
 
   std::vector<std::complex<NumericT> > input(size_mat);
 
@@ -347,11 +347,11 @@ void reorder(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV>& in,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
+  for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
   {
-    for (unsigned int i = 0; i < size; i++)
+    for (vcl_size_t i = 0; i < size; i++)
     {
-      unsigned int v = viennacl::linalg::host_based::detail::fft::get_reorder_num(i, bits_datasize);
+      vcl_size_t v = viennacl::linalg::host_based::detail::fft::get_reorder_num(i, bits_datasize);
       if (i < v)
       {
         if (!data_order)
@@ -376,29 +376,29 @@ void reorder(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV>& in,
  * Kernel for computing smaller amount of data
  */
 template<typename NumericT>
-void fft_radix2(std::complex<NumericT> * input_complex, unsigned int batch_num,
-                unsigned int bit_size, unsigned int size, unsigned int stride, NumericT sign,
+void fft_radix2(std::complex<NumericT> * input_complex, vcl_size_t batch_num,
+                vcl_size_t bit_size, vcl_size_t size, vcl_size_t stride, NumericT sign,
                 viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::DATA_ORDER data_order = viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
 {
   NumericT const NUM_PI = NumericT(3.14159265358979323846);
 
   for (vcl_size_t step = 0; step < bit_size; step++)
   {
-    unsigned int ss = 1 << step;
-    unsigned int half_size = size >> 1;
+    vcl_size_t ss = 1 << step;
+    vcl_size_t half_size = size >> 1;
     NumericT cs, sn;
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for private(cs,sn) shared(ss,half_size,step)
 #endif
-    for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
+    for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
     {
-      for (unsigned int tid = 0; tid < half_size; tid++)
+      for (vcl_size_t tid = 0; tid < half_size; tid++)
       {
-        unsigned int group = (tid & (ss - 1));
-        unsigned int pos = ((tid >> step) << (step + 1)) + group;
+        vcl_size_t group = (tid & (ss - 1));
+        vcl_size_t pos = ((tid >> step) << (step + 1)) + group;
         std::complex<NumericT> in1;
         std::complex<NumericT> in2;
-        unsigned int offset;
+        vcl_size_t offset;
         if (!data_order)
         {
           offset = batch_id * stride + pos;
@@ -411,9 +411,9 @@ void fft_radix2(std::complex<NumericT> * input_complex, unsigned int batch_num,
           in1 = input_complex[offset];
           in2 = input_complex[offset + ss * stride];
         }
-        NumericT arg = group * sign * NUM_PI / ss;
-        sn = sin(arg);
-        cs = cos(arg);
+        NumericT arg = NumericT(group) * sign * NUM_PI / NumericT(ss);
+        sn = std::sin(arg);
+        cs = std::cos(arg);
         std::complex<NumericT> ex(cs, sn);
         std::complex<NumericT> tmp(in2.real() * ex.real() - in2.imag() * ex.imag(),
                                    in2.real() * ex.imag() + in2.imag() * ex.real());
@@ -434,20 +434,20 @@ void fft_radix2(std::complex<NumericT> * input_complex, unsigned int batch_num,
  */
 template<typename NumericT>
 void fft_radix2_local(std::complex<NumericT> * input_complex,
-                      std::complex<NumericT> * lcl_input, unsigned int batch_num, unsigned int bit_size,
-                      unsigned int size, unsigned int stride, NumericT sign,
+                      std::complex<NumericT> * lcl_input, vcl_size_t batch_num, vcl_size_t bit_size,
+                      vcl_size_t size, vcl_size_t stride, NumericT sign,
                       viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::DATA_ORDER data_order = viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
 {
   NumericT const NUM_PI = NumericT(3.14159265358979323846);
 
-  for (unsigned int batch_id = 0; batch_id < batch_num; batch_id++)
+  for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
   {
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for
 #endif
-    for (unsigned int p = 0; p < size; p += 1)
+    for (vcl_size_t p = 0; p < size; p += 1)
     {
-      unsigned int v = viennacl::linalg::host_based::detail::fft::get_reorder_num(p,
+      vcl_size_t v = viennacl::linalg::host_based::detail::fft::get_reorder_num(p,
           bit_size);
 
       if (!data_order)
@@ -456,24 +456,24 @@ void fft_radix2_local(std::complex<NumericT> * input_complex,
         lcl_input[v] = input_complex[p * stride + batch_id];
     }
 
-    for (unsigned int s = 0; s < bit_size; s++)
+    for (vcl_size_t s = 0; s < bit_size; s++)
     {
-      unsigned int ss = 1 << s;
+      vcl_size_t ss = 1 << s;
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for
 #endif
-      for (unsigned int tid = 0; tid < size; tid++)
+      for (vcl_size_t tid = 0; tid < size; tid++)
       {
-        unsigned int group = (tid & (ss - 1));
-        unsigned int pos = ((tid >> s) << (s + 1)) + group;
+        vcl_size_t group = (tid & (ss - 1));
+        vcl_size_t pos = ((tid >> s) << (s + 1)) + group;
 
         std::complex<NumericT> in1 = lcl_input[pos];
         std::complex<NumericT> in2 = lcl_input[pos + ss];
 
-        NumericT arg = group * sign * NUM_PI / ss;
+        NumericT arg = NumericT(group) * sign * NUM_PI / NumericT(ss);
 
-        NumericT sn = sin(arg);
-        NumericT cs = cos(arg);
+        NumericT sn = std::sin(arg);
+        NumericT cs = std::cos(arg);
         std::complex<NumericT> ex(cs, sn);
 
         std::complex<NumericT> tmp(in2.real() * ex.real() - in2.imag() * ex.imag(),
@@ -488,7 +488,7 @@ void fft_radix2_local(std::complex<NumericT> * input_complex,
     #pragma omp parallel for
 #endif
     //copy local array back to global memory
-    for (unsigned int p = 0; p < size; p += 1)
+    for (vcl_size_t p = 0; p < size; p += 1)
     {
       if (!data_order)
         input_complex[batch_id * stride + p] = lcl_input[p];
@@ -514,7 +514,7 @@ void radix2(viennacl::vector<NumericT, AlignmentV>& in, vcl_size_t size, vcl_siz
             viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::DATA_ORDER data_order = viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
 {
 
-  unsigned int bit_size = viennacl::linalg::host_based::detail::fft::num_bits(size);
+  vcl_size_t bit_size = viennacl::linalg::host_based::detail::fft::num_bits(size);
 
   std::vector<std::complex<NumericT> > input_complex(size * batch_num);
   std::vector<std::complex<NumericT> > lcl_input(size * batch_num);
@@ -547,13 +547,13 @@ void radix2(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV>& in, vcl
             viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::DATA_ORDER data_order = viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR)
 {
 
-  unsigned int bit_size = viennacl::linalg::host_based::detail::fft::num_bits(size);
+  vcl_size_t bit_size = viennacl::linalg::host_based::detail::fft::num_bits(size);
 
   NumericT * data = detail::extract_raw_pointer<NumericT>(in);
 
-  unsigned int row_num = in.internal_size1();
-  unsigned int col_num = in.internal_size2() >> 1;
-  unsigned int size_mat = row_num * col_num;
+  vcl_size_t row_num = in.internal_size1();
+  vcl_size_t col_num = in.internal_size2() >> 1;
+  vcl_size_t size_mat = row_num * col_num;
 
   std::vector<std::complex<NumericT> > input_complex(size_mat);
 
@@ -604,25 +604,25 @@ void bluestein(viennacl::vector<NumericT, AlignmentV>& in, viennacl::vector<Nume
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (unsigned int i = 0; i < ext_size; i++)
+  for (vcl_size_t i = 0; i < ext_size; i++)
   {
     A_complex[i] = 0;
     B_complex[i] = 0;
   }
 
-  unsigned int double_size = size << 1;
+  vcl_size_t double_size = size << 1;
 
   NumericT const NUM_PI = NumericT(3.14159265358979323846);
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (unsigned int i = 0; i < size; i++)
+  for (vcl_size_t i = 0; i < size; i++)
   {
-    unsigned int rm = i * i % (double_size);
-    NumericT angle = (NumericT) rm / size * NUM_PI;
+    vcl_size_t rm = i * i % (double_size);
+    NumericT angle = NumericT(rm) / NumericT(size) * NumericT(NUM_PI);
 
-    NumericT sn_a = sin(-angle);
-    NumericT cs_a = cos(-angle);
+    NumericT sn_a = std::sin(-angle);
+    NumericT cs_a = std::cos(-angle);
 
     std::complex<NumericT> a_i(cs_a, sn_a);
     std::complex<NumericT> b_i(cs_a, -sn_a);
@@ -648,12 +648,12 @@ void bluestein(viennacl::vector<NumericT, AlignmentV>& in, viennacl::vector<Nume
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for private(sn_a,cs_a)
 #endif
-  for (unsigned int i = 0; i < size; i++)
+  for (vcl_size_t i = 0; i < size; i++)
   {
-    unsigned int rm = i * i % (double_size);
-    NumericT angle = (NumericT) rm / size * (-NUM_PI);
-    sn_a = sin(angle);
-    cs_a = cos(angle);
+    vcl_size_t rm = i * i % (double_size);
+    NumericT angle = NumericT(rm) / NumericT(size) * NumericT(-NUM_PI);
+    sn_a = std::sin(angle);
+    cs_a = std::cos(angle);
     std::complex<NumericT> b_i(cs_a, sn_a);
     output_complex[i] = std::complex<NumericT>(Z_complex[i].real() * b_i.real() - Z_complex[i].imag() * b_i.imag(),
                                                Z_complex[i].real() * b_i.imag() + Z_complex[i].imag() * b_i.real());
@@ -670,7 +670,7 @@ void normalize(viennacl::vector<NumericT, AlignmentV> & input)
 {
   vcl_size_t size = input.size() >> 1;
   NumericT norm_factor = static_cast<NumericT>(size);
-  for (unsigned int i = 0; i < size * 2; i++)
+  for (vcl_size_t i = 0; i < size * 2; i++)
     input[i] /= norm_factor;
 
 }
@@ -694,7 +694,7 @@ void multiply_complex(viennacl::vector<NumericT, AlignmentV> const & input1,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (unsigned int i = 0; i < size; i++)
+  for (vcl_size_t i = 0; i < size; i++)
   {
     std::complex<NumericT> in1 = input1_complex[i];
     std::complex<NumericT> in2 = input2_complex[i];
@@ -710,10 +710,10 @@ void multiply_complex(viennacl::vector<NumericT, AlignmentV> const & input1,
 template<typename NumericT, unsigned int AlignmentV>
 void transpose(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> & input)
 {
-  unsigned int row_num = input.internal_size1() / 2;
-  unsigned int col_num = static_cast<unsigned int>(input.internal_size2()) / 2;
+  vcl_size_t row_num = input.internal_size1() / 2;
+  vcl_size_t col_num = input.internal_size2() / 2;
 
-  unsigned int size = row_num * col_num;
+  vcl_size_t size = row_num * col_num;
 
   NumericT * data = detail::extract_raw_pointer<NumericT>(input);
 
@@ -723,11 +723,11 @@ void transpose(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> & inp
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for shared(row_num,col_num)
 #endif
-  for (unsigned int i = 0; i < size; i++)
+  for (vcl_size_t i = 0; i < size; i++)
   {
-    unsigned int row = i / col_num;
-    unsigned int col = i - row * col_num;
-    unsigned int new_pos = col * row_num + row;
+    vcl_size_t row = i / col_num;
+    vcl_size_t col = i - row * col_num;
+    vcl_size_t new_pos = col * row_num + row;
 
     if (i < new_pos)
     {
@@ -748,9 +748,9 @@ void transpose(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> const
                viennacl::matrix<NumericT, viennacl::row_major, AlignmentV>       & output)
 {
 
-  unsigned int row_num = input.internal_size1() / 2;
-  unsigned int col_num = input.internal_size2() / 2;
-  unsigned int size = row_num * col_num;
+  vcl_size_t row_num = input.internal_size1() / 2;
+  vcl_size_t col_num = input.internal_size2() / 2;
+  vcl_size_t size = row_num * col_num;
 
   NumericT const * data_A = detail::extract_raw_pointer<NumericT>(input);
   NumericT       * data_B = detail::extract_raw_pointer<NumericT>(output);
@@ -762,11 +762,11 @@ void transpose(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> const
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (unsigned int i = 0; i < size; i++)
+  for (vcl_size_t i = 0; i < size; i++)
   {
-    unsigned int row = i / col_num;
-    unsigned int col = i % col_num;
-    unsigned int new_pos = col * row_num + row;
+    vcl_size_t row = i / col_num;
+    vcl_size_t col = i % col_num;
+    vcl_size_t new_pos = col * row_num + row;
     output_complex[new_pos] = input_complex[i];
   }
   viennacl::linalg::host_based::detail::fft::copy_to_vector(&output_complex[0], data_B, size);
@@ -785,7 +785,7 @@ void real_to_complex(viennacl::vector_base<NumericT> const & in,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-  for (unsigned int i = 0; i < size; i++)
+  for (vcl_size_t i = 0; i < size; i++)
   {
     std::complex<NumericT> val = 0;
     val.real() = in[i];
@@ -803,11 +803,11 @@ void complex_to_real(viennacl::vector_base<NumericT> const & in,
 {
   std::vector<std::complex<NumericT> > input1_complex(size);
   viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input1_complex[0], in, size);
+
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-
-  for (unsigned int i = 0; i < size; i++)
+  for (vcl_size_t i = 0; i < size; i++)
     out[i] = input1_complex[i].real();
 }
 
@@ -817,12 +817,12 @@ void complex_to_real(viennacl::vector_base<NumericT> const & in,
 template<typename NumericT>
 void reverse(viennacl::vector_base<NumericT> & in)
 {
-  unsigned int size = in.size();
+  vcl_size_t size = in.size();
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-  for (unsigned int i = 0; i < size; i++)
+  for (vcl_size_t i = 0; i < size; i++)
   {
     NumericT val1 = in[i];
     NumericT val2 = in[size - i - 1];

@@ -66,12 +66,12 @@ void run_solver_matrix(MatrixT1 const & matrix1, MatrixT2 const & matrix2,Matrix
 
   timer.start();
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
-   	result = viennacl::linalg::solve(matrix1, matrix2, SolverTag());
+    result = viennacl::linalg::solve(matrix1, matrix2, SolverTag());
 
   double exec_time = timer.get();
   viennacl::backend::finish();
-  std::cout << "GPU: ";printOps((matrix1.size1() * matrix1.size1() * matrix2.size2()),(static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS)));
-  std::cout << "GPU: " << (matrix1.size1() * matrix1.size1() * matrix2.size2() * sizeof(NumericT)) / (static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS)) / 1e9 << " GB/sec" << std::endl;
+  std::cout << "GPU: ";printOps(double(matrix1.size1() * matrix1.size1() * matrix2.size2()),(static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS)));
+  std::cout << "GPU: " << double(matrix1.size1() * matrix1.size1() * matrix2.size2() * sizeof(NumericT)) / (static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS)) / 1e9 << " GB/sec" << std::endl;
   std::cout << "Execution time: " << exec_time/BENCHMARK_RUNS << std::endl;
   std::cout << "------- Finnished: " << SolverTag::name() << " ----------" << std::endl;
 }
@@ -92,8 +92,8 @@ void run_solver_vector(MatrixT const & matrix, VectorT2 const & vector2,VectorT 
   }
   double exec_time = timer.get();
   viennacl::backend::finish();
-  std::cout << "GPU: ";printOps((matrix.size1() * matrix.size1()),(static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS)));
-  std::cout << "GPU: "<< (matrix.size1() * matrix.size1() * sizeof(NumericT)) / (static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS)) / 1e9 << " GB/sec" << std::endl;
+  std::cout << "GPU: ";printOps(double(matrix.size1() * matrix.size1()),(static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS)));
+  std::cout << "GPU: "<< double(matrix.size1() * matrix.size1() * sizeof(NumericT)) / (static_cast<double>(exec_time) / static_cast<double>(BENCHMARK_RUNS)) / 1e9 << " GB/sec" << std::endl;
   std::cout << "Execution time: " << exec_time/BENCHMARK_RUNS << std::endl;
   std::cout << "------- Finished: " << SolverTag::name() << " ----------" << std::endl;
 }

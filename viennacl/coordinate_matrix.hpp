@@ -83,7 +83,7 @@ void copy(const CPUMatrixT & cpu_matrix,
         ++data_index;
       }
 
-      while (data_index > (current_fraction + 1) / static_cast<double>(group_num) * num_entries)    //split data equally over 64 groups
+      while (data_index > vcl_size_t(static_cast<double>(current_fraction + 1) / static_cast<double>(group_num)) * num_entries)    //split data equally over 64 groups
         group_boundaries.set(++current_fraction, data_index);
     }
 

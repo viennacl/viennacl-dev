@@ -97,7 +97,7 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
 #endif
   for (x=0; x < static_cast<long>(pointvector[level].size()); ++x)
   {
-    pointx = pointvector[level][x];
+    pointx = pointvector[level][static_cast<unsigned int>(x)];
     /*if (A[level](x,x) > 0)
       diag_sign = 1;
     else
@@ -105,7 +105,7 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
 
     // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
     if (pointx->is_cpoint())
-      P[level](x,pointx->get_coarse_index()) = 1;
+      P[level](static_cast<unsigned int>(x),pointx->get_coarse_index()) = 1;
 
     // When the current line corresponds to a F point then the diagonal is 0 and the rest has to be computed (Yang, p.14)
     if (pointx->is_fpoint())
@@ -128,7 +128,7 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
         // Sum all other coefficients in line x
         row_sum += *col_iter;
 
-        pointy = pointvector[level][y];
+        pointy = pointvector[level][static_cast<unsigned int>(y)];
         // Sum all coefficients that correspond to a strongly influencing C point
         if (pointy->is_cpoint())
           if (pointx->is_influencing(pointy))
@@ -144,13 +144,13 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
         if (pointy->is_cpoint())
         {
           if (temp_res != 0)
-            P[level](x, pointy->get_coarse_index()) = temp_res * A[level](x,pointy->get_index());
+            P[level](static_cast<unsigned int>(x), pointy->get_coarse_index()) = temp_res * A[level](static_cast<unsigned int>(x),pointy->get_index());
         }
       }
 
       //Truncate interpolation if chosen
       if (tag.get_interpolweight() != 0)
-        amg_truncate_row(P[level], x, tag);
+        amg_truncate_row(P[level], static_cast<unsigned int>(x), tag);
     }
   }
 
@@ -201,15 +201,15 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
 #endif
   for (x=0; x < static_cast<long>(pointvector[level].size()); ++x)
   {
-    pointx = pointvector[level][x];
-    if (A[level](x,x) > 0)
+    pointx = pointvector[level][static_cast<unsigned int>(x)];
+    if (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(x)) > 0)
       diag_sign = 1;
     else
       diag_sign = -1;
 
     // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
     if (pointx->is_cpoint())
-      P[level](x,pointx->get_coarse_index()) = 1;
+      P[level](static_cast<unsigned int>(x),pointx->get_coarse_index()) = 1;
 
     // When the current line corresponds to a F point then the diagonal is 0 and the rest has to be computed (Yang, p.14)
     if (pointx->is_fpoint())
@@ -224,7 +224,7 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
         k = static_cast<unsigned int>(col_iter.index2());
-        pointk = pointvector[level][k];
+        pointk = pointvector[level][static_cast<unsigned int>(k)];
 
         // Sum of weakly influencing neighbors + diagonal coefficient
         if (x == k || !pointx->is_influencing(pointk))// || *col_iter * diag_sign > 0)
@@ -243,8 +243,8 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
 
             if (pointm->is_cpoint())
               // Only use coefficients that have opposite sign of diagonal.
-              if (A[level](k,m) * diag_sign < 0)
-                c_sum_row[k] += A[level](k,m);
+              if (A[level](static_cast<unsigned int>(k),static_cast<unsigned int>(m)) * ScalarType(diag_sign) < 0)
+                c_sum_row[static_cast<unsigned int>(k)] += A[level](static_cast<unsigned int>(k), static_cast<unsigned int>(m));
           }
           continue;
         }
@@ -265,20 +265,20 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
           {
             k = iter2.index();
             // Only use coefficients that have opposite sign of diagonal.
-            if (A[level](k,y) * diag_sign < 0)
-              strong_sum += (A[level](x,k) * A[level](k,y)) / (*iter2);
+            if (A[level](static_cast<unsigned int>(k),static_cast<unsigned int>(y)) * ScalarType(diag_sign) < 0)
+              strong_sum += (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(k)) * A[level](static_cast<unsigned int>(k),static_cast<unsigned int>(y))) / (*iter2);
           }
 
           // Calculate coefficient
-          temp_res = - (A[level](x,y) + strong_sum) / (weak_sum);
+          temp_res = - (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(y)) + strong_sum) / (weak_sum);
           if (temp_res != 0)
-            P[level](x,pointy->get_coarse_index()) = temp_res;
+            P[level](static_cast<unsigned int>(x),pointy->get_coarse_index()) = temp_res;
         }
       }
 
       //Truncate iteration if chosen
       if (tag.get_interpolweight() != 0)
-        amg_truncate_row(P[level], x, tag);
+        amg_truncate_row(P[level], static_cast<unsigned int>(x), tag);
     }
   }
 
@@ -384,10 +384,10 @@ void amg_interpol_ag(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
 #endif
   for (x=0; x<static_cast<long>(pointvector[level].size()); ++x)
   {
-    pointx = pointvector[level][x];
+    pointx = pointvector[level][static_cast<unsigned int>(x)];
     pointy = pointvector[level][pointx->get_aggregate()];
     // Point x belongs to aggregate y.
-    P[level](x,pointy->get_coarse_index()) = 1;
+    P[level](static_cast<unsigned int>(x), pointy->get_coarse_index()) = 1;
   }
 
   #ifdef VIENNACL_AMG_DEBUG
@@ -440,10 +440,10 @@ void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
       // Already use Jacobi matrix to save filtered A matrix to speed up computation.
       if (x == y)
         diag += *col_iter;
-      else if (!pointvector[level][x]->is_influencing(pointvector[level][y]))
+      else if (!pointvector[level][static_cast<unsigned int>(x)]->is_influencing(pointvector[level][static_cast<unsigned int>(y)]))
         diag += -*col_iter;
       else
-        Jacobi (x,y) = *col_iter;
+        Jacobi (static_cast<unsigned int>(x), static_cast<unsigned int>(y)) = *col_iter;
     }
     InternalRowIterator row_iter2 = Jacobi.begin1();
     row_iter2 += x;
@@ -453,7 +453,7 @@ void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
         *col_iter2 = - static_cast<ScalarType>(tag.get_interpolweight())/diag * *col_iter2;
     }
     // Diagonal can be computed seperately.
-    Jacobi (x,x) = 1 - static_cast<ScalarType>(tag.get_interpolweight());
+    Jacobi (static_cast<unsigned int>(x), static_cast<unsigned int>(x)) = 1 - static_cast<ScalarType>(tag.get_interpolweight());
   }
 
   #ifdef VIENNACL_AMG_DEBUG

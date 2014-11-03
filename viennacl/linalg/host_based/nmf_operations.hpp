@@ -131,12 +131,12 @@ namespace host_based
   template<typename NumericT>
   void el_wise_mul_div(NumericT       * matrix1,
                        NumericT const * matrix2,
-                       NumericT const * matrix3, unsigned int size)
+                       NumericT const * matrix3, vcl_size_t size)
   {
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for
 #endif
-    for (unsigned int i = 0; i < size; i++)
+    for (vcl_size_t i = 0; i < size; i++)
     {
       NumericT val     = matrix1[i] * matrix2[i];
       NumericT divisor = matrix3[i];
@@ -175,8 +175,6 @@ namespace host_based
     viennacl::matrix_base<NumericT> htmp(k, k, H.row_major());
 
     viennacl::matrix_base<NumericT> appr(V.size1(), V.size2(), V.row_major());
-
-    viennacl::vector<NumericT> diff(V.size1() * V.size2());
 
     NumericT last_diff = 0;
     NumericT diff_init = 0;
@@ -224,7 +222,7 @@ namespace host_based
           break;
 
         // Stagnation check
-        if (std::fabs(diff_val - last_diff) / (diff_val * conf.check_after_steps()) < conf.stagnation_tolerance()) //avoid situations where convergence stagnates
+        if (std::fabs(diff_val - last_diff) / (diff_val * NumericT(conf.check_after_steps())) < conf.stagnation_tolerance()) //avoid situations where convergence stagnates
         {
           if (stagnation_flag)    // iteration stagnates (two iterates with no notable progress)
             break;

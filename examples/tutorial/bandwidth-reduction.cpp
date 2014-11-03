@@ -128,7 +128,7 @@ inline std::vector<int> generate_random_reordering(std::size_t n)
 
     for (std::size_t i = 0; i < n - 1; i++)
     {
-        std::size_t j = i + static_cast<std::size_t>((static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) * (n - 1 - i));
+        std::size_t j = i + static_cast<std::size_t>((static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) * static_cast<double>(n - 1 - i));
         if (j != i)
         {
             tmp = r[i];

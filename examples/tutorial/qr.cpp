@@ -106,17 +106,17 @@ int main (int, const char **)
   {
     for (std::size_t j=0; j<cols; ++j)
     {
-      ublas_A(i,j) = -1.0 + (i+1)*(j+1)
-                     + ( (rand() % 1000) - 500.0) / 1000.0;
+      ublas_A(i,j) = ScalarType(-1.0) + ScalarType((i+1)*(j+1))
+                     + ScalarType( (rand() % 1000) - 500.0) / ScalarType(1000.0);
 
       if (i == j)
-        ublas_A(i,j) += 10.0;
+        ublas_A(i,j) += ScalarType(10.0);
 
       R(i,j) = 0.0;
     }
 
     for (std::size_t j=0; j<rows; ++j)
-      Q(i,j) = 0.0;
+      Q(i,j) = ScalarType(0.0);
   }
 
   // keep initial input matrix for comparison
