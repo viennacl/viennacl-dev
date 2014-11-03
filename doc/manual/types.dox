@@ -149,6 +149,10 @@ The second optional template argument `F` specifies the storage layout and defau
 As an alternative, a `column_major` memory layout can be used.
 The third template argument `alignment` denotes an alignment for the rows and columns for row-major and column-major memory layout and should no longer be specified by the user (cf. `alignment` for the `vector` type).
 
+\image html matrix-padding.svg "Memory layout of a row-major dense matrix. The rows and columns of the matrix may be padded, such that the internal buffer is of size `internal_size1()*internal_size2()` elements."
+
+\note For efficiency purposes, the rows and columns of matrices in ViennaCL may be padded by additional zeros.
+
 \subsection manual-types-matrix-usage Example Usage
 The use of `matrix<T, F>` is similar to that of the counterpart in Boost.uBLAS.
 The operators are overloaded similarly.
@@ -177,6 +181,8 @@ The type requirement for a class instantiated in an object `cpu_matrix is that `
 Please refer to \ref manual-page-interfacing "Interfacing Other Libraries" for an overview of other libraries for which an overload of `copy()` is provided.
 
 \note The internal memory buffer of a `matrix<>` is by default padded with zeros so that the internal matrix size is a multiple of e.g. a power of two.
+
+\note When using `fast_copy()` on a matrix, the padded zeros need to be taken into account correctly. Query `internal_size1()` and `internal_size2()` to do so.
 
 \subsection manual-types-matrix-members Members
 

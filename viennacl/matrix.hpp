@@ -912,6 +912,8 @@ void copy(const std::vector< std::vector<NumericT, A1>, A2> & cpu_matrix,
 //
 /** @brief Copies a dense matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU) without temporary. Matrix-Layout on CPU must be equal to the matrix-layout on the GPU.
 *
+* See \ref manual-types-matrix in the manual for the underlying data layout including padding rows and columns by zero.
+*
 * @param cpu_matrix_begin   Pointer to the first matrix entry. Cf. iterator concept in STL
 * @param cpu_matrix_end     Pointer past the last matrix entry. Cf. iterator concept in STL
 * @param gpu_matrix         A dense ViennaCL matrix
@@ -1109,6 +1111,8 @@ void copy(const matrix<NumericT, F, AlignmentV> & gpu_matrix,
 
 //gpu to cpu, STL type
 /** @brief Copies a dense matrix from the OpenCL device (GPU or multi-core CPU) to the host (CPU).
+*
+* See \ref manual-types-matrix in the manual for the underlying data layout including padding rows and columns by zero.
 *
 * @param gpu_matrix         A dense ViennaCL matrix
 * @param cpu_matrix_begin   Pointer to the output memory on the CPU. User must ensure that provided memory is large enough.
