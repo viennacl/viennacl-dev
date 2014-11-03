@@ -1400,8 +1400,8 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing elementwise power function..." << std::endl;
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(1.0) + random<NumericT>();
-    ublas_v2[i] = NumericT(2.0) + random<NumericT>();
+    ublas_v1[i] = NumericT(1.1) + NumericT(0.5) * random<NumericT>();
+    ublas_v2[i] = NumericT(1.1) + NumericT(0.5) * random<NumericT>();
   }
   UblasVectorType ublas_v3 = ublas_v1;
 
