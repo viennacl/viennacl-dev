@@ -164,6 +164,9 @@ public:
   template<typename LHS, typename RHS, typename OP>
   explicit vector_base(vector_expression<const LHS, const RHS, OP> const & proxy);
 
+  // Copy CTOR:
+  vector_base(const self_type & other);
+
   /** @brief Assignment operator. Other vector needs to be of the same size, or this vector is not yet initialized.
     */
   self_type & operator=(const self_type & vec);

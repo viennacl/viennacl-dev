@@ -321,6 +321,23 @@ vector_base<NumericT, SizeT, DistanceT>::vector_base(vector_expression<const LHS
   self_type::operator=(proxy);
 }
 
+// Copy CTOR:
+template<class NumericT, typename SizeT, typename DistanceT>
+vector_base<NumericT, SizeT, DistanceT>::vector_base(const vector_base<NumericT, SizeT, DistanceT> & other) :
+  size_(other.size_), start_(0), stride_(1),
+  internal_size_(viennacl::tools::align_to_multiple<size_type>(other.size_, dense_padding_size))
+{
+  elements_.switch_active_handle_id(viennacl::traits::active_handle_id(other));
+  if (internal_size() > 0)
+  {
+    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(other));
+    clear();
+    self_type::operator=(other);
+  }
+}
+
+
+
 template<class NumericT, typename SizeT, typename DistanceT>
 vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator=(const self_type & vec)
 {

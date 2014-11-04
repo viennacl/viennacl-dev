@@ -61,6 +61,10 @@ public:
     : base_type(const_cast<handle_type &>(v.handle()),
                 entry_range.size(), v.start() + v.stride() * entry_range.start(), v.stride()) {}
 
+  vector_range(self_type const & other)
+    : base_type(const_cast<handle_type &>(other.handle()),
+                other.size(), other.start(), other.stride()) {}
+
   using base_type::operator=;
 };
 
@@ -203,6 +207,10 @@ public:
   vector_slice(self_type const & v, slice const & entry_slice)
     : base_type(const_cast<handle_type &>(v.handle()),
                 entry_slice.size(), v.start() + v.stride() * entry_slice.start(), v.stride() * entry_slice.stride()) {}
+
+  vector_slice(self_type const & other)
+    : base_type(const_cast<handle_type &>(other.handle()),
+                other.size(), other.start(), other.stride()) {}
 
   using base_type::operator=;
 
