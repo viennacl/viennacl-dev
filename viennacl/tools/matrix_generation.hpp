@@ -49,40 +49,40 @@ void generate_fdm_laplace(MatrixType & A, vcl_size_t points_x, vcl_size_t points
 {
   typedef typename MatrixType::value_type  ScalarType;
 
-  std::size_t total_unknowns = points_x * points_y;
+  vcl_size_t total_unknowns = points_x * points_y;
 
   A.clear();
   A.resize(total_unknowns, total_unknowns, false);
 
-  for (std::size_t i=0; i<points_x; ++i)
+  for (vcl_size_t i=0; i<points_x; ++i)
   {
-    for (std::size_t j=0; j<points_y; ++j)
+    for (vcl_size_t j=0; j<points_y; ++j)
     {
-      std::size_t row = i + j * points_x;
+      vcl_size_t row = i + j * points_x;
 
       A(row, row) = 4.0;
 
       if (i > 0)
       {
-        std::size_t col = (i-1) + j * points_x;
+        vcl_size_t col = (i-1) + j * points_x;
         A(row, col) = -1.0;
       }
 
       if (j > 0)
       {
-        std::size_t col = i + (j-1) * points_x;
+        vcl_size_t col = i + (j-1) * points_x;
         A(row, col) = -1.0;
       }
 
       if (i < points_x-1)
       {
-        std::size_t col = (i+1) + j * points_x;
+        vcl_size_t col = (i+1) + j * points_x;
         A(row, col) = -1.0;
       }
 
       if (j < points_y-1)
       {
-        std::size_t col = i + (j+1) * points_x;
+        vcl_size_t col = i + (j+1) * points_x;
         A(row, col) = -1.0;
       }
     }

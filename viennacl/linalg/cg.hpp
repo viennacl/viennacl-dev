@@ -128,7 +128,7 @@ viennacl::vector<NumericT> solve(MatrixT const & A, //MatrixType const & A,
   viennacl::vector<NumericT> Ap = viennacl::linalg::prod(A, p);
   viennacl::vector<NumericT> inner_prod_buffer = viennacl::zero_vector<NumericT>(3*256, viennacl::traits::context(rhs)); // temporary buffer
   std::vector<NumericT>      host_inner_prod_buffer(inner_prod_buffer.size());
-  std::size_t                buffer_size_per_vector = inner_prod_buffer.size() / 3;
+  vcl_size_t                 buffer_size_per_vector = inner_prod_buffer.size() / 3;
 
   NumericT norm_rhs_squared = viennacl::linalg::norm_2(residual); norm_rhs_squared *= norm_rhs_squared;
 

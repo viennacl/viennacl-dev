@@ -52,16 +52,16 @@ protected:
 
   static void replace_offset(std::string & str, MorphBase const & morph)
   {
-    size_t pos = 0;
+    vcl_size_t pos = 0;
     while ((pos=str.find("$OFFSET", pos))!=std::string::npos)
     {
       std::string postprocessed;
-      size_t pos_po = str.find('{', pos);
-      size_t pos_pe = str.find('}', pos_po);
+      vcl_size_t pos_po = str.find('{', pos);
+      vcl_size_t pos_pe = str.find('}', pos_po);
 
       if (MorphBase2D const * p = dynamic_cast<MorphBase2D const *>(&morph))
       {
-        size_t pos_comma = str.find(',', pos_po);
+        vcl_size_t pos_comma = str.find(',', pos_po);
         std::string i = str.substr(pos_po + 1, pos_comma - pos_po - 1);
         std::string j = str.substr(pos_comma + 1, pos_pe - pos_comma - 1);
         postprocessed = (*p)(i, j);

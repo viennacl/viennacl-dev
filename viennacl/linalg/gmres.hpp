@@ -174,7 +174,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag
   VectorT result = rhs;
   viennacl::traits::clear(result);
 
-  std::size_t krylov_dim = static_cast<std::size_t>(tag.krylov_dim());
+  vcl_size_t krylov_dim = static_cast<vcl_size_t>(tag.krylov_dim());
   if (problem_size < krylov_dim)
     krylov_dim = problem_size; //A Krylov space larger than the matrix would lead to seg-faults (mathematically, error is certain to be zero already)
 
@@ -225,7 +225,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag
     //
     // Iterate up until maximal Krylove space dimension is reached:
     //
-    std::size_t k = 0;
+    vcl_size_t k = 0;
     for (k = 0; k < krylov_dim; ++k)
     {
       tag.iters( tag.iters() + 1 ); //increase iteration counter

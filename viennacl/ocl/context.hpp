@@ -403,10 +403,10 @@ public:
       std::ifstream cached((cache_path_+sha1).c_str(),std::ios::binary);
       if (cached)
       {
-        size_t len;
+        vcl_size_t len;
         std::vector<unsigned char> buffer;
 
-        cached.read((char*)&len, sizeof(std::size_t));
+        cached.read((char*)&len, sizeof(vcl_size_t));
         buffer.resize(len);
         cached.read((char*)buffer.data(), std::streamsize(len));
 
@@ -435,7 +435,7 @@ public:
       std::cout << "Build Status = " << status << " ( Err = " << err << " )" << std::endl;
 
       char *build_log;
-      size_t ret_val_size;
+      size_t ret_val_size; // don't use vcl_size_t here
       err = clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_LOG, 0, NULL, &ret_val_size);
       build_log = new char[ret_val_size+1];
       err = clGetProgramBuildInfo(temp, devices_[0].id(), CL_PROGRAM_BUILD_LOG, ret_val_size, build_log, NULL);
@@ -449,14 +449,14 @@ public:
 
     if (cache_path_.size())
     {
-      std::size_t len;
+      vcl_size_t len;
 
-      std::vector<std::size_t> sizes(devices_.size());
+      std::vector<vcl_size_t> sizes(devices_.size());
       clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,0,NULL,&len);
       clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,len,(void*)sizes.data(),NULL);
 
       std::vector<unsigned char*> binaries;
-      for (std::size_t i = 0; i < devices_.size(); ++i)
+      for (vcl_size_t i = 0; i < devices_.size(); ++i)
         binaries.push_back(new unsigned char[sizes[i]]);
 
       clGetProgramInfo(temp,CL_PROGRAM_BINARIES,0,NULL,&len);
@@ -465,10 +465,10 @@ public:
       std::string sha1 =  tools::sha1(source);
       std::ofstream cached((cache_path_+sha1).c_str(),std::ios::binary);
 
-      cached.write((char*)&sizes[0], sizeof(size_t));
+      cached.write((char*)&sizes[0], sizeof(vcl_size_t));
       cached.write((char*)binaries[0], std::streamsize(sizes[0]));
 
-      for (std::size_t i = 0; i < devices_.size(); ++i)
+      for (vcl_size_t i = 0; i < devices_.size(); ++i)
         delete[] binaries[i];
 
       VIENNACL_ERR_CHECK(err);

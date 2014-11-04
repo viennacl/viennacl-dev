@@ -38,7 +38,7 @@
 #include "viennacl/tools/tools.hpp"
 
 namespace viennacl
-{  
+{
 namespace device_specific
 {
 
@@ -102,7 +102,7 @@ private:
       for (mapping_type::const_iterator iit = it->begin(); iit != it->end(); ++iit)
         if (mapped_scalar_reduction * p = dynamic_cast<mapped_scalar_reduction*>(iit->second.get()))
           exprs.push_back(p);
-    std::size_t N = exprs.size();
+    vcl_size_t N = exprs.size();
 
     std::string arguments = generate_value_kernel_argument("unsigned int", "N");
     for (unsigned int k = 0; k < N; ++k)
@@ -315,10 +315,10 @@ public:
     cl_uint size = 0;
     for (statements_container::data_type::const_iterator it = statements.data().begin(); it != statements.data().end(); ++it)
     {
-      std::vector<size_t> reductions_idx;
+      std::vector<vcl_size_t> reductions_idx;
       tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&utils::is_reduction, reductions_idx), false);
       size = static_cast<cl_uint>(vector_size(lhs_most(it->array(), reductions_idx[0]), false));
-      for (std::vector<size_t>::iterator itt = reductions_idx.begin(); itt != reductions_idx.end(); ++itt)
+      for (std::vector<vcl_size_t>::iterator itt = reductions_idx.begin(); itt != reductions_idx.end(); ++itt)
         reductions.push_back(&it->array()[*itt]);
     }
 

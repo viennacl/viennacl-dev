@@ -653,14 +653,14 @@ void matrix_row(const matrix_base<NumericT> & mat, unsigned int i, vector_base<N
     detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
     for (vcl_size_t j = 0; j < v_size; ++j)
-      data_vec[v_start + j * v_inc] = wrapper_A(static_cast<std::size_t>(i), j);
+      data_vec[v_start + j * v_inc] = wrapper_A(static_cast<vcl_size_t>(i), j);
   }
   else
   {
     detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
     for (vcl_size_t j = 0; j < v_size; ++j)
-      data_vec[v_start + j * v_inc] = wrapper_A(static_cast<std::size_t>(i), j);
+      data_vec[v_start + j * v_inc] = wrapper_A(static_cast<vcl_size_t>(i), j);
   }
 }
 
@@ -690,14 +690,14 @@ void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_bas
     detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
     for (vcl_size_t i = 0; i < v_size; ++i)
-      data_vec[v_start + i * v_inc] = wrapper_A(i, static_cast<std::size_t>(j));
+      data_vec[v_start + i * v_inc] = wrapper_A(i, static_cast<vcl_size_t>(j));
   }
   else
   {
     detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
     for (vcl_size_t i = 0; i < v_size; ++i)
-      data_vec[v_start + i * v_inc] = wrapper_A(i, static_cast<std::size_t>(j));
+      data_vec[v_start + i * v_inc] = wrapper_A(i, static_cast<vcl_size_t>(j));
   }
 }
 

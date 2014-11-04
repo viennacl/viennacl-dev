@@ -195,8 +195,8 @@ long read_matrix_market_file_impl(MatrixT & mat,
       if (is_header)
       {
         //read header line
-        std::size_t rows;
-        std::size_t cols;
+        vcl_size_t rows;
+        vcl_size_t cols;
 
         if (line.good())
           line >> rows;

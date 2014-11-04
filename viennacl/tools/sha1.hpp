@@ -40,7 +40,7 @@ namespace detail
   public:
     typedef uint32_t digest32_t[5];
     typedef uint8_t digest8_t[20];
-    inline static uint32_t LeftRotate(uint32_t value, size_t count) {
+    inline static uint32_t LeftRotate(uint32_t value, vcl_size_t count) {
       return (value << count) ^ (value >> (32-count));
     }
     sha1(){ reset(); }
@@ -81,13 +81,13 @@ namespace detail
       }
       return *this;
     }
-    sha1& processBytes(const void* const data, size_t len) {
+    sha1& processBytes(const void* const data, vcl_size_t len) {
       const uint8_t* block = static_cast<const uint8_t*>(data);
       processBlock(block, block + len);
       return *this;
     }
     const uint32_t* getDigest(digest32_t digest) {
-      size_t bitCount = this->m_byteCount * 8;
+      vcl_size_t bitCount = this->m_byteCount * 8;
       processByte(0x80);
       if (this->m_blockByteIndex > 56) {
         while (m_blockByteIndex != 0) {
@@ -116,7 +116,7 @@ namespace detail
     const uint8_t* getDigestBytes(digest8_t digest) {
       digest32_t d32;
       getDigest(d32);
-      size_t di = 0;
+      vcl_size_t di = 0;
       digest[di++] = static_cast<uint8_t>((d32[0] >> 24) & 0xFF);
       digest[di++] = static_cast<uint8_t>((d32[0] >> 16) & 0xFF);
       digest[di++] = static_cast<uint8_t>((d32[0] >> 8) & 0xFF);
@@ -147,13 +147,13 @@ namespace detail
   protected:
     void processBlock() {
       uint32_t w[80];
-      for (size_t i = 0; i < 16; i++) {
+      for (vcl_size_t i = 0; i < 16; i++) {
         w[i] = static_cast<uint32_t>(m_block[i*4 + 0] << 24);
         w[i] |= static_cast<uint32_t>(m_block[i*4 + 1] << 16);
         w[i] |= static_cast<uint32_t>(m_block[i*4 + 2] << 8);
         w[i] |= static_cast<uint32_t>(m_block[i*4 + 3]);
       }
-      for (size_t i = 16; i < 80; i++) {
+      for (vcl_size_t i = 16; i < 80; i++) {
         w[i] = LeftRotate((w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16]), 1);
       }
 
@@ -163,7 +163,7 @@ namespace detail
       uint32_t d = m_digest[3];
       uint32_t e = m_digest[4];
 
-      for (std::size_t i=0; i<80; ++i) {
+      for (vcl_size_t i=0; i<80; ++i) {
         uint32_t f = 0;
         uint32_t k = 0;
 
@@ -197,8 +197,8 @@ namespace detail
   private:
     digest32_t m_digest;
     uint8_t m_block[64];
-    size_t m_blockByteIndex;
-    size_t m_byteCount;
+    vcl_size_t m_blockByteIndex;
+    vcl_size_t m_byteCount;
   };
 
 }

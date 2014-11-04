@@ -98,7 +98,7 @@ void copy(const VectorType & cpu_vector,
   if (cpu_vector.end() - cpu_vector.begin() > 0)
   {
     //we require that the size of the gpu_vector is larger or equal to the cpu-size
-    std::vector<NumericT> temp_buffer(static_cast<std::size_t>(cpu_vector.end() - cpu_vector.begin()));
+    std::vector<NumericT> temp_buffer(static_cast<vcl_size_t>(cpu_vector.end() - cpu_vector.begin()));
     std::copy(cpu_vector.begin(), cpu_vector.end(), temp_buffer.begin());
     viennacl::backend::memory_write(gpu_vector_range.handle(), sizeof(NumericT)*gpu_vector_range.start(), sizeof(NumericT)*temp_buffer.size(), &(temp_buffer[0]));
   }

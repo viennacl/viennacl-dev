@@ -350,7 +350,7 @@ protected:
     }
   }
 
-  static bool is_node_trans(scheduler::statement::container_type const & array, size_t root_idx, leaf_t leaf_type)
+  static bool is_node_trans(scheduler::statement::container_type const & array, vcl_size_t root_idx, leaf_t leaf_type)
   {
     bool res = false;
     scheduler::lhs_rhs_element scheduler::statement_node::*ptr;
@@ -403,7 +403,7 @@ protected:
         if (utils::call_on_matrix(*itt, utils::stride1_fun())>1 || utils::call_on_matrix(*itt, utils::stride2_fun())>2)
           return true;
 
-      std::vector<size_t> striding_operators;
+      std::vector<vcl_size_t> striding_operators;
       tree_parsing::traverse(*it, it->root(), tree_parsing::filter(&is_striding_operator, striding_operators), false);
       if(striding_operators.size() > 0)
           return true;
@@ -547,14 +547,14 @@ public:
     unsigned int scalartype_size = utils::size_of(lhs_most(statement.array(), statement.root()).lhs.numeric_type);
 
     //Query device informations
-    size_t lmem_available = static_cast<size_t>(device.local_mem_size());
-    size_t lmem_usage = scalartype_size*n_lmem_elements();
+    vcl_size_t lmem_available = static_cast<vcl_size_t>(device.local_mem_size());
+    vcl_size_t lmem_usage = scalartype_size*n_lmem_elements();
     if (lmem_usage>lmem_available)
       return TEMPLATE_LOCAL_MEMORY_OVERFLOW;
 
     //Invalid work group size
-    size_t max_workgroup_size = device.max_work_group_size();
-    std::vector<size_t> max_work_item_sizes = device.max_work_item_sizes();
+    vcl_size_t max_workgroup_size = device.max_work_group_size();
+    std::vector<vcl_size_t> max_work_item_sizes = device.max_work_item_sizes();
     if (p_.local_size_0*p_.local_size_1 > max_workgroup_size)
       return TEMPLATE_WORK_GROUP_SIZE_OVERFLOW;
     if (p_.local_size_0 > max_work_item_sizes[0])

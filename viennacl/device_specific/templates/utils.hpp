@@ -69,7 +69,7 @@ inline void process_all(std::string const & type_key, std::string const & str,
 
 inline void process_all_at(std::string const & type_key, std::string const & str,
                            utils::kernel_generation_stream & stream, std::vector<mapping_type> const & mappings,
-                           size_t root_idx, leaf_t leaf)
+                           vcl_size_t root_idx, leaf_t leaf)
 {
   for (std::vector<mapping_type>::const_iterator mit = mappings.begin(); mit != mappings.end(); ++mit)
   {

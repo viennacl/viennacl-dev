@@ -40,7 +40,7 @@
 #include "viennacl/scheduler/io.hpp"
 
 namespace viennacl
-{  
+{
 namespace device_specific
 {
 
@@ -70,7 +70,7 @@ private:
     return p_.local_size_0*(p_.local_size_1+1);
   }
 
-  static void parse(scheduler::statement const & statement, std::vector<size_t> & idx, bool & is_trans, scheduler::lhs_rhs_element & matrix)
+  static void parse(scheduler::statement const & statement, std::vector<vcl_size_t> & idx, bool & is_trans, scheduler::lhs_rhs_element & matrix)
   {
     tree_parsing::traverse(statement, statement.root(), tree_parsing::filter(&utils::is_reduction, idx), false);
     is_trans = is_node_trans(statement.array(), idx[0], LHS_NODE_TYPE);
@@ -228,7 +228,7 @@ private:
     std::vector<mapping_type>::const_iterator mit;
     for (mit = mappings.begin(), sit = statements.data().begin(); mit != mappings.end(); ++mit, ++sit)
     {
-      std::vector<size_t> idx;
+      std::vector<vcl_size_t> idx;
       scheduler::lhs_rhs_element A;
       parse(*sit, idx, is_trans, A);
       row_major = utils::call_on_matrix(A, utils::row_major_fun());
@@ -253,7 +253,7 @@ public:
 
   void enqueue(std::string const & kernel_prefix, std::vector<lazy_program_compiler> & programs, statements_container const & statements)
   {
-    std::vector<size_t> idx;
+    std::vector<vcl_size_t> idx;
     scheduler::lhs_rhs_element A;
     bool is_trans;
     parse(statements.data().front(), idx, is_trans, A);

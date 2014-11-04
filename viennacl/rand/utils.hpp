@@ -32,7 +32,7 @@ namespace rand{
 
 template<class SCALARTYPE, class DISTRIBUTION>
 struct random_matrix_t{
-    typedef size_t size_type;
+    typedef vcl_size_t size_type;
     random_matrix_t(size_type _size1, unsigned int _size2, DISTRIBUTION const & _distribution) : size1(_size1), size2(_size2), distribution(_distribution){
         #ifdef VIENNACL_WITH_OPENCL
         viennacl::linalg::kernels::rand<SCALARTYPE,1>::init();
@@ -46,7 +46,7 @@ struct random_matrix_t{
 
 template<class SCALARTYPE, class DISTRIBUTION>
 struct random_vector_t{
-    typedef size_t size_type;
+    typedef vcl_size_t size_type;
     random_vector_t(size_type _size, DISTRIBUTION const & _distribution) : size(_size), distribution(_distribution){
         #ifdef VIENNACL_WITH_OPENCL
         viennacl::linalg::kernels::rand<SCALARTYPE,1>::init();

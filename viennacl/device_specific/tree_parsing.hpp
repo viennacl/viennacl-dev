@@ -85,9 +85,9 @@ class filter : public traversal_functor
 public:
   typedef bool (*pred_t)(scheduler::statement_node const & node);
 
-  filter(pred_t pred, std::vector<size_t> & out) : pred_(pred), out_(out){ }
+  filter(pred_t pred, std::vector<vcl_size_t> & out) : pred_(pred), out_(out){ }
 
-  void operator()(scheduler::statement const & statement, size_t root_idx, leaf_t) const
+  void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t) const
   {
     scheduler::statement_node const * root_node = &statement.array()[root_idx];
     if (pred_(*root_node))
@@ -95,7 +95,7 @@ public:
   }
 private:
   pred_t pred_;
-  std::vector<size_t> & out_;
+  std::vector<vcl_size_t> & out_;
 };
 
 class filter_elements : public traversal_functor
@@ -103,7 +103,7 @@ class filter_elements : public traversal_functor
 public:
   filter_elements(scheduler::statement_node_subtype subtype, std::vector<scheduler::lhs_rhs_element> & out) : subtype_(subtype), out_(out) { }
 
-  void operator()(scheduler::statement const & statement, size_t root_idx, leaf_t) const
+  void operator()(scheduler::statement const & statement, vcl_size_t root_idx, leaf_t) const
   {
     scheduler::statement_node const * root_node = &statement.array()[root_idx];
     if (root_node->lhs.subtype==subtype_)
@@ -357,7 +357,7 @@ private:
 };
 
 inline void process(utils::kernel_generation_stream & stream, leaf_t leaf, std::string const & type_key, std::string const & to_process,
-                    scheduler::statement const & statement, size_t root_idx, mapping_type const & mapping, std::set<std::string> & already_processed)
+                    scheduler::statement const & statement, vcl_size_t root_idx, mapping_type const & mapping, std::set<std::string> & already_processed)
 {
   process_traversal traversal_functor(type_key, to_process, stream, mapping, already_processed);
   scheduler::statement_node const & root_node = statement.array()[root_idx];
@@ -469,7 +469,7 @@ public:
 
   static inline void append(char*& p, const char * str)
   {
-    std::size_t n = std::strlen(str);
+    vcl_size_t n = std::strlen(str);
     std::memcpy(p, str, n);
     p+=n;
   }

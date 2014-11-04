@@ -84,7 +84,7 @@ inline bool is_vector_reduction(scheduler::statement_node const & node)
       || node.op.type_family==scheduler::OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY;
 }
 
-inline scheduler::statement_node const & lhs_most(scheduler::statement::container_type const & array, size_t root)
+inline scheduler::statement_node const & lhs_most(scheduler::statement::container_type const & array, vcl_size_t root)
 {
   scheduler::statement_node const * current = &array[root];
   while (current->lhs.type_family==scheduler::COMPOSITE_OPERATION_FAMILY)
@@ -187,7 +187,7 @@ namespace tree_parsing
   inline void traverse(scheduler::statement const & statement, vcl_size_t root_idx, Fun const & fun, bool inspect);
 
   inline void process(utils::kernel_generation_stream & stream, leaf_t leaf, std::string const & type_key, std::string const & to_process,
-                      scheduler::statement const & statement, size_t root_idx, mapping_type const & mapping, std::set<std::string> & already_processed);
+                      scheduler::statement const & statement, vcl_size_t root_idx, mapping_type const & mapping, std::set<std::string> & already_processed);
   inline std::string evaluate(leaf_t leaf, std::map<std::string, std::string> const & accessors, scheduler::statement const & statement, vcl_size_t root_idx,mapping_type const & mapping);
 }
 
