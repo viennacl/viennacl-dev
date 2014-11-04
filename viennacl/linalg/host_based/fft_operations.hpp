@@ -779,18 +779,18 @@ template<typename NumericT>
 void real_to_complex(viennacl::vector_base<NumericT> const & in,
                      viennacl::vector_base<NumericT>       & out, vcl_size_t size)
 {
-
-  std::vector<std::complex<NumericT> > out_complex(size);
+  NumericT const * data_in  = detail::extract_raw_pointer<NumericT>(in);
+  NumericT       * data_out = detail::extract_raw_pointer<NumericT>(out);
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-  for (vcl_size_t i = 0; i < size; i++)
+  for (long i2 = 0; i2 < long(size); i2++)
   {
-    std::complex<NumericT> val = 0;
-	 out_complex[i] = (in[i], 0); 
+    vcl_size_t i = static_cast<vcl_size_t>(i2);
+    data_out[2*i  ] = data_in[i];
+    data_out[2*i+1] = NumericT(0);
   }
-  viennacl::linalg::host_based::detail::fft::copy_to_vector(&out_complex[0], out, int(size));
 }
 
 /**
@@ -800,14 +800,14 @@ template<typename NumericT>
 void complex_to_real(viennacl::vector_base<NumericT> const & in,
                      viennacl::vector_base<NumericT>       & out, vcl_size_t size)
 {
-  std::vector<std::complex<NumericT> > input1_complex(size);
-  viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input1_complex[0], in, size);
+  NumericT const * data_in  = detail::extract_raw_pointer<NumericT>(in);
+  NumericT       * data_out = detail::extract_raw_pointer<NumericT>(out);
 
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-  for (vcl_size_t i = 0; i < size; i++)
-    out[i] = input1_complex[i].real();
+  for (long i = 0; i < long(size); i++)
+    data_out[i] = data_in[2*i];
 }
 
 /**
