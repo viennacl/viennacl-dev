@@ -123,7 +123,7 @@ void bench(size_t BLAS1_N, size_t BLAS2_M, size_t BLAS2_N, size_t BLAS3_M, size_
     BENCHMARK_OP(C = prod(A, trans(BT)),         "GEMM-NT",      double(2*BLAS3_M*BLAS3_N*BLAS3_K)/time_spent*1e-9, "GFLOPs/s");
     BENCHMARK_OP(C = prod(trans(AT), B),         "GEMM-TN",      double(2*BLAS3_M*BLAS3_N*BLAS3_K)/time_spent*1e-9, "GFLOPs/s");
     BENCHMARK_OP(C = prod(trans(AT), trans(BT)), "GEMM-TT",      double(2*BLAS3_M*BLAS3_N*BLAS3_K)/time_spent*1e-9, "GFLOPs/s");
-    BENCHMARK_OP(lu_factorize(A),                "LU-FACTORIZE", double(2*BLAS3_M*BLAS3_K*BLAS3_K)/time_spent*1e-9, "GFLOPs/s");
+    //BENCHMARK_OP(lu_factorize(A),                "LU-FACTORIZE", double(2*BLAS3_M*BLAS3_K*BLAS3_K)/time_spent*1e-9, "GFLOPs/s");
   }
 
 
@@ -131,6 +131,16 @@ void bench(size_t BLAS1_N, size_t BLAS2_M, size_t BLAS2_N, size_t BLAS3_M, size_
 
 int main()
 {
+#ifdef VIENNACL_WITH_OPENCL
+  std::cout << std::endl;
+  std::cout << "----------------------------------------------" << std::endl;
+  std::cout << "               Device Info" << std::endl;
+  std::cout << "----------------------------------------------" << std::endl;
+  std::cout << std::endl;
+  std::cout << viennacl::ocl::current_device().info() << std::endl;
+  std::cout << std::endl;
+#endif
+
   std::size_t BLAS1_N = 10000000;
 
   std::size_t BLAS2_M = 3840;
@@ -144,5 +154,8 @@ int main()
   std::cout << "----------------" << std::endl;
   bench<float>(BLAS1_N, BLAS2_M, BLAS2_N, BLAS3_M, BLAS3_N, BLAS3_K, "s");
   std::cout << "----" << std::endl;
+#ifdef VIENNACL_WITH_OPENCL
+  if ( viennacl::ocl::current_device().double_support() )
+#endif
   bench<double>(BLAS1_N, BLAS2_M, BLAS2_N, BLAS3_M, BLAS3_N, BLAS3_K, "d");
 }
