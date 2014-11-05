@@ -971,10 +971,6 @@ namespace detail
     vcl_size_t num_blocks_C2 = (C_size2 - 1) / blocksize + 1;
     vcl_size_t num_blocks_A2 = (A_size2 - 1) / blocksize + 1;
 
-    std::vector<NumericT> buffer_A(blocksize * blocksize); // row-major
-    std::vector<NumericT> buffer_B(blocksize * blocksize); // column-major
-    std::vector<NumericT> buffer_C(blocksize * blocksize); // row-major
-
     //
     // outer loop pair: Run over all blocks with indices (block_idx_i, block_idx_j) of the result matrix C:
     //
@@ -983,6 +979,11 @@ namespace detail
 #endif
     for (long block_idx_i2=0; block_idx_i2<static_cast<long>(num_blocks_C1); ++block_idx_i2)
     {
+      // thread-local auxiliary buffers
+      std::vector<NumericT> buffer_A(blocksize * blocksize); // row-major
+      std::vector<NumericT> buffer_B(blocksize * blocksize); // column-major
+      std::vector<NumericT> buffer_C(blocksize * blocksize); // row-major
+
       vcl_size_t block_idx_i = static_cast<vcl_size_t>(block_idx_i2);
       for (vcl_size_t block_idx_j=0; block_idx_j<num_blocks_C2; ++block_idx_j)
       {
