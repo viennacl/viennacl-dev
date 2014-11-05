@@ -48,7 +48,7 @@ void bisectSmall(const viennacl::linalg::detail::InputData<NumericT> &input, vie
 
 
   dim3  blocks(1, 1, 1);
-  dim3  threads(MAX_THREADS_BLOCK_SMALL_MATRIX, 1, 1);
+  dim3  threads(VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX, 1, 1);
 
   bisectKernelSmall<<< blocks, threads >>>(
     viennacl::linalg::cuda::detail::cuda_arg<NumericT>(input.g_a),
@@ -73,7 +73,7 @@ void bisectLarge(const viennacl::linalg::detail::InputData<NumericT> &input, vie
  {
 
   dim3  blocks(1, 1, 1);
-  dim3  threads(MAX_THREADS_BLOCK, 1, 1);
+  dim3  threads(VIENNACL_BISECT_MAX_THREADS_BLOCK, 1, 1);
   bisectKernelLarge<<< blocks, threads >>>
     (viennacl::linalg::cuda::detail::cuda_arg<NumericT>(input.g_a),
      viennacl::linalg::cuda::detail::cuda_arg<NumericT>(input.g_b) + 1,
@@ -104,11 +104,11 @@ void bisectLarge_OneIntervals(const viennacl::linalg::detail::InputData<NumericT
  {
 
   unsigned int num_one_intervals = result.g_num_one;
-  unsigned int num_blocks = viennacl::linalg::detail::getNumBlocksLinear(num_one_intervals, MAX_THREADS_BLOCK);
+  unsigned int num_blocks = viennacl::linalg::detail::getNumBlocksLinear(num_one_intervals, VIENNACL_BISECT_MAX_THREADS_BLOCK);
   dim3 grid_onei;
   grid_onei.x = num_blocks;
   grid_onei.y = 1, grid_onei.z = 1;
-  dim3 threads_onei(MAX_THREADS_BLOCK, 1, 1);
+  dim3 threads_onei(VIENNACL_BISECT_MAX_THREADS_BLOCK, 1, 1);
 
 
   bisectKernelLarge_OneIntervals<<< grid_onei , threads_onei >>>
@@ -138,7 +138,7 @@ void bisectLarge_MultIntervals(const viennacl::linalg::detail::InputData<Numeric
 
     // setup the execution environment
     dim3  grid_mult(num_blocks_mult, 1, 1);
-    dim3  threads_mult(MAX_THREADS_BLOCK, 1, 1);
+    dim3  threads_mult(VIENNACL_BISECT_MAX_THREADS_BLOCK, 1, 1);
 
     bisectKernelLarge_MultIntervals<<< grid_mult, threads_mult >>>
       (viennacl::linalg::cuda::detail::cuda_arg<NumericT>(input.g_a),

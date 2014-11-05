@@ -847,6 +847,179 @@ namespace viennacl
     }
 
 
+    /** @brief Computes the maximum of a vector with final reduction on the CPU
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template<typename NumericT>
+    void max_impl(vector_base<NumericT> const & vec, viennacl::scalar<NumericT> & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::max_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::max_impl(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::max_impl(vec, result);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Computes the supremum norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template<typename LHS, typename RHS, typename OP, typename NumericT>
+    void max_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec, viennacl::scalar<NumericT> & result)
+    {
+      viennacl::vector<NumericT> temp = vec;
+      max_impl(temp, result);
+    }
+
+
+    /** @brief Computes the maximum of a vector with final reduction on the CPU
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template<typename T>
+    void max_cpu(vector_base<T> const & vec, T & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::max_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::max_cpu(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::max_cpu(vec, result);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Computes the supremum norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template<typename LHS, typename RHS, typename OP, typename S2>
+    void max_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec, S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
+      max_cpu(temp, result);
+    }
+
+
+    /** @brief Computes the minimum of a vector with final reduction on the CPU
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template<typename NumericT>
+    void min_impl(vector_base<NumericT> const & vec, viennacl::scalar<NumericT> & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::min_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::min_impl(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::min_impl(vec, result);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Computes the supremum norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template<typename LHS, typename RHS, typename OP, typename NumericT>
+    void min_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec, viennacl::scalar<NumericT> & result)
+    {
+      viennacl::vector<NumericT> temp = vec;
+      min_impl(temp, result);
+    }
+
+
+    /** @brief Computes the minimum of a vector with final reduction on the CPU
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template<typename T>
+    void min_cpu(vector_base<T> const & vec, T & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::min_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::min_cpu(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::min_cpu(vec, result);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Computes the supremum norm of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template<typename LHS, typename RHS, typename OP, typename S2>
+    void min_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec, S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
+      min_cpu(temp, result);
+    }
+
+
+
     /** @brief Computes a plane rotation of two vectors.
     *
     * Computes (x,y) <- (alpha * x + beta * y, -beta * x + alpha * y)

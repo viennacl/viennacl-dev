@@ -383,6 +383,71 @@ cl_uint index_norm_inf(vector_base<NumericT> const & x)
   return static_cast<cl_uint>(host_result);
 }
 
+////////// max
+
+/** @brief Computes the maximum of a vector
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void max_impl(vector_base<NumericT> const & x,
+                   scalar<NumericT> & result)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  scheduler::statement statement = scheduler::preset::max(&result, &x);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("max", statement);
+}
+
+/** @brief Computes the supremum-norm of a vector
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void max_cpu(vector_base<NumericT> const & x,
+                  NumericT & result)
+{
+  scalar<NumericT> tmp(0, viennacl::traits::context(x));
+  max_impl(x, tmp);
+  result = tmp;
+}
+
+
+////////// min
+
+/** @brief Computes the minimum of a vector
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void min_impl(vector_base<NumericT> const & x,
+                   scalar<NumericT> & result)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  scheduler::statement statement = scheduler::preset::min(&result, &x);
+  kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("min", statement);
+}
+
+/** @brief Computes the supremum-norm of a vector
+*
+* @param vec The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void min_cpu(vector_base<NumericT> const & x,
+                  NumericT & result)
+{
+  scalar<NumericT> tmp(0, viennacl::traits::context(x));
+  min_impl(x, tmp);
+  result = tmp;
+}
+
+
+
 //TODO: Special case x == y allows improvement!!
 /** @brief Computes a plane rotation of two vectors.
 *

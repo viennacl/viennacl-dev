@@ -142,6 +142,10 @@ inline void norm_impl(lhs_rhs_element const & x,
       viennacl::linalg::norm_2_impl(*x.vector_float, *s.scalar_float);
     else if (op_type == OPERATION_UNARY_NORM_INF_TYPE)
       viennacl::linalg::norm_inf_impl(*x.vector_float, *s.scalar_float);
+    else if (op_type == OPERATION_UNARY_MAX_TYPE)
+      viennacl::linalg::max_impl(*x.vector_float, *s.scalar_float);
+    else if (op_type == OPERATION_UNARY_MIN_TYPE)
+      viennacl::linalg::min_impl(*x.vector_float, *s.scalar_float);
     else
       throw statement_not_supported_exception("Invalid norm type in scheduler::detail::norm_impl()");
     break;
@@ -152,6 +156,10 @@ inline void norm_impl(lhs_rhs_element const & x,
       viennacl::linalg::norm_2_impl(*x.vector_double, *s.scalar_double);
     else if (op_type == OPERATION_UNARY_NORM_INF_TYPE)
       viennacl::linalg::norm_inf_impl(*x.vector_double, *s.scalar_double);
+    else if (op_type == OPERATION_UNARY_MAX_TYPE)
+      viennacl::linalg::max_impl(*x.vector_double, *s.scalar_double);
+    else if (op_type == OPERATION_UNARY_MIN_TYPE)
+      viennacl::linalg::min_impl(*x.vector_double, *s.scalar_double);
     else
       throw statement_not_supported_exception("Invalid norm type in scheduler::detail::norm_impl()");
     break;

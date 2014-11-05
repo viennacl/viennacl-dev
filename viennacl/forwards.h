@@ -194,6 +194,13 @@ namespace viennacl
   /** @brief A tag class representing the inf-norm of a vector */
   struct op_norm_inf {};
 
+  /** @brief A tag class representing the maximum of a vector */
+  struct op_max {};
+
+  /** @brief A tag class representing the minimum of a vector */
+  struct op_min {};
+
+
   /** @brief A tag class representing the Frobenius-norm of a matrix */
   struct op_norm_frobenius {};
 
@@ -705,6 +712,40 @@ namespace viennacl
     void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       S2 & result);
 
+    //forward definition of max()-related functions
+    template<typename T>
+    void max_impl(vector_base<T> const & vec, scalar<T> & result);
+
+    template<typename LHS, typename RHS, typename OP, typename T>
+    void max_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                  scalar<T> & result);
+
+
+    template<typename T>
+    void max_cpu(vector_base<T> const & vec, T & result);
+
+    template<typename LHS, typename RHS, typename OP, typename S2>
+    void max_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                 S2 & result);
+
+    //forward definition of min()-related functions
+    template<typename T>
+    void min_impl(vector_base<T> const & vec, scalar<T> & result);
+
+    template<typename LHS, typename RHS, typename OP, typename T>
+    void min_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                  scalar<T> & result);
+
+
+    template<typename T>
+    void min_cpu(vector_base<T> const & vec, T & result);
+
+    template<typename LHS, typename RHS, typename OP, typename S2>
+    void min_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                 S2 & result);
+
+
+    // forward definition of frobenius norm:
     template<typename T>
     void norm_frobenius_impl(matrix_base<T> const & vec, scalar<T> & result);
 

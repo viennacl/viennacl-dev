@@ -45,6 +45,7 @@
 #include "viennacl/linalg/norm_1.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
+#include "viennacl/linalg/maxmin.hpp"
 
 #include "Random.hpp"
 
@@ -285,6 +286,68 @@ int test(UblasVectorType     & ublas_v1, UblasVectorType     & ublas_v2,
 
   if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
     return EXIT_FAILURE;
+
+  // --------------------------------------------------------------------------
+  std::cout << "Testing max..." << std::endl;
+  cpu_result = ublas_v1[0];
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    cpu_result = std::max<NumericT>(cpu_result, ublas_v1[i]);
+  gpu_result = viennacl::linalg::max(vcl_v1);
+
+  if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  cpu_result = ublas_v1[0];
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    cpu_result = std::max<NumericT>(cpu_result, ublas_v1[i]);
+  gpu_result = cpu_result;
+  cpu_result *= 2; //reset
+  cpu_result = viennacl::linalg::max(vcl_v1);
+
+  if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  cpu_result = ublas_v1[0] + ublas_v2[0];
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    cpu_result = std::max<NumericT>(cpu_result, ublas_v1[i] + ublas_v2[i]);
+  gpu_result = cpu_result;
+  cpu_result *= 2; //reset
+  cpu_result = viennacl::linalg::max(vcl_v1 + vcl_v2);
+
+  if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+
+  // --------------------------------------------------------------------------
+  std::cout << "Testing min..." << std::endl;
+  cpu_result = ublas_v1[0];
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    cpu_result = std::min<NumericT>(cpu_result, ublas_v1[i]);
+  gpu_result = viennacl::linalg::min(vcl_v1);
+
+  if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  cpu_result = ublas_v1[0];
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    cpu_result = std::min<NumericT>(cpu_result, ublas_v1[i]);
+  gpu_result = cpu_result;
+  cpu_result *= 2; //reset
+  cpu_result = viennacl::linalg::min(vcl_v1);
+
+  if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  cpu_result = ublas_v1[0] + ublas_v2[0];
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    cpu_result = std::min<NumericT>(cpu_result, ublas_v1[i] + ublas_v2[i]);
+  gpu_result = cpu_result;
+  cpu_result *= 2; //reset
+  cpu_result = viennacl::linalg::min(vcl_v1 + vcl_v2);
+
+  if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
 
 
   // --------------------------------------------------------------------------

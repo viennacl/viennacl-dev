@@ -160,7 +160,9 @@ namespace detail
     else if (   leaf.op.type == OPERATION_BINARY_INNER_PROD_TYPE
                 || leaf.op.type == OPERATION_UNARY_NORM_1_TYPE
                 || leaf.op.type == OPERATION_UNARY_NORM_2_TYPE
-                || leaf.op.type == OPERATION_UNARY_NORM_INF_TYPE)
+                || leaf.op.type == OPERATION_UNARY_NORM_INF_TYPE
+                || leaf.op.type == OPERATION_UNARY_MAX_TYPE
+                || leaf.op.type == OPERATION_UNARY_MIN_TYPE)
       execute_scalar_assign_composite(s, root_node);
     else if (   (leaf.op.type_family == OPERATION_UNARY_TYPE_FAMILY && leaf.op.type != OPERATION_UNARY_TRANS_TYPE)
                 || leaf.op.type == OPERATION_BINARY_ELEMENT_PROD_TYPE

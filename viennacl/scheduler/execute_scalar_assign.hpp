@@ -144,7 +144,9 @@ inline void execute_scalar_assign_composite(statement const & s, statement_node 
   }
   else if (   leaf.op.type  == OPERATION_UNARY_NORM_1_TYPE
               || leaf.op.type  == OPERATION_UNARY_NORM_2_TYPE
-              || leaf.op.type  == OPERATION_UNARY_NORM_INF_TYPE)
+              || leaf.op.type  == OPERATION_UNARY_NORM_INF_TYPE
+              || leaf.op.type  == OPERATION_UNARY_MAX_TYPE
+              || leaf.op.type  == OPERATION_UNARY_MIN_TYPE)
   {
     assert(root_node.lhs.type_family == SCALAR_TYPE_FAMILY && bool("Inner product requires assignment to scalar type!"));
 

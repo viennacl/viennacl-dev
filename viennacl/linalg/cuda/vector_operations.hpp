@@ -2259,7 +2259,7 @@ __global__ void norm_kernel_floats(
 {
   __shared__ NumericT tmp_buffer[128];
 
-  NumericT tmp = 0;
+  NumericT tmp = (norm_selector > 2) ? vec[start1] : 0;
   unsigned int work_per_thread = (size1 - 1) / (gridDim.x * blockDim.x) + 1;
   unsigned int group_start = blockIdx.x * work_per_thread * blockDim.x;
   unsigned int group_stop  = (blockIdx.x + 1) * work_per_thread * blockDim.x;
@@ -2284,16 +2284,46 @@ __global__ void norm_kernel_floats(
     for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
       tmp = fmax(fabs(vec[i*inc1 + start1]), tmp);
   }
+  else if (norm_selector == 3) //min
+  {
+    for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
+      tmp = (vec[i*inc1 + start1] < tmp) ? vec[i*inc1 + start1] : tmp;
+  }
+  else if (norm_selector == 4) //max
+  {
+    for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
+      tmp = (vec[i*inc1 + start1] > tmp) ? vec[i*inc1 + start1] : tmp;
+  }
 
   tmp_buffer[threadIdx.x] = tmp;
 
-  if (norm_selector > 0) //parallel reduction for norm_1 or norm_2:
+  if (norm_selector == 1 || norm_selector == 2) //parallel reduction for norm_1 or norm_2:
   {
     for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
     {
       __syncthreads();
       if (threadIdx.x < stride)
         tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
+    }
+  }
+  else if (norm_selector == 3)
+  {
+    //min:
+    for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+    {
+      __syncthreads();
+      if (threadIdx.x < stride)
+        tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x+stride] < tmp_buffer[threadIdx.x]) ? tmp_buffer[threadIdx.x+stride] : tmp_buffer[threadIdx.x];
+    }
+  }
+  else if (norm_selector == 4)
+  {
+    //max:
+    for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+    {
+      __syncthreads();
+      if (threadIdx.x < stride)
+        tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x+stride] > tmp_buffer[threadIdx.x]) ? tmp_buffer[threadIdx.x+stride] : tmp_buffer[threadIdx.x];
     }
   }
   else
@@ -2322,7 +2352,7 @@ __global__ void norm_kernel_integers(
 {
   __shared__ NumericT tmp_buffer[128];
 
-  NumericT tmp = 0;
+  NumericT tmp = (norm_selector > 2) ? vec[start1] : 0;
   unsigned int work_per_thread = (size1 - 1) / (gridDim.x * blockDim.x) + 1;
   unsigned int group_start = blockIdx.x * work_per_thread * blockDim.x;
   unsigned int group_stop  = (blockIdx.x + 1) * work_per_thread * blockDim.x;
@@ -2338,16 +2368,46 @@ __global__ void norm_kernel_integers(
     for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
       tmp = (tmp > abs(vec[i*inc1 + start1])) ? tmp : abs(vec[i*inc1 + start1]);
   }
+  else if (norm_selector == 3) //min
+  {
+    for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
+      tmp = (vec[i*inc1 + start1] < tmp) ? vec[i*inc1 + start1] : tmp;
+  }
+  else if (norm_selector == 4) //max
+  {
+    for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
+      tmp = (vec[i*inc1 + start1] > tmp) ? vec[i*inc1 + start1] : tmp;
+  }
 
   tmp_buffer[threadIdx.x] = tmp;
 
-  if (norm_selector > 0) //parallel reduction for norm_1 or norm_2:
+  if (norm_selector == 1 || norm_selector == 2) //parallel reduction for norm_1 or norm_2:
   {
     for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
     {
       __syncthreads();
       if (threadIdx.x < stride)
         tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
+    }
+  }
+  else if (norm_selector == 3)
+  {
+    //min:
+    for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+    {
+      __syncthreads();
+      if (threadIdx.x < stride)
+        tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x+stride] < tmp_buffer[threadIdx.x]) ? tmp_buffer[threadIdx.x+stride] : tmp_buffer[threadIdx.x];
+    }
+  }
+  else if (norm_selector == 4)
+  {
+    //max:
+    for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+    {
+      __syncthreads();
+      if (threadIdx.x < stride)
+        tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x+stride] > tmp_buffer[threadIdx.x]) ? tmp_buffer[threadIdx.x+stride] : tmp_buffer[threadIdx.x];
     }
   }
   else
@@ -2376,7 +2436,7 @@ __global__ void norm_kernel_unsigned_integers(
 {
   __shared__ NumericT tmp_buffer[128];
 
-  NumericT tmp = 0;
+  NumericT tmp = (norm_selector > 2) ? vec[start1] : 0;
   unsigned int work_per_thread = (size1 - 1) / (gridDim.x * blockDim.x) + 1;
   unsigned int group_start = blockIdx.x * work_per_thread * blockDim.x;
   unsigned int group_stop  = (blockIdx.x + 1) * work_per_thread * blockDim.x;
@@ -2392,16 +2452,46 @@ __global__ void norm_kernel_unsigned_integers(
     for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
       tmp = (tmp > vec[i*inc1 + start1]) ? tmp : vec[i*inc1 + start1];
   }
+  else if (norm_selector == 3) //min
+  {
+    for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
+      tmp = (vec[i*inc1 + start1] < tmp) ? vec[i*inc1 + start1] : tmp;
+  }
+  else if (norm_selector == 4) //max
+  {
+    for (unsigned int i = group_start + threadIdx.x; i < group_stop; i += blockDim.x)
+      tmp = (vec[i*inc1 + start1] > tmp) ? vec[i*inc1 + start1] : tmp;
+  }
 
   tmp_buffer[threadIdx.x] = tmp;
 
-  if (norm_selector > 0) //parallel reduction for norm_1 or norm_2:
+  if (norm_selector == 1 || norm_selector == 2) //parallel reduction for norm_1 or norm_2:
   {
     for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
     {
       __syncthreads();
       if (threadIdx.x < stride)
         tmp_buffer[threadIdx.x] += tmp_buffer[threadIdx.x+stride];
+    }
+  }
+  else if (norm_selector == 3)
+  {
+    //min:
+    for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+    {
+      __syncthreads();
+      if (threadIdx.x < stride)
+        tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x+stride] < tmp_buffer[threadIdx.x]) ? tmp_buffer[threadIdx.x+stride] : tmp_buffer[threadIdx.x];
+    }
+  }
+  else if (norm_selector == 4)
+  {
+    //max:
+    for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+    {
+      __syncthreads();
+      if (threadIdx.x < stride)
+        tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x+stride] > tmp_buffer[threadIdx.x]) ? tmp_buffer[threadIdx.x+stride] : tmp_buffer[threadIdx.x];
     }
   }
   else
@@ -2640,6 +2730,156 @@ void norm_inf_cpu(vector_base<NumericT> const & vec1,
   for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
     result = std::max(result, *it);
 }
+
+
+////// max
+
+// second reduction stage for min() and max()
+template<typename NumericT>
+__global__ void vector_maxmin_kernel(
+          const NumericT * vec1,
+          unsigned int start1,
+          unsigned int inc1,
+          unsigned int size1,
+          unsigned int option, //0: use max, 1: use min
+          NumericT * result)
+{
+  __shared__ NumericT tmp_buffer[128];
+  NumericT thread_minmax = vec1[start1];
+  for (unsigned int i = threadIdx.x; i<size1; i += blockDim.x)
+  {
+    if (option > 0) //min
+      thread_minmax = (vec1[i*inc1+start1] < thread_minmax) ? vec1[i*inc1+start1] : thread_minmax;
+    else
+      thread_minmax = (vec1[i*inc1+start1] > thread_minmax) ? vec1[i*inc1+start1] : thread_minmax;
+  }
+
+  tmp_buffer[threadIdx.x] = thread_minmax;
+
+  for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    if (threadIdx.x < stride)
+    {
+      if (option > 0) //min
+        tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x + stride] < tmp_buffer[threadIdx.x]) ? tmp_buffer[threadIdx.x + stride] : tmp_buffer[threadIdx.x];
+      else
+        tmp_buffer[threadIdx.x] = (tmp_buffer[threadIdx.x + stride] > tmp_buffer[threadIdx.x]) ? tmp_buffer[threadIdx.x + stride] : tmp_buffer[threadIdx.x];
+    }
+  }
+
+  if (threadIdx.x == 0)
+    *result = tmp_buffer[0];
+}
+
+
+/** @brief Computes the maximum of a vector, both reduction stages run on the GPU
+*
+* @param vec1   The vector
+* @param result The result GPU scalar
+*/
+template<typename NumericT>
+void max_impl(vector_base<NumericT> const & vec1,
+              scalar<NumericT> & result)
+{
+  typedef NumericT      value_type;
+
+  vcl_size_t work_groups = 128;
+  viennacl::vector<value_type> temp(work_groups, viennacl::traits::context(vec1));
+
+  detail::norm_kernel_launcher<NumericT>::apply(vec1, temp, 4);
+
+  vector_maxmin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                   static_cast<unsigned int>(0),
+                                   detail::cuda_arg<value_type>(result)
+                                  );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("vector_maxmin_kernel");
+}
+
+
+
+/** @brief Computes the maximum of a vector, first reduction stage on the GPU, second stage on the CPU
+*
+* @param vec1   The vector
+* @param result The result host scalar
+*/
+template<typename NumericT>
+void max_cpu(vector_base<NumericT> const & vec1,
+             NumericT & result)
+{
+  typedef NumericT        value_type;
+
+  vcl_size_t work_groups = 128;
+  viennacl::vector<value_type> temp(work_groups, viennacl::traits::context(vec1));
+
+  detail::norm_kernel_launcher<NumericT>::apply(vec1, temp, 4);
+
+  std::vector<value_type> temp_cpu(work_groups);
+  viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+
+  result = temp[0];
+  for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+    result = std::max(result, *it);
+}
+
+//////////////////
+
+/** @brief Computes the maximum of a vector, both reduction stages run on the GPU
+*
+* @param vec1   The vector
+* @param result The result GPU scalar
+*/
+template<typename NumericT>
+void min_impl(vector_base<NumericT> const & vec1,
+              scalar<NumericT> & result)
+{
+  typedef NumericT      value_type;
+
+  vcl_size_t work_groups = 128;
+  viennacl::vector<value_type> temp(work_groups, viennacl::traits::context(vec1));
+
+  detail::norm_kernel_launcher<NumericT>::apply(vec1, temp, 3);
+
+  vector_maxmin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
+                                   static_cast<unsigned int>(1),
+                                   detail::cuda_arg<value_type>(result)
+                                  );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("vector_maxmin_kernel");
+}
+
+
+
+/** @brief Computes the maximum of a vector, first reduction stage on the GPU, second stage on the CPU
+*
+* @param vec1   The vector
+* @param result The result host scalar
+*/
+template<typename NumericT>
+void min_cpu(vector_base<NumericT> const & vec1,
+             NumericT & result)
+{
+  typedef NumericT        value_type;
+
+  vcl_size_t work_groups = 128;
+  viennacl::vector<value_type> temp(work_groups, viennacl::traits::context(vec1));
+
+  detail::norm_kernel_launcher<NumericT>::apply(vec1, temp, 3);
+
+  std::vector<value_type> temp_cpu(work_groups);
+  viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
+
+  result = temp[0];
+  for (typename std::vector<value_type>::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
+    result = std::min(result, *it);
+}
+
+
 
 
 //////////////////////////////////////

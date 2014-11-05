@@ -78,15 +78,15 @@ bisectKernelLarge_MultIntervals(const NumericT *g_d, const NumericT *g_s, const 
   const unsigned int tid = threadIdx.x;
 
     // left and right limits of interval
-    __shared__  NumericT  s_left[2 * MAX_THREADS_BLOCK];
-    __shared__  NumericT  s_right[2 * MAX_THREADS_BLOCK];
+    __shared__  NumericT  s_left[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK];
+    __shared__  NumericT  s_right[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK];
 
     // number of eigenvalues smaller than interval limits
-    __shared__  unsigned int  s_left_count[2 * MAX_THREADS_BLOCK];
-    __shared__  unsigned int  s_right_count[2 * MAX_THREADS_BLOCK];
+    __shared__  unsigned int  s_left_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK];
+    __shared__  unsigned int  s_right_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK];
 
     // helper array for chunk compaction of second chunk
-    __shared__  unsigned int  s_compaction_list[2 * MAX_THREADS_BLOCK + 1];
+    __shared__  unsigned int  s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
     // compaction list helper for exclusive scan
     unsigned int *s_compaction_list_exc = s_compaction_list + 1;
 
@@ -137,8 +137,8 @@ bisectKernelLarge_MultIntervals(const NumericT *g_d, const NumericT *g_s, const 
 
      s_left_count [tid] = 42;
      s_right_count[tid] = 42;
-     s_left_count [tid + MAX_THREADS_BLOCK] = 0;
-     s_right_count[tid + MAX_THREADS_BLOCK] = 0;
+     s_left_count [tid + VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
+     s_right_count[tid + VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
 
     __syncthreads();
 
@@ -161,7 +161,7 @@ bisectKernelLarge_MultIntervals(const NumericT *g_d, const NumericT *g_s, const 
         //for (int iter=0; iter < 0; iter++) {
         s_compaction_list[threadIdx.x] = 0;
         s_compaction_list[threadIdx.x + blockDim.x] = 0;
-        s_compaction_list[2 * MAX_THREADS_BLOCK] = 0;
+        s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
 
         // subdivide interval if currently active and not already converged
         subdivideActiveInterval(tid, s_left, s_right,

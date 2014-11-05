@@ -233,7 +233,7 @@ compactStreamsFinal(const unsigned int tid, const unsigned int tid_2,
 ////////////////////////////////////////////////////////////////////////////////
 //! Compute addresses to obtain compact list of block start addresses
 ////////////////////////////////////////////////////////////////////////////////
-__device__
+inline __device__
 void
 scanCompactBlocksStartAddress(const unsigned int tid, const unsigned int tid_2,
                               const unsigned int num_threads_compaction,
@@ -298,7 +298,7 @@ scanCompactBlocksStartAddress(const unsigned int tid, const unsigned int tid_2,
 ////////////////////////////////////////////////////////////////////////////////
 //! Perform scan to obtain number of eigenvalues before a specific block
 ////////////////////////////////////////////////////////////////////////////////
-__device__
+inline __device__
 void
 scanSumBlocks(const unsigned int tid, const unsigned int tid_2,
               const unsigned int num_threads_active,
@@ -364,7 +364,7 @@ scanSumBlocks(const unsigned int tid, const unsigned int tid_2,
 //! Perform initial scan for compaction of intervals containing one and
 //! multiple eigenvalues; also do initial scan to build blocks
 ////////////////////////////////////////////////////////////////////////////////
-__device__
+inline __device__
 void
 scanInitial(const unsigned int tid, const unsigned int tid_2,
             const unsigned int num_threads_active,
@@ -421,7 +421,7 @@ scanInitial(const unsigned int tid, const unsigned int tid_2,
 
                     unsigned int temp = s_cl_blocking[bi] + s_cl_blocking[ai - 1];
 
-                    if (temp > MAX_THREADS_BLOCK)
+                    if (temp > VIENNACL_BISECT_MAX_THREADS_BLOCK)
                     {
 
                         // the two child trees have to form separate blocks, terminate trees
@@ -555,16 +555,16 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
 
     // intervals (store left and right because the subdivision tree is in general
     // not dense
-    __shared__  NumericT  s_left[2 * MAX_THREADS_BLOCK + 1];
-    __shared__  NumericT  s_right[2 * MAX_THREADS_BLOCK + 1];
+    __shared__  NumericT  s_left[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
+    __shared__  NumericT  s_right[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
 
     // number of eigenvalues that are smaller than s_left / s_right
     // (correspondence is realized via indices)
-    __shared__  unsigned short  s_left_count[2 * MAX_THREADS_BLOCK + 1];
-    __shared__  unsigned short  s_right_count[2 * MAX_THREADS_BLOCK + 1];
+    __shared__  unsigned short  s_left_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
+    __shared__  unsigned short  s_right_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
 
     // helper for stream compaction
-    __shared__  unsigned short  s_compaction_list[2 * MAX_THREADS_BLOCK + 1];
+    __shared__  unsigned short  s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
 
     // state variables for whole block
     // if 0 then compaction of second chunk of child intervals is not necessary
@@ -631,8 +631,8 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
     for( unsigned int i = 0; i < 15; ++i )
     {
         s_compaction_list[tid] = 0;
-        s_compaction_list[tid + MAX_THREADS_BLOCK] = 0;
-        s_compaction_list[2 * MAX_THREADS_BLOCK] = 0;
+        s_compaction_list[tid + VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
+        s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
         subdivideActiveInterval(tid, s_left, s_right, s_left_count, s_right_count,
                                 num_threads_active,
                                 left, right, left_count, right_count,
@@ -779,7 +779,7 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
     // eigenvalues
     unsigned short  *s_cl_blocking = s_compaction_list_exc;
     // helper compaction list for generating blocks of intervals
-    __shared__ unsigned short  s_cl_helper[2 * MAX_THREADS_BLOCK + 1];
+    __shared__ unsigned short  s_cl_helper[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
 
     if (0 == tid)
     {
@@ -819,7 +819,7 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
         s_cl_blocking[tid_2] = (1 == is_one_lambda_2) ? 0 : multiplicity;
         s_cl_helper[tid_2] = 0;
     }
-    else if (tid_2 < (2 * MAX_THREADS_BLOCK + 1))
+    else if (tid_2 < (2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1))
     {
 
         // clear

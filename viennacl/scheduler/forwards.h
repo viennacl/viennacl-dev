@@ -107,6 +107,8 @@ enum operation_node_type
   OPERATION_UNARY_NORM_1_TYPE,
   OPERATION_UNARY_NORM_2_TYPE,
   OPERATION_UNARY_NORM_INF_TYPE,
+  OPERATION_UNARY_MAX_TYPE,
+  OPERATION_UNARY_MIN_TYPE,
 
   // binary expression
   OPERATION_BINARY_ACCESS_TYPE,
@@ -203,6 +205,8 @@ namespace result_of
   template<> struct op_type_info<op_norm_1                  >      { enum { id = OPERATION_UNARY_NORM_1_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_norm_2                  >      { enum { id = OPERATION_UNARY_NORM_2_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_norm_inf                >      { enum { id = OPERATION_UNARY_NORM_INF_TYPE,      family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_max                     >      { enum { id = OPERATION_UNARY_MAX_TYPE,           family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_min                     >      { enum { id = OPERATION_UNARY_MIN_TYPE,           family = OPERATION_UNARY_TYPE_FAMILY}; };
 
   template<> struct op_type_info<op_trans                   >      { enum { id = OPERATION_UNARY_TRANS_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_row                   >      { enum { id = OPERATION_BINARY_MATRIX_ROW_TYPE,         family = OPERATION_BINARY_TYPE_FAMILY}; };

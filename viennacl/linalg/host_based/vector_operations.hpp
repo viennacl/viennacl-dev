@@ -568,6 +568,59 @@ vcl_size_t index_norm_inf(vector_base<NumericT> const & vec1)
   return index;
 }
 
+/** @brief Computes the maximum of a vector
+*
+* @param vec1 The vector
+* @param result The result scalar
+*/
+template<typename NumericT, typename ScalarT>
+void max_impl(vector_base<NumericT> const & vec1,
+              ScalarT & result)
+{
+  typedef NumericT       value_type;
+
+  value_type const * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
+
+  vcl_size_t start1 = viennacl::traits::start(vec1);
+  vcl_size_t inc1   = viennacl::traits::stride(vec1);
+  vcl_size_t size1  = viennacl::traits::size(vec1);
+
+  value_type temp = data_vec1[start1];
+
+  // Note: No max() reduction in OpenMP yet
+  for (vcl_size_t i = 1; i < size1; ++i)
+    temp = std::max<value_type>(temp, data_vec1[i*inc1+start1]);
+
+  result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+}
+
+/** @brief Computes the maximum of a vector
+*
+* @param vec1 The vector
+* @param result The result scalar
+*/
+template<typename NumericT, typename ScalarT>
+void min_impl(vector_base<NumericT> const & vec1,
+              ScalarT & result)
+{
+  typedef NumericT       value_type;
+
+  value_type const * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
+
+  vcl_size_t start1 = viennacl::traits::start(vec1);
+  vcl_size_t inc1   = viennacl::traits::stride(vec1);
+  vcl_size_t size1  = viennacl::traits::size(vec1);
+
+  value_type temp = data_vec1[start1];
+
+  // Note: No max() reduction in OpenMP yet
+  for (vcl_size_t i = 1; i < size1; ++i)
+    temp = std::min<value_type>(temp, data_vec1[i*inc1+start1]);
+
+  result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+}
+
+
 
 /** @brief Computes a plane rotation of two vectors.
 *

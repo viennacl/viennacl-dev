@@ -65,17 +65,17 @@ bisectKernelSmall(const NumericT *g_d, const NumericT *g_s, const unsigned int n
 {
     // intervals (store left and right because the subdivision tree is in general
     // not dense
-    __shared__  NumericT  s_left[MAX_THREADS_BLOCK_SMALL_MATRIX];
-    __shared__  NumericT  s_right[MAX_THREADS_BLOCK_SMALL_MATRIX];
+    __shared__  NumericT  s_left[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];
+    __shared__  NumericT  s_right[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];
 
     // number of eigenvalues that are smaller than s_left / s_right
     // (correspondence is realized via indices)
-    __shared__  unsigned int  s_left_count[MAX_THREADS_BLOCK_SMALL_MATRIX];
-    __shared__  unsigned int  s_right_count[MAX_THREADS_BLOCK_SMALL_MATRIX];
+    __shared__  unsigned int  s_left_count[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];
+    __shared__  unsigned int  s_right_count[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];
 
     // helper for stream compaction
     __shared__  unsigned int
-    s_compaction_list[MAX_THREADS_BLOCK_SMALL_MATRIX + 1];
+    s_compaction_list[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX + 1];
 
     // state variables for whole block
     // if 0 then compaction of second chunk of child intervals is not necessary

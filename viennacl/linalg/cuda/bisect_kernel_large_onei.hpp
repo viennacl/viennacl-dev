@@ -65,8 +65,8 @@ bisectKernelLarge_OneIntervals(const NumericT *g_d, const NumericT *g_s, const u
 
   const unsigned int gtid = (blockDim.x * blockIdx.x) + threadIdx.x;
 
-  __shared__  NumericT  s_left_scratch[MAX_THREADS_BLOCK];
-  __shared__  NumericT  s_right_scratch[MAX_THREADS_BLOCK];
+  __shared__  NumericT  s_left_scratch[VIENNACL_BISECT_MAX_THREADS_BLOCK];
+  __shared__  NumericT  s_right_scratch[VIENNACL_BISECT_MAX_THREADS_BLOCK];
 
   // active interval of thread
   // left and right limit of current interval

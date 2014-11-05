@@ -245,6 +245,19 @@ statement sum(scalar<NumericT> const * s, vector_base<NumericT> const * x)
 }
 
 template<typename NumericT>
+statement max(scalar<NumericT> const * s, vector_base<NumericT> const * x)
+{
+  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_floating_point<NumericT>::value ? OPERATION_BINARY_ELEMENT_FMAX_TYPE : OPERATION_BINARY_ELEMENT_MAX_TYPE, false, false);
+}
+
+template<typename NumericT>
+statement min(scalar<NumericT> const * s, vector_base<NumericT> const * x)
+{
+  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_floating_point<NumericT>::value ? OPERATION_BINARY_ELEMENT_FMIN_TYPE : OPERATION_BINARY_ELEMENT_MIN_TYPE, false, false);
+}
+
+
+template<typename NumericT>
 statement binary_element_op(NumericT const * x, NumericT const * y, NumericT const * z, scheduler::operation_node_type TYPE)
 {
   vcl_size_t dummy = 0;

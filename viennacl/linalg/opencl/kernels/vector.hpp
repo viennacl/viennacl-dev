@@ -136,6 +136,8 @@ public:
       handler.add("norm_inf", ds::reduction_template(reduction_params), scheduler::preset::norm_inf(&da, &x));
       handler.add("index_norm_inf", ds::reduction_template(reduction_params), scheduler::preset::index_norm_inf(&da, &x));
       handler.add("sum", ds::reduction_template(reduction_params), scheduler::preset::sum(&da, &x));
+      handler.add("max", ds::reduction_template(reduction_params), scheduler::preset::max(&da, &x));
+      handler.add("min", ds::reduction_template(reduction_params), scheduler::preset::min(&da, &x));
     }
     return handlers_map.at(h);
   }
