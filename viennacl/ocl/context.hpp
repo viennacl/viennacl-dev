@@ -399,7 +399,11 @@ public:
       std::cout << "ViennaCL: Cache at " << cache_path_ << std::endl;
 #endif
 
-      std::string sha1 =  tools::sha1(source);
+      std::string prefix;
+      for(std::vector< viennacl::ocl::device >::const_iterator it = devices_.begin(); it != devices_.end(); ++it)
+        prefix += it->name() + it->vendor() + it->driver_version();
+      std::string sha1 = tools::sha1(prefix + source);
+      
       std::ifstream cached((cache_path_+sha1).c_str(),std::ios::binary);
       if (cached)
       {
@@ -447,6 +451,9 @@ public:
     }
     VIENNACL_ERR_CHECK(err);
 
+    //
+    // Store the program in the cache
+    //
     if (cache_path_.size())
     {
       vcl_size_t len;
@@ -462,7 +469,10 @@ public:
       clGetProgramInfo(temp,CL_PROGRAM_BINARIES,0,NULL,&len);
       clGetProgramInfo(temp,CL_PROGRAM_BINARIES,len,binaries.data(),NULL);
 
-      std::string sha1 =  tools::sha1(source);
+      std::string prefix;
+      for(std::vector< viennacl::ocl::device >::const_iterator it = devices_.begin(); it != devices_.end(); ++it)
+        prefix += it->name() + it->vendor() + it->driver_version();
+      std::string sha1 = tools::sha1(prefix + source);
       std::ofstream cached((cache_path_+sha1).c_str(),std::ios::binary);
 
       cached.write((char*)&sizes[0], sizeof(vcl_size_t));
