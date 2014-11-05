@@ -75,9 +75,10 @@ endif (ENABLE_OPENCL)
 #
 
 if (ENABLE_CUDA)
-  foreach(tut blas1 wrap-cuda-buffer fft nmf)
+  foreach(tut blas1 fft nmf wrap-cuda-buffer)
     cuda_add_executable(${tut}-cuda ${tut}.cu)
   endforeach()
+  cuda_add_executable(custom-cuda  custom-cuda.cu)  # would otherwise result in custom-cuda-cuda
 
   if (ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})

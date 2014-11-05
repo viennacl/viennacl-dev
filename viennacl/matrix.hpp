@@ -675,6 +675,37 @@ public:
     */
   explicit matrix(size_type rows, size_type columns, viennacl::context ctx = viennacl::context()) : base_type(rows, columns, viennacl::is_row_major<F>::value, ctx) {}
 
+  /** @brief Wraps a CUDA or host buffer provided by the user.
+    *
+    * @param ptr_to_mem   The pointer to existing memory
+    * @param mem_type     Type of the memory (either viennacl::CUDA_MEMORY if available, or viennacl::HOST_MEMORY)
+    * @param rows         Number of rows of the matrix
+    * @param cols         Number of columns of the matrix
+    */
+  explicit matrix(NumericT * ptr_to_mem, viennacl::memory_types mem_type, size_type rows, size_type cols)
+    : base_type(ptr_to_mem, mem_type,
+                rows, 0, 1, rows,
+                cols, 0, 1, cols,
+                viennacl::is_row_major<F>::value) {}
+
+
+  /** @brief Wraps a CUDA or host buffer provided by the user including padding of rows and columns.
+    *
+    * @param ptr_to_mem          The pointer to existing memory
+    * @param mem_type            Type of the memory (either viennacl::CUDA_MEMORY if available, or viennacl::HOST_MEMORY)
+    * @param rows                Number of rows of the matrix
+    * @param internal_row_count  Number of rows including padding the buffer by e.g. zeros.
+    * @param cols                Number of columns of the matrix
+    * @param internal_col_count  Number of columns including padding the buffer by e.g. zeros.
+    */
+  explicit matrix(NumericT * ptr_to_mem, viennacl::memory_types mem_type,
+                  size_type rows, size_type internal_row_count,
+                  size_type cols, size_type internal_col_count)
+    : base_type(ptr_to_mem, mem_type,
+                rows, 0, 1, internal_row_count,
+                cols, 0, 1, internal_col_count,
+                true, viennacl::is_row_major<F>::value) {}
+
 #ifdef VIENNACL_WITH_OPENCL
   explicit matrix(cl_mem mem, size_type rows, size_type columns) : base_type(mem, rows, columns, viennacl::is_row_major<F>::value) {}
 #endif
