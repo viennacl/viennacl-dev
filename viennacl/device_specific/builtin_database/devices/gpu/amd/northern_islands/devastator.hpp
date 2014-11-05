@@ -65,7 +65,7 @@ inline void add_4B(database_type<reduction_template::parameters_type> & db)
 
 inline void add_4B(database_type<vector_axpy_template::parameters_type> & db)
 {
-  db.add_4B(amd_id, CL_DEVICE_TYPE_GPU, ocl::northern_islands, "Devastator", vector_axpy_template::parameters_type(4,256,4,FETCH_FROM_GLOBAL_STRIDED));
+  db.add_4B(amd_id, CL_DEVICE_TYPE_GPU, ocl::northern_islands, "Devastator", vector_axpy_template::parameters_type(1,256,4,FETCH_FROM_GLOBAL_STRIDED));
 }
 
 }
