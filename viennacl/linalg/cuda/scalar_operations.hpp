@@ -82,7 +82,7 @@ as(ScalarT1 & s1,
   unsigned int options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
   value_type temporary_alpha = 0;
-  if (viennacl::is_cpu_scalar<ScalarT1>::value)
+  if (viennacl::is_cpu_scalar<NumericT>::value)
     temporary_alpha = alpha;
 
   as_kernel<<<1, 1>>>(detail::cuda_arg<value_type>(s1),
