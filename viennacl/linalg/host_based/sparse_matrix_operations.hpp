@@ -1540,17 +1540,16 @@ void prod_impl(const viennacl::sliced_ell_matrix<NumericT, IndexT> & mat,
   IndexT   const * block_start       = detail::extract_raw_pointer<IndexT>(mat.handle3());
 
   vcl_size_t num_blocks = mat.size1() / mat.rows_per_block() + 1;
-  std::vector<NumericT> result_values(mat.rows_per_block());
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t block_idx = 0; block_idx < num_blocks; ++block_idx)
+  for (long block_idx2 = 0; block_idx2 < num_blocks; ++block_idx2)
   {
+    vcl_size_t block_idx = static_cast<vcl_size_t>(block_idx2);
     vcl_size_t current_columns_per_block = columns_per_block[block_idx];
 
-    for (vcl_size_t i=0; i<result_values.size(); ++i)
-      result_values[i] = 0;
+    std::vector<NumericT> result_values(mat.rows_per_block());
 
     for (IndexT column_entry_index = 0;
                 column_entry_index < current_columns_per_block;
