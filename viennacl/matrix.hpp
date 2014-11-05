@@ -175,6 +175,7 @@ matrix_base<NumericT, SizeT, DistanceT>::matrix_base(NumericT * ptr_to_mem, vien
     elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
     elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
     elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+#else
     throw cuda_not_available_exception();
 #endif
   }
