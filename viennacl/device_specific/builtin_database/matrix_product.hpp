@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_PRODUCT_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_MATRIX_PRODUCT_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gtx_470.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/maxwell/geforce_gtx_750_ti.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/northern_islands/scrapper.hpp"
@@ -62,6 +64,8 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::amd::northern_islands::scrapper::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_8B(result, char_to_type<'N'>(), char_to_type<'N'>());
+  devices::gpu::nvidia::fermi::geforce_gtx_470::add_4B(result, char_to_type<'N'>(), char_to_type<'N'>());
+  devices::gpu::nvidia::fermi::geforce_gtx_470::add_8B(result, char_to_type<'N'>(), char_to_type<'N'>());
 
   return result;
 }
@@ -93,6 +97,8 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::amd::northern_islands::scrapper::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
+  devices::gpu::nvidia::fermi::geforce_gtx_470::add_4B(result, char_to_type<'T'>(), char_to_type<'N'>());
+  devices::gpu::nvidia::fermi::geforce_gtx_470::add_8B(result, char_to_type<'T'>(), char_to_type<'N'>());
 
   return result;
 }
@@ -127,6 +133,8 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::amd::northern_islands::scrapper::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_8B(result, char_to_type<'N'>(), char_to_type<'T'>());
+  devices::gpu::nvidia::fermi::geforce_gtx_470::add_4B(result, char_to_type<'N'>(), char_to_type<'T'>());
+  devices::gpu::nvidia::fermi::geforce_gtx_470::add_8B(result, char_to_type<'N'>(), char_to_type<'T'>());
 
   return result;
 }
@@ -157,6 +165,8 @@ inline database_type<matrix_product_template::parameters_type> init_matrix_produ
   devices::gpu::amd::northern_islands::scrapper::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_8B(result, char_to_type<'T'>(), char_to_type<'T'>());
+  devices::gpu::nvidia::fermi::geforce_gtx_470::add_4B(result, char_to_type<'T'>(), char_to_type<'T'>());
+  devices::gpu::nvidia::fermi::geforce_gtx_470::add_8B(result, char_to_type<'T'>(), char_to_type<'T'>());
 
   return result;
 }
