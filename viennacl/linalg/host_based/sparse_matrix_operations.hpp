@@ -1544,7 +1544,7 @@ void prod_impl(const viennacl::sliced_ell_matrix<NumericT, IndexT> & mat,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (long block_idx2 = 0; block_idx2 < num_blocks; ++block_idx2)
+  for (long block_idx2 = 0; block_idx2 < static_cast<long>(num_blocks); ++block_idx2)
   {
     vcl_size_t block_idx = static_cast<vcl_size_t>(block_idx2);
     vcl_size_t current_columns_per_block = columns_per_block[block_idx];
