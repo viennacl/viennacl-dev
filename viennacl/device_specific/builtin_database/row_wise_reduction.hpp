@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_ROW_WISE_REDUCTION_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_ROW_WISE_REDUCTION_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/northern_islands/barts.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/tesla_c2050.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gtx_470.hpp"
@@ -76,6 +78,7 @@ inline database_type<row_wise_reduction_template::parameters_type> init_row_wise
   devices::gpu::nvidia::fermi::geforce_gtx_470::add_8B(result, char_to_type<'N'>());
   devices::gpu::nvidia::fermi::tesla_c2050::add_4B(result, char_to_type<'N'>());
   devices::gpu::nvidia::fermi::tesla_c2050::add_8B(result, char_to_type<'N'>());
+  devices::gpu::amd::northern_islands::barts::add_4B(result, char_to_type<'N'>());
 
   return result;
 }
@@ -114,6 +117,7 @@ inline database_type<row_wise_reduction_template::parameters_type> init_row_wise
   devices::gpu::nvidia::fermi::geforce_gtx_470::add_8B(result, char_to_type<'T'>());
   devices::gpu::nvidia::fermi::tesla_c2050::add_4B(result, char_to_type<'T'>());
   devices::gpu::nvidia::fermi::tesla_c2050::add_8B(result, char_to_type<'T'>());
+  devices::gpu::amd::northern_islands::barts::add_4B(result, char_to_type<'T'>());
 
   return result;
 }
