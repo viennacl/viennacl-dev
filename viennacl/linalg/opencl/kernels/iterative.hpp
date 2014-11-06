@@ -906,6 +906,343 @@ void generate_hyb_matrix_pipelined_bicgstab_prod(StringT & source, std::string c
   source.append("} \n \n");
 }
 
+//////////////////////////////
+
+
+template <typename StringType>
+void generate_pipelined_gmres_gram_schmidt_stage1(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_gram_schmidt_1( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" const * krylov_basis, \n");
+  source.append("          unsigned int size, \n");
+  source.append("          unsigned int internal_size, \n");
+  source.append("          unsigned int k, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vi_in_vk_buffer, \n");
+  source.append("          unsigned int chunk_size, \n");
+  source.append("         __local "); source.append(numeric_string); source.append(" * shared_array) \n");
+  source.append("{ \n");
+
+  source.append("  "); source.append(numeric_string); source.append(" vi_in_vk[7]; \n");
+  source.append("  "); source.append(numeric_string); source.append(" value_vk = 0; \n");
+
+  source.append("  unsigned int k_base = 0;   \n");
+  source.append("  while (k_base < k) {   \n");
+  source.append("    unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);   \n");
+  source.append("    vi_in_vk[0] = 0;\n");
+  source.append("    vi_in_vk[1] = 0;\n");
+  source.append("    vi_in_vk[2] = 0;\n");
+  source.append("    vi_in_vk[3] = 0;\n");
+  source.append("    vi_in_vk[4] = 0;\n");
+  source.append("    vi_in_vk[5] = 0;\n");
+  source.append("    vi_in_vk[6] = 0;\n");
+  source.append("    for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0)) { \n");
+  source.append("      value_vk = krylov_basis[i + k * internal_size]; \n");
+  source.append("       \n");
+  source.append("      for (unsigned int j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("        vi_in_vk[j] += value_vk * krylov_basis[i + (k_base + j) * internal_size]; \n");
+  source.append("    }  \n");
+
+  // parallel reduction in work group
+  source.append("    for (uint j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("      shared_array[get_local_id(0) + j*chunk_size] = vi_in_vk[j]; \n");
+  source.append("    for (uint stride=get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("    { \n");
+  source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("      if (get_local_id(0) < stride) { \n");
+  source.append("        for (uint j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("          shared_array[get_local_id(0) + j*chunk_size] += shared_array[get_local_id(0) + j*chunk_size + stride];  \n");
+  source.append("      } ");
+  source.append("    } ");
+
+  // write results to result array
+  source.append("    if (get_local_id(0) == 0) \n ");
+  source.append("      for (unsigned int j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("        vi_in_vk_buffer[get_group_id(0) + (k_base + j) * chunk_size] = shared_array[j*chunk_size]; ");
+
+  source.append("    k_base += vecs_in_iteration;   \n");
+  source.append("  }  \n");
+
+  source.append("} \n");
+
+}
+
+template <typename StringType>
+void generate_pipelined_gmres_gram_schmidt_stage2(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_gram_schmidt_2( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * krylov_basis, \n");
+  source.append("          unsigned int size, \n");
+  source.append("          unsigned int internal_size, \n");
+  source.append("          unsigned int k, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" const * vi_in_vk_buffer, \n");
+  source.append("          unsigned int chunk_size, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * R_buffer, \n");
+  source.append("          unsigned int krylov_dim, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
+  source.append("         __local "); source.append(numeric_string); source.append(" * shared_array) \n");
+  source.append("{ \n");
+
+  source.append("  "); source.append(numeric_string); source.append(" vk_dot_vk = 0; \n");
+  source.append("  "); source.append(numeric_string); source.append(" value_vk = 0; \n");
+
+  source.append("  unsigned int k_base = 0;   \n");
+  source.append("  while (k_base < k) {   \n");
+  source.append("    unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);   \n");
+
+  // parallel reduction in work group for <v_i, v_k>
+  source.append("    for (uint j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("      shared_array[get_local_id(0) + j*chunk_size] = vi_in_vk_buffer[get_local_id(0) + (k_base + j) * chunk_size]; \n");
+  source.append("    for (uint stride=get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("    { \n");
+  source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("      if (get_local_id(0) < stride) { \n");
+  source.append("        for (uint j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("          shared_array[get_local_id(0) + j*chunk_size] += shared_array[get_local_id(0) + j*chunk_size + stride];  \n");
+  source.append("      } ");
+  source.append("    } ");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  // v_k -= <v_i, v_k> v_i:
+  source.append("    for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0)) { \n");
+  source.append("      value_vk = krylov_basis[i + k * internal_size]; \n");
+  source.append("       \n");
+  source.append("      for (unsigned int j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("        value_vk -= shared_array[j*chunk_size] * krylov_basis[i + (k_base + j) * internal_size]; \n");
+  source.append("      vk_dot_vk += (k_base + vecs_in_iteration == k) ? (value_vk * value_vk) : 0;  \n");
+  source.append("      krylov_basis[i + k * internal_size] = value_vk;  \n");
+  source.append("    }  \n");
+
+  // write to R: (to avoid thread divergence, all threads write the same value)
+  source.append("    if (get_group_id(0) == 0) \n");
+  source.append("      for (unsigned int j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("        R_buffer[(k_base + j) + k*krylov_dim] = shared_array[j*chunk_size]; ");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  source.append("    k_base += vecs_in_iteration;   \n");
+  source.append("  }  \n");
+
+  // parallel reduction in work group for <v_k, v_k>
+  source.append("  shared_array[get_local_id(0)] = vk_dot_vk; \n");
+  source.append("  for (uint stride=get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride) \n");
+  source.append("      shared_array[get_local_id(0)] += shared_array[get_local_id(0) + stride];  \n");
+  source.append("  } ");
+
+  // write results to result array
+  source.append("  if (get_local_id(0) == 0) \n ");
+  source.append("    inner_prod_buffer[chunk_size+get_group_id(0)] = shared_array[0]; ");
+
+  source.append("} \n");
+}
+
+template <typename StringType>
+void generate_pipelined_gmres_normalize_vk(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_normalize_vk( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vk, \n");
+  source.append("          unsigned int vk_offset, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" const * residual, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * R_buffer, \n");
+  source.append("          unsigned int R_offset, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" const * inner_prod_buffer, \n");
+  source.append("          unsigned int chunk_size, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * r_dot_vk_buffer, \n");
+  source.append("          unsigned int chunk_offset, \n");
+  source.append("          unsigned int size, \n");
+  source.append("         __local "); source.append(numeric_string); source.append(" * shared_array) \n");
+  source.append("{ \n");
+
+  source.append("  "); source.append(numeric_string); source.append(" norm_vk = 0; \n");
+
+  // parallel reduction in work group to compute <vk, vk>
+  source.append("  shared_array[get_local_id(0)] = inner_prod_buffer[get_local_id(0) + chunk_size]; \n");
+  source.append("  for (uint stride=get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride) \n");
+  source.append("      shared_array[get_local_id(0)]  += shared_array[get_local_id(0) + stride];  \n");
+  source.append("  } ");
+
+  // compute alpha from reduced values:
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("  norm_vk = sqrt(shared_array[0]); \n");
+
+  source.append("  "); source.append(numeric_string); source.append(" inner_prod_contrib = 0; \n");
+  source.append("  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0)) { \n");
+  source.append("    "); source.append(numeric_string); source.append(" value_vk = vk[i + vk_offset] / norm_vk; \n");
+  source.append("     \n");
+  source.append("    inner_prod_contrib += residual[i] * value_vk; \n");
+  source.append("     \n");
+  source.append("    vk[i + vk_offset] = value_vk; \n");
+  source.append("  }  \n");
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  // parallel reduction in work group
+  source.append("  shared_array[get_local_id(0)] = inner_prod_contrib; \n");
+  source.append("  for (uint stride=get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride)  \n");
+  source.append("      shared_array[get_local_id(0)] += shared_array[get_local_id(0) + stride];  \n");
+  source.append("  } ");
+
+  // write results to result array
+  source.append("  if (get_local_id(0) == 0) \n ");
+  source.append("    r_dot_vk_buffer[get_group_id(0) + chunk_offset] = shared_array[0]; ");
+  source.append("  if (get_global_id(0) == 0) \n ");
+  source.append("    R_buffer[R_offset] = norm_vk; \n");
+
+  source.append("} \n");
+
+}
+
+template <typename StringType>
+void generate_pipelined_gmres_update_result(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_update_result( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" const * residual, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" const * krylov_basis, \n");
+  source.append("          unsigned int size, \n");
+  source.append("          unsigned int internal_size, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" const * coefficients, \n");
+  source.append("          unsigned int k) \n");
+  source.append("{ \n");
+
+  source.append("  for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0)) { \n");
+  source.append("    "); source.append(numeric_string); source.append(" value_result = result[i] + coefficients[0] * residual[i]; \n");
+  source.append("     \n");
+  source.append("    for (unsigned int j = 1; j < k; ++j) \n");
+  source.append("      value_result += coefficients[j] * krylov_basis[i + (j-1)*internal_size]; \n");
+  source.append("     \n");
+  source.append("    result[i] = value_result; \n");
+  source.append("  }  \n");
+
+  source.append("} \n");
+}
+
+
+template <typename StringType>
+void generate_compressed_matrix_pipelined_gmres_prod(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_csr_prod( \n");
+  source.append("          __global const unsigned int * row_indices, \n");
+  source.append("          __global const unsigned int * column_indices, \n");
+  source.append("          __global const "); source.append(numeric_string); source.append(" * elements, \n");
+  source.append("          __global const "); source.append(numeric_string); source.append(" * p, \n");
+  source.append("          unsigned int offset_p, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * Ap, \n");
+  source.append("          unsigned int offset_Ap, \n");
+  source.append("          unsigned int size, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
+  source.append("          unsigned int buffer_size, \n");
+  source.append("         __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
+  source.append("         __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
+  source.append("{ \n");
+  source.append("  cg_csr_prod(row_indices, column_indices, elements, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
+  source.append("} \n \n");
+
+}
+
+template <typename StringType>
+void generate_coordinate_matrix_pipelined_gmres_prod(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_coo_prod( \n");
+  source.append("          __global const uint2 * coords,  \n");//(row_index, column_index)
+  source.append("          __global const "); source.append(numeric_string); source.append(" * elements, \n");
+  source.append("          __global const uint  * group_boundaries, \n");
+  source.append("          __global const "); source.append(numeric_string); source.append(" * p, \n");
+  source.append("          unsigned int offset_p, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * Ap, \n");
+  source.append("          unsigned int offset_Ap, \n");
+  source.append("          unsigned int size, \n");
+  source.append("          __local unsigned int * shared_rows, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * inter_results, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
+  source.append("          unsigned int buffer_size, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
+  source.append("{ \n");
+  source.append("  cg_coo_prod(coords, elements, group_boundaries, p + offset_p, Ap + offset_Ap, size, shared_rows, inter_results, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
+  source.append("} \n \n");
+
+}
+
+
+template <typename StringType>
+void generate_ell_matrix_pipelined_gmres_prod(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_ell_prod( \n");
+  source.append("  __global const unsigned int * coords, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
+  source.append("  unsigned int internal_row_num, \n");
+  source.append("  unsigned int items_per_row, \n");
+  source.append("  unsigned int aligned_items_per_row, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
+  source.append("  unsigned int offset_p, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
+  source.append("  unsigned int offset_Ap, \n");
+  source.append("  unsigned int size, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
+  source.append("  unsigned int buffer_size, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
+  source.append("{ \n");
+  source.append("  cg_ell_prod(coords, elements, internal_row_num, items_per_row, aligned_items_per_row, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
+  source.append("} \n \n");
+}
+
+template <typename StringType>
+void generate_sliced_ell_matrix_pipelined_gmres_prod(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_sliced_ell_prod( \n");
+  source.append("  __global const unsigned int * columns_per_block, \n");
+  source.append("  __global const unsigned int * column_indices, \n");
+  source.append("  __global const unsigned int * block_start, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
+  source.append("  unsigned int offset_p, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
+  source.append("  unsigned int offset_Ap, \n");
+  source.append("  unsigned int size, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
+  source.append("  unsigned int buffer_size, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
+  source.append("{ \n");
+  source.append("  cg_sliced_ell_prod(columns_per_block, column_indices, block_start, elements, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
+  source.append("} \n \n");
+}
+
+template <typename StringType>
+void generate_hyb_matrix_pipelined_gmres_prod(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void gmres_hyb_prod( \n");
+  source.append("  const __global int* ell_coords, \n");
+  source.append("  const __global "); source.append(numeric_string); source.append("* ell_elements, \n");
+  source.append("  const __global uint* csr_rows, \n");
+  source.append("  const __global uint* csr_cols, \n");
+  source.append("  const __global "); source.append(numeric_string); source.append("* csr_elements, \n");
+  source.append("  unsigned int internal_row_num, \n");
+  source.append("  unsigned int items_per_row, \n");
+  source.append("  unsigned int aligned_items_per_row, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
+  source.append("  unsigned int offset_p, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
+  source.append("  unsigned int offset_Ap, \n");
+  source.append("  unsigned int size, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
+  source.append("  unsigned int buffer_size, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
+  source.append("{ \n");
+  source.append("  cg_hyb_prod(ell_coords, ell_elements, csr_rows, csr_cols, csr_elements, internal_row_num, items_per_row, aligned_items_per_row, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
+  source.append("} \n \n");
+}
+
+
 
 
 //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
@@ -947,6 +1284,16 @@ struct iterative
       generate_ell_matrix_pipelined_bicgstab_prod(source, numeric_string);
       generate_sliced_ell_matrix_pipelined_bicgstab_prod(source, numeric_string);
       generate_hyb_matrix_pipelined_bicgstab_prod(source, numeric_string);
+
+      generate_pipelined_gmres_gram_schmidt_stage1(source, numeric_string);
+      generate_pipelined_gmres_gram_schmidt_stage2(source, numeric_string);
+      generate_pipelined_gmres_normalize_vk(source, numeric_string);
+      generate_pipelined_gmres_update_result(source, numeric_string);
+      generate_compressed_matrix_pipelined_gmres_prod(source, numeric_string);
+      generate_coordinate_matrix_pipelined_gmres_prod(source, numeric_string);
+      generate_ell_matrix_pipelined_gmres_prod(source, numeric_string);
+      generate_sliced_ell_matrix_pipelined_gmres_prod(source, numeric_string);
+      generate_hyb_matrix_pipelined_gmres_prod(source, numeric_string);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO

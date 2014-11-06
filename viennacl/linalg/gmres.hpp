@@ -32,7 +32,12 @@
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/traits/clear.hpp"
 #include "viennacl/traits/size.hpp"
+#include "viennacl/traits/context.hpp"
 #include "viennacl/meta/result_of.hpp"
+
+#include "viennacl/linalg/iterative_operations.hpp"
+#include "viennacl/vector_proxy.hpp"
+
 
 namespace viennacl
 {
@@ -154,6 +159,171 @@ namespace detail
   }
 
 }
+
+
+/** @brief Implementation of a GMRES solver without preconditioner
+*
+* Following algorithm 2.1 proposed by Walker in "A Simpler GMRES", but uses classical Gram-Schmidt instead of modified Gram-Schmidt for better parallelization.
+*
+* @param matrix     The system matrix
+* @param rhs        The load vector
+* @param tag        Solver configuration tag
+* @param precond    A preconditioner. Precondition operation is done via member function apply()
+* @return The result vector
+*/
+template <typename MatrixType, typename ScalarType>
+viennacl::vector<ScalarType> solve(MatrixType const & A,
+                                   viennacl::vector<ScalarType> const & rhs,
+                                   gmres_tag const & tag,
+                                   viennacl::linalg::no_precond)
+{
+  viennacl::vector<ScalarType> residual(rhs);
+  viennacl::vector<ScalarType> result = viennacl::zero_vector<ScalarType>(rhs.size(), viennacl::traits::context(rhs));
+
+  viennacl::vector<ScalarType> device_krylov_basis(rhs.internal_size() * tag.krylov_dim(), viennacl::traits::context(rhs)); // not using viennacl::matrix here because of spurious padding in column number
+  viennacl::vector<ScalarType> device_buffer_R(tag.krylov_dim()*tag.krylov_dim(), viennacl::traits::context(rhs));
+  std::vector<ScalarType>      host_buffer_R(device_buffer_R.size());
+
+  vcl_size_t buffer_size_per_vector = 128;
+  vcl_size_t num_buffer_chunks      = 3;
+  viennacl::vector<ScalarType> device_inner_prod_buffer = viennacl::zero_vector<ScalarType>(num_buffer_chunks*buffer_size_per_vector, viennacl::traits::context(rhs)); // temporary buffer
+  viennacl::vector<ScalarType> device_r_dot_vk_buffer   = viennacl::zero_vector<ScalarType>(buffer_size_per_vector * tag.krylov_dim(), viennacl::traits::context(rhs)); // holds result of first reduction stage for <r, v_k> on device
+  viennacl::vector<ScalarType> device_vi_in_vk_buffer   = viennacl::zero_vector<ScalarType>(buffer_size_per_vector * tag.krylov_dim(), viennacl::traits::context(rhs)); // holds <v_i, v_k> for i=0..k-1 on device
+  viennacl::vector<ScalarType> device_values_xi_k       = viennacl::zero_vector<ScalarType>(tag.krylov_dim(), viennacl::traits::context(rhs)); // holds values \xi_k = <r, v_k> on device
+  std::vector<ScalarType>      host_r_dot_vk_buffer(device_r_dot_vk_buffer.size());
+  std::vector<ScalarType>      host_values_xi_k(tag.krylov_dim());
+  std::vector<ScalarType>      host_values_eta_k_buffer(tag.krylov_dim());
+  std::vector<ScalarType>      host_update_coefficients(tag.krylov_dim());
+
+  ScalarType norm_rhs = viennacl::linalg::norm_2(residual);
+  ScalarType rho_0 = norm_rhs;
+  ScalarType rho = ScalarType(1);
+
+  tag.iters(0);
+
+  for (unsigned int restart_count = 0; restart_count <= tag.max_restarts(); ++restart_count)
+  {
+    //
+    // prepare restart:
+    //
+    if (restart_count > 0)
+    {
+      // compute new residual without introducing a temporary for A*x:
+      residual = viennacl::linalg::prod(A, result);
+      residual = rhs - residual;
+
+      rho_0 = viennacl::linalg::norm_2(residual);
+    }
+    residual /= rho_0;
+    rho = ScalarType(1);
+
+
+    //
+    // minimize in Krylov basis:
+    //
+    vcl_size_t k = 0;
+    for (k = 0; k < static_cast<vcl_size_t>(tag.krylov_dim()); ++k)
+    {
+      tag.iters( tag.iters() + 1 ); //increase iteration counter
+
+      if (k == 0)
+      {
+        // compute v0 = A*r and perform first reduction stage for ||v0||
+        viennacl::vector_range<viennacl::vector<ScalarType> > v0(device_krylov_basis, viennacl::range(0, rhs.size()));
+        viennacl::linalg::pipelined_gmres_prod(A, residual, v0, device_inner_prod_buffer);
+
+        // Normalize v_1 and compute first reduction stage for <r, v_0> in device_r_dot_vk_buffer:
+        viennacl::linalg::pipelined_gmres_normalize_vk(v0, residual,
+                                                       device_buffer_R, k*tag.krylov_dim() + k,
+                                                       device_inner_prod_buffer, device_r_dot_vk_buffer,
+                                                       buffer_size_per_vector, k*buffer_size_per_vector);
+      }
+      else
+      {
+        // compute v0 = A*r and perform first reduction stage for ||v0||
+        viennacl::vector_range<viennacl::vector<ScalarType> > vk        (device_krylov_basis, viennacl::range( k   *rhs.internal_size(),  k   *rhs.internal_size() + rhs.size()));
+        viennacl::vector_range<viennacl::vector<ScalarType> > vk_minus_1(device_krylov_basis, viennacl::range((k-1)*rhs.internal_size(), (k-1)*rhs.internal_size() + rhs.size()));
+        viennacl::linalg::pipelined_gmres_prod(A, vk_minus_1, vk, device_inner_prod_buffer);
+
+        //
+        // Gram-Schmidt, stage 1: compute first reduction stage of <v_i, v_k>
+        //
+        viennacl::linalg::pipelined_gmres_gram_schmidt_stage1(device_krylov_basis, rhs.size(), rhs.internal_size(), k, device_vi_in_vk_buffer, buffer_size_per_vector);
+
+        //
+        // Gram-Schmidt, stage 2: compute second reduction stage of <v_i, v_k> and use that to compute v_k -= sum_i <v_i, v_k> v_i.
+        //                        Store <v_i, v_k> in R-matrix and compute first reduction stage for ||v_k||
+        //
+        viennacl::linalg::pipelined_gmres_gram_schmidt_stage2(device_krylov_basis, rhs.size(), rhs.internal_size(), k,
+                                                              device_vi_in_vk_buffer,
+                                                              device_buffer_R, tag.krylov_dim(),
+                                                              device_inner_prod_buffer, buffer_size_per_vector);
+
+        //
+        // Normalize v_k and compute first reduction stage for <r, v_k> in device_r_dot_vk_buffer:
+        //
+        viennacl::linalg::pipelined_gmres_normalize_vk(vk, residual,
+                                                       device_buffer_R, k*tag.krylov_dim() + k,
+                                                       device_inner_prod_buffer, device_r_dot_vk_buffer,
+                                                       buffer_size_per_vector, k*buffer_size_per_vector);
+      }
+    }
+
+    //
+    // Run reduction to obtain the values \xi_k = <r, v_k>.
+    // Note that unlike Algorithm 2.1 in Walker: "A Simpler GMRES", we do not update the residual
+    //
+    viennacl::fast_copy(device_r_dot_vk_buffer.begin(), device_r_dot_vk_buffer.end(), host_r_dot_vk_buffer.begin());
+    for (std::size_t i=0; i<k; ++i)
+    {
+      host_values_xi_k[i] = ScalarType(0);
+      for (std::size_t j=0; j<buffer_size_per_vector; ++j)
+        host_values_xi_k[i] += host_r_dot_vk_buffer[i*buffer_size_per_vector + j];
+    }
+
+    // Compute error estimator:
+    for (std::size_t i=0; i<k; ++i)
+      rho *= std::sin( std::acos(host_values_xi_k[i] / rho) );
+
+    //
+    // Bring values in R  back to host:
+    //
+    viennacl::fast_copy(device_buffer_R.begin(), device_buffer_R.end(), host_buffer_R.begin());
+
+    //
+    // Solve minimization problem:
+    //
+    host_values_eta_k_buffer = host_values_xi_k;
+
+    for (int i=static_cast<int>(k)-1; i>-1; --i)
+    {
+      for (vcl_size_t j=static_cast<vcl_size_t>(i)+1; j<k; ++j)
+        host_values_eta_k_buffer[i] -= host_buffer_R[i + j*k] * host_values_eta_k_buffer[j];
+
+      host_values_eta_k_buffer[i] /= host_buffer_R[i + i*k];
+    }
+
+    //
+    // Update x += rho * z with z = \eta_0 * residual + sum_{i=0}^{k-1} \eta_{i+1} v_i
+    // Note that we have not updated the residual yet, hence this slightly modified as compared to the form given in Algorithm 2.1 in Walker: "A Simpler GMRES"
+    //
+    for (vcl_size_t i=0; i<k; ++i)
+      host_update_coefficients[i] = rho_0 * host_values_eta_k_buffer[i];
+
+    viennacl::fast_copy(host_update_coefficients.begin(), host_update_coefficients.end(), device_values_xi_k.begin()); //reuse device_values_xi_k_buffer here for simplicity
+
+    viennacl::linalg::pipelined_gmres_update_result(result, residual,
+                                                    device_krylov_basis, rhs.size(), rhs.internal_size(),
+                                                    device_values_xi_k, k);
+
+    tag.error( std::fabs(rho*rho_0 / norm_rhs) );
+  }
+
+  return result;
+}
+
+
+
 
 /** @brief Implementation of the GMRES solver.
 *

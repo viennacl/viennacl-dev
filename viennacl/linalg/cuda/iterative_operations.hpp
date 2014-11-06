@@ -303,7 +303,7 @@ void pipelined_cg_prod(coordinate_matrix<NumericT> const & A,
 
   Ap.clear();
 
-  pipelined_cg_coo_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle12().cuda_handle()),
+  pipelined_cg_coo_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(A.handle12().cuda_handle()),
                                                 detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                 detail::cuda_arg<NumericT>(p),
@@ -968,7 +968,7 @@ void pipelined_bicgstab_prod(coordinate_matrix<NumericT> const & A,
 
   Ap.clear();
 
-  pipelined_bicgstab_coo_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle12().cuda_handle()),
+  pipelined_bicgstab_coo_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(A.handle12().cuda_handle()),
                                                       detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
                                                       detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                       detail::cuda_arg<NumericT>(p),
@@ -1289,6 +1289,433 @@ void pipelined_bicgstab_prod(hyb_matrix<NumericT> const & A,
                                                       chunk_offset);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_hyb_vec_mul_kernel");
 }
+
+//////////////////////////////////////////
+
+template <typename T>
+__global__ void pipelined_gmres_normalize_vk_kernel(T * vk,
+                                                    unsigned int vk_offset,
+                                                    T const * residual,
+                                                    T * R_buffer,
+                                                    unsigned int R_offset,
+                                                    T const * inner_prod_buffer,
+                                                    unsigned int chunk_size,
+                                                    T * r_dot_vk_buffer,
+                                                    unsigned int chunk_offset,
+                                                    unsigned int size)
+{
+  __shared__ T shared_array[128];
+  T norm_vk = 0;
+
+  // parallel reduction in work group to compute <vk, vk>
+  shared_array[threadIdx.x] = inner_prod_buffer[threadIdx.x + chunk_size];
+  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    if (threadIdx.x < stride)
+      shared_array[threadIdx.x] += shared_array[threadIdx.x + stride];
+  }
+
+  // compute alpha from reduced values:
+  __syncthreads();
+  norm_vk = sqrt(shared_array[0]);
+
+  T inner_prod_contrib = 0;
+  for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    T value_vk = vk[i + vk_offset] / norm_vk;
+
+    inner_prod_contrib += residual[i] * value_vk;
+
+    vk[i + vk_offset] = value_vk;
+  }
+  __syncthreads();
+
+  // parallel reduction in work group
+  shared_array[threadIdx.x] = inner_prod_contrib;
+  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    if (threadIdx.x < stride)
+      shared_array[threadIdx.x] += shared_array[threadIdx.x + stride];
+  }
+
+  // write results of first reduction stage:
+  if (threadIdx.x == 0)
+    r_dot_vk_buffer[blockIdx.x + chunk_offset] = shared_array[0];
+  // store norm:
+  if (blockDim.x * blockIdx.x + threadIdx.x == 0)
+    R_buffer[R_offset] = norm_vk;
+}
+
+/** @brief Performs a vector normalization needed for an efficient pipelined GMRES algorithm.
+  *
+  * This routines computes for vectors 'r', 'v_k':
+  *   Second reduction step for ||v_k||
+  *   v_k /= ||v_k||
+  *   First reduction step for <r, v_k>
+  */
+template <typename T>
+void pipelined_gmres_normalize_vk(vector_base<T> & v_k,
+                                  vector_base<T> const & residual,
+                                  vector_base<T> & R_buffer,
+                                  vcl_size_t offset_in_R,
+                                  vector_base<T> const & inner_prod_buffer,
+                                  vector_base<T> & r_dot_vk_buffer,
+                                  vcl_size_t buffer_chunk_size,
+                                  vcl_size_t buffer_chunk_offset)
+{
+  unsigned int vk_offset = viennacl::traits::start(v_k);
+  unsigned int R_offset = offset_in_R;
+  unsigned int chunk_size = buffer_chunk_size;
+  unsigned int chunk_offset = buffer_chunk_offset;
+  unsigned int size = v_k.size();
+
+  pipelined_gmres_normalize_vk_kernel<<<128, 128>>>(detail::cuda_arg<T>(v_k),
+                                                    vk_offset,
+                                                    detail::cuda_arg<T>(residual),
+                                                    detail::cuda_arg<T>(R_buffer),
+                                                    R_offset,
+                                                    detail::cuda_arg<T>(inner_prod_buffer),
+                                                    chunk_size,
+                                                    detail::cuda_arg<T>(r_dot_vk_buffer),
+                                                    chunk_offset,
+                                                    size);
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_gmres_normalize_vk_kernel");
+}
+
+
+
+template <typename T>
+__global__ void pipelined_gmres_gram_schmidt_stage1_kernel(T const * krylov_basis,
+                                                           unsigned int size,
+                                                           unsigned int internal_size,
+                                                           unsigned int k,
+                                                           T * vi_in_vk_buffer,
+                                                           unsigned int chunk_size)
+{
+  __shared__ T shared_array[7*128];
+  T vi_in_vk[7];
+  T value_vk = 0;
+
+  unsigned int k_base = 0;
+  while (k_base < k)
+  {
+    unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);
+    vi_in_vk[0] = 0;
+    vi_in_vk[1] = 0;
+    vi_in_vk[2] = 0;
+    vi_in_vk[3] = 0;
+    vi_in_vk[4] = 0;
+    vi_in_vk[5] = 0;
+    vi_in_vk[6] = 0;
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+      value_vk = krylov_basis[i + k * internal_size];
+
+      for (unsigned int j=0; j<vecs_in_iteration; ++j)
+        vi_in_vk[j] += value_vk * krylov_basis[i + (k_base + j) * internal_size];
+    }
+
+    // parallel reduction in work group
+    for (uint j=0; j<vecs_in_iteration; ++j)
+      shared_array[threadIdx.x + j*chunk_size] = vi_in_vk[j];
+    for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+    {
+      __syncthreads();
+      if (threadIdx.x < stride) {
+        for (uint j=0; j<vecs_in_iteration; ++j)
+          shared_array[threadIdx.x + j*chunk_size] += shared_array[threadIdx.x + j*chunk_size + stride];
+      }
+    }
+
+    // write results to result array
+    if (threadIdx.x == 0)
+      for (unsigned int j=0; j<vecs_in_iteration; ++j)
+        vi_in_vk_buffer[blockIdx.x + (k_base + j) * chunk_size] = shared_array[j*chunk_size];
+
+    k_base += vecs_in_iteration;
+  }
+
+}
+
+template <typename T>
+void pipelined_gmres_gram_schmidt_stage1(vector_base<T> const & device_krylov_basis,
+                                         vcl_size_t v_k_size,
+                                         vcl_size_t v_k_internal_size,
+                                         vcl_size_t param_k,
+                                         vector_base<T> & vi_in_vk_buffer,
+                                         vcl_size_t buffer_chunk_size)
+{
+  unsigned int chunk_size = buffer_chunk_size;
+  unsigned int size = v_k_size;
+  unsigned int internal_size = v_k_internal_size;
+  unsigned int k = param_k;
+
+  pipelined_gmres_gram_schmidt_stage1_kernel<<<128, 128>>>(detail::cuda_arg<T>(device_krylov_basis),
+                                                           size,
+                                                           internal_size,
+                                                           k,
+                                                           detail::cuda_arg<T>(vi_in_vk_buffer),
+                                                           chunk_size);
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_gmres_gram_schmidt_stage1_kernel");
+}
+
+
+
+
+template <typename T>
+__global__ void pipelined_gmres_gram_schmidt_stage2_kernel(T * krylov_basis,
+                                                           unsigned int size,
+                                                           unsigned int internal_size,
+                                                           unsigned int k,
+                                                           T const * vi_in_vk_buffer,
+                                                           unsigned int chunk_size,
+                                                           T * R_buffer,
+                                                           unsigned int krylov_dim,
+                                                           T * inner_prod_buffer)
+{
+  __shared__ T shared_array[7*128];
+  T vk_dot_vk = 0;
+  T value_vk = 0;
+
+  unsigned int k_base = 0;
+  while (k_base < k)
+  {
+    unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);
+
+    // parallel reduction in work group for <v_i, v_k>
+    for (uint j=0; j<vecs_in_iteration; ++j)
+      shared_array[threadIdx.x + j*chunk_size] = vi_in_vk_buffer[threadIdx.x + (k_base + j) * chunk_size];
+    for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+    {
+      __syncthreads();
+      if (threadIdx.x < stride) {
+        for (uint j=0; j<vecs_in_iteration; ++j)
+          shared_array[threadIdx.x + j*chunk_size] += shared_array[threadIdx.x + j*chunk_size + stride];
+      }
+    }
+    __syncthreads();
+
+    // v_k -= <v_i, v_k> v_i:
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x)
+    {
+      value_vk = krylov_basis[i + k * internal_size];
+
+      for (unsigned int j=0; j<vecs_in_iteration; ++j)
+        value_vk -= shared_array[j*chunk_size] * krylov_basis[i + (k_base + j) * internal_size];
+      vk_dot_vk += (k_base + vecs_in_iteration == k) ? (value_vk * value_vk) : 0;
+      krylov_basis[i + k * internal_size] = value_vk;
+    }
+
+    // write to R: (to avoid thread divergence, all threads write the same value)
+    if (blockIdx.x == 0)
+      for (unsigned int j=0; j<vecs_in_iteration; ++j)
+        R_buffer[(k_base + j) + k*krylov_dim] = shared_array[j*chunk_size];
+    __syncthreads();
+
+    k_base += vecs_in_iteration;
+  }
+
+  // parallel reduction in work group for <v_k, v_k>
+  shared_array[threadIdx.x] = vk_dot_vk;
+  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    if (threadIdx.x < stride)
+      shared_array[threadIdx.x] += shared_array[threadIdx.x + stride];
+  }
+
+  // write results to result array
+  if (threadIdx.x == 0)
+    inner_prod_buffer[chunk_size+blockIdx.x] = shared_array[0];
+}
+
+template <typename T>
+void pipelined_gmres_gram_schmidt_stage2(vector_base<T> & device_krylov_basis,
+                                         vcl_size_t v_k_size,
+                                         vcl_size_t v_k_internal_size,
+                                         vcl_size_t param_k,
+                                         vector_base<T> const & vi_in_vk_buffer,
+                                         vector_base<T> & R_buffer,
+                                         vcl_size_t krylov_dim,
+                                         vector_base<T> & inner_prod_buffer,
+                                         vcl_size_t buffer_chunk_size)
+{
+  unsigned int chunk_size = buffer_chunk_size;
+  unsigned int size = v_k_size;
+  unsigned int internal_size = v_k_internal_size;
+  unsigned int k = param_k;
+  unsigned int krylov = krylov_dim;
+
+  pipelined_gmres_gram_schmidt_stage2_kernel<<<128, 128>>>(detail::cuda_arg<T>(device_krylov_basis),
+                                                           size,
+                                                           internal_size,
+                                                           k,
+                                                           detail::cuda_arg<T>(vi_in_vk_buffer),
+                                                           chunk_size,
+                                                           detail::cuda_arg<T>(R_buffer),
+                                                           krylov,
+                                                           detail::cuda_arg<T>(inner_prod_buffer));
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_gmres_gram_schmidt_stage2_kernel");
+}
+
+
+
+
+template <typename T>
+__global__ void pipelined_gmres_update_result_kernel(T * result,
+                                                     T const * residual,
+                                                     T const * krylov_basis,
+                                                     unsigned int size,
+                                                     unsigned int internal_size,
+                                                     T const * coefficients,
+                                                     unsigned int k)
+{
+  for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x)
+  {
+    T value_result = result[i] + coefficients[0] * residual[i];
+
+    for (unsigned int j = 1; j < k; ++j)
+      value_result += coefficients[j] * krylov_basis[i + (j-1)*internal_size];
+
+    result[i] = value_result;
+  }
+}
+
+template <typename T>
+void pipelined_gmres_update_result(vector_base<T> & result,
+                                   vector_base<T> const & residual,
+                                   vector_base<T> const & krylov_basis,
+                                   vcl_size_t v_k_size,
+                                   vcl_size_t v_k_internal_size,
+                                   vector_base<T> const & coefficients,
+                                   vcl_size_t param_k)
+{
+  unsigned int size = v_k_size;
+  unsigned int internal_size = v_k_internal_size;
+  unsigned int k = param_k;
+
+  pipelined_gmres_update_result_kernel<<<128, 128>>>(detail::cuda_arg<T>(result),
+                                                     detail::cuda_arg<T>(residual),
+                                                     detail::cuda_arg<T>(krylov_basis),
+                                                     size,
+                                                     internal_size,
+                                                     detail::cuda_arg<T>(coefficients),
+                                                     k);
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_gmres_update_result_kernel");
+}
+
+
+
+template <typename T>
+void pipelined_gmres_prod(compressed_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  unsigned int size = p.size();
+  unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
+
+  pipelined_cg_csr_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                detail::cuda_arg<T>(A.handle().cuda_handle()),
+                                                detail::cuda_arg<T>(p) + viennacl::traits::start(p),
+                                                detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+                                                size,
+                                                detail::cuda_arg<T>(inner_prod_buffer),
+                                                buffer_size_per_vector);
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_kernel");
+}
+
+template <typename T>
+void pipelined_gmres_prod(coordinate_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  unsigned int size = p.size();
+  unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
+
+  Ap.clear();
+
+  pipelined_cg_coo_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(A.handle12().cuda_handle()),
+                                                detail::cuda_arg<T>(A.handle().cuda_handle()),
+                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
+                                                detail::cuda_arg<T>(p) + viennacl::traits::start(p),
+                                                detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+                                                size,
+                                                detail::cuda_arg<T>(inner_prod_buffer),
+                                                buffer_size_per_vector);
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_coo_vec_mul_kernel");
+}
+
+template <typename T>
+void pipelined_gmres_prod(ell_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  unsigned int size = p.size();
+  unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
+
+  pipelined_cg_ell_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                detail::cuda_arg<T>(A.handle().cuda_handle()),
+                                                static_cast<unsigned int>(A.internal_size1()),
+                                                static_cast<unsigned int>(A.maxnnz()),
+                                                detail::cuda_arg<T>(p) + viennacl::traits::start(p),
+                                                detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+                                                size,
+                                                detail::cuda_arg<T>(inner_prod_buffer),
+                                                buffer_size_per_vector);
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_ell_vec_mul_kernel");
+}
+
+template <typename T>
+void pipelined_gmres_prod(sliced_ell_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  unsigned int size = p.size();
+  unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
+
+  pipelined_cg_sliced_ell_vec_mul_kernel<<<128, A.rows_per_block()>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                                      detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                                      detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
+                                                                      detail::cuda_arg<T>(A.handle().cuda_handle()),
+                                                                      detail::cuda_arg<T>(p) + viennacl::traits::start(p),
+                                                                      detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+                                                                      size,
+                                                                      detail::cuda_arg<T>(inner_prod_buffer),
+                                                                      buffer_size_per_vector);
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_sliced_ell_vec_mul_kernel");
+}
+
+
+template <typename T>
+void pipelined_gmres_prod(hyb_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  unsigned int size = p.size();
+  unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
+
+  pipelined_cg_hyb_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                detail::cuda_arg<T>(A.handle().cuda_handle()),
+                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
+                                                detail::cuda_arg<unsigned int>(A.handle4().cuda_handle()),
+                                                detail::cuda_arg<T>(A.handle5().cuda_handle()),
+                                                static_cast<unsigned int>(A.internal_size1()),
+                                                static_cast<unsigned int>(A.ell_nnz()),
+                                                detail::cuda_arg<T>(p) + viennacl::traits::start(p),
+                                                detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+                                                size,
+                                                detail::cuda_arg<T>(inner_prod_buffer),
+                                                buffer_size_per_vector);
+  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_hyb_vec_mul_kernel");
+}
+
+
 
 } // namespace cuda
 } //namespace linalg

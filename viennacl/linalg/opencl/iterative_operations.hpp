@@ -493,6 +493,311 @@ void pipelined_bicgstab_prod(hyb_matrix<NumericT> const & A,
                         );
 }
 
+///////////////////////////////////
+
+/** @brief Performs a vector normalization needed for an efficient pipelined GMRES algorithm.
+  *
+  * This routines computes for vectors 'r', 'v_k':
+  *   Second reduction step for ||v_k||
+  *   v_k /= ||v_k||
+  *   First reduction step for <r, v_k>
+  */
+template <typename T>
+void pipelined_gmres_normalize_vk(vector_base<T> & v_k,
+                                  vector_base<T> const & residual,
+                                  vector_base<T> & R_buffer,
+                                  vcl_size_t offset_in_R,
+                                  vector_base<T> const & inner_prod_buffer,
+                                  vector_base<T> & r_dot_vk_buffer,
+                                  vcl_size_t buffer_chunk_size,
+                                  vcl_size_t buffer_chunk_offset)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(v_k).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_normalize_vk");
+
+  k.local_work_size(0, 128);
+  k.global_work_size(0, 128*128);
+
+  cl_uint size_vk      = cl_uint(v_k.size());
+  cl_uint vk_offset    = cl_uint(viennacl::traits::start(v_k));
+  cl_uint R_offset     = cl_uint(offset_in_R);
+  cl_uint chunk_size   = cl_uint(buffer_chunk_size);
+  cl_uint chunk_offset = cl_uint(buffer_chunk_offset);
+  viennacl::ocl::enqueue(k(v_k, vk_offset,
+                           residual,
+                           R_buffer, R_offset,
+                           inner_prod_buffer, chunk_size,
+                           r_dot_vk_buffer, chunk_offset,
+                           size_vk,
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))
+                           ));
+}
+
+template <typename T>
+void pipelined_gmres_gram_schmidt_stage1(vector_base<T> const & device_krylov_basis,
+                                         vcl_size_t v_k_size,
+                                         vcl_size_t v_k_internal_size,
+                                         vcl_size_t param_k,
+                                         vector_base<T> & vi_in_vk_buffer,
+                                         vcl_size_t buffer_chunk_size)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(device_krylov_basis).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_gram_schmidt_1");
+
+  k.local_work_size(0, 128);
+  k.global_work_size(0, 128*128);
+
+  cl_uint size_vk          = cl_uint(v_k_size);
+  cl_uint internal_size_vk = cl_uint(v_k_internal_size);
+  cl_uint ocl_k            = cl_uint(param_k);
+  cl_uint chunk_size = cl_uint(buffer_chunk_size);
+  viennacl::ocl::enqueue(k(device_krylov_basis, size_vk, internal_size_vk, ocl_k,
+                           vi_in_vk_buffer, chunk_size,
+                           viennacl::ocl::local_mem(7 * k.local_work_size() * sizeof(T))
+                           ));
+}
+
+template <typename T>
+void pipelined_gmres_gram_schmidt_stage2(vector_base<T> & device_krylov_basis,
+                                         vcl_size_t v_k_size,
+                                         vcl_size_t v_k_internal_size,
+                                         vcl_size_t param_k,
+                                         vector_base<T> const & vi_in_vk_buffer,
+                                         vector_base<T> & R_buffer,
+                                         vcl_size_t krylov_dim,
+                                         vector_base<T> & inner_prod_buffer,
+                                         vcl_size_t buffer_chunk_size)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(device_krylov_basis).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_gram_schmidt_2");
+
+  cl_uint size_vk          = cl_uint(v_k_size);
+  cl_uint internal_size_vk = cl_uint(v_k_internal_size);
+  cl_uint ocl_k            = cl_uint(param_k);
+  cl_uint chunk_size       = cl_uint(buffer_chunk_size);
+  cl_uint ocl_krylov_dim   = cl_uint(krylov_dim);
+  viennacl::ocl::enqueue(k(device_krylov_basis, size_vk, internal_size_vk, ocl_k,
+                           vi_in_vk_buffer, chunk_size,
+                           R_buffer, ocl_krylov_dim,
+                           inner_prod_buffer,
+                           viennacl::ocl::local_mem(7 * k.local_work_size() * sizeof(T))
+                           ));
+}
+
+template <typename T>
+void pipelined_gmres_update_result(vector_base<T> & result,
+                                   vector_base<T> const & residual,
+                                   vector_base<T> const & krylov_basis,
+                                   vcl_size_t v_k_size,
+                                   vcl_size_t v_k_internal_size,
+                                   vector_base<T> const & coefficients,
+                                   vcl_size_t param_k)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(result).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_update_result");
+
+  cl_uint size_vk          = cl_uint(v_k_size);
+  cl_uint internal_size_vk = cl_uint(v_k_internal_size);
+  cl_uint ocl_k            = cl_uint(param_k);
+  viennacl::ocl::enqueue(k(result,
+                           residual,
+                           krylov_basis, size_vk, internal_size_vk,
+                           coefficients, ocl_k
+                           ));
+}
+
+
+template <typename T>
+void pipelined_gmres_prod(compressed_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_csr_prod");
+
+  cl_uint vec_size               = cl_uint(viennacl::traits::size(p));
+  cl_uint buffer_size_per_vector = cl_uint(inner_prod_buffer.size()) / cl_uint(3);
+  cl_uint start_p                = cl_uint(viennacl::traits::start(p));
+  cl_uint start_Ap               = cl_uint(viennacl::traits::start(Ap));
+
+  k.local_work_size(0, 128);
+  k.global_work_size(0, 128*128);
+  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                           p, start_p,
+                           Ap, start_Ap,
+                           vec_size,
+                           inner_prod_buffer,
+                           buffer_size_per_vector,
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))
+                          ));
+
+}
+
+template <typename T>
+void pipelined_gmres_prod(coordinate_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  cl_uint vec_size               = cl_uint(viennacl::traits::size(p));
+  cl_uint buffer_size_per_vector = cl_uint(inner_prod_buffer.size()) / cl_uint(3);
+  cl_uint start_p                = cl_uint(viennacl::traits::start(p));
+  cl_uint start_Ap               = cl_uint(viennacl::traits::start(Ap));
+
+  Ap.clear();
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_coo_prod");
+  unsigned int thread_num = 128; //k.local_work_size(0);
+
+  k.local_work_size(0, thread_num);
+
+  k.global_work_size(0, 64 * thread_num);  //64 work groups are hard-coded for now. Gives reasonable performance in most cases
+
+  viennacl::ocl::enqueue(k(A.handle12().opencl_handle(), A.handle().opencl_handle(), A.handle3().opencl_handle(),
+                           p, start_p,
+                           Ap, start_Ap,
+                           vec_size,
+                           viennacl::ocl::local_mem(sizeof(cl_uint)*thread_num),
+                           viennacl::ocl::local_mem(sizeof(T)*thread_num),
+                           inner_prod_buffer,
+                           buffer_size_per_vector,
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))
+                          ));
+}
+
+template <typename T>
+void pipelined_gmres_prod(ell_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  cl_uint vec_size               = cl_uint(viennacl::traits::size(p));
+  cl_uint buffer_size_per_vector = cl_uint(inner_prod_buffer.size()) / cl_uint(3);
+  cl_uint start_p                = cl_uint(viennacl::traits::start(p));
+  cl_uint start_Ap               = cl_uint(viennacl::traits::start(Ap));
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_ell_prod");
+
+  unsigned int thread_num = 128;
+  unsigned int group_num = 128;
+
+  k.local_work_size(0, thread_num);
+  k.global_work_size(0, thread_num * group_num);
+
+  viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
+                           A.handle().opencl_handle(),
+                           cl_uint(A.internal_size1()),
+                           cl_uint(A.maxnnz()),
+                           cl_uint(A.internal_maxnnz()),
+                           viennacl::traits::opencl_handle(p), start_p,
+                           viennacl::traits::opencl_handle(Ap), start_Ap,
+                           vec_size,
+                           inner_prod_buffer,
+                           buffer_size_per_vector,
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))
+                          )
+                         );
+}
+
+template <typename T>
+void pipelined_gmres_prod(sliced_ell_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  cl_uint vec_size               = cl_uint(viennacl::traits::size(p));
+  cl_uint buffer_size_per_vector = cl_uint(inner_prod_buffer.size()) / cl_uint(3);
+  cl_uint start_p                = cl_uint(viennacl::traits::start(p));
+  cl_uint start_Ap               = cl_uint(viennacl::traits::start(Ap));
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_sliced_ell_prod");
+
+  unsigned int thread_num = A.rows_per_block();
+  unsigned int group_num = 128;
+
+  k.local_work_size(0, thread_num);
+  k.global_work_size(0, thread_num * group_num);
+
+  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(),
+                           A.handle2().opencl_handle(),
+                           A.handle3().opencl_handle(),
+                           A.handle().opencl_handle(),
+                           viennacl::traits::opencl_handle(p), start_p,
+                           viennacl::traits::opencl_handle(Ap), start_Ap,
+                           vec_size,
+                           inner_prod_buffer,
+                           buffer_size_per_vector,
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))
+                          )
+                        );
+}
+
+
+template <typename T>
+void pipelined_gmres_prod(hyb_matrix<T> const & A,
+                          vector_base<T> const & p,
+                          vector_base<T> & Ap,
+                          vector_base<T> & inner_prod_buffer)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
+
+  cl_uint vec_size               = cl_uint(viennacl::traits::size(p));
+  cl_uint buffer_size_per_vector = cl_uint(inner_prod_buffer.size()) / cl_uint(3);
+  cl_uint start_p                = cl_uint(viennacl::traits::start(p));
+  cl_uint start_Ap               = cl_uint(viennacl::traits::start(Ap));
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_hyb_prod");
+
+  unsigned int thread_num = 128;
+  unsigned int group_num = 128;
+
+  k.local_work_size(0, thread_num);
+  k.global_work_size(0, thread_num * group_num);
+
+  viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
+                           A.handle().opencl_handle(),
+                           A.handle3().opencl_handle(),
+                           A.handle4().opencl_handle(),
+                           A.handle5().opencl_handle(),
+                           cl_uint(A.internal_size1()),
+                           cl_uint(A.ell_nnz()),
+                           cl_uint(A.internal_ellnnz()),
+                           viennacl::traits::opencl_handle(p), start_p,
+                           viennacl::traits::opencl_handle(Ap), start_Ap,
+                           vec_size,
+                           inner_prod_buffer,
+                           buffer_size_per_vector,
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))
+                          )
+                        );
+}
+
 
 } //namespace opencl
 } //namespace linalg

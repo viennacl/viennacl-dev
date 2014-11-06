@@ -68,8 +68,8 @@ namespace detail
   {
     typedef NumericT        value_type;
 
-    value_type         * Ap_buf      = detail::extract_raw_pointer<value_type>(Ap.handle());
-    value_type   const *  p_buf      = detail::extract_raw_pointer<value_type>(p.handle());
+    value_type         * Ap_buf      = detail::extract_raw_pointer<value_type>(Ap.handle()) + viennacl::traits::start(Ap);
+    value_type   const *  p_buf      = detail::extract_raw_pointer<value_type>(p.handle()) + viennacl::traits::start(p);
     value_type   const * elements    = detail::extract_raw_pointer<value_type>(A.handle());
     unsigned int const *  row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
     unsigned int const *  col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
@@ -119,8 +119,8 @@ namespace detail
   {
     typedef NumericT        value_type;
 
-    value_type         * Ap_buf       = detail::extract_raw_pointer<value_type>(Ap.handle());
-    value_type   const *  p_buf       = detail::extract_raw_pointer<value_type>(p.handle());
+    value_type         * Ap_buf       = detail::extract_raw_pointer<value_type>(Ap.handle()) + viennacl::traits::start(Ap);;
+    value_type   const *  p_buf       = detail::extract_raw_pointer<value_type>(p.handle()) + viennacl::traits::start(p);;
     value_type   const * elements     = detail::extract_raw_pointer<value_type>(A.handle());
     unsigned int const * coord_buffer = detail::extract_raw_pointer<unsigned int>(A.handle12());
     value_type         * data_buffer  = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
@@ -172,8 +172,8 @@ namespace detail
   {
     typedef NumericT     value_type;
 
-    value_type         * Ap_buf       = detail::extract_raw_pointer<value_type>(Ap.handle());
-    value_type   const *  p_buf       = detail::extract_raw_pointer<value_type>(p.handle());
+    value_type         * Ap_buf       = detail::extract_raw_pointer<value_type>(Ap.handle()) + viennacl::traits::start(Ap);;
+    value_type   const *  p_buf       = detail::extract_raw_pointer<value_type>(p.handle()) + viennacl::traits::start(p);;
     value_type   const * elements     = detail::extract_raw_pointer<value_type>(A.handle());
     unsigned int const * coords       = detail::extract_raw_pointer<unsigned int>(A.handle2());
     value_type         * data_buffer  = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
@@ -225,8 +225,8 @@ namespace detail
   {
     typedef NumericT     value_type;
 
-    value_type       * Ap_buf            = detail::extract_raw_pointer<value_type>(Ap.handle());
-    value_type const *  p_buf            = detail::extract_raw_pointer<value_type>(p.handle());
+    value_type       * Ap_buf            = detail::extract_raw_pointer<value_type>(Ap.handle()) + viennacl::traits::start(Ap);;
+    value_type const *  p_buf            = detail::extract_raw_pointer<value_type>(p.handle()) + viennacl::traits::start(p);;
     value_type const * elements          = detail::extract_raw_pointer<value_type>(A.handle());
     IndexT     const * columns_per_block = detail::extract_raw_pointer<IndexT>(A.handle1());
     IndexT     const * column_indices    = detail::extract_raw_pointer<IndexT>(A.handle2());
@@ -302,8 +302,8 @@ namespace detail
     typedef NumericT     value_type;
     typedef unsigned int index_type;
 
-    value_type       * Ap_buf            = detail::extract_raw_pointer<value_type>(Ap.handle());
-    value_type const *  p_buf            = detail::extract_raw_pointer<value_type>(p.handle());
+    value_type       * Ap_buf            = detail::extract_raw_pointer<value_type>(Ap.handle()) + viennacl::traits::start(Ap);;
+    value_type const *  p_buf            = detail::extract_raw_pointer<value_type>(p.handle()) + viennacl::traits::start(p);;
     value_type const * elements          = detail::extract_raw_pointer<value_type>(A.handle());
     index_type const * coords            = detail::extract_raw_pointer<index_type>(A.handle2());
     value_type const * csr_elements      = detail::extract_raw_pointer<value_type>(A.handle5());
@@ -696,6 +696,181 @@ void pipelined_bicgstab_update_s(vector_base<NumericT> & s,
 
    viennacl::linalg::host_based::detail::pipelined_prod_impl(A, p, Ap, data_r0star, inner_prod_buffer, buffer_chunk_size, buffer_chunk_offset);
  }
+
+
+/////////////////////////////////////////////////////////////
+
+/** @brief Performs a vector normalization needed for an efficient pipelined GMRES algorithm.
+ *
+ * This routines computes for vectors 'r', 'v_k':
+ *   Second reduction step for ||v_k||
+ *   v_k /= ||v_k||
+ *   First reduction step for <r, v_k>
+ */
+template <typename T>
+void pipelined_gmres_normalize_vk(vector_base<T> & v_k,
+                                 vector_base<T> const & residual,
+                                 vector_base<T> & R_buffer,
+                                 vcl_size_t offset_in_R,
+                                 vector_base<T> const & inner_prod_buffer,
+                                 vector_base<T> & r_dot_vk_buffer,
+                                 vcl_size_t buffer_chunk_size,
+                                 vcl_size_t buffer_chunk_offset)
+{
+  typedef T        value_type;
+
+  value_type       * data_v_k      = detail::extract_raw_pointer<value_type>(v_k);
+  value_type const * data_residual = detail::extract_raw_pointer<value_type>(residual);
+  value_type       * data_R        = detail::extract_raw_pointer<value_type>(R_buffer);
+  value_type const * data_buffer   = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
+  value_type       * data_r_dot_vk = detail::extract_raw_pointer<value_type>(r_dot_vk_buffer);
+
+  // Note: Due to the special setting in GMRES, there is no need to check for sizes and strides
+  vcl_size_t size     = viennacl::traits::size(v_k);
+  vcl_size_t vk_start = viennacl::traits::start(v_k);
+
+  // part 1: compute alpha:
+  value_type norm_vk = 0;
+  for (vcl_size_t i=0; i<buffer_chunk_size; ++i)
+   norm_vk += data_buffer[i + buffer_chunk_size];
+  norm_vk = std::sqrt(norm_vk);
+  data_R[offset_in_R] = norm_vk;
+
+  // Compute <r, v_k> after normalization of v_k:
+  value_type inner_prod_r_dot_vk = 0;
+  for (long i = 0; i < static_cast<long>(size); ++i)
+  {
+    value_type value_vk = data_v_k[static_cast<vcl_size_t>(i) + vk_start] / norm_vk;
+
+    inner_prod_r_dot_vk += data_residual[static_cast<vcl_size_t>(i)] * value_vk;
+
+    data_v_k[static_cast<vcl_size_t>(i) + vk_start] = value_vk;
+  }
+
+  data_r_dot_vk[buffer_chunk_offset] = inner_prod_r_dot_vk;
+}
+
+
+
+/** @brief Computes first reduction stage for multiple inner products <v_i, v_k>, i=0..k-1
+ *
+ *  All vectors v_i are stored column-major in the array 'device_krylov_basis', where each vector has an actual length 'v_k_size', but might be padded to have 'v_k_internal_size'
+ */
+template <typename T>
+void pipelined_gmres_gram_schmidt_stage1(vector_base<T> const & device_krylov_basis,
+                                        vcl_size_t v_k_size,
+                                        vcl_size_t v_k_internal_size,
+                                        vcl_size_t k,
+                                        vector_base<T> & vi_in_vk_buffer,
+                                        vcl_size_t buffer_chunk_size)
+{
+  typedef T        value_type;
+
+  value_type const * data_krylov_basis = detail::extract_raw_pointer<value_type>(device_krylov_basis);
+  value_type       * data_inner_prod   = detail::extract_raw_pointer<value_type>(vi_in_vk_buffer);
+
+  // reset buffer:
+  for (vcl_size_t j = 0; j < k; ++j)
+    data_inner_prod[j*buffer_chunk_size] = value_type(0);
+
+  // compute inner products:
+  for (vcl_size_t i = 0; i < v_k_size; ++i)
+  {
+    value_type value_vk = data_krylov_basis[static_cast<vcl_size_t>(i) + k * v_k_internal_size];
+
+    for (vcl_size_t j = 0; j < k; ++j)
+      data_inner_prod[j*buffer_chunk_size] += data_krylov_basis[static_cast<vcl_size_t>(i) + j * v_k_internal_size] * value_vk;
+  }
+}
+
+
+/** @brief Computes the second reduction stage for multiple inner products <v_i, v_k>, i=0..k-1, then updates v_k -= <v_i, v_k> v_i and computes the first reduction stage for ||v_k||
+ *
+ *  All vectors v_i are stored column-major in the array 'device_krylov_basis', where each vector has an actual length 'v_k_size', but might be padded to have 'v_k_internal_size'
+ */
+template <typename T>
+void pipelined_gmres_gram_schmidt_stage2(vector_base<T> & device_krylov_basis,
+                                        vcl_size_t v_k_size,
+                                        vcl_size_t v_k_internal_size,
+                                        vcl_size_t k,
+                                        vector_base<T> const & vi_in_vk_buffer,
+                                        vector_base<T> & R_buffer,
+                                        vcl_size_t krylov_dim,
+                                        vector_base<T> & inner_prod_buffer,
+                                        vcl_size_t buffer_chunk_size)
+{
+  typedef T        value_type;
+
+  value_type * data_krylov_basis = detail::extract_raw_pointer<value_type>(device_krylov_basis);
+
+  std::vector<T> values_vi_in_vk(k);
+
+  // Step 1: Finish reduction of <v_i, v_k> to obtain scalars:
+  for (std::size_t i=0; i<k; ++i)
+    for (vcl_size_t j=0; j<buffer_chunk_size; ++j)
+      values_vi_in_vk[i] += vi_in_vk_buffer[i*buffer_chunk_size + j];
+
+
+  // Step 2: Compute v_k -= <v_i, v_k> v_i and reduction on ||v_k||:
+  value_type norm_vk = 0;
+  for (vcl_size_t i = 0; i < v_k_size; ++i)
+  {
+    value_type value_vk = data_krylov_basis[static_cast<vcl_size_t>(i) + k * v_k_internal_size];
+
+    for (vcl_size_t j = 0; j < k; ++j)
+      value_vk -= values_vi_in_vk[j] * data_krylov_basis[static_cast<vcl_size_t>(i) + j * v_k_internal_size];
+
+    norm_vk += value_vk * value_vk;
+    data_krylov_basis[static_cast<vcl_size_t>(i) + k * v_k_internal_size] = value_vk;
+  }
+
+  // Step 3: Write values to R_buffer:
+  for (std::size_t i=0; i<k; ++i)
+    R_buffer[i + k * krylov_dim] = values_vi_in_vk[i];
+
+  inner_prod_buffer[buffer_chunk_size] = norm_vk;
+}
+
+/** @brief Computes x += eta_0 r + sum_{i=1}^{k-1} eta_i v_{i-1} */
+template <typename T>
+void pipelined_gmres_update_result(vector_base<T> & result,
+                                  vector_base<T> const & residual,
+                                  vector_base<T> const & krylov_basis,
+                                  vcl_size_t v_k_size,
+                                  vcl_size_t v_k_internal_size,
+                                  vector_base<T> const & coefficients,
+                                  vcl_size_t k)
+{
+  typedef T        value_type;
+
+  value_type       * data_result       = detail::extract_raw_pointer<value_type>(result);
+  value_type const * data_residual     = detail::extract_raw_pointer<value_type>(residual);
+  value_type const * data_krylov_basis = detail::extract_raw_pointer<value_type>(krylov_basis);
+  value_type const * data_coefficients = detail::extract_raw_pointer<value_type>(coefficients);
+
+  for (vcl_size_t i = 0; i < v_k_size; ++i)
+  {
+    value_type value_result = data_result[i];
+
+    value_result += data_coefficients[0] * data_residual[i];
+    for (vcl_size_t j = 1; j<k; ++j)
+      value_result += data_coefficients[j] * data_krylov_basis[i + (j-1) * v_k_internal_size];
+
+    data_result[i] = value_result;
+  }
+
+}
+
+// Reuse implementation from CG:
+template <typename MatrixType, typename T>
+void pipelined_gmres_prod(MatrixType const & A,
+                      vector_base<T> const & p,
+                      vector_base<T> & Ap,
+                      vector_base<T> & inner_prod_buffer)
+{
+  pipelined_cg_prod(A, p, Ap, inner_prod_buffer);
+}
+
 
 } //namespace host_based
 } //namespace linalg
