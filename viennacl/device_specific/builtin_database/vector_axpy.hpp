@@ -20,6 +20,8 @@
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/volcanic_islands/hawaii.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen/cypress.hpp"
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen/cedar.hpp"
+
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gt_540m.hpp"
 
@@ -52,6 +54,7 @@ inline database_type<vector_axpy_template::parameters_type> init_vector_axpy()
   devices::gpu::fallback::add_8B(result);
   devices::gpu::nvidia::fermi::geforce_gt_540m::add_4B(result);
   devices::gpu::nvidia::fermi::geforce_gt_540m::add_8B(result);
+  devices::gpu::amd::evergreen::cedar::add_4B(result);
   devices::gpu::amd::evergreen::cypress::add_4B(result);
   devices::gpu::amd::evergreen::cypress::add_8B(result);
   devices::gpu::amd::volcanic_islands::hawaii::add_4B(result);

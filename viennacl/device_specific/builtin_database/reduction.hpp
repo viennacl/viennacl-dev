@@ -20,6 +20,8 @@
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/volcanic_islands/hawaii.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen/cypress.hpp"
+#include "viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen/cedar.hpp"
+
 
 #include "viennacl/ocl/device_utils.hpp"
 
@@ -51,6 +53,7 @@ inline database_type<reduction_template::parameters_type> init_reduction()
 
   devices::gpu::fallback::add_4B(result);
   devices::gpu::fallback::add_8B(result);
+  devices::gpu::amd::evergreen::cedar::add_4B(result);
   devices::gpu::amd::evergreen::cypress::add_4B(result);
   devices::gpu::amd::evergreen::cypress::add_8B(result);
   devices::gpu::amd::volcanic_islands::hawaii::add_4B(result);
