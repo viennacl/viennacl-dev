@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_VECTOR_AXPY_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_VECTOR_AXPY_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/tesla_c2050.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/geforce_gtx_470.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/maxwell/geforce_gtx_750_ti.hpp"
@@ -68,6 +70,8 @@ inline database_type<vector_axpy_template::parameters_type> init_vector_axpy()
   devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_8B(result);
   devices::gpu::nvidia::fermi::geforce_gtx_470::add_4B(result);
   devices::gpu::nvidia::fermi::geforce_gtx_470::add_8B(result);
+  devices::gpu::nvidia::fermi::tesla_c2050::add_4B(result);
+  devices::gpu::nvidia::fermi::tesla_c2050::add_8B(result);
 
   return result;
 }
