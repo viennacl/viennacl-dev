@@ -1,6 +1,8 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_VECTOR_AXPY_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_VECTOR_AXPY_HPP_
 
+#include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/maxwell/geforce_gtx_750_ti.hpp"
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/northern_islands/scrapper.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/tesla/geforce_gtx_260.hpp"
@@ -60,6 +62,8 @@ inline database_type<vector_axpy_template::parameters_type> init_vector_axpy()
   devices::gpu::nvidia::tesla::geforce_gtx_260::add_4B(result);
   devices::gpu::nvidia::tesla::geforce_gtx_260::add_8B(result);
   devices::gpu::amd::northern_islands::scrapper::add_4B(result);
+  devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_4B(result);
+  devices::gpu::nvidia::maxwell::geforce_gtx_750_ti::add_8B(result);
 
   return result;
 }
