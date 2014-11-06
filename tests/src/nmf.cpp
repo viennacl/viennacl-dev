@@ -53,7 +53,7 @@ void fill_random(viennacl::matrix_base<ScalarType>& v)
   for (std::size_t i = 0; i < v.size1(); i++)
   {
     for (std::size_t j = 0; j < v.size2(); ++j)
-      v(i, j) = static_cast<ScalarType>(rand()) / RAND_MAX;
+      v(i, j) = static_cast<ScalarType>(rand()) / ScalarType(RAND_MAX);
   }
 }
 

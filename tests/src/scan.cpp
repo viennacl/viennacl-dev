@@ -61,8 +61,8 @@ void vector_print(viennacl::vector<ScalarType>& v )
 void init_vector(viennacl::vector<ScalarType>& vcl_v)
 {
     std::vector<ScalarType> v(vcl_v.size());
-    for (unsigned int i = 0; i < v.size(); ++i)
-      v[i] =  i;
+    for (std::size_t i = 0; i < v.size(); ++i)
+      v[i] = ScalarType(i);
     viennacl::copy(v, vcl_v);
 }
 
@@ -72,8 +72,8 @@ void test_inclusive_scan_values(viennacl::vector<ScalarType> & vcl_vec)
   viennacl::copy(vcl_vec, vec);
   for(viennacl::vcl_size_t i = 1; i < vec.size(); i++)
   {
-    ScalarType abs_error = std::fabs(static_cast<double>(i) * (static_cast<double>(i) + 1.) / 2. - vec[i]);
-    if (abs_error > EPS * vec[i])
+    double abs_error = std::fabs(static_cast<double>(i) * (static_cast<double>(i) + 1.) / 2. - static_cast<double>(vec[i]));
+    if (abs_error > static_cast<double>(EPS) * static_cast<double>(vec[i]))
     {
       std::cout << "Fail at vector index " << i << " Absolute error:  " << abs_error;
       std::cout << "\t Relative error:  " << std::setprecision(7) << abs_error / vec[i] * 100 << "%"<< std::endl;
@@ -91,9 +91,9 @@ void test_exclusive_scan_values(viennacl::vector<ScalarType> & vcl_vec)
   viennacl::copy(vcl_vec, vec);
   for(viennacl::vcl_size_t i = 1; i < vec.size() - 1; i++)
   {
-    ScalarType abs_error = std::fabs(static_cast<double>(i) * (static_cast<double>(i) + 1.) / 2. - vec[i + 1]);
-    if (abs_error > EPS * vec[i])
-     {
+    double abs_error = std::fabs(static_cast<double>(i) * (static_cast<double>(i) + 1.) / 2. - static_cast<double>(vec[i + 1]));
+    if (abs_error > static_cast<double>(EPS) * static_cast<double>(vec[i]))
+    {
       std::cout << "Fail at vector index " << i << " Absolute error:  " << abs_error;
       std::cout << "\t Relative error:  " << std::setprecision(7) << abs_error / vec[i] * 100 << "%"<< std::endl;
       std::cout << "vec[" << i << "] = " << vec[i] << std::endl;

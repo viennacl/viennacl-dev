@@ -1413,8 +1413,8 @@ int test()
 
   for (std::size_t i=0; i<ublas_full_vec.size(); ++i)
   {
-    ublas_full_vec[i]  = NumericT(1.0 + i);
-    ublas_full_vec2[i] = NumericT(2.0 + i / 2);
+    ublas_full_vec[i]  = NumericT(1.0) + NumericT(i);
+    ublas_full_vec2[i] = NumericT(2.0) + NumericT(i) / NumericT(2);
   }
 
   ublas::range r1(    ublas_full_vec.size() / 4, 2 * ublas_full_vec.size() / 4);

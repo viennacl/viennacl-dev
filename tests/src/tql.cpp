@@ -59,28 +59,28 @@ bool test_eigen_val_vec(viennacl::matrix<ScalarType, MatrixLayout> & Q,
                       std::vector<ScalarType> & d,
                       std::vector<ScalarType> & e)
 {
-  unsigned int Q_size = Q.size2();
+  std::size_t Q_size = Q.size2();
   ScalarType value = 0;
 
-  for(unsigned int j = 0; j < Q_size; j++)
+  for(std::size_t j = 0; j < Q_size; j++)
   {
     // calculate first row
     value = (d[0]- eigenvalues[j]) * Q(0, j) + e[1] * Q(1, j);
-    if(value > EPS)
+    if (value > EPS)
       return false;
 
     // calcuate inner rows
-    for(unsigned int i = 1; i < Q_size - 1; i++)
+    for(std::size_t i = 1; i < Q_size - 1; i++)
     {
-        value = e[i] * Q(i - 1, j) + (d[i]- eigenvalues[j]) * Q(i, j) + e[i + 1] * Q(i + 1, j);
-        if(value > EPS)
-          return false;
+      value = e[i] * Q(i - 1, j) + (d[i]- eigenvalues[j]) * Q(i, j) + e[i + 1] * Q(i + 1, j);
+      if (value > EPS)
+        return false;
     }
 
     // calculate last row
     value = e[Q_size - 1] * Q(Q_size - 2, j) + (d[Q_size - 1] - eigenvalues[j]) * Q(Q_size - 1, j);
-     if(value > EPS)
-       return false;
+    if (value > EPS)
+      return false;
   }
   return true;
 }

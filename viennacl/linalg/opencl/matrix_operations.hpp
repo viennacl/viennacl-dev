@@ -635,7 +635,7 @@ template<typename NumericT>
   void inclusive_scan(vector_base<NumericT>& vec1,
                       vector_base<NumericT>& vec2)
   {
-    vcl_size_t N = static_cast<vcl_size_t>(std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE)));
+    vcl_size_t N = static_cast<vcl_size_t>(std::ceil(static_cast<double>(vec1.size()) / static_cast<double>(VIENNACL_SECTION_SIZE)));
     viennacl::vector<NumericT> S    (N);
     viennacl::vector<NumericT> S_ref(N);
 
@@ -709,7 +709,7 @@ template<typename NumericT>
   void exclusive_scan(vector_base<NumericT>& vec1,
                       vector_base<NumericT>& vec2)
   {
-      vcl_size_t N = static_cast<vcl_size_t>(std::ceil(vec1.size() / static_cast<double>(VIENNACL_SECTION_SIZE)));
+      vcl_size_t N = static_cast<vcl_size_t>(std::ceil(static_cast<double>(vec1.size()) / static_cast<double>(VIENNACL_SECTION_SIZE)));
       viennacl::vector<NumericT> S    (N);
       viennacl::vector<NumericT> S_ref(N);
 

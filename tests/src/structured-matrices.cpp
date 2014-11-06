@@ -389,8 +389,8 @@ int vandermonde_test(ScalarType epsilon)
     for (std::size_t i = 0; i < m1.size1(); i++)
       for (std::size_t j = 0; j < m1.size2(); j++)
       {
-        m1(i,j) = std::pow(ScalarType(1.0 + i/1000.0), ScalarType(j));
-        m2(i,j) = std::pow(ScalarType(1.0 - i/2000.0), ScalarType(j));
+        m1(i,j) = std::pow(ScalarType(1.0) + ScalarType(i)/ScalarType(1000.0), ScalarType(j));
+        m2(i,j) = std::pow(ScalarType(1.0) - ScalarType(i)/ScalarType(2000.0), ScalarType(j));
       }
 
     for (std::size_t i = 0; i < input_ref.size(); i++)

@@ -85,7 +85,7 @@ template<typename ScalarType>
 void random_fill(std::vector<ScalarType>& in)
 {
   for (std::size_t i = 0; i < in.size(); i++)
-    in[i] = static_cast<ScalarType>(rand()) / RAND_MAX;
+    in[i] = static_cast<ScalarType>(rand()) / ScalarType(RAND_MAX);
 }
 
 
