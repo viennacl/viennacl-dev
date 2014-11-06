@@ -682,11 +682,11 @@ public:
     if (!done_init_apply_)
       init_apply();
 
-    int level;
+    vcl_size_t level;
 
     // Precondition operation (Yang, p.3).
     rhs_[0] = vec;
-    for (level=0; level <static_cast<int>(tag_.get_coarselevels()); level++)
+    for (level=0; level < tag_.get_coarselevels(); level++)
     {
       result_[level].clear();
 
@@ -732,8 +732,10 @@ public:
     printvector (result[level]);
     #endif
 
-    for (level=tag_.get_coarselevels()-1; level >= 0; level--)
+    for (int level2 = static_cast<int>(tag_.get_coarselevels()-1); level2 >= 0; level2--)
     {
+      level = static_cast<vcl_size_t>(level2);
+
       #ifdef VIENNACL_AMG_DEBUG
       std::cout << "Coarse Error: " << std::endl;
       printvector(result[level+1]);
@@ -765,7 +767,7 @@ public:
   * @param rhs         The right hand side of the equation for the smoother
   */
   template<typename VectorT>
-  void smooth_jacobi(int level, unsigned int iterations, VectorT & x, VectorT const & rhs_smooth) const
+  void smooth_jacobi(vcl_size_t level, unsigned int iterations, VectorT & x, VectorT const & rhs_smooth) const
   {
     VectorType old_result = x;
 

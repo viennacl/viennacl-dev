@@ -87,7 +87,8 @@ public:
 
   NumericT operator*(void) const
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    if (flag_iterator1)
     {
       typedef typename std::map<SizeT, NumericT>::const_iterator  col_iterator;
 
@@ -103,9 +104,11 @@ public:
 
   self_type & operator++(void)
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    bool flag_forward   = is_forward;
+    if (flag_iterator1)
     {
-      if (is_forward)
+      if (flag_forward)
         ++i_;
       else
         --i_;
@@ -118,9 +121,11 @@ public:
 
   self_type operator+=(SizeT offset)
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    bool flag_forward   = is_forward;
+    if (flag_iterator1)
     {
-      if (is_forward)
+      if (flag_forward)
         i_ += offset;
       else
         i_ -= offset;
@@ -135,7 +140,8 @@ public:
 
   bool operator==(self_type const & other) const
   {
-    return is_iterator1 ? (i_ == other.i_) : (iter2 == other.iter2);
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    return flag_iterator1 ? (i_ == other.i_) : (iter2 == other.iter2);
   }
 
   bool operator!=(self_type const & other) const { return !(*this == other); }
@@ -143,7 +149,8 @@ public:
   size_type index1() const { return i_; }
   size_type index2() const
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    if (flag_iterator1)
       return 0;
     else
       return iter2->first;
@@ -251,16 +258,16 @@ public:
       }
       else //_j is valid
       {
-        if (i_ < mat_.size() && mat_[i].size() > 0 )
+        if (i_ < mat_.size() && mat_[i_].size() > 0 )
         {
           //TODO: Start at entry j, not at the beginning
-          if (static_cast<int>(mat_[i].rbegin()->first) < j)
-            iter2 = mat_[i].end();
+          if (static_cast<int>(mat_[i_].rbegin()->first) < j)
+            iter2 = mat_[i_].end();
           else
-            iter2 = mat_[i].begin();
+            iter2 = mat_[i_].begin();
         }
-        else if (i_ < mat_.size() && mat_[i].size() == 0)
-          iter2 = mat_[i].end();
+        else if (i_ < mat_.size() && mat_[i_].size() == 0)
+          iter2 = mat_[i_].end();
         else //i is out of range -> end iterator requested
           iter2 = mat_.back().end(); //forward iterator end
       }
@@ -269,7 +276,8 @@ public:
 
   NumericT & operator*(void)
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    if (flag_iterator1)
     {
       return mat_[i_][static_cast<SizeT>(j_)];
     }
@@ -279,7 +287,8 @@ public:
 
   self_type & operator++(void)
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    if (flag_iterator1)
       ++i_;
     else
       ++iter2;
@@ -289,7 +298,8 @@ public:
 
   self_type operator+=(size_type offset)
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    if (flag_iterator1)
       i_ += offset;
     else
     {
@@ -301,7 +311,8 @@ public:
 
   bool operator==(self_type const & other) const
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    if (flag_iterator1)
       return (i_ == other.i_);
     return (iter2 == other.iter2);
   }
@@ -310,7 +321,8 @@ public:
   size_type index1() const { return i_; }
   size_type index2() const
   {
-    if (is_iterator1)
+    bool flag_iterator1 = is_iterator1; // avoid unreachable code warnings without specializing template
+    if (flag_iterator1)
       return 0;
     else
       return iter2->first;
@@ -324,7 +336,7 @@ public:
   {
     int end_ = static_cast<int>(mat_[i_].size());
     if (end_ > 0)
-      end_ = mat_[i_].rbegin()->first;
+      end_ = static_cast<int>(mat_[i_].rbegin()->first);
     return sparse_matrix_adapted_iterator<NumericT, SizeT, !is_iterator1>(mat_, static_cast<int>(i_), end_ + 1);
   }
 

@@ -406,7 +406,7 @@ class kernel_generation_stream : public std::ostream
   class kgenstream : public std::stringbuf
   {
   public:
-    kgenstream(std::ostringstream& oss,unsigned int const & tab_count) : oss_(oss), tab_count_(tab_count){ }
+    kgenstream(std::ostringstream& osstream,unsigned int const & tab_count) : oss_(osstream), tab_count_(tab_count){ }
     int sync() {
       for (unsigned int i=0; i<tab_count_;++i)
         oss_ << "    ";

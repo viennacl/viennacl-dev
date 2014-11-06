@@ -433,6 +433,7 @@ protected:
   struct loop_body_base
   {
     virtual void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const = 0;
+    virtual ~loop_body_base() {}
   };
 
   static void element_wise_loop_1D(utils::kernel_generation_stream & stream, loop_body_base const & loop_body,

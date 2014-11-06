@@ -152,7 +152,7 @@ public:
   {
     s_ = value;
     // Only write if scalar is nonzero
-    if (s_ == 0) return s_;
+    if (s_ <= 0 && s_ >= 0) return s_;
     // Write to m_ using iterator iter_ or indices (i_,j_)
     m_->addscalar(iter_,i_,j_,s_);
     return s_;
@@ -164,12 +164,12 @@ public:
   NumericT operator+=(const NumericT value)
   {
     // If zero is added, then no change necessary
-    if (value == 0)
+    if (value <= 0 && value >= 0)
       return s_;
 
     s_ += value;
     // Remove entry if resulting scalar is zero
-    if (s_ == 0)
+    if (s_ <= 0 && s_ >= 0)
     {
       m_->removescalar(iter_,i_);
       return s_;
@@ -297,7 +297,7 @@ public:
     {
       s += (*iter).second;
       // If new value is zero, then erase the entry, otherwise write new value
-      if (s != 0)
+      if (s < 0 || s > 0)
         (*iter).second = s;
       else
         internal_vector_.erase(iter);
@@ -309,7 +309,7 @@ public:
   void addscalar(IteratorT & iter, unsigned int i, unsigned int /* j */, NumericT s)
   {
     // Don't write if value is zero
-    if (s == 0)
+    if (s <= 0 && s >= 0)
       return;
 
     // If entry is already present, overwrite value, otherwise make new entry
@@ -468,7 +468,7 @@ public:
     {
       for (typename MatrixT::const_iterator2 col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
-        if (*col_iter != 0)
+        if (std::fabs(*col_iter) > 0)  // *col_iter != 0, but without floating point comparison warnings
         {
           unsigned int x = static_cast<unsigned int>(col_iter.index1());
           unsigned int y = static_cast<unsigned int>(col_iter.index2());
@@ -539,7 +539,7 @@ public:
   void add(unsigned int i, unsigned int j, NumericT s)
   {
     // If zero is added then do nothing.
-    if (s == 0)
+    if (s <= 0 && s >= 0)
       return;
 
     typename RowType::iterator col_iter = internal_mat_[i].find(j);
@@ -550,7 +550,7 @@ public:
     {
       s += (*col_iter).second;
       // Update value and erase entry if value is zero.
-      if (s != 0)
+      if (s < 0 || s > 0)
         (*col_iter).second = s;
       else
         internal_mat_[i].erase(col_iter);
@@ -563,7 +563,7 @@ public:
   void addscalar(IteratorT & iter, unsigned int i, unsigned int j, NumericT s)
   {
     // Don't write if value is zero
-    if (s == 0)
+    if (s >= 0 && s <= 0)
       return;
 
     if (iter != internal_mat_[i].end())
@@ -1243,8 +1243,10 @@ private:
   #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for
   #endif
-    for (long i=0; i<=static_cast<long>(threads_); ++i)
+    for (long i2=0; i2<=static_cast<long>(threads_); ++i2)
     {
+      std::size_t i = static_cast<std::size_t>(i2);
+
       // Offset of first piece is zero. Pieces 1,...,threads-1 have equal size while the last one might be greater.
       if (i == 0) offset_[i][level] = 0;
       else if (i == threads_) offset_[i][level] = static_cast<unsigned int>(A[level].size1());
@@ -1268,8 +1270,10 @@ private:
   #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for private (x,y,point)
   #endif
-    for (long i=0; i<static_cast<long>(threads_); ++i)
+    for (long i2=0; i2<static_cast<long>(threads_); ++i2)
     {
+      std::size_t i = static_cast<std::size_t>(i2);
+
       // Allocate space for the matrix slice and the pointvector.
       A_slice_[i][level] = SparseMatrixType(offset_[i+1][level]-offset_[i][level], offset_[i+1][level]-offset_[i][level]);
       pointvector_slice_[i][level] = PointVectorType(offset_[i+1][level]-offset_[i][level]);
@@ -1329,12 +1333,12 @@ void amg_mat_prod (SparseMatrixT & A, SparseMatrixT & B, SparseMatrixT & RES)
   for (x=0; x<static_cast<long>(A.size1()); ++x)
   {
     InternalRowIterator row_iter = A.begin1();
-    row_iter += x;
+    row_iter += vcl_size_t(x);
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
       y = static_cast<unsigned int>(col_iter.index2());
       InternalRowIterator row_iter2 = B.begin1();
-      row_iter2 += y;
+      row_iter2 += vcl_size_t(y);
 
       for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
       {
@@ -1370,13 +1374,13 @@ void amg_galerkin_prod (SparseMatrixT & A, SparseMatrixT & P, SparseMatrixT & RE
   {
     row = amg_sparsevector<ScalarType>(static_cast<unsigned int>(A.size2()));
     InternalRowIterator row_iter = P.begin1(true);
-    row_iter += x;
+    row_iter += vcl_size_t(x);
 
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
       y1 = static_cast<long>(col_iter.index2());
       InternalRowIterator row_iter2 = A.begin1();
-      row_iter2 += y1;
+      row_iter2 += vcl_size_t(y1);
 
       for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
       {
@@ -1388,7 +1392,7 @@ void amg_galerkin_prod (SparseMatrixT & A, SparseMatrixT & P, SparseMatrixT & RE
     {
       y2 = iter.index();
       InternalRowIterator row_iter3 = P.begin1();
-      row_iter3 += y2;
+      row_iter3 += vcl_size_t(y2);
 
       for (InternalColIterator col_iter3 = row_iter3.begin(); col_iter3 != row_iter3.end(); ++col_iter3)
       {

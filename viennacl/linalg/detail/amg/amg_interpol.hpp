@@ -112,7 +112,7 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
     {
       // Jump to row x
       InternalRowIterator row_iter = A[level].begin1();
-      row_iter += x;
+      row_iter += vcl_size_t(x);
 
       // Row sum of coefficients (without diagonal) and sum of influencing C point coefficients has to be computed
       row_sum = c_sum = diag = 0;
@@ -143,13 +143,13 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
         // The value is only non-zero for columns that correspond to a C point
         if (pointy->is_cpoint())
         {
-          if (temp_res != 0)
+          if (temp_res > 0 || temp_res < 0)
             P[level](static_cast<unsigned int>(x), pointy->get_coarse_index()) = temp_res * A[level](static_cast<unsigned int>(x),pointy->get_index());
         }
       }
 
       //Truncate interpolation if chosen
-      if (tag.get_interpolweight() != 0)
+      if (tag.get_interpolweight() > 0)
         amg_truncate_row(P[level], static_cast<unsigned int>(x), tag);
     }
   }
@@ -216,7 +216,7 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
     {
       // Jump to row x
       InternalRowIterator row_iter = A[level].begin1();
-      row_iter += x;
+      row_iter += vcl_size_t(x);
 
       weak_sum = 0;
       c_sum_row = amg_sparsevector<ScalarType>(static_cast<unsigned int>(A[level].size1()));
@@ -271,13 +271,13 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
 
           // Calculate coefficient
           temp_res = - (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(y)) + strong_sum) / (weak_sum);
-          if (temp_res != 0)
+          if (temp_res < 0 || temp_res > 0)
             P[level](static_cast<unsigned int>(x),pointy->get_coarse_index()) = temp_res;
         }
       }
 
       //Truncate iteration if chosen
-      if (tag.get_interpolweight() != 0)
+      if (tag.get_interpolweight() > 0)
         amg_truncate_row(P[level], static_cast<unsigned int>(x), tag);
     }
   }
@@ -430,7 +430,7 @@ void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
   {
     diag = 0;
     InternalRowIterator row_iter = A[level].begin1();
-    row_iter += x;
+    row_iter += vcl_size_t(x);
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
       y = static_cast<long>(col_iter.index2());
@@ -446,7 +446,7 @@ void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
         Jacobi (static_cast<unsigned int>(x), static_cast<unsigned int>(y)) = *col_iter;
     }
     InternalRowIterator row_iter2 = Jacobi.begin1();
-    row_iter2 += x;
+    row_iter2 += vcl_size_t(x);
     // Traverse through filtered A matrix and compute the Jacobi filtering
     for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
     {

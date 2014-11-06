@@ -37,7 +37,6 @@
 #include "viennacl/linalg/bisect_gpu.hpp"
 
 
-typedef float NumericT;
 
 /**
 * The first step is to generate a suitable input tridiagonal input matrix in the function initInputData():
@@ -51,8 +50,8 @@ typedef float NumericT;
 /// \param superdiagonal   superdiagonal elements of the matrix
 /// \param mat_size        Dimension of the matrix
 ///
-void
-initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, const unsigned int mat_size)
+template <typename NumericT>
+void initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, const unsigned int mat_size)
 {
 
   srand(278217421);
@@ -93,6 +92,8 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
 **/
 int main()
 {
+    typedef float NumericT;
+
     bool bResult = false;
     unsigned int mat_size = 30;
 

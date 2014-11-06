@@ -102,7 +102,7 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
     }
 
     // If maximum is 0 then the row is independent of the others
-    if (max == 0)
+    if (std::fabs(max) <= 0)
       continue;
 
     // Find all points that strongly influence current point (Yang, p.5)
@@ -309,9 +309,9 @@ void amg_coarse_classic(unsigned int level, InternalT1 & A, InternalT2 & pointve
           add_C = true;
           // C point is common for two F points if they are both strongly influenced by that C point.
           // Compare strong influences for point1 and point2.
-          for (amg_point::iterator iter3 = point1->begin_influencing(); iter3 != point1 -> end_influencing(); ++iter3)
+          for (amg_point::iterator iter4 = point1->begin_influencing(); iter4 != point1 -> end_influencing(); ++iter4)
           {
-            c_point = *iter3;
+            c_point = *iter4;
             // Stop search when strong common influence is found via c_point.
             if (c_point->is_cpoint())
             {
@@ -376,8 +376,9 @@ void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector
   #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
   #endif
-  for (long i=0; i<static_cast<long>(slicing.threads_); ++i)
+  for (long i2=0; i2<static_cast<long>(slicing.threads_); ++i2)
   {
+    std::size_t i = static_cast<std::size_t>(i2);
     amg_coarse_classic(level, slicing.A_slice_[i], slicing.pointvector_slice_[i],tag);
 
     // Save C points (using Slicing.Offset on the next level as temporary memory)
@@ -395,8 +396,10 @@ void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector
     #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for
     #endif
-    for (long i=0; i<static_cast<long>(slicing.threads_); ++i)
+    for (long i2=0; i2<static_cast<long>(slicing.threads_); ++i2)
     {
+      std::size_t i = static_cast<std::size_t>(i2);
+
       // If no higher coarse level can be found on slice i (saved in Slicing.Offset[i+1][level+1]) then pull C point(s) to the next level
       if (slicing.offset_[i+1][level+1] == 0)
       {
@@ -408,8 +411,11 @@ void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector
     }
 
     // Build slicing offset from number of C points (offset = total sum of C points on threads with lower number)
-    for (unsigned int i=2; i<=slicing.threads_; ++i)
+    for (unsigned int i2=2; i2<=slicing.threads_; ++i2)
+    {
+      std::size_t i = static_cast<std::size_t>(i2);
       slicing.offset_[i][level+1] += slicing.offset_[i-1][level+1];
+    }
 
     // Join C and F points
     slicing.join(level, pointvector);
@@ -519,9 +525,9 @@ void amg_coarse_rs3(unsigned int level, InternalT1 & A, InternalT2 & pointvector
             add_C = true;
             // C point is common for two F points if they are both strongly influenced by that C point.
             // Compare strong influences for point1 and point2.
-            for (amg_point::iterator iter3 = point1->begin_influencing(); iter3 != point1 -> end_influencing(); ++iter3)
+            for (amg_point::iterator iter4 = point1->begin_influencing(); iter4 != point1 -> end_influencing(); ++iter4)
             {
-              c_point = *iter3;
+              c_point = *iter4;
               // Stop search when strong common influence is found via c_point.
               if (c_point->is_cpoint())
               {
@@ -537,8 +543,8 @@ void amg_coarse_rs3(unsigned int level, InternalT1 & A, InternalT2 & pointvector
             {
               pointvector[level].switch_ftoc(point2);
               // Add +1 to offsets as one C point has been added.
-              for (unsigned int j=i+1; j<=slicing.threads_; ++j)
-                slicing.offset_[j][level+1]++;
+              for (unsigned int k=i+1; k<=slicing.threads_; ++k)
+                slicing.offset_[k][level+1]++;
             }
           }
         }
@@ -592,7 +598,7 @@ void amg_coarse_ag(unsigned int level, InternalT1 & A, InternalT2 & pointvector,
   for (x=0; x<static_cast<long>(A[level].size1()); ++x)
   {
     InternalRowIterator row_iter = A[level].begin1();
-    row_iter += x;
+    row_iter += std::size_t(x);
     diag = A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(x));
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {

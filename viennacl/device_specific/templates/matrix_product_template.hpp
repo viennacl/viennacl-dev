@@ -49,10 +49,10 @@ struct matrix_product_parameters : public template_base::parameters_type
   matrix_product_parameters(unsigned int simd_width
                             , unsigned int local_size_0, unsigned int KL, unsigned int local_size_1
                             , unsigned int ms, unsigned int ks, unsigned int ns
-                            , fetching_policy_type A_fetching_policy, fetching_policy_type B_fetching_policy
-                            , unsigned int local_fetch_0, unsigned int local_fetch_1): template_base::parameters_type(simd_width, local_size_0, local_size_1, 1),
-    kL(KL), mS(ms), kS(ks), nS(ns), A_fetching_policy(A_fetching_policy), B_fetching_policy(B_fetching_policy),
-    local_fetch_0(local_fetch_0), local_fetch_1(local_fetch_1),
+                            , fetching_policy_type A_fetching_policy_param, fetching_policy_type B_fetching_policy_param
+                            , unsigned int local_fetch_0_param, unsigned int local_fetch_1_param): template_base::parameters_type(simd_width, local_size_0, local_size_1, 1),
+    kL(KL), mS(ms), kS(ks), nS(ns), A_fetching_policy(A_fetching_policy_param), B_fetching_policy(B_fetching_policy_param),
+    local_fetch_0(local_fetch_0_param), local_fetch_1(local_fetch_1_param),
     mL(ms*local_size_0), nL(ns*local_size_1){}
 
   unsigned int kL;
@@ -365,7 +365,7 @@ private:
         stream << A->process("#pointer += (gidx*" + to_string(p.mL/p.simd_width) + "+ idx)*#ld;") << std::endl;
       break;
 
-    default: break;
+    //default: break;
     }
 
     switch (p.B_fetching_policy)
@@ -391,7 +391,7 @@ private:
         stream << B->process("#pointer += (gidy*" + to_string(p.nL/p.simd_width) + "+ idy)*#ld;") << std::endl;
       break;
 
-    default: break;
+    //default: break;
     }
 
     stream << std::endl;
@@ -499,9 +499,7 @@ private:
       break;
     }
 
-    default:
-      break;
-
+    //default: break;
     }
     stream.dec_tab();
     stream << "}" << std::endl;
@@ -537,7 +535,7 @@ private:
       break;
     }
 
-    default: break;
+    //default: break;
     }
     stream.dec_tab();
     stream << "}" << std::endl;
@@ -711,7 +709,7 @@ private:
   void enqueue_block(scheduler::statement & statement,
                      scheduler::lhs_rhs_element& eA, scheduler::lhs_rhs_element& eB, scheduler::lhs_rhs_element& eC, scheduler::lhs_rhs_element& ebeta,
                      matrix_base<NumericT> const & A, matrix_base<NumericT> const & B, matrix_base<NumericT> const & C, NumericT beta,
-                     std::vector<lazy_program_compiler> & programs, std::string const & kernel_prefix, int id)
+                     std::vector<lazy_program_compiler> & programs, std::string const & kernel_prefix, vcl_size_t id)
   {
     if (A.size1()==0 || A.size2()==0 || B.size1()==0 || B.size2()==0 || C.size1()==0 || C.size2()==0)
       return;

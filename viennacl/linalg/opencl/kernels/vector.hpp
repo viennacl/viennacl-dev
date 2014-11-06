@@ -130,8 +130,8 @@ public:
       generate_inner_prod_impl(handler, "inner_prod", reduction_params, 1, &x, &y, &da);
 
       handler.add("norm_1", ds::reduction_template(reduction_params), scheduler::preset::norm_1(&da, &x));
-      if (is_floating_point<NumericT>::value)
-        //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
+      bool is_float_or_double = is_floating_point<NumericT>::value;
+      if (is_float_or_double) //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
         handler.add("norm_2", ds::reduction_template(reduction_params, ds::BIND_TO_HANDLE), scheduler::preset::norm_2(&da, &x));
       handler.add("norm_inf", ds::reduction_template(reduction_params), scheduler::preset::norm_inf(&da, &x));
       handler.add("index_norm_inf", ds::reduction_template(reduction_params), scheduler::preset::index_norm_inf(&da, &x));

@@ -59,17 +59,17 @@ protected:
       vcl_size_t pos_po = str.find('{', pos);
       vcl_size_t pos_pe = str.find('}', pos_po);
 
-      if (MorphBase2D const * p = dynamic_cast<MorphBase2D const *>(&morph))
+      if (MorphBase2D const * p2d = dynamic_cast<MorphBase2D const *>(&morph))
       {
         vcl_size_t pos_comma = str.find(',', pos_po);
         std::string i = str.substr(pos_po + 1, pos_comma - pos_po - 1);
         std::string j = str.substr(pos_comma + 1, pos_pe - pos_comma - 1);
-        postprocessed = (*p)(i, j);
+        postprocessed = (*p2d)(i, j);
       }
-      else if (MorphBase1D const * p = dynamic_cast<MorphBase1D const *>(&morph))
+      else if (MorphBase1D const * p1d = dynamic_cast<MorphBase1D const *>(&morph))
       {
         std::string i = str.substr(pos_po + 1, pos_pe - pos_po - 1);
-        postprocessed = (*p)(i);
+        postprocessed = (*p1d)(i);
       }
 
       str.replace(pos, pos_pe + 1 - pos, postprocessed);

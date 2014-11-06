@@ -61,8 +61,8 @@ as(ScalarT1 & s1,
 
   cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(),
-                                             (viennacl::is_cpu_scalar<NumericT>::value ? "as_cpu" : "as_gpu"));
+  bool is_cpu = viennacl::is_cpu_scalar<NumericT>::value;
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::scalar<value_type>::program_name(), is_cpu ? "as_cpu" : "as_gpu");
   k.local_work_size(0, 1);
   k.global_work_size(0, 1);
   viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(s1),
@@ -94,11 +94,13 @@ asbs(ScalarT1 & s1,
   viennacl::linalg::opencl::kernels::scalar<value_type>::init(ctx);
 
   std::string kernel_name;
-  if (viennacl::is_cpu_scalar<NumericT2>::value && viennacl::is_cpu_scalar<NumericT3>::value)
+  bool is_cpu_2 = viennacl::is_cpu_scalar<NumericT2>::value;
+  bool is_cpu_3 = viennacl::is_cpu_scalar<NumericT3>::value;
+  if (is_cpu_2 && is_cpu_3)
     kernel_name = "asbs_cpu_cpu";
-  else if (viennacl::is_cpu_scalar<NumericT2>::value && !viennacl::is_cpu_scalar<NumericT3>::value)
+  else if (is_cpu_2 && !is_cpu_3)
     kernel_name = "asbs_cpu_gpu";
-  else if (!viennacl::is_cpu_scalar<NumericT2>::value && viennacl::is_cpu_scalar<NumericT3>::value)
+  else if (!is_cpu_2 && is_cpu_3)
     kernel_name = "asbs_gpu_cpu";
   else
     kernel_name = "asbs_gpu_gpu";

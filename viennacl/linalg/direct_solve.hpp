@@ -321,7 +321,7 @@ namespace detail
       for (int i = static_cast<int>(A.size1()); i > 0; i = i - blockSize)
       {
         int Apos1 = i - blockSize;
-        vcl_size_t Apos2 = i;
+        vcl_size_t Apos2 = vcl_size_t(i);
         vcl_size_t Bpos = B.size2();
         if (Apos1 < 0)
         {
@@ -543,7 +543,7 @@ namespace detail
   template<typename MatrixT1, typename VectorT, typename SolverTagT>
   void inplace_solve_upper_vec_impl(MatrixT1 const & A, VectorT & B, SolverTagT)
   {
-    unsigned int blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
+    int blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
     if (A.size1() < blockSize)
       inplace_solve_vec_kernel(A, B, SolverTagT());
     else

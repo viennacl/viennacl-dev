@@ -40,7 +40,7 @@
 #include "viennacl/tools/tools.hpp"
 
 namespace viennacl
-{  
+{
 namespace device_specific
 {
 
@@ -86,18 +86,18 @@ private:
 
       struct loop_body : public loop_body_base
       {
-        loop_body(statements_container const & _statements, std::vector<mapping_type> const & _mappings) : statements(_statements), mappings(_mappings) { }
+        loop_body(statements_container const & statements_, std::vector<mapping_type> const & mappings_) : statements(statements_), mappings(mappings_) { }
 
-        void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const
+        void operator()(utils::kernel_generation_stream & kernel_stream, unsigned int kernel_simd_width) const
         {
           std::string process_str;
-          std::string i = (simd_width==1)?"i*#stride":"i";
+          std::string i_str = (kernel_simd_width==1)?"i*#stride":"i";
 
-          process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width, i, "#pointer") + ";";
-          tree_parsing::process(stream, PARENT_NODE_TYPE, "vector", process_str, statements, mappings);
-          tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = #pointer[$OFFSET{#row*#stride1, i*#stride2}];", statements, mappings);
-          tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = #pointer[$OFFSET{i*#stride1,#column*#stride2}];", statements, mappings);
-          tree_parsing::process(stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = #pointer[#diag_offset<0?$OFFSET{(i - #diag_offset)*#stride1, i*#stride2}:$OFFSET{i*#stride1, (i + #diag_offset)*#stride2}];", statements, mappings);
+          process_str = utils::append_width("#scalartype",kernel_simd_width) + " #namereg = " + vload(kernel_simd_width, i_str, "#pointer") + ";";
+          tree_parsing::process(kernel_stream, PARENT_NODE_TYPE, "vector", process_str, statements, mappings);
+          tree_parsing::process(kernel_stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = #pointer[$OFFSET{#row*#stride1, i*#stride2}];", statements, mappings);
+          tree_parsing::process(kernel_stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = #pointer[$OFFSET{i*#stride1,#column*#stride2}];", statements, mappings);
+          tree_parsing::process(kernel_stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = #pointer[#diag_offset<0?$OFFSET{(i - #diag_offset)*#stride1, i*#stride2}:$OFFSET{i*#stride1, (i + #diag_offset)*#stride2}];", statements, mappings);
 
           std::map<std::string, std::string> accessors;
           accessors["vector"] = "#namereg";
@@ -105,13 +105,13 @@ private:
           accessors["matrix_column"] = "#namereg";
           accessors["matrix_diag"] = "#namereg";
           accessors["scalar"] = "#namereg";
-          tree_parsing::evaluate(stream, PARENT_NODE_TYPE, accessors, statements, mappings);
+          tree_parsing::evaluate(kernel_stream, PARENT_NODE_TYPE, accessors, statements, mappings);
 
-          process_str = vstore(simd_width, "#namereg",i,"#pointer")+";";
-          tree_parsing::process(stream, LHS_NODE_TYPE, "vector", process_str, statements, mappings);
-          tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_row", "#pointer[$OFFSET{#row, i}] = #namereg;", statements, mappings);
-          tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_column", "#pointer[$OFFSET{i, #column}] = #namereg;", statements, mappings);
-          tree_parsing::process(stream, LHS_NODE_TYPE, "matrix_diag", "#pointer[#diag_offset<0?$OFFSET{i - #diag_offset, i}:$OFFSET{i, i + #diag_offset}] = #namereg;", statements, mappings);
+          process_str = vstore(kernel_simd_width, "#namereg",i_str,"#pointer")+";";
+          tree_parsing::process(kernel_stream, LHS_NODE_TYPE, "vector", process_str, statements, mappings);
+          tree_parsing::process(kernel_stream, LHS_NODE_TYPE, "matrix_row", "#pointer[$OFFSET{#row, i}] = #namereg;", statements, mappings);
+          tree_parsing::process(kernel_stream, LHS_NODE_TYPE, "matrix_column", "#pointer[$OFFSET{i, #column}] = #namereg;", statements, mappings);
+          tree_parsing::process(kernel_stream, LHS_NODE_TYPE, "matrix_diag", "#pointer[#diag_offset<0?$OFFSET{i - #diag_offset, i}:$OFFSET{i, i + #diag_offset}] = #namereg;", statements, mappings);
 
         }
 

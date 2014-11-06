@@ -291,7 +291,7 @@ void copy(const compressed_matrix<NumericT, AlignmentV> & gpu_matrix,
           return;
         }
 
-        if (elements[data_index] != static_cast<NumericT>(0.0))
+        if (std::fabs(elements[data_index]) > static_cast<NumericT>(0))
           cpu_matrix(row-1, static_cast<vcl_size_t>(col_buffer[data_index])) = elements[data_index];
         ++data_index;
       }

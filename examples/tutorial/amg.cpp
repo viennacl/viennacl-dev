@@ -34,13 +34,6 @@
 
 #define VIENNACL_WITH_UBLAS 1
 
-#define SOLVER_ITERS 2500
-//#define SCALAR float
-#define SCALAR double
-
-//#define SOLVER_TOLERANCE 1e-5
-#define SOLVER_TOLERANCE 1e-9
-
 #include "viennacl/vector.hpp"
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"

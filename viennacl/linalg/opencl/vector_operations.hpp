@@ -57,9 +57,10 @@ void av(vector_base<NumericT> & x,
 {
   assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(y).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
   std::string kernel_name("assign_*v_**00");
-  kernel_name[7] = is_cpu_scalar<ScalarT1>::value?'h':'d';
-  kernel_name[10] = flip_sign_alpha?'1':'0';
-  kernel_name[11] = reciprocal_alpha?'1':'0';
+  bool is_scalar_cpu = is_cpu_scalar<ScalarT1>::value;
+  kernel_name[7]  =    is_scalar_cpu ? 'h' : 'd';
+  kernel_name[10] =  flip_sign_alpha ? '1' : '0';
+  kernel_name[11] = reciprocal_alpha ? '1' : '0';
 
   scheduler::statement statement = scheduler::preset::av(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha);
   kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);
@@ -75,12 +76,13 @@ void avbv(vector_base<NumericT> & x,
   assert(viennacl::traits::opencl_handle(y).context() == viennacl::traits::opencl_handle(z).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
   std::string kernel_name("assign_*v*v_****");
-  kernel_name[7] = is_cpu_scalar<ScalarT1>::value?'h':'d';
-  kernel_name[9] = is_cpu_scalar<ScalarT2>::value?'h':'d';
-  kernel_name[12] = flip_sign_alpha?'1':'0';
-  kernel_name[13] = reciprocal_alpha?'1':'0';
-  kernel_name[14] = flip_sign_beta?'1':'0';
-  kernel_name[15] = reciprocal_beta?'1':'0';
+  bool is_scalar_cpu = is_cpu_scalar<ScalarT1>::value;
+  kernel_name[7]  = is_scalar_cpu    ? 'h' : 'd';
+  kernel_name[9]  = is_scalar_cpu    ? 'h' : 'd';
+  kernel_name[12] = flip_sign_alpha  ? '1' : '0';
+  kernel_name[13] = reciprocal_alpha ? '1' : '0';
+  kernel_name[14] = flip_sign_beta   ? '1' : '0';
+  kernel_name[15] = reciprocal_beta  ? '1' : '0';
 
   scheduler::statement statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha, &z, &beta, flip_sign_beta, reciprocal_beta);
   kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);
@@ -96,12 +98,13 @@ void avbv_v(vector_base<NumericT> & x,
   assert(viennacl::traits::opencl_handle(y).context() == viennacl::traits::opencl_handle(z).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
   std::string kernel_name("ip_add_*v*v_****");
-  kernel_name[7] = is_cpu_scalar<ScalarT1>::value?'h':'d';
-  kernel_name[9] = is_cpu_scalar<ScalarT2>::value?'h':'d';
-  kernel_name[12] = flip_sign_alpha?'1':'0';
-  kernel_name[13] = reciprocal_alpha?'1':'0';
-  kernel_name[14] = flip_sign_beta?'1':'0';
-  kernel_name[15] = reciprocal_beta?'1':'0';
+  bool is_scalar_cpu = is_cpu_scalar<ScalarT1>::value;
+  kernel_name[7]  = is_scalar_cpu    ? 'h' : 'd';
+  kernel_name[9]  = is_scalar_cpu    ? 'h' : 'd';
+  kernel_name[12] = flip_sign_alpha  ? '1' : '0';
+  kernel_name[13] = reciprocal_alpha ? '1' : '0';
+  kernel_name[14] = flip_sign_beta   ? '1' : '0';
+  kernel_name[15] = reciprocal_beta  ? '1' : '0';
 
   scheduler::statement statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &alpha, flip_sign_alpha, reciprocal_alpha, &z, &beta, flip_sign_beta, reciprocal_beta);
   kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute(kernel_name, statement);

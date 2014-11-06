@@ -150,36 +150,36 @@ private:
     class loop_body : public loop_body_base
     {
     public:
-      loop_body(std::vector<mapped_scalar_reduction*> const & _exprs) : exprs(_exprs){ }
+      loop_body(std::vector<mapped_scalar_reduction*> const & exprs_) : exprs(exprs_){ }
 
-      void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const
+      void operator()(utils::kernel_generation_stream & kernel_stream, unsigned int loop_simd_width) const
       {
-        std::string i = (simd_width==1)?"i*#stride":"i";
+        std::string i = (loop_simd_width==1)?"i*#stride":"i";
         std::string process_str;
         //Fetch vector entry
         {
           std::set<std::string> already_fetched;
-          process_str = utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width,i,"#pointer")+";";
+          process_str = utils::append_width("#scalartype",loop_simd_width) + " #namereg = " + vload(loop_simd_width,i,"#pointer")+";";
           for (std::vector<mapped_scalar_reduction*>::const_iterator it = exprs.begin(); it != exprs.end(); ++it)
           {
-            (*it)->process_recursive(stream, PARENT_NODE_TYPE, "vector", process_str, already_fetched);
-            (*it)->process_recursive(stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = #pointer[$OFFSET{#row*#stride1, i*#stride2}];", already_fetched);
-            (*it)->process_recursive(stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = #pointer[$OFFSET{i*#stride1,#column*#stride2}];", already_fetched);
-            (*it)->process_recursive(stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = #pointer[#diag_offset<0?$OFFSET{(i - #diag_offset)*#stride1, i*#stride2}:$OFFSET{i*#stride1, (i + #diag_offset)*#stride2}];", already_fetched);
+            (*it)->process_recursive(kernel_stream, PARENT_NODE_TYPE, "vector", process_str, already_fetched);
+            (*it)->process_recursive(kernel_stream, PARENT_NODE_TYPE, "matrix_row", "#scalartype #namereg = #pointer[$OFFSET{#row*#stride1, i*#stride2}];", already_fetched);
+            (*it)->process_recursive(kernel_stream, PARENT_NODE_TYPE, "matrix_column", "#scalartype #namereg = #pointer[$OFFSET{i*#stride1,#column*#stride2}];", already_fetched);
+            (*it)->process_recursive(kernel_stream, PARENT_NODE_TYPE, "matrix_diag", "#scalartype #namereg = #pointer[#diag_offset<0?$OFFSET{(i - #diag_offset)*#stride1, i*#stride2}:$OFFSET{i*#stride1, (i + #diag_offset)*#stride2}];", already_fetched);
           }
         }
 
         //Update accumulators
-        std::vector<std::string> str(simd_width);
-        if (simd_width==1)
+        std::vector<std::string> str(loop_simd_width);
+        if (loop_simd_width==1)
           str[0] = "#namereg";
         else
-          for (unsigned int a = 0; a < simd_width; ++a)
+          for (unsigned int a = 0; a < loop_simd_width; ++a)
             str[a] = append_simd_suffix("#namereg.s", a);
 
         for (unsigned int k = 0; k < exprs.size(); ++k)
         {
-          for (unsigned int a = 0; a < simd_width; ++a)
+          for (unsigned int a = 0; a < loop_simd_width; ++a)
           {
             std::map<std::string, std::string> accessors;
             accessors["vector"] = str[a];
@@ -192,9 +192,9 @@ private:
               value+= "*" + exprs[k]->evaluate_recursive(RHS_NODE_TYPE, accessors);
 
             if (exprs[k]->is_index_reduction())
-              compute_index_reduction(stream, exprs[k]->process("#name_acc"),  "i*"+tools::to_string(simd_width) + "+" + tools::to_string(a), exprs[k]->process("#name_acc_value"), value,exprs[k]->root_op());
+              compute_index_reduction(kernel_stream, exprs[k]->process("#name_acc"),  "i*"+tools::to_string(loop_simd_width) + "+" + tools::to_string(a), exprs[k]->process("#name_acc_value"), value,exprs[k]->root_op());
             else
-              compute_reduction(stream, exprs[k]->process("#name_acc"), value,exprs[k]->root_op());
+              compute_reduction(kernel_stream, exprs[k]->process("#name_acc"), value,exprs[k]->root_op());
           }
         }
       }

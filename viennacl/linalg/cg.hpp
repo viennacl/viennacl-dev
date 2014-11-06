@@ -120,6 +120,8 @@ viennacl::vector<NumericT> solve(MatrixT const & A, //MatrixType const & A,
                                  cg_tag const & tag,
                                  viennacl::linalg::no_precond)
 {
+  typedef typename viennacl::vector<NumericT>::difference_type   difference_type;
+
   viennacl::vector<NumericT> result(rhs);
   viennacl::traits::clear(result);
 
@@ -129,6 +131,7 @@ viennacl::vector<NumericT> solve(MatrixT const & A, //MatrixType const & A,
   viennacl::vector<NumericT> inner_prod_buffer = viennacl::zero_vector<NumericT>(3*256, viennacl::traits::context(rhs)); // temporary buffer
   std::vector<NumericT>      host_inner_prod_buffer(inner_prod_buffer.size());
   vcl_size_t                 buffer_size_per_vector = inner_prod_buffer.size() / 3;
+  difference_type            buffer_offset_per_vector = static_cast<difference_type>(buffer_size_per_vector);
 
   NumericT norm_rhs_squared = viennacl::linalg::norm_2(residual); norm_rhs_squared *= norm_rhs_squared;
 
@@ -151,9 +154,9 @@ viennacl::vector<NumericT> solve(MatrixT const & A, //MatrixType const & A,
     // bring back the partial results to the host:
     viennacl::fast_copy(inner_prod_buffer.begin(), inner_prod_buffer.end(), host_inner_prod_buffer.begin());
 
-    inner_prod_rr   = std::accumulate(host_inner_prod_buffer.begin(),                              host_inner_prod_buffer.begin() +     buffer_size_per_vector, NumericT(0));
-    inner_prod_ApAp = std::accumulate(host_inner_prod_buffer.begin() +     buffer_size_per_vector, host_inner_prod_buffer.begin() + 2 * buffer_size_per_vector, NumericT(0));
-    inner_prod_pAp  = std::accumulate(host_inner_prod_buffer.begin() + 2 * buffer_size_per_vector, host_inner_prod_buffer.begin() + 3 * buffer_size_per_vector, NumericT(0));
+    inner_prod_rr   = std::accumulate(host_inner_prod_buffer.begin(),                                host_inner_prod_buffer.begin() +     buffer_offset_per_vector, NumericT(0));
+    inner_prod_ApAp = std::accumulate(host_inner_prod_buffer.begin() +     buffer_offset_per_vector, host_inner_prod_buffer.begin() + 2 * buffer_offset_per_vector, NumericT(0));
+    inner_prod_pAp  = std::accumulate(host_inner_prod_buffer.begin() + 2 * buffer_offset_per_vector, host_inner_prod_buffer.begin() + 3 * buffer_offset_per_vector, NumericT(0));
 
     if (std::fabs(inner_prod_rr / norm_rhs_squared) < tag.tolerance() *  tag.tolerance())    //squared norms involved here
       break;
@@ -202,7 +205,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, cg_tag const & tag, P
   CPU_NumericType norm_rhs_squared = ip_rr;
   CPU_NumericType new_ipp_rr_over_norm_rhs;
 
-  if (norm_rhs_squared == 0) //solution is zero if RHS norm is zero
+  if (norm_rhs_squared <= 0) //solution is zero if RHS norm is zero
     return result;
 
   for (unsigned int i = 0; i < tag.max_iterations(); ++i)

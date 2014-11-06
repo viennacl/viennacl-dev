@@ -85,9 +85,10 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
   viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
   std::stringstream ss;
   ss << "vec_mul";
-  if (AlignmentV == 4)
+  unsigned int alignment = AlignmentV; //prevent unreachable code warnings below
+  if (alignment == 4)
     ss << "4";
-  if (AlignmentV == 8)
+  if (alignment == 8)
     ss << "8";
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), ss.str());

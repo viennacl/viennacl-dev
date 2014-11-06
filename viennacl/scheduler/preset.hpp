@@ -185,13 +185,15 @@ scheduler::statement reduction_inner_prod(ScalarT const * s, vector_base<Numeric
     array[2].op.type = ROP;
   }
 
-  if (is_floating_point<NumericT>::value)
+  bool is_float_or_double = is_floating_point<NumericT>::value; // assign to variable to avoid compiler warnings about unreachable code
+  if (is_float_or_double)
   {
     statement::add_element(dummy, array[3].lhs, *x);
     array[3].op.type_family = OPERATION_UNARY_TYPE_FAMILY;
     array[3].op.type = OPERATION_UNARY_FABS_TYPE;
   }
-  else{
+  else
+  {
     array[3].lhs.type_family = COMPOSITE_OPERATION_FAMILY;
     array[3].lhs.node_index = 4;
     array[3].op.type_family = OPERATION_UNARY_TYPE_FAMILY;
@@ -227,14 +229,16 @@ statement norm_2(scalar<NumericT> const * s, vector_base<NumericT> const * x)
 template<typename NumericT>
 statement norm_inf(scalar<NumericT> const * s, vector_base<NumericT> const * x)
 {
-  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_floating_point<NumericT>::value?OPERATION_BINARY_ELEMENT_FMAX_TYPE:
+  bool is_float_or_double = is_floating_point<NumericT>::value;
+  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_float_or_double ? OPERATION_BINARY_ELEMENT_FMAX_TYPE :
                                                                                                OPERATION_BINARY_ELEMENT_MAX_TYPE, false, true);
 }
 
 template<typename NumericT>
 statement index_norm_inf(scalar<NumericT> const * s, vector_base<NumericT> const * x)
 {
-  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_floating_point<NumericT>::value?OPERATION_BINARY_ELEMENT_ARGFMAX_TYPE:
+  bool is_float_or_double = is_floating_point<NumericT>::value; //avoid compiler warnings about unreachable code below
+  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_float_or_double ? OPERATION_BINARY_ELEMENT_ARGFMAX_TYPE :
                                                                                                OPERATION_BINARY_ELEMENT_ARGMAX_TYPE, false, true);
 }
 
@@ -247,13 +251,15 @@ statement sum(scalar<NumericT> const * s, vector_base<NumericT> const * x)
 template<typename NumericT>
 statement max(scalar<NumericT> const * s, vector_base<NumericT> const * x)
 {
-  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_floating_point<NumericT>::value ? OPERATION_BINARY_ELEMENT_FMAX_TYPE : OPERATION_BINARY_ELEMENT_MAX_TYPE, false, false);
+  bool is_float_or_double = is_floating_point<NumericT>::value; //avoid compiler warnings about unreachable code below
+  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_float_or_double ? OPERATION_BINARY_ELEMENT_FMAX_TYPE : OPERATION_BINARY_ELEMENT_MAX_TYPE, false, false);
 }
 
 template<typename NumericT>
 statement min(scalar<NumericT> const * s, vector_base<NumericT> const * x)
 {
-  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_floating_point<NumericT>::value ? OPERATION_BINARY_ELEMENT_FMIN_TYPE : OPERATION_BINARY_ELEMENT_MIN_TYPE, false, false);
+  bool is_float_or_double = is_floating_point<NumericT>::value; //avoid compiler warnings about unreachable code below
+  return preset::reduction_inner_prod(s, x, (vector_base<NumericT>*)NULL, is_float_or_double ? OPERATION_BINARY_ELEMENT_FMIN_TYPE : OPERATION_BINARY_ELEMENT_MIN_TYPE, false, false);
 }
 
 

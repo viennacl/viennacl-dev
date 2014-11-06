@@ -118,31 +118,31 @@ private:
     {
     public:
       loop_body(std::vector<mapped_row_wise_reduction*> const & _exprs, bool _is_trans) : exprs(_exprs), is_trans(_is_trans){ }
-      void operator()(utils::kernel_generation_stream & stream, unsigned int simd_width) const
+      void operator()(utils::kernel_generation_stream & kernel_stream, unsigned int loop_simd_width) const
       {
         std::set<std::string> already_fetched;
         for (std::vector<mapped_row_wise_reduction*>::const_iterator it = exprs.begin(); it != exprs.end(); ++it)
         {
           if (is_trans)
-            (*it)->process_recursive(stream, LHS_NODE_TYPE, "matrix_trans", utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width, "c*#stride1", "#pointer + r*#ld")+";", already_fetched);
+            (*it)->process_recursive(kernel_stream, LHS_NODE_TYPE, "matrix_trans", utils::append_width("#scalartype",loop_simd_width) + " #namereg = " + vload(loop_simd_width, "c*#stride1", "#pointer + r*#ld")+";", already_fetched);
           else
-            (*it)->process_recursive(stream, LHS_NODE_TYPE, "matrix", "#scalartype #namereg = #pointer[r*#stride1 + c*#ld];", already_fetched);
-          (*it)->process_recursive(stream, RHS_NODE_TYPE, "vector", utils::append_width("#scalartype",simd_width) + " #namereg = " + vload(simd_width, "c*#stride", "#pointer")+";", already_fetched);
+            (*it)->process_recursive(kernel_stream, LHS_NODE_TYPE, "matrix", "#scalartype #namereg = #pointer[r*#stride1 + c*#ld];", already_fetched);
+          (*it)->process_recursive(kernel_stream, RHS_NODE_TYPE, "vector", utils::append_width("#scalartype",loop_simd_width) + " #namereg = " + vload(loop_simd_width, "c*#stride", "#pointer")+";", already_fetched);
         }
 
 
         //Update accumulators
-        std::vector<std::string> str(simd_width);
-        if (simd_width==1)
+        std::vector<std::string> str(loop_simd_width);
+        if (loop_simd_width==1)
           str[0] = "#namereg";
         else
-          for (unsigned int a = 0; a < simd_width; ++a)
+          for (unsigned int a = 0; a < loop_simd_width; ++a)
             str[a] = append_simd_suffix("#namereg.s", a);
 
 
         for (unsigned int k = 0; k < exprs.size(); ++k)
         {
-          for (unsigned int a = 0; a < simd_width; ++a)
+          for (unsigned int a = 0; a < loop_simd_width; ++a)
           {
             std::map<std::string, std::string> accessors;
             if (is_trans)
@@ -156,9 +156,9 @@ private:
               value+= "*" + exprs[k]->evaluate_recursive(RHS_NODE_TYPE, accessors);
 
             if (exprs[k]->is_index_reduction())
-              compute_index_reduction(stream, exprs[k]->process("#name_acc"), "c*"+to_string(simd_width) + to_string(a), exprs[k]->process("#name_acc_value"), value,exprs[k]->root_op());
+              compute_index_reduction(kernel_stream, exprs[k]->process("#name_acc"), "c*"+to_string(loop_simd_width) + to_string(a), exprs[k]->process("#name_acc_value"), value,exprs[k]->root_op());
             else
-              compute_reduction(stream, exprs[k]->process("#name_acc"), value,exprs[k]->root_op());
+              compute_reduction(kernel_stream, exprs[k]->process("#name_acc"), value,exprs[k]->root_op());
           }
         }
       }
