@@ -19,7 +19,7 @@
 *  This typically holds true for sparse matrices as well.
 *  GPUs which are integrated with the CPU on the same chip use the same memory link as the CPU, so the limiting resource is the same.
 *
-*  <h3>Why do I see only mild performance gains on my Laptop GPU?</h3>
+*  <h3>Why do I see only mild performance gains (or no gains at all) on my Laptop GPU?</h3>
 *  Laptop GPUs are optimized for low power consumption.
 *  You may use Laptop GPUs to debug your implementations, but you need to run on high-end discrete GPUs for best performance.
 *
@@ -42,6 +42,11 @@
 *  <h3>Can I use ViennaCL on a cluster?</h3>
 *  ViennaCL is available as add-on package for the solver library <a href="http://www.mcs.anl.gov/petsc/">PETSc</a>, through which you can run the iterative solvers with full MPI-parallelization across nodes.
 *  Not all features of ViennaCL are available through PETSc, though.
+*
+*  <h3>Why does ViennaCL only use the old C++03 standard, but not the latest C++11?</h3>
+*  Our aim is to make ViennaCL available on as many machines as possible.
+*  However, many enterprise-class machines do not ship with compilers supporting C++11.
+*  For example, the default compiler on CentOS 5.11 is GCC 4.4, which does not support any C++11 features at all.
 *
 *  <h3>How can I contribute?</h3>
 *  The are multiple options available:
