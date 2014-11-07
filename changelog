@@ -1,287 +1,325 @@
-******************************
-**** ViennaCL Change Logs ****
-******************************
+/** \page changelog    Change Log
 
-*** Version 1.5.x ***
+## Version 1.6.x
 
--- Version 1.5.2 --
+### Version 1.6.0
+This new minor release number update introduces an extensive device database, which enables the use of compute kernels tailored to the underlying device.
+As a consequence, the performance portability of ViennaCL is higher than ever before.
+A list of significant changes is as follows:
+  - Major update of the internal OpenCL kernel generator, which is now used for all BLAS operations with device-specific parameters and greatly improves performance particularly on older AMD GPUs.
+  - Iterative solvers: Added pipelined implementations of CG, BiCGStab and GMRES, which are up to three times faster than other GPU-enabled solver libraries (see <a href="http://arxiv.org/abs/1410.4054">Pipelined Iterative Solvers with Kernel Fusion for Graphics Processing Units</a> for details).
+  - sliced_ell_matrix: Added new sparse matrix type implementing the sliced ELLPACK format for all three compute backends as proposed in the paper <a href="http://arxiv.org/abs/1307.6209">A unified sparse matrix data format for efficient general sparse matrix-vector multiply on modern processors with wide SIMD units</a> by Kreutzer et al.
+  - CUDA: Added option for specifying the CUDA architecture through CMake in the CUDA_ARCH_FLAG variable.
+  - Added viennacl/version.hpp for identifying the ViennaCL version (thanks to GitHub user vigsterkr for bringing this up).
+  - Added viennacl::min() and viennacl::max() to obtain the minimum and maximum element in a vector (thanks to sourceforge user cpp1 for the suggestion).
+  - Matrix-matrix products on CPU: Improved performance by about an order of magnitude.
+  - matrix: Added constructor and example for wrapping user-provided CUDA buffers.
+  - Eigenvalues: Implementation of bisection algorithm for tridiagonal symmetric matrices (thanks to Andreas Selinger and Denis Ojdanic). API still experimental.
+  - Eigenvalues: Extended current implementation of the QR method to OpenMP and CUDA backends (thanks to Andreas Selinger and Denis Ojdanic). API remains experimental.
+  - Scan: Implemented inclusive and exclusive scans for all three compute backends (thanks to Andreas Selinger and Denis Ojdanic). API still experimental.
+  - Triangular solvers: Improved performance particularly for multiple right hand sides (i.e. BLAS level 3 solves). Contributed by Juraj Kabzan.
+  - matrix: Improved performance for matrix transposition (thanks to Juraj Kabzan).
+  - FFT: Now also supports OpenMP and CUDA backends (thanks to Juraj Kabzan).
+  - Nonnegative matrix factorization: Now also supports OpenMP and CUDA backends (thanks to Juraj Kabzan).
+  - Nonnegative matrix factorization: Now using correct contexts and better robustness for initial guesses being all-zero.
+  - Documentation: Integrated former LaTeX manual into Doxygen, resulting in an all-HTML documentation. Enables much better cross-referencing.
+  - Benchmarks: Merged separate BLAS level 1/2/3 benchmarks into a single benchmark printing performance for all three levels.
+  - matrix_range: Fixed incorrect copying of data back to the host (thanks to GitHub user karelp).
+  - hyb_matrix: Fixed a bug in the constructor for the non-square case (thanks to Denis Demidov for providing a fix).
+  - OpenMP: Added linker flags when building with OpenMP on MinGW (thanks to GitHub user skn123 for very helpful input).
+  - OpenCL: Added optional caching of OpenCL kernels at a user-defined location in the file system if the environment variable VIENNACL_CACHE_PATH is defined.
+  - CMake: Enclosing variables in double quotes where necessary (thanks to GitHub user elfring for the suggestion).
+  - matrix: Better reuse of existing memory buffers to better support user-provided buffers.
+  - Sparse matrices: Added .clear() member function for freeing internal memory buffers (thanks to sourceforge user suchismit for the suggestion).
+  - Better support for passing host scalars of non-matching scalar type for operations on vectors and matrices (thanks to Denis Demidov for bringing this up).
+  - Vector: Passing an empty vector as the destination of a two-parameter version of viennacl::copy() now resizes the vector automatically for higher convenience.
+  - AMG: Fixed invalid decrement of auxiliary iterator (thanks to Yaron Keren).
+  - Tools: Added sparse matrix generation routine for matrices obtained from finite difference discretizations in 2D.
+  - uBLAS: Including necessary header when working with compressed_matrix (thanks to Lucas Clemente Vella).
+  - Visual Studio 2012: Fixed compilation problems for some new submodules based on input from Matthew Musto.
+  - Iterators: Fixed incorrect index calculations when using iterators on vectors (thanks to Karan Poddar for reporting).
+  - matrix_base: The storage layout of matrices is internally managed as a runtime parameter, which allows for a better internal dispatch in order to use faster compute kernels.
+
+## Version 1.5.x
+
+### Version 1.5.2
 While the work for the upcoming 1.6.0 release is in full progress, this maintenance release fixes a couple of bugs and performance regressions reported to us:
- - Fixed compilation problems on Visual Studio for the operations y += prod(A, x) and y -= prod(A, x) with dense matrix A.
- - Added a better performance profile for NVIDIA Kepler GPUs. For example, this increases the performance of matrix-matrix multiplications to 600 GFLOPs in single precision on a GeForce GTX 680. Thanks to Paul Dufort for bringing this to our attention.
- - Added support for the operation A = trans(B) for matrices A and B to the scheduler.
- - Fixed compilation problems in block-ILU preconditioners when passing block boundaries manually.
- - Ensured compatibility with OpenCL 1.0, which may still be available on older devices.
+  - Fixed compilation problems on Visual Studio for the operations y += prod(A, x) and y -= prod(A, x) with dense matrix A.
+  - Added a better performance profile for NVIDIA Kepler GPUs. For example, this increases the performance of matrix-matrix multiplications to 600 GFLOPs in single precision on a GeForce GTX 680. Thanks to Paul Dufort for bringing this to our attention.
+  - Added support for the operation A = trans(B) for matrices A and B to the scheduler.
+  - Fixed compilation problems in block-ILU preconditioners when passing block boundaries manually.
+  - Ensured compatibility with OpenCL 1.0, which may still be available on older devices.
 
--- Version 1.5.1 --
+### Version 1.5.1
 This maintenance release fixes a few nasty bugs:
- - Fixed a memory leak in the OpenCL kernel generator. Thanks to GitHub user dxyzab for spotting this.
- - Added compatibility of the mixed precision CG implementation with older AMD GPUs. Thanks to Andreas Rost for the input.
- - Fixed an error when running the QR factorization for matrices with less rows than columns. Thanks to Karol Polko for reporting.
- - Readded accidentally removed chapters on additional algorithms and structured matrices to the manual. Thanks to Sajjadul Islam for the hint.
- - Fixed buggy OpenCL kernels for matrix additions and subtractions for column-major matrices. Thanks to Tom Nicholson for reporting.
- - Fixed an invalid default kernel parameter set for matrix-matrix multiplications on CPUs when using the OpenCL backend. Thanks again to Tom Nicholson.
- - Corrected a weak check used in two tests. Thanks to Walter Mascarenhas for providing a fix.
- - Fixed a wrong global work size inside the SPAI preconditioner. Thanks to Andreas Rost.
+  - Fixed a memory leak in the OpenCL kernel generator. Thanks to GitHub user dxyzab for spotting this.
+  - Added compatibility of the mixed precision CG implementation with older AMD GPUs. Thanks to Andreas Rost for the input.
+  - Fixed an error when running the QR factorization for matrices with less rows than columns. Thanks to Karol Polko for reporting.
+  - Readded accidentally removed chapters on additional algorithms and structured matrices to the manual. Thanks to Sajjadul Islam for the hint.
+  - Fixed buggy OpenCL kernels for matrix additions and subtractions for column-major matrices. Thanks to Tom Nicholson for reporting.
+  - Fixed an invalid default kernel parameter set for matrix-matrix multiplications on CPUs when using the OpenCL backend. Thanks again to Tom Nicholson.
+  - Corrected a weak check used in two tests. Thanks to Walter Mascarenhas for providing a fix.
+  - Fixed a wrong global work size inside the SPAI preconditioner. Thanks to Andreas Rost.
 
--- Version 1.5.0 --
+### Version 1.5.0
 This new minor release number update focuses on a more powerful API, and on first steps in making ViennaCL more accessible from languages other than C++.
 In addition to many internal improvements both in terms of performance and flexibility, the following changes are visible to users:
- - API-change: User-provided OpenCL kernels extract their kernels automatically. A call to add_kernel() is now obsolete, hence the function was removed.
- - API-change: Device class has been extend and supports all informations defined in the OpenCL 1.1 standard through member functions. Duplicate compute_units() and max_work_group_size() have been removed (thanks for Shantanu Agarwal for the input).
- - API-change: viennacl::copy() from a ViennaCL object to an object of non-ViennaCL type no longer tries to resize the object accordingly. An assertion is thrown if the sizes are incorrect in order to provide a consistent behavior across many different types.
- - Datastructure change: Vectors and matrices are now padded with zeros by default, resulting in higher performance particularly for matrix operations. This padding needs to be taken into account when using fast_copy(), particularly for matrices.
- - Fixed problems with CUDA and CMake+CUDA on Visual Studio.
- - coordinate_matrix<> now also behaves correctly for tiny matrix dimensions.
- - CMake 2.6 as new minimum requirement instead of CMake 2.8.
- - Vectors and matrices can be instantiated with integer template types (long, int, short, char).
- - Added support for element_prod() and element_div() for dense matrices.
- - Added element_pow() for vectors and matrices.
- - Added norm_frobenius() for computing the Frobenius norm of dense matrices.
- - Added unary element-wise operations for vectors and dense matrices: element_sin(), element_sqrt(), etc.
- - Multiple OpenCL contexts can now be used in a multi-threaded setting (one thread per context).
- - Multiple inner products with a common vector can now be computed efficiently via e.g.~inner_prod(x, tie(y, z));
- - Added support for prod(A, B), where A is a sparse matrix type and B is a dense matrix (thanks to Albert Zaharovits for providing parts of the implementation).
- - Added diag() function for extracting the diagonal of a vector to a matrix, or for generating a square matrix from a vector with the vector elements on a diagonal (similar to MATLAB).
- - Added row() and column() functions for extracting a certain row or column of a matrix to a vector.
- - Sparse matrix-vector products now also work with vector strides and ranges.
- - Added async_copy() for vectors to allow for a better overlap of computation and communication.
- - Added compressed_compressed_matrix type for the efficient representation of CSR matrices with only few nonzero rows.
- - Added possibility to switch command queues in OpenCL contexts.
- - Improved performance of Block-ILU by removing one spurious conversion step.
- - Improved performance of Cuthill-McKee algorithm by about 40 percent.
- - Improved performance of power iteration by avoiding the creation of temporaries in each step.
- - Removed spurious status message to cout in matrix market reader and nonnegative matrix factorization.
- - The OpenCL kernel launch logic no longer attempts to re-launch the kernel with smaller work sizes if an error is encountered (thanks to Peter Burka for pointing this out).
- - Reduced overhead for lenghty expressions involving temporaries (at the cost of increased compilation times).
- - vector and matrix are now padded to dimensions being multiples of 128 per default. This greatly improves GEMM performance for arbitrary sizes.
- - Loop indices for OpenMP parallelization are now all signed, increasing compatibility with older OpenMP implementations (thanks to Mrinal Deo for the hint).
- - Complete rewrite of the generator. Now uses the scheduler for specifying the operation. Includes a full device database for portable high performance of GEMM kernels.
- - Added micro-scheduler for attaching the OpenCL kernel generator to the user API.
- - Certain BLAS functionality in ViennaCL is now also available through a shared library (libviennacl).
- - Removed the external kernel parameter tuning factility, which is to be replaced by an internal device database through the kernel generator.
- - Completely eliminated the OpenCL kernel conversion step in the developer repository and the source-release. One can now use the developer version without the need for a Boost installation.
+  - API-change: User-provided OpenCL kernels extract their kernels automatically. A call to add_kernel() is now obsolete, hence the function was removed.
+  - API-change: Device class has been extend and supports all informations defined in the OpenCL 1.1 standard through member functions. Duplicate compute_units() and max_work_group_size() have been removed (thanks for Shantanu Agarwal for the input).
+  - API-change: viennacl::copy() from a ViennaCL object to an object of non-ViennaCL type no longer tries to resize the object accordingly. An assertion is thrown if the sizes are incorrect in order to provide a consistent behavior across many different types.
+  - Datastructure change: Vectors and matrices are now padded with zeros by default, resulting in higher performance particularly for matrix operations. This padding needs to be taken into account when using fast_copy(), particularly for matrices.
+  - Fixed problems with CUDA and CMake+CUDA on Visual Studio.
+  - coordinate_matrix<> now also behaves correctly for tiny matrix dimensions.
+  - CMake 2.6 as new minimum requirement instead of CMake 2.8.
+  - Vectors and matrices can be instantiated with integer template types (long, int, short, char).
+  - Added support for element_prod() and element_div() for dense matrices.
+  - Added element_pow() for vectors and matrices.
+  - Added norm_frobenius() for computing the Frobenius norm of dense matrices.
+  - Added unary element-wise operations for vectors and dense matrices: element_sin(), element_sqrt(), etc.
+  - Multiple OpenCL contexts can now be used in a multi-threaded setting (one thread per context).
+  - Multiple inner products with a common vector can now be computed efficiently via e.g.~inner_prod(x, tie(y, z));
+  - Added support for prod(A, B), where A is a sparse matrix type and B is a dense matrix (thanks to Albert Zaharovits for providing parts of the implementation).
+  - Added diag() function for extracting the diagonal of a vector to a matrix, or for generating a square matrix from a vector with the vector elements on a diagonal (similar to MATLAB).
+  - Added row() and column() functions for extracting a certain row or column of a matrix to a vector.
+  - Sparse matrix-vector products now also work with vector strides and ranges.
+  - Added async_copy() for vectors to allow for a better overlap of computation and communication.
+  - Added compressed_compressed_matrix type for the efficient representation of CSR matrices with only few nonzero rows.
+  - Added possibility to switch command queues in OpenCL contexts.
+  - Improved performance of Block-ILU by removing one spurious conversion step.
+  - Improved performance of Cuthill-McKee algorithm by about 40 percent.
+  - Improved performance of power iteration by avoiding the creation of temporaries in each step.
+  - Removed spurious status message to cout in matrix market reader and nonnegative matrix factorization.
+  - The OpenCL kernel launch logic no longer attempts to re-launch the kernel with smaller work sizes if an error is encountered (thanks to Peter Burka for pointing this out).
+  - Reduced overhead for lenghty expressions involving temporaries (at the cost of increased compilation times).
+  - vector and matrix are now padded to dimensions being multiples of 128 per default. This greatly improves GEMM performance for arbitrary sizes.
+  - Loop indices for OpenMP parallelization are now all signed, increasing compatibility with older OpenMP implementations (thanks to Mrinal Deo for the hint).
+  - Complete rewrite of the generator. Now uses the scheduler for specifying the operation. Includes a full device database for portable high performance of GEMM kernels.
+  - Added micro-scheduler for attaching the OpenCL kernel generator to the user API.
+  - Certain BLAS functionality in ViennaCL is now also available through a shared library (libviennacl).
+  - Removed the external kernel parameter tuning factility, which is to be replaced by an internal device database through the kernel generator.
+  - Completely eliminated the OpenCL kernel conversion step in the developer repository and the source-release. One can now use the developer version without the need for a Boost installation.
 
 
-*** Version 1.4.x ***
+## Version 1.4.x
 
--- Version 1.4.2 --
+### Version 1.4.2
 This is a maintenance release, particularly resolving compilation problems with Visual Studio 2012.
-- Largely refactored the internal code base, unifying code for vector, vector_range, and vector_slice.
-  Similar code refactoring was applied to matrix, matrix_range, and matrix_slice.
-  This not only resolves the problems in VS 2012, but also leads to shorter compilation times and a smaller code base.
-- Improved performance of matrix-vector products of compressed_matrix on CPUs using OpenCL.
-- Resolved a bug which shows up if certain rows and columns of a compressed_matrix are empty and the matrix is copied back to host.
-- Fixed a bug and improved performance of GMRES. Thanks to Ivan Komarov for reporting via sourceforge.
-- Added additional Doxygen documentation.
+  - Largely refactored the internal code base, unifying code for vector, vector_range, and vector_slice.
+    Similar code refactoring was applied to matrix, matrix_range, and matrix_slice.
+    This not only resolves the problems in VS 2012, but also leads to shorter compilation times and a smaller code base.
+  - Improved performance of matrix-vector products of compressed_matrix on CPUs using OpenCL.
+  - Resolved a bug which shows up if certain rows and columns of a compressed_matrix are empty and the matrix is copied back to host.
+  - Fixed a bug and improved performance of GMRES. Thanks to Ivan Komarov for reporting via sourceforge.
+  - Added additional Doxygen documentation.
 
--- Version 1.4.1 --
+### Version 1.4.1
 This release focuses on improved stability and performance on AMD devices rather than introducing new features:
-- Included fast matrix-matrix multiplication kernel for AMD's Tahiti GPUs if matrix dimensions are a multiple of 128.
-  Our sample HD7970 reaches over 1.3 TFLOPs in single precision and 200 GFLOPs in double precision (counting multiplications and additions as separate operations).
-- All benchmark FLOPs are now using the common convention of counting multiplications and additions separately (ignoring fused multiply-add).
-- Fixed a bug for matrix-matrix multiplication with matrix_slice<> when slice dimensions are multiples of 64.
-- Improved detection logic for Intel OpenCL SDK.
-- Fixed issues when resizing an empty compressed_matrix.
-- Fixes and improved support for BLAS-1-type operations on dense matrices and vectors.
-- Vector expressions can now be passed to inner_prod() and norm_1(), norm_2() and norm_inf() directly.
-- Improved performance when using OpenMP.
-- Better support for Intel Xeon Phi (MIC).
-- Resolved problems when using OpenCL for CPUs if the number of cores is not a power of 2.
-- Fixed a flaw when using AMG in debug mode. Thanks to Jakub Pola for reporting.
-- Removed accidental external linkage (invalidating header-only model) of SPAI-related functions. Thanks again to Jakub Pola.
-- Fixed issues with copy back to host when OpenCL handles are passed to CTORs of vector, matrix, or compressed_matrix. Thanks again to Jakub Pola.
-- Added fix for segfaults on program exit when providing custom OpenCL queues. Thanks to Denis Demidov for reporting.
-- Fixed bug in copy() to hyb_matrix as reported by Denis Demidov (thanks!).
-- Added an overload for result_of::alignment for vector_expression. Thanks again to Denis Demidov.
-- Added SSE-enabled code contributed by Alex Christensen.
+  - Included fast matrix-matrix multiplication kernel for AMD's Tahiti GPUs if matrix dimensions are a multiple of 128.
+    Our sample HD7970 reaches over 1.3 TFLOPs in single precision and 200 GFLOPs in double precision (counting multiplications and additions as separate operations).
+  - All benchmark FLOPs are now using the common convention of counting multiplications and additions separately (ignoring fused multiply-add).
+  - Fixed a bug for matrix-matrix multiplication with matrix_slice<> when slice dimensions are multiples of 64.
+  - Improved detection logic for Intel OpenCL SDK.
+  - Fixed issues when resizing an empty compressed_matrix.
+  - Fixes and improved support for BLAS-1-type operations on dense matrices and vectors.
+  - Vector expressions can now be passed to inner_prod() and norm_1(), norm_2() and norm_inf() directly.
+  - Improved performance when using OpenMP.
+  - Better support for Intel Xeon Phi (MIC).
+  - Resolved problems when using OpenCL for CPUs if the number of cores is not a power of 2.
+  - Fixed a flaw when using AMG in debug mode. Thanks to Jakub Pola for reporting.
+  - Removed accidental external linkage (invalidating header-only model) of SPAI-related functions. Thanks again to Jakub Pola.
+  - Fixed issues with copy back to host when OpenCL handles are passed to CTORs of vector, matrix, or compressed_matrix. Thanks again to Jakub Pola.
+  - Added fix for segfaults on program exit when providing custom OpenCL queues. Thanks to Denis Demidov for reporting.
+  - Fixed bug in copy() to hyb_matrix as reported by Denis Demidov (thanks!).
+  - Added an overload for result_of::alignment for vector_expression. Thanks again to Denis Demidov.
+  - Added SSE-enabled code contributed by Alex Christensen.
 
--- Version 1.4.0 --
+### Version 1.4.0
 The transition from 1.3.x to 1.4.x features the largest number of additions, improvements, and cleanups since the initial release.
 In particular, host-, OpenCL-, and CUDA-based execution is now supported. OpenCL now needs to be enabled explicitly!
 New features and feature improvements are as follows:
-- Added host-based and CUDA-enabled operations on ViennaCL objects. The default is now a host-based execution for reasons of compatibility.
-  Enable OpenCL- or CUDA-based execution by defining the preprocessor constant VIENNACL_WITH_OPENCL and VIENNACL_WITH_CUDA respectively.
-  Note that CUDA-based execution requires the use of nvcc.
-- Added mixed-precision CG solver (OpenCL-based).
-- Greatly improved performance of ILU0 and ILUT preconditioners (up to 10-fold). Also fixed a bug in ILUT.
-- Added initializer types from Boost.uBLAS (unit_vector, zero_vector, scalar_vector, identity_matrix, zero_matrix, scalar_matrix).
-  Thanks to Karsten Ahnert for suggesting the feature.
-- Added incomplete Cholesky factorization preconditioner.
-- Added element-wise operations for vectors as available in Boost.uBLAS (element_prod, element_div).
-- Added restart-after-N-cycles option to BiCGStab.
-- Added level-scheduling for ILU-preconditioners. Performance strongly depends on matrix pattern.
-- Added least-squares example including a function inplace_qr_apply_trans_Q() to compute the right hand side vector Q^T b without rebuilding Q.
-- Improved performance of LU-factorization of dense matrices.
-- Improved dense matrix-vector multiplication performance (thanks to Philippe Tillet).
-- Reduced overhead when copying to/from ublas::compressed_matrix.
-- ViennaCL objects (scalar, vector, etc.) can now be used as global variables (thanks to an anonymous user on the support-mailinglist).
-- Refurbished OpenCL vector kernels backend.
-  All operations of the type v1 = a v2 @ b v3 with vectors v1, v2, v3 and scalars a and b including += and -= instead of = are now temporary-free. Similarly for matrices.
-- matrix_range and matrix_slice as well as vector_range and vector_slice can now be used and mixed completely seamlessly with all standard operations except lu_factorize().
-- Fixed a bug when using copy() with iterators on vector proxy objects.
-- Final reduction step in inner_prod() and norms is now computed on CPU if the result is a CPU scalar.
-- Reduced kernel launch overhead of simple vector kernels by packing multiple kernel arguments together.
-- Updated SVD code and added routines for the computation of symmetric eigenvalues using OpenCL.
-- custom_operation's constructor now support multiple arguments, allowing multiple expression to be packed in the same kernel for improved performances.
-  However, all the datastructures in the multiple operations must have the same size.
-- Further improvements to the OpenCL kernel generator: Added a repeat feature for generating loops inside a kernel, added element-wise products and division, added support for every one-argument OpenCL function.
-- The name of the operation is now a mandatory argument of the constructor of custom_operation.
-- Improved performances of the generated matrix-vector product code.
-- Updated interfacing code for the Eigen library, now working with Eigen 3.x.y.
-- Converter in source-release now depends on Boost.filesystem3 instead of Boost.filesystem2, thus requiring Boost 1.44 or above.
+  - Added host-based and CUDA-enabled operations on ViennaCL objects. The default is now a host-based execution for reasons of compatibility.
+    Enable OpenCL- or CUDA-based execution by defining the preprocessor constant VIENNACL_WITH_OPENCL and VIENNACL_WITH_CUDA respectively.
+    Note that CUDA-based execution requires the use of nvcc.
+  - Added mixed-precision CG solver (OpenCL-based).
+  - Greatly improved performance of ILU0 and ILUT preconditioners (up to 10-fold). Also fixed a bug in ILUT.
+  - Added initializer types from Boost.uBLAS (unit_vector, zero_vector, scalar_vector, identity_matrix, zero_matrix, scalar_matrix).
+    Thanks to Karsten Ahnert for suggesting the feature.
+  - Added incomplete Cholesky factorization preconditioner.
+  - Added element-wise operations for vectors as available in Boost.uBLAS (element_prod, element_div).
+  - Added restart-after-N-cycles option to BiCGStab.
+  - Added level-scheduling for ILU-preconditioners. Performance strongly depends on matrix pattern.
+  - Added least-squares example including a function inplace_qr_apply_trans_Q() to compute the right hand side vector Q^T b without rebuilding Q.
+  - Improved performance of LU-factorization of dense matrices.
+  - Improved dense matrix-vector multiplication performance (thanks to Philippe Tillet).
+  - Reduced overhead when copying to/from ublas::compressed_matrix.
+  - ViennaCL objects (scalar, vector, etc.) can now be used as global variables (thanks to an anonymous user on the support-mailinglist).
+  - Refurbished OpenCL vector kernels backend.
+    All operations of the type v1 = a v2 @ b v3 with vectors v1, v2, v3 and scalars a and b including += and -= instead of = are now temporary-free. Similarly for matrices.
+  - matrix_range and matrix_slice as well as vector_range and vector_slice can now be used and mixed completely seamlessly with all standard operations except lu_factorize().
+  - Fixed a bug when using copy() with iterators on vector proxy objects.
+  - Final reduction step in inner_prod() and norms is now computed on CPU if the result is a CPU scalar.
+  - Reduced kernel launch overhead of simple vector kernels by packing multiple kernel arguments together.
+  - Updated SVD code and added routines for the computation of symmetric eigenvalues using OpenCL.
+  - custom_operation's constructor now support multiple arguments, allowing multiple expression to be packed in the same kernel for improved performances.
+    However, all the datastructures in the multiple operations must have the same size.
+  - Further improvements to the OpenCL kernel generator: Added a repeat feature for generating loops inside a kernel, added element-wise products and division, added support for every one-argument OpenCL function.
+  - The name of the operation is now a mandatory argument of the constructor of custom_operation.
+  - Improved performances of the generated matrix-vector product code.
+  - Updated interfacing code for the Eigen library, now working with Eigen 3.x.y.
+  - Converter in source-release now depends on Boost.filesystem3 instead of Boost.filesystem2, thus requiring Boost 1.44 or above.
 
-*** Version 1.3.x ***
+## Version 1.3.x
 
--- Version 1.3.1 --
+### Version 1.3.1
 The following bugfixes and enhancements have been applied:
-- Fixed a compilation problem with GCC 4.7 caused by the wrong order of function declarations. Also removed unnecessary indirections and unused variables.
-- Improved out-of-source build in the src-version (for packagers).
-- Added virtual destructor in the runtime_wrapper-class in the kernel generator.
-- Extended flexibility of submatrix and subvector proxies (ranges, slices).
-- Block-ILU for compressed_matrix is now applied on the GPU during the solver cycle phase. However, for the moment the implementation file in viennacl/linalg/detail/ilu/opencl block ilu.hpp needs to be included separately in order to avoid an OpenCL dependency for all ILU implementations.
-- SVD now supports double precision.
-- Slighly adjusted the interface for NMF. The approximation rank is now specified by the supplied matrices W and H.
-- Fixed a problem with matrix-matrix products if the result matrix is not initialized properly (thanks to Laszlo Marak for finding the issue and a fix).
-- The operations C += prod(A, B) and C −= prod(A, B) for matrices A, B, and C no longer introduce temporaries if the three matrices are distinct.
+  - Fixed a compilation problem with GCC 4.7 caused by the wrong order of function declarations. Also removed unnecessary indirections and unused variables.
+  - Improved out-of-source build in the src-version (for packagers).
+  - Added virtual destructor in the runtime_wrapper-class in the kernel generator.
+  - Extended flexibility of submatrix and subvector proxies (ranges, slices).
+  - Block-ILU for compressed_matrix is now applied on the GPU during the solver cycle phase. However, for the moment the implementation file in viennacl/linalg/detail/ilu/opencl block ilu.hpp needs to be included separately in order to avoid an OpenCL dependency for all ILU implementations.
+  - SVD now supports double precision.
+  - Slighly adjusted the interface for NMF. The approximation rank is now specified by the supplied matrices W and H.
+  - Fixed a problem with matrix-matrix products if the result matrix is not initialized properly (thanks to Laszlo Marak for finding the issue and a fix).
+  - The operations C += prod(A, B) and C −= prod(A, B) for matrices A, B, and C no longer introduce temporaries if the three matrices are distinct.
 
--- Version 1.3.0 --
+### Version 1.3.0
 Several new features enter this new minor version release.
 Some of the experimental features introduced in 1.2.0 keep their experimental state in 1.3.x due to the short time since 1.2.0, with exceptions listed below along with the new features:
- - Full support for ranges and slices for dense matrices and vectors (no longer experimental)
- - QR factorization now possible for arbitrary matrix sizes (no longer experimental)
- - Further improved matrix-matrix multiplication performance for matrix dimensions which are a multiple of 64 (particularly improves performance for NVIDIA GPUs)
- - Added Lanczos and power iteration method for eigenvalue computations of dense and sparse matrices (experimental, contributed by Guenther Mader and Astrid Rupp)
- - Added singular value decomposition in single precision (experimental, contributed by Volodymyr Kysenko)
- - Two new ILU-preconditioners added: ILU0 (contributed by Evan Bollig) and a block-diagonal ILU preconditioner using either ILUT or ILU0 for each block. Both preconditioners are computed entirely on the CPU.
- - Automated OpenCL kernel generator based on high-level operation specifications added (many thanks to Philippe Tillet who had a lot of /fun fun fun/ working on this)
- - Two new sparse matrix types (by Volodymyr Kysenko): ell_matrix for the ELL format and hyb_matrix for a hybrid format (contributed by Volodymyr Kysenko).
- - Added possibility to specify the OpenCL platform used by a context
- - Build options for the OpenCL compiler can now be supplied to a context (thanks to Krzysztof Bzowski for the suggestion)
- - Added nonnegative matrix factorization by Lee and Seoung (contributed by Volodymyr Kysenko).
+  - Full support for ranges and slices for dense matrices and vectors (no longer experimental)
+  - QR factorization now possible for arbitrary matrix sizes (no longer experimental)
+  - Further improved matrix-matrix multiplication performance for matrix dimensions which are a multiple of 64 (particularly improves performance for NVIDIA GPUs)
+  - Added Lanczos and power iteration method for eigenvalue computations of dense and sparse matrices (experimental, contributed by Guenther Mader and Astrid Rupp)
+  - Added singular value decomposition in single precision (experimental, contributed by Volodymyr Kysenko)
+  - Two new ILU-preconditioners added: ILU0 (contributed by Evan Bollig) and a block-diagonal ILU preconditioner using either ILUT or ILU0 for each block. Both preconditioners are computed entirely on the CPU.
+  - Automated OpenCL kernel generator based on high-level operation specifications added (many thanks to Philippe Tillet who had a lot of /fun fun fun/ working on this)
+  - Two new sparse matrix types (by Volodymyr Kysenko): ell_matrix for the ELL format and hyb_matrix for a hybrid format (contributed by Volodymyr Kysenko).
+  - Added possibility to specify the OpenCL platform used by a context
+  - Build options for the OpenCL compiler can now be supplied to a context (thanks to Krzysztof Bzowski for the suggestion)
+  - Added nonnegative matrix factorization by Lee and Seoung (contributed by Volodymyr Kysenko).
 
-*** Version 1.2.x ***
+## Version 1.2.x
 
--- Version 1.2.1 --
+### Version 1.2.1
 The current release mostly provides a few bug fixes for experimental features introduced in 1.2.0.
 In addition, performance improvements for matrix-matrix multiplications are applied.
 The main changes (in addition to some internal adjustments) are as follows:
- - Fixed problems with double precision on AMD GPUs supporting cl_amd_fp64 instead of cl_khr_fp64 (thanks to Sylvain R.)
- - Considerable improvements in the handling of matrix_range. Added project() function for convenience (cf. Boost.uBLAS)
- - Further improvements of matrix-matrix multiplication performance (contributed by Volodymyr Kysenko)
- - Improved performance of QR factorization
- - Added direct element access to elements of compressed_matrix using operator() (thanks to sourceforge.net user Sulif for the hint)
- - Fixed incorrect matrix dimensions obtained with the transfer of non-square sparse Eigen and MTL matrices to ViennaCL objects (thanks to sourceforge.net user ggrocca for pointing at this)
+  - Fixed problems with double precision on AMD GPUs supporting cl_amd_fp64 instead of cl_khr_fp64 (thanks to Sylvain R.)
+  - Considerable improvements in the handling of matrix_range. Added project() function for convenience (cf. Boost.uBLAS)
+  - Further improvements of matrix-matrix multiplication performance (contributed by Volodymyr Kysenko)
+  - Improved performance of QR factorization
+  - Added direct element access to elements of compressed_matrix using operator() (thanks to sourceforge.net user Sulif for the hint)
+  - Fixed incorrect matrix dimensions obtained with the transfer of non-square sparse Eigen and MTL matrices to ViennaCL objects (thanks to sourceforge.net user ggrocca for pointing at this)
 
--- Version 1.2.0 --
+### Version 1.2.0
 Many new features from the Google Summer of Code and the IuE Summer of Code enter this release.
 Due to their complexity, they are for the moment still in experimental state (see the respective chapters for details) and are expected to reach maturity with the 1.3.0 release.
 Shorter release cycles are planned for the near future.
- - Added a bunch of algebraic multigrid preconditioner variants (contributed by Markus Wagner)
- - Added (factored) sparse approximate inverse preconditioner (SPAI, contributed by Nikolay Lukash)
- - Added fast Fourier transform (FFT) for vector sizes with a power of two, tandard Fourier transform for other sizes (contributed by Volodymyr Kysenko)
- - Additional structured matrix classes for circulant matrices, Hankel matrices, Toeplitz matrices and Vandermonde matrices (contributed by Volodymyr Kysenko)
- - Added reordering algorithms (Cuthill-McKee and Gibbs-Poole-Stockmeyer, contributed by Philipp Grabenweger)
- - Refurbished CMake build system (thanks to Michael Wild)
- - Added matrix and vector proxy objects for submatrix and subvector manipulation
- - Added (possibly GPU-assisted) QR factorization
- - Per default, a viennacl::ocl::context now consists of one device only. The rationale is to provide better out-of-the-box support for machines with hybrid graphics (two GPUs), where one GPU may not be capable of double precision support.
- - Fixed problems with viennacl::compressed_matrix which occurred if the number of rows and columns differed
- - Improved documentation for the case of multiple custom kernels within a program
- - Improved matrix-matrix multiplication kernels (may lead to up to 20 percent performance gains)
- - Fixed problems in GMRES for small matrices (dimensions smaller than the maximum number of Krylov vectors)
+  - Added a bunch of algebraic multigrid preconditioner variants (contributed by Markus Wagner)
+  - Added (factored) sparse approximate inverse preconditioner (SPAI, contributed by Nikolay Lukash)
+  - Added fast Fourier transform (FFT) for vector sizes with a power of two, tandard Fourier transform for other sizes (contributed by Volodymyr Kysenko)
+  - Additional structured matrix classes for circulant matrices, Hankel matrices, Toeplitz matrices and Vandermonde matrices (contributed by Volodymyr Kysenko)
+  - Added reordering algorithms (Cuthill-McKee and Gibbs-Poole-Stockmeyer, contributed by Philipp Grabenweger)
+  - Refurbished CMake build system (thanks to Michael Wild)
+  - Added matrix and vector proxy objects for submatrix and subvector manipulation
+  - Added (possibly GPU-assisted) QR factorization
+  - Per default, a viennacl::ocl::context now consists of one device only. The rationale is to provide better out-of-the-box support for machines with hybrid graphics (two GPUs), where one GPU may not be capable of double precision support.
+  - Fixed problems with viennacl::compressed_matrix which occurred if the number of rows and columns differed
+  - Improved documentation for the case of multiple custom kernels within a program
+  - Improved matrix-matrix multiplication kernels (may lead to up to 20 percent performance gains)
+  - Fixed problems in GMRES for small matrices (dimensions smaller than the maximum number of Krylov vectors)
 
 
-*** Version 1.1.x ***
+## Version 1.1.x
 
--- Version 1.1.2 --
+### Version 1.1.2
 This final release of the ViennaCL 1.1.x family focuses on refurbishing existing functionality:
- - Fixed a bug with partial vector copies from CPU to GPU (thanks to sourceforge.net user kaiwen).
- - Corrected error estimations in CG and BiCGStab iterative solvers (thanks to Riccardo Rossi for the hint).
- - Improved performance of CG and BiCGStab as well as Jacobi and row-scaling preconditioners considerably (thanks to Farshid Mossaiby and Riccardo Rossi for a lot of input).
- - Corrected linker statements in CMakeLists.txt for MacOS (thanks to Eric Christiansen).
- - Improved handling of ViennaCL types (direct construction, output streaming of matrix- and vector-expressions, etc.).
- - Updated old code in the coordinate_matrix type and improved performance (thanks to Dongdong Li for finding this).
- - Using size_t instead of unsigned int for the size type on the host.
- - Updated double precision support detection for AMD hardware.
- - Fixed a name clash in direct_solve.hpp and ilu.hpp (thanks to sourceforge.net user random).
- - Prevented unsupported assignments and copies of sparse matrix types (thanks to sourceforge.net user kszyh).
+  - Fixed a bug with partial vector copies from CPU to GPU (thanks to sourceforge.net user kaiwen).
+  - Corrected error estimations in CG and BiCGStab iterative solvers (thanks to Riccardo Rossi for the hint).
+  - Improved performance of CG and BiCGStab as well as Jacobi and row-scaling preconditioners considerably (thanks to Farshid Mossaiby and Riccardo Rossi for a lot of input).
+  - Corrected linker statements in CMakeLists.txt for MacOS (thanks to Eric Christiansen).
+  - Improved handling of ViennaCL types (direct construction, output streaming of matrix- and vector-expressions, etc.).
+  - Updated old code in the coordinate_matrix type and improved performance (thanks to Dongdong Li for finding this).
+  - Using size_t instead of unsigned int for the size type on the host.
+  - Updated double precision support detection for AMD hardware.
+  - Fixed a name clash in direct_solve.hpp and ilu.hpp (thanks to sourceforge.net user random).
+  - Prevented unsupported assignments and copies of sparse matrix types (thanks to sourceforge.net user kszyh).
 
--- Version 1.1.1 --
+### Version 1.1.1
 This new revision release has a focus on better interaction with other linear algebra libraries. The few known glitches with version 1.1.0 are now removed.
- - Fixed compilation problems on MacOS X and OpenCL 1.0 header files due to undefined an preprocessor constant (thanks to Vlad-Andrei Lazar and Evan Bollig for reporting this)
- - Removed the accidental external linkage for three functions (we appreciate the report by Gordon Stevenson).
- - New out-of-the-box support for Eigen and MTL libraries. Iterative solvers from ViennaCL can now directly be used with both libraries.
- - Fixed a problem with GMRES when system matrix is smaller than the maximum Krylov space dimension.
- - Better default parameter for BLAS3 routines leads to higher performance for matrix-matrix-products.
- - Added benchmark for dense matrix-matrix products (BLAS3 routines).
- - Added viennacl-info example that displays infos about the OpenCL backend used by ViennaCL.
- - Cleaned up CMakeLists.txt in order to selectively enable builds that rely on external libraries.
- - More than one installed OpenCL platform is now allowed (thanks to Aditya Patel).
+  - Fixed compilation problems on MacOS X and OpenCL 1.0 header files due to undefined an preprocessor constant (thanks to Vlad-Andrei Lazar and Evan Bollig for reporting this)
+  - Removed the accidental external linkage for three functions (we appreciate the report by Gordon Stevenson).
+  - New out-of-the-box support for Eigen and MTL libraries. Iterative solvers from ViennaCL can now directly be used with both libraries.
+  - Fixed a problem with GMRES when system matrix is smaller than the maximum Krylov space dimension.
+  - Better default parameter for BLAS3 routines leads to higher performance for matrix-matrix-products.
+  - Added benchmark for dense matrix-matrix products (BLAS3 routines).
+  - Added viennacl-info example that displays infos about the OpenCL backend used by ViennaCL.
+  - Cleaned up CMakeLists.txt in order to selectively enable builds that rely on external libraries.
+  - More than one installed OpenCL platform is now allowed (thanks to Aditya Patel).
 
 
--- Version 1.1.0 --
+### Version 1.1.0
 A large number of new features and improvements over the 1.0.5 release are now available:
- - The completely rewritten OpenCL back-end allows for multiple contexts, multiple devices and even to wrap existing OpenCL resources into ViennaCL objects. A tutorial demonstrates the new functionality. Thanks to Josip Basic for pushing us into that direction.
- - The tutorials are now named according to their purpose.
- - The dense matrix type now supports both row-major and column-major
-storage.
- - Dense and sparse matrix types now now be filled using STL-emulated types (std::vector< std::vector<NumericT> > and std::vector< std::map< unsigned int, NumericT> >)
- - BLAS level 3 functionality is now complete. We are very happy with the general out-of-the-box performance of matrix-matrix-products, even though it cannot beat the extremely tuned implementations tailored to certain matrix sizes on a particular device yet.
- - An automated performance tuning environment allows an optimization of the kernel parameters for the library user's machine. Best parameters can be obtained from a tuning run and stored in a XML file and read at program startup using pugixml.
- - Two new preconditioners are now included: A Jacobi preconditioner and a row-scaling preconditioner. In contrast to ILUT, they are applied on the OpenCL device directly.
- - Clean compilation of all examples under Visual Studio 2005 (we recommend newer compilers though...).
- - Error handling is now carried out using C++ exceptions.
- - Matrix Market now uses index base 1 per default (thanks to Evan Bollig for reporting that)
- - Improved performance of norm_X kernels.
- - Iterative solver tags now have consistent constructors: First argument is the relative tolerance, second argument is the maximum number of total iterations. Other arguments depend on the respective solver.
- - A few minor improvements here and there (thanks go to Riccardo Rossi and anonymous sourceforge.net users for reporting the issues)
+  - The completely rewritten OpenCL back-end allows for multiple contexts, multiple devices and even to wrap existing OpenCL resources into ViennaCL objects. A tutorial demonstrates the new functionality. Thanks to Josip Basic for pushing us into that direction.
+  - The tutorials are now named according to their purpose.
+  - The dense matrix type now supports both row-major and column-major storage.
+  - Dense and sparse matrix types now now be filled using STL-emulated types (std::vector< std::vector<NumericT> > and std::vector< std::map< unsigned int, NumericT> >)
+  - BLAS level 3 functionality is now complete. We are very happy with the general out-of-the-box performance of matrix-matrix-products, even though it cannot beat the extremely tuned implementations tailored to certain matrix sizes on a particular device yet.
+  - An automated performance tuning environment allows an optimization of the kernel parameters for the library user's machine. Best parameters can be obtained from a tuning run and stored in a XML file and read at program startup using pugixml.
+  - Two new preconditioners are now included: A Jacobi preconditioner and a row-scaling preconditioner. In contrast to ILUT, they are applied on the OpenCL device directly.
+  - Clean compilation of all examples under Visual Studio 2005 (we recommend newer compilers though...).
+  - Error handling is now carried out using C++ exceptions.
+  - Matrix Market now uses index base 1 per default (thanks to Evan Bollig for reporting that)
+  - Improved performance of norm_X kernels.
+  - Iterative solver tags now have consistent constructors: First argument is the relative tolerance, second argument is the maximum number of total iterations. Other arguments depend on the respective solver.
+  - A few minor improvements here and there (thanks go to Riccardo Rossi and anonymous sourceforge.net users for reporting the issues)
 
-*** Version 1.0.x ***
+## Version 1.0.x
 
--- Version 1.0.5 --
+### Version 1.0.5
 This is the last 1.0.x release. The main changes are as follows:
- - Added a reader and writer for MatrixMarket files (thanks to Evan Bollig for suggesting that)
- - Eliminated a bug that caused the upper triangular direct solver to fail on NVIDIA hardware for large matrices (thanks to Andrew Melfi for finding that)
- - The number of iterations and the final estimated error can now be obtained from iterative solver tags.
- - Improvements provided by Klaus Schnass are included in the developer converter script (OpenCL kernels to C++ header)
- - Disabled the use of reference counting for OpenCL handles on Mac OS X (caused seg faults on program exit)
+  - Added a reader and writer for MatrixMarket files (thanks to Evan Bollig for suggesting that)
+  - Eliminated a bug that caused the upper triangular direct solver to fail on NVIDIA hardware for large matrices (thanks to Andrew Melfi for finding that)
+  - The number of iterations and the final estimated error can now be obtained from iterative solver tags.
+  - Improvements provided by Klaus Schnass are included in the developer converter script (OpenCL kernels to C++ header)
+  - Disabled the use of reference counting for OpenCL handles on Mac OS X (caused seg faults on program exit)
 
--- Version 1.0.4 --
+### Version 1.0.4
 The changes in this release are:
- - All tutorials now work out-of the box with Visual Studio 2008.
- - Eliminated all ViennaCL related warnings when compiling with Visual Studio 2008.
- - Better (experimental) support for double precision on ATI GPUs, but no norm_1, norm_2, norm_inf and index_norm_inf functions using ATI Stream SDK on GPUs in double precision.
- - Fixed a bug in GMRES that caused segmentation faults under Windows.
- - Fixed a bug in const_sparse_matrix_adapter (thanks to Abhinav Golas and Nico Galoppo for almost simultaneous emails on that)
- - Corrected incorrect return values in the sparse matrix regression test suite (thanks to Klaus Schnass for the hint)
+  - All tutorials now work out-of the box with Visual Studio 2008.
+  - Eliminated all ViennaCL related warnings when compiling with Visual Studio 2008.
+  - Better (experimental) support for double precision on ATI GPUs, but no norm_1, norm_2, norm_inf and index_norm_inf functions using ATI Stream SDK on GPUs in double precision.
+  - Fixed a bug in GMRES that caused segmentation faults under Windows.
+  - Fixed a bug in const_sparse_matrix_adapter (thanks to Abhinav Golas and Nico Galoppo for almost simultaneous emails on that)
+  - Corrected incorrect return values in the sparse matrix regression test suite (thanks to Klaus Schnass for the hint)
 
 
--- Version 1.0.3 --
+### Version 1.0.3
 The main improvements in this release are:
- - Support for multi-core CPUs with ATI Stream SDK (thanks to Riccardo Rossi, UPC. BARCELONA TECH, for suggesting this)
- - inner_prod is now up to a factor of four faster (thanks to Serban Georgescu, ETH, for pointing the poor performance of the old implementation out)
- - Fixed a bug with plane_rotation that caused system freezes with ATI GPUs.
- - Extended the doxygen generated reference documentation
+  - Support for multi-core CPUs with ATI Stream SDK (thanks to Riccardo Rossi, UPC. BARCELONA TECH, for suggesting this)
+  - inner_prod is now up to a factor of four faster (thanks to Serban Georgescu, ETH, for pointing the poor performance of the old implementation out)
+  - Fixed a bug with plane_rotation that caused system freezes with ATI GPUs.
+  - Extended the doxygen generated reference documentation
 
 
--- Version 1.0.2 --
+### Version 1.0.2
 A bug-fix release that resolves some problems with the Visual C++ compiler.
- - Fixed some compilation problems under Visual C++ (version 2005 and 2008).
- - All tutorials accidentally relied on ublas. Now tut1 and tut5 can be compiled without ublas.
- - Renamed aux/ folder to auxiliary/ (caused some problems on windows machines)
+  - Fixed some compilation problems under Visual C++ (version 2005 and 2008).
+  - All tutorials accidentally relied on ublas. Now tut1 and tut5 can be compiled without ublas.
+  - Renamed aux/ folder to auxiliary/ (caused some problems on windows machines)
 
--- Version 1.0.1 --
+### Version 1.0.1
 This is a quite large revision of ViennaCL 1.0.0, but mainly improves things under the hood.
- - Fixed a bug in lu_substitute for dense matrices
- - Changed iterative solver behavior to stop if a certain relative residual is reached
- - ILU preconditioning is now fully done on the CPU, because this gives best overall performance
- - All OpenCL handles of ViennaCL types can now be accessed via member function handle()
- - Improved GPU performance of GMRES by about a factor of two.
- - Added generic norm_2 function in header file norm_2.hpp
- - Wrapper for clFlush() and clFinish() added
- - Device information can be queried by device.info()
- - Extended documentation and tutorials
+  - Fixed a bug in lu_substitute for dense matrices
+  - Changed iterative solver behavior to stop if a certain relative residual is reached
+  - ILU preconditioning is now fully done on the CPU, because this gives best overall performance
+  - All OpenCL handles of ViennaCL types can now be accessed via member function handle()
+  - Improved GPU performance of GMRES by about a factor of two.
+  - Added generic norm_2 function in header file norm_2.hpp
+  - Wrapper for clFlush() and clFinish() added
+  - Device information can be queried by device.info()
+  - Extended documentation and tutorials
 
--- Version 1.0.0 --
+### Version 1.0.0
 First release
 
+*/
