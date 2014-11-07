@@ -101,8 +101,9 @@ void fanOutVector(VectorT const & m_in, std::vector<unsigned int> const & J, Spa
 template<typename MatrixT, typename VectorT>
 void backwardSolve(MatrixT const & R, VectorT const & y, VectorT & x)
 {
-  for (long i = static_cast<long>(R.size2())-1; i >= 0; i--)
+  for (long i2 = static_cast<long>(R.size2())-1; i2 >= 0; i2--)
   {
+    vcl_size_t i = static_cast<vcl_size_t>(i2);
     x(i) = y(i);
     for (vcl_size_t j = static_cast<vcl_size_t>(i)+1; j < R.size2(); ++j)
       x(i) -= R(i,j)*x(j);

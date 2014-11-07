@@ -79,9 +79,10 @@ void am(matrix_base<NumericT> & A,
   assert(A.row_major() == B.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
 
   std::string kernel_name("assign_*m_**00");
-  kernel_name[7]  = is_cpu_scalar<ScalarT1>::value?'h':'d';
-  kernel_name[10] = flip_sign_alpha?'1':'0';
-  kernel_name[11] = reciprocal_alpha?'1':'0';
+  bool is_scalar_cpu = is_cpu_scalar<ScalarT1>::value;
+  kernel_name[7]  = is_scalar_cpu    ? 'h' : 'd';
+  kernel_name[10] = flip_sign_alpha  ? '1' : '0';
+  kernel_name[11] = reciprocal_alpha ? '1' : '0';
 
   scheduler::statement statement = scheduler::preset::av(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &alpha, flip_sign_alpha, reciprocal_alpha);
   kernels::matrix<NumericT>::execution_handler(A.row_major(), viennacl::traits::opencl_context(A)).execute(kernel_name, statement);
@@ -97,12 +98,14 @@ void ambm(matrix_base<NumericT> & A,
   assert(A.row_major() == B.row_major() && A.row_major() == C.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
 
   std::string kernel_name("assign_*m*m_****");
-  kernel_name[7] = is_cpu_scalar<ScalarT1>::value?'h':'d';
-  kernel_name[9] = is_cpu_scalar<ScalarT2>::value?'h':'d';
-  kernel_name[12] = flip_sign_alpha?'1':'0';
-  kernel_name[13] = reciprocal_alpha?'1':'0';
-  kernel_name[14] = flip_sign_beta?'1':'0';
-  kernel_name[15] = reciprocal_beta?'1':'0';
+  bool is_scalar_cpu1 = is_cpu_scalar<ScalarT1>::value;
+  bool is_scalar_cpu2 = is_cpu_scalar<ScalarT2>::value;
+  kernel_name[7]  = is_scalar_cpu1   ? 'h' : 'd';
+  kernel_name[9]  = is_scalar_cpu2   ? 'h' : 'd';
+  kernel_name[12] = flip_sign_alpha  ? '1' : '0';
+  kernel_name[13] = reciprocal_alpha ? '1' : '0';
+  kernel_name[14] = flip_sign_beta   ? '1' : '0';
+  kernel_name[15] = reciprocal_beta  ? '1' : '0';
 
   scheduler::statement statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_ASSIGN_TYPE, &A, &B, &alpha, flip_sign_alpha, reciprocal_alpha, &C, &beta, flip_sign_beta, reciprocal_beta);
   kernels::matrix<NumericT>::execution_handler(A.row_major(), viennacl::traits::opencl_context(A)).execute(kernel_name, statement);
@@ -118,12 +121,14 @@ void ambm_m(matrix_base<NumericT> & A,
   assert(A.row_major() == B.row_major() && A.row_major() == C.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
 
   std::string kernel_name("ip_add_*v*v_****");
-  kernel_name[7] = is_cpu_scalar<ScalarT1>::value?'h':'d';
-  kernel_name[9] = is_cpu_scalar<ScalarT2>::value?'h':'d';
-  kernel_name[12] = flip_sign_alpha?'1':'0';
-  kernel_name[13] = reciprocal_alpha?'1':'0';
-  kernel_name[14] = flip_sign_beta?'1':'0';
-  kernel_name[15] = reciprocal_beta?'1':'0';
+  bool is_scalar_cpu1 = is_cpu_scalar<ScalarT1>::value;
+  bool is_scalar_cpu2 = is_cpu_scalar<ScalarT2>::value;
+  kernel_name[7]  = is_scalar_cpu1   ? 'h' : 'd';
+  kernel_name[9]  = is_scalar_cpu2   ? 'h' : 'd';
+  kernel_name[12] = flip_sign_alpha  ? '1' : '0';
+  kernel_name[13] = reciprocal_alpha ? '1' : '0';
+  kernel_name[14] = flip_sign_beta   ? '1' : '0';
+  kernel_name[15] = reciprocal_beta  ? '1' : '0';
 
 
   scheduler::statement statement = scheduler::preset::avbv(scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &A, &B, &alpha, flip_sign_alpha, reciprocal_alpha, &C, &beta, flip_sign_beta, reciprocal_beta);
@@ -322,7 +327,8 @@ void scaled_rank_1_update(matrix_base<NumericT> & A,
   assert( (viennacl::traits::size2(A) == viennacl::traits::size(vec2)) && bool("Size mismatch in scaled_rank_1_update: size2(A) != size(v2)"));
 
   cl_uint options_alpha = detail::make_options(len_alpha, reciprocal_alpha, flip_sign_alpha);
-  viennacl::ocl::kernel& kernel= detail::legacy_kernel_for_matrix(A, viennacl::is_cpu_scalar<ScalarT1>::value ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
+  bool is_cpu = viennacl::is_cpu_scalar<ScalarT1>::value;
+  viennacl::ocl::kernel& kernel= detail::legacy_kernel_for_matrix(A, is_cpu ? "scaled_rank1_update_cpu" : "scaled_rank1_update_gpu");
 
   viennacl::ocl::enqueue(kernel(viennacl::traits::opencl_handle(A),
                            cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),

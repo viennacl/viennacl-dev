@@ -189,8 +189,9 @@ void block_set_up(SparseMatrixT const & A,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (long i = 0; i < static_cast<long>(M_v.size()); ++i)
+  for (long i2 = 0; i2 < static_cast<long>(M_v.size()); ++i2)
   {
+    vcl_size_t i = static_cast<vcl_size_t>(i2);
     build_index_set(A_v_c, M_v[i], g_J[i], g_I[i]);
     initProjectSubMatrix(A, g_J[i], g_I[i], g_A_I_J[i]);
     //print_matrix(g_A_I_J[i]);
@@ -215,8 +216,11 @@ void index_set_up(std::vector<SparseVectorT> const & A_v_c,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (long i = 0; i < static_cast<long>(M_v.size()); ++i)
+  for (long i2 = 0; i2 < static_cast<long>(M_v.size()); ++i2)
+  {
+    vcl_size_t i = static_cast<vcl_size_t>(i2);
     build_index_set(A_v_c, M_v[i], g_J[i], g_I[i]);
+  }
 }
 
 /************************************************** GPU BLOCK SET UP ***************************************/
@@ -372,7 +376,7 @@ void least_square_solve(std::vector<SparseVectorT> & A_v_c,
       //std::cout<<"Residual norm of column #: "<<i<<std::endl;
       //std::cout<<res_norm<<std::endl;
       //std::cout<<"************************"<<std::endl;
-      g_is_update[i] = (res_norm > tag.getResidualNormThreshold())&& (!tag.getIsStatic())?(1):(0);
+      g_is_update[static_cast<vcl_size_t>(i)] = (res_norm > tag.getResidualNormThreshold())&& (!tag.getIsStatic())?(1):(0);
     }
   }
 }
@@ -406,13 +410,14 @@ void least_square_solve(std::vector<SparseVectorT> const & A_v_c,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (long i = 0; i < static_cast<long>(M_v.size()); ++i)
+  for (long i2 = 0; i2 < static_cast<long>(M_v.size()); ++i2)
   {
-    if (g_is_update[static_cast<vcl_size_t>(i)])
+    vcl_size_t i = static_cast<vcl_size_t>(i2);
+    if (g_is_update[i])
     {
       VectorT y = boost::numeric::ublas::zero_vector<NumericType>(g_I[i].size());
 
-      projectI<VectorT, NumericType>(g_I[i], y, static_cast<unsigned int>(tag.getBegInd() + i));
+      projectI<VectorT, NumericType>(g_I[i], y, static_cast<unsigned int>(tag.getBegInd() + long(i)));
       apply_q_trans_vec(g_R[i], g_b_v[i], y);
 
       VectorT m_new =  boost::numeric::ublas::zero_vector<NumericType>(g_R[i].size2());
@@ -420,7 +425,7 @@ void least_square_solve(std::vector<SparseVectorT> const & A_v_c,
       fanOutVector(m_new, g_J[i], M_v[i]);
       g_res[i].clear();
 
-      compute_spai_residual<SparseVectorT, NumericType>(A_v_c,  M_v[i], static_cast<unsigned int>(tag.getBegInd() + i), g_res[i]);
+      compute_spai_residual<SparseVectorT, NumericType>(A_v_c,  M_v[i], static_cast<unsigned int>(tag.getBegInd() + long(i)), g_res[i]);
 
       NumericType res_norm = 0;
       sparse_norm_2(g_res[i], res_norm);

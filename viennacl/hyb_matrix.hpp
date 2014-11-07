@@ -261,7 +261,7 @@ void copy(const hyb_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
       {
         vcl_size_t offset = gpu_matrix.internal_size1() * ind + row;
 
-        if (ell_elements[offset] == static_cast<NumericT>(0.0))
+        if (!ell_elements[offset])
           continue;
 
         if (ell_coords[offset] >= gpu_matrix.size2())
@@ -275,7 +275,7 @@ void copy(const hyb_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
 
       for (vcl_size_t ind = csr_rows[row]; ind < csr_rows[row+1]; ind++)
       {
-        if (csr_elements[ind] == static_cast<NumericT>(0.0))
+        if (!csr_elements[ind])
           continue;
 
         if (csr_cols[ind] >= gpu_matrix.size2())

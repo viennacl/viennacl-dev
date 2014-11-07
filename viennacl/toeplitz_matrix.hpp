@@ -276,7 +276,7 @@ std::ostream & operator<<(std::ostream & s, toeplitz_matrix<NumericT, AlignmentV
     s << "(";
     for (vcl_size_t j = 0; j < size; j++)
     {
-      s << tmp[static_cast<int>(j) - static_cast<int>(i) + static_cast<int>(size - 1)];
+      s << tmp[vcl_size_t(static_cast<int>(j) - static_cast<int>(i) + static_cast<int>(size - 1))];
       //s << (int)i - (int)j;
       if (j < (size - 1)) s << ",";
     }

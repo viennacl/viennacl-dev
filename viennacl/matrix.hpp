@@ -1443,8 +1443,9 @@ template<typename NumericT, typename S1>
 typename viennacl::enable_if< viennacl::is_scalar<S1>::value, matrix_base<NumericT> & >::type
 operator *= (matrix_base<NumericT> & m1, S1 const & gpu_val)
 {
+  bool is_sign_flip = viennacl::is_flip_sign_scalar<S1>::value;
   viennacl::linalg::am(m1,
-                       m1, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+                       m1, gpu_val, 1, false, is_sign_flip ? true : false);
   return m1;
 }
 

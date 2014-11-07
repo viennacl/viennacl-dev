@@ -50,6 +50,8 @@ typedef float     ScalarType;
 #define EPS 0.0001
 
 
+void vector_print(viennacl::vector<ScalarType>& v );
+
 void vector_print(viennacl::vector<ScalarType>& v )
 {
   for (unsigned int i = 0; i < v.size(); i++)
@@ -57,6 +59,7 @@ void vector_print(viennacl::vector<ScalarType>& v )
     std::cout << "\n";
 }
 
+void init_vector(viennacl::vector<ScalarType>& vcl_v);
 
 void init_vector(viennacl::vector<ScalarType>& vcl_v)
 {
@@ -65,6 +68,8 @@ void init_vector(viennacl::vector<ScalarType>& vcl_v)
       v[i] = ScalarType(i);
     viennacl::copy(v, vcl_v);
 }
+
+void test_inclusive_scan_values(viennacl::vector<ScalarType> & vcl_vec);
 
 void test_inclusive_scan_values(viennacl::vector<ScalarType> & vcl_vec)
 {
@@ -84,6 +89,7 @@ void test_inclusive_scan_values(viennacl::vector<ScalarType> & vcl_vec)
 
 }
 
+void test_exclusive_scan_values(viennacl::vector<ScalarType> & vcl_vec);
 
 void test_exclusive_scan_values(viennacl::vector<ScalarType> & vcl_vec)
 {
@@ -104,6 +110,7 @@ void test_exclusive_scan_values(viennacl::vector<ScalarType> & vcl_vec)
 }
 
 
+void test_scans();
 
 void test_scans()
 {

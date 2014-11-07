@@ -242,7 +242,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
 
         int nn = static_cast<int>(vcl_H.size1());
 
-        FastMatrix<SCALARTYPE> H(nn, vcl_H.internal_size2());//, V(nn);
+        FastMatrix<SCALARTYPE> H(vcl_size_t(nn), vcl_H.internal_size2());//, V(nn);
 
         std::vector<float>  buf(5 * vcl_size_t(nn));
         //boost::numeric::ublas::vector<float>  buf(5 * nn);
@@ -284,9 +284,10 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
             while (l > 0)
             {
                 s = std::fabs(H(l - 1, l - 1)) + std::fabs(H(l, l));
-                if (s == 0) s = norm;
+                if (!s)
+                  s = norm;
                 if (std::fabs(H(l, l - 1)) < eps * s)
-                    break;
+                  break;
 
                 l--;
             }
@@ -296,8 +297,8 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
             {
                 // One root found
                 H(n, n) = H(n, n) + exshift;
-                d[n] = H(n, n);
-                e[n] = 0;
+                d[vcl_size_t(n)] = H(n, n);
+                e[vcl_size_t(n)] = 0;
                 n--;
                 iter = 0;
             }
@@ -316,12 +317,12 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                 {
                     // Real pair
                     z = (p >= 0) ? (p + z) : (p - z);
-                    d[n - 1] = x + z;
-                    d[n] = d[n - 1];
-                    if (z != 0)
-                        d[n] = x - w / z;
-                    e[n - 1] = 0;
-                    e[n] = 0;
+                    d[vcl_size_t(n) - 1] = x + z;
+                    d[vcl_size_t(n)] = d[vcl_size_t(n) - 1];
+                    if (!z)
+                      d[vcl_size_t(n)] = x - w / z;
+                    e[vcl_size_t(n) - 1] = 0;
+                    e[vcl_size_t(n)] = 0;
                     x = H(n, n - 1);
                     s = std::fabs(x) + std::fabs(z);
                     p = x / s;
@@ -345,10 +346,10 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                 else
                 {
                     // Complex pair
-                    d[n - 1] = x + p;
-                    d[n] = x + p;
-                    e[n - 1] = z;
-                    e[n] = -z;
+                    d[vcl_size_t(n) - 1] = x + p;
+                    d[vcl_size_t(n)] = x + p;
+                    e[vcl_size_t(n) - 1] = z;
+                    e[vcl_size_t(n)] = -z;
                 }
 
                 n = n - 2;
@@ -438,7 +439,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                         q = H(k + 1, k - 1);
                         r = (notlast ? H(k + 2, k - 1) : 0);
                         x = std::fabs(p) + std::fabs(q) + std::fabs(r);
-                        if (x != 0)
+                        if (x)
                         {
                             p = p / x;
                             q = q / x;
@@ -446,12 +447,12 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                         }
                     }
 
-                    if (x == 0) break;
+                    if (!x) break;
 
                     s = static_cast<SCALARTYPE>(std::sqrt(p * p + q * q + r * r));
                     if (p < 0) s = -s;
 
-                    if (s != 0)
+                    if (s)
                     {
                         if (k != m)
                             H(k, k - 1) = -s * x;
@@ -466,11 +467,11 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                         q = q / p;
                         r = r / p;
 
-                        buf[5 * k] = x;
-                        buf[5 * k + 1] = y;
-                        buf[5 * k + 2] = z;
-                        buf[5 * k + 3] = q;
-                        buf[5 * k + 4] = r;
+                        buf[5 * vcl_size_t(k)] = x;
+                        buf[5 * vcl_size_t(k) + 1] = y;
+                        buf[5 * vcl_size_t(k) + 2] = z;
+                        buf[5 * vcl_size_t(k) + 3] = q;
+                        buf[5 * vcl_size_t(k) + 4] = r;
 
 
                         SCALARTYPE* a_row_k = H.row(k);
@@ -532,18 +533,18 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
         }
 
         // Backsubstitute to find vectors of upper triangular form
-        if (norm == 0)
+        if (!norm)
         {
             return;
         }
 
         for (n = nn - 1; n >= 0; n--)
         {
-            p = d[n];
-            q = e[n];
+            p = d[vcl_size_t(n)];
+            q = e[vcl_size_t(n)];
 
             // Real vector
-            if (q == 0)
+            if (!q)
             {
                 int l = n;
                 H(n, n) = 1;
@@ -554,7 +555,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                     for (int j = l; j <= n; j++)
                         r = r + H(i, j) * H(j, n);
 
-                    if (e[i] < 0)
+                    if (e[vcl_size_t(i)] < 0)
                     {
                         z = w;
                         s = r;
@@ -562,16 +563,16 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                     else
                     {
                         l = i;
-                        if (e[i] == 0)
+                        if (!e[vcl_size_t(i)])
                         {
-                            H(i, n) = (w != 0) ? (-r / w) : (-r / (eps * norm));
+                            H(i, n) = w ? (-r / w) : (-r / (eps * norm));
                         }
                         else
                         {
                             // Solve real equations
                             x = H(i, i + 1);
                             y = H(i + 1, i);
-                            q = (d[i] - p) * (d[i] - p) + e[i] * e[i];
+                            q = (d[vcl_size_t(i)] - p) * (d[vcl_size_t(i)] - p) + e[vcl_size_t(i)] * e[vcl_size_t(i)];
                             t = (x * s - z * r) / q;
                             H(i, n) = t;
                             H(i + 1, n) = (std::fabs(x) > std::fabs(z)) ? ((-r - w * t) / x) : ((-s - y * t) / z);
@@ -620,7 +621,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
 
                     w = H(i, i) - p;
 
-                    if (e[i] < 0)
+                    if (e[vcl_size_t(i)] < 0)
                     {
                         z = w;
                         r = ra;
@@ -629,7 +630,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                     else
                     {
                         l = i;
-                        if (e[i] == 0)
+                        if (!e[vcl_size_t(i)])
                         {
                             cdiv<SCALARTYPE>(-ra, -sa, w, q, out1, out2);
                             H(i, n - 1) = out1;
@@ -640,9 +641,9 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                             // Solve complex equations
                             x = H(i, i + 1);
                             y = H(i + 1, i);
-                            vr = (d[i] - p) * (d[i] - p) + e[i] * e[i] - q * q;
-                            vi = (d[i] - p) * 2 * q;
-                            if ( (vr == 0) && (vi == 0) )
+                            vr = (d[vcl_size_t(i)] - p) * (d[vcl_size_t(i)] - p) + e[vcl_size_t(i)] * e[vcl_size_t(i)] - q * q;
+                            vi = (d[vcl_size_t(i)] - p) * 2 * q;
+                            if ( !vr && !vi )
                                 vr = eps * norm * (std::fabs(w) + std::fabs(q) + std::fabs(x) + std::fabs(y) + std::fabs(z));
 
                             cdiv<SCALARTYPE>(x * r - z * ra + q * sa, x * s - z * sa - q * ra, vr, vi, out1, out2);

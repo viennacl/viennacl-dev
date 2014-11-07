@@ -41,7 +41,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSgemv(ViennaCLBackend ba
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
 
   viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<float> v2(y, size_type(m), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -65,7 +65,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLBackend ba
                                                               cl_mem y, ViennaCLInt offy, ViennaCLInt incy)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
 
   viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<double> v2(y, size_type(m), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -86,12 +86,12 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDgemv(ViennaCLBackend ba
 // xTRSV
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLBackend backend,
-                                                              ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA,
+                                                              ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
                                                               ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
 
   viennacl::vector_base<float> v(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::matrix_base<float> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
@@ -100,28 +100,40 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLStrsv(ViennaCLBackend ba
   if (transA == ViennaCLTrans)
   {
     if (uplo == ViennaCLUpper)
-      viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::upper_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::unit_upper_tag());
+      else
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::upper_tag());
     else
-      viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::lower_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::unit_lower_tag());
+      else
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::lower_tag());
   }
   else
   {
     if (uplo == ViennaCLUpper)
-      viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::upper_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::unit_upper_tag());
+      else
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::upper_tag());
     else
-      viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::lower_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::unit_lower_tag());
+      else
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::lower_tag());
   }
 
   return ViennaCLSuccess;
 }
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLBackend backend,
-                                                              ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA,
+                                                              ViennaCLUplo uplo, ViennaCLOrder order, ViennaCLTranspose transA, ViennaCLDiag diag,
                                                               ViennaCLInt n, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda,
                                                               cl_mem x, ViennaCLInt offx, ViennaCLInt incx)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
 
   viennacl::vector_base<double> v(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::matrix_base<double> mat(A, viennacl::ocl::get_context(backend->opencl_backend.context_id),
@@ -130,16 +142,28 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDtrsv(ViennaCLBackend ba
   if (transA == ViennaCLTrans)
   {
     if (uplo == ViennaCLUpper)
-      viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::upper_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::unit_upper_tag());
+      else
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::upper_tag());
     else
-      viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::lower_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::unit_lower_tag());
+      else
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::lower_tag());
   }
   else
   {
     if (uplo == ViennaCLUpper)
-      viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::upper_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::unit_upper_tag());
+      else
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::upper_tag());
     else
-      viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::lower_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::unit_lower_tag());
+      else
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::lower_tag());
   }
 
   return ViennaCLSuccess;
@@ -158,7 +182,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSger(ViennaCLBackend bac
                                                              cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
 
   viennacl::vector_base<float> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<float> v2(y, size_type(m), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));
@@ -180,7 +204,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDger(ViennaCLBackend bac
                                                              cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
 
   viennacl::vector_base<double> v1(x, size_type(n), size_type(offx), difference_type(incx), viennacl::ocl::get_context(backend->opencl_backend.context_id));
   viennacl::vector_base<double> v2(y, size_type(m), size_type(offy), difference_type(incy), viennacl::ocl::get_context(backend->opencl_backend.context_id));

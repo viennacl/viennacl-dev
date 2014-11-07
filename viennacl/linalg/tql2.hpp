@@ -43,13 +43,13 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
           VectorType & d,
           VectorType & e)
 {
-    int n = static_cast<int>(viennacl::traits::size1(Q));
+    vcl_size_t n = viennacl::traits::size1(Q);
 
     //boost::numeric::ublas::vector<SCALARTYPE> cs(n), ss(n);
     std::vector<SCALARTYPE> cs(n), ss(n);
     viennacl::vector<SCALARTYPE> tmp1(n), tmp2(n);
 
-    for (int i = 1; i < n; i++)
+    for (vcl_size_t i = 1; i < n; i++)
         e[i - 1] = e[i];
 
     e[n - 1] = 0;
@@ -58,11 +58,11 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
     SCALARTYPE tst1 = 0;
     SCALARTYPE eps = static_cast<SCALARTYPE>(viennacl::linalg::detail::EPS);
 
-    for (int l = 0; l < n; l++)
+    for (vcl_size_t l = 0; l < n; l++)
     {
         // Find small subdiagonal element.
         tst1 = std::max<SCALARTYPE>(tst1, std::fabs(d[l]) + std::fabs(e[l]));
-        int m = l;
+        vcl_size_t m = l;
         while (m < n)
         {
             if (std::fabs(e[m]) <= eps * tst1)
@@ -91,7 +91,7 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 d[l + 1] = e[l] * (p + r);
                 SCALARTYPE dl1 = d[l + 1];
                 SCALARTYPE h = g - d[l];
-                for (int i = l + 2; i < n; i++)
+                for (vcl_size_t i = l + 2; i < n; i++)
                 {
                     d[i] -= h;
                 }
@@ -106,8 +106,9 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 SCALARTYPE el1 = e[l + 1];
                 SCALARTYPE s = 0;
                 SCALARTYPE s2 = 0;
-                for (int i = m - 1; i >= l; i--)
+                for (int i2 = int(m) - 1; i2 >= int(l); i2--)
                 {
+                    vcl_size_t i = vcl_size_t(i2);
                     c3 = c2;
                     c2 = c;
                     s2 = s;
@@ -133,7 +134,7 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 viennacl::copy(cs, tmp1);
                 viennacl::copy(ss, tmp2);
 
-                viennacl::linalg::givens_next(Q, tmp1, tmp2, l, m);
+                viennacl::linalg::givens_next(Q, tmp1, tmp2, int(l), int(m));
 
                 // Check for convergence.
             }

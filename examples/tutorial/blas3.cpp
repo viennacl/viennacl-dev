@@ -130,10 +130,10 @@ int main()
   dummy devices;
 #endif
 
-  for (std::size_t i=0; i<devices.size(); ++i)
+  for (std::size_t device_id=0; device_id<devices.size(); ++device_id)
   {
 #ifdef VIENNACL_WITH_OPENCL
-    viennacl::ocl::current_context().switch_device(devices[i]);
+    viennacl::ocl::current_context().switch_device(devices[device_id]);
     std::cout << " - Device Name: " << viennacl::ocl::current_device().name() << std::endl;
 #endif
 

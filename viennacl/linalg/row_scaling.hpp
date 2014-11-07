@@ -119,7 +119,7 @@ namespace viennacl
               else if (tag.norm() == 2)
                 diag_M[col_it.index1()] += (*col_it) * (*col_it);
             }
-            if (diag_M[row_it.index1()] == 0)
+            if (!diag_M[row_it.index1()])
               throw "ViennaCL: Zero row encountered while setting up row scaling preconditioner!";
 
             if (tag.norm() == 2)

@@ -50,6 +50,8 @@ typedef float ScalarType;
 
 const ScalarType EPS = 0.0001f;
 
+void read_matrix_size(std::fstream& f, std::size_t& sz);
+
 void read_matrix_size(std::fstream& f, std::size_t& sz)
 {
     if(!f.is_open())
@@ -80,6 +82,8 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType, MatrixLayout
 
     viennacl::copy(h_A, A);
 }
+
+void read_vector_body(std::fstream& f, std::vector<ScalarType>& v);
 
 void read_vector_body(std::fstream& f, std::vector<ScalarType>& v) {
     if(!f.is_open())
@@ -130,6 +134,9 @@ bool check_hessenberg(viennacl::matrix<ScalarType, MatrixLayout>& A_orig)
 }
 
 ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
+                            ublas::matrix<ScalarType>& ref);
+
+ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
                             ublas::matrix<ScalarType>& ref)
 {
     ScalarType diff = 0.0;
@@ -146,6 +153,9 @@ ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
 
     return diff / mx;
 }
+
+ScalarType vector_compare(std::vector<ScalarType> & res,
+                          std::vector<ScalarType> & ref);
 
 ScalarType vector_compare(std::vector<ScalarType> & res,
                           std::vector<ScalarType> & ref)
@@ -184,7 +194,8 @@ void test_eigen(const std::string& fn, bool is_symm)
     //read size of input matrix
     read_matrix_size(f, sz);
 
-    if (viennacl::is_row_major<MatrixLayout>::value)
+    bool is_row = viennacl::is_row_major<MatrixLayout>::value;
+    if (is_row)
       std::cout << "Testing row-major matrix of size " << sz << "-by-" << sz << std::endl;
     else
       std::cout << "Testing column-major matrix of size " << sz << "-by-" << sz << std::endl;

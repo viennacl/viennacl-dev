@@ -68,9 +68,9 @@ bool check_for_equality(MatrixType const & ublas_A, VCLMatrixType const & vcl_A,
   {
     for (std::size_t j=0; j<ublas_A.size2(); ++j)
     {
-      if (ublas_A(i,j) != vcl_A_cpu(i,j))
+      if (std::fabs(ublas_A(i,j) - vcl_A_cpu(i,j)) > 0)
       {
-        if ( (std::abs(ublas_A(i,j) - vcl_A_cpu(i,j)) / std::max(std::fabs(ublas_A(i,j)), std::fabs(vcl_A_cpu(i,j))) > epsilon) || (vcl_A_cpu(i,j) != vcl_A_cpu(i,j)) )
+        if ( (std::fabs(ublas_A(i,j) - vcl_A_cpu(i,j)) / std::max(std::fabs(ublas_A(i,j)), std::fabs(vcl_A_cpu(i,j))) > epsilon) || std::fabs(vcl_A_cpu(i,j) - vcl_A_cpu(i,j)) > 0 )
         {
           std::cout << "Error at index (" << i << ", " << j << "): " << ublas_A(i,j) << " vs " << vcl_A_cpu(i,j) << std::endl;
           std::cout << std::endl << "TEST failed!" << std::endl;
@@ -905,7 +905,7 @@ int main (int, const char **)
    if ( viennacl::ocl::current_device().double_support() )
 #endif
   {
-    double epsilon = 1e-12;
+    epsilon = 1e-12;
     std::cout << "# Testing setup:" << std::endl;
     std::cout << "  eps:     " << epsilon << std::endl;
     std::cout << "  numeric: double" << std::endl;

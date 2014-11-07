@@ -138,7 +138,7 @@ namespace viennacl
       CPU_ScalarType new_ip_rr = 0;
       CPU_ScalarType norm_rhs_squared = ip_rr;
 
-      if (norm_rhs_squared == 0) //solution is zero if RHS norm is zero
+      if (norm_rhs_squared <= 0) //solution is zero if RHS norm is zero
         return result;
 
       static bool first = true;

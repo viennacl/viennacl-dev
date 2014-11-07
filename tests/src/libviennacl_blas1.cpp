@@ -34,7 +34,7 @@
 template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 {
-   if (s1 != s2)
+   if (std::fabs(s1 - s2) > 0)
       return (s1 - s2) / std::max(static_cast<ScalarType>(std::fabs(static_cast<double>(s1))),
                                   static_cast<ScalarType>(std::fabs(static_cast<double>(s2))));
    return ScalarType(0);

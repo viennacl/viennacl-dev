@@ -32,9 +32,9 @@
 template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 {
-   if (s1 != s2)
-      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
-   return 0;
+  if (std::fabs(s1 - s2) > 0)
+    return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
+  return ScalarType(0);
 }
 
 template<typename ScalarType, typename ViennaCLVectorType>

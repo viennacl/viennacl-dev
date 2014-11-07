@@ -39,7 +39,7 @@ template<typename ScalarType>
 ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 {
    viennacl::backend::finish();
-   if (s1 != s2)
+   if (std::fabs(s1 - s2) > 0)
       return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
    return 0;
 }
@@ -60,7 +60,7 @@ int test(Epsilon const& epsilon)
    viennacl::scalar<NumericT> vcl_s3 = 1.0;
 
    vcl_s1 = s1;
-   if ( fabs(diff(s1, vcl_s1)) > epsilon )
+   if ( std::fabs(diff(s1, vcl_s1)) > epsilon )
    {
       std::cout << "# Error at operation: vcl_s1 = s1;" << std::endl;
       std::cout << "  diff: " << fabs(diff(s1, vcl_s1)) << std::endl;
@@ -68,7 +68,7 @@ int test(Epsilon const& epsilon)
    }
 
    vcl_s2 = s2;
-   if ( fabs(diff(s2, vcl_s2)) > epsilon )
+   if ( std::fabs(diff(s2, vcl_s2)) > epsilon )
    {
       std::cout << "# Error at operation: vcl_s2 = s2;" << std::endl;
       std::cout << "  diff: " << fabs(diff(s2, vcl_s2)) << std::endl;
@@ -76,7 +76,7 @@ int test(Epsilon const& epsilon)
    }
 
    vcl_s3 = s3;
-   if ( s3 != vcl_s3 )
+   if ( std::fabs(diff(s3, vcl_s3)) > epsilon )
    {
       std::cout << "# Error at operation: vcl_s3 = s3;" << std::endl;
       std::cout << "  diff: " << s3 - vcl_s3 << std::endl;

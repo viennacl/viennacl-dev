@@ -175,7 +175,7 @@ void prepare_householder_vector(
   //boost::numeric::ublas::vector<SCALARTYPE> tmp = boost::numeric::ublas::scalar_vector<SCALARTYPE>(size, 0);
   std::vector<SCALARTYPE> tmp(size);
   copy_vec(A, D, row_start, col_start, is_column);
-  fast_copy(D.begin(), D.begin() + vcl_ptrdiff_t(size - start), tmp.begin() + start);
+  fast_copy(D.begin(), D.begin() + vcl_ptrdiff_t(size - start), tmp.begin() + vcl_ptrdiff_t(start));
 
   detail::householder_vector(tmp, start);
   fast_copy(tmp, D);

@@ -66,6 +66,7 @@ double check(MatrixType const & qr, MatrixType const & ref)
       }
 
 
+      /* Uncomment the following if you also want to check for NaNs.
       if (qr(i,j) != qr(i,j))
       {
         std::cout << "!!!" << std::endl;
@@ -73,7 +74,7 @@ double check(MatrixType const & qr, MatrixType const & ref)
         std::cout << "!!!" << std::endl;
         do_break = true;
         break;
-      }
+      }*/
     }
     if (do_break)
       break;

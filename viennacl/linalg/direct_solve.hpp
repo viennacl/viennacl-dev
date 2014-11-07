@@ -544,7 +544,7 @@ namespace detail
   void inplace_solve_upper_vec_impl(MatrixT1 const & A, VectorT & B, SolverTagT)
   {
     int blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
-    if (A.size1() < blockSize)
+    if (static_cast<int>(A.size1()) < blockSize)
       inplace_solve_vec_kernel(A, B, SolverTagT());
     else
     {

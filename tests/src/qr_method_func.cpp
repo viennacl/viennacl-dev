@@ -52,6 +52,8 @@
 namespace ublas = boost::numeric::ublas;
 typedef float     ScalarType;
 
+void read_matrix_size(std::fstream& f, std::size_t& sz);
+
 void read_matrix_size(std::fstream& f, std::size_t& sz)
 {
     if(!f.is_open())
@@ -82,6 +84,8 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType, MatrixLayout
     viennacl::copy(h_A, A);
 }
 
+void matrix_print(viennacl::matrix<ScalarType>& A_orig);
+
 void matrix_print(viennacl::matrix<ScalarType>& A_orig)
 {
     ublas::matrix<ScalarType> A(A_orig.size1(), A_orig.size2());
@@ -94,6 +98,8 @@ void matrix_print(viennacl::matrix<ScalarType>& A_orig)
     std::cout << std::endl;
 }
 
+void matrix_print(ublas::matrix<ScalarType>& A);
+
 void matrix_print(ublas::matrix<ScalarType>& A)
 {
     for (unsigned int i = 0; i < A.size1(); i++) {
@@ -103,6 +109,8 @@ void matrix_print(ublas::matrix<ScalarType>& A)
     }
     std::cout << std::endl;
 }
+
+void vector_print(std::vector<ScalarType>& v );
 
 void vector_print(std::vector<ScalarType>& v )
 {
@@ -153,6 +161,8 @@ bool check_for_equality(VectorType const & vec_A, VectorType const & vec_B)
   std::cout << "PASSED!" << std::endl;
   return true;
 }
+
+void fill_vector(std::vector<ScalarType>& v);
 
 void fill_vector(std::vector<ScalarType>& v)
 {

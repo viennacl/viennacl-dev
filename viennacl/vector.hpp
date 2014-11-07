@@ -164,7 +164,7 @@ public:
     assert( (other.start_ == start_) && (other.stride_ == stride_) && bool("Iterators are not from the same vector (proxy)!"));
     return static_cast<difference_type>(index_) - static_cast<difference_type>(other.index_);
   }
-  self_type operator+(difference_type diff) const { return self_type(elements_, index_ + diff, start_, stride_); }
+  self_type operator+(difference_type diff) const { return self_type(elements_, size_type(difference_type(index_) + diff), start_, stride_); }
 
   //vcl_size_t index() const { return index_; }
   /** @brief Offset of the current element index with respect to the beginning of the buffer */
@@ -1678,9 +1678,10 @@ vector_base<T> &
 >::type
 operator *= (vector_base<T> & v1, S1 const & gpu_val)
 {
+  bool flip_sign = viennacl::is_flip_sign_scalar<S1>::value;
   if (v1.size() > 0)
     viennacl::linalg::av(v1,
-                         v1, gpu_val, 1, false, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+                         v1, gpu_val, 1, false, flip_sign);
   return v1;
 }
 
@@ -1698,9 +1699,10 @@ vector_base<T> &
 >::type
 operator /= (vector_base<T> & v1, S1 const & gpu_val)
 {
+  bool flip_sign = viennacl::is_flip_sign_scalar<S1>::value;
   if (v1.size() > 0)
     viennacl::linalg::av(v1,
-                         v1, gpu_val, 1, true, (viennacl::is_flip_sign_scalar<S1>::value ? true : false));
+                         v1, gpu_val, 1, true, flip_sign);
   return v1;
 }
 

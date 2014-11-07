@@ -228,10 +228,10 @@ namespace viennacl
               y = q[i];
               h = s * g;
               g = c * g;
-              CPU_ScalarType z = detail::pythag(f, h);
-              e[i - 1] = z;
-              c = f / z;
-              s = h / z;
+              CPU_ScalarType z2 = detail::pythag(f, h);
+              e[i - 1] = z2;
+              c = f / z2;
+              s = h / z2;
               f = x * c + g * s;
               g = -x * s + g * c;
               h = y * s;
@@ -241,9 +241,9 @@ namespace viennacl
               ss1[i] = s;
 
               z = detail::pythag(f, h);
-              q[i - 1] = z;
-              c = f / z;
-              s = h / z;
+              q[i - 1] = z2;
+              c = f / z2;
+              s = h / z2;
               f = c * g + s * y;
               x = -s * g + c * y;
 

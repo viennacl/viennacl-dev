@@ -90,6 +90,9 @@ testData transposeMatrix= {{0.139420f,0.539278f,0.547922f,0.672097f,0.528360f,0.
     0.237294f,0.522898f,0.637506f},1,4,4};
 
 void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>& output,
+    unsigned int& rows, unsigned int& cols, unsigned int& batch_size, testData& data);
+
+void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>& output,
     unsigned int& rows, unsigned int& cols, unsigned int& batch_size, testData& data)
 {
   unsigned int size = data.col_num * data.batch_num * 2 * data.row_num;
@@ -105,6 +108,9 @@ void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>& 
   }
 
 }
+
+void read_matrices_pair(std::vector<ScalarType>& input, std::vector<ScalarType>& output,
+    unsigned int& rows, unsigned int& cols, unsigned int& batch_size, const std::string& log_tag);
 
 void read_matrices_pair(std::vector<ScalarType>& input, std::vector<ScalarType>& output,
     unsigned int& rows, unsigned int& cols, unsigned int& batch_size, const std::string& log_tag)
@@ -157,6 +163,10 @@ ScalarType diff_max(std::vector<ScalarType>& vec, std::vector<ScalarType>& ref)
   return norm_max;
 }
 
+
+void copy_vector_to_matrix(viennacl::matrix<ScalarType> & input, std::vector<ScalarType> & in,
+    unsigned int row, unsigned int col);
+
 void copy_vector_to_matrix(viennacl::matrix<ScalarType> & input, std::vector<ScalarType> & in,
     unsigned int row, unsigned int col)
 {
@@ -169,6 +179,9 @@ void copy_vector_to_matrix(viennacl::matrix<ScalarType> & input, std::vector<Sca
 }
 
 void copy_matrix_to_vector(viennacl::matrix<ScalarType> & input, std::vector<ScalarType> & in,
+    unsigned int row, unsigned int col);
+
+void copy_matrix_to_vector(viennacl::matrix<ScalarType> & input, std::vector<ScalarType> & in,
     unsigned int row, unsigned int col)
 {
   std::vector<std::vector<ScalarType> > my_matrix(row, std::vector<ScalarType>(col * 2));
@@ -177,6 +190,9 @@ void copy_matrix_to_vector(viennacl::matrix<ScalarType> & input, std::vector<Sca
     for (unsigned int j = 0; j < col * 2; j++)
       in[i * col * 2 + j] = my_matrix[i][j];
 }
+
+ScalarType fft_2d_1arg(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int row,
+    unsigned int col, unsigned int /*batch_size*/);
 
 ScalarType fft_2d_1arg(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int row,
     unsigned int col, unsigned int /*batch_size*/)
@@ -197,6 +213,9 @@ ScalarType fft_2d_1arg(std::vector<ScalarType>& in, std::vector<ScalarType>& out
 }
 
 ScalarType transpose_inplace(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int row,
+    unsigned int col, unsigned int /*batch_size*/);
+
+ScalarType transpose_inplace(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int row,
     unsigned int col, unsigned int /*batch_size*/)
 {
   viennacl::matrix<ScalarType> input(row, 2 * col);
@@ -213,6 +232,9 @@ ScalarType transpose_inplace(std::vector<ScalarType>& in, std::vector<ScalarType
 
   return diff_max(res, out);
 }
+
+ScalarType transpose(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int row,
+    unsigned int col, unsigned int /*batch_size*/);
 
 ScalarType transpose(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int row,
     unsigned int col, unsigned int /*batch_size*/)
@@ -234,6 +256,10 @@ ScalarType transpose(std::vector<ScalarType>& in, std::vector<ScalarType>& out, 
   return diff_max(res, out);
 }
 
+
+ScalarType fft_2d_2arg(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int row,
+    unsigned int col, unsigned int /*batch_size*/);
+
 ScalarType fft_2d_2arg(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int row,
     unsigned int col, unsigned int /*batch_size*/)
 {
@@ -253,6 +279,9 @@ ScalarType fft_2d_2arg(std::vector<ScalarType>& in, std::vector<ScalarType>& out
 
   return diff_max(res, out);
 }
+
+int test_correctness(const std::string& log_tag, input_function_ptr input_function,
+    test_function_ptr func);
 
 int test_correctness(const std::string& log_tag, input_function_ptr input_function,
     test_function_ptr func)

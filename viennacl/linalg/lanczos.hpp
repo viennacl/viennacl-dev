@@ -76,7 +76,7 @@ public:
               vcl_size_t krylov = 100) : factor_(factor), num_eigenvalues_(numeig), method_(met), krylov_size_(krylov) {}
 
   /** @brief Sets the number of eigenvalues */
-  void num_eigenvalues(int numeig){ num_eigenvalues_ = numeig; }
+  void num_eigenvalues(vcl_size_t numeig){ num_eigenvalues_ = numeig; }
 
     /** @brief Returns the number of eigenvalues */
   vcl_size_t num_eigenvalues() const { return num_eigenvalues_; }
@@ -88,7 +88,7 @@ public:
   double factor() const { return factor_; }
 
   /** @brief Sets the size of the kylov space */
-  void krylov_size(int max) { krylov_size_ = max; }
+  void krylov_size(vcl_size_t max) { krylov_size_ = max; }
 
   /** @brief Returns the size of the kylov space */
   vcl_size_t  krylov_size() const { return krylov_size_; }
@@ -141,7 +141,7 @@ namespace detail
     boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<CPU_ScalarType> >   get_T(mt, T);
 
 
-    long i, j, k, index, retry, reorths;
+    long i, k, retry, reorths;
     std::vector<long> l_bound(size/2), u_bound(size/2);
     bool second_step;
     CPU_ScalarType squ_eps, eta, temp, eps, retry_th;
@@ -188,30 +188,30 @@ namespace detail
       betas.push_back(vcl_beta);
       r = r / vcl_beta;
 
-      index = i % 2;
-      w[index][i] = 1;
+      vcl_size_t index = vcl_size_t(i % 2);
+      w[index][vcl_size_t(i)] = 1;
       k = (i + 1) % 2;
-      w[index][0] = (betas[1] * w[k][1] + (alphas[0] - vcl_alpha) * w[k][0] - betas[i - 1] * w[index][0]) / vcl_beta + eps * 0.3 * get_N() * (betas[1] + vcl_beta);
+      w[index][0] = (betas[1] * w[vcl_size_t(k)][1] + (alphas[0] - vcl_alpha) * w[vcl_size_t(k)][0] - betas[vcl_size_t(i) - 1] * w[index][0]) / vcl_beta + eps * 0.3 * get_N() * (betas[1] + vcl_beta);
 
-      for (j = 1;j < i - 1;j++)
+      for (vcl_size_t j = 1; j < vcl_size_t(i - 1); j++)
       {
-              w[index][j] = (betas[j + 1] * w[k][j + 1] + (alphas[j] - vcl_alpha) * w[k][j] + betas[j] * w[k][j - 1] - betas[i - 1] * w[index][j]) / vcl_beta + eps * 0.3 * get_N() * (betas[j + 1] + vcl_beta);
+              w[index][j] = (betas[j + 1] * w[vcl_size_t(k)][j + 1] + (alphas[j] - vcl_alpha) * w[vcl_size_t(k)][j] + betas[j] * w[vcl_size_t(k)][j - 1] - betas[vcl_size_t(i) - 1] * w[index][j]) / vcl_beta + eps * 0.3 * get_N() * (betas[j + 1] + vcl_beta);
       }
-      w[index][i - 1] = 0.6 * eps * CPU_ScalarType(n) * get_N() * betas[1] / vcl_beta;
+      w[index][vcl_size_t(i) - 1] = 0.6 * eps * CPU_ScalarType(n) * get_N() * betas[1] / vcl_beta;
 
       if (second_step)
       {
-        for (j = 0;j < batches;j++)
+        for (vcl_size_t j = 0; j < vcl_size_t(batches); j++)
         {
-          l_bound[j]++;
-          u_bound[j]--;
+          l_bound[vcl_size_t(j)]++;
+          u_bound[vcl_size_t(j)]--;
 
           for (k = l_bound[j];k < u_bound[j];k++)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
+            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
             inner_rt = viennacl::linalg::inner_prod(r,t);
             r = r - inner_rt * t;
-            w[index][k] = 1.5 * eps * get_N();
+            w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
             reorths++;
           }
         }
@@ -222,7 +222,7 @@ namespace detail
       }
       batches = 0;
 
-      for (j = 0;j < i;j++)
+      for (vcl_size_t j = 0; j < vcl_size_t(i); j++)
       {
         if (std::fabs(w[index][j]) >= squ_eps)
         {
@@ -230,32 +230,32 @@ namespace detail
           inner_rt = viennacl::linalg::inner_prod(r,t);
           r = r - inner_rt * t;
           w[index][j] = 1.5 * eps * get_N();
-          k = j - 1;
+          k = long(j) - 1;
           reorths++;
-          while (k >= 0 && std::fabs(w[index][k]) > eta)
+          while (k >= 0 && std::fabs(w[index][vcl_size_t(k)]) > eta)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
+            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
             inner_rt = viennacl::linalg::inner_prod(r,t);
             r = r - inner_rt * t;
-            w[index][k] = 1.5 * eps * get_N();
+            w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
             k--;
             reorths++;
           }
-          l_bound[batches] = k + 1;
-          k = j + 1;
+          l_bound[vcl_size_t(batches)] = k + 1;
+          k = long(j) + 1;
 
-          while (k < i && std::fabs(w[index][k]) > eta)
+          while (k < i && std::fabs(w[index][vcl_size_t(k)]) > eta)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
+            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
             inner_rt = viennacl::linalg::inner_prod(r,t);
             r = r - inner_rt * t;
-            w[index][k] = 1.5 * eps * get_N();
+            w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
             k++;
             reorths++;
           }
-          u_bound[batches] = k - 1;
+          u_bound[vcl_size_t(batches)] = k - 1;
           batches++;
-          j = k;
+          j = vcl_size_t(k);
         }
       }
 
@@ -268,9 +268,9 @@ namespace detail
 
         while (temp < retry_th)
         {
-          for (j = 0;j < i;j++)
+          for (vcl_size_t j = 0; j < vcl_size_t(i); j++)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, k), t);
+            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
             inner_rt = viennacl::linalg::inner_prod(r,t);
             r = r - inner_rt * t;
             reorths++;
@@ -283,10 +283,10 @@ namespace detail
       }
 
       detail::copy_vec_to_vec(r,s);
-      boost::numeric::ublas::column(Q, i) = s;
+      boost::numeric::ublas::column(Q, vcl_size_t(i)) = s;
 
       cpu_beta = vcl_beta;
-      s = - cpu_beta * boost::numeric::ublas::column(Q, i - 1);
+      s = - cpu_beta * boost::numeric::ublas::column(Q, vcl_size_t(i - 1));
       detail::copy_vec_to_vec(s, u);
       u += viennacl::linalg::prod(A, r);
       vcl_alpha = viennacl::linalg::inner_prod(u, r);

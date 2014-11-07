@@ -165,7 +165,7 @@ void precondition(SparseMatrixTypeT const & A,
 
       //line 4:
       NumericT a_kk = output[k][k];
-      if (a_kk == 0)
+      if (a_kk <= 0 && a_kk >= 0) // a_kk == 0
       {
         std::cerr << "ViennaCL: FATAL ERROR in ILUT(): Diagonal entry is zero in row " << k
                   << " while processing line " << i << "!" << std::endl;
@@ -202,7 +202,7 @@ void precondition(SparseMatrixTypeT const & A,
       if ( (abs_w_k > tau_i) || (k == i) )//do not drop diagonal element!
       {
 
-        if (abs_w_k == 0) // this can only happen for diagonal entry
+        if (abs_w_k <= 0) // this can only happen for diagonal entry
           throw "Triangular factor in ILUT singular!";
 
         temp_map.insert(std::make_pair(abs_w_k, std::make_pair(k, w_k_entry)));

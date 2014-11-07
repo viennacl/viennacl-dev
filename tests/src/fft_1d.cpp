@@ -535,6 +535,9 @@ testData radix2_data = { { 0.141603f, 0.606969f, 0.016301f, 0.242887f, 0.137232f
     -5.413608f, -16.642197f, 12.340921f, 2.494469f, -4.610116f, 2.209176f, 6.676560f, -0.715086f, 19.455254f }, { 0 }, 1, 1, 1024 };
 
 void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>& output,
+    unsigned int& rows, unsigned int& cols, unsigned int& batch_size, testData& data);
+
+void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>& output,
     unsigned int& rows, unsigned int& cols, unsigned int& batch_size, testData& data)
 {
   unsigned int size = data.col_num * data.batch_num * 2;
@@ -550,6 +553,10 @@ void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>& 
   }
 
 }
+
+void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>&input2,
+    std::vector<ScalarType>& output, unsigned int& rows, unsigned int& cols,
+    unsigned int& batch_size, testData& data);
 
 void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>&input2,
     std::vector<ScalarType>& output, unsigned int& rows, unsigned int& cols,
@@ -570,6 +577,9 @@ void set_values_struct(std::vector<ScalarType>& input, std::vector<ScalarType>&i
     output[i] = data.result_multiply[i];
   }
 }
+
+void read_vectors_pair(std::vector<ScalarType>& input, std::vector<ScalarType>& output,
+    unsigned int& rows, unsigned int& cols, unsigned int& batch_size, const std::string& log_tag);
 
 void read_vectors_pair(std::vector<ScalarType>& input, std::vector<ScalarType>& output,
     unsigned int& rows, unsigned int& cols, unsigned int& batch_size, const std::string& log_tag)
@@ -593,6 +603,10 @@ void read_vectors_pair(std::vector<ScalarType>& input, std::vector<ScalarType>& 
     set_values_struct(input, output, rows, cols, batch_size, radix2_data);
 
 }
+
+void read_vectors_three(std::vector<ScalarType>& input, std::vector<ScalarType>&input2,
+    std::vector<ScalarType>& output, unsigned int& rows, unsigned int& cols,
+    unsigned int& batch_size, const std::string& log_tag);
 
 void read_vectors_three(std::vector<ScalarType>& input, std::vector<ScalarType>&input2,
     std::vector<ScalarType>& output, unsigned int& rows, unsigned int& cols,
@@ -674,6 +688,8 @@ void copy_to_complex_array(std::complex<SCALARTYPE> * input_complex, const SCALA
   }
 }
 
+void convolve_ref(std::vector<ScalarType>& in1, std::vector<ScalarType>& in2, std::vector<ScalarType>& out);
+
 void convolve_ref(std::vector<ScalarType>& in1, std::vector<ScalarType>& in2, std::vector<ScalarType>& out)
 {
   out.resize(in1.size());
@@ -684,17 +700,21 @@ void convolve_ref(std::vector<ScalarType>& in1, std::vector<ScalarType>& in2, st
     std::complex<ScalarType> el;
     for (unsigned int k = 0; k < data_size; k++)
     {
-      int offset = (n - k);
+      int offset = int(n) - int(k);
       if (offset < 0)
         offset += data_size;
       std::complex<ScalarType> m1(in1[2 * k], in1[2 * k + 1]);
-      std::complex<ScalarType> m2(in2[2 * offset], in2[2 * offset + 1]);
+      std::complex<ScalarType> m2(in2[2 * std::size_t(offset)], in2[2 * std::size_t(offset) + 1]);
       el = el + m1 * m2;
     }
     out[2 * n] = el.real();
     out[2 * n + 1] = el.imag();
   }
 }
+
+
+ScalarType fft(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int /*row*/,
+    unsigned int /*col*/, unsigned int batch_size);
 
 ScalarType fft(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int /*row*/,
     unsigned int /*col*/, unsigned int batch_size)
@@ -713,6 +733,9 @@ ScalarType fft(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsign
 
   return diff_max(res, out);
 }
+
+ScalarType direct(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int /*row*/,
+    unsigned int /*col*/, unsigned int batch_num);
 
 ScalarType direct(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int /*row*/,
     unsigned int /*col*/, unsigned int batch_num)
@@ -734,6 +757,9 @@ ScalarType direct(std::vector<ScalarType>& in, std::vector<ScalarType>& out, uns
 }
 
 ScalarType bluestein(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
+    unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_size);
+
+ScalarType bluestein(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
     unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_size)
 {
   viennacl::vector<ScalarType> input(in.size());
@@ -750,6 +776,9 @@ ScalarType bluestein(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
 
   return diff_max(res, out);
 }
+
+ScalarType radix2(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int /*row*/,
+    unsigned int /*col*/, unsigned int batch_num);
 
 ScalarType radix2(std::vector<ScalarType>& in, std::vector<ScalarType>& out, unsigned int /*row*/,
     unsigned int /*col*/, unsigned int batch_num)
@@ -769,6 +798,9 @@ ScalarType radix2(std::vector<ScalarType>& in, std::vector<ScalarType>& out, uns
 
   return diff_max(res, out);
 }
+
+ScalarType fft_ifft_radix2(std::vector<ScalarType>& in, std::vector<ScalarType>& /*out*/,
+    unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_num);
 
 ScalarType fft_ifft_radix2(std::vector<ScalarType>& in, std::vector<ScalarType>& /*out*/,
     unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_num)
@@ -791,6 +823,9 @@ ScalarType fft_ifft_radix2(std::vector<ScalarType>& in, std::vector<ScalarType>&
 }
 
 ScalarType ifft_fft_radix2(std::vector<ScalarType>& in, std::vector<ScalarType>& /*out*/,
+    unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_num);
+
+ScalarType ifft_fft_radix2(std::vector<ScalarType>& in, std::vector<ScalarType>& /*out*/,
     unsigned int /*row*/, unsigned int /*col*/, unsigned int batch_num)
 {
   viennacl::vector<ScalarType> input(in.size());
@@ -809,6 +844,9 @@ ScalarType ifft_fft_radix2(std::vector<ScalarType>& in, std::vector<ScalarType>&
 
   return diff_max(res, in);
 }
+
+ScalarType fft_reverse_direct(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
+    unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_num*/);
 
 ScalarType fft_reverse_direct(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
     unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_num*/)
@@ -830,6 +868,9 @@ ScalarType fft_reverse_direct(std::vector<ScalarType>& in, std::vector<ScalarTyp
 }
 
 ScalarType real_to_complex(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
+    unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_num*/);
+
+ScalarType real_to_complex(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
     unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_num*/)
 {
 
@@ -847,6 +888,11 @@ ScalarType real_to_complex(std::vector<ScalarType>& in, std::vector<ScalarType>&
   return diff_max(res, out);
 
 }
+
+
+ScalarType complex_to_real(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
+    unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_num*/);
+
 ScalarType complex_to_real(std::vector<ScalarType>& in, std::vector<ScalarType>& out,
     unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_num*/)
 {
@@ -865,6 +911,9 @@ ScalarType complex_to_real(std::vector<ScalarType>& in, std::vector<ScalarType>&
   return diff_max(res, out);
 
 }
+
+ScalarType multiply_complex(std::vector<ScalarType>& in, std::vector<ScalarType>& in2,
+    std::vector<ScalarType>& out);
 
 ScalarType multiply_complex(std::vector<ScalarType>& in, std::vector<ScalarType>& in2,
     std::vector<ScalarType>& out)
@@ -889,6 +938,8 @@ ScalarType multiply_complex(std::vector<ScalarType>& in, std::vector<ScalarType>
   return diff_max(res, out);
 }
 
+ScalarType convolve(std::vector<ScalarType>& in1, std::vector<ScalarType>& in2,
+    unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_size*/);
 
 ScalarType convolve(std::vector<ScalarType>& in1, std::vector<ScalarType>& in2,
     unsigned int /*row*/, unsigned int /*col*/, unsigned int /*batch_size*/)
@@ -914,6 +965,9 @@ ScalarType convolve(std::vector<ScalarType>& in1, std::vector<ScalarType>& in2,
 }
 
 int test_correctness(const std::string& log_tag, input_function_ptr input_function,
+    test_function_ptr func);
+
+int test_correctness(const std::string& log_tag, input_function_ptr input_function,
     test_function_ptr func)
 {
 
@@ -937,6 +991,8 @@ int test_correctness(const std::string& log_tag, input_function_ptr input_functi
 
   return EXIT_SUCCESS;
 }
+
+int testcorrectnes_multiply(const std::string& log_tag);
 
 int testcorrectnes_multiply(const std::string& log_tag)
 {

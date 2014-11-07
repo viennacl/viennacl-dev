@@ -244,7 +244,7 @@ void householder_vector(MatrixT const & A,
   copy_vector(A, v, j+1);
   NumericT mu;
   v(j) = static_cast<NumericT>(1.0);
-  if (sg == 0)
+  if (!sg)
     b = 0;
   else
   {

@@ -93,16 +93,28 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDAStrsv(ViennaCLBackend /*ba
   if (transA == ViennaCLTrans)
   {
     if (uplo == ViennaCLUpper)
-      viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::upper_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::unit_upper_tag());
+      else
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::upper_tag());
     else
-      viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::lower_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::unit_lower_tag());
+      else
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::lower_tag());
   }
   else
   {
     if (uplo == ViennaCLUpper)
-      viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::upper_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::unit_upper_tag());
+      else
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::upper_tag());
     else
-      viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::lower_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::unit_lower_tag());
+      else
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::lower_tag());
   }
 
   return ViennaCLSuccess;
@@ -120,16 +132,28 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLCUDADtrsv(ViennaCLBackend /*ba
   if (transA == ViennaCLTrans)
   {
     if (uplo == ViennaCLUpper)
-      viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::upper_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::unit_upper_tag());
+      else
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::upper_tag());
     else
-      viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::lower_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::unit_lower_tag());
+      else
+        viennacl::linalg::inplace_solve(viennacl::trans(mat), v, viennacl::linalg::lower_tag());
   }
   else
   {
     if (uplo == ViennaCLUpper)
-      viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::upper_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::unit_upper_tag());
+      else
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::upper_tag());
     else
-      viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::lower_tag());
+      if (diag == ViennaCLUnit)
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::unit_lower_tag());
+      else
+        viennacl::linalg::inplace_solve(mat, v, viennacl::linalg::lower_tag());
   }
 
   return ViennaCLSuccess;

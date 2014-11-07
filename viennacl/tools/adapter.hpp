@@ -376,7 +376,7 @@ public:
   iterator1 end1() { return iterator1(mat_, static_cast<int>(mat_.size()), static_cast<int>(mat_.back().size())); }
 
   const_iterator1 begin1() const { return const_iterator1(mat_, 0, 0); }
-  const_iterator1 end1() const   { return const_iterator1(mat_, size1(), size2()); }
+  const_iterator1 end1() const   { return const_iterator1(mat_, static_cast<int>(size1()), static_cast<int>(size2())); }
 
   iterator2 begin2() { return iterator2(mat_, 0, 0); }
   iterator2 end2() { return iterator2(mat_, mat_.size(), mat_.back().size()); }

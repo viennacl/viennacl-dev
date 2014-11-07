@@ -52,6 +52,7 @@ typedef int ViennaCLInt;
 
 typedef enum
 {
+  ViennaCLInvalidBackend, // for catching uninitialized and invalid values
   ViennaCLCUDA,
   ViennaCLOpenCL,
   ViennaCLHost
@@ -59,30 +60,35 @@ typedef enum
 
 typedef enum
 {
+  ViennaCLInvalidOrder,  // for catching uninitialized and invalid values
   ViennaCLRowMajor,
   ViennaCLColumnMajor
 } ViennaCLOrder;
 
 typedef enum
 {
+  ViennaCLInvalidTranspose, // for catching uninitialized and invalid values
   ViennaCLNoTrans,
   ViennaCLTrans
 } ViennaCLTranspose;
 
 typedef enum
 {
+  ViennaCLInvalidUplo, // for catching uninitialized and invalid values
   ViennaCLUpper,
   ViennaCLLower
 } ViennaCLUplo;
 
 typedef enum
 {
+  ViennaCLInvalidDiag, // for catching uninitialized and invalid values
   ViennaCLUnit,
   ViennaCLNonUnit
 } ViennaCLDiag;
 
 typedef enum
 {
+  ViennaCLInvalidPrecision,  // for catching uninitialized and invalid values
   ViennaCLFloat,
   ViennaCLDouble
 } ViennaCLPrecision;
@@ -505,9 +511,10 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLSger(ViennaCLBackend bac
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDger(ViennaCLBackend backend,
                                                              ViennaCLOrder order,
                                                              ViennaCLInt m, ViennaCLInt n,
+                                                             double alpha,
                                                              cl_mem x, ViennaCLInt offx, ViennaCLInt incx,
                                                              cl_mem y, ViennaCLInt offy, ViennaCLInt incy,
-                                                             double alpha, cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda);
+                                                             cl_mem A, ViennaCLInt offA_row, ViennaCLInt offA_col, ViennaCLInt incA_row, ViennaCLInt incA_col, ViennaCLInt lda);
 #endif
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSger(ViennaCLBackend backend,
@@ -598,6 +605,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDgemm(ViennaCLBackend back
                                                             double beta,
                                                             double *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc);
 
+// xTRSM: Triangular solves with multiple right hand sides
+
+VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsm(ViennaCLMatrix A, ViennaCLUplo uplo, ViennaCLDiag diag, ViennaCLMatrix B);
 
 #ifdef __cplusplus
 }

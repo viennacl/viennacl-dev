@@ -50,7 +50,7 @@ namespace detail
                                        NumericT *C, ViennaCLInt offC_row, ViennaCLInt offC_col, ViennaCLInt incC_row, ViennaCLInt incC_col, ViennaCLInt ldc)
   {
     typedef typename viennacl::matrix_base<NumericT>::size_type           size_type;
-    typedef typename viennacl::matrix_base<NumericT>::difference_type     difference_type;
+    typedef typename viennacl::matrix_base<NumericT>::size_type           difference_type;
 
     size_type A_size1 = static_cast<size_type>((transA == ViennaCLTrans) ? k : m);
     size_type A_size2 = static_cast<size_type>((transA == ViennaCLTrans) ? m : k);

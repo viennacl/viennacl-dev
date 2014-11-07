@@ -41,7 +41,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostiSamax(ViennaCLBackend /*b
                                                              float *x, ViennaCLInt offx, int incx)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
 
   *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
@@ -53,7 +53,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostiDamax(ViennaCLBackend /*b
                                                              double *x, ViennaCLInt offx, int incx)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
 
   *index = static_cast<ViennaCLInt>(viennacl::linalg::index_norm_inf(v1));
@@ -69,7 +69,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSasum(ViennaCLBackend /*ba
                                                             float *x, ViennaCLInt offx, int incx)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
 
   *alpha = viennacl::linalg::norm_1(v1);
@@ -81,7 +81,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDasum(ViennaCLBackend /*ba
                                                             double *x, ViennaCLInt offx, int incx)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
 
   *alpha = viennacl::linalg::norm_1(v1);
@@ -98,7 +98,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSaxpy(ViennaCLBackend /*ba
                                                             float *y, ViennaCLInt offy, int incy)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -112,7 +112,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDaxpy(ViennaCLBackend /*ba
                                                             double *y, ViennaCLInt offy, int incy)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -128,7 +128,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostScopy(ViennaCLBackend /*ba
                                                             float *y, ViennaCLInt offy, int incy)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -141,7 +141,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDcopy(ViennaCLBackend /*ba
                                                             double *y, ViennaCLInt offy, int incy)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -157,7 +157,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSdot(ViennaCLBackend /*bac
                                                            float *y, ViennaCLInt offy, int incy)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -171,7 +171,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDdot(ViennaCLBackend /*bac
                                                            double *y, ViennaCLInt offy, int incy)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -186,7 +186,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSnrm2(ViennaCLBackend /*ba
                                                             float *x, ViennaCLInt offx, int incx)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
 
   *alpha = viennacl::linalg::norm_2(v1);
@@ -198,7 +198,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDnrm2(ViennaCLBackend /*ba
                                                             double *x, ViennaCLInt offx, int incx)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
 
   *alpha = viennacl::linalg::norm_2(v1);
@@ -214,7 +214,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSrot(ViennaCLBackend /*bac
                                                            float c, float s)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -228,7 +228,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDrot(ViennaCLBackend /*bac
                                                            double c, double s)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -245,7 +245,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSscal(ViennaCLBackend /*ba
                                                             float *x, ViennaCLInt offx, int incx)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
 
   v1 *= alpha;
@@ -257,7 +257,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDscal(ViennaCLBackend /*ba
                                                             double *x, ViennaCLInt offx, int incx)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
 
   v1 *= alpha;
@@ -271,7 +271,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostSswap(ViennaCLBackend /*ba
                                                             float *y, ViennaCLInt offy, int incy)
 {
   typedef viennacl::vector_base<float>::size_type           size_type;
-  typedef viennacl::vector_base<float>::difference_type     difference_type;
+  typedef viennacl::vector_base<float>::size_type           difference_type;
   viennacl::vector_base<float> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<float> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 
@@ -284,7 +284,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLHostDswap(ViennaCLBackend /*ba
                                                             double *y, ViennaCLInt offy, int incy)
 {
   typedef viennacl::vector_base<double>::size_type           size_type;
-  typedef viennacl::vector_base<double>::difference_type     difference_type;
+  typedef viennacl::vector_base<double>::size_type           difference_type;
   viennacl::vector_base<double> v1(x, viennacl::MAIN_MEMORY, size_type(n), size_type(offx), difference_type(incx));
   viennacl::vector_base<double> v2(y, viennacl::MAIN_MEMORY, size_type(n), size_type(offy), difference_type(incy));
 

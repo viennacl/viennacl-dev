@@ -52,7 +52,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemm(ViennaCLHostScalar alpha,
     case ViennaCLFloat:
     {
       typedef viennacl::matrix_base<float>::size_type           size_type;
-      typedef viennacl::matrix_base<float>::difference_type     difference_type;
+      typedef viennacl::matrix_base<float>::size_type           difference_type;
 
       viennacl::matrix_base<float> mat_A(A_handle,
                                          size_type(A->size1), size_type(A->start1), difference_type(A->stride1), size_type(A->internal_size1),
@@ -81,7 +81,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemm(ViennaCLHostScalar alpha,
     case ViennaCLDouble:
     {
       typedef viennacl::matrix_base<double>::size_type           size_type;
-      typedef viennacl::matrix_base<double>::difference_type     difference_type;
+      typedef viennacl::matrix_base<double>::size_type           difference_type;
 
       viennacl::matrix_base<double> mat_A(A_handle,
                                           size_type(A->size1), size_type(A->start1), difference_type(A->stride1), size_type(A->internal_size1),
@@ -131,7 +131,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsm(ViennaCLMatrix A, ViennaC
     case ViennaCLFloat:
     {
       typedef viennacl::matrix_base<float>::size_type           size_type;
-      typedef viennacl::matrix_base<float>::difference_type     difference_type;
+      typedef viennacl::matrix_base<float>::size_type           difference_type;
 
       viennacl::matrix_base<float> mat_A(A_handle,
                                          size_type(A->size1), size_type(A->start1), difference_type(A->stride1), size_type(A->internal_size1),
@@ -198,7 +198,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsm(ViennaCLMatrix A, ViennaC
     case ViennaCLDouble:
     {
       typedef viennacl::matrix_base<double>::size_type           size_type;
-      typedef viennacl::matrix_base<double>::difference_type     difference_type;
+      typedef viennacl::matrix_base<double>::size_type           difference_type;
 
       viennacl::matrix_base<double> mat_A(A_handle,
                                           size_type(A->size1), size_type(A->start1), difference_type(A->stride1), size_type(A->internal_size1),

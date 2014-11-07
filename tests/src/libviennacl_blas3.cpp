@@ -35,9 +35,9 @@
 template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 {
-   if (s1 != s2)
-      return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
-   return 0;
+  if (std::fabs(s1 - s2) > 0)
+    return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
+  return ScalarType(0);
 }
 
 template<typename ScalarType, typename ViennaCLVectorType>
@@ -96,6 +96,27 @@ T get_value(std::vector<T> & array, ViennaCLInt i, ViennaCLInt j,
 }
 
 
+void test_blas(ViennaCLBackend my_backend,
+               float eps_float, double eps_double,
+               std::vector<float> & C_float, std::vector<double> & C_double,
+               std::vector<float> & A_float, std::vector<double> & A_double,
+               std::vector<float> & B_float, std::vector<double> & B_double,
+               ViennaCLOrder order_C, ViennaCLOrder order_A, ViennaCLOrder order_B,
+               ViennaCLTranspose trans_A, ViennaCLTranspose trans_B,
+               viennacl::vector<float> & host_C_float, viennacl::vector<double> & host_C_double,
+               viennacl::vector<float> & host_A_float, viennacl::vector<double> & host_A_double,
+               viennacl::vector<float> & host_B_float, viennacl::vector<double> & host_B_double
+#ifdef VIENNACL_WITH_CUDA
+               , viennacl::vector<float> & cuda_C_float, viennacl::vector<double> & cuda_C_double
+               , viennacl::vector<float> & cuda_A_float, viennacl::vector<double> & cuda_A_double
+               , viennacl::vector<float> & cuda_B_float, viennacl::vector<double> & cuda_B_double
+#endif
+#ifdef VIENNACL_WITH_OPENCL
+               , viennacl::vector<float> & opencl_C_float, viennacl::vector<double> * opencl_C_double
+               , viennacl::vector<float> & opencl_A_float, viennacl::vector<double> * opencl_A_double
+               , viennacl::vector<float> & opencl_B_float, viennacl::vector<double> * opencl_B_double
+#endif
+               );
 
 void test_blas(ViennaCLBackend my_backend,
                float eps_float, double eps_double,
@@ -249,6 +270,26 @@ void test_blas(ViennaCLBackend my_backend,
   std::cout << std::endl;
 }
 
+void test_blas(ViennaCLBackend my_backend,
+               float eps_float, double eps_double,
+               std::vector<float> & C_float, std::vector<double> & C_double,
+               std::vector<float> & A_float, std::vector<double> & A_double,
+               std::vector<float> & B_float, std::vector<double> & B_double,
+               ViennaCLOrder order_C, ViennaCLOrder order_A, ViennaCLOrder order_B,
+               viennacl::vector<float> & host_C_float, viennacl::vector<double> & host_C_double,
+               viennacl::vector<float> & host_A_float, viennacl::vector<double> & host_A_double,
+               viennacl::vector<float> & host_B_float, viennacl::vector<double> & host_B_double
+#ifdef VIENNACL_WITH_CUDA
+               , viennacl::vector<float> & cuda_C_float, viennacl::vector<double> & cuda_C_double
+               , viennacl::vector<float> & cuda_A_float, viennacl::vector<double> & cuda_A_double
+               , viennacl::vector<float> & cuda_B_float, viennacl::vector<double> & cuda_B_double
+#endif
+#ifdef VIENNACL_WITH_OPENCL
+               , viennacl::vector<float> & opencl_C_float, viennacl::vector<double> * opencl_C_double
+               , viennacl::vector<float> & opencl_A_float, viennacl::vector<double> * opencl_A_double
+               , viennacl::vector<float> & opencl_B_float, viennacl::vector<double> * opencl_B_double
+#endif
+               );
 
 void test_blas(ViennaCLBackend my_backend,
                float eps_float, double eps_double,
@@ -332,6 +373,27 @@ void test_blas(ViennaCLBackend my_backend,
             );
 
 }
+
+
+void test_blas(ViennaCLBackend my_backend,
+               float eps_float, double eps_double,
+               std::vector<float> & C_float, std::vector<double> & C_double,
+               std::vector<float> & A_float, std::vector<double> & A_double,
+               std::vector<float> & B_float, std::vector<double> & B_double,
+               viennacl::vector<float> & host_C_float, viennacl::vector<double> & host_C_double,
+               viennacl::vector<float> & host_A_float, viennacl::vector<double> & host_A_double,
+               viennacl::vector<float> & host_B_float, viennacl::vector<double> & host_B_double
+#ifdef VIENNACL_WITH_CUDA
+               , viennacl::vector<float> & cuda_C_float, viennacl::vector<double> & cuda_C_double
+               , viennacl::vector<float> & cuda_A_float, viennacl::vector<double> & cuda_A_double
+               , viennacl::vector<float> & cuda_B_float, viennacl::vector<double> & cuda_B_double
+#endif
+#ifdef VIENNACL_WITH_OPENCL
+               , viennacl::vector<float> & opencl_C_float, viennacl::vector<double> * opencl_C_double
+               , viennacl::vector<float> & opencl_A_float, viennacl::vector<double> * opencl_A_double
+               , viennacl::vector<float> & opencl_B_float, viennacl::vector<double> * opencl_B_double
+#endif
+               );
 
 void test_blas(ViennaCLBackend my_backend,
                float eps_float, double eps_double,

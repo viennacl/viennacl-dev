@@ -232,7 +232,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
   CPU_NumericType new_ip_rr0star = 0;
   CPU_NumericType residual_norm = norm_rhs_host;
 
-  if (norm_rhs_host == 0) //solution is zero if RHS norm is zero
+  if (norm_rhs_host <= 0) //solution is zero if RHS norm is zero
     return result;
 
   bool restart_flag = true;
@@ -272,7 +272,10 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
     beta = new_ip_rr0star / ip_rr0star * alpha/omega;
     ip_rr0star = new_ip_rr0star;
 
-    if (ip_rr0star == 0 || omega == 0 || i - last_restart > tag.max_iterations_before_restart()) //search direction degenerate. A restart might help
+    if (    (ip_rr0star <= 0 && ip_rr0star >= 0)
+         || (omega <= 0 && omega >= 0)
+         || (i - last_restart > tag.max_iterations_before_restart())
+       ) //search direction degenerate. A restart might help
       restart_flag = true;
 
     // Execution of

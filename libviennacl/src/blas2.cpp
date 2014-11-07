@@ -53,7 +53,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha,
     case ViennaCLFloat:
     {
       typedef viennacl::vector_base<float>::size_type           size_type;
-      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      typedef viennacl::vector_base<float>::size_type           difference_type;
 
       viennacl::vector_base<float> v1(v1_handle, size_type(x->size), size_type(x->offset), difference_type(x->inc));
       viennacl::vector_base<float> v2(v2_handle, size_type(y->size), size_type(y->offset), difference_type(y->inc));
@@ -73,7 +73,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha,
     case ViennaCLDouble:
     {
       typedef viennacl::vector_base<double>::size_type           size_type;
-      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      typedef viennacl::vector_base<double>::size_type           difference_type;
 
       viennacl::vector_base<double> v1(v1_handle, size_type(x->size), size_type(x->offset), difference_type(x->inc));
       viennacl::vector_base<double> v2(v2_handle, size_type(y->size), size_type(y->offset), difference_type(y->inc));
@@ -114,7 +114,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaC
     case ViennaCLFloat:
     {
       typedef viennacl::vector_base<float>::size_type           size_type;
-      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      typedef viennacl::vector_base<float>::size_type           difference_type;
 
       viennacl::vector_base<float> v1(v1_handle, size_type(x->size), size_type(x->offset), difference_type(x->inc));
 
@@ -141,7 +141,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaC
     case ViennaCLDouble:
     {
       typedef viennacl::vector_base<double>::size_type           size_type;
-      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      typedef viennacl::vector_base<double>::size_type           difference_type;
 
       viennacl::vector_base<double> v1(v1_handle, size_type(x->size), size_type(x->offset), difference_type(x->inc));
 
@@ -194,7 +194,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLger(ViennaCLHostScalar alpha, 
     case ViennaCLFloat:
     {
       typedef viennacl::vector_base<float>::size_type           size_type;
-      typedef viennacl::vector_base<float>::difference_type     difference_type;
+      typedef viennacl::vector_base<float>::size_type           difference_type;
 
       viennacl::vector_base<float> v1(v1_handle, size_type(x->size), size_type(x->offset), difference_type(x->inc));
       viennacl::vector_base<float> v2(v2_handle, size_type(y->size), size_type(y->offset), difference_type(y->inc));
@@ -210,7 +210,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLger(ViennaCLHostScalar alpha, 
     case ViennaCLDouble:
     {
       typedef viennacl::vector_base<double>::size_type           size_type;
-      typedef viennacl::vector_base<double>::difference_type     difference_type;
+      typedef viennacl::vector_base<double>::size_type           difference_type;
 
       viennacl::vector_base<double> v1(v1_handle, size_type(x->size), size_type(x->offset), difference_type(x->inc));
       viennacl::vector_base<double> v2(v2_handle, size_type(y->size), size_type(y->offset), difference_type(y->inc));

@@ -40,12 +40,6 @@
 
 #define EPS 10.0e-4
 
-typedef float NumericT;
-////////////////////////////////////////////////////////////////////////////////
-// declaration, forward
-bool runTest(const int mat_size);
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief initInputData   Initialize the diagonal and superdiagonal elements of
@@ -54,8 +48,8 @@ bool runTest(const int mat_size);
 /// \param superdiagonal   superdiagonal elements of the matrix
 /// \param mat_size        Dimension of the matrix
 ///
-void
-initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, const unsigned int mat_size)
+template<typename NumericT>
+void initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, std::size_t mat_size)
 {
 
   srand(278217421);
@@ -65,7 +59,7 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
   if (randomValues == true)
   {
     // Initialize diagonal and superdiagonal elements with random values
-    for (unsigned int i = 0; i < mat_size; ++i)
+    for (std::size_t i = 0; i < mat_size; ++i)
     {
         diagonal[i] =      static_cast<NumericT>(2.0 * (((double)rand()
                                      / (double) RAND_MAX) - 0.5));
@@ -77,7 +71,7 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
   {
     // Initialize diagonal and superdiagonal elements with modulo values
     // This will cause in many multiple eigenvalues.
-    for (unsigned int i = 0; i < mat_size; ++i)
+    for (std::size_t i = 0; i < mat_size; ++i)
     {
        diagonal[i] = ((NumericT)(i % 8)) - 4.5f;
        superdiagonal[i] = ((NumericT)(i % 5)) - 4.5f;
@@ -91,43 +85,10 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Program main
-////////////////////////////////////////////////////////////////////////////////
-int main()
-{
-    bool test_result = false;
-
-    // run test for large matrix
-    test_result = runTest(520);
-    if(test_result == true)
-    {
-      std::cout << "First Test Succeeded!" << std::endl << std::endl;
-    }
-    else
-    {
-      std::cout << "---TEST FAILED---" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-
-    // run test for small matrix
-    test_result = runTest(230);
-    if(test_result == true)
-    {
-      std::cout << std::endl << "---TEST SUCCESSFULLY COMPLETED---" << std::endl;
-      exit(EXIT_SUCCESS);
-    }
-    else
-    {
-      std::cout << "---TEST FAILED---" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////
 //! Run a simple test
 ////////////////////////////////////////////////////////////////////////////////
-bool
-runTest(const int mat_size)
+template<typename NumericT>
+bool runTest(std::size_t mat_size)
 {
     bool bResult = false;
 
@@ -169,7 +130,7 @@ runTest(const int mat_size)
     // Compare the results from the bisection algorithm with the results
     // from the tql2 algorithm.
     std::cout << "Start comparison..." << std::endl;
-    for (int i = 0; i < mat_size; i++)
+    for (std::size_t i = 0; i < mat_size; i++)
     {
        if (std::abs(eigenvalues_bisect[i] - diagonal_tql[i]) > EPS)
        {
@@ -190,4 +151,38 @@ runTest(const int mat_size)
 
   return bResult;
 
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Program main
+////////////////////////////////////////////////////////////////////////////////
+int main()
+{
+    bool test_result = false;
+
+    // run test for large matrix
+    test_result = runTest<float>(520);
+    if(test_result == true)
+    {
+      std::cout << "First Test Succeeded!" << std::endl << std::endl;
+    }
+    else
+    {
+      std::cout << "---TEST FAILED---" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+
+    // run test for small matrix
+    test_result = runTest<float>(230);
+    if(test_result == true)
+    {
+      std::cout << std::endl << "---TEST SUCCESSFULLY COMPLETED---" << std::endl;
+      exit(EXIT_SUCCESS);
+    }
+    else
+    {
+      std::cout << "---TEST FAILED---" << std::endl;
+      exit(EXIT_FAILURE);
+    }
 }

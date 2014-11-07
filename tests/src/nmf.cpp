@@ -48,6 +48,8 @@ float matrix_compare(MATRIX & res, viennacl::matrix_base<ScalarType>& ref)
   return diff / mx;
 }
 
+void fill_random(viennacl::matrix_base<ScalarType>& v);
+
 void fill_random(viennacl::matrix_base<ScalarType>& v)
 {
   for (std::size_t i = 0; i < v.size1(); i++)
@@ -56,6 +58,8 @@ void fill_random(viennacl::matrix_base<ScalarType>& v)
       v(i, j) = static_cast<ScalarType>(rand()) / ScalarType(RAND_MAX);
   }
 }
+
+void test_nmf(std::size_t m, std::size_t k, std::size_t n);
 
 void test_nmf(std::size_t m, std::size_t k, std::size_t n)
 {

@@ -848,7 +848,8 @@ struct svd
 {
   static std::string program_name()
   {
-    return (viennacl::ocl::type_to_string<NumericT>::apply() + "_svd_") + (viennacl::is_row_major<MatrixLayout>::value ? "row" : "col");
+    bool is_row = viennacl::is_row_major<MatrixLayout>::value;
+    return (viennacl::ocl::type_to_string<NumericT>::apply() + "_svd_") + (is_row ? "row" : "col");
   }
 
   static void init(viennacl::ocl::context & ctx)

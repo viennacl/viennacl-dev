@@ -199,8 +199,9 @@ private:
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for
 #endif
-    for (long i=0; i<static_cast<long>(block_indices_.size()); ++i)
+    for (long i2=0; i2<static_cast<long>(block_indices_.size()); ++i2)
     {
+      vcl_size_t i = static_cast<vcl_size_t>(i2);
       // Step 1: Extract blocks
       vcl_size_t block_size = block_indices_[i].second - block_indices_[i].first;
       vcl_size_t block_nnz  = row_buffer[block_indices_[i].second] - row_buffer[block_indices_[i].first];

@@ -123,15 +123,15 @@ bisect(VectorT const & alphas, VectorT const & betas)
     double xu = xmin;
     for (long i = k; i >= 0; --i)
     {
-      if (xu < wu[k-i])
+      if (xu < wu[vcl_size_t(k-i)])
       {
-        xu = wu[i];
+        xu = wu[vcl_size_t(i)];
         break;
       }
     }
 
-    if (x0 > x_temp[k])
-      x0 = x_temp[k];
+    if (x0 > x_temp[vcl_size_t(k)])
+      x0 = x_temp[vcl_size_t(k)];
 
     double x1 = (xu + x0) / 2.0;
     while (x0 - xu > 2.0 * rel_error * (std::fabs(xu) + std::fabs(x0)) + eps1)
@@ -140,7 +140,7 @@ bisect(VectorT const & alphas, VectorT const & betas)
       double q = 1;
       for (vcl_size_t i = 0; i < size; i++)
       {
-        if (q != 0)
+        if (q > 0 || q < 0)
           q = alphas[i] - x1 - beta_bisect[i] / q;
         else
           q = alphas[i] - x1 - std::fabs(betas[i] / rel_error);
@@ -166,7 +166,7 @@ bisect(VectorT const & alphas, VectorT const & betas)
 
       x1 = (xu + x0) / 2.0;
     }
-    x_temp[k] = x1;
+    x_temp[vcl_size_t(k)] = x1;
   }
   return x_temp;
 }

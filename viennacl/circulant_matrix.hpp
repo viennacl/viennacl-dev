@@ -252,7 +252,7 @@ std::ostream & operator<<(std::ostream& s, circulant_matrix<NumericT, AlignmentV
     {
       long index = static_cast<long>(i) - static_cast<long>(j);
       if (index < 0) index = static_cast<long>(size) + index;
-      s << tmp[index];
+      s << tmp[vcl_size_t(index)];
       //s << index;
       if (j < (size - 1)) s << ",";
     }

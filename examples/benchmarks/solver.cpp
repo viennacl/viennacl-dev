@@ -395,7 +395,8 @@ int run_benchmark(viennacl::context ctx)
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
 
 #ifdef VIENNACL_WITH_OPENCL
-  if (sizeof(ScalarType) == sizeof(double))
+  bool is_double = (sizeof(ScalarType) == sizeof(double));
+  if (is_double)
   {
     std::cout << "------- CG solver, mixed precision (no preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
     viennacl::linalg::mixed_precision_cg_tag mixed_precision_cg_solver(solver_tolerance, solver_iters);

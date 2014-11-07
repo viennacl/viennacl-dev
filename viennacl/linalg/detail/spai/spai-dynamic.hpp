@@ -314,7 +314,7 @@ void block_update(SparseMatrixT const & A,
   {
     if (g_is_update[static_cast<vcl_size_t>(i)])
     {
-      if (buildAugmentedIndexSet<SparseVectorT, NumericType>(A_v_c, g_res[i], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
+      if (buildAugmentedIndexSet<SparseVectorT, NumericType>(A_v_c, g_res[static_cast<vcl_size_t>(i)], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
       {
         //initialize matrix A_I_\hatJ
         initProjectSubMatrix(A, g_J_u[static_cast<vcl_size_t>(i)], g_I[static_cast<vcl_size_t>(i)], g_A_I_J_u[static_cast<vcl_size_t>(i)]);
@@ -413,11 +413,11 @@ void assemble_qr_row_inds(std::vector<std::vector<SizeT> > const & g_I,
 #endif
   for (long i = 0; i < static_cast<long>(g_I.size()); ++i)
   {
-    for (vcl_size_t j = g_J[i].size(); j < g_I[i].size(); ++j)
-      g_I_q[i].push_back(g_I[i][j]);
+    for (vcl_size_t j = g_J[static_cast<vcl_size_t>(i)].size(); j < g_I[static_cast<vcl_size_t>(i)].size(); ++j)
+      g_I_q[static_cast<vcl_size_t>(i)].push_back(g_I[static_cast<vcl_size_t>(i)][j]);
 
-    for (vcl_size_t j = 0; j < g_I_u[i].size(); ++j)
-      g_I_q[i].push_back(g_I_u[i][j]);
+    for (vcl_size_t j = 0; j < g_I_u[static_cast<vcl_size_t>(i)].size(); ++j)
+      g_I_q[static_cast<vcl_size_t>(i)].push_back(g_I_u[static_cast<vcl_size_t>(i)][j]);
   }
 }
 
@@ -654,7 +654,7 @@ void block_update(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   {
     if (g_is_update[static_cast<vcl_size_t>(i)])
     {
-      if (buildAugmentedIndexSet<SparseVectorT, NumericT>(A_v_c, g_res[i], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
+      if (buildAugmentedIndexSet<SparseVectorT, NumericT>(A_v_c, g_res[static_cast<vcl_size_t>(i)], g_J[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], tag))
           buildNewRowSet(A_v_c, g_I[static_cast<vcl_size_t>(i)], g_J_u[static_cast<vcl_size_t>(i)], g_I_u[static_cast<vcl_size_t>(i)]);
     }
   }

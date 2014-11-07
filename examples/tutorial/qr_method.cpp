@@ -32,13 +32,11 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/qr-method.hpp"
 
-// Change to 'double' if supported by your hardware.
-typedef float ScalarType;
-
 
 /**
 * Helper routine for initializing a ViennaCL matrix and returning its associated eigenvalues
 **/
+template <typename ScalarType>
 void initialize(viennacl::matrix<ScalarType> & A, std::vector<ScalarType> & v)
 {
   // System matrix:
@@ -67,6 +65,7 @@ void initialize(viennacl::matrix<ScalarType> & A, std::vector<ScalarType> & v)
 /**
 *  Helper routine: Print an STL vector
 **/
+template <typename ScalarType>
 void vector_print(std::vector<ScalarType>& v )
 {
   for (unsigned int i = 0; i < v.size(); i++)
@@ -79,6 +78,9 @@ void vector_print(std::vector<ScalarType>& v )
 **/
 int main()
 {
+  // Change to 'double' if supported by your hardware.
+  typedef float ScalarType;
+
   std::cout << "Testing matrix of size " << 9 << "-by-" << 9 << std::endl;
 
   viennacl::matrix<ScalarType> A_input(9,9);

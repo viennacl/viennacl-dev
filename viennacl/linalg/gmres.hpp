@@ -131,7 +131,7 @@ namespace detail
     NumericT sigma = viennacl::linalg::norm_2(hh_vec);
     sigma *= sigma;
 
-    if (sigma == 0)
+    if (sigma <= 0)
     {
       beta = 0;
       mu = input_j;
@@ -295,8 +295,9 @@ viennacl::vector<ScalarType> solve(MatrixType const & A,
     //
     host_values_eta_k_buffer = host_values_xi_k;
 
-    for (int i=static_cast<int>(k)-1; i>-1; --i)
+    for (int i2=static_cast<int>(k)-1; i2>-1; --i2)
     {
+      vcl_size_t i = static_cast<vcl_size_t>(i2);
       for (vcl_size_t j=static_cast<vcl_size_t>(i)+1; j<k; ++j)
         host_values_eta_k_buffer[i] -= host_buffer_R[i + j*k] * host_values_eta_k_buffer[j];
 
@@ -360,7 +361,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag
 
   CPU_NumericType norm_rhs = viennacl::linalg::norm_2(rhs);
 
-  if (norm_rhs == 0) //solution is zero if RHS norm is zero
+  if (norm_rhs <= 0) //solution is zero if RHS norm is zero
     return result;
 
   tag.iters(0);
@@ -417,14 +418,14 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag
 
         //Householder rotations, part 1: Compute P_1 * P_2 * ... * P_{k-1} * e_{k-1}
         for (int i = static_cast<int>(k)-1; i > -1; --i)
-          detail::gmres_householder_reflect(v_k_tilde, householder_reflectors[i], betas[i]);
+          detail::gmres_householder_reflect(v_k_tilde, householder_reflectors[vcl_size_t(i)], betas[vcl_size_t(i)]);
 
         v_k_tilde_temp = viennacl::linalg::prod(matrix, v_k_tilde);
         precond.apply(v_k_tilde_temp);
         v_k_tilde = v_k_tilde_temp;
 
         //Householder rotations, part 2: Compute P_{k-1} * ... * P_{1} * v_k_tilde
-        for (unsigned int i = 0; i < k; ++i)
+        for (vcl_size_t i = 0; i < k; ++i)
           detail::gmres_householder_reflect(v_k_tilde, householder_reflectors[i], betas[i]);
       }
 
@@ -468,9 +469,10 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag
     // Triangular solver stage:
     //
 
-    for (int i=static_cast<int>(k)-1; i>-1; --i)
+    for (int i2=static_cast<int>(k)-1; i2>-1; --i2)
     {
-      for (vcl_size_t j=static_cast<vcl_size_t>(i)+1; j<k; ++j)
+      vcl_size_t i = static_cast<vcl_size_t>(i2);
+      for (vcl_size_t j=i+1; j<k; ++j)
         projection_rhs[i] -= R[j][i] * projection_rhs[j];     //R is transposed
 
       projection_rhs[i] /= R[i][i];
@@ -492,7 +494,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag
     // Form z inplace in 'res' by applying P_1 * ... * P_{k}
     //
     for (int i=static_cast<int>(k)-1; i>=0; --i)
-      detail::gmres_householder_reflect(res, householder_reflectors[i], betas[i]);
+      detail::gmres_householder_reflect(res, householder_reflectors[vcl_size_t(i)], betas[vcl_size_t(i)]);
 
     res *= rho_0;
     result += res;  // x += rho_0 * z    in the paper

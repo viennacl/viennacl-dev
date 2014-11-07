@@ -372,9 +372,9 @@ inline void execute_matrix_prod(statement const & s, statement_node const & root
       else
         throw statement_not_supported_exception("Invalid assignment type for matrix-vector product");
 
-      lhs_rhs_element y = root_node.lhs;
-      detail::axbx(y,
-                   y, 1.0, 1, false, false,
+      lhs_rhs_element y2 = root_node.lhs;
+      detail::axbx(y2,
+                   y2, 1.0, 1, false, false,
                    new_root_z.lhs, alpha, 1, false, false);
 
       detail::delete_element(new_root_z.lhs);

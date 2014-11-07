@@ -190,7 +190,7 @@ void copy(const ell_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
       {
         vcl_size_t offset = gpu_matrix.internal_size1() * ind + row;
 
-        if (elements[offset] == static_cast<NumericT>(0.0))
+        if (!elements[offset])
           continue;
 
         if (coords[offset] >= gpu_matrix.size2())

@@ -71,7 +71,7 @@ namespace viennacl
         v(j,0) = 1.0;
         project(v, range(j+1, A.size1()), range(0,1)) = project(A, range(j+1, A.size1()), range(j,j+1));
 
-        if (sigma == 0)
+        if (sigma <= 0)
           return 0;
         else
         {
@@ -540,12 +540,12 @@ namespace viennacl
           if (A.size2() > j + effective_block_size)
           {
 
-            VCLMatrixRange A_part(A, viennacl::range(j, A.size1()), viennacl::range(j+effective_block_size, A.size2()));
+            VCLMatrixRange A_part2(A, viennacl::range(j, A.size1()), viennacl::range(j+effective_block_size, A.size2()));
             VCLMatrixRange W_part(vclW, viennacl::range(j, A.size1()), viennacl::range(0, effective_block_size));
-            MatrixType temp = viennacl::linalg::prod(trans(W_part), A_part);
+            MatrixType temp = viennacl::linalg::prod(trans(W_part), A_part2);
 
-            A_part += viennacl::linalg::prod(viennacl::project(vclY, viennacl::range(j, A.size1()), viennacl::range(0, effective_block_size)),
-                                             temp);
+            A_part2 += viennacl::linalg::prod(viennacl::project(vclY, viennacl::range(j, A.size1()), viennacl::range(0, effective_block_size)),
+                                              temp);
           }
         }
 
@@ -592,7 +592,7 @@ namespace viennacl
         for (vcl_size_t i=col_index+1; i<A.size1(); ++i)
           v[i] = A(i, col_index);
 
-        if (betas[col_index] != 0)
+        if (betas[col_index] > 0 || betas[col_index] < 0)
           detail::householder_reflect(Q, v, betas[col_index], col_index);
       }
     }
