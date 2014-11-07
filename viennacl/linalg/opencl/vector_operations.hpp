@@ -76,9 +76,10 @@ void avbv(vector_base<NumericT> & x,
   assert(viennacl::traits::opencl_handle(y).context() == viennacl::traits::opencl_handle(z).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
   std::string kernel_name("assign_*v*v_****");
-  bool is_scalar_cpu = is_cpu_scalar<ScalarT1>::value;
-  kernel_name[7]  = is_scalar_cpu    ? 'h' : 'd';
-  kernel_name[9]  = is_scalar_cpu    ? 'h' : 'd';
+  bool is_scalar_cpu1 = is_cpu_scalar<ScalarT1>::value;
+  bool is_scalar_cpu2 = is_cpu_scalar<ScalarT2>::value;
+  kernel_name[7]  = is_scalar_cpu1   ? 'h' : 'd';
+  kernel_name[9]  = is_scalar_cpu2   ? 'h' : 'd';
   kernel_name[12] = flip_sign_alpha  ? '1' : '0';
   kernel_name[13] = reciprocal_alpha ? '1' : '0';
   kernel_name[14] = flip_sign_beta   ? '1' : '0';
@@ -98,9 +99,10 @@ void avbv_v(vector_base<NumericT> & x,
   assert(viennacl::traits::opencl_handle(y).context() == viennacl::traits::opencl_handle(z).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
   std::string kernel_name("ip_add_*v*v_****");
-  bool is_scalar_cpu = is_cpu_scalar<ScalarT1>::value;
-  kernel_name[7]  = is_scalar_cpu    ? 'h' : 'd';
-  kernel_name[9]  = is_scalar_cpu    ? 'h' : 'd';
+  bool is_scalar_cpu1 = is_cpu_scalar<ScalarT1>::value;
+  bool is_scalar_cpu2 = is_cpu_scalar<ScalarT2>::value;
+  kernel_name[7]  = is_scalar_cpu1    ? 'h' : 'd';
+  kernel_name[9]  = is_scalar_cpu2    ? 'h' : 'd';
   kernel_name[12] = flip_sign_alpha  ? '1' : '0';
   kernel_name[13] = reciprocal_alpha ? '1' : '0';
   kernel_name[14] = flip_sign_beta   ? '1' : '0';
