@@ -80,7 +80,7 @@ inline void execute_axbx(statement const & s, statement_node const & root_node)
     {
       statement_node const & y = expr[leaf.lhs.node_index];
 
-      if (y.op.type_family == OPERATION_BINARY_TYPE_FAMILY)
+      if (y.op.type_family == OPERATION_BINARY_TYPE_FAMILY || y.op.type_family == OPERATION_UNARY_TYPE_FAMILY)
       {
         // y might be  'v * alpha' or 'v / alpha' with {scalar|vector|matrix} v
         if (   (y.op.type == OPERATION_BINARY_MULT_TYPE || y.op.type == OPERATION_BINARY_DIV_TYPE)
@@ -161,7 +161,7 @@ inline void execute_axbx(statement const & s, statement_node const & root_node)
         }
       }
       else
-        throw statement_not_supported_exception("Cannot deal with unary operations on vectors");
+        throw statement_not_supported_exception("Cannot deal with unknown non-unary and non-binary operations on vectors");
 
     }
     else if (  leaf.lhs.type_family != COMPOSITE_OPERATION_FAMILY
@@ -169,7 +169,7 @@ inline void execute_axbx(statement const & s, statement_node const & root_node)
     {
       statement_node const & z = expr[leaf.rhs.node_index];
 
-      if (z.op.type_family == OPERATION_BINARY_TYPE_FAMILY)
+      if (z.op.type_family == OPERATION_BINARY_TYPE_FAMILY || z.op.type_family == OPERATION_UNARY_TYPE_FAMILY)
       {
         // z might be  'v * alpha' or 'v / alpha' with vector v
         if (   (z.op.type == OPERATION_BINARY_MULT_TYPE || z.op.type == OPERATION_BINARY_DIV_TYPE)
@@ -250,7 +250,7 @@ inline void execute_axbx(statement const & s, statement_node const & root_node)
         }
       }
       else
-        throw statement_not_supported_exception("Cannot deal with unary operations on vectors");
+        throw statement_not_supported_exception("Cannot deal with unknown non-unary and non-binary operations on vectors");
 
     }
     else if (  leaf.lhs.type_family == COMPOSITE_OPERATION_FAMILY
@@ -259,8 +259,8 @@ inline void execute_axbx(statement const & s, statement_node const & root_node)
       statement_node const & y = expr[leaf.lhs.node_index];
       statement_node const & z = expr[leaf.rhs.node_index];
 
-      if (   y.op.type_family == OPERATION_BINARY_TYPE_FAMILY
-             && z.op.type_family == OPERATION_BINARY_TYPE_FAMILY)
+      if (   (y.op.type_family == OPERATION_BINARY_TYPE_FAMILY || y.op.type_family == OPERATION_UNARY_TYPE_FAMILY)
+          && (z.op.type_family == OPERATION_BINARY_TYPE_FAMILY || z.op.type_family == OPERATION_UNARY_TYPE_FAMILY))
       {
         // z might be  'v * alpha' or 'v / alpha' with vector v
         if (   (y.op.type == OPERATION_BINARY_MULT_TYPE || y.op.type == OPERATION_BINARY_DIV_TYPE)
@@ -364,7 +364,7 @@ inline void execute_axbx(statement const & s, statement_node const & root_node)
         }
       }
       else
-        throw statement_not_supported_exception("Cannot deal with unary operations on vectors");
+        throw statement_not_supported_exception("Cannot deal with unknown non-unary and non-binary operations on vectors");
     }
     else
       throw statement_not_supported_exception("Cannot deal with addition of vectors");

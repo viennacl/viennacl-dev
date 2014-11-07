@@ -375,6 +375,44 @@ int run_test(double epsilon,
 
 #undef GENERATE_UNARY_OP_TEST
 
+  if (ublas_C.size1() == ublas_C.size2()) // transposition tests
+  {
+    std::cout << "z = element_fabs(x - trans(y))... ";
+    {
+    for (std::size_t i=0; i<ublas_C.size1(); ++i)
+      for (std::size_t j=0; j<ublas_C.size2(); ++j)
+        ublas_C(i,j) = std::fabs(ublas_A(i,j) - ublas_B(j,i));
+    viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_fabs((vcl_A) - trans(vcl_B)));
+    viennacl::scheduler::execute(my_statement);
+
+    if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+      return EXIT_FAILURE;
+    }
+
+    std::cout << "z = element_fabs(trans(x) - (y))... ";
+    {
+    for (std::size_t i=0; i<ublas_C.size1(); ++i)
+      for (std::size_t j=0; j<ublas_C.size2(); ++j)
+        ublas_C(i,j) = std::fabs(ublas_A(j,i) - ublas_B(i,j));
+    viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_fabs(trans(vcl_A) - (vcl_B)));
+    viennacl::scheduler::execute(my_statement);
+
+    if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+      return EXIT_FAILURE;
+    }
+
+    std::cout << "z = element_fabs(trans(x) - trans(y))... ";
+    {
+    for (std::size_t i=0; i<ublas_C.size1(); ++i)
+      for (std::size_t j=0; j<ublas_C.size2(); ++j)
+        ublas_C(i,j) = std::fabs(ublas_A(j,i) - ublas_B(j,i));
+    viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_fabs(trans(vcl_A) - trans(vcl_B)));
+    viennacl::scheduler::execute(my_statement);
+
+    if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+      return EXIT_FAILURE;
+    }
+  }
 
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
@@ -397,8 +435,8 @@ int run_test(double epsilon)
 
     std::size_t dim_rows = 131;
     std::size_t dim_cols = 33;
-    //std::size_t dim_rows = 5;
-    //std::size_t dim_cols = 3;
+    //std::size_t dim_rows = 4;
+    //std::size_t dim_cols = 4;
 
     //setup ublas objects:
     MatrixType ublas_A(dim_rows, dim_cols);
