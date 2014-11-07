@@ -24,7 +24,7 @@
 
 
 #include "viennacl/matrix.hpp"
-#include "viennacl/linalg/nmf_operations.hpp"
+#include "viennacl/linalg/nmf.hpp"
 
 // feel free to change this to 'double' if supported by your hardware.
 typedef float ScalarType;

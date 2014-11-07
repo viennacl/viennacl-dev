@@ -24,11 +24,11 @@
 #include <cmath>
 
 #include "viennacl/linalg/prod.hpp"
-#include "viennacl/linalg/nmf_operations.hpp"
+#include "viennacl/linalg/nmf.hpp"
 
 typedef float ScalarType;
 
-const ScalarType EPS = ScalarType(0.1);
+const ScalarType EPS = ScalarType(0.03);
 
 template<typename MATRIX>
 float matrix_compare(MATRIX & res, viennacl::matrix_base<ScalarType>& ref)
@@ -79,8 +79,8 @@ void test_nmf(std::size_t m, std::size_t k, std::size_t n)
   fill_random(h_nmf);
 
   viennacl::linalg::nmf_config conf;
-  conf.print_relative_error(false);
-  conf.max_iterations(5000); //5000 iterations are enough for the test
+  conf.print_relative_error(true);
+  conf.max_iterations(3000); //3000 iterations are enough for the test
 
   viennacl::linalg::nmf(v_ref, w_nmf, h_nmf, conf);
 
@@ -105,10 +105,9 @@ int main()
   std::cout << std::endl;
 
   test_nmf(3, 3, 3);
-  test_nmf(3, 2, 3);
+  test_nmf(5, 4, 5);
   test_nmf(16, 7, 12);
-  test_nmf(140, 73, 180);
-//  test_nmf(427, 21, 523); //takes to long
+  test_nmf(140, 86, 113);
 
   std::cout << std::endl;
   std::cout << "------- Test completed --------" << std::endl;
