@@ -29,7 +29,9 @@
 #include <iostream>
 
 // We don't need debug mode in UBLAS:
-#define BOOST_UBLAS_NDEBUG
+#ifndef NDEBUG
+  #define BOOST_UBLAS_NDEBUG
+#endif
 
 //
 // *** Boost
