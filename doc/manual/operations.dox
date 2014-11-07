@@ -59,6 +59,7 @@ The only dense matrix norm provided is `norm_frobenius()` for the Frobenius norm
 
 \note Mixing operations between objects of different scalar types is not supported. Convert the data manually on the host if needed.
 
+\warning The operator overloads make extensive use of expression templates. Do not use the C++11 keyword `auto` for the result type, as this might result in unexpected performance regressions or dangling references.
 
 \section manual-operations-blas2 Matrix-Vector Operations (BLAS Level 2)
 The interface for level 2 BLAS functions in ViennaCL is similar to that of Boost.uBLAS:
@@ -87,6 +88,8 @@ The interface for level 2 BLAS functions in ViennaCL is similar to that of Boost
 </table>
 <b>BLAS level 2 routines mapped to ViennaCL. Note that the free functions reside in namespace `viennacl::linalg`.<br /> `tag` is one out of `lower_tag`, `unit_lower_tag`, `upper_tag`, and `unit_upper_tag`.</b>
 </center>
+
+\warning The operator overloads make extensive use of expression templates. Do not use the C++11 keyword `auto` for the result type, as this might result in unexpected performance regressions or dangling references.
 
 \section manual-operations-blas3 Matrix-Matrix Operations (BLAS Level 3)
 
@@ -125,6 +128,8 @@ The OpenMP backend, however, currently provides only moderate performance and is
 </table>
 <b>BLAS level 3 routines mapped to ViennaCL. Note that the free functions reside in namespace `viennacl::linalg`</b>
 </center>
+
+\warning The operator overloads make extensive use of expression templates. Do not use the C++11 keyword `auto` for the result type, as this might result in unexpected performance regressions or dangling references.
 
 \section manual-operations-row-column-diagonal Row, Column, and Diagonal Extraction
 For many algorithms it is of interest to extract a single row or column of a dense matrix, or to access the matrix diagonal.
