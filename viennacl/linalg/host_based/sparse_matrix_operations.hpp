@@ -1261,7 +1261,7 @@ void prod_impl(const viennacl::ell_matrix<NumericT, AlignmentV> & mat,
       vcl_size_t offset = row + item_id * mat.internal_size1();
       NumericT val = elements[offset];
 
-      if (val)
+      if (bool(val))
       {
         unsigned int col = coords[offset];
         sum += (vec_buf[col * vec.stride() + vec.start()] * val);
@@ -1340,7 +1340,7 @@ void prod_impl(const viennacl::ell_matrix<NumericT, AlignmentV> & sp_mat,
         NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
         vcl_size_t sp_mat_col = static_cast<vcl_size_t>(sp_mat_coords[offset]);
 
-        if (sp_mat_val)
+        if (bool(sp_mat_val))
         {
           if (result.row_major())
             for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
@@ -1379,7 +1379,7 @@ void prod_impl(const viennacl::ell_matrix<NumericT, AlignmentV> & sp_mat,
           NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
           vcl_size_t sp_mat_col = static_cast<vcl_size_t>(sp_mat_coords[offset]);
 
-          if (sp_mat_val) {
+          if (bool(sp_mat_val)) {
             if (result.row_major())
               result_wrapper_row( row, col) += sp_mat_val * d_mat_wrapper_col( sp_mat_col, col);
             else
@@ -1463,7 +1463,7 @@ void prod_impl(const viennacl::ell_matrix<NumericT, AlignmentV> & sp_mat,
           NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
           vcl_size_t sp_mat_col = static_cast<vcl_size_t>(sp_mat_coords[offset]);
 
-          if (sp_mat_val)
+          if (bool(sp_mat_val))
           {
             if (result.row_major())
               result_wrapper_row( row, col) += sp_mat_val * d_mat_wrapper_row( col, sp_mat_col);
@@ -1500,7 +1500,7 @@ void prod_impl(const viennacl::ell_matrix<NumericT, AlignmentV> & sp_mat,
         NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
         vcl_size_t sp_mat_col = static_cast<vcl_size_t>(sp_mat_coords[offset]);
 
-        if (sp_mat_val)
+        if (bool(sp_mat_val))
         {
           if (result.row_major())
             for (vcl_size_t col = 0; col < d_mat.size2(); ++col)
@@ -1562,7 +1562,7 @@ void prod_impl(const viennacl::sliced_ell_matrix<NumericT, IndexT> & mat,
       {
         NumericT val = elements[stride_start + row_in_block];
 
-        result_values[row_in_block] += val ? vec_buf[column_indices[stride_start + row_in_block] * vec.stride() + vec.start()] * val : 0;
+        result_values[row_in_block] += bool(val) ? vec_buf[column_indices[stride_start + row_in_block] * vec.stride() + vec.start()] * val : 0;
       }
     }
 
@@ -1613,7 +1613,7 @@ void prod_impl(const viennacl::hyb_matrix<NumericT, AlignmentV> & mat,
       vcl_size_t offset = row + item_id * mat.internal_size1();
       NumericT val = elements[offset];
 
-      if (val)
+      if (bool(val))
       {
         unsigned int col = coords[offset];
         sum += (vec_buf[col * vec.stride() + vec.start()] * val);
@@ -1700,7 +1700,7 @@ void prod_impl(const viennacl::hyb_matrix<NumericT, AlignmentV> & mat,
         vcl_size_t offset = row + item_id * mat.internal_size1();
         NumericT val = elements[offset];
 
-        if (val)
+        if (bool(val))
         {
           vcl_size_t col = static_cast<vcl_size_t>(coords[offset]);
           if (d_mat.row_major())
@@ -1795,7 +1795,7 @@ void prod_impl(const viennacl::hyb_matrix<NumericT, AlignmentV> & mat,
         vcl_size_t offset = row + item_id * mat.internal_size1();
         NumericT val = elements[offset];
 
-        if (val)
+        if (bool(val))
         {
           vcl_size_t col = static_cast<vcl_size_t>(coords[offset]);
           if (d_mat.lhs().row_major())

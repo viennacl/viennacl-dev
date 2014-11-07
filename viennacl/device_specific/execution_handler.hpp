@@ -59,7 +59,7 @@ private:
   }
 
 public:
-  execution_handler(std::string const & program_name_base, viennacl::ocl::context & ctx, viennacl::ocl::device const & device, bool force_recompilation = false) : ctx_(ctx), device_(device), program_names_(2), init_done_(false)
+  execution_handler(std::string const & program_name_base, viennacl::ocl::context & ctx, viennacl::ocl::device const & device, bool force_recompilation = false) : ctx_(ctx), device_(device), program_names_(2)
   {
     lazy_programs_.reserve(2);
     init_program_compiler(program_name_base + "_0", force_recompilation);
@@ -94,7 +94,6 @@ private:
   container_type kernels_;
   std::vector<std::string> program_names_;
   std::vector<lazy_program_compiler> lazy_programs_;
-  bool init_done_;
 };
 
 }

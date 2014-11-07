@@ -56,10 +56,10 @@ void nmf(viennacl::matrix_base<NumericT> const & V,
   vcl_size_t k = W.size2();
   conf.iters_ = 0;
 
-  if (!viennacl::linalg::norm_frobenius(W))
+  if (!static_cast<bool>(viennacl::linalg::norm_frobenius(W)))
     W = viennacl::scalar_matrix<NumericT>(W.size1(), W.size2(), NumericT(1), ctx);
 
-  if (!viennacl::linalg::norm_frobenius(H))
+  if (!static_cast<bool>(viennacl::linalg::norm_frobenius(H)))
     H = viennacl::scalar_matrix<NumericT>(H.size1(), H.size2(), NumericT(1), ctx);
 
   viennacl::matrix_base<NumericT> wn(V.size1(), k, W.row_major(), ctx);

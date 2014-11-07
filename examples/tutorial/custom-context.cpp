@@ -57,7 +57,7 @@
 *            (in MATLAB notation this is 'result = v1 .* v2');<br />
 **/
 
-const char * my_compute_program =
+static const char * my_compute_program =
 "__kernel void elementwise_prod(\n"
 "          __global const float * vec1,\n"
 "          __global const float * vec2, \n"

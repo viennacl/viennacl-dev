@@ -177,7 +177,7 @@ std::vector<int> reorder(MatrixType const & matrix,
   std::vector<int> wvsh;
   int deg_min;
   int deg;
-  int ind_min;
+  int ind_min = 0;
 
   nodes.reserve(n);
 

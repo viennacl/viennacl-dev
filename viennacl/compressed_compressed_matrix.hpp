@@ -65,7 +65,7 @@ namespace detail
            ++col_it)
       {
         NumericT entry = *col_it;
-        if (entry)
+        if (bool(entry))
         {
           if (row_empty)
           {
@@ -131,7 +131,7 @@ void copy(const CPUMatrixT & cpu_matrix,
            col_it != row_it.end();
            ++col_it)
       {
-        if (*col_it)
+        if (bool(*col_it))
         {
           ++num_entries;
 
@@ -228,7 +228,7 @@ void copy(const compressed_compressed_matrix<NumericT> & gpu_matrix,
           return;
         }
 
-        if (elements[data_index])
+        if (bool(elements[data_index]))
           cpu_matrix(row_indices[i-1], col_buffer[data_index]) = elements[data_index];
         ++data_index;
       }

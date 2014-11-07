@@ -43,6 +43,17 @@
   #include "viennacl/vandermonde_matrix.hpp"
 #endif
 
+
+// forward declarations of global variables:
+extern viennacl::scalar<float> s1;
+extern viennacl::scalar<int>   s2;
+
+extern viennacl::vector<float> v1;
+extern viennacl::vector<int>   v2;
+
+extern viennacl::matrix<float> m1;
+
+// instantiation of global variables:
 viennacl::scalar<float>  s1;
 viennacl::scalar<int> s2;
 
