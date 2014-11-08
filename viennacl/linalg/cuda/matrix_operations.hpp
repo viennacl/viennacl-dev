@@ -1419,6 +1419,7 @@ void element_op(matrix_base<NumericT> & A,
 * Implementation of the convenience expressions result = prod(mat, vec); and result = prod(trans(mat), vec);
 *
 * @param mat    The matrix
+* @param mat_transpose Whether the matrix is to be transposed.
 * @param vec    The vector
 * @param result The result vector
 */
@@ -2481,9 +2482,9 @@ void scaled_rank_1_update(matrix_base<NumericT> & mat1,
 /** @brief This function stores the diagonal and the superdiagonal of a matrix in two vectors.
 *
 *
-* @param A    The matrix from which the vectors will be extracted of.
-* @param D    The vector in which the diagonal of the matrix will be stored in.
-* @param S    The vector in which the superdiagonal of the matrix will be stored in.
+* @param A     The matrix from which the vectors will be extracted of.
+* @param dh    The vector in which the diagonal of the matrix will be stored in.
+* @param sh    The vector in which the superdiagonal of the matrix will be stored in.
 */
 template <typename NumericT, typename VectorType>
 void bidiag_pack(matrix_base<NumericT> & A,
@@ -2691,27 +2692,27 @@ void house_update_QL(matrix_base<NumericT> & Q,
 * @param m       Data from the tql2 algorithm.
 */
 template<typename NumericT>
-void givens_next(matrix_base<NumericT> & matrix,
+void givens_next(matrix_base<NumericT> & Q,
                  vector_base<NumericT>& tmp1,
                  vector_base<NumericT>& tmp2,
                  int l,
                  int m)
   {
   if (matrix.row_major())
-    givens_next_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(matrix),
+    givens_next_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(Q),
                                      detail::cuda_arg<NumericT>(tmp1),
                                      detail::cuda_arg<NumericT>(tmp2),
-                                     static_cast<unsigned int>(viennacl::traits::size1(matrix)),
-                                     static_cast<unsigned int>(viennacl::traits::internal_size2(matrix)),
+                                     static_cast<unsigned int>(viennacl::traits::size1(Q)),
+                                     static_cast<unsigned int>(viennacl::traits::internal_size2(Q)),
                                      static_cast<unsigned int>(l),
                                      static_cast<unsigned int>(m - 1));
 
   else
-    givens_next_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(matrix),
+    givens_next_column_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(Q),
                                      detail::cuda_arg<NumericT>(tmp1),
                                      detail::cuda_arg<NumericT>(tmp2),
-                                     static_cast<unsigned int>(viennacl::traits::size1(matrix)),
-                                     static_cast<unsigned int>(viennacl::traits::internal_size1(matrix)),
+                                     static_cast<unsigned int>(viennacl::traits::size1(Q)),
+                                     static_cast<unsigned int>(viennacl::traits::internal_size1(Q)),
                                      static_cast<unsigned int>(l),
                                      static_cast<unsigned int>(m - 1));
   }

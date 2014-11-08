@@ -110,7 +110,6 @@ namespace detail
 * @param A          The system matrix
 * @param rhs        The load vector
 * @param tag        Solver configuration tag
-* @param precond    A preconditioner. Precondition operation is done via member function apply()
 * @return The result vector
 */
 //template<typename MatrixType, typename ScalarType>

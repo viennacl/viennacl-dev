@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Eigenvalues: Symmetric Tridiagonal Matrices"
+/** \example tql2.cpp
 *
 *   This tutorial explains how one can use the tql-algorithm to compute the eigenvalues of tridiagonal matrices.
 *

@@ -123,8 +123,10 @@ namespace detail
 ////////////////// upper triangular solver (upper_tag) //////////////////////////////////////
 /** @brief Direct inplace solver for triangular systems with multiple right hand sides, i.e. A \ B   (MATLAB notation)
 *
-* @param A      The system matrix
-* @param B      The matrix of row vectors, where the solution is directly written to
+* @param A        The system matrix
+* @param trans_A  Whether A is to be transposed
+* @param B        The matrix of row vectors, where the solution is directly written to
+* @param trans_B  Whether B is to be transposed
 */
 template<typename NumericT, typename SolverTagT>
 void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,

@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "MTL4: Iterative Solvers"
+/** \example iterative-mtl4.cpp
 *
 *   The following tutorial shows how to use the iterative solvers in ViennaCL with objects from the <a href="http://www.mtl4.org/">MTL4 Library</a> directly.
 *

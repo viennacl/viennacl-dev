@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/**  \example "Structured Matrices"
+/**  \example structured-matrices.cpp
 *
 *   In this tutorial we demonstrate the use of structured dense matrices (Circulant matrix, Hankel matrix, Toeplitz matrix, Vandermonde matrix).
 *

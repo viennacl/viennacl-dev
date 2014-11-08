@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "uBLAS: Iterative Solvers"
+/** \example iterative-ublas.cpp
 *
 *   In this example we show how one can use the iterative solvers in ViennaCL with objects from Boost.uBLAS.
 *

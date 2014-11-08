@@ -142,7 +142,7 @@ Note that FSPAI depends on the ordering of the unknowns, thus bandwidth reductio
 \section manual-additional-algorithms-fft Fast Fourier Transform
 
 Since there is no standardized complex type in OpenCL at the time of the release of ViennaCL, vectors need to be set up with real- and imaginary part before computing a fast Fourier transform (FFT).
-In order to store complex numbers \f$ z_0 \f$, \f$ z_1 \f$, etc. in a `viennacl::vector`, say `v`, the real and imaginary parts are mapped to even and odd entries of \lstinline|v| respectively:
+In order to store complex numbers \f$ z_0 \f$, \f$ z_1 \f$, etc. in a `viennacl::vector`, say `v`, the real and imaginary parts are mapped to even and odd entries of `v` respectively:
 `v[0] = Real(z_0)`, `v[1] = Imag(z_0)`, `v[2] = Real(z_1)`, `v[3] = Imag(z_1)`, etc.
 
 The FFT of `v` can then be computed either by writing to a second vector `output` or by directly writing the result to `v`

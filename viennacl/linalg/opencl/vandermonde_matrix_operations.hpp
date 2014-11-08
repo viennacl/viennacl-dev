@@ -39,11 +39,11 @@ namespace opencl
 
 /** @brief Carries out matrix-vector multiplication with a vandermonde_matrix
 *
-* Implementation of the convenience expression result = prod(mat, vec);
+* Implementation of the convenience expression y = prod(A, x);
 *
-* @param mat    The matrix
-* @param vec    The vector
-* @param result The result vector
+* @param A    The Vandermonde matrix
+* @param x    The vector
+* @param y    The result vector
 */
 template<typename NumericT, unsigned int AlignmentV>
 void prod_impl(viennacl::vandermonde_matrix<NumericT, AlignmentV> const & A,

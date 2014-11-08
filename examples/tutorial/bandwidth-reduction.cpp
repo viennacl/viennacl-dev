@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Matrix Bandwidth Reduction"
+/** \example bandwidth-reduction.cpp
 *
 *  This tutorial shows how the bandwidth of the nonzero pattern of a sparse matrix can be reduced by renumbering the unknowns (i.e. rows and columns).
 *  Such a reordering can significantly improve cache reuse for algorithms such as sparse matrix-vector products and may also reduce the iteration required in iterative solvers.

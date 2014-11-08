@@ -165,10 +165,9 @@ namespace detail
 *
 * Following algorithm 2.1 proposed by Walker in "A Simpler GMRES", but uses classical Gram-Schmidt instead of modified Gram-Schmidt for better parallelization.
 *
-* @param matrix     The system matrix
+* @param A          The system matrix
 * @param rhs        The load vector
 * @param tag        Solver configuration tag
-* @param precond    A preconditioner. Precondition operation is done via member function apply()
 * @return The result vector
 */
 template <typename MatrixType, typename ScalarType>

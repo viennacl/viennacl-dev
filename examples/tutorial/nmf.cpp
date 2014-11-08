@@ -15,7 +15,7 @@
  License:         MIT (X11), see file LICENSE in the base directory
  ============================================================================= */
 
-/** \example "Nonnegative Matrix Factorization"
+/** \example nmf.cpp
 *
 *   This tutorial explains how to use the nonnegative matrix factorization (NMF) functionality in ViennaCL.
 *

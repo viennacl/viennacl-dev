@@ -16,7 +16,7 @@
 ============================================================================= */
 
 
-/** \example "MTL4: Exchange data with ViennaCL"
+/** \example mtl4-with-viennacl.cpp
 *
 *   This tutorial shows how data can be directly transferred from the <a href="http://www.mtl4.org/">MTL4 Library</a> to ViennaCL objects using the built-in convenience wrappers.
 *

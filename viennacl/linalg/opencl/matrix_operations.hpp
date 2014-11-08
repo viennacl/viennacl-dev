@@ -254,9 +254,10 @@ void element_op(matrix_base<NumericT> & A,
 *
 * Implementation of the convenience expression result = prod(A, vec);
 *
-* @param mat    The matrix
-* @param vec    The vector
-* @param result The result vector
+* @param A        The matrix
+* @param trans_A  Whether the matrix A should be transposed
+* @param vec      The vector
+* @param result   The result vector
 */
 template<typename NumericT>
 void prod_impl(const matrix_base<NumericT> & A, bool trans_A,

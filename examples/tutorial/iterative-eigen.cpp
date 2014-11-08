@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Eigen: Iterative Solvers from ViennaCL"
+/** \example iterative-eigen.cpp
 *
 *   The following tutorial shows how to use the iterative solvers in ViennaCL with objects from the <a href="http://eigen.tuxfamily.org/">Eigen Library</a> directly.
 *

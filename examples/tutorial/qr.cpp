@@ -16,7 +16,7 @@
 ============================================================================= */
 
 
-/** \example "QR Factorization of Dense Matrices"
+/** \example qr.cpp
 *
 *   This tutorial shows how the QR factorization of matrices from ViennaCL or Boost.uBLAS can be computed.
 *

@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Using the Low-Level Scheduler"
+/** \example scheduler.cpp
 *
 *   This tutorial show how to use the low-level scheduler to generate efficient custom OpenCL kernels at run time.
 *   The purpose of the scheduler is to provide a low-level interface for interfacing ViennaCL from languages other than C++,

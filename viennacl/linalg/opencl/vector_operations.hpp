@@ -273,7 +273,7 @@ void inner_prod_cpu(vector_base<NumericT> const & x,
 
 /** @brief Computes the l^1-norm of a vector
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -288,7 +288,7 @@ void norm_1_impl(vector_base<NumericT> const & x,
 
 /** @brief Computes the l^1-norm of a vector with final reduction on CPU
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -307,7 +307,7 @@ void norm_1_cpu(vector_base<NumericT> const & x,
 
 /** @brief Computes the l^2-norm of a vector - implementation using OpenCL summation at second step
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -322,7 +322,7 @@ void norm_2_impl(vector_base<NumericT> const & x,
 
 /** @brief Computes the l^1-norm of a vector with final reduction on CPU
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -340,7 +340,7 @@ void norm_2_cpu(vector_base<NumericT> const & x,
 
 /** @brief Computes the supremum-norm of a vector
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -355,7 +355,7 @@ void norm_inf_impl(vector_base<NumericT> const & x,
 
 /** @brief Computes the supremum-norm of a vector
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -375,7 +375,7 @@ void norm_inf_cpu(vector_base<NumericT> const & x,
 // are ambiguous
 /** @brief Computes the index of the first entry that is equal to the supremum-norm in modulus.
 *
-* @param vec The vector
+* @param x The vector
 * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
 */
 template<typename NumericT>
@@ -392,7 +392,7 @@ cl_uint index_norm_inf(vector_base<NumericT> const & x)
 
 /** @brief Computes the maximum of a vector
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -407,7 +407,7 @@ void max_impl(vector_base<NumericT> const & x,
 
 /** @brief Computes the supremum-norm of a vector
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -424,7 +424,7 @@ void max_cpu(vector_base<NumericT> const & x,
 
 /** @brief Computes the minimum of a vector
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>
@@ -439,7 +439,7 @@ void min_impl(vector_base<NumericT> const & x,
 
 /** @brief Computes the supremum-norm of a vector
 *
-* @param vec The vector
+* @param x      The vector
 * @param result The result scalar
 */
 template<typename NumericT>

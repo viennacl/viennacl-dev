@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Multiple Conjugate Gradient Solvers (one per Context)"
+/** \example multithreaded_cg.cpp
 *
 *   This tutorial shows how to run multiple instances of a conjugate gradient solver, one instance per GPU.
 *

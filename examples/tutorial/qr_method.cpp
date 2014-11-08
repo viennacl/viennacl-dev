@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Eigenvalues: QR method for dense systems"
+/** \example qr_method.cpp
 *
 * In this tutorial the eigenvalues and eigenvectors of a symmetric 9-by-9 matrix are calculated using the QR-method.
 *

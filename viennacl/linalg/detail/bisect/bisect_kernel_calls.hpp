@@ -18,7 +18,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/linalg/detail/bisect_kernel_calls.hpp
+/** @file viennacl/linalg/detail/bisect/bisect_kernel_calls.hpp
     @brief Kernel calls for the bisection algorithm
 
     Implementation based on the sample provided with the CUDA 6.0 SDK, for which

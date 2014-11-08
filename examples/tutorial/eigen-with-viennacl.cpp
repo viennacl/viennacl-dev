@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Eigen: Exchange data with ViennaCL"
+/** \example eigen-with-viennacl.cpp
 *
 *   This tutorial shows how data can be directly transferred from the <a href="http://eigen.tuxfamily.org/">Eigen Library</a> to ViennaCL objects using the built-in convenience wrappers.
 *

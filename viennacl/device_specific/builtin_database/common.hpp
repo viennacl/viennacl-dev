@@ -1,6 +1,28 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_COMMON_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_COMMON_HPP_
 
+/* =========================================================================
+   Copyright (c) 2010-2014, Institute for Microelectronics,
+                            Institute for Analysis and Scientific Computing,
+                            TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
+
+                            -----------------
+                  ViennaCL - The Vienna Computing Library
+                            -----------------
+
+   Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
+
+   (A list of authors and contributors can be found in the PDF manual)
+
+   License:         MIT (X11), see file LICENSE in the base directory
+============================================================================= */
+
+/** @file viennacl/device_specific/builtin_database/common.hpp
+*
+* Common routines such as device lookup for the built-in device database.
+*/
+
 #include "viennacl/ocl/device_utils.hpp"
 
 #include "viennacl/scheduler/forwards.h"

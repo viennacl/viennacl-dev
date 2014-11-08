@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Sparse Approximate Inverse Preconditioner"
+/** \example spai.cpp
 *
 *   This tutorial shows how to use the sparse approximate inverse (SPAI) preconditioner.
 *

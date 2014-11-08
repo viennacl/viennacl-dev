@@ -116,9 +116,9 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
 *
 * Implementation of the convenience expression y = prod(sp_A, d_A);
 *
-* @param sp_mat     The sparse matrix
-* @param d_mat      The dense matrix
-* @param y     The y matrix
+* @param sp_A     The sparse matrix
+* @param d_A      The dense matrix
+* @param y        The y matrix
 */
 template< typename NumericT, unsigned int AlignmentV>
 void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & sp_A,
@@ -148,9 +148,9 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & sp_A,
 *
 * Implementation of the convenience expression y = prod(sp_A, d_A);
 *
-* @param sp_mat             The sparse matrix
-* @param d_mat              The transposed dense matrix
-* @param y             The y matrix
+* @param sp_A             The sparse matrix
+* @param d_A              The transposed dense matrix
+* @param y                The y matrix
 */
 template<typename NumericT, unsigned int AlignmentV>
 void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & sp_A,
@@ -574,7 +574,7 @@ void prod_impl(viennacl::coordinate_matrix<NumericT, AlignmentV> const & A,
 * Implementation of the convenience expression y = prod(A, B); with A being sparse (COO) and B being dense
 *
 * @param A    The sparse matrix (COO forA)
-* @param d_mat  The dense matrix
+* @param d_A  The dense matrix
 * @param y the result vector
 */
 template<typename NumericT, unsigned int AlignmentV>
@@ -615,7 +615,7 @@ void prod_impl(viennacl::coordinate_matrix<NumericT, AlignmentV> const & A,
 * Implementation of the convenience expression y = prod(A, trans(B)); with A being sparse (COO) and B being dense
 *
 * @param A    The sparse matrix (COO forA)
-* @param d_mat  The dense matrix
+* @param d_A  The dense matrix
 * @param y the result vector
 */
 template<typename NumericT, unsigned int AlignmentV>
@@ -714,9 +714,9 @@ void prod_impl(viennacl::ell_matrix<NumericT, AlignmentV> const & A,
 * Implementation of the convenience expression y = prod(sp_A, d_A);
 * sp_mat being in ELL format
 *
-* @param sp_mat     The sparse matrix (ELL)
-* @param d_mat      The dense matrix
-* @param y     The y matrix
+* @param sp_A     The sparse matrix (ELL)
+* @param d_A      The dense matrix
+* @param y        The y matrix
 */
 template<typename NumericT, unsigned int AlignmentV>
 void prod_impl(viennacl::ell_matrix<NumericT, AlignmentV> const & sp_A,
@@ -759,9 +759,9 @@ void prod_impl(viennacl::ell_matrix<NumericT, AlignmentV> const & sp_A,
 * Implementation of the convenience expression y = prod(sp_A, trans(d_A));
 * sp_mat being in ELL format
 *
-* @param sp_mat     The sparse matrix (ELL)
-* @param d_mat      The dense transposed matrix
-* @param y     The y matrix
+* @param sp_A     The sparse matrix (ELL)
+* @param d_A      The dense transposed matrix
+* @param y        The y matrix
 */
 template<typename NumericT, unsigned int AlignmentV>
 void prod_impl(viennacl::ell_matrix<NumericT, AlignmentV> const & sp_A,

@@ -53,7 +53,7 @@ If OpenCL is to be used with GPUs, suitable drivers have to be installed.
 This section describes how these can be acquired.
 For Mac OS X systems there is no need to install an OpenCL capable driver and the corresponding library.
 The OpenCL library is already present if a suitable graphics card is present.
-The setup of ViennaCL on Mac OS X is outlined \ref manual-installation-macos here.
+The setup of ViennaCL on Mac OS X is outlined \ref manual-installation-examples-macos here.
 
 \subsection manual-installation-opencl-nvidia NVIDIA Driver
 NVIDIA provides the OpenCL library with the GPU driver.
@@ -69,7 +69,7 @@ AMD has provided the OpenCL library with the Accelerated Parallel Processing (AP
 Currently the OpenCL library is also included in the GPU driver.
 In doubt, make sure you have both the AMD APP SDK and the latest GPU driver installed.
 The latest tested version of the AMD APP SDK is 2.9, yet newer releases usually work as well.
-If {\ViennaCL} is to be run on multi-core CPUs with OpenCL, no additional GPU driver is required.
+If ViennaCL is to be run on multi-core CPUs with OpenCL, no additional GPU driver is required.
 The installation notes of the APP SDK provides guidance throughout the installation process \cite atistreamdocu.
 
 If the AMD APP SDK is installed in a non-system wide location on UNIX-based systems, be sure to add the OpenCL library path to the <tt>LD_LIBRARY_PATH</tt> environment variable.
@@ -89,23 +89,23 @@ The correct linker path is set automatically in <tt>CMakeLists.txt</tt> when usi
 \section manual-installation-backends Enabling OpenMP, OpenCL, or CUDA Backends
 
 <b>The default behavior since ViennaCL 1.4.0 is to use the CPU backend.
-OpenCL and CUDA backends need to be enabled by appropriate preprocessor <tt>#define</tt>s.</b>
+OpenCL and CUDA backends need to be enabled by appropriate preprocessor \#`define`s.</b>
 
 
 <center>
 <table>
-<tr><th>Preprocessor <tt>#define</tt>  </th><th>Default computing backend</th></tr>
-<tr><td> none                          </td><td>CPU, single-threaded</td></tr>
-<tr><td> <tt>VIENNACL_WITH_OPENMP</tt> </td><td>CPU with OpenMP (compiler flags required)</td></tr>
-<tr><td> <tt>VIENNACL_WITH_OPENCL</tt> </td><td>OpenCL</td></tr>
-<tr><td> <tt>VIENNACL_WITH_CUDA</tt>    </td><td>CUDA</td></tr>
+<tr><th>Preprocessor \#`define`  </th><th>Default computing backend</th></tr>
+<tr><td> none                   </td><td>CPU, single-threaded</td></tr>
+<tr><td> `VIENNACL_WITH_OPENMP` </td><td>CPU with OpenMP (compiler flags required)</td></tr>
+<tr><td> `VIENNACL_WITH_OPENCL` </td><td>OpenCL</td></tr>
+<tr><td> `VIENNACL_WITH_CUDA`   </td><td>CUDA</td></tr>
 </table>
 </center>
 
 The preprocessor constants can be either defined at the beginning of the source file (prior to any ViennaCL-includes), or passed to the compiler as command line argument.
-For example, on <tt>g++</tt> the respective command line option for enabling the OpenCL backend is <tt>-DVIENNACL_WITH_OPENCL</tt>.
-<b>Note that CUDA requires the <tt>nvcc</tt> compiler.</b>
-Furthermore, the use of OpenMP usually requires additional compiler flags (on <tt>g++</tt> this is for example <tt>-fopenmp</tt>).
+For example, on `g++` the respective command line option for enabling the OpenCL backend is `-DVIENNACL_WITH_OPENCL`.
+<b>Note that CUDA requires the `nvcc` compiler.</b>
+Furthermore, the use of OpenMP usually requires additional compiler flags (on `g++` this is for example `-fopenmp`).
 
 Multiple backends can be used simultaneously.
 In such case, CUDA has higher priority than OpenCL, which has higher priority over the CPU backend when it comes to selecting the default backend.
@@ -155,7 +155,7 @@ Other dependencies are as follows:
 <tr><td><tt>benchmarks/sparse.cpp/cu</tt>           </td><td> uBLAS  </td></tr>
 <tr><td><tt>benchmarks/vector.cpp/cu</tt>           </td><td> -      </td></tr>
 </table>
-<b>Dependencies for the examples in the <tt>examples/</tt> folder. Examples using the CUDA-backend use the \lstinline|.cu| file extension.
+<b>Dependencies for the examples in the `examples/` folder. Examples using the CUDA-backend use the `.cu` file extension.
 Note that all examples can be run using either of the CPU, OpenCL, and CUDA backend unless an explicit OpenCL-dependency is stated.</b>
 </center>
 
@@ -200,16 +200,16 @@ If some of the dependencies in the table of examples above are not fulfilled, yo
     $> make blas1             #builds the blas level 1 tutorial
     $> make vectorbench       #builds vector benchmarks
 
-Speed up the building process by using jobs, e.g. <tt>make -j4</tt>.
+Speed up the building process by using jobs, e.g. `make -j4`.
 
-Execute the examples from the <tt>build/</tt> folder as follows:
+Execute the examples from the `build/` folder as follows:
 
     $> examples/tutorial/blas1
     $> examples/benchmarks/vectorbench
 
-Note that all benchmark executables carry the suffix \lstinline|bench|.
+Note that all benchmark executables carry the suffix `bench`.
 
-You may also use the CMake-GUI via <tt>cmake-gui ..</tt> within the <tt>build/</tt> folder in order to enable or disable optional libraries conveniently.
+You may also use the CMake-GUI via `cmake-gui ..` within the `build/` folder in order to enable or disable optional libraries conveniently.
 
 \subsection manual-installation-examples-macos Mac OS X
 
@@ -217,7 +217,7 @@ For the GCC compiler suite the Xcode \cite xcode package has to be installed.
 To install CMake and Boost, external portation tools have to be used, for example, Fink \cite fink , DarwinPorts \cite darwinports , or MacPorts \cite macports . Such portation tools provide the aforementioned packages, CMake and Boost, for Mac OS.
 
 If the CMake build system has problems detecting your Boost libraries, determine the location of your Boost folder.
-Provide the path using either the CMake GUI, or by passing <tt>-DBOOST_DIR=/path/to/boost/</tt> to the CMake executable.
+Provide the path using either the CMake GUI, or by passing `-DBOOST_DIR=/path/to/boost/` to the CMake executable.
 
 The build process of ViennaCL on Mac OS is similar to Linux.
 

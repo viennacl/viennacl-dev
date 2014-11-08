@@ -50,11 +50,10 @@ namespace kernels
 
   }
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Compute the next lower power of two of n
-  //! @param  n  number for which next higher power of two is seeked
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for computing the next lower power of two of n
+   *
+   * n ...  number for which next higher power of two is seeked
+   **/
   template <typename StringType>
   void generate_bisect_kernel_floorPow2(StringType & source, std::string const & numeric_string)
   {
@@ -67,7 +66,6 @@ namespace kernels
   source.append("         uint grp_nm = get_num_groups(0); \n");
   source.append("         uint lcl_id = get_local_id(0); \n");
   source.append("         uint lcl_sz = get_local_size(0); \n");
-
 
       // early out if already power of two
   source.append("         if (0 == (n & (n-1)))  \n");
@@ -83,11 +81,10 @@ namespace kernels
   }
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Compute the next higher power of two of n
-  //! @param  n  number for which next higher power of two is seeked
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for computing the next higher power of two of n
+   *
+   *  n ...  number for which next higher power of two is seeked
+   */
   template <typename StringType>
   void generate_bisect_kernel_ceilPow2(StringType & source, std::string const & numeric_string)
   {
@@ -115,13 +112,11 @@ namespace kernels
   }
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Compute midpoint of interval [\a left, \a right] avoiding overflow if
-  //! possible
-  //! @param left   left / lower limit of interval
-  //! @param right  right / upper limit of interval
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for computing the midpoint of an interval [left, right] avoiding overflow if possible
+   *
+   * left  ...  left / lower limit of interval
+   * right ...  right / upper limit of interval
+   */
   template <typename StringType>
   void generate_bisect_kernel_computeMidpoint(StringType & source, std::string const & numeric_string)
   {
@@ -152,22 +147,19 @@ namespace kernels
   }
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Check if interval converged and store appropriately
-  //! @param  addr    address where to store the information of the interval
-  //! @param  s_left  shared memory storage for left interval limits
-  //! @param  s_right  shared memory storage for right interval limits
-  //! @param  s_left_count  shared memory storage for number of eigenvalues less
-  //!                       than left interval limits
-  //! @param  s_right_count  shared memory storage for number of eigenvalues less
-  //!                       than right interval limits
-  //! @param  left   lower limit of interval
-  //! @param  right  upper limit of interval
-  //! @param  left_count  eigenvalues less than \a left
-  //! @param  right_count  eigenvalues less than \a right
-  //! @param  precision  desired precision for eigenvalues
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for checking if interval converged and store appropriately
+   *
+   *  addr          address where to store the information of the interval
+   *  s_left        shared memory storage for left interval limits
+   *  s_right       shared memory storage for right interval limits
+   *  s_left_count  shared memory storage for number of eigenvalues less than left interval limits
+   *  s_right_count shared memory storage for number of eigenvalues less than right interval limits
+   *  left          lower limit of interval
+   *  right  upper  limit of interval
+   *  left_count    eigenvalues less than \a left
+   *  right_count   eigenvalues less than \a right
+   *  precision     desired precision for eigenvalues
+   */
   template<typename StringType>
   void generate_bisect_kernel_storeInterval(StringType & source, std::string const & numeric_string)
   {
@@ -270,25 +262,18 @@ namespace kernels
   }
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Compute number of eigenvalues that are smaller than x given a symmetric,
-  //! real, and tridiagonal matrix
-  //! @param  g_d  diagonal elements stored in global memory
-  //! @param  g_s  superdiagonal elements stored in global memory
-  //! @param  n    size of matrix
-  //! @param  x    value for which the number of eigenvalues that are smaller is
-  //!              seeked
-  //! @param  tid  thread identified (e.g. threadIdx.x or gtid)
-  //! @param  num_intervals_active  number of active intervals / threads that
-  //!                               currently process an interval
-  //! @param  s_d  scratch space to store diagonal entries of the tridiagonal
-  //!              matrix in shared memory
-  //! @param  s_s  scratch space to store superdiagonal entries of the tridiagonal
-  //!              matrix in shared memory
-  //! @param  converged  flag if the current thread is already converged (that
-  //!         is count does not have to be computed)
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** OpenCL function for computing the number of eigenvalues that are smaller than x given a symmetric, real, and tridiagonal matrix
+   *
+   *  g_d                   diagonal elements stored in global memory
+   *  g_s                   superdiagonal elements stored in global memory
+   *  n                     size of matrix
+   *  x                     value for which the number of eigenvalues that are smaller is sought
+   *  tid                   thread identified (e.g. threadIdx.x or gtid)
+   *  num_intervals_active  number of active intervals / threads that currently process an interval
+   *  s_d                   scratch space to store diagonal entries of the tridiagonal matrix in shared memory
+   *  s_s                   scratch space to store superdiagonal entries of the tridiagonal matrix in shared memory
+   *  converged             flag if the current thread is already converged (that is count does not have to be computed)
+   */
   template <typename StringType>
   void generate_bisect_kernel_computeNumSmallerEigenvals(StringType & source, std::string const & numeric_string)
   {
@@ -347,24 +332,18 @@ namespace kernels
 
 
   ////////////////////////////////////////////////////////////////////////////////
-  //! Compute number of eigenvalues that are smaller than x given a symmetric,
-  //! real, and tridiagonal matrix
-  //! @param  g_d  diagonal elements stored in global memory
-  //! @param  g_s  superdiagonal elements stored in global memory
-  //! @param  n    size of matrix
-  //! @param  x    value for which the number of eigenvalues that are smaller is
-  //!              seeked
-  //! @param  tid  thread identified (e.g. threadIdx.x or gtid)
-  //! @param  num_intervals_active  number of active intervals / threads that
-  //!                               currently process an interval
-  //! @param  s_d  scratch space to store diagonal entries of the tridiagonal
-  //!              matrix in shared memory
-  //! @param  s_s  scratch space to store superdiagonal entries of the tridiagonal
-  //!              matrix in shared memory
-  //! @param  converged  flag if the current thread is already converged (that
-  //!         is count does not have to be computed)
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** OpenCL function for computing the number of eigenvalues that are smaller than x given a symmetric, real, and tridiagonal matrix
+   *
+   *  g_d  diagonal elements stored in global memory
+   *  g_s  superdiagonal elements stored in global memory
+   *  n    size of matrix
+   *  x    value for which the number of eigenvalues that are smaller is sought
+   *  tid  thread identified (e.g. threadIdx.x or gtid)
+   *  num_intervals_active  number of active intervals / threads that currently process an interval
+   *  s_d  scratch space to store diagonal entries of the tridiagonal matrix in shared memory
+   *  s_s  scratch space to store superdiagonal entries of the tridiagonal matrix in shared memory
+   *  converged  flag if the current thread is already converged (that is count does not have to be computed)
+   */
   template <typename StringType>
   void generate_bisect_kernel_computeNumSmallerEigenvalsLarge(StringType & source, std::string const & numeric_string)
   {
@@ -433,31 +412,25 @@ namespace kernels
   }
 
   ////////////////////////////////////////////////////////////////////////////////
-  //! Store all non-empty intervals resulting from the subdivision of the interval
-  //! currently processed by the thread
-  //! @param  addr  base address for storing intervals
-  //! @param  num_threads_active  number of threads / intervals in current sweep
-  //! @param  s_left  shared memory storage for left interval limits
-  //! @param  s_right  shared memory storage for right interval limits
-  //! @param  s_left_count  shared memory storage for number of eigenvalues less
-  //!                       than left interval limits
-  //! @param  s_right_count  shared memory storage for number of eigenvalues less
-  //!                       than right interval limits
-  //! @param  left   lower limit of interval
-  //! @param  mid    midpoint of interval
-  //! @param  right  upper limit of interval
-  //! @param  left_count  eigenvalues less than \a left
-  //! @param  mid_count  eigenvalues less than \a mid
-  //! @param  right_count  eigenvalues less than \a right
-  //! @param  precision  desired precision for eigenvalues
-  //! @param  compact_second_chunk  shared mem flag if second chunk is used and
-  //!                               ergo requires compaction
-  //! @param  s_compaction_list_exc  helper array for stream compaction,
-  //!                                s_compaction_list_exc[tid] = 1 when the
-  //!                                thread generated two child intervals
-  //! @is_active_interval  mark is thread has a second non-empty child interval
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** OpenCL function for Storing all non-empty intervals resulting from the subdivision of the interval currently processed by the thread
+   *
+   *  addr                base address for storing intervals
+   *  num_threads_active  number of threads / intervals in current sweep
+   *  s_left              shared memory storage for left interval limits
+   *  s_right             shared memory storage for right interval limits
+   *  s_left_count        shared memory storage for number of eigenvalues less than left interval limits
+   *  s_right_count       shared memory storage for number of eigenvalues less than right interval limits
+   *  left                lower limit of interval
+   *  mid                 midpoint of interval
+   *  right               upper limit of interval
+   *  left_count          eigenvalues less than \a left
+   *  mid_count           eigenvalues less than \a mid
+   *  right_count         eigenvalues less than \a right
+   *  precision              desired precision for eigenvalues
+   *  compact_second_chunk   shared mem flag if second chunk is used and ergo requires compaction
+   *  s_compaction_list_exc  helper array for stream compaction, s_compaction_list_exc[tid] = 1 when the thread generated two child intervals
+   *  is_active_interval     mark is thread has a second non-empty child interval
+   */
   template<typename StringType>
   void generate_bisect_kernel_storeNonEmptyIntervals(StringType & source, std::string const & numeric_string)
   {
@@ -528,11 +501,7 @@ namespace kernels
   }
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Store all non-empty intervals resulting from the subdivision of the interval
-  //! currently processed by the thread
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for storing all non-empty intervals resulting from the subdivision of the interval currently processed by the thread */
   template <typename StringType>
   void generate_bisect_kernel_storeNonEmptyIntervalsLarge(StringType & source, std::string const & numeric_string)
   {
@@ -596,17 +565,16 @@ namespace kernels
       source.append("     }  \n");
   }
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Create indices for compaction, that is process \a s_compaction_list_exc
-  //! which is 1 for intervals that generated a second child and 0 otherwise
-  //! and create for each of the non-zero elements the index where the new
-  //! interval belongs to in a compact representation of all generated second
-  //! childs
-  //! @param   s_compaction_list_exc  list containing the flags which threads
-  //!                                 generated two childs
-  //! @param   num_threads_compaction number of threads to employ for compaction
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for creating indices for compaction.
+   *
+   * Process s_compaction_list_exc,
+   * which is 1 for intervals that generated a second child and 0 otherwise
+   * and create for each of the non-zero elements the index where the new
+   * interval belongs to in a compact representation of all generated second children
+   *
+   *  s_compaction_list_exc    list containing the flags which threads generated two children
+   *  num_threads_compaction   number of threads to employ for compaction
+   */
   template<typename StringType>
   void generate_bisect_kernel_createIndicesCompaction(StringType & source, std::string const & numeric_string)
   {
@@ -733,24 +701,20 @@ namespace kernels
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  //! Perform stream compaction for second child intervals
-  //! @param  s_left  shared
-  //! @param  s_left  shared memory storage for left interval limits
-  //! @param  s_right  shared memory storage for right interval limits
-  //! @param  s_left_count  shared memory storage for number of eigenvalues less
-  //!                       than left interval limits
-  //! @param  s_right_count  shared memory storage for number of eigenvalues less
-  //!                       than right interval limits
-  //! @param  mid    midpoint of current interval (left of new interval)
-  //! @param  right  upper limit of interval
-  //! @param  mid_count  eigenvalues less than \a mid
-  //! @param  s_compaction_list  list containing the indices where the data has
-  //!         to be stored
-  //! @param  num_threads_active  number of active threads / intervals
-  //! @is_active_interval  mark is thread has a second non-empty child interval
-  ///////////////////////////////////////////////////////////////////////////////
-
-
+  /** @brief OpenCL function for performing stream compaction for second child intervals
+   *
+   *  s_left              shared memory storage for left interval limits
+   *  s_right             shared memory storage for right interval limits
+   *  s_left_count        shared memory storage for number of eigenvalues less than left interval limits
+   *  s_right_count       shared memory storage for number of eigenvalues less than right interval limits
+   *  mid                 midpoint of current interval (left of new interval)
+   *  right               upper limit of interval
+   *  mid_count           eigenvalues less than mid
+   *  s_compaction_list   list containing the indices where the data has to be stored
+   *  num_threads_active  number of active threads / intervals
+   *
+   *  is_active_second  mark is thread has a second non-empty child interval
+   */
   template<typename StringType>
   void generate_bisect_kernel_compactIntervals(StringType & source, std::string const & numeric_string)
   {
@@ -962,25 +926,20 @@ namespace kernels
   source.append("     }  \n");
   }
 
-  ///////////////////////////////////////////////////////////////////////////////
-  //! Subdivide interval if active and not already converged
-  //! @param tid  id of thread
-  //! @param  s_left  shared memory storage for left interval limits
-  //! @param  s_right  shared memory storage for right interval limits
-  //! @param  s_left_count  shared memory storage for number of eigenvalues less
-  //!                       than left interval limits
-  //! @param  s_right_count  shared memory storage for number of eigenvalues less
-  //!                       than right interval limits
-  //! @param  num_threads_active  number of active threads in warp
-  //! @param  left   lower limit of interval
-  //! @param  right  upper limit of interval
-  //! @param  left_count  eigenvalues less than \a left
-  //! @param  right_count  eigenvalues less than \a right
-  //! @param  all_threads_converged  shared memory flag if all threads are
-  //!                                 converged
-  ///////////////////////////////////////////////////////////////////////////////
-
-
+  /** @brief Subdivide interval if active and not already converged
+   *
+   *  tid                     id of thread
+   *  s_left                  shared memory storage for left interval limits
+   *  s_right                 shared memory storage for right interval limits
+   *  s_left_count            shared memory storage for number of eigenvalues less than left interval limits
+   *  s_right_count           shared memory storage for number of eigenvalues less than right interval limits
+   *  num_threads_active      number of active threads in warp
+   *  left                    lower limit of interval
+   *  right                   upper limit of interval
+   *  left_count              eigenvalues less than \a left
+   *  right_count             eigenvalues less than \a right
+   *  all_threads_converged   shared memory flag if all threads are converged
+   */
   template<typename StringType>
   void generate_bisect_kernel_subdivideActiveInterval(StringType & source, std::string const & numeric_string)
   {
@@ -1088,19 +1047,17 @@ namespace kernels
   // start of kernels
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
-  //! @param  g_d  diagonal elements in global memory
-  //! @param  g_s  superdiagonal elements in global elements (stored so that the
-  //!              element *(g_s - 1) can be accessed an equals 0
-  //! @param  n   size of matrix
-  //! @param  lg  lower bound of input interval (e.g. Gerschgorin interval)
-  //! @param  ug  upper bound of input interval (e.g. Gerschgorin interval)
-  //! @param  lg_eig_count  number of eigenvalues that are smaller than \a lg
-  //! @param  lu_eig_count  number of eigenvalues that are smaller than \a lu
-  //! @param  epsilon  desired accuracy of eigenvalues to compute
-  ////////////////////////////////////////////////////////////////////////////////
-  ///
+  /** @brief OpenCL kernel for bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
+   *
+   *  g_d           diagonal elements in global memory
+   *  g_s           superdiagonal elements in global elements (stored so that the element *(g_s - 1) can be accessed an equals 0
+   *  n             size of matrix
+   *  lg            lower bound of input interval (e.g. Gerschgorin interval)
+   *  ug            upper bound of input interval (e.g. Gerschgorin interval)
+   *  lg_eig_count  number of eigenvalues that are smaller than \a lg
+   *  lu_eig_count  number of eigenvalues that are smaller than \a lu
+   *  epsilon       desired accuracy of eigenvalues to compute
+   */
   template <typename StringType>
   void generate_bisect_kernel_bisectKernel(StringType & source, std::string const & numeric_string)
   {
@@ -1316,26 +1273,21 @@ namespace kernels
       source.append("     }  \n");
      }
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Perform second step of bisection algorithm for large matrices for
-  //! intervals that after the first step contained more than one eigenvalue
-  //! @param  g_d  diagonal elements of symmetric, tridiagonal matrix
-  //! @param  g_s  superdiagonal elements of symmetric, tridiagonal matrix
-  //! @param  n    matrix size
-  //! @param  blocks_mult  start addresses of blocks of intervals that are
-  //!                      processed by one block of threads, each of the
-  //!                      intervals contains more than one eigenvalue
-  //! @param  blocks_mult_sum  total number of eigenvalues / singleton intervals
-  //!                          in one block of intervals
-  //! @param  g_left  left limits of intervals
-  //! @param  g_right  right limits of intervals
-  //! @param  g_left_count  number of eigenvalues less than left limits
-  //! @param  g_right_count  number of eigenvalues less than right limits
-  //! @param  g_lambda  final eigenvalue
-  //! @param  g_pos  index of eigenvalue (in ascending order)
-  //! @param  precision  desired precision of eigenvalues
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief Perform second step of bisection algorithm for large matrices for intervals that after the first step contained more than one eigenvalue
+   *
+   *  g_d              diagonal elements of symmetric, tridiagonal matrix
+   *  g_s              superdiagonal elements of symmetric, tridiagonal matrix
+   *  n                matrix size
+   *  blocks_mult      start addresses of blocks of intervals that are processed by one block of threads, each of the intervals contains more than one eigenvalue
+   *  blocks_mult_sum  total number of eigenvalues / singleton intervals in one block of intervals
+   *  g_left           left limits of intervals
+   *  g_right          right limits of intervals
+   *  g_left_count     number of eigenvalues less than left limits
+   *  g_right_count    number of eigenvalues less than right limits
+   *  g_lambda         final eigenvalue
+   *  g_pos            index of eigenvalue (in ascending order)
+   *  precision        desired precision of eigenvalues
+   */
   template <typename StringType>
   void generate_bisect_kernel_bisectKernelLarge_MultIntervals(StringType & source, std::string const & numeric_string)
   {
@@ -1561,21 +1513,17 @@ namespace kernels
   }
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Determine eigenvalues for large matrices for intervals that after
-  //! the first step contained one eigenvalue
-  //! @param  g_d  diagonal elements of symmetric, tridiagonal matrix
-  //! @param  g_s  superdiagonal elements of symmetric, tridiagonal matrix
-  //! @param  n    matrix size
-  //! @param  num_intervals  total number of intervals containing one eigenvalue
-  //!                         after the first step
-  //! @param g_left  left interval limits
-  //! @param g_right  right interval limits
-  //! @param g_pos  index of interval / number of intervals that are smaller than
-  //!               right interval limit
-  //! @param  precision  desired precision of eigenvalues
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL kernel for Determining eigenvalues for large matrices for intervals that after the first step contained one eigenvalue
+   *
+   *  g_d            diagonal elements of symmetric, tridiagonal matrix
+   *  g_s            superdiagonal elements of symmetric, tridiagonal matrix
+   *  n              matrix size
+   *  num_intervals  total number of intervals containing one eigenvalue after the first step
+   *  g_left         left interval limits
+   *  g_right        right interval limits
+   *  g_pos          index of interval / number of intervals that are smaller than right interval limit
+   *  precision      desired precision of eigenvalues
+   */
   template <typename StringType>
   void generate_bisect_kernel_bisectKernelLarge_OneIntervals(StringType & source, std::string const & numeric_string)
   {
@@ -1690,10 +1638,7 @@ namespace kernels
       source.append("     }  \n");
   }
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Write data to global memory
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** OpenCL function for writing data to global memory */
   template <typename StringType>
   void generate_bisect_kernel_writeToGmem(StringType & source, std::string const & numeric_string)
   {
@@ -1782,10 +1727,7 @@ namespace kernels
       source.append("     }  \n");
   }
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Perform final stream compaction before writing data to global memory
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for performing final stream compaction before writing data to global memory */
   template <typename StringType>
   void generate_bisect_kernel_compactStreamsFinal(StringType & source, std::string const & numeric_string)
   {
@@ -1901,10 +1843,7 @@ namespace kernels
 
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Compute addresses to obtain compact list of block start addresses
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for computing addresses to obtain compact list of block start addresses */
   template <typename StringType>
   void generate_bisect_kernel_scanCompactBlocksStartAddress(StringType & source, std::string const & numeric_string)
   {
@@ -1981,10 +1920,7 @@ namespace kernels
   }
 
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Perform scan to obtain number of eigenvalues before a specific block
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL function for performing scan to obtain number of eigenvalues before a specific block */
   template <typename StringType>
   void generate_bisect_kernel_scanSumBlocks(StringType & source, std::string const & numeric_string)
   {
@@ -2057,11 +1993,7 @@ namespace kernels
 
   }
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Perform initial scan for compaction of intervals containing one and
-  //! multiple eigenvalues; also do initial scan to build blocks
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief Perform initial scan for compaction of intervals containing one and multiple eigenvalues; also do initial scan to build blocks */
   template <typename StringType>
   void generate_bisect_kernel_scanInitial(StringType & source, std::string const & numeric_string)
   {
@@ -2167,19 +2099,17 @@ namespace kernels
       source.append("     }  \n");
   }
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
-  //! @param  g_d  diagonal elements in global memory
-  //! @param  g_s  superdiagonal elements in global elements (stored so that the
-  //!              element *(g_s - 1) can be accessed an equals 0
-  //! @param  n   size of matrix
-  //! @param  lg  lower bound of input interval (e.g. Gerschgorin interval)
-  //! @param  ug  upper bound of input interval (e.g. Gerschgorin interval)
-  //! @param  lg_eig_count  number of eigenvalues that are smaller than \a lg
-  //! @param  lu_eig_count  number of eigenvalues that are smaller than \a lu
-  //! @param  epsilon  desired accuracy of eigenvalues to compute
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief OpenCL kernel for bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
+   *
+   *  g_d           diagonal elements in global memory
+   *  g_s           superdiagonal elements in global elements (stored so that the element *(g_s - 1) can be accessed an equals 0
+   *  n             size of matrix
+   *  lg            lower bound of input interval (e.g. Gerschgorin interval)
+   *  ug            upper bound of input interval (e.g. Gerschgorin interval)
+   *  lg_eig_count  number of eigenvalues that are smaller than \a lg
+   *  lu_eig_count  number of eigenvalues that are smaller than \a lu
+   *  epsilon       desired accuracy of eigenvalues to compute
+   */
   template <typename StringType>
   void generate_bisect_kernel_bisectKernelLarge(StringType & source, std::string const & numeric_string)
   {

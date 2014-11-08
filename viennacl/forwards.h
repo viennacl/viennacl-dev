@@ -28,6 +28,7 @@
 
  Here you can find all the documentation on how to use the GPU-accelerated linear algebra library ViennaCL.
  The formerly separate \ref usermanual "user manual" is no longer available as a standalone PDF, but all integrated into the HTML-based documentation.
+ Please use the navigation panel on the left to access the desired information.
 
  Quick links:
      - \ref manual-installation "Installation and building the examples"
@@ -495,7 +496,7 @@ namespace viennacl
     enum { value = false };
   };
 
-  /** @brief Helper class for checking whether a matrix is a sliced_ell_matrix (SELL-C-\sigma format) */
+  /** @brief Helper class for checking whether a matrix is a sliced_ell_matrix (SELL-C-\f$ \sigma \f$ format) */
   template<typename T>
   struct is_sliced_ell_matrix
   {

@@ -520,18 +520,16 @@ storeNonEmptyIntervalsLarge(unsigned int addr,
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//! Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
-//! @param  g_d  diagonal elements in global memory
-//! @param  g_s  superdiagonal elements in global elements (stored so that the
-//!              element *(g_s - 1) can be accessed and equals 0
-//! @param  n   size of matrix
-//! @param  lg  lower bound of input interval (e.g. Gerschgorin interval)
-//! @param  ug  upper bound of input interval (e.g. Gerschgorin interval)
-//! @param  lg_eig_count  number of eigenvalues that are smaller than \a lg
-//! @param  lu_eig_count  number of eigenvalues that are smaller than \a lu
-//! @param  epsilon  desired accuracy of eigenvalues to compute
-////////////////////////////////////////////////////////////////////////////////
+/** @brief Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
+*  g_d  diagonal elements in global memory
+*  g_s  superdiagonal elements in global elements (stored so that the element *(g_s - 1) can be accessed and equals 0
+*  n   size of matrix
+*  lg  lower bound of input interval (e.g. Gerschgorin interval)
+*  ug  upper bound of input interval (e.g. Gerschgorin interval)
+*  lg_eig_count  number of eigenvalues that are smaller than lg
+*  lu_eig_count  number of eigenvalues that are smaller than lu
+*  epsilon  desired accuracy of eigenvalues to compute
+*/
 template<typename NumericT>
 __global__
 void

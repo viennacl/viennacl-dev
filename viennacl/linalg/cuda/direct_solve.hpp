@@ -440,8 +440,9 @@ namespace detail
 
 /** @brief Direct inplace solver for dense triangular systems (non-transposed version)
 *
-* @param mat    The system matrix proxy
-* @param vec    The load vector, where the solution is directly written to
+* @param mat       The system matrix proxy
+* @param trans_mat Whether the matrix is to be transposed
+* @param vec       The load vector, where the solution is directly written to
 */
 template<typename NumericT, typename SolverTagT>
 void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,

@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "BLAS-like Shared Library"
+/** \example examples/tutorial/libviennacl.cpp
 *
 *   In this example we show how one can directly interface the ViennaCL BLAS-like shared library.
 *   For simplicity, C++ is used as a host language, but one may also use C or any other language which is able to call C functions.

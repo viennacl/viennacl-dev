@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "BLAS Level 1 Functionality"
+/** \example blas1.cpp
 *
 *   This tutorial shows how the BLAS level 1 functionality available in ViennaCL can be used.
 *   Operator overloading in C++ is used extensively to provide an intuitive syntax.
@@ -123,7 +123,7 @@ int main()
 
 
   /**
-  *  <h2>Vector Operations
+  *  <h2>Vector Operations</h2>
   *
   * Define a few vectors (from STL and plain C) and viennacl::vectors
   **/

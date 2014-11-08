@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Operations with Submatrices"
+/** \example matrix-range.cpp
 *
 *   This tutorial explains the use of matrix ranges with simple BLAS level 1 and 2 operations.
 *

@@ -2,7 +2,7 @@
 #define VIENNACL_DEVICE_SPECIFIC_EXECUTE_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2013, Institute for Microelectronics,
+   Copyright (c) 2010-2014, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/execute.hpp
+/** @file viennacl/device_specific/execute.hpp
     @brief the user interface for the code generator
 */
 

@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "OpenCL: User-Defined Kernels"
+/** \example custom-kernels.cpp
 *
 *   This tutorial explains how users can inject their own OpenCL compute kernels for use with ViennaCL objects
 *

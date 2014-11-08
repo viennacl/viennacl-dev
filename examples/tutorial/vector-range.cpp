@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Vector Ranges"
+/** \example vector-range.cpp
 *
 *   This tutorial explains the use of vector ranges with simple BLAS level 1 and 2 operations.
 *   Vector slices are used similarly and not further considered in this tutorial.

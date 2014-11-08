@@ -2,7 +2,7 @@
 #define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_REDUCTION_UTILS_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2013, Institute for Microelectronics,
+   Copyright (c) 2010-2014, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -19,9 +19,9 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/row_wise_reduction.hpp
+/** @file viennacl/device_specific/templates/utils.hpp
  *
- * Kernel template for the vector reduction operation
+ * A collection of utilities for the device specific execution templates.
 */
 
 #include <vector>

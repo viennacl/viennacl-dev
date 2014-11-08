@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "BLAS Level 3 Functionality"
+/** \example blas3.cpp
 *
 *  In this tutorial it is shown how BLAS level 3 functionality in ViennaCL can be used.
 *

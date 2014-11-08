@@ -313,7 +313,7 @@ void amg_setup_apply(InternalVectorT & result, InternalVectorT & rhs, InternalVe
  *  @brief Speeds up precondition phase as this is computed only once overall instead of once per iteration.
 *
 * @param op           Operator matrix for direct solve
-* @param Permutation  Permutation matrix which saves the factorization result
+* @param permutation  Permutation matrix which saves the factorization result
 * @param A            Operator matrix on coarsest level
 */
 template<typename NumericT, typename SparseMatrixT>
@@ -520,7 +520,7 @@ public:
   * @param level       Coarse level to which smoother is applied to
   * @param iterations  Number of smoother iterations
   * @param x           The vector smoothing is applied to
-  * @param rhs         The right hand side of the equation for the smoother
+  * @param rhs_smooth  The right hand side of the equation for the smoother
   */
   template<typename VectorT>
   void smooth_jacobi(int level, int const iterations, VectorT & x, VectorT const & rhs_smooth) const
@@ -764,7 +764,7 @@ public:
   * @param level       Coarse level to which smoother is applied to
   * @param iterations  Number of smoother iterations
   * @param x           The vector smoothing is applied to
-  * @param rhs         The right hand side of the equation for the smoother
+  * @param rhs_smooth  The right hand side of the equation for the smoother
   */
   template<typename VectorT>
   void smooth_jacobi(vcl_size_t level, unsigned int iterations, VectorT & x, VectorT const & rhs_smooth) const

@@ -16,7 +16,7 @@
 ============================================================================= */
 
 
-/** \example "Eigenvalues: Bisection Method"
+/** \example bisect.cpp
 *
 * This tutorial shows how the eigenvalues of a symmetric, tridiagonal matrix can be computed using bisection.
 * We begin with the usual header inclusions:

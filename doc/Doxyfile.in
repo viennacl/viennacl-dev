@@ -754,7 +754,7 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @PROJECT_SOURCE_DIR@/viennacl/ @PROJECT_SOURCE_DIR@/libviennacl/ @PROJECT_SOURCE_DIR@/doc/manual @PROJECT_SOURCE_DIR@/changelog @PROJECT_SOURCE_DIR@/tests/src/ @PROJECT_SOURCE_DIR@/examples/tutorial/ @PROJECT_SOURCE_DIR@/examples/libviennashe/ @PROJECT_SOURCE_DIR@/examples/benchmarks/
+INPUT                  = @PROJECT_SOURCE_DIR@/viennacl/ @PROJECT_SOURCE_DIR@/libviennacl/ @PROJECT_SOURCE_DIR@/doc/manual @PROJECT_SOURCE_DIR@/changelog @PROJECT_SOURCE_DIR@/tests/src/ @PROJECT_SOURCE_DIR@/examples/tutorial/ @PROJECT_SOURCE_DIR@/examples/benchmarks/
 
 
 # This tag can be used to specify the character encoding of the source files

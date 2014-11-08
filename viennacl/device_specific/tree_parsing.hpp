@@ -2,7 +2,7 @@
 #define VIENNACL_DEVICE_SPECIFIC_TREE_PARSING_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2013, Institute for Microelectronics,
+   Copyright (c) 2010-2014, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -19,8 +19,8 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/helpers.hpp
-    @brief several code generation helpers
+/** @file viennacl/device_specific/tree_parsing.hpp
+    @brief Code for parsing the expression trees.
 */
 
 #include <set>

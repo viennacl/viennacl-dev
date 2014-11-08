@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Eigenvalues: Lanczos' Method"
+/** \example lanczos.cpp
 *
 *   This tutorial shows how to calculate the largest eigenvalues of a matrix using Lanczos' method.
 *

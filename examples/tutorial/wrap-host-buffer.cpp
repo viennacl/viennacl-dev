@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Wrapping User-provided Buffers"
+/** \example wrap-host-buffer.cpp
 *
 *   This tutorial shows how ViennaCL can be used to wrap user-provided memory buffers allocated on the host.
 *   The benefit of such a wrapper is that the algorithms in ViennaCL can directly be run without pre- or postprocessing the data.

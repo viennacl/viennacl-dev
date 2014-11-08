@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Multithreaded Use of ViennaCL"
+/** \example multithreaded.cpp
 *
 *   This tutorial shows how to use ViennaCL with multiple threads, one thread per GPU.
 *   The use of one thread per context (host, CUDA, OpenCL) is supported.

@@ -849,9 +849,9 @@ namespace viennacl
     /** @brief This function stores the diagonal and the superdiagonal of a matrix in two vectors.
     *
     *
-    * @param A    The matrix from which the vectors will be extracted of.
-    * @param D    The vector in which the diagonal of the matrix will be stored in.
-    * @param S    The vector in which the superdiagonal of the matrix will be stored in.
+    * @param A     The matrix from which the vectors will be extracted of.
+    * @param dh    The vector in which the diagonal of the matrix will be stored in.
+    * @param sh    The vector in which the superdiagonal of the matrix will be stored in.
     */
 
     template <typename NumericT, typename VectorType>
@@ -1046,27 +1046,27 @@ namespace viennacl
   * @param m       Data from the tql2 algorithm.
   */
   template<typename NumericT>
-  void givens_next(matrix_base<NumericT> & matrix,
+  void givens_next(matrix_base<NumericT> & Q,
                    vector_base<NumericT> & tmp1,
                    vector_base<NumericT> & tmp2,
                    int l,
                    int m
                 )
   {
-    switch (viennacl::traits::handle(matrix).get_active_handle_id())
+    switch (viennacl::traits::handle(Q).get_active_handle_id())
     {
       case viennacl::MAIN_MEMORY:
-        viennacl::linalg::host_based::givens_next(matrix, tmp1, tmp2, l, m);
+        viennacl::linalg::host_based::givens_next(Q, tmp1, tmp2, l, m);
         break;
 #ifdef VIENNACL_WITH_OPENCL
       case viennacl::OPENCL_MEMORY:
-        viennacl::linalg::opencl::givens_next(matrix, tmp1, tmp2, l, m);
+        viennacl::linalg::opencl::givens_next(Q, tmp1, tmp2, l, m);
         break;
 #endif
 
 #ifdef VIENNACL_WITH_CUDA
       case viennacl::CUDA_MEMORY:
-        viennacl::linalg::cuda::givens_next(matrix, tmp1, tmp2, l, m);
+        viennacl::linalg::cuda::givens_next(Q, tmp1, tmp2, l, m);
         break;
 #endif
 

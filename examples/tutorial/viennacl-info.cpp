@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Device Informations"
+/** \example viennacl-info.cpp
 *
 *   This tutorial prints informations about the OpenCL backend and therefore only works with OpenCL enabled.
 *   See the viennacl::ocl::device class for full information about which information can be queried from devices.

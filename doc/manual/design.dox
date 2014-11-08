@@ -133,6 +133,6 @@ Each program contains plenty of compute kernels, which are not yet initialized.
 Only if an argument for a compute kernel is set, the kernel actually cares about its own initialization.
 Any subsequent calls of that kernel reuse the already compiled and initialized compute kernel.
 
-\NOTE When benchmarking ViennaCL, a dummy call to the functionality of interest should be issued prior to taking timings. Otherwise, benchmark results include the just-in-time compilation, which is a constant independent of the data size.
+\note When benchmarking ViennaCL, a dummy call to the functionality of interest should be issued prior to taking timings. Otherwise, benchmark results include the just-in-time compilation, which is a constant independent of the data size.
 
 */

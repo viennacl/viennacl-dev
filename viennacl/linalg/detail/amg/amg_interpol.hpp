@@ -43,11 +43,11 @@ namespace amg
 {
 
 /** @brief Calls the right function to build interpolation matrix
- * @param level    Coarse level identifier
- * @param A      Operator matrix on all levels
- * @param P      Prolongation matrices. P[level] is constructed
- * @param Pointvector  Vector of points on all levels
- * @param tag    AMG preconditioner tag
+ * @param level        Coarse level identifier
+ * @param A            Operator matrix on all levels
+ * @param P            Prolongation matrices. P[level] is constructed
+ * @param pointvector  Vector of points on all levels
+ * @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
 void amg_interpol(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
@@ -62,11 +62,11 @@ void amg_interpol(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2
 }
 
 /** @brief Direct interpolation. Multi-threaded! (VIENNACL_AMG_INTERPOL_DIRECT)
- * @param level    Coarse level identifier
- * @param A      Operator matrix on all levels
- * @param P      Prolongation matrices. P[level] is constructed
- * @param Pointvector  Vector of points on all levels
- * @param tag    AMG preconditioner tag
+ * @param level        Coarse level identifier
+ * @param A            Operator matrix on all levels
+ * @param P            Prolongation matrices. P[level] is constructed
+ * @param pointvector  Vector of points on all levels
+ * @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
 void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
@@ -164,11 +164,11 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
 }
 
 /** @brief Classical interpolation. Don't use with onepass classical coarsening or RS0 (Yang, p.14)! Multi-threaded! (VIENNACL_AMG_INTERPOL_CLASSIC)
- * @param level    Coarse level identifier
- * @param A      Operator matrix on all levels
- * @param P      Prolongation matrices. P[level] is constructed
- * @param Pointvector  Vector of points on all levels
- * @param tag    AMG preconditioner tag
+ * @param level        Coarse level identifier
+ * @param A            Operator matrix on all levels
+ * @param P            Prolongation matrices. P[level] is constructed
+ * @param pointvector  Vector of points on all levels
+ * @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
 void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
@@ -354,10 +354,10 @@ void amg_truncate_row(SparseMatrixT & P, unsigned int row, amg_tag & tag)
 }
 
 /** @brief AG (aggregation based) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)
- * @param level    Coarse level identifier
- * @param A      Operator matrix on all levels
- * @param P      Prolongation matrices. P[level] is constructed
- * @param Pointvector  Vector of points on all levels
+ * @param level        Coarse level identifier
+ * @param A            Operator matrix on all levels
+ * @param P            Prolongation matrices. P[level] is constructed
+ * @param pointvector  Vector of points on all levels
 */
 template<typename InternalT1, typename InternalT2>
 void amg_interpol_ag(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag)
@@ -397,11 +397,11 @@ void amg_interpol_ag(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
 }
 
 /** @brief SA (smoothed aggregate) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)
- * @param level    Coarse level identifier
- * @param A      Operator matrix on all levels
- * @param P      Prolongation matrices. P[level] is constructed
- * @param Pointvector  Vector of points on all levels
- * @param tag    AMG preconditioner tag
+ * @param level        Coarse level identifier
+ * @param A            Operator matrix on all levels
+ * @param P            Prolongation matrices. P[level] is constructed
+ * @param pointvector  Vector of points on all levels
+ * @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
 void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)

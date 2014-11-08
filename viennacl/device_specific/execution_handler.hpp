@@ -2,7 +2,7 @@
 #define VIENNACL_DEVICE_SPECIFIC_EXECUTION_HANDLER_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2013, Institute for Microelectronics,
+   Copyright (c) 2010-2014, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/execution_handler.hpp
+/** @file viennacl/device_specific/execution_handler.hpp
     @brief Helper for handling fallbacks, lazy compilation, input-dependent kernels, etc
 */
 

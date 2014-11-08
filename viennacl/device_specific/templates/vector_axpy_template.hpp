@@ -2,7 +2,7 @@
 #define VIENNACL_DEVICE_SPECIFIC_TEMPLATES_VECTOR_AXPY_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2013, Institute for Microelectronics,
+   Copyright (c) 2010-2014, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/generator/vector_axpy.hpp
+/** @file viennacl/device_specific/templates/vector_axpy_template.hpp
  *
  * Kernel template for the vector axpy-like operations
 */

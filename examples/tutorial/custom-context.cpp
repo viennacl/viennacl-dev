@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "OpenCL: User-Provided Contexts"
+/** \example custom-context.cpp
 *
 *   This tutorial shows how you can use your own OpenCL contexts with ViennaCL.
 *

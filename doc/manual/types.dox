@@ -46,7 +46,7 @@ Apart from suitably overloaded operators that mimic the behavior of the respecti
 <tr><th>Interface</th><th>Comment</th></tr>
 <tr><td>`v.handle()`</td><td>The memory handle (CPU, CUDA, or OpenCL)</td></tr>
 </table>
-<b>Interface of `scalar<T>` in \ViennaCL. Destructors and operator overloads for BLAS are not listed.</b>
+<b>Interface of `scalar<T>` in ViennaCL. Destructors and operator overloads for BLAS are not listed.</b>
 </center>
 
 
@@ -112,7 +112,7 @@ Other member functions are as follows:
 <tr><td>`v.clear()`   </td><td> Sets all entries in v to zero </td></tr>
 <tr><td>`v.handle()`  </td><td>Returns the memory handle (needed for custom kernels, see \ref manual-custom-kernels "Custom Compute Kernels") </td></tr>
 </table>
-<b>Interface of `vector<T>` in \ViennaCL. Destructors and operator overloads for BLAS are not listed.</b>
+<b>Interface of `vector<T>` in ViennaCL. Destructors and operator overloads for BLAS are not listed.</b>
 </center>
 
 \note Accessing single elements of a vector using operator() or operator[] is very slow for GPUs due to PCI-Express latency! Use with care!
@@ -206,7 +206,7 @@ The members are as follows, with the usual operator overloads not listed explici
 
 \section manual-operations-initializers Initializer Types
 
-\NOTE Initializer types in ViennaCL can currently only be used for initializing vectors and matrices, not for computations!
+\note Initializer types in ViennaCL can currently only be used for initializing vectors and matrices, not for computations!
 
 In order to initialize vectors, the following initializer types are provided, again similar to Boost.uBLAS:
 <center>
@@ -248,7 +248,7 @@ In general, sparse matrices should be set up on the CPU and then be pushed to th
 <tr><th>Interface</th><th>Comment</th></tr>
 <tr><td>`CTOR(nrows, ncols)`</td><td> Constructor with number of rows and columns </td></tr>
 <tr><td>`mat.set()`         </td><td> Initialize mat with the data provided as arguments  </td></tr>
-<tr><td>`mat.reserve(num)`  </td><td> Reserve memory for up to \texttt{num} nonzero entries  </td></tr>
+<tr><td>`mat.reserve(num)`  </td><td> Reserve memory for up to `num` nonzero entries  </td></tr>
 
 <tr><td>`mat.size1()`       </td><td> Number of rows in `mat`  </td></tr>
 <tr><td>`mat.size2()`       </td><td> Number of columns in `mat`  </td></tr>
@@ -314,7 +314,7 @@ In general, sparse matrices should be set up on the CPU and then be pushed to th
 <table>
 <tr><th>Interface</th><th>Comment</th></tr>
 <tr><td>`CTOR(nrows, ncols)`  </td><td> Constructor with number of rows and columns </td></tr>
-<tr><td>`mat.reserve(num)`    </td><td> Reserve memory for \texttt{num} nonzero entries </td></tr>
+<tr><td>`mat.reserve(num)`    </td><td> Reserve memory for `num` nonzero entries </td></tr>
 <tr><td>`mat.size1()`         </td><td> Number of rows in `mat` </td></tr>
 <tr><td>`mat.size2()`         </td><td> Number of columns in `mat` </td></tr>
 <tr><td>`mat.nnz()`           </td><td> Number of nonzeroes in `mat` </td></tr>

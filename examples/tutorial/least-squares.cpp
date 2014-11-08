@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Method of Least Squares"
+/** \example least-squares.cpp
 *
 *   This tutorial shows how least Squares problems for matrices from ViennaCL or Boost.uBLAS can be solved solved.
 *
@@ -46,6 +46,7 @@
 #include "viennacl/matrix_proxy.hpp"
 #include "viennacl/linalg/qr.hpp"
 #include "viennacl/linalg/lu.hpp"
+#include "viennacl/linalg/direct_solve.hpp"
 
 
 /**

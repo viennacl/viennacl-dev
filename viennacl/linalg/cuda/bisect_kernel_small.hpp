@@ -40,18 +40,21 @@ namespace linalg
 namespace cuda
 {
 
-////////////////////////////////////////////////////////////////////////////////
-//! Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
-//! @param  g_d  diagonal elements in global memory
-//! @param  g_s  superdiagonal elements in global elements (stored so that the
-//!              element *(g_s - 1) can be accessed an equals 0
-//! @param  n   size of matrix
-//! @param  lg  lower bound of input interval (e.g. Gerschgorin interval)
-//! @param  ug  upper bound of input interval (e.g. Gerschgorin interval)
-//! @param  lg_eig_count  number of eigenvalues that are smaller than \a lg
-//! @param  lu_eig_count  number of eigenvalues that are smaller than \a lu
-//! @param  epsilon  desired accuracy of eigenvalues to compute
-////////////////////////////////////////////////////////////////////////////////
+/** @brief Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
+*
+* @param  g_d  diagonal elements in global memory
+* @param  g_s  superdiagonal elements in global elements (stored so that the element *(g_s - 1) can be accessed an equals 0
+* @param  n    size of matrix
+* @param  g_left         helper array
+* @param  g_right        helper array
+* @param  g_left_count   helper array
+* @param  g_right_count  helper array
+* @param  lg             lower bound of input interval (e.g. Gerschgorin interval)
+* @param  ug             upper bound of input interval (e.g. Gerschgorin interval)
+* @param  lg_eig_count   number of eigenvalues that are smaller than lg
+* @param  ug_eig_count   number of eigenvalues that are smaller than lu
+* @param  epsilon        desired accuracy of eigenvalues to compute
+*/
 template<typename NumericT>
 __global__
 void

@@ -123,6 +123,7 @@ public:
     *
     * @param rows     Number of rows
     * @param columns  Number of columns
+    * @param is_row_major  Boolean flag stating whether this matrix is stored row-major
     * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
     */
   explicit matrix_base(size_type rows, size_type columns, bool is_row_major, viennacl::context ctx = viennacl::context());

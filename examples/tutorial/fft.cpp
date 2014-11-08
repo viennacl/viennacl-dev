@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
  ============================================================================= */
 
-/** \example "Fast Fourier Transform"
+/** \example fft.cpp
 *
 *   This tutorial showcasts FFT functionality.
 *

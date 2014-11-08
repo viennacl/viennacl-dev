@@ -17,7 +17,7 @@
 
 
 
-/** \file tests/src/vector_multiple_inner_prod.cpp  Tests the performance of multiple inner products with a common vector.
+/** \file tests/src/vector_multi_inner_prod.cpp  Tests the performance of multiple inner products with a common vector.
 *   \test   Tests the performance of multiple inner products with a common vector.
 **/
 

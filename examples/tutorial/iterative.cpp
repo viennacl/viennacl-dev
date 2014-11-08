@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Iterative Solvers"
+/** \example iterative.cpp
 *
 *   This tutorial explains the use of iterative solvers in ViennaCL.
 *

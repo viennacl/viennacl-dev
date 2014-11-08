@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Eigenvalues: Power Iteration"
+/** \example power-iter.cpp
 *
 *   This tutorial demonstrates the calculation of the eigenvalue with largest modulus using the power iteration method.
 *

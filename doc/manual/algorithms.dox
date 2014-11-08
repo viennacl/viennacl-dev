@@ -124,7 +124,7 @@ An overview of preconditioners available for the various sparse matrix types is 
 </table>
 </center>
 Broader support of preconditioners particularly for `ell_matrix` and `hyb_matrix` is scheduled for future releases.
-AMG and SPAI preconditioners are described in \ref manual-additional-algo "Additional Algorithms" section.
+AMG and SPAI preconditioners are described in \ref manual-additional-algorithms "Additional Algorithms" section.
 
 
 \subsection manual-algorithms-preconditioners-ilut Incomplete LU Factorization with Threshold (ILUT)
@@ -271,7 +271,7 @@ viennacl::linalg::lanczos_tag ltag(0.85, 15, 0, 200);
 
 \section manual-algorithms-qr-factorization QR Factorization
 
-\NOTE The current QR factorization implementation depends on Boost.uBLAS.
+\note The current QR factorization implementation depends on Boost.uBLAS.
 
 A matrix \f$ A \in \mathbb{R}^{n\times m} \f$ can be factored into \f$ A = Q R \f$, where \f$ Q \in \mathbb{R}^{n\times n}\f$ is an orthogonal matrix and \f$ R \in \mathbb{R}^{n \times m}\f$  is upper triangular.
 This so-called QR-factorization is important for eigenvalue computations as well as for the solution of least-squares problems \cite golub:matrix-computations .

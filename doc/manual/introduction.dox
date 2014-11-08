@@ -53,7 +53,7 @@ There is no double precision emulation in software in ViennaCL.
 <tr><td>NVIDIA Tesla C10XX    </td><td> ok </td><td> ok </td></tr>
 <tr><td>NVIDIA Tesla C20XX    </td><td> ok </td><td> ok </td></tr>
 <tr><td>NVIDIA Tesla K20      </td><td> ok </td><td> ok </td></tr>
-\hline
+<tr><td>                      </td><td>    </td><td>   </td></tr>
 <tr><td>ATI Radeon HD 4XXX   </td><td> ok </td><td> -  </td></tr>
 <tr><td>ATI Radeon HD 48XX   </td><td> ok </td><td> ok </td></tr>
 <tr><td>ATI Radeon HD 5XXX   </td><td> ok </td><td> -  </td></tr>

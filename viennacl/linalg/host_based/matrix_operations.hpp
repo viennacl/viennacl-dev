@@ -853,6 +853,7 @@ void element_op(matrix_base<NumericT> & A,
 * Implementation of the convenience expression result = prod(mat, vec);
 *
 * @param mat    The matrix
+* @param trans  Flag whether mat is to be transposed
 * @param vec    The vector
 * @param result The result vector
 */

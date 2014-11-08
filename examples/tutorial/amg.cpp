@@ -16,7 +16,7 @@
 ============================================================================= */
 
 
-/** \example "Algebraic Multigrid Preconditioners"
+/** \example amg.cpp
 *
 *   This tutorial shows the use of algebraic multigrid (AMG) preconditioners.
 *   \warning AMG is currently only experimentally available with the OpenCL backend and depends on Boost.uBLAS

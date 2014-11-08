@@ -21,7 +21,7 @@
 /** @file viennacl/sliced_ell_matrix.hpp
     @brief Implementation of the sliced_ell_matrix class
 
-    Based on the SELL-C-\sigma format provided by Kreutzer et al., 2014
+    Based on the SELL-C-sigma format provided by Kreutzer et al., 2014
 */
 
 
@@ -34,13 +34,13 @@
 
 namespace viennacl
 {
-/** @brief Sparse matrix class using the sliced ELLPACK with parameters C, \sigma
+/** @brief Sparse matrix class using the sliced ELLPACK with parameters C, \f$ \sigma \f$
   *
-  * Based on the SELL-C-\sigma format provided by Kreutzer et al., 2014
+  * Based on the SELL-C-sigma format provided by Kreutzer et al., 2014
   * Can be seen as a block-wise ELLPACK format, where C rows are accumulated into the same block
   * for which a column-wise storage is used. Enables fully-coalesced reads from global memory.
   *
-  * Note: Currently \sigma is fixed to 1, since the sorting of rows
+  * Note: Currently \f$ \sigma \f$ is fixed to 1, since the sorting of rows
   */
 template<typename ScalarT, typename IndexT /* see forwards.h = unsigned int */>
 class sliced_ell_matrix

@@ -19,7 +19,7 @@
 ============================================================================= */
 
 
-/** @file viennacl/linalg/cuda/bisect_kernel_large_mult.hpp
+/** @file viennacl/linalg/cuda/bisect_kernel_large_multi.hpp
     @brief Second step of the bisection algorithm for the computation of eigenvalues for large matrices.
 
     Implementation based on the sample provided with the CUDA 6.0 SDK, for which

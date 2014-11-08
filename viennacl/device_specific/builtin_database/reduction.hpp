@@ -1,6 +1,23 @@
 #ifndef VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_REDUCTION_HPP_
 #define VIENNACL_DEVICE_SPECIFIC_BUILTIN_DATABASE_REDUCTION_HPP_
 
+/* =========================================================================
+   Copyright (c) 2010-2014, Institute for Microelectronics,
+                            Institute for Analysis and Scientific Computing,
+                            TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
+
+                            -----------------
+                  ViennaCL - The Vienna Computing Library
+                            -----------------
+
+   Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
+
+   (A list of authors and contributors can be found in the PDF manual)
+
+   License:         MIT (X11), see file LICENSE in the base directory
+============================================================================= */
+
 #include "viennacl/device_specific/builtin_database/devices/gpu/amd/northern_islands/barts.hpp"
 
 #include "viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi/tesla_c2050.hpp"
@@ -35,6 +52,11 @@
 #include "viennacl/device_specific/builtin_database/devices/accelerator/fallback.hpp"
 #include "viennacl/device_specific/builtin_database/devices/cpu/fallback.hpp"
 #include "viennacl/device_specific/builtin_database/devices/gpu/fallback.hpp"
+
+/** @file viennacl/device_specific/builtin_database/reduction.hpp
+*
+* Initializes the device database with the provided profiles. Updated semi-automatically.
+*/
 
 namespace viennacl
 {

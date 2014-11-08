@@ -41,7 +41,7 @@ namespace linalg
 *
 * Implementation of the convenience expression result = prod(mat, vec);
 *
-* @param mat    The matrix
+* @param A      The matrix
 * @param vec    The vector
 * @param result The result vector
 */

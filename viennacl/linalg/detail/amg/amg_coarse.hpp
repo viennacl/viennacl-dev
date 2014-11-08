@@ -42,11 +42,11 @@ namespace amg
 {
 
 /** @brief Calls the right coarsening procedure
-* @param level    Coarse level identifier
-* @param A    Operator matrix on all levels
-* @param Pointvector   Vector of points on all levels
-* @param Slicing    Partitioning of the system matrix to different processors (only used in RS0 and RS3)
-* @param tag    AMG preconditioner tag
+* @param level        Coarse level identifier
+* @param A            Operator matrix on all levels
+* @param pointvector  Vector of points on all levels
+* @param slicing      Partitioning of the system matrix to different processors (only used in RS0 and RS3)
+* @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2, typename InternalT3>
 void amg_coarse(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
@@ -62,10 +62,10 @@ void amg_coarse(unsigned int level, InternalT1 & A, InternalT2 & pointvector, In
 }
 
 /** @brief Determines strong influences in system matrix, classical approach (RS). Multithreaded!
-* @param level    Coarse level identifier
-* @param A      Operator matrix on all levels
-* @param Pointvector   Vector of points on all levels
-* @param tag    AMG preconditioner tag
+* @param level        Coarse level identifier
+* @param A            Operator matrix on all levels
+* @param pointvector  Vector of points on all levels
+* @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
 void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointvector, amg_tag & tag)
@@ -147,10 +147,10 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
 
 
 /** @brief Classical (RS) one-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC_ONEPASS)
-* @param level     Course level identifier
-* @param A      Operator matrix on all levels
-* @param Pointvector   Vector of points on all levels
-* @param tag    AMG preconditioner tag
+* @param level         Course level identifier
+* @param A             Operator matrix on all levels
+* @param pointvector   Vector of points on all levels
+* @param tag           AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
 void amg_coarse_classic_onepass(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
@@ -235,10 +235,10 @@ void amg_coarse_classic_onepass(unsigned int level, InternalT1 & A, InternalT2 &
 }
 
 /** @brief Classical (RS) two-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC)
-* @param level    Coarse level identifier
-* @param A      Operator matrix on all levels
-* @param Pointvector   Vector of points on all levels
-* @param tag    AMG preconditioner tag
+* @param level        Coarse level identifier
+* @param A            Operator matrix on all levels
+* @param pointvector  Vector of points on all levels
+* @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
 void amg_coarse_classic(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
@@ -357,11 +357,11 @@ void amg_coarse_classic(unsigned int level, InternalT1 & A, InternalT2 & pointve
 }
 
 /** @brief Parallel classical RS0 coarsening. Multi-Threaded! (VIENNACL_AMG_COARSE_RS0 || VIENNACL_AMG_COARSE_RS3)
-* @param level    Coarse level identifier
-* @param A      Operator matrix on all level
-* @param Pointvector   Vector of points on all levels
-* @param Slicing    Partitioning of the system matrix and the other data structures to different processors
-* @param tag    AMG preconditioner tag
+* @param level         Coarse level identifier
+* @param A             Operator matrix on all level
+* @param pointvector   Vector of points on all levels
+* @param slicing       Partitioning of the system matrix and the other data structures to different processors
+* @param tag           AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2, typename InternalT3>
 void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
@@ -437,11 +437,11 @@ void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector
 }
 
 /** @brief RS3 coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_RS3)
-* @param level    Coarse level identifier
-* @param A      Operator matrix on all levels
-* @param Pointvector   Vector of points on all levels
-* @param Slicing    Partitioning of the system matrix and the other data structures to different processors
-* @param tag    AMG preconditioner tag
+* @param level        Coarse level identifier
+* @param A            Operator matrix on all levels
+* @param pointvector  Vector of points on all levels
+* @param slicing      Partitioning of the system matrix and the other data structures to different processors
+* @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2, typename InternalT3>
 void amg_coarse_rs3(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
@@ -567,10 +567,10 @@ void amg_coarse_rs3(unsigned int level, InternalT1 & A, InternalT2 & pointvector
 
 /** @brief AG (aggregation based) coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_SA)
 *
-* @param level    Coarse level identifier
-* @param A      Operator matrix on all levels
-* @param Pointvector   Vector of points on all levels
-* @param tag    AMG preconditioner tag
+* @param level        Coarse level identifier
+* @param A            Operator matrix on all levels
+* @param pointvector  Vector of points on all levels
+* @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
 void amg_coarse_ag(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)

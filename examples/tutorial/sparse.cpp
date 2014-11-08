@@ -15,7 +15,7 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** \example "Sparse Matrices"
+/** \example sparse.cpp
 *
 *   This tutorial demonstrates the use of sparse matrices.
 *   The primary operation for sparse matrices in ViennaCL is the sparse matrix-vector product.

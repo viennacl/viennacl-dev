@@ -32,7 +32,7 @@ const char * my_compute_program =
 "};\n";
 \endcode
 The kernel takes three vector arguments `vec1`, `vec2` and `result` and the vector length variable `size`.
-It computes the entry-wise product of the vectors `vec1` and `vec2` and writes the result to the vector \lstinline|result|.
+It computes the entry-wise product of the vectors `vec1` and `vec2` and writes the result to the vector `result`.
 For more detailed explanation of the OpenCL source code, please refer to the specification available at the Khronos group webpage \cite khronoscl .
 
 \section manual-custom-kernels-opencl-build Compilation of the OpenCL Source Code
