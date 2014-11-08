@@ -284,7 +284,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
             while (l > 0)
             {
                 s = std::fabs(H(l - 1, l - 1)) + std::fabs(H(l, l));
-                if (!bool(s))
+                if (s <= 0)
                   s = norm;
                 if (std::fabs(H(l, l - 1)) < eps * s)
                   break;
@@ -319,7 +319,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                     z = (p >= 0) ? (p + z) : (p - z);
                     d[vcl_size_t(n) - 1] = x + z;
                     d[vcl_size_t(n)] = d[vcl_size_t(n) - 1];
-                    if (!bool(z))
+                    if (z <= 0 && z >= 0) // z == 0 without compiler complaints
                       d[vcl_size_t(n)] = x - w / z;
                     e[vcl_size_t(n) - 1] = 0;
                     e[vcl_size_t(n)] = 0;
@@ -439,7 +439,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                         q = H(k + 1, k - 1);
                         r = (notlast ? H(k + 2, k - 1) : 0);
                         x = std::fabs(p) + std::fabs(q) + std::fabs(r);
-                        if (bool(x))
+                        if (x > 0)
                         {
                             p = p / x;
                             q = q / x;
@@ -447,12 +447,12 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                         }
                     }
 
-                    if (!bool(x)) break;
+                    if (x <= 0 && x >= 0) break;  // x == 0 without compiler complaints
 
                     s = static_cast<SCALARTYPE>(std::sqrt(p * p + q * q + r * r));
                     if (p < 0) s = -s;
 
-                    if (bool(s))
+                    if (s < 0 || s > 0)
                     {
                         if (k != m)
                             H(k, k - 1) = -s * x;
@@ -533,7 +533,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
         }
 
         // Backsubstitute to find vectors of upper triangular form
-        if (!bool(norm))
+        if (norm <= 0)
         {
             return;
         }
@@ -544,7 +544,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
             q = e[vcl_size_t(n)];
 
             // Real vector
-            if (!bool(q))
+            if (q <= 0 && q >= 0)
             {
                 int l = n;
                 H(n, n) = 1;
@@ -563,9 +563,9 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                     else
                     {
                         l = i;
-                        if (!bool(e[vcl_size_t(i)]))
+                        if (e[vcl_size_t(i)] <= 0) // e[i] == 0 with previous if
                         {
-                            H(i, n) = bool(w) ? (-r / w) : (-r / (eps * norm));
+                            H(i, n) = (w > 0 || w < 0) ? (-r / w) : (-r / (eps * norm));
                         }
                         else
                         {
@@ -630,7 +630,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                     else
                     {
                         l = i;
-                        if (!bool(e[vcl_size_t(i)]))
+                        if (e[vcl_size_t(i)] <= 0) // e[i] == 0 with previous if
                         {
                             cdiv<SCALARTYPE>(-ra, -sa, w, q, out1, out2);
                             H(i, n - 1) = out1;
@@ -643,7 +643,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
                             y = H(i + 1, i);
                             vr = (d[vcl_size_t(i)] - p) * (d[vcl_size_t(i)] - p) + e[vcl_size_t(i)] * e[vcl_size_t(i)] - q * q;
                             vi = (d[vcl_size_t(i)] - p) * 2 * q;
-                            if ( !bool(vr) && !bool(vi) )
+                            if ( (vr <= 0 && vr >= 0) && (vi <= 0 && vi >= 0) )
                                 vr = eps * norm * (std::fabs(w) + std::fabs(q) + std::fabs(x) + std::fabs(y) + std::fabs(z));
 
                             cdiv<SCALARTYPE>(x * r - z * ra + q * sa, x * s - z * sa - q * ra, vr, vi, out1, out2);

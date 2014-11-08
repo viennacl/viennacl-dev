@@ -1030,10 +1030,18 @@ namespace detail
         }
 
         // write result:
-        for (vcl_size_t i = offset_i; i < std::min(offset_i + blocksize, C_size1); ++i)
-          for (vcl_size_t j = offset_j; j < std::min(offset_j + blocksize, C_size2); ++j)
-            C(i,j) =  (bool(beta) ? beta * C(i,j) : NumericT(0))
-                     + alpha * buffer_C[(i - offset_i) * blocksize + (j - offset_j)];
+        if (beta > 0 || beta < 0)
+        {
+          for (vcl_size_t i = offset_i; i < std::min(offset_i + blocksize, C_size1); ++i)
+            for (vcl_size_t j = offset_j; j < std::min(offset_j + blocksize, C_size2); ++j)
+              C(i,j) = beta * C(i,j) + alpha * buffer_C[(i - offset_i) * blocksize + (j - offset_j)];
+        }
+        else
+        {
+          for (vcl_size_t i = offset_i; i < std::min(offset_i + blocksize, C_size1); ++i)
+            for (vcl_size_t j = offset_j; j < std::min(offset_j + blocksize, C_size2); ++j)
+              C(i,j) =                 alpha * buffer_C[(i - offset_i) * blocksize + (j - offset_j)];
+        }
 
       } // for block j
     } // for block i

@@ -1261,7 +1261,7 @@ void prod_impl(const viennacl::ell_matrix<NumericT, AlignmentV> & mat,
       vcl_size_t offset = row + item_id * mat.internal_size1();
       NumericT val = elements[offset];
 
-      if (bool(val))
+      if (val > 0 || val < 0)
       {
         unsigned int col = coords[offset];
         sum += (vec_buf[col * vec.stride() + vec.start()] * val);
@@ -1562,7 +1562,7 @@ void prod_impl(const viennacl::sliced_ell_matrix<NumericT, IndexT> & mat,
       {
         NumericT val = elements[stride_start + row_in_block];
 
-        result_values[row_in_block] += bool(val) ? vec_buf[column_indices[stride_start + row_in_block] * vec.stride() + vec.start()] * val : 0;
+        result_values[row_in_block] += (val > 0 || val < 0) ? vec_buf[column_indices[stride_start + row_in_block] * vec.stride() + vec.start()] * val : 0;
       }
     }
 
@@ -1613,7 +1613,7 @@ void prod_impl(const viennacl::hyb_matrix<NumericT, AlignmentV> & mat,
       vcl_size_t offset = row + item_id * mat.internal_size1();
       NumericT val = elements[offset];
 
-      if (bool(val))
+      if (val > 0 || val < 0)
       {
         unsigned int col = coords[offset];
         sum += (vec_buf[col * vec.stride() + vec.start()] * val);

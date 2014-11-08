@@ -160,10 +160,10 @@ namespace host_based
     vcl_size_t k = W.size2();
     conf.iters_ = 0;
 
-    if (!static_cast<bool>(viennacl::linalg::norm_frobenius(W)))
+    if (viennacl::linalg::norm_frobenius(W) <= 0)
       W = viennacl::scalar_matrix<NumericT>(W.size1(), W.size2(), NumericT(1.0));
 
-    if (!static_cast<bool>(viennacl::linalg::norm_frobenius(H)))
+    if (viennacl::linalg::norm_frobenius(H) <= 0)
       H = viennacl::scalar_matrix<NumericT>(H.size1(), H.size2(), NumericT(1.0));
 
     viennacl::matrix_base<NumericT> wn(V.size1(), k, W.row_major());
