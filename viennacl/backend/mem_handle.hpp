@@ -42,15 +42,42 @@ namespace viennacl
 namespace backend
 {
 
-
-// if a user compiles with CUDA, it is reasonable to expect that CUDA should be the default
+namespace detail
+{
+  /** @brief Singleton for managing the default memory type.
+  *
+  * @param new_mem_type    If NULL, returns the current memory type. Otherwise, sets the memory type to the provided value.
+  */
+  inline memory_types get_set_default_memory_type(memory_types * new_mem_type)
+  {
+    // if a user compiles with CUDA, it is reasonable to expect that CUDA should be the default
 #ifdef VIENNACL_WITH_CUDA
-inline memory_types default_memory_type() { return CUDA_MEMORY; }
+    static memory_types mem_type = CUDA_MEMORY;
 #elif defined(VIENNACL_WITH_OPENCL)
-inline memory_types default_memory_type() { return OPENCL_MEMORY; }
+    static memory_types mem_type = OPENCL_MEMORY;
 #else
-inline memory_types default_memory_type() { return MAIN_MEMORY; }
+    static memory_types mem_type = MAIN_MEMORY;
 #endif
+
+    if (new_mem_type)
+      mem_type = *new_mem_type;
+
+    return mem_type;
+  }
+}
+
+/** @brief Returns the default memory type for the given configuration.
+ *
+ * CUDA has precedence over OpenCL, which has precedence over main memory. Depends on which VIENNACL_WITH_{CUDA/OPENCL/OPENMP} macros are defined.
+ */
+inline memory_types default_memory_type() { return detail::get_set_default_memory_type(NULL); }
+
+/** @brief Sets the default memory type for the given configuration.
+ *
+ * Make sure the respective new memory type is enabled.
+ * For example, passing CUDA_MEMORY if no CUDA backend is selected will result in exceptions being thrown as soon as you try to allocate buffers.
+ */
+inline memory_types default_memory_type(memory_types new_memory_type) { return detail::get_set_default_memory_type(&new_memory_type); }
 
 
 /** @brief Main abstraction class for multiple memory domains. Represents a buffer in either main RAM, an OpenCL context, or a CUDA device.

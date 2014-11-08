@@ -9,7 +9,6 @@ With the support of multiple compute backends, memory buffers need to be managed
 These different <em>memory domains</em> are abstracted in a class `viennacl::backend::mem_handle`, which is able to refer to a buffer in all three backends, possibly at the same time.
 Objects of type `mem_handle` are the building blocks of scalars, vectors and matrices in ViennaCL, see \ref manual-types "Basic Types".
 
-
 The raw handles for each memory domain can be obtained via the member functions `cuda_handle()`, `opencl_handle()`, and `ram_handle()`.
 Note that the former two may not be available if no support for the respective backend is activated using the preprocessor constants `VIENNACL_WITH_CUDA` and `VIENNACL_WITH_OPENCL`, see \ref manual-installation-backends "Enabling OpenMP, OpenCL, or CUDA Backends"
 
@@ -24,8 +23,21 @@ A common interface layer in `viennacl::backend` dispatches into the respective r
 
 
 \section manual-memory-switching Querying and Switching Active Memory Domains
-A `mem_handle` object creates its buffer according to the following prioritized list, whichever is available: CUDA, OpenCL, host runtime (CPU RAM).
-The current memory domain can be queried using the member function `memory_domain()` and returns one of the values `MEMORY_NOT_INITIALIZED`, `MAIN_MEMORY`, `OPENCL_MEMORY`, or `CUDA_MEMORY` defined in the struct `viennacl::memory_types`.
+
+The global default memory domain can be queried by
+
+    viennacl::backend::default_memory_type();
+
+If the global memory domain should be changed to a new default, pass the new memory domain as parameter to `default_memory_type()`.
+For example, to allocate buffers in main memory even though OpenCL or CUDA are enabled, call
+
+    viennacl::backend::default_memory_type(viennacl::MAIN_MEMORY);
+
+and all subsequent buffers are allocated in main memory unless specified otherwise.
+
+A global change of the default memory domain is not thread-safe, hence one can specify the memory domain individually for each object holding one or more memory handles internally.
+Unless specified otherwise, such a `mem_handle` object creates its buffer for the default memory type.
+The current memory domain of a `mem_handle` can be queried using the member function `memory_domain()` and returns one of the values `MEMORY_NOT_INITIALIZED`, `MAIN_MEMORY`, `OPENCL_MEMORY`, or `CUDA_MEMORY` defined in the struct `viennacl::memory_types`.
 
 The currently active memory handle can be switched from outside using the member function `switch_memory_domain()`.
 For example, to indicate that the memory referenced by a handle `h`, the line
