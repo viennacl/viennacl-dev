@@ -30,10 +30,10 @@
  The formerly separate \ref usermanual "user manual" is no longer available as a standalone PDF, but all integrated into the HTML-based documentation.
 
  Quick links:
-     - \ref manual-page-installation "Installation and building the examples"
-     - \ref manual-page-types        "Basic types"
-     - \ref manual-page-operations   "Basic operations"
-     - \ref manual-page-algorithms   "Algorithms"
+     - \ref manual-installation "Installation and building the examples"
+     - \ref manual-types        "Basic types"
+     - \ref manual-operations   "Basic operations"
+     - \ref manual-algorithms   "Algorithms"
 */
 
 

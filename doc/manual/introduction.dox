@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-introduction    Introduction
+   \page manual-introduction    Introduction
 
 
 The Vienna Computing Library (ViennaCL) is a scientific computing library written in C++.
@@ -13,7 +13,7 @@ The following iterative solvers are currently implemented (confer for example to
     - Conjugate Gradient (CG)
     - Stabilized BiConjugate Gradient (BiCGStab)
     - Generalized Minimum Residual (GMRES)
-A number of preconditioners is also provided in order to improve convergence of these solvers, see \ref manual-page-algorithms "chapter on algorithms".
+A number of preconditioners is also provided in order to improve convergence of these solvers, see \ref manual-algorithms "chapter on algorithms".
 
 The solvers and preconditioners can also be used with different libraries due to their generic implementation.
 Currently it is possible to use the solvers and preconditioners directly with types from the uBLAS library, which is part of Boost \cite boost .

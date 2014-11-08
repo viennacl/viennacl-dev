@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-additional-algorithms    Additional Algorithms
+   \page manual-additional-algorithms    Additional Algorithms
 
 
 The implementations of the algorithms described in this chapter are still not yet mature enough to be considered core-functionality, and/or are available with the OpenCL backend only.

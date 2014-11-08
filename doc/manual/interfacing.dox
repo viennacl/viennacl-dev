@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-interfacing    Interfacing Other Libraries
+   \page manual-interfacing    Interfacing Other Libraries
 
 ViennaCL aims at compatibility with as many other libraries as possible.
 This is on the one hand achieved by using generic implementations of the individual algorithms, and on the other hand by providing the necessary wrappers.

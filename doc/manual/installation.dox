@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-installation    Installation
+   \page manual-installation    Installation
 
 This chapter shows how ViennaCL can be integrated into a project and how the examples are built.
 The necessary steps are outlined for several different platforms, but we could not check every possible combination of hardware, operating system and compiler.
@@ -13,7 +13,7 @@ If you experience any trouble, please write to the maining list at <br />
 </center>
 
 
-\section manual-installation-dependencies Dependencies 
+\section manual-installation-dependencies Dependencies
 
 ViennaCL uses the CMake build system for multi-platform support.
 Thus, before you proceed with the installation of ViennaCL, make sure you have a recent version of CMake installed.
@@ -43,7 +43,7 @@ For using the CUDA backend, make sure that the CUDA SDK is installed properly an
 If you intend to use the OpenCL backend, the include and library directories of your OpenCL SDK should also be added there.
 
 Note: If multiple OpenCL libraries are available on the host system, ViennaCL uses the first platform returned by the system by default.
-Consult \ref manual-page-multi-device "the chapter on using multiple devices" for configuring the use of other platforms.
+Consult \ref manual-multi-device "the chapter on using multiple devices" for configuring the use of other platforms.
 
 
 \section manual-installation-opencl Get the OpenCL Library

@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-custom-contexts    User-Provided OpenCL Contexts
+   \page manual-custom-contexts    User-Provided OpenCL Contexts
 
 Many projects need similar basic linear algebra operations, but essentially operate in their own OpenCL context.
 To provide the functionality and convenience of ViennaCL to such existing projects, existing contexts can be passed to ViennaCL and memory objects can be wrapped into the basic linear algebra types `vector`, `matrix`, or `compressed_matrix`.
@@ -13,7 +13,7 @@ This chapter is devoted to the description of the necessary steps to use ViennaC
 
 \section manual-custom-contexts-passing Passing Contexts to ViennaCL
 ViennaCL is able to handle an arbitrary number of contexts, which are identified by a key value of type `long`.
-By default, ViennaCL operates on the context identified by `0`, unless the user switches the context, cf. \ref manual-page-multi-device "Configuring OpenCL Contexts and Devices".
+By default, ViennaCL operates on the context identified by `0`, unless the user switches the context, cf. \ref manual-multi-device "Configuring OpenCL Contexts and Devices".
 
 According to the OpenCL standard, a context contains devices and queues for each device.
 Thus, it is assumed in the following that the user has successfully created a context with one or more devices and one or more queues per device.

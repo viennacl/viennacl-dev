@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-operations    Basic Operations
+   \page manual-operations    Basic Operations
 
 The basic types have been introduced in the previous chapter, so we move on with the description of the basic BLAS operations.
 Almost all operations supported by Boost.uBLAS are available, including element-wise operations on vectors.

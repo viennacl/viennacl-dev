@@ -3,11 +3,11 @@
 
 /**
 
-   \page manual-page-memory    Memory Model
+   \page manual-memory    Memory Model
 
 With the support of multiple compute backends, memory buffers need to be managed differently depending on whether CUDA, OpenCL or a plain host-based buffer is in use.
 These different <em>memory domains</em> are abstracted in a class `viennacl::backend::mem_handle`, which is able to refer to a buffer in all three backends, possibly at the same time.
-Objects of type `mem_handle` are the building blocks of scalars, vectors and matrices in \ViennaCL, see \ref manual-page-types "Basic Types".
+Objects of type `mem_handle` are the building blocks of scalars, vectors and matrices in \ViennaCL, see \ref manual-types "Basic Types".
 
 
 The raw handles for each memory domain can be obtained via the member functions `cuda_handle()`, `opencl_handle()`, and `ram_handle()`.

@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-custom-kernels    Custom OpenCL Compute Kernels
+   \page manual-custom-kernels    Custom OpenCL Compute Kernels
 
 For custom algorithms the built-in functionality of ViennaCL may not be sufficient or not fast enough.
 In such cases it can be desirable to write a custom OpenCL compute kernel, which is explained in this chapter.

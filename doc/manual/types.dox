@@ -3,10 +3,10 @@
 
 /**
 
-   \page manual-page-types    Basic Types
+   \page manual-types    Basic Types
 
 This chapter provides a brief overview of the basic interfaces and usage of the provided data types.
-Operations on the various types are explained in \ref manual-page-operations "Basic Operations".
+Operations on the various types are explained in \ref manual-operations "Basic Operations".
 
 \section manual-types-scalar Scalar Type
 The scalar type `scalar<T>` with template parameter `T` denoting the underlying CPU scalar type (`char`, `short`, `int`, `long`, `float` and `double`, if supported - see \ref manual-introduction-hardware-table "table of supported hardware") and represents single scalar value on the computing device.
@@ -82,7 +82,7 @@ The overloaded function `copy()`, which is used similar to `std::copy()` from th
 The function `copy()` does not assume that the values of the supplied CPU object are located in a linear memory sequence.
 If this is the case, the function `fast_copy` provides better performance.
 
-Once the vectors are set up on the GPU, they can be used like objects on the CPU (refer to \ref manual-page-operations "Basic Operations" for more details):
+Once the vectors are set up on the GPU, they can be used like objects on the CPU (refer to \ref manual-operations "Basic Operations" for more details):
 \code
     // let vcl_vec1 and vcl_vec2 denote two vector on the GPU
     vcl_vec1 *= 2.0;
@@ -110,7 +110,7 @@ Other member functions are as follows:
 <tr><td>`v.internal_size()` </td><td> Returns the number of entries allocated on the GPU (taking alignment into account) </td></tr>
 <tr><td>`v.empty()`   </td><td> Shorthand notation for `v.size() == 0`</td></tr>
 <tr><td>`v.clear()`   </td><td> Sets all entries in v to zero </td></tr>
-<tr><td>`v.handle()`  </td><td>Returns the memory handle (needed for custom kernels, see \ref manual-page-custom-kernels "Custom Compute Kernels") </td></tr>
+<tr><td>`v.handle()`  </td><td>Returns the memory handle (needed for custom kernels, see \ref manual-custom-kernels "Custom Compute Kernels") </td></tr>
 </table>
 <b>Interface of `vector<T>` in \ViennaCL. Destructors and operator overloads for BLAS are not listed.</b>
 </center>
@@ -178,7 +178,7 @@ A much better way is to initialize a dense matrix using the provided `copy()` fu
     copy(gpu_matrix, cpu_matrix);
 \endcode
 The type requirement for a class instantiated in an object `cpu_matrix is that `operator() can be used for accessing entries, that a member function `size1()` returns the number of rows and that `size2()` returns the number of columns.
-Please refer to \ref manual-page-interfacing "Interfacing Other Libraries" for an overview of other libraries for which an overload of `copy()` is provided.
+Please refer to \ref manual-interfacing "Interfacing Other Libraries" for an overview of other libraries for which an overload of `copy()` is provided.
 
 \note The internal memory buffer of a `matrix<>` is by default padded with zeros so that the internal matrix size is a multiple of e.g. a power of two.
 
@@ -199,7 +199,7 @@ The members are as follows, with the usual operator overloads not listed explici
 <tr><td>`mat.size2()`           </td><td> Number of columns in mat  </td></tr>
 <tr><td>`mat.internal_size2()`  </td><td> Internal number of columns in mat  </td></tr>
 <tr><td>`mat.clear()`           </td><td> Sets all entries in v to zero  </td></tr>
-<tr><td>`mat.handle()`          </td><td> Returns the memory handle (needed for custom kernels, see \ref manual-page-custom-kernels "Custom Compute Kernels") </td></tr>
+<tr><td>`mat.handle()`          </td><td> Returns the memory handle (needed for custom kernels, see \ref manual-custom-kernels "Custom Compute Kernels") </td></tr>
 </table>
 <b>Interface of the dense matrix type `matrix<T, F>` in ViennaCL. Constructors, Destructors and operator overloads for BLAS are not listed.</b>
 </center>
@@ -254,9 +254,9 @@ In general, sparse matrices should be set up on the CPU and then be pushed to th
 <tr><td>`mat.size2()`       </td><td> Number of columns in `mat`  </td></tr>
 <tr><td>`mat.nnz()`         </td><td> Number of nonzeroes in `mat`  </td></tr>
 <tr><td>`mat.resize(m, n, bool preserve)`  </td><td> Resize mat to `m` rows and `n` columns. Currently, the boolean flag is ignored and entries always discarded.  </td></tr>
-<tr><td>`mat.handle1()`     </td><td> Returns the memory handle holding the row indices (needed for custom kernels, see \ref manual-page-custom-kernels "Custom Compute Kernels")  </td></tr>
-<tr><td>`mat.handle2()`     </td><td> Returns the memory handle holding the column indices  (needed for custom kernels, see \ref manual-page-custom-kernels "Custom Compute Kernels")  </td></tr>
-<tr><td>`mat.handle()`      </td><td> Returns the memory handle holding the entries (needed for custom kernels, see \ref manual-page-custom-kernels "Custom Compute Kernels") </td></tr>
+<tr><td>`mat.handle1()`     </td><td> Returns the memory handle holding the row indices (needed for custom kernels, see \ref manual-custom-kernels "Custom Compute Kernels")  </td></tr>
+<tr><td>`mat.handle2()`     </td><td> Returns the memory handle holding the column indices  (needed for custom kernels, see \ref manual-custom-kernels "Custom Compute Kernels")  </td></tr>
+<tr><td>`mat.handle()`      </td><td> Returns the memory handle holding the entries (needed for custom kernels, see \ref manual-custom-kernels "Custom Compute Kernels") </td></tr>
 </table>
 <b>Interface of the sparse matrix type `compressed_matrix<T, F>` in ViennaCL. Destructors and operator overloads for BLAS are not listed.</b>
 </center>
@@ -297,7 +297,7 @@ The iterator returned from the cpu sparse matrix type via `begin1()` has to fulf
   - Increment and dereference
 
 For the sparse matrix types in Boost.uBLAS, these requirements are all fulfilled.
-Please refer to \ref manual-page-interfacing "Interfacing Other Libraries" for an overview of other libraries for which an overload of `copy()` is provided.
+Please refer to \ref manual-interfacing "Interfacing Other Libraries" for an overview of other libraries for which an overload of `copy()` is provided.
 
 \subsubsection manual-types-sparse-compressed-members Members
 The interface is described in \ref manual-types-sparse-compressed-table-members "Table of members".
@@ -320,8 +320,8 @@ In general, sparse matrices should be set up on the CPU and then be pushed to th
 <tr><td>`mat.nnz()`           </td><td> Number of nonzeroes in `mat` </td></tr>
 <tr><td>`mat.resize(m, n, bool preserve)`   </td><td> Resize `mat` to `m` rows and `n` columns. Currently, the boolean flag is ignored and entries always discarded.</td></tr>
 <tr><td>`mat.resize(m, n)`    </td><td> Resize mat to `m` rows and `n` columns. Does not preserve old values. </td></tr>
-<tr><td>`mat.handle12()`      </td><td> Returns the memory handle holding the row and column indices (needed for custom kernels, see \ref manual-page-custom-kernels "Custom Compute Kernels") </td></tr>
-<tr><td>`mat.handle()`        </td><td> Returns the memory handle holding the entries (needed for custom kernels, see \ref manual-page-custom-kernels "Custom Compute Kernels") </td></tr>
+<tr><td>`mat.handle12()`      </td><td> Returns the memory handle holding the row and column indices (needed for custom kernels, see \ref manual-custom-kernels "Custom Compute Kernels") </td></tr>
+<tr><td>`mat.handle()`        </td><td> Returns the memory handle holding the entries (needed for custom kernels, see \ref manual-custom-kernels "Custom Compute Kernels") </td></tr>
 </table>
 <b>Interface of the sparse matrix type `coordinate_matrix<T, A>` in ViennaCL. Destructors and operator overloads for BLAS operations are not listed.</b>
 </center>

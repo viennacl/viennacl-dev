@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-multi-device    Configuring OpenCL Contexts and Devices
+   \page manual-multi-device    Configuring OpenCL Contexts and Devices
 
 Support for multiple devices was officially added in OpenCL 1.1.
 Among other things, this allows for e.g. using all CPUs in a multi-socket CPU mainboard as a single OpenCL compute device.
@@ -12,7 +12,7 @@ Nevertheless, the efficient use of multiple OpenCL devices is far from trivial, 
 \note There is no native support for automatically executing operations over multiple GPUs in ViennaCL. Partition of data is left to the user.
 
 \section manual-multi-device-context Context Setup
-Unless specified otherwise (see \ref manual-page-custom-contexts "User-Provided OpenCL Contexts"), ViennaCL silently creates its own context and adds all available default devices with a single queue per device to it.
+Unless specified otherwise (see \ref manual-custom-contexts "User-Provided OpenCL Contexts"), ViennaCL silently creates its own context and adds all available default devices with a single queue per device to it.
 All operations are then carried out on this (or the user-provided) context, which can be obtained with the call
 \code
  viennacl::ocl::current_context();
@@ -60,7 +60,7 @@ viennacl::ocl::setup_context(id, my_devices);
 \endcode
 Similarly, contexts with other IDs can be set up.
 
-\note For details on how to initialize ViennaCL with already existing contexts, see \ref manual-page-custom-contexts "User-Provided OpenCL Contexts".
+\note For details on how to initialize ViennaCL with already existing contexts, see \ref manual-custom-contexts "User-Provided OpenCL Contexts".
 
 The user is reminded that memory objects within an OpenCL context are allocated for all devices within a context.
 Thus, setting up contexts with one device each is optimal in terms of memory usage, because each memory object is then bound to a single device only.

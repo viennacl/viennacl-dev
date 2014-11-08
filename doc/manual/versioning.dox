@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-versioning    Versioning
+   \page manual-versioning    Versioning
 
 
 Each release of ViennaCL carries a three-fold version number:

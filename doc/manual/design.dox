@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-design    Design Decisions
+   \page manual-design    Design Decisions
 
 During the implementation of ViennaCL, several design decisions were necessary, which are often a trade-off among various advantages and disadvantages.
 In the following, we discuss several design decisions and the reasoning that has led to the same.

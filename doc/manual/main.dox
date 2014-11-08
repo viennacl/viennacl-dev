@@ -7,27 +7,27 @@
 
 This manual describes the use of %ViennaCL and consists of multiple parts:
   <table>
-  <tr><td>\subpage manual-page-introduction   </td><td>Provides a first overview of ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-installation   </td><td>How to build the examples and benchmarks in ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-types          </td><td>Description of the basic types in ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-operations     </td><td>Description of the basic operations available</td></tr>
-  <tr><td>\subpage manual-page-algorithms     </td><td>Discusses the use of the various algorithms available</td></tr>
-  <tr><td>\subpage manual-page-interfacing    </td><td>Using ViennaCL with other libraries such as Boost.uBLAS, Eigen, or MTL4</td></tr>
-  <tr><td>\subpage manual-page-memory         </td><td>Explains the memory model used in ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-shared-library </td><td>How to use ViennaCL as a shared library from programming languages other than C++</td></tr>
+  <tr><td>\subpage manual-introduction   </td><td>Provides a first overview of ViennaCL</td></tr>
+  <tr><td>\subpage manual-installation   </td><td>How to build the examples and benchmarks in ViennaCL</td></tr>
+  <tr><td>\subpage manual-types          </td><td>Description of the basic types in ViennaCL</td></tr>
+  <tr><td>\subpage manual-operations     </td><td>Description of the basic operations available</td></tr>
+  <tr><td>\subpage manual-algorithms     </td><td>Discusses the use of the various algorithms available</td></tr>
+  <tr><td>\subpage manual-interfacing    </td><td>Using ViennaCL with other libraries such as Boost.uBLAS, Eigen, or MTL4</td></tr>
+  <tr><td>\subpage manual-memory         </td><td>Explains the memory model used in ViennaCL</td></tr>
+  <tr><td>\subpage manual-shared-library </td><td>How to use ViennaCL as a shared library from programming languages other than C++</td></tr>
 
-  <tr><td>\subpage manual-page-additional-algorithms </td><td>Explains backend-specific (unstable) algorithms in ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-custom-contexts       </td><td>How to provide your own OpenCL context for use with ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-multi-device          </td><td>How to use multiple compute devices concurrently with ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-custom-kernels        </td><td>Shows how to use your own compute kernels in CUDA or OpenCL with ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-structured-matrix     </td><td>Describes the structured matrices and associated operations available for the OpenCL backend</td></tr>
+  <tr><td>\subpage manual-additional-algorithms </td><td>Explains backend-specific (unstable) algorithms in ViennaCL</td></tr>
+  <tr><td>\subpage manual-custom-contexts       </td><td>How to provide your own OpenCL context for use with ViennaCL</td></tr>
+  <tr><td>\subpage manual-multi-device          </td><td>How to use multiple compute devices concurrently with ViennaCL</td></tr>
+  <tr><td>\subpage manual-custom-kernels        </td><td>Shows how to use your own compute kernels in CUDA or OpenCL with ViennaCL</td></tr>
+  <tr><td>\subpage manual-structured-matrix     </td><td>Describes the structured matrices and associated operations available for the OpenCL backend</td></tr>
 
-  <tr><td>\subpage manual-page-design         </td><td>Explains certain design decisions in ViennaCL</td></tr>
+  <tr><td>\subpage manual-design         </td><td>Explains certain design decisions in ViennaCL</td></tr>
 
-  <tr><td>\subpage manual-page-authors        </td><td>A list of authors and contributors to ViennaCL</td></tr>
-  <tr><td>\subpage manual-page-versioning     </td><td>Description of the basic types in ViennaCL</td></tr>
-  <tr><td>\subpage changelog                  </td><td>Lists the changes to ViennaCL in each release</td></tr>
-  <tr><td>\subpage manual-page-license        </td><td>The permissive MIT/X11 license of ViennaCL</td></tr>
+  <tr><td>\subpage manual-authors        </td><td>A list of authors and contributors to ViennaCL</td></tr>
+  <tr><td>\subpage manual-versioning     </td><td>Description of the basic types in ViennaCL</td></tr>
+  <tr><td>\subpage changelog             </td><td>Lists the changes to ViennaCL in each release</td></tr>
+  <tr><td>\subpage manual-license        </td><td>The permissive MIT/X11 license of ViennaCL</td></tr>
   </table>
 */
 

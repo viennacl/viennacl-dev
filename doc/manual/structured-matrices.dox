@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-structured-matrix    Structured Matrix Types
+   \page manual-structured-matrix    Structured Matrix Types
 
 \warning Structured matrix types are experimental in ViennaCL. Interface changes as well as considerable performance improvements may be included in future releases!
 

@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-shared-library    Shared Library
+   \page manual-shared-library    Shared Library
 
 In order to open up ViennaCL to other languages such as C, FORTRAN, or Python, a shared library is under development in the subfolder `libviennacl/`.
 Currently the different BLAS backends for dense linear algebra are available.

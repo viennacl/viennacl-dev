@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-page-algorithms    Algorithms
+   \page manual-algorithms    Algorithms
 
 This chapter gives an overview over the available algorithms in ViennaCL.
 The focus of ViennaCL is on iterative solvers, for which generic implementations that allows the use of the same code on the CPU (either using Boost.uBLAS, Eigen, MTL4, or ViennaCL types) and on the GPU (using ViennaCL types) are provided.
@@ -55,7 +55,7 @@ ViennaCL provides different iterative solvers for various classes of matrices:
 Unlike direct solvers, the convergence of iterative solvers relies on certain properties of the system matrix.
 Keep in mind that an iterative solver may fail to converge, especially if the matrix is ill conditioned or a wrong solver is chosen.
 
-\note The iterative solvers can also be used for Boost.uBLAS, Eigen and MTL4 objects! Have a look at \ref manual-page-interfacing  "Interfacing Other Libraries" and the respective tutorials in the `examples/tutorials/` folder.
+\note The iterative solvers can also be used for Boost.uBLAS, Eigen and MTL4 objects! Have a look at \ref manual-interfacing  "Interfacing Other Libraries" and the respective tutorials in the `examples/tutorials/` folder.
 
 \code
 viennacl::compressed_matrix<float>  vcl_matrix;
@@ -124,7 +124,7 @@ An overview of preconditioners available for the various sparse matrix types is 
 </table>
 </center>
 Broader support of preconditioners particularly for `ell_matrix` and `hyb_matrix` is scheduled for future releases.
-AMG and SPAI preconditioners are described in \ref manual-page-additional-algo "Additional Algorithms" section.
+AMG and SPAI preconditioners are described in \ref manual-additional-algo "Additional Algorithms" section.
 
 
 \subsection manual-algorithms-preconditioners-ilut Incomplete LU Factorization with Threshold (ILUT)
