@@ -660,6 +660,7 @@ void pipelined_gmres_prod(coordinate_matrix<T> const & A,
   cl_uint start_Ap               = cl_uint(viennacl::traits::start(Ap));
 
   Ap.clear();
+  inner_prod_buffer.clear();
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_coo_prod");
   unsigned int thread_num = 128; //k.local_work_size(0);
