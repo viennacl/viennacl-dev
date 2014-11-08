@@ -16,7 +16,7 @@ A. License
 -----------------
 ViennaCL requires the following:
  * A recent C++ compiler (e.g. gcc 4.x.x)
- * For accessing GPUs and multi-core CPUs: OpenCL (shared library and include files)
+ * For accessing GPUs and multi-core CPUs: OpenCL (shared library and include files) or CUDA if only targeting NVIDIA GPUs
  * For building some of the tutorials: uBLAS (shipped with the Boost libraries)
 
 
@@ -26,9 +26,9 @@ ViennaCL requires the following:
 The first step is to extract the file:
 
 Unix-based OS:
-$> gunzip ViennaCL-1.5.2.tar.gz
-$> tar -xf ViennaCL-1.5.2.tar
-$> cd ViennaCL-1.5.2
+$> gunzip ViennaCL-1.6.0.tar.gz
+$> tar -xf ViennaCL-1.6.0.tar
+$> cd ViennaCL-1.6.0
 
 Windows:
 Extract the file using your favorite compressor/decompressor, e.g. 7-zip.
@@ -45,7 +45,7 @@ Unix-based clients:
    $> cmake ..
 
  * If CMake cannot find the OpenCL files, e.g. 'Could NOT find OPENCL (missing:  OPENCL_INCLUDE_DIR)', please set the paths manually, e.g.
-   $> cmake -DOPENCL_INCLUDE_DIR=../CL ..
+   $> cmake .. -DOPENCL_INCLUDE_DIR=../CL
    Or, use the CMake GUI.
    $> cmake-gui
    Or, disable openCL if you are not planning to use parallel programming components
@@ -107,7 +107,8 @@ Windows:
 4. Contact
 ------------------------
 
-For any technical questions related to ViennaCL, please use our mailing list: viennacl-support@lists.sourceforge.net
+For any technical questions related to ViennaCL, please use our support mailing list: viennacl-support@lists.sourceforge.net (https://lists.sourceforge.net/lists/listinfo/viennacl-support)
+The developer mailinglist is viennacl-devel@lists.sourceforge.net, for which you can subscribe at https://lists.sourceforge.net/lists/listinfo/viennacl-devel
 You may also use the forum provided by sourceforge.net: http://sourceforge.net/projects/viennacl/
 For any other issues, please contact the project head Karl Rupp at rupp@iue.tuwien.ac.at.
 
