@@ -14,13 +14,13 @@ A list of significant changes is as follows:
   - Added viennacl::min() and viennacl::max() to obtain the minimum and maximum element in a vector (thanks to sourceforge user cpp1 for the suggestion).
   - Matrix-matrix products on CPU: Improved performance by about an order of magnitude.
   - matrix: Added constructor and example for wrapping user-provided CUDA buffers.
-  - Eigenvalues: Implementation of bisection algorithm for tridiagonal symmetric matrices (thanks to Andreas Selinger and Denis Ojdanic). API still experimental.
-  - Eigenvalues: Extended current implementation of the QR method to OpenMP and CUDA backends (thanks to Andreas Selinger and Denis Ojdanic). API remains experimental.
-  - Scan: Implemented inclusive and exclusive scans for all three compute backends (thanks to Andreas Selinger and Denis Ojdanic). API still experimental.
-  - Triangular solvers: Improved performance particularly for multiple right hand sides (i.e. BLAS level 3 solves). Contributed by Juraj Kabzan.
-  - matrix: Improved performance for matrix transposition (thanks to Juraj Kabzan).
-  - FFT: Now also supports OpenMP and CUDA backends (thanks to Juraj Kabzan).
-  - Nonnegative matrix factorization: Now also supports OpenMP and CUDA backends (thanks to Juraj Kabzan).
+  - Eigenvalues: Implementation of bisection algorithm for tridiagonal symmetric matrices (thanks to Andreas Selinger and Denis Ojdanic for the code contribution). API still experimental.
+  - Eigenvalues: Extended current implementation of the QR method to OpenMP and CUDA backends (thanks to Andreas Selinger and Denis Ojdanic for the code contribution). API remains experimental.
+  - Scan: Implemented inclusive and exclusive scans for all three compute backends (thanks to Andreas Selinger and Denis Ojdanic for the code contribution). API still experimental.
+  - Triangular solvers: Improved performance particularly for multiple right hand sides (i.e. BLAS level 3 solves). Code contributed by Juraj Kabzan.
+  - matrix: Improved performance for matrix transposition (thanks to Juraj Kabzan for the code contribution).
+  - FFT: Now also supports OpenMP and CUDA backends (thanks to Juraj Kabzan for the code contribution).
+  - Nonnegative matrix factorization: Now also supports OpenMP and CUDA backends (thanks to Juraj Kabzan for the code contribution).
   - Nonnegative matrix factorization: Now using correct contexts and better robustness for initial guesses being all-zero.
   - Documentation: Integrated former LaTeX manual into Doxygen, resulting in an all-HTML documentation. Enables much better cross-referencing.
   - Benchmarks: Merged separate BLAS level 1/2/3 benchmarks into a single benchmark printing performance for all three levels.
