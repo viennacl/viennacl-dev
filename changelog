@@ -39,6 +39,7 @@ A list of significant changes is as follows:
   - Visual Studio 2012: Fixed compilation problems for some new submodules based on input from Matthew Musto.
   - Iterators: Fixed incorrect index calculations when using iterators on vectors (thanks to Karan Poddar for reporting).
   - matrix_base: The storage layout of matrices is internally managed as a runtime parameter, which allows for a better internal dispatch in order to use faster compute kernels.
+  - Random numbers: Removed experimental random number generation in viennacl/rand/
 
 ## Version 1.5.x
 

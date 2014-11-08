@@ -31,7 +31,6 @@
 #include "viennacl/tools/matrix_size_deducer.hpp"
 #include "viennacl/meta/result_of.hpp"
 #include "viennacl/meta/enable_if.hpp"
-//#include "viennacl/rand/utils.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/row_major.hpp"
 

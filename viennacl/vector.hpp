@@ -32,7 +32,6 @@
 #include "viennacl/linalg/detail/op_executor.hpp"
 #include "viennacl/linalg/vector_operations.hpp"
 #include "viennacl/meta/result_of.hpp"
-//#include "viennacl/rand/utils.hpp"
 #include "viennacl/context.hpp"
 #include "viennacl/traits/handle.hpp"
 
