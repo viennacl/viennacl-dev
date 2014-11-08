@@ -217,6 +217,9 @@ viennacl::vector<ScalarType> solve(MatrixType const & A,
     residual /= rho_0;
     rho = ScalarType(1);
 
+    // check for convergence:
+    if (rho_0 / norm_rhs < tag.tolerance())
+      break;
 
     //
     // minimize in Krylov basis:
@@ -281,14 +284,28 @@ viennacl::vector<ScalarType> solve(MatrixType const & A,
         host_values_xi_k[i] += host_r_dot_vk_buffer[i*buffer_size_per_vector + j];
     }
 
-    // Compute error estimator:
-    for (std::size_t i=0; i<k; ++i)
-      rho *= std::sin( std::acos(host_values_xi_k[i] / rho) );
-
     //
     // Bring values in R  back to host:
     //
     viennacl::fast_copy(device_buffer_R.begin(), device_buffer_R.end(), host_buffer_R.begin());
+
+    //
+    // Check for premature convergence: If the diagonal element drops too far below the first norm, we're done and restrict the Krylov size accordingly.
+    //
+    vcl_size_t full_krylov_dim = k; //needed for proper access to R
+    for (std::size_t i=0; i<k; ++i)
+    {
+      if (std::fabs(host_buffer_R[i + i*k]) < tag.tolerance() * host_buffer_R[0])
+      {
+        k = i;
+        break;
+      }
+    }
+
+
+    // Compute error estimator:
+    for (std::size_t i=0; i<k; ++i)
+      rho *= std::sin( std::acos(host_values_xi_k[i] / rho) );
 
     //
     // Solve minimization problem:
@@ -299,9 +316,9 @@ viennacl::vector<ScalarType> solve(MatrixType const & A,
     {
       vcl_size_t i = static_cast<vcl_size_t>(i2);
       for (vcl_size_t j=static_cast<vcl_size_t>(i)+1; j<k; ++j)
-        host_values_eta_k_buffer[i] -= host_buffer_R[i + j*k] * host_values_eta_k_buffer[j];
+        host_values_eta_k_buffer[i] -= host_buffer_R[i + j*full_krylov_dim] * host_values_eta_k_buffer[j];
 
-      host_values_eta_k_buffer[i] /= host_buffer_R[i + i*k];
+      host_values_eta_k_buffer[i] /= host_buffer_R[i + i*full_krylov_dim];
     }
 
     //
