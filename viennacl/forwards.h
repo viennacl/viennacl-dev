@@ -35,6 +35,16 @@
      - \ref manual-types        "Basic types"
      - \ref manual-operations   "Basic operations"
      - \ref manual-algorithms   "Algorithms"
+
+
+ -----------------------------------
+ \htmlonly
+ <div style="align: right; width: 100%">
+ <a href="http://www.tuwien.ac.at/"><img src="tuwien.png"></a>
+ <a href="http://www.iue.tuwien.ac.at/"><img src="iue.png"></a>
+ <a href="http://www.asc.tuwien.ac.at/"><img src="asc.png"></a>
+ </div>
+ \endhtmlonly
 */
 
 
