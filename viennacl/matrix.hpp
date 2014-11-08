@@ -23,7 +23,7 @@
 */
 
 #include "viennacl/forwards.h"
-#include "viennacl/matrix_def.hpp"
+#include "viennacl/detail/matrix_def.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
 #include "viennacl/linalg/sparse_matrix_operations.hpp"

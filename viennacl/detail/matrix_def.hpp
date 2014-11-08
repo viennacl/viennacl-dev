@@ -1,5 +1,5 @@
-#ifndef VIENNACL_MATRIX_DEF_HPP_
-#define VIENNACL_MATRIX_DEF_HPP_
+#ifndef VIENNACL_DETAIL_MATRIX_DEF_HPP_
+#define VIENNACL_DETAIL_MATRIX_DEF_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2014, Institute for Microelectronics,
@@ -18,8 +18,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file viennacl/matrix.hpp
-    @brief Implementation of the dense matrix class
+/** @file viennacl/detail/matrix_def.hpp
+    @brief Forward declaration of dense matrix classes
 */
 
 #include "viennacl/forwards.h"

@@ -25,7 +25,7 @@
 #include "viennacl/forwards.h"
 #include "viennacl/range.hpp"
 #include "viennacl/slice.hpp"
-#include "viennacl/matrix_def.hpp"
+#include "viennacl/detail/matrix_def.hpp"
 
 namespace viennacl
 {

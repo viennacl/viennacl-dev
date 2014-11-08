@@ -25,8 +25,8 @@
 
 #include <sstream>
 
-#include "viennacl/matrix_def.hpp"
-#include "viennacl/vector_def.hpp"
+#include "viennacl/detail/matrix_def.hpp"
+#include "viennacl/detail/vector_def.hpp"
 
 #include "viennacl/device_specific/forwards.h"
 #include "viennacl/ocl/forwards.h"

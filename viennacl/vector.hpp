@@ -24,7 +24,7 @@
 */
 
 #include "viennacl/forwards.h"
-#include "viennacl/vector_def.hpp"
+#include "viennacl/detail/vector_def.hpp"
 #include "viennacl/backend/memory.hpp"
 #include "viennacl/scalar.hpp"
 #include "viennacl/tools/tools.hpp"

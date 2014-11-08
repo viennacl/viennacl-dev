@@ -25,7 +25,7 @@
 #include <cmath>
 
 #include "viennacl/forwards.h"
-#include "viennacl/vector_def.hpp"
+#include "viennacl/detail/vector_def.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/ocl/kernel.hpp"

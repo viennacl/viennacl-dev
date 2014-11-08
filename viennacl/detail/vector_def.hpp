@@ -1,5 +1,5 @@
-#ifndef VIENNACL_VECTOR_DEF_HPP_
-#define VIENNACL_VECTOR_DEF_HPP_
+#ifndef VIENNACL_DETAIL_VECTOR_DEF_HPP_
+#define VIENNACL_DETAIL_VECTOR_DEF_HPP_
 
 /* =========================================================================
    Copyright (c) 2010-2014, Institute for Microelectronics,
@@ -18,8 +18,8 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/** @file  viennacl/vector_def.hpp
-    @brief The definition of the implicit_vector_base, vector_base class. Operators are declared, accessors are defined. Use this file to avoid circular dependencies
+/** @file  viennacl/detail/vector_def.hpp
+    @brief Forward declarations of the implicit_vector_base, vector_base class.
 */
 
 #include "viennacl/forwards.h"

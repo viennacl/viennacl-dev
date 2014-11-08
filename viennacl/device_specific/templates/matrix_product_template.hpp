@@ -28,7 +28,7 @@ License:         MIT (X11), see file LICENSE in the base directory
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/matrix_def.hpp"
+#include "viennacl/detail/matrix_def.hpp"
 #include "viennacl/matrix_proxy.hpp"
 
 #include "viennacl/device_specific/templates/template_base.hpp"
