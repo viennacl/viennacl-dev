@@ -173,7 +173,52 @@ namespace detail
                 || leaf.op.type == OPERATION_BINARY_MAT_MAT_PROD_TYPE)
       execute_matrix_prod(s, root_node);
     else if (   leaf.op.type == OPERATION_UNARY_TRANS_TYPE)
-      assign_trans(root_node.lhs, leaf.lhs);
+    {
+      if (root_node.op.type == OPERATION_BINARY_ASSIGN_TYPE)
+        assign_trans(root_node.lhs, leaf.lhs);
+      else // use temporary object:
+      {
+        statement_node new_root_y;
+
+        new_root_y.lhs.type_family  = root_node.lhs.type_family;
+        new_root_y.lhs.subtype      = root_node.lhs.subtype;
+        new_root_y.lhs.numeric_type = root_node.lhs.numeric_type;
+        detail::new_element(new_root_y.lhs, root_node.lhs, ctx);
+
+        new_root_y.op.type_family = OPERATION_BINARY_TYPE_FAMILY;
+        new_root_y.op.type        = OPERATION_BINARY_ASSIGN_TYPE;
+
+        new_root_y.rhs.type_family  = COMPOSITE_OPERATION_FAMILY;
+        new_root_y.rhs.subtype      = INVALID_SUBTYPE;
+        new_root_y.rhs.numeric_type = INVALID_NUMERIC_TYPE;
+        new_root_y.rhs.node_index   = root_node.rhs.node_index;
+
+        // work on subexpression:
+        // TODO: Catch exception, free temporary, then rethrow
+        execute_composite(s, new_root_y);
+
+        // now compute x += temp or x -= temp:
+        lhs_rhs_element u = root_node.lhs;
+        lhs_rhs_element v = new_root_y.lhs;
+
+        if (root_node.op.type == OPERATION_BINARY_INPLACE_ADD_TYPE)
+        {
+          detail::axbx(u,
+                       u,   1.0, 1, false, false,
+                       v,   1.0, 1, false, false);
+        }
+        else if (root_node.op.type == OPERATION_BINARY_INPLACE_SUB_TYPE)
+        {
+          detail::axbx(u,
+                       u,   1.0, 1, false, false,
+                       v,   1.0, 1, false, true);
+        }
+        else
+          throw statement_not_supported_exception("Unsupported binary operator for operation in root node (should be =, +=, or -=)");
+
+        detail::delete_element(new_root_y.lhs);
+      }
+    }
     else
       throw statement_not_supported_exception("Unsupported binary operator");
   }

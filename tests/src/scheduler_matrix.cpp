@@ -412,6 +412,31 @@ int run_test(double epsilon,
     if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
       return EXIT_FAILURE;
     }
+
+    std::cout << "z += trans(x)... ";
+    {
+    for (std::size_t i=0; i<ublas_C.size1(); ++i)
+      for (std::size_t j=0; j<ublas_C.size2(); ++j)
+        ublas_C(i,j) += ublas_A(j,i);
+    viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_inplace_add(), trans(vcl_A));
+    viennacl::scheduler::execute(my_statement);
+
+    if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+      return EXIT_FAILURE;
+    }
+
+    std::cout << "z -= trans(x)... ";
+    {
+    for (std::size_t i=0; i<ublas_C.size1(); ++i)
+      for (std::size_t j=0; j<ublas_C.size2(); ++j)
+        ublas_C(i,j) -= ublas_A(j,i);
+    viennacl::scheduler::statement   my_statement(vcl_C, viennacl::op_inplace_sub(), trans(vcl_A));
+    viennacl::scheduler::execute(my_statement);
+
+    if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS)
+      return EXIT_FAILURE;
+    }
+
   }
 
   std::cout << std::endl;

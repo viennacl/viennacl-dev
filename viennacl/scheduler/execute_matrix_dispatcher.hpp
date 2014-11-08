@@ -150,7 +150,7 @@ void ambm_m(lhs_rhs_element & mat1,
     throw statement_not_supported_exception("Invalid arguments in scheduler when calling ambm_m()");
 }
 
-/** @brief Scheduler unwrapper for A = trans(B) */
+/** @brief Scheduler unwrapper for A =/+=/-= trans(B) */
 inline void assign_trans(lhs_rhs_element const & A,
                          lhs_rhs_element const & B)
 {
