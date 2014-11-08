@@ -349,6 +349,14 @@ For an example use of an `ell_matrix`, have a look at examples/benchmarks/sparse
 
 \note Note that preconditioners do not work with `ell_matrix` yet.
 
+\subsection manual-types-sparse-sliced-ell Sliced ELL Matrix
+A variation of the ELL format was recently proposed by Kreutzer et al. for use on CPUs, GPUs, and Intel's MIC architecture.
+The implementation in ViennaCL does not reorder the rows of the matrix, but is otherwise as proposed in the paper.
+
+For an example use of `sliced_ell_matrix`, have a look at examples/benchmarks/sparse.cpp.
+
+\note Note that preconditioners do not work with `sliced_ell_matrix` yet.
+
 \subsection manual-types-sparse-hyb Hybrid Matrix
 The higher performance of the ELL format for matrices with approximately the same number of entries per row and the higher flexibility of the CSR format is combined in the `hyb_matrix` type, where the main part of the system matrix is stored in ELL format and excess entries are stored in CSR format.
 
