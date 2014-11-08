@@ -167,3 +167,18 @@ install(FILES
    "${PROJECT_BINARY_DIR}/ViennaCLConfig.cmake"
    "${PROJECT_BINARY_DIR}/ViennaCLConfigVersion.cmake"
    DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+
+
+# For out-of-the-box support on MacOS:
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  EXEC_PROGRAM(uname ARGS -v  OUTPUT_VARIABLE DARWIN_VERSION)
+  STRING(REGEX MATCH "[0-9]+" DARWIN_VERSION ${DARWIN_VERSION})
+  IF (DARWIN_VERSION GREATER 12)
+    IF (ENABLE_CUDA)
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")  # Mavericks and beyond need the new C++ STL with CUDA
+      # see https://github.com/viennacl/viennacl-dev/issues/106 for discussion
+    ENDIF()
+  ENDIF()
+  INCLUDE_DIRECTORIES("/opt/local/include")
+  SET(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

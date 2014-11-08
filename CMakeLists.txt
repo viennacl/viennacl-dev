@@ -68,19 +68,6 @@ endif()
 
 include_directories(BEFORE "${PROJECT_SOURCE_DIR}")
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  EXEC_PROGRAM(uname ARGS -v  OUTPUT_VARIABLE DARWIN_VERSION)
-  STRING(REGEX MATCH "[0-9]+" DARWIN_VERSION ${DARWIN_VERSION})
-  IF (DARWIN_VERSION GREATER 12)
-    IF (ENABLE_CUDA)
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")  # Mavericks and beyond need the new C++ STL with CUDA
-      # see https://github.com/viennacl/viennacl-dev/issues/106 for discussion
-    ENDIF()
-  ENDIF()
-  INCLUDE_DIRECTORIES("/opt/local/include")
-  SET(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
 
 # Subdirectories
 ################
@@ -157,11 +144,12 @@ if(ENABLE_DIST)
          "${PROJECT_SOURCE_DIR}/cmake/ViennaCLConfigVersion.cmake.in" "${DISTDIR}/cmake/ViennaCLConfigVersion.cmake.in"
 
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${DISTDIR}/doc"
-      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-         "${PROJECT_BINARY_DIR}/doc/viennacl.pdf" "${DISTDIR}/doc/viennacl.pdf"
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
-         "${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen"
-         "${DISTDIR}/doc/doxygen"
+         "${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen/html"
+         "${DISTDIR}/doc/html"
+      COMMAND "${CMAKE_COMMAND}" -E copy_directory
+         "${PROJECT_SOURCE_DIR}/doc/manual/figures"
+         "${DISTDIR}/doc/html"
 
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/doc/Doxyfile.in" "${DISTDIR}/doc/Doxyfile.in"

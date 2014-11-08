@@ -1,7 +1,7 @@
 # Project setup
 ###############
 
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
@@ -32,14 +32,6 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 option(BUILD_TESTING "Build the tests " OFF)
 
 include(ViennaCLCommon)
-
-# For out-of-the-box support on MacOS:
-IF (ENABLE_OPENCL)
-  IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    INCLUDE_DIRECTORIES("/opt/local/include")
-    set(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
-  ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-ENDIF(ENABLE_OPENCL)
 
 
 # Set release build:
