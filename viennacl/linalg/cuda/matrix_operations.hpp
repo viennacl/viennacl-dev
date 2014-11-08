@@ -2698,7 +2698,7 @@ void givens_next(matrix_base<NumericT> & Q,
                  int l,
                  int m)
   {
-  if (matrix.row_major())
+  if (Q.row_major())
     givens_next_row_major_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(Q),
                                      detail::cuda_arg<NumericT>(tmp1),
                                      detail::cuda_arg<NumericT>(tmp2),
