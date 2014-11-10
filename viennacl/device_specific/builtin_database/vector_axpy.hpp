@@ -71,6 +71,9 @@ inline database_type<vector_axpy_template::parameters_type> init_vector_axpy()
 {
   database_type<vector_axpy_template::parameters_type> result;
 
+  devices::accelerator::fallback::add_4B(result);
+  devices::accelerator::fallback::add_8B(result);
+
   devices::cpu::fallback::add_4B(result);
   devices::cpu::fallback::add_8B(result);
 
