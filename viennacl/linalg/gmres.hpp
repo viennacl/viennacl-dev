@@ -213,6 +213,10 @@ viennacl::vector<ScalarType> solve(MatrixType const & A,
 
       rho_0 = viennacl::linalg::norm_2(residual);
     }
+
+    if (rho_0 <= ScalarType(0))  // trivial right hand side?
+      break;
+
     residual /= rho_0;
     rho = ScalarType(1);
 
@@ -226,8 +230,6 @@ viennacl::vector<ScalarType> solve(MatrixType const & A,
     vcl_size_t k = 0;
     for (k = 0; k < static_cast<vcl_size_t>(tag.krylov_dim()); ++k)
     {
-      tag.iters( tag.iters() + 1 ); //increase iteration counter
-
       if (k == 0)
       {
         // compute v0 = A*r and perform first reduction stage for ||v0||
@@ -304,7 +306,19 @@ viennacl::vector<ScalarType> solve(MatrixType const & A,
 
     // Compute error estimator:
     for (std::size_t i=0; i<k; ++i)
+    {
+      tag.iters( tag.iters() + 1 ); //increase iteration counter
+
+      // check for accumulation of round-off errors for poorly conditioned systems
+      if (host_values_xi_k[i] >= rho || host_values_xi_k[i] <= -rho)
+      {
+        k = i;
+        break;  // restrict Krylov space at this point. No gain from using additional basis vectors, since orthogonality is lost.
+      }
+
+      // update error estimator
       rho *= std::sin( std::acos(host_values_xi_k[i] / rho) );
+    }
 
     //
     // Solve minimization problem:
