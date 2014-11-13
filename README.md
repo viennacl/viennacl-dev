@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/d-meiser/viennacl-dev.svg?branch=master)](https://travis-ci.org/d-meiser/viennacl-dev)
-[![Coverage Status](https://img.shields.io/coveralls/d-meiser/viennacl-dev.svg)](https://coveralls.io/r/d-meiser/viennacl-dev)
+[![Build Status](https://travis-ci.org/viennacl/viennacl-dev.svg?branch=master)](https://travis-ci.org/viennacl/viennacl-dev)
+[![Coverage Status](https://img.shields.io/coveralls/viennacl/viennacl-dev.svg)](https://coveralls.io/r/viennacl/viennacl-dev)
 Developer Repository for ViennaCL
 ==========================================
 
