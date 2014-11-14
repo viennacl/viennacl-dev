@@ -240,7 +240,7 @@ namespace viennacl
               cs1[i] = c;
               ss1[i] = s;
 
-              z = detail::pythag(f, h);
+              z2 = detail::pythag(f, h);
               q[i - 1] = z2;
               c = f / z2;
               s = h / z2;
