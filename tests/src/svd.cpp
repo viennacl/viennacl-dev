@@ -210,6 +210,8 @@ void test_svd(const std::string & fn, ScalarType EPS)
                    && (fabs(prods_diff) < std::sqrt(EPS));  //note: computing the product is not accurate down to 10^{-16}, so we allow for a higher tolerance here
 
   printf("%6s [%dx%d] %40s sigma_diff = %.6f; prod_diff = %.6f; time = %.6f\n", sigma_ok?"[[OK]]":"[FAIL]", (int)Aref.size1(), (int)Aref.size2(), fn.c_str(), sigma_diff, prods_diff, time_spend);
+  if (!sigma_ok)
+    exit(EXIT_FAILURE);
 }
 
 
