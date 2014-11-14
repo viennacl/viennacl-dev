@@ -29,7 +29,7 @@
 #include <iostream>
 
 #ifndef NDEBUG
-  #define NDEBUG
+  #define BOOST_UBLAS_NDEBUG
 #endif
 
 #define VIENNACL_WITH_UBLAS

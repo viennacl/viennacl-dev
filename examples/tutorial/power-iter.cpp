@@ -24,7 +24,7 @@
 
 // Sparse matrices in uBLAS are *very* slow if debug mode is enabled. Disable it:
 #ifndef NDEBUG
-  #define NDEBUG
+  #define BOOST_UBLAS_NDEBUG
 #endif
 
 // Include necessary system headers

@@ -30,7 +30,7 @@
 //
 // Necessary to obtain a suitable performance in ublas
 #ifndef NDEBUG
- #define NDEBUG
+ #define BOOST_UBLAS_NDEBUG
 #endif
 
 

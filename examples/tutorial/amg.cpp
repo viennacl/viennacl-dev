@@ -26,7 +26,7 @@
 
 
 #ifndef NDEBUG     //without NDEBUG the performance of sparse ublas matrices is poor.
- #define NDEBUG
+ #define BOOST_UBLAS_NDEBUG
 #endif
 
 #include <boost/numeric/ublas/matrix_sparse.hpp>

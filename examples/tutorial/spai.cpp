@@ -28,7 +28,7 @@
 #define VIENNACL_WITH_UBLAS
 
 #ifndef NDEBUG
- #define NDEBUG
+ #define BOOST_UBLAS_NDEBUG
 #endif
 
 // System headers:
