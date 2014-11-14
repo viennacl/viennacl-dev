@@ -403,7 +403,7 @@ public:
       for(std::vector< viennacl::ocl::device >::const_iterator it = devices_.begin(); it != devices_.end(); ++it)
         prefix += it->name() + it->vendor() + it->driver_version();
       std::string sha1 = tools::sha1(prefix + source);
-      
+
       std::ifstream cached((cache_path_+sha1).c_str(),std::ios::binary);
       if (cached)
       {
@@ -804,10 +804,10 @@ inline void viennacl::ocl::kernel::set_work_size_defaults()
   else //assume CPU type:
   {
     //conservative assumption: one thread per CPU core:
-    local_work_size_[0] = 1; local_work_size_[1] = 0; local_work_size_[2] = 0;
+    local_work_size_[0] = 2; local_work_size_[1] = 0; local_work_size_[2] = 0;
 
     size_type units = p_context_->current_device().max_compute_units();
-    size_type s = 1;
+    size_type s = 2;
 
     while (s < units) // find next power of 2. Important to make reductions work on e.g. six-core CPUs.
       s *= 2;
