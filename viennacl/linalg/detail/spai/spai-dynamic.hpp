@@ -473,7 +473,7 @@ void assemble_qr_block(std::vector<std::vector<unsigned int> > const & g_J,
   g_A_I_J_q_vcl.handle1().context(opencl_ctx);
 
   g_A_I_J_q_vcl.handle2() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
-                                                      static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size() + 1)),
+                                                      static_cast<unsigned int>(sizeof(cl_uint)*static_cast<unsigned int>(g_I.size() + 1)),
                                                       &(blocks_ind[0]));
   g_A_I_J_q_vcl.handle2().context(opencl_ctx);
 
@@ -566,7 +566,7 @@ void assemble_r(std::vector<std::vector<unsigned int> > & g_I,
   g_A_I_J_r_vcl.handle1().context(opencl_ctx);
 
   g_A_I_J_r_vcl.handle2() = opencl_ctx.create_memory(CL_MEM_READ_WRITE,
-                                                     static_cast<unsigned int>(sizeof(cl_uint)*2*static_cast<unsigned int>(g_I.size() + 1)),
+                                                     static_cast<unsigned int>(sizeof(cl_uint)*static_cast<unsigned int>(g_I.size() + 1)),
                                                      &(blocks_ind[0]));
   g_A_I_J_r_vcl.handle2().context(opencl_ctx);
 
