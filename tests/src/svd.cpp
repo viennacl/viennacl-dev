@@ -248,9 +248,9 @@ int test(ScalarType epsilon)
     test_svd<ScalarType>(std::string("../examples/testdata/svd/random.example"), epsilon);
 
     time_svd<ScalarType>(500, 500);
-    time_svd<ScalarType>(1000, 1000);
-    time_svd<ScalarType>(4096, 512);
-    time_svd<ScalarType>(2048, 2048);
+    time_svd<ScalarType>(1024, 1024);
+    time_svd<ScalarType>(2048, 512);
+    //time_svd<ScalarType>(2048, 2048);
     //time_svd(4096, 4096);  //takes too long for a standard sanity test. Feel free to uncomment
 
     return EXIT_SUCCESS;
@@ -264,7 +264,7 @@ int main()
    std::cout << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
-   std::cout << "## Test :: BLAS 3 routines" << std::endl;
+   std::cout << "## Test :: Singular Value Decomposition" << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << "----------------------------------------------" << std::endl;
    std::cout << std::endl;
