@@ -401,9 +401,9 @@ void generate_triangular_substitute_inplace(StringT & source, std::string const 
   source.append("  for (unsigned int rows_processed = 0; rows_processed < A_size1; ++rows_processed)  \n");   //Note: A required to be square
   source.append("  { \n");
   source.append("    row = is_lower_solve ? rows_processed : ((A_size1 - rows_processed) - 1); \n");
+  source.append("    barrier(CLK_GLOBAL_MEM_FENCE); \n");
   source.append("    if (!unit_diagonal_flag) \n");
   source.append("    { \n");
-  source.append("      barrier(CLK_GLOBAL_MEM_FENCE); \n");
   source.append("      if (get_global_id(0) == 0) \n");
   if (is_row_major)
     source.append("        v[row * v_inc + v_start] /= A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]; \n");

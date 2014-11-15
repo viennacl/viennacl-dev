@@ -804,15 +804,15 @@ inline void viennacl::ocl::kernel::set_work_size_defaults()
   else //assume CPU type:
   {
     //conservative assumption: one thread per CPU core:
-    local_work_size_[0] = 2; local_work_size_[1] = 0; local_work_size_[2] = 0;
+    local_work_size_[0] = 1; local_work_size_[1] = 0; local_work_size_[2] = 0;
 
     size_type units = p_context_->current_device().max_compute_units();
-    size_type s = 2;
+    size_type s = 1;
 
     while (s < units) // find next power of 2. Important to make reductions work on e.g. six-core CPUs.
       s *= 2;
 
-    global_work_size_[0] = s; global_work_size_[1] = 0; global_work_size_[2] = 0;
+    global_work_size_[0] = s * local_work_size_[0]; global_work_size_[1] = 0; global_work_size_[2] = 0;
   }
 }
 
