@@ -115,6 +115,7 @@ void inplace_solve(const matrix_base<NumericT> & A, bool A_trans,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(program_name, ss.str());
 
+  k.local_work_size(0, 128);
   if (B_trans)
     k.global_work_size(0, B.size1() * k.local_work_size());
   else
@@ -139,6 +140,7 @@ void inplace_solve(matrix_base<NumericT> const & A, bool A_trans,
 
   viennacl::ocl::kernel & k = detail::legacy_kernel_for_matrix(A,  "triangular_substitute_inplace");
 
+  k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
   viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
                            cl_uint(viennacl::traits::start1(A)),         cl_uint(viennacl::traits::start2(A)),
