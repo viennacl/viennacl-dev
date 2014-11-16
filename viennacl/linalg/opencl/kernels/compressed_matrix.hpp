@@ -527,7 +527,7 @@ void generate_compressed_matrix_trans_lu_forward(StringT & source, std::string c
   source.append("  { \n");
   source.append("    col_index    = (i < nnz) ? column_indices[i] : 0; \n");
   source.append("    matrix_entry = (i < nnz) ? elements[i]       : 0; \n");
-  source.append("    row_index_lookahead[get_local_id(0)] = (row_at_window_start + get_local_id(0) < size) ? row_indices[row_at_window_start + get_local_id(0)] : size - 1; \n");
+  source.append("    row_index_lookahead[get_local_id(0)] = (row_at_window_start + get_local_id(0) < size) ? row_indices[row_at_window_start + get_local_id(0)] : nnz; \n");
 
   source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
 
@@ -668,7 +668,7 @@ void generate_compressed_matrix_trans_unit_lu_forward(StringT & source, std::str
   source.append("  { \n");
   source.append("    col_index    = (i < nnz) ? column_indices[i] : 0; \n");
   source.append("    matrix_entry = (i < nnz) ? elements[i]       : 0; \n");
-  source.append("    row_index_lookahead[get_local_id(0)] = (row_at_window_start + get_local_id(0) < size) ? row_indices[row_at_window_start + get_local_id(0)] : size - 1; \n");
+  source.append("    row_index_lookahead[get_local_id(0)] = (row_at_window_start + get_local_id(0) < size) ? row_indices[row_at_window_start + get_local_id(0)] : nnz; \n");
 
   source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
 

@@ -386,7 +386,7 @@ __global__ void csr_trans_unit_lu_forward_kernel(
   {
     col_index    = (i < nnz) ? column_indices[i] : 0;
     matrix_entry = (i < nnz) ? elements[i]       : 0;
-    row_index_lookahead[threadIdx.x] = (row_at_window_start + threadIdx.x < size) ? row_indices[row_at_window_start + threadIdx.x] : size - 1;
+    row_index_lookahead[threadIdx.x] = (row_at_window_start + threadIdx.x < size) ? row_indices[row_at_window_start + threadIdx.x] : nnz;
 
     __syncthreads();
 
@@ -449,7 +449,7 @@ __global__ void csr_trans_lu_forward_kernel(
   {
     col_index    = (i < nnz) ? column_indices[i] : 0;
     matrix_entry = (i < nnz) ? elements[i]       : 0;
-    row_index_lookahead[threadIdx.x] = (row_at_window_start + threadIdx.x < size) ? row_indices[row_at_window_start + threadIdx.x] : size - 1;
+    row_index_lookahead[threadIdx.x] = (row_at_window_start + threadIdx.x < size) ? row_indices[row_at_window_start + threadIdx.x] : nnz;
 
     __syncthreads();
 
