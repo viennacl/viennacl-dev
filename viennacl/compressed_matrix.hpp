@@ -42,6 +42,10 @@ namespace viennacl
 namespace detail
 {
 
+  /** @brief Implementation of the copy of a host-based sparse matrix to the device.
+    *
+    * See convenience copy() routines for type requirements of CPUMatrixT
+    */
   template<typename CPUMatrixT, typename NumericT, unsigned int AlignmentV>
   void copy_impl(const CPUMatrixT & cpu_matrix,
                  compressed_matrix<NumericT, AlignmentV> & gpu_matrix,
@@ -84,6 +88,10 @@ namespace detail
         nonzeros);
   }
 }
+
+//
+// host to device:
+//
 
 //provide copy-operation:
 /** @brief Copies a sparse matrix from the host to the OpenCL device (either GPU or multi-core CPU)
@@ -157,6 +165,10 @@ void copy(const std::vector< std::map<SizeT, NumericT> > & cpu_matrix,
 }
 
 #ifdef VIENNACL_WITH_UBLAS
+/** @brief Convenience routine for copying a sparse uBLAS matrix to a ViennaCL matrix.
+  *
+  * Optimization which copies the data directly from the internal uBLAS buffers.
+  */
 template<typename ScalarType, typename F, vcl_size_t IB, typename IA, typename TA>
 void copy(const boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, TA> & ublas_matrix,
           viennacl::compressed_matrix<ScalarType, 1> & gpu_matrix)
@@ -184,6 +196,10 @@ void copy(const boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, 
 #endif
 
 #ifdef VIENNACL_WITH_EIGEN
+/** @brief Convenience routine for copying a sparse Eigen matrix to a ViennaCL matrix.
+  *
+  * Builds a temporary STL matrix. Patches for avoiding the temporary matrix welcome.
+  */
 template<typename NumericT, int flags, unsigned int AlignmentV>
 void copy(const Eigen::SparseMatrix<NumericT, flags> & eigen_matrix,
           compressed_matrix<NumericT, AlignmentV> & gpu_matrix)
@@ -203,6 +219,10 @@ void copy(const Eigen::SparseMatrix<NumericT, flags> & eigen_matrix,
 
 
 #ifdef VIENNACL_WITH_MTL4
+/** @brief Convenience routine for copying a sparse MTL4 matrix to a ViennaCL matrix.
+  *
+  * Builds a temporary STL matrix for the copy. Patches for avoiding the temporary matrix welcome.
+  */
 template<typename NumericT, unsigned int AlignmentV>
 void copy(const mtl::compressed2D<NumericT> & cpu_matrix,
           compressed_matrix<NumericT, AlignmentV> & gpu_matrix)
@@ -248,7 +268,7 @@ void copy(const mtl::compressed2D<NumericT> & cpu_matrix,
 
 
 //
-// gpu to cpu:
+// device to host:
 //
 /** @brief Copies a sparse matrix from the OpenCL device (either GPU or multi-core CPU) to the host.
   *
@@ -314,6 +334,10 @@ void copy(const compressed_matrix<NumericT, AlignmentV> & gpu_matrix,
 }
 
 #ifdef VIENNACL_WITH_UBLAS
+/** @brief Convenience routine for copying a ViennaCL sparse matrix back to a sparse uBLAS matrix
+  *
+  * Directly populates the internal buffer of the uBLAS matrix, thus avoiding a temporary STL matrix.
+  */
 template<typename ScalarType, unsigned int AlignmentV, typename F, vcl_size_t IB, typename IA, typename TA>
 void copy(viennacl::compressed_matrix<ScalarType, AlignmentV> const & gpu_matrix,
           boost::numeric::ublas::compressed_matrix<ScalarType> & ublas_matrix)
@@ -344,6 +368,7 @@ void copy(viennacl::compressed_matrix<ScalarType, AlignmentV> const & gpu_matrix
 #endif
 
 #ifdef VIENNACL_WITH_EIGEN
+/** @brief Convenience routine for copying a ViennaCL sparse matrix back to a sparse Eigen matrix */
 template<typename NumericT, int flags, unsigned int AlignmentV>
 void copy(compressed_matrix<NumericT, AlignmentV> & gpu_matrix,
           Eigen::SparseMatrix<NumericT, flags> & eigen_matrix)
@@ -381,6 +406,7 @@ void copy(compressed_matrix<NumericT, AlignmentV> & gpu_matrix,
 
 
 #ifdef VIENNACL_WITH_MTL4
+/** @brief Convenience routine for copying a ViennaCL sparse matrix back to a sparse MTL4 matrix */
 template<typename NumericT, unsigned int AlignmentV>
 void copy(compressed_matrix<NumericT, AlignmentV> & gpu_matrix,
           mtl::compressed2D<NumericT> & mtl4_matrix)
@@ -500,6 +526,10 @@ public:
     }
   }
 
+  /** @brief Creates an empty compressed_matrix, but sets the respective context information.
+    *
+    * This is useful if you want to want to populate e.g. a viennacl::compressed_matrix<> on the host with copy(), but the default backend is OpenCL.
+    */
   explicit compressed_matrix(viennacl::context ctx) : rows_(0), cols_(0), nonzeros_(0)
   {
     row_buffer_.switch_active_handle_id(ctx.memory_type());
@@ -518,6 +548,15 @@ public:
 
 
 #ifdef VIENNACL_WITH_OPENCL
+  /** @brief Wraps existing OpenCL buffers holding the compressed sparse row information.
+    *
+    * @param mem_row_buffer   A buffer consisting of unsigned integers (cl_uint) holding the entry points for each row (0-based indexing). (rows+1) elements, the last element being 'nonzeros'.
+    * @param mem_col_buffer   A buffer consisting of unsigned integers (cl_uint) holding the column index for each nonzero entry as stored in 'mem_elements'.
+    * @param mem_elements     A buffer holding the floating point numbers for nonzeros. OpenCL type of elements must match the template 'NumericT'.
+    * @param rows             Number of rows in the matrix to be wrapped.
+    * @param cols             Number of columns to be wrapped.
+    * @param nonzeros         Number of nonzero entries in the matrix.
+    */
   explicit compressed_matrix(cl_mem mem_row_buffer, cl_mem mem_col_buffer, cl_mem mem_elements,
                              vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzeros) :
     rows_(rows), cols_(cols), nonzeros_(nonzeros)
@@ -559,14 +598,18 @@ public:
 
 
   /** @brief Sets the row, column and value arrays of the compressed matrix
-      *
-      * @param row_jumper     Pointer to an array holding the indices of the first element of each row (starting with zero). E.g. row_jumper[10] returns the index of the first entry of the 11th row. The array length is 'cols + 1'
-      * @param col_buffer     Pointer to an array holding the column index of each entry. The array length is 'nonzeros'
-      * @param elements       Pointer to an array holding the entries of the sparse matrix. The array length is 'elements'
-      * @param rows           Number of rows of the sparse matrix
-      * @param cols           Number of columns of the sparse matrix
-      * @param nonzeros       Number of nonzeros
-      */
+    *
+    * Type of row_jumper and col_buffer is 'unsigned int' for CUDA and OpenMP (host) backend, but *must* be cl_uint for OpenCL.
+    * The reason is that 'unsigned int' might have a different bit representation on the host than 'unsigned int' on the OpenCL device.
+    * cl_uint is guaranteed to have the correct bit representation for OpenCL devices.
+    *
+    * @param row_jumper     Pointer to an array holding the indices of the first element of each row (starting with zero). E.g. row_jumper[10] returns the index of the first entry of the 11th row. The array length is 'cols + 1'
+    * @param col_buffer     Pointer to an array holding the column index of each entry. The array length is 'nonzeros'
+    * @param elements       Pointer to an array holding the entries of the sparse matrix. The array length is 'elements'
+    * @param rows           Number of rows of the sparse matrix
+    * @param cols           Number of columns of the sparse matrix
+    * @param nonzeros       Number of nonzeros
+    */
   void set(const void * row_jumper,
            const void * col_buffer,
            const NumericT * elements,
@@ -728,6 +771,10 @@ public:
   /** @brief  Returns the OpenCL handle to the matrix entry array */
   handle_type & handle() { return elements_; }
 
+  /** @brief Switches the memory context of the matrix.
+    *
+    * Allows for e.g. an migration of the full matrix from OpenCL memory to host memory for e.g. computing a preconditioner.
+    */
   void switch_memory_context(viennacl::context new_ctx)
   {
     viennacl::backend::switch_memory_context<unsigned int>(row_buffer_, new_ctx);
@@ -735,6 +782,7 @@ public:
     viennacl::backend::switch_memory_context<NumericT>(elements_, new_ctx);
   }
 
+  /** @brief Returns the current memory context to determine whether the matrix is set up for OpenMP, OpenCL, or CUDA. */
   viennacl::memory_types memory_context() const
   {
     return row_buffer_.get_active_handle_id();
@@ -742,6 +790,7 @@ public:
 
 private:
 
+  /** @brief Helper function for accessing the element (i,j) of the matrix. */
   vcl_size_t element_index(vcl_size_t i, vcl_size_t j)
   {
     //read row indices
