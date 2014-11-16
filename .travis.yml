@@ -12,9 +12,4 @@ script:
 - make -j4
 - ./examples/tutorial/viennacl-info
 - ctest -j4 --output-on-failure
-after_success:
-- lcov -d test -base-directory .. -c -o coverage.info
-- lcov --remove coverage.info '/usr*' -o coverage.info
-- cd ..
-- coveralls-lcov build/coverage.info
 
