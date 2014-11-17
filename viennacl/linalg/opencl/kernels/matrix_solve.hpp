@@ -22,21 +22,16 @@ namespace kernels
 template<typename StringT>
 void generate_matrix_solve_blas3(StringT & source, std::string const & numeric_string,
                                  bool row_major_A, bool row_major_B,
-                                 bool transpose_A, bool transpose_B,
                                  bool upper_solve, bool unit_diagonal)
 {
   //start OpenCL code:
   source.append("__kernel void ");
-  if (transpose_A)
-    source.append("trans_");
   if (unit_diagonal)
     source.append("unit_");
   if (upper_solve)
     source.append("upper_");
   else
     source.append("lower_");
-  if (transpose_B)
-    source.append("trans_");
   source.append("solve");
 
   source.append("( \n");
@@ -69,13 +64,9 @@ void generate_matrix_solve_blas3(StringT & source, std::string const & numeric_s
     source.append("    barrier(CLK_GLOBAL_MEM_FENCE); \n");
     source.append("    if (get_local_id(0) == 0)  \n");
     //Note: A is square, thus A_internal_rows == A_internal_cols and no dispatch for transposedness needed
-    if (row_major_B && transpose_B)
-      source.append("      B[(get_group_id(0) * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)] /= ");
-    else if (row_major_B && !transpose_B)
+    if (row_major_B)
       source.append("      B[(row * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)] /= ");
-    else if (!row_major_B && transpose_B)
-      source.append("      B[(get_group_id(0) * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1] /= ");
-    else if (!row_major_B && !transpose_B)
+    else
       source.append("      B[(row * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1] /= ");
 
     if (row_major_A)
@@ -86,13 +77,9 @@ void generate_matrix_solve_blas3(StringT & source, std::string const & numeric_s
 
   source.append("    barrier(CLK_GLOBAL_MEM_FENCE); \n");
 
-  if (row_major_B && transpose_B)
-    source.append("    temp = B[(get_group_id(0) * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)]; \n");
-  else if (row_major_B && !transpose_B)
+  if (row_major_B)
     source.append("    temp = B[(row * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)]; \n");
-  else if (!row_major_B && transpose_B)
-    source.append("    temp = B[(get_group_id(0) * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1]; \n");
-  else if (!row_major_B && !transpose_B)
+  else
     source.append("    temp = B[(row * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1]; \n");
 
   source.append("    //eliminate column of op(A) with index 'row' in parallel: \n");
@@ -101,22 +88,14 @@ void generate_matrix_solve_blas3(StringT & source, std::string const & numeric_s
   else
     source.append("    for  (unsigned int elim = row + get_local_id(0) + 1; elim < A_size1; elim += get_local_size(0)) \n");
 
-  if (row_major_B && transpose_B)
-    source.append("      B[(get_group_id(0) * B_inc1 + B_start1) * B_internal_size2 + (elim * B_inc2 + B_start2)] -= temp * ");
-  else if (row_major_B && !transpose_B)
+  if (row_major_B)
     source.append("      B[(elim * B_inc1 + B_start1) * B_internal_size2 + (get_group_id(0) * B_inc2 + B_start2)] -= temp * ");
-  else if (!row_major_B && transpose_B)
-    source.append("      B[(get_group_id(0) * B_inc1 + B_start1) + (elim * B_inc2 + B_start2) * B_internal_size1] -= temp * ");
-  else if (!row_major_B && !transpose_B)
+  else
     source.append("      B[(elim * B_inc1 + B_start1) + (get_group_id(0) * B_inc2 + B_start2) * B_internal_size1] -= temp * ");
 
-  if (row_major_A && transpose_A)
-    source.append("A[(row * A_inc1 + A_start1) * A_internal_size2 + (elim * A_inc2 + A_start2)]; \n");
-  else if (row_major_A && !transpose_A)
+  if (row_major_A)
     source.append("A[(elim * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]; \n");
-  else if (!row_major_A && transpose_A)
-    source.append("A[(row * A_inc1 + A_start1) + (elim * A_inc2 + A_start2) * A_internal_size1]; \n");
-  else if (!row_major_A && !transpose_A)
+  else
     source.append("A[(elim * A_inc1 + A_start1) + (row * A_inc2 + A_start2) * A_internal_size1]; \n");
 
   source.append("   } \n");
@@ -157,40 +136,13 @@ struct matrix_solve
       if (numeric_string == "float" || numeric_string == "double")
       {
         generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    false, false, false, false);
+                                    false, false);
         generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    false, false, false, true);
+                                    false, true);
         generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    false, false, true, false);
+                                    true, false);
         generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    false, false, true, true);
-
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    false, true, false, false);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    false, true, false, true);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    false, true, true, false);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    false, true, true, true);
-
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    true, false, false, false);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    true, false, false, true);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    true, false, true, false);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    true, false, true, true);
-
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    true, true, false, false);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    true, true, false, true);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    true, true, true, false);
-        generate_matrix_solve_blas3(source, numeric_string, matrix_row_major, rhs_row_major,
-                                    true, true, true, true);
+                                    true, true);
       }
 
       std::string prog_name = program_name();

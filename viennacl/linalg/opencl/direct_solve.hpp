@@ -75,8 +75,8 @@ namespace detail
 * @param B_trans  Whether B is to be transposed
 */
 template<typename NumericT, typename SolverTagT>
-void inplace_solve(const matrix_base<NumericT> & A, bool A_trans,
-                   matrix_base<NumericT> & B, bool B_trans,
+void inplace_solve(matrix_base<NumericT> const & A,
+                   matrix_base<NumericT> & B,
                    SolverTagT)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
@@ -108,18 +108,13 @@ void inplace_solve(const matrix_base<NumericT> & A, bool A_trans,
   }
 
   std::stringstream ss;
-  if (A_trans) ss << "trans_";
   ss << SolverTagT::name();
-  if (B_trans) ss << "_trans";
   ss << "_solve";
 
   viennacl::ocl::kernel & k = ctx.get_kernel(program_name, ss.str());
 
   k.local_work_size(0, 128);
-  if (B_trans)
-    k.global_work_size(0, B.size1() * k.local_work_size());
-  else
-    k.global_work_size(0, B.size2() * k.local_work_size());
+  k.global_work_size(0, B.size2() * k.local_work_size());
   detail::inplace_solve_impl(A, B, k);
 }
 
@@ -130,13 +125,11 @@ void inplace_solve(const matrix_base<NumericT> & A, bool A_trans,
 //
 
 template<typename NumericT, typename SOLVERTAG>
-void inplace_solve(matrix_base<NumericT> const & A, bool A_trans,
+void inplace_solve(matrix_base<NumericT> const & A,
                    vector_base<NumericT>       & x,
                    SOLVERTAG)
 {
   cl_uint options = detail::get_option_for_solver_tag(SOLVERTAG());
-  if (A_trans)
-    options |= 0x02;
 
   viennacl::ocl::kernel & k = detail::legacy_kernel_for_matrix(A,  "triangular_substitute_inplace");
 

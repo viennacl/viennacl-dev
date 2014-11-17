@@ -129,8 +129,8 @@ namespace detail
 * @param trans_B  Whether B is to be transposed
 */
 template<typename NumericT, typename SolverTagT>
-void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
-                   matrix_base<NumericT> & B, bool trans_B,
+void inplace_solve(matrix_base<NumericT> const & A,
+                   matrix_base<NumericT> & B,
                    SolverTagT)
 {
   typedef NumericT        value_type;
@@ -142,7 +142,7 @@ void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
   vcl_size_t A_start2 = viennacl::traits::start2(A);
   vcl_size_t A_inc1   = viennacl::traits::stride1(A);
   vcl_size_t A_inc2   = viennacl::traits::stride2(A);
-  vcl_size_t A_size1  = viennacl::traits::size1(A);
+  //vcl_size_t A_size1  = viennacl::traits::size1(A);
   vcl_size_t A_size2  = viennacl::traits::size2(A);
   vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
   vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
@@ -151,322 +151,42 @@ void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
   vcl_size_t B_start2 = viennacl::traits::start2(B);
   vcl_size_t B_inc1   = viennacl::traits::stride1(B);
   vcl_size_t B_inc2   = viennacl::traits::stride2(B);
-  vcl_size_t B_size1  = viennacl::traits::size1(B);
+  //vcl_size_t B_size1  = viennacl::traits::size1(B);
   vcl_size_t B_size2  = viennacl::traits::size2(B);
   vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B);
   vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B);
 
 
-  if (!trans_A && !trans_B)
-  {
-    if (A.row_major() && B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SolverTagT());
-    }
-    else if (A.row_major() && !B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, false>      wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SolverTagT());
-    }
-    else if (!A.row_major() && B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       row_major, false>      wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SolverTagT());
-    }
-    else
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SolverTagT());
-    }
-  }
-  else if  (!trans_A && trans_B)
-  {
-    if (A.row_major() && B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-    }
-    else if (A.row_major() && !B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, false>     wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       column_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-    }
-    else if (!A.row_major() && B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       row_major, true>       wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-    }
-    else
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-    }
-  }
-  else if  (trans_A && !trans_B)
-  {
-    if (A.row_major() && B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size2, SolverTagT());
-    }
-    else if (A.row_major() && !B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, true>       wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size2, SolverTagT());
-    }
-    else if (!A.row_major() && B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       row_major, false>      wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size2, SolverTagT());
-    }
-    else
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size2, SolverTagT());
-    }
-  }
-  else if  (trans_A && trans_B)
-  {
-    if (A.row_major() && B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       row_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size1, SolverTagT());
-    }
-    else if (A.row_major() && !B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, true>      wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       column_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size1, SolverTagT());
-    }
-    else if (!A.row_major() && B.row_major())
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       row_major, true>      wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size1, SolverTagT());
-    }
-    else
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type,       column_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-      detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size1, B_size1, SolverTagT());
-    }
-  }
-}
-
-/** @brief Direct inplace solver for triangular systems with multiple transposed right hand sides, i.e. A \ B^T   (MATLAB notation)
-*
-* @param A       The system matrix
-* @param proxy_B The proxy for the transposed matrix of row vectors, where the solution is directly written to
-*/
-template<typename NumericT, typename SolverTagT>
-void inplace_solve(const matrix_base<NumericT> & A,
-                   matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> proxy_B,
-                   SolverTagT)
-{
-  typedef NumericT        value_type;
-
-  value_type const * data_A = detail::extract_raw_pointer<value_type>(A);
-  value_type       * data_B = const_cast<value_type *>(detail::extract_raw_pointer<value_type>(proxy_B.lhs()));
-
-  vcl_size_t A_start1 = viennacl::traits::start1(A);
-  vcl_size_t A_start2 = viennacl::traits::start2(A);
-  vcl_size_t A_inc1   = viennacl::traits::stride1(A);
-  vcl_size_t A_inc2   = viennacl::traits::stride2(A);
-  vcl_size_t A_size2  = viennacl::traits::size2(A);
-  vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
-  vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
-
-  vcl_size_t B_start1 = viennacl::traits::start1(proxy_B.lhs());
-  vcl_size_t B_start2 = viennacl::traits::start2(proxy_B.lhs());
-  vcl_size_t B_inc1   = viennacl::traits::stride1(proxy_B.lhs());
-  vcl_size_t B_inc2   = viennacl::traits::stride2(proxy_B.lhs());
-  vcl_size_t B_size1  = viennacl::traits::size1(proxy_B.lhs());
-  vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(proxy_B.lhs());
-  vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(proxy_B.lhs());
-
-
-  if (A.row_major() && proxy_B.lhs().row_major())
+  if (A.row_major() && B.row_major())
   {
     detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,       row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-    detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-  }
-  else if (A.row_major() && !proxy_B.lhs().row_major())
-  {
-    detail::matrix_array_wrapper<value_type const, row_major, false>     wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,       column_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-    detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-  }
-  else if (!A.row_major() && proxy_B.lhs().row_major())
-  {
-    detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,       row_major, true>       wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-    detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-  }
-  else
-  {
-    detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,       column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-    detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-  }
-}
-
-//upper triangular solver for transposed lower triangular matrices
-/** @brief Direct inplace solver for transposed triangular systems with multiple right hand sides, i.e. A^T \ B   (MATLAB notation)
-*
-* @param proxy_A  The transposed system matrix proxy
-* @param B        The matrix holding the load vectors, where the solution is directly written to
-*/
-template<typename NumericT, typename SolverTagT>
-void inplace_solve(const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
-                   matrix_base<NumericT> & B,
-                   SolverTagT)
-{
-  typedef NumericT        value_type;
-
-  value_type const * data_A = detail::extract_raw_pointer<value_type>(proxy_A.lhs());
-  value_type       * data_B = const_cast<value_type *>(detail::extract_raw_pointer<value_type>(B));
-
-  vcl_size_t A_start1 = viennacl::traits::start1(proxy_A.lhs());
-  vcl_size_t A_start2 = viennacl::traits::start2(proxy_A.lhs());
-  vcl_size_t A_inc1   = viennacl::traits::stride1(proxy_A.lhs());
-  vcl_size_t A_inc2   = viennacl::traits::stride2(proxy_A.lhs());
-  vcl_size_t A_size2  = viennacl::traits::size2(proxy_A.lhs());
-  vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(proxy_A.lhs());
-  vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(proxy_A.lhs());
-
-  vcl_size_t B_start1 = viennacl::traits::start1(B);
-  vcl_size_t B_start2 = viennacl::traits::start2(B);
-  vcl_size_t B_inc1   = viennacl::traits::stride1(B);
-  vcl_size_t B_inc2   = viennacl::traits::stride2(B);
-  vcl_size_t B_size2  = viennacl::traits::size2(B);
-  vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B);
-  vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B);
-
-  if (proxy_A.lhs().row_major() && B.row_major())
-  {
-    detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
     detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
     detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SolverTagT());
   }
-  else if (proxy_A.lhs().row_major() && !B.row_major())
+  else if (A.row_major() && !B.row_major())
   {
-    detail::matrix_array_wrapper<value_type const, row_major, true>       wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::matrix_array_wrapper<value_type const, row_major,    false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
     detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
     detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SolverTagT());
   }
-  else if (!proxy_A.lhs().row_major() && B.row_major())
+  else if (!A.row_major() && B.row_major())
   {
-    detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,       row_major, false>      wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+    detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::matrix_array_wrapper<value_type,       row_major,    false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
     detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SolverTagT());
   }
   else
   {
-    detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
     detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
     detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size2, SolverTagT());
   }
 }
 
-/** @brief Direct inplace solver for transposed triangular systems with multiple transposed right hand sides, i.e. A^T \ B^T   (MATLAB notation)
-*
-* @param proxy_A    The transposed system matrix proxy
-* @param proxy_B    The transposed matrix holding the load vectors, where the solution is directly written to
-*/
-template<typename NumericT, typename SolverTagT>
-void inplace_solve(matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_A,
-                   matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans> & proxy_B,
-                   SolverTagT)
-{
-  typedef NumericT        value_type;
-
-  value_type const * data_A = detail::extract_raw_pointer<value_type>(proxy_A.lhs());
-  value_type       * data_B = const_cast<value_type *>(detail::extract_raw_pointer<value_type>(proxy_B.lhs()));
-
-  vcl_size_t A_start1 = viennacl::traits::start1(proxy_A.lhs());
-  vcl_size_t A_start2 = viennacl::traits::start2(proxy_A.lhs());
-  vcl_size_t A_inc1   = viennacl::traits::stride1(proxy_A.lhs());
-  vcl_size_t A_inc2   = viennacl::traits::stride2(proxy_A.lhs());
-  vcl_size_t A_size2  = viennacl::traits::size2(proxy_A.lhs());
-  vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(proxy_A.lhs());
-  vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(proxy_A.lhs());
-
-  vcl_size_t B_start1 = viennacl::traits::start1(proxy_B.lhs());
-  vcl_size_t B_start2 = viennacl::traits::start2(proxy_B.lhs());
-  vcl_size_t B_inc1   = viennacl::traits::stride1(proxy_B.lhs());
-  vcl_size_t B_inc2   = viennacl::traits::stride2(proxy_B.lhs());
-  vcl_size_t B_size1  = viennacl::traits::size1(proxy_B.lhs());
-  vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(proxy_B.lhs());
-  vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(proxy_B.lhs());
-
-  if (proxy_A.lhs().row_major() && proxy_B.lhs().row_major())
-  {
-    detail::matrix_array_wrapper<value_type const, row_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,       row_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-    detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-  }
-  else if (proxy_A.lhs().row_major() && !proxy_B.lhs().row_major())
-  {
-    detail::matrix_array_wrapper<value_type const,    row_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,       column_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-    detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-  }
-  else if (!proxy_A.lhs().row_major() && proxy_B.lhs().row_major())
-  {
-    detail::matrix_array_wrapper<value_type const, column_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,          row_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-    detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-  }
-  else
-  {
-    detail::matrix_array_wrapper<value_type const, column_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-    detail::matrix_array_wrapper<value_type,       column_major, true>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
-
-    detail::inplace_solve_matrix(wrapper_A, wrapper_B, A_size2, B_size1, SolverTagT());
-  }
-}
 
 //
 //  Solve on vector
@@ -545,8 +265,8 @@ namespace detail
 }
 
 template<typename NumericT, typename SolverTagT>
-void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,
-                         vector_base<NumericT> & vec,
+void inplace_solve(matrix_base<NumericT> const & mat,
+                   vector_base<NumericT> & vec,
                    SolverTagT)
 {
   typedef NumericT        value_type;
@@ -567,37 +287,17 @@ void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,
 
   if (mat.row_major())
   {
-    if (trans_mat)
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
+    detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
 
-      detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SolverTagT());
-    }
-    else
-    {
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
-
-      detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SolverTagT());
-    }
+    detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SolverTagT());
   }
   else
   {
-    if (trans_mat)
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, true>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
+    detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
 
-      detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SolverTagT());
-    }
-    else
-    {
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::vector_array_wrapper<value_type> wrapper_v(data_v, start1, inc1);
-
-      detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SolverTagT());
-    }
+    detail::inplace_solve_vector(wrapper_A, wrapper_v, A_size2, SolverTagT());
   }
 }
 

@@ -45,7 +45,6 @@ __global__ void matrix_matrix_upper_solve_kernel(
           unsigned int A_size1,  unsigned int A_size2,
           unsigned int A_internal_size1, unsigned int A_internal_size2,
           bool row_major_A,
-          bool transpose_A,
 
           NumericT * B,
           unsigned int B_start1, unsigned int B_start2,
@@ -53,7 +52,6 @@ __global__ void matrix_matrix_upper_solve_kernel(
           unsigned int B_size1,  unsigned int B_size2,
           unsigned int B_internal_size1, unsigned int B_internal_size2,
           bool row_major_B,
-          bool transpose_B,
 
           bool unit_diagonal)
 {
@@ -70,16 +68,10 @@ __global__ void matrix_matrix_upper_solve_kernel(
 
       if (threadIdx.x == 0)
       {
-        if (row_major_B && transpose_B)
-          B[(blockIdx.x * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)] /= (row_major_A) ? A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]
-                                                                                                              : A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];
-        else if (row_major_B && !transpose_B)
+        if (row_major_B)
           B[(row * B_inc1 + B_start1) * B_internal_size2 + (blockIdx.x * B_inc2 + B_start2)] /= (row_major_A) ? A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]
                                                                                                               : A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];
-        else if (!row_major_B && transpose_B)
-          B[(blockIdx.x * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1] /= (row_major_A) ? A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]
-                                                                                                              : A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];
-        else //if (!row_major_B && !transpose_B)
+        else //if (!row_major_B)
           B[(row * B_inc1 + B_start1) + (blockIdx.x * B_inc2 + B_start2) * B_internal_size1] /= (row_major_A) ? A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]
                                                                                                               : A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];
       }
@@ -87,34 +79,22 @@ __global__ void matrix_matrix_upper_solve_kernel(
 
     __syncthreads();
 
-    if (row_major_B && transpose_B)
-      temp = B[(blockIdx.x * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)];
-    else if (row_major_B && !transpose_B)
+    if (row_major_B)
       temp = B[(row * B_inc1 + B_start1) * B_internal_size2 + (blockIdx.x * B_inc2 + B_start2)];
-    else if (!row_major_B && transpose_B)
-      temp = B[(blockIdx.x * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1];
-    else //if (!row_major_B && !transpose_B)
+    else //if (!row_major_B)
       temp = B[(row * B_inc1 + B_start1) + (blockIdx.x * B_inc2 + B_start2) * B_internal_size1];
 
     //eliminate column of op(A) with index 'row' in parallel: " << std::endl;
     for  (unsigned int elim = threadIdx.x; elim < row; elim += blockDim.x)
     {
-      if (row_major_A && transpose_A)
-        entry_A = A[(row * A_inc1 + A_start1) * A_internal_size2 + (elim * A_inc2 + A_start2)];
-      else if (row_major_A && !transpose_A)
+      if (row_major_A)
         entry_A = A[(elim * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)];
-      else if (!row_major_A && transpose_A)
-        entry_A = A[(row * A_inc1 + A_start1) + (elim * A_inc2 + A_start2) * A_internal_size1];
-      else //if (!row_major_A && !transpose_A)
+      else //if (!row_major_A)
         entry_A = A[(elim * A_inc1 + A_start1) + (row * A_inc2 + A_start2) * A_internal_size1];
 
-      if (row_major_B && transpose_B)
-        B[(blockIdx.x * B_inc1 + B_start1) * B_internal_size2 + (elim * B_inc2 + B_start2)] -= temp * entry_A;
-      else if (row_major_B && !transpose_B)
+      if (row_major_B)
         B[(elim * B_inc1 + B_start1) * B_internal_size2 + (blockIdx.x * B_inc2 + B_start2)] -= temp * entry_A;
-      else if (!row_major_B && transpose_B)
-        B[(blockIdx.x * B_inc1 + B_start1) + (elim * B_inc2 + B_start2) * B_internal_size1] -= temp * entry_A;
-      else //if (!row_major_B && !transpose_B)
+      else //if (!row_major_B)
         B[(elim * B_inc1 + B_start1) + (blockIdx.x * B_inc2 + B_start2) * B_internal_size1] -= temp * entry_A;
 
     }
@@ -131,7 +111,6 @@ __global__ void matrix_matrix_lower_solve_kernel(
           unsigned int A_size1,  unsigned int A_size2,
           unsigned int A_internal_size1, unsigned int A_internal_size2,
           bool row_major_A,
-          bool transpose_A,
 
           NumericT * B,
           unsigned int B_start1, unsigned int B_start2,
@@ -139,7 +118,6 @@ __global__ void matrix_matrix_lower_solve_kernel(
           unsigned int B_size1,  unsigned int B_size2,
           unsigned int B_internal_size1, unsigned int B_internal_size2,
           bool row_major_B,
-          bool transpose_B,
 
           bool unit_diagonal)
 {
@@ -155,16 +133,10 @@ __global__ void matrix_matrix_lower_solve_kernel(
 
       if (threadIdx.x == 0)
       {
-        if (row_major_B && transpose_B)
-          B[(blockIdx.x * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)] /= (row_major_A) ? A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]
-                                                                                                              : A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];
-        else if (row_major_B && !transpose_B)
+        if (row_major_B)
           B[(row * B_inc1 + B_start1) * B_internal_size2 + (blockIdx.x * B_inc2 + B_start2)] /= (row_major_A) ? A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]
                                                                                                               : A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];
-        else if (!row_major_B && transpose_B)
-          B[(blockIdx.x * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1] /= (row_major_A) ? A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]
-                                                                                                              : A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];
-        else //if (!row_major_B && !transpose_B)
+        else //if (!row_major_B)
           B[(row * B_inc1 + B_start1) + (blockIdx.x * B_inc2 + B_start2) * B_internal_size1] /= (row_major_A) ? A[(row * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)]
                                                                                                               : A[(row * A_inc1 + A_start1) + (row * A_inc2 + A_start2)*A_internal_size1];
       }
@@ -172,34 +144,22 @@ __global__ void matrix_matrix_lower_solve_kernel(
 
     __syncthreads();
 
-    if (row_major_B && transpose_B)
-      temp = B[(blockIdx.x * B_inc1 + B_start1) * B_internal_size2 + (row * B_inc2 + B_start2)];
-    else if (row_major_B && !transpose_B)
+    if (row_major_B)
       temp = B[(row * B_inc1 + B_start1) * B_internal_size2 + (blockIdx.x * B_inc2 + B_start2)];
-    else if (!row_major_B && transpose_B)
-      temp = B[(blockIdx.x * B_inc1 + B_start1) + (row * B_inc2 + B_start2) * B_internal_size1];
-    else //if (!row_major_B && !transpose_B)
+    else //if (!row_major_B)
       temp = B[(row * B_inc1 + B_start1) + (blockIdx.x * B_inc2 + B_start2) * B_internal_size1];
 
     //eliminate column of op(A) with index 'row' in parallel: " << std::endl;
     for  (unsigned int elim = row + threadIdx.x + 1; elim < A_size1; elim += blockDim.x)
     {
-      if (row_major_A && transpose_A)
-        entry_A = A[(row * A_inc1 + A_start1) * A_internal_size2 + (elim * A_inc2 + A_start2)];
-      else if (row_major_A && !transpose_A)
+      if (row_major_A)
         entry_A = A[(elim * A_inc1 + A_start1) * A_internal_size2 + (row * A_inc2 + A_start2)];
-      else if (!row_major_A && transpose_A)
-        entry_A = A[(row * A_inc1 + A_start1) + (elim * A_inc2 + A_start2) * A_internal_size1];
-      else //if (!row_major_A && !transpose_A)
+      else //if (!row_major_A)
         entry_A = A[(elim * A_inc1 + A_start1) + (row * A_inc2 + A_start2) * A_internal_size1];
 
-      if (row_major_B && transpose_B)
-        B[(blockIdx.x * B_inc1 + B_start1) * B_internal_size2 + (elim * B_inc2 + B_start2)] -= temp * entry_A;
-      else if (row_major_B && !transpose_B)
+      else if (row_major_B)
         B[(elim * B_inc1 + B_start1) * B_internal_size2 + (blockIdx.x * B_inc2 + B_start2)] -= temp * entry_A;
-      else if (!row_major_B && transpose_B)
-        B[(blockIdx.x * B_inc1 + B_start1) + (elim * B_inc2 + B_start2) * B_internal_size1] -= temp * entry_A;
-      else //if (!row_major_B && !transpose_B)
+      else //if (!row_major_B)
         B[(elim * B_inc1 + B_start1) + (blockIdx.x * B_inc2 + B_start2) * B_internal_size1] -= temp * entry_A;
 
     }
@@ -226,14 +186,14 @@ namespace detail
   inline bool is_upper_solve(viennacl::linalg::unit_upper_tag) { return true; }
 
   template<typename Matrix1T, typename Matrix2T, typename SolverTagT>
-  void inplace_solve_impl(Matrix1T const & A, bool transpose_A,
-                          Matrix2T & B,       bool transpose_B,
+  void inplace_solve_impl(Matrix1T const & A,
+                          Matrix2T & B,
                           SolverTagT const & tag)
   {
     typedef typename viennacl::result_of::cpu_value_type<Matrix1T>::type        value_type;
 
     dim3 threads(128);
-    dim3 grid( transpose_B ? B.size1() : B.size2() );
+    dim3 grid(B.size2());
 
     if (is_upper_solve(tag))
     {
@@ -243,7 +203,6 @@ namespace detail
                                                          static_cast<unsigned int>(viennacl::traits::size1(A)),          static_cast<unsigned int>(viennacl::traits::size2(A)),
                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(A)), static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
                                                          bool(A.row_major()),
-                                                         transpose_A,
 
                                                          detail::cuda_arg<value_type>(B),
                                                          static_cast<unsigned int>(viennacl::traits::start1(B)),         static_cast<unsigned int>(viennacl::traits::start2(B)),
@@ -251,7 +210,6 @@ namespace detail
                                                          static_cast<unsigned int>(viennacl::traits::size1(B)),          static_cast<unsigned int>(viennacl::traits::size2(B)),
                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(B)), static_cast<unsigned int>(viennacl::traits::internal_size2(B)),
                                                          bool(B.row_major()),
-                                                         transpose_B,
 
                                                          is_unit_solve(tag)
                                                         );
@@ -264,7 +222,6 @@ namespace detail
                                                          static_cast<unsigned int>(viennacl::traits::size1(A)),          static_cast<unsigned int>(viennacl::traits::size2(A)),
                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(A)), static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
                                                          bool(A.row_major()),
-                                                         transpose_A,
 
                                                          detail::cuda_arg<value_type>(B),
                                                          static_cast<unsigned int>(viennacl::traits::start1(B)),         static_cast<unsigned int>(viennacl::traits::start2(B)),
@@ -272,7 +229,6 @@ namespace detail
                                                          static_cast<unsigned int>(viennacl::traits::size1(B)),          static_cast<unsigned int>(viennacl::traits::size2(B)),
                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(B)), static_cast<unsigned int>(viennacl::traits::internal_size2(B)),
                                                          bool(B.row_major()),
-                                                         transpose_B,
 
                                                          is_unit_solve(tag)
                                                         );
@@ -287,21 +243,18 @@ namespace detail
 //
 
 ////////////////// triangular solver //////////////////////////////////////
-/** @brief Direct inplace solver for triangular systems with multiple right hand sides, i.e. A \ B   (MATLAB notation). Both A and B can optionally be transposed.
+/** @brief Direct inplace solver for triangular systems with multiple right hand sides, i.e. A \ B   (MATLAB notation).
 *
 * @param A         The system matrix
-* @param trans_A   Whether A is transposed
 * @param B         The matrix of row vectors, where the solution is directly written to
-* @param trans_B   Whether B is transposed
 * @param tag       Solver tag for identifying the respective triangular solver
 */
 template<typename NumericT, typename SolverTagT>
-void inplace_solve(const matrix_base<NumericT> & A, bool trans_A,
-                   matrix_base<NumericT> & B, bool trans_B,
+void inplace_solve(matrix_base<NumericT> const & A,
+                   matrix_base<NumericT> & B,
                    SolverTagT tag)
 {
-  detail::inplace_solve_impl(A, trans_A,
-                             B, trans_B, tag);
+  detail::inplace_solve_impl(A, B, tag);
 }
 
 
@@ -325,7 +278,7 @@ __global__ void triangular_substitute_inplace_row_kernel(
 {
   NumericT temp;
   unsigned int unit_diagonal_flag  = (options & (1 << 0));
-  unsigned int transposed_access_A = (options & (1 << 1));
+
   unsigned int is_lower_solve      = (options & (1 << 2));
   unsigned int row;
   for (unsigned int rows_processed = 0; rows_processed < A_size1; ++rows_processed)    //Note: A required to be square
@@ -345,8 +298,7 @@ __global__ void triangular_substitute_inplace_row_kernel(
     for (int elim = (is_lower_solve ? (row + threadIdx.x + 1) : threadIdx.x);
             elim < (is_lower_solve ? A_size1 : row);
             elim += blockDim.x)
-      v[elim * v_inc + v_start] -= temp * A[transposed_access_A ? ((row  * A_inc1 + A_start1) * A_internal_size2 + (elim * A_inc2 + A_start2))
-                                                                : ((elim * A_inc1 + A_start1) * A_internal_size2 + (row  * A_inc2 + A_start2))];
+      v[elim * v_inc + v_start] -= temp * A[(elim * A_inc1 + A_start1) * A_internal_size2 + (row  * A_inc2 + A_start2)];
   }
 }
 
@@ -366,7 +318,7 @@ __global__ void triangular_substitute_inplace_col_kernel(
 {
   NumericT temp;
   unsigned int unit_diagonal_flag  = (options & (1 << 0));
-  unsigned int transposed_access_A = (options & (1 << 1));
+
   unsigned int is_lower_solve      = (options & (1 << 2));
   unsigned int row;
   for (unsigned int rows_processed = 0; rows_processed < A_size1; ++rows_processed)    //Note: A required to be square
@@ -386,8 +338,7 @@ __global__ void triangular_substitute_inplace_col_kernel(
     for (int elim = (is_lower_solve ? (row + threadIdx.x + 1) : threadIdx.x);
             elim < (is_lower_solve ? A_size1 : row);
             elim += blockDim.x)
-      v[elim * v_inc + v_start] -= temp * A[transposed_access_A ? ((row  * A_inc1 + A_start1) + (elim * A_inc2 + A_start2) * A_internal_size1)
-                                                                : ((elim * A_inc1 + A_start1) + (row  * A_inc2 + A_start2) * A_internal_size1)];
+      v[elim * v_inc + v_start] -= temp * A[(elim * A_inc1 + A_start1) + (row  * A_inc2 + A_start2) * A_internal_size1];
   }
 }
 
@@ -441,17 +392,14 @@ namespace detail
 /** @brief Direct inplace solver for dense triangular systems (non-transposed version)
 *
 * @param mat       The system matrix proxy
-* @param trans_mat Whether the matrix is to be transposed
 * @param vec       The load vector, where the solution is directly written to
 */
 template<typename NumericT, typename SolverTagT>
-void inplace_solve(const matrix_base<NumericT> & mat, bool trans_mat,
-                         vector_base<NumericT> & vec,
+void inplace_solve(matrix_base<NumericT> const & mat,
+                   vector_base<NumericT> & vec,
                    SolverTagT)
 {
   unsigned int options = detail::get_option_for_solver_tag(SolverTagT());
-  if (trans_mat)
-    options |= 0x02;
 
   detail::inplace_solve_vector_impl(mat, vec, options);
 }
