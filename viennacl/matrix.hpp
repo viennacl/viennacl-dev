@@ -2116,7 +2116,14 @@ namespace detail
                       const viennacl::matrix_base<T>,
                       viennacl::op_prod> const & proxy)
     {
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), lhs);
+      // check for x = A * x
+      if (op_aliasing(lhs, proxy.rhs()))
+      {
+        matrix_base<T> temp(proxy);
+        lhs = temp;
+      }
+      else
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), lhs);
     }
 
     // dense = sparse * trans(dense)
@@ -2127,7 +2134,14 @@ namespace detail
                       viennacl::op_trans >,
                       viennacl::op_prod> const & proxy)
     {
-      viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), lhs);
+      // check for x = A * x
+      if (op_aliasing(lhs, proxy.rhs()))
+      {
+        matrix_base<T> temp(proxy);
+        lhs = temp;
+      }
+      else
+        viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), lhs);
     }
 
   };
@@ -3000,7 +3014,13 @@ namespace detail
   {
     static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
+      if (op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs = temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
     }
   };
 
@@ -3014,7 +3034,13 @@ namespace detail
                       const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
+      if (op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs().lhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs = temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
     }
   };
 
@@ -3028,7 +3054,13 @@ namespace detail
                       const matrix_base<T>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
+      if (op_aliasing(lhs, rhs.lhs().lhs()) || op_aliasing(lhs, rhs.rhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs = temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
     }
   };
 
@@ -3042,7 +3074,13 @@ namespace detail
                       const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
+      if (op_aliasing(lhs, rhs.lhs().lhs()) || op_aliasing(lhs, rhs.rhs().lhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs = temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(0));
     }
   };
 
@@ -3053,7 +3091,13 @@ namespace detail
   {
     static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
+      if (op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs += temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
     }
   };
 
@@ -3067,7 +3111,13 @@ namespace detail
                       const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
+      if (op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs().lhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs += temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
     }
   };
 
@@ -3081,7 +3131,13 @@ namespace detail
                       const matrix_base<T>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
+      if (op_aliasing(lhs, rhs.lhs().lhs()) || op_aliasing(lhs, rhs.rhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs += temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
     }
   };
 
@@ -3095,7 +3151,13 @@ namespace detail
                       const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
+      if (op_aliasing(lhs, rhs.lhs().lhs()) || op_aliasing(lhs, rhs.rhs().lhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs += temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(1.0), T(1.0));
     }
   };
 
@@ -3106,7 +3168,13 @@ namespace detail
   {
     static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
+      if (op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs -= temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
     }
   };
 
@@ -3120,7 +3188,13 @@ namespace detail
                       const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
+      if (op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs().lhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs -= temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
     }
   };
 
@@ -3134,7 +3208,13 @@ namespace detail
                       const matrix_base<T>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
+      if (op_aliasing(lhs, rhs.lhs().lhs()) || op_aliasing(lhs, rhs.rhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs -= temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
     }
   };
 
@@ -3148,7 +3228,13 @@ namespace detail
                       const matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans>,
                       op_mat_mat_prod> const & rhs)
     {
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
+      if (op_aliasing(lhs, rhs.lhs().lhs()) || op_aliasing(lhs, rhs.rhs().lhs()))
+      {
+        matrix_base<T> temp(rhs);
+        lhs -= temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs, T(-1.0), T(1.0));
     }
   };
 
