@@ -124,6 +124,8 @@ namespace detail
   template<typename MatrixT1, typename MatrixT2, typename SolverTagT>
   void inplace_solve_lower_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
   {
+    typedef typename viennacl::result_of::cpu_value_type<MatrixT1>::type  NumericType;
+
     vcl_size_t blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
     if (A.size1() <= blockSize)
       inplace_solve_kernel(A, B, SolverTagT());
@@ -139,9 +141,11 @@ namespace detail
                              SolverTagT());
         if (Apos2 < A.size1())
         {
-          viennacl::project(B, viennacl::range(Apos2, B.size1()), viennacl::range(0, Bpos))
-            -= viennacl::linalg::prod(viennacl::project(A, viennacl::range(Apos2, A.size1()), viennacl::range(Apos1, Apos2)),
-                                      viennacl::project(B, viennacl::range(Apos1, Apos2),     viennacl::range(0,     Bpos)));
+          viennacl::matrix_range<MatrixT2> B_lower(B, viennacl::range(Apos2, B.size1()), viennacl::range(0, Bpos));
+          viennacl::linalg::prod_impl(viennacl::project(A, viennacl::range(Apos2, A.size1()), viennacl::range(Apos1, Apos2)),
+                                      viennacl::project(B, viennacl::range(Apos1, Apos2),     viennacl::range(0,     Bpos)),
+                                      B_lower,
+                                      NumericType(-1.0), NumericType(1.0));
         }
       }
     }
@@ -162,6 +166,8 @@ namespace detail
   template<typename MatrixT1, typename MatrixT2, typename SolverTagT>
   void inplace_solve_upper_impl(MatrixT1 const & A, MatrixT2 & B, SolverTagT)
   {
+    typedef typename viennacl::result_of::cpu_value_type<MatrixT1>::type  NumericType;
+
     int blockSize = VIENNACL_DIRECT_SOLVE_BLOCKSIZE;
     if (static_cast<int>(A.size1()) <= blockSize)
       inplace_solve_kernel(A, B, SolverTagT());
@@ -177,9 +183,12 @@ namespace detail
                              SolverTagT());
         if (Apos1 > 0)
         {
-          viennacl::project(B, viennacl::range(0, Apos1), viennacl::range(0, Bpos))
-            -= viennacl::linalg::prod(viennacl::project(A, viennacl::range(0,     Apos1), viennacl::range(Apos1, Apos2)),
-                                      viennacl::project(B, viennacl::range(Apos1, Apos2), viennacl::range(0,     Bpos)));
+          viennacl::matrix_range<MatrixT2> B_upper(B, viennacl::range(0, Apos1), viennacl::range(0, Bpos));
+
+          viennacl::linalg::prod_impl(viennacl::project(A, viennacl::range(0,     Apos1), viennacl::range(Apos1, Apos2)),
+                                      viennacl::project(B, viennacl::range(Apos1, Apos2), viennacl::range(0,     Bpos)),
+                                      B_upper,
+                                      NumericType(-1.0), NumericType(1.0));
         }
       }
     }
