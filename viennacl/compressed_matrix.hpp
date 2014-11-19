@@ -464,7 +464,7 @@ public:
   typedef vcl_size_t                                                                                 size_type;
 
   /** @brief Default construction of a compressed matrix. No memory is allocated */
-  compressed_matrix() : rows_(0), cols_(0), nonzeros_(0) {}
+  compressed_matrix() : rows_(0), cols_(0), nonzeros_(0), row_block_num_(0) {}
 
   /** @brief Construction of a compressed matrix with the supplied number of rows and columns. If the number of nonzeros is positive, memory is allocated
       *
@@ -474,11 +474,12 @@ public:
       * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
       */
   explicit compressed_matrix(vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzeros = 0, viennacl::context ctx = viennacl::context())
-    : rows_(rows), cols_(cols), nonzeros_(nonzeros)
+    : rows_(rows), cols_(cols), nonzeros_(nonzeros), row_block_num_(0)
   {
     row_buffer_.switch_active_handle_id(ctx.memory_type());
     col_buffer_.switch_active_handle_id(ctx.memory_type());
     elements_.switch_active_handle_id(ctx.memory_type());
+    row_blocks_.switch_active_handle_id(ctx.memory_type());
 
 #ifdef VIENNACL_WITH_OPENCL
     if (ctx.memory_type() == OPENCL_MEMORY)
@@ -486,6 +487,7 @@ public:
       row_buffer_.opencl_handle().context(ctx.opencl_context());
       col_buffer_.opencl_handle().context(ctx.opencl_context());
       elements_.opencl_handle().context(ctx.opencl_context());
+      row_blocks_.opencl_handle().context(ctx.opencl_context());
     }
 #endif
     if (rows > 0)
@@ -506,11 +508,12 @@ public:
       * @param ctx      Context in which to create the matrix
       */
   explicit compressed_matrix(vcl_size_t rows, vcl_size_t cols, viennacl::context ctx)
-    : rows_(rows), cols_(cols), nonzeros_(0)
+    : rows_(rows), cols_(cols), nonzeros_(0), row_block_num_(0)
   {
     row_buffer_.switch_active_handle_id(ctx.memory_type());
     col_buffer_.switch_active_handle_id(ctx.memory_type());
     elements_.switch_active_handle_id(ctx.memory_type());
+    row_blocks_.switch_active_handle_id(ctx.memory_type());
 
 #ifdef VIENNACL_WITH_OPENCL
     if (ctx.memory_type() == OPENCL_MEMORY)
@@ -518,6 +521,7 @@ public:
       row_buffer_.opencl_handle().context(ctx.opencl_context());
       col_buffer_.opencl_handle().context(ctx.opencl_context());
       elements_.opencl_handle().context(ctx.opencl_context());
+      row_blocks_.opencl_handle().context(ctx.opencl_context());
     }
 #endif
     if (rows > 0)
@@ -530,11 +534,12 @@ public:
     *
     * This is useful if you want to want to populate e.g. a viennacl::compressed_matrix<> on the host with copy(), but the default backend is OpenCL.
     */
-  explicit compressed_matrix(viennacl::context ctx) : rows_(0), cols_(0), nonzeros_(0)
+  explicit compressed_matrix(viennacl::context ctx) : rows_(0), cols_(0), nonzeros_(0), row_block_num_(0)
   {
     row_buffer_.switch_active_handle_id(ctx.memory_type());
     col_buffer_.switch_active_handle_id(ctx.memory_type());
     elements_.switch_active_handle_id(ctx.memory_type());
+    row_blocks_.switch_active_handle_id(ctx.memory_type());
 
 #ifdef VIENNACL_WITH_OPENCL
     if (ctx.memory_type() == OPENCL_MEMORY)
@@ -542,6 +547,7 @@ public:
       row_buffer_.opencl_handle().context(ctx.opencl_context());
       col_buffer_.opencl_handle().context(ctx.opencl_context());
       elements_.opencl_handle().context(ctx.opencl_context());
+      row_blocks_.opencl_handle().context(ctx.opencl_context());
     }
 #endif
   }
@@ -559,7 +565,7 @@ public:
     */
   explicit compressed_matrix(cl_mem mem_row_buffer, cl_mem mem_col_buffer, cl_mem mem_elements,
                              vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzeros) :
-    rows_(rows), cols_(cols), nonzeros_(nonzeros)
+    rows_(rows), cols_(cols), nonzeros_(nonzeros), row_block_num_(0)
   {
     row_buffer_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
     row_buffer_.opencl_handle() = mem_row_buffer;
@@ -575,6 +581,9 @@ public:
     elements_.opencl_handle() = mem_elements;
     elements_.opencl_handle().inc();               //prevents that the user-provided memory is deleted once the matrix object is destroyed.
     elements_.raw_size(sizeof(NumericT) * nonzeros);
+
+    //generate block information for CSR-adaptive:
+    generate_row_block_information();
   }
 #endif
 
@@ -588,9 +597,11 @@ public:
     rows_ = other.size1();
     cols_ = other.size2();
     nonzeros_ = other.nnz();
+    row_block_num_ = other.row_block_num_;
 
     viennacl::backend::typesafe_memory_copy<unsigned int>(other.row_buffer_, row_buffer_);
     viennacl::backend::typesafe_memory_copy<unsigned int>(other.col_buffer_, col_buffer_);
+    viennacl::backend::typesafe_memory_copy<unsigned int>(other.row_blocks_, row_blocks_);
     viennacl::backend::typesafe_memory_copy<NumericT>(other.elements_, elements_);
 
     return *this;
@@ -634,6 +645,9 @@ public:
     nonzeros_ = nonzeros;
     rows_ = rows;
     cols_ = cols;
+
+    //generate block information for CSR-adaptive:
+    generate_row_block_information();
   }
 
   /** @brief Allocate memory for the supplied number of nonzeros in the matrix. Old values are preserved. */
@@ -756,11 +770,15 @@ public:
   const vcl_size_t & size2() const { return cols_; }
   /** @brief  Returns the number of nonzero entries */
   const vcl_size_t & nnz() const { return nonzeros_; }
+  /** @brief  Returns the internal number of row blocks for an adaptive SpMV */
+  const vcl_size_t & blocks1() const { return row_block_num_; }
 
   /** @brief  Returns the OpenCL handle to the row index array */
   const handle_type & handle1() const { return row_buffer_; }
   /** @brief  Returns the OpenCL handle to the column index array */
   const handle_type & handle2() const { return col_buffer_; }
+  /** @brief  Returns the OpenCL handle to the row block array */
+  const handle_type & handle3() const { return row_blocks_; }
   /** @brief  Returns the OpenCL handle to the matrix entry array */
   const handle_type & handle() const { return elements_; }
 
@@ -768,6 +786,8 @@ public:
   handle_type & handle1() { return row_buffer_; }
   /** @brief  Returns the OpenCL handle to the column index array */
   handle_type & handle2() { return col_buffer_; }
+  /** @brief  Returns the OpenCL handle to the row block array */
+  handle_type & handle3() { return row_blocks_; }
   /** @brief  Returns the OpenCL handle to the matrix entry array */
   handle_type & handle() { return elements_; }
 
@@ -811,6 +831,44 @@ private:
     return nonzeros_;
   }
 
+  void generate_row_block_information()
+  {
+    viennacl::backend::typesafe_host_array<unsigned int> row_buffer(row_buffer_, rows_ + 1);
+    viennacl::backend::memory_read(row_buffer_, 0, row_buffer.raw_size(), row_buffer.get());
+
+    viennacl::backend::typesafe_host_array<unsigned int> row_blocks(row_buffer_, rows_ + 1);
+
+    vcl_size_t num_entries_in_current_batch = 0;
+
+    const vcl_size_t shared_mem_size = 1024; // number of column indices loaded to shared memory, number of floating point values loaded to shared memory
+
+    row_block_num_ = 0;
+    row_blocks.set(0, 0);
+    for (vcl_size_t i=0; i<rows_; ++i)
+    {
+      vcl_size_t entries_in_row = vcl_size_t(row_buffer[i+1]) - vcl_size_t(row_buffer[i]);
+      num_entries_in_current_batch += entries_in_row;
+
+      if (num_entries_in_current_batch > shared_mem_size)
+      {
+        vcl_size_t rows_in_batch = i - row_blocks[row_block_num_];
+        if (rows_in_batch > 0) // at least one full row is in the batch. Use current row in next batch.
+          row_blocks.set(++row_block_num_, i--);
+        else // row is larger than buffer in shared memory
+          row_blocks.set(++row_block_num_, i+1);
+        num_entries_in_current_batch = 0;
+      }
+    }
+    if (num_entries_in_current_batch > 0)
+      row_blocks.set(++row_block_num_, rows_);
+
+    if (row_block_num_ > 0) //matrix might be empty...
+      viennacl::backend::memory_create(row_blocks_,
+                                       row_blocks.element_size() * (row_block_num_ + 1),
+                                       viennacl::traits::context(row_buffer_), row_blocks.get());
+
+  }
+
   // /** @brief Copy constructor is by now not available. */
   //compressed_matrix(compressed_matrix const &);
 
@@ -818,7 +876,9 @@ private:
   vcl_size_t rows_;
   vcl_size_t cols_;
   vcl_size_t nonzeros_;
+  vcl_size_t row_block_num_;
   handle_type row_buffer_;
+  handle_type row_blocks_;
   handle_type col_buffer_;
   handle_type elements_;
 };

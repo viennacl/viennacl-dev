@@ -142,6 +142,106 @@ __global__ void compressed_matrix_vec_mul_kernel(
 
 
 
+template<typename NumericT>
+__global__ void compressed_matrix_vec_mul_adaptive_kernel(
+          const unsigned int * row_indices,
+          const unsigned int * column_indices,
+          const unsigned int * row_blocks,
+          const NumericT * elements,
+          unsigned int num_blocks,
+          const NumericT * x,
+          unsigned int start_x,
+          unsigned int inc_x,
+          NumericT * result,
+          unsigned int start_result,
+          unsigned int inc_result,
+          unsigned int size_result)
+{
+  __shared__ NumericT     shared_elements[1024];
+
+  for (unsigned int block_id = blockIdx.x; block_id < num_blocks; block_id += gridDim.x)
+  {
+    unsigned int row_start = row_blocks[block_id];
+    unsigned int row_stop  = row_blocks[block_id + 1];
+    unsigned int element_start = row_indices[row_start];
+    unsigned int element_stop = row_indices[row_stop];
+    unsigned int rows_to_process = row_stop - row_start;
+
+    if (rows_to_process > 1)  // CSR stream with one thread per row
+    {
+      // load to shared buffer:
+      for (unsigned int i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
+        shared_elements[i - element_start] = elements[i] * x[column_indices[i] * inc_x + start_x];
+
+      __syncthreads();
+
+      // use one thread per row to sum:
+      for (unsigned int row = row_start + threadIdx.x; row < row_stop; row += blockDim.x)
+      {
+        NumericT dot_prod = 0;
+        unsigned int thread_row_start = row_indices[row]     - element_start;
+        unsigned int thread_row_stop  = row_indices[row + 1] - element_start;
+        for (unsigned int i = thread_row_start; i < thread_row_stop; ++i)
+          dot_prod += shared_elements[i];
+        result[row * inc_result + start_result] = dot_prod;
+      }
+    }
+    /*else if (rows_to_process > 1)  // CSR stream with local reduction
+    {
+      // load to shared buffer:
+      for (unsigned int i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
+        shared_elements[i - element_start] = elements[i] * x[column_indices[i] * inc_x + start_x];
+
+      __syncthreads();
+
+      // sum each row separately using a reduction:
+      for (unsigned int row = row_start; row < row_stop; ++row)
+      {
+        unsigned int current_row_start = row_indices[row]     - element_start;
+        unsigned int current_row_stop  = row_indices[row + 1] - element_start;
+
+        // sum whatever exceeds the current buffer:
+        shared_reduction_helper[threadIdx.x] = 0;
+        for (unsigned int j = current_row_start + threadIdx.x; j < current_row_stop; j += blockDim.x)
+          shared_reduction_helper[threadIdx.x] += shared_elements[j];
+
+        // reduction
+        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+        {
+          __syncthreads();
+          if (threadIdx.x < stride)
+            shared_reduction_helper[threadIdx.x] += shared_reduction_helper[threadIdx.x+stride];
+        }
+        if (threadIdx.x == 0)
+          result[row * inc_result + start_result] = shared_reduction_helper[0];
+      }
+    }*/
+    // TODO here: CSR vector for two rows
+    else // CSR vector for a single row
+    {
+      // load and sum to shared buffer:
+      shared_elements[threadIdx.x] = 0;
+      for (unsigned int i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
+        shared_elements[threadIdx.x] += elements[i] * x[column_indices[i] * inc_x + start_x];
+
+      // reduction to obtain final result
+      for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+      {
+        __syncthreads();
+        if (threadIdx.x < stride)
+          shared_elements[threadIdx.x] += shared_elements[threadIdx.x+stride];
+      }
+
+      if (threadIdx.x == 0)
+        result[row_start * inc_result + start_result] = shared_elements[0];
+    }
+
+    __syncthreads();  // avoid race conditions
+  }
+}
+
+
+
 
 /** @brief Carries out matrix-vector multiplication with a compressed_matrix
 *
@@ -156,9 +256,11 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & mat,
                const viennacl::vector_base<NumericT> & vec,
                      viennacl::vector_base<NumericT> & result)
 {
-  compressed_matrix_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+  compressed_matrix_vec_mul_adaptive_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
                                                  detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                 detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
                                                  detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+                                                 static_cast<unsigned int>(mat.blocks1()),
                                                  detail::cuda_arg<NumericT>(vec),
                                                  static_cast<unsigned int>(vec.start()),
                                                  static_cast<unsigned int>(vec.stride()),
@@ -167,7 +269,7 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & mat,
                                                  static_cast<unsigned int>(result.stride()),
                                                  static_cast<unsigned int>(result.size())
                                                 );
-  VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_kernel");
+  VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_adaptive_kernel");
 }
 
 /** @brief Helper struct for accessing an element of a row- or column-major matrix.

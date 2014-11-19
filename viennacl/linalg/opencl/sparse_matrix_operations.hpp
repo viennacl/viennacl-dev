@@ -105,10 +105,24 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
   layout_y.size   = cl_uint(viennacl::traits::size(y));
   layout_y.internal_size   = cl_uint(viennacl::traits::internal_size(y));
 
-  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
-                          x, layout_x,
-                          y, layout_y
-                          ));
+  if (alignment == 4 || alignment == 8)
+  {
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                             x, layout_x,
+                             y, layout_y
+                            ));
+  }
+  else
+  {
+    if (ctx.current_device().max_work_group_size() >= 256)
+      k.local_work_size(0, 256);
+    k.global_work_size(0, A.blocks1() * k.local_work_size(0));
+
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                             x, layout_x,
+                             y, layout_y
+                            ));
+  }
 }
 
 

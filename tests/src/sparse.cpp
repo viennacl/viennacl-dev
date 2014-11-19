@@ -102,7 +102,7 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
       if (v2_cpu[i] > 0.0001)
       {
         //std::cout << "Neighbor: "      << i-1 << ": " << v1[i-1] << " vs. " << v2_cpu[i-1] << std::endl;
-        std::cout << "Error at entry " << i   << ": " << v1[i]   << " vs. " << v2_cpu[i]   << std::endl;
+        std::cout << "Error at entry " << i   << ": Should: " << v1[i]   << " vs. Is: " << v2[i]   << std::endl;
         //std::cout << "Neighbor: "      << i+1 << ": " << v1[i+1] << " vs. " << v2_cpu[i+1] << std::endl;
         exit(EXIT_FAILURE);
       }
