@@ -157,7 +157,7 @@ __global__ void matrix_matrix_lower_solve_kernel(
       else //if (!row_major_A)
         entry_A = A[(elim * A_inc1 + A_start1) + (row * A_inc2 + A_start2) * A_internal_size1];
 
-      else if (row_major_B)
+      if (row_major_B)
         B[(elim * B_inc1 + B_start1) * B_internal_size2 + (blockIdx.x * B_inc2 + B_start2)] -= temp * entry_A;
       else //if (!row_major_B)
         B[(elim * B_inc1 + B_start1) + (blockIdx.x * B_inc2 + B_start2) * B_internal_size1] -= temp * entry_A;
