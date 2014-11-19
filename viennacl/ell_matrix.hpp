@@ -170,6 +170,26 @@ void copy(const CPUMatrixT& cpu_matrix, ell_matrix<NumericT, AlignmentV>& gpu_ma
   }
 }
 
+
+
+/** @brief Copies a sparse matrix from the host to the compute device. The host type is the std::vector< std::map < > > format .
+  *
+  * @param cpu_matrix   A sparse matrix on the host composed of an STL vector and an STL map.
+  * @param gpu_matrix   The sparse ell_matrix from ViennaCL
+  */
+template<typename IndexT, typename NumericT, unsigned int AlignmentV>
+void copy(std::vector< std::map<IndexT, NumericT> > const & cpu_matrix,
+          ell_matrix<NumericT, AlignmentV> & gpu_matrix)
+{
+  tools::const_sparse_matrix_adapter<NumericT, IndexT> temp(cpu_matrix, cpu_matrix.size(), cpu_matrix.size());
+  viennacl::copy(temp, gpu_matrix);
+}
+
+
+
+
+
+
 template<typename CPUMatrixT, typename NumericT, unsigned int AlignmentV>
 void copy(const ell_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_matrix)
 {
@@ -205,6 +225,19 @@ void copy(const ell_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
   }
 }
 
+
+/** @brief Copies a sparse matrix from the compute device to the host. The host type is the std::vector< std::map < > > format .
+  *
+  * @param gpu_matrix   The sparse ell_matrix from ViennaCL
+  * @param cpu_matrix   A sparse matrix on the host composed of an STL vector and an STL map.
+  */
+template<typename NumericT, unsigned int AlignmentV, typename IndexT>
+void copy(const ell_matrix<NumericT, AlignmentV> & gpu_matrix,
+          std::vector< std::map<IndexT, NumericT> > & cpu_matrix)
+{
+  tools::sparse_matrix_adapter<NumericT, IndexT> temp(cpu_matrix, cpu_matrix.size(), cpu_matrix.size());
+  viennacl::copy(gpu_matrix, temp);
+}
 
 //
 // Specify available operations:
