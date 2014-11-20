@@ -114,7 +114,9 @@ template<typename NumericT>
 __global__ void pipelined_cg_csr_vec_mul_kernel(
           const unsigned int * row_indices,
           const unsigned int * column_indices,
+          const unsigned int * row_blocks,
           const NumericT * elements,
+          unsigned int num_blocks,
           const NumericT * p,
           NumericT * Ap,
           unsigned int size,
@@ -124,17 +126,62 @@ __global__ void pipelined_cg_csr_vec_mul_kernel(
   NumericT inner_prod_ApAp = 0;
   NumericT inner_prod_pAp = 0;
 
-  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
-                    row  < size;
-                    row += gridDim.x * blockDim.x)
+  __shared__ NumericT     shared_elements[1024];
+
+  for (unsigned int block_id = blockIdx.x; block_id < num_blocks; block_id += gridDim.x)
   {
-    NumericT dot_prod = NumericT(0);
-    unsigned int row_end = row_indices[row+1];
-    for (unsigned int i = row_indices[row]; i < row_end; ++i)
-      dot_prod += elements[i] * p[column_indices[i]];
-    Ap[row] = dot_prod;
-    inner_prod_ApAp += dot_prod * dot_prod;
-    inner_prod_pAp  +=   p[row] * dot_prod;
+    unsigned int row_start = row_blocks[block_id];
+    unsigned int row_stop  = row_blocks[block_id + 1];
+    unsigned int element_start = row_indices[row_start];
+    unsigned int element_stop = row_indices[row_stop];
+    unsigned int rows_to_process = row_stop - row_start;
+
+    if (rows_to_process > 1)  // CSR stream with one thread per row
+    {
+      // load to shared buffer:
+      for (unsigned int i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
+        shared_elements[i - element_start] = elements[i] * p[column_indices[i]];
+
+      __syncthreads();
+
+      // use one thread per row to sum:
+      for (unsigned int row = row_start + threadIdx.x; row < row_stop; row += blockDim.x)
+      {
+        NumericT dot_prod = 0;
+        unsigned int thread_row_start = row_indices[row]     - element_start;
+        unsigned int thread_row_stop  = row_indices[row + 1] - element_start;
+        for (unsigned int i = thread_row_start; i < thread_row_stop; ++i)
+          dot_prod += shared_elements[i];
+        Ap[row] = dot_prod;
+        inner_prod_ApAp += dot_prod * dot_prod;
+        inner_prod_pAp  +=   p[row] * dot_prod;
+      }
+    }
+    // TODO here: Consider CSR vector for two to four rows (cf. OpenCL implementation. Experience on Fermi suggests that this may not be necessary)
+    else // CSR vector for a single row
+    {
+      // load and sum to shared buffer:
+      shared_elements[threadIdx.x] = 0;
+      for (unsigned int i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
+        shared_elements[threadIdx.x] += elements[i] * p[column_indices[i]];
+
+      // reduction to obtain final result
+      for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+      {
+        __syncthreads();
+        if (threadIdx.x < stride)
+          shared_elements[threadIdx.x] += shared_elements[threadIdx.x+stride];
+      }
+
+      if (threadIdx.x == 0)
+      {
+        Ap[row_start] = shared_elements[0];
+        inner_prod_ApAp += shared_elements[0] * shared_elements[0];
+        inner_prod_pAp  +=       p[row_start] * shared_elements[0];
+      }
+    }
+
+    __syncthreads();  // avoid race conditions
   }
 
   ////////// parallel reduction in work group
@@ -173,7 +220,9 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
 
   pipelined_cg_csr_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                 detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                                static_cast<unsigned int>(A.blocks1()),
                                                 detail::cuda_arg<NumericT>(p),
                                                 detail::cuda_arg<NumericT>(Ap),
                                                 size,
@@ -751,7 +800,9 @@ template<typename NumericT>
 __global__ void pipelined_bicgstab_csr_vec_mul_kernel(
           const unsigned int * row_indices,
           const unsigned int * column_indices,
+          const unsigned int * row_blocks,
           const NumericT * elements,
+          unsigned int num_blocks,
           const NumericT * p,
           NumericT * Ap,
           const NumericT * r0star,
@@ -764,18 +815,64 @@ __global__ void pipelined_bicgstab_csr_vec_mul_kernel(
   NumericT inner_prod_pAp = 0;
   NumericT inner_prod_r0Ap  = 0;
 
-  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
-                    row  < size;
-                    row += gridDim.x * blockDim.x)
+  __shared__ NumericT     shared_elements[1024];
+
+  for (unsigned int block_id = blockIdx.x; block_id < num_blocks; block_id += gridDim.x)
   {
-    NumericT dot_prod(0);
-    unsigned int row_end = row_indices[row+1];
-    for (unsigned int i = row_indices[row]; i < row_end; ++i)
-      dot_prod += elements[i] * p[column_indices[i]];
-    Ap[row] = dot_prod;
-    inner_prod_ApAp += dot_prod * dot_prod;
-    inner_prod_pAp  +=   p[row] * dot_prod;
-    inner_prod_r0Ap += r0star[row] * dot_prod;
+    unsigned int row_start = row_blocks[block_id];
+    unsigned int row_stop  = row_blocks[block_id + 1];
+    unsigned int element_start = row_indices[row_start];
+    unsigned int element_stop = row_indices[row_stop];
+    unsigned int rows_to_process = row_stop - row_start;
+
+    if (rows_to_process > 1)  // CSR stream with one thread per row
+    {
+      // load to shared buffer:
+      for (unsigned int i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
+        shared_elements[i - element_start] = elements[i] * p[column_indices[i]];
+
+      __syncthreads();
+
+      // use one thread per row to sum:
+      for (unsigned int row = row_start + threadIdx.x; row < row_stop; row += blockDim.x)
+      {
+        NumericT dot_prod = 0;
+        unsigned int thread_row_start = row_indices[row]     - element_start;
+        unsigned int thread_row_stop  = row_indices[row + 1] - element_start;
+        for (unsigned int i = thread_row_start; i < thread_row_stop; ++i)
+          dot_prod += shared_elements[i];
+        Ap[row] = dot_prod;
+        inner_prod_ApAp += dot_prod * dot_prod;
+        inner_prod_pAp  +=   p[row] * dot_prod;
+        inner_prod_r0Ap += r0star[row] * dot_prod;
+      }
+    }
+    // TODO here: Consider CSR vector for two to four rows (cf. OpenCL implementation. Experience on Fermi suggests that this may not be necessary)
+    else // CSR vector for a single row
+    {
+      // load and sum to shared buffer:
+      shared_elements[threadIdx.x] = 0;
+      for (unsigned int i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
+        shared_elements[threadIdx.x] += elements[i] * p[column_indices[i]];
+
+      // reduction to obtain final result
+      for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
+      {
+        __syncthreads();
+        if (threadIdx.x < stride)
+          shared_elements[threadIdx.x] += shared_elements[threadIdx.x+stride];
+      }
+
+      if (threadIdx.x == 0)
+      {
+        Ap[row_start] = shared_elements[0];
+        inner_prod_ApAp += shared_elements[0] * shared_elements[0];
+        inner_prod_pAp  +=       p[row_start] * shared_elements[0];
+        inner_prod_r0Ap +=  r0star[row_start] * shared_elements[0];
+      }
+    }
+
+    __syncthreads();  // avoid race conditions
   }
 
   ////////// parallel reduction in work group
@@ -822,7 +919,9 @@ void pipelined_bicgstab_prod(compressed_matrix<NumericT> const & A,
 
   pipelined_bicgstab_csr_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
                                                       detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                      detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                       detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                                      static_cast<unsigned int>(A.blocks1()),
                                                       detail::cuda_arg<NumericT>(p),
                                                       detail::cuda_arg<NumericT>(Ap),
                                                       detail::cuda_arg<NumericT>(r0star),
@@ -1617,7 +1716,9 @@ void pipelined_gmres_prod(compressed_matrix<T> const & A,
 
   pipelined_cg_csr_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                 detail::cuda_arg<T>(A.handle().cuda_handle()),
+                                                static_cast<unsigned int>(A.blocks1()),
                                                 detail::cuda_arg<T>(p) + viennacl::traits::start(p),
                                                 detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
                                                 size,
