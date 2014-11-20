@@ -70,9 +70,7 @@ namespace detail
 /** @brief Direct inplace solver for dense triangular systems. Matlab notation: A \ B
 *
 * @param A    The system matrix
-* @param A_trans  Whether A is to be transposed
 * @param B    The matrix of row vectors, where the solution is directly written to
-* @param B_trans  Whether B is to be transposed
 */
 template<typename NumericT, typename SolverTagT>
 void inplace_solve(matrix_base<NumericT> const & A,
