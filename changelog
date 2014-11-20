@@ -4,7 +4,7 @@
 
 ### Version 1.6.1
 This bugfix releases focuses on performance improvements and provides a couple of bugfixes for issues reported by our users:
-  - compressed_matrix: Implemented fast CSR-adaptive kernel as presented by Greathouse and Maya from AMD at the Supercomputing Conference 2014, leading to substantial performance improvements on average.
+  - compressed_matrix: Implemented fast CSR-adaptive kernel as presented by Greathouse and Daga from AMD at the Supercomputing Conference 2014, leading to substantial performance improvements on average.
   - matrix: Improved performance of tridiagonal solves for transposed system matrix or right hand side.
   - OpenCL: Added missing kernel default settings for accelerators such as Xeon Phi (thanks to Krzysztof Bzowski for reporting).
   - GMRES: Improved the numerical robustness of the pipelined implementation (thanks to Andreas Rost for bringing this up).
