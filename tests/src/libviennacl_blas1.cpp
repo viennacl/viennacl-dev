@@ -323,8 +323,8 @@ int main()
   ref_double_alpha = 0;
   for (std::size_t i=0; i<size/2; ++i)
   {
-    ref_float_alpha  += ref_float_y[3 + 2*i]  * ref_float_x[2 + 2*i];
-    ref_double_alpha += ref_double_y[3 + 2*i] * ref_double_x[2 + 2*i];
+    ref_float_alpha  += ref_float_y[3 + i]  * ref_float_x[2 + i];
+    ref_double_alpha += ref_double_y[3 + i] * ref_double_x[2 + i];
   }
 
   std::cout << std::endl << "Host: ";
