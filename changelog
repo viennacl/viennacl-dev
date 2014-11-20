@@ -2,6 +2,20 @@
 
 ## Version 1.6.x
 
+### Version 1.6.1
+This bugfix releases focuses on performance improvements and provides a couple of bugfixes for issues reported by our users:
+  - compressed_matrix: Implemented fast CSR-adaptive kernel as presented by Greathouse and Maya from AMD at the Supercomputing Conference 2014, leading to substantial performance improvements on average.
+  - matrix: Improved performance of tridiagonal solves for transposed system matrix or right hand side.
+  - OpenCL: Added missing kernel default settings for accelerators such as Xeon Phi (thanks to Krzysztof Bzowski for reporting).
+  - GMRES: Improved the numerical robustness of the pipelined implementation (thanks to Andreas Rost for bringing this up).
+  - SPAI: Fixed an incorrect buffer size (thanks again to Andreas Rost).
+  - SVD: Fixed a bug which caused incorrect results.
+  - matrix: Fixed an incorrect matrix transposition for large matrices (thanks to Dominic Meiser for the Travis CI integration which revealed this flaw).
+  - compressed_matrix: Fixed an invalid memory access for triangular solves for some sparsity patterns.
+  - Self-assignments: Corner cases such as A = prod(A, A); are now handled correctly.
+  - Documentation: Various improvements.
+  - Visual Studio: Fixed spurious performance warnings when using certain sparse matrix types.
+
 ### Version 1.6.0
 This new minor release number update introduces an extensive device database, which enables the use of compute kernels tailored to the underlying device.
 As a consequence, the performance portability of ViennaCL is higher than ever before.
