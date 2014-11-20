@@ -72,13 +72,16 @@ void generate_pipelined_cg_vector_update(StringT & source, std::string const & n
   source.append("} \n");
 }
 
+
 template<typename StringT>
 void generate_compressed_matrix_pipelined_cg_prod(StringT & source, std::string const & numeric_string)
 {
   source.append("__kernel void cg_csr_prod( \n");
   source.append("  __global const unsigned int * row_indices, \n");
   source.append("  __global const unsigned int * column_indices, \n");
+  source.append("  __global const unsigned int * row_blocks, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
+  source.append("  unsigned int num_blocks, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
   source.append("  unsigned int size, \n");
@@ -87,17 +90,59 @@ void generate_compressed_matrix_pipelined_cg_prod(StringT & source, std::string 
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
   source.append("{ \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" shared_elements[1024]; \n");
+
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_ApAp = 0; \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_pAp = 0; \n");
-  source.append("  for (unsigned int row = get_global_id(0); row < size; row += get_global_size(0)) \n");
-  source.append("  { \n");
-  source.append("    "); source.append(numeric_string); source.append(" dot_prod = ("); source.append(numeric_string); source.append(")0; \n");
-  source.append("    unsigned int row_end = row_indices[row+1]; \n");
-  source.append("    for (unsigned int i = row_indices[row]; i < row_end; ++i) \n");
-  source.append("      dot_prod += elements[i] * p[column_indices[i]]; \n");
-  source.append("    Ap[row] = dot_prod; \n");
-  source.append("    inner_prod_ApAp += dot_prod * dot_prod; \n");
-  source.append("    inner_prod_pAp  +=   p[row] * dot_prod; \n");
+
+  source.append("  for (unsigned int block_id = get_group_id(0); block_id < num_blocks; block_id += get_num_groups(0)) { \n");
+  source.append("    unsigned int row_start = row_blocks[block_id]; \n");
+  source.append("    unsigned int row_stop  = row_blocks[block_id + 1]; \n");
+  source.append("    unsigned int rows_to_process = row_stop - row_start; \n");
+  source.append("    unsigned int element_start = row_indices[row_start]; \n");
+  source.append("    unsigned int element_stop = row_indices[row_stop]; \n");
+
+  source.append("    if (rows_to_process > 1) { \n"); // CSR stream
+      // load to shared buffer:
+  source.append("      for (unsigned int i = element_start + get_local_id(0); i < element_stop; i += get_local_size(0)) \n");
+  source.append("        shared_elements[i - element_start] = elements[i] * p[column_indices[i]]; \n");
+
+  source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+      // use one thread per row to sum:
+  source.append("      for (unsigned int row = row_start + get_local_id(0); row < row_stop; row += get_local_size(0)) { \n");
+  source.append("        "); source.append(numeric_string); source.append(" dot_prod = 0; \n");
+  source.append("        unsigned int thread_row_start = row_indices[row]     - element_start; \n");
+  source.append("        unsigned int thread_row_stop  = row_indices[row + 1] - element_start; \n");
+  source.append("        for (unsigned int i = thread_row_start; i < thread_row_stop; ++i) \n");
+  source.append("          dot_prod += shared_elements[i]; \n");
+  source.append("        Ap[row] = dot_prod; \n");
+  source.append("        inner_prod_ApAp += dot_prod * dot_prod; \n");
+  source.append("        inner_prod_pAp  +=   p[row] * dot_prod; \n");
+  source.append("      } \n");
+  source.append("    } \n");
+
+  source.append("    else  \n"); // CSR vector for a single row
+  source.append("    { \n");
+      // load and sum to shared buffer:
+  source.append("      shared_elements[get_local_id(0)] = 0; \n");
+  source.append("      for (unsigned int i = element_start + get_local_id(0); i < element_stop; i += get_local_size(0)) \n");
+  source.append("        shared_elements[get_local_id(0)] += elements[i] * p[column_indices[i]]; \n");
+
+      // reduction to obtain final result
+  source.append("      for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < stride) \n");
+  source.append("          shared_elements[get_local_id(0)] += shared_elements[get_local_id(0) + stride]; \n");
+  source.append("      } \n");
+
+  source.append("      if (get_local_id(0) == 0) { \n");
+  source.append("        Ap[row_start] = shared_elements[0]; \n");
+  source.append("        inner_prod_ApAp += shared_elements[0] * shared_elements[0]; \n");
+  source.append("        inner_prod_pAp  +=       p[row_start] * shared_elements[0]; \n");
+  source.append("      } \n");
+  source.append("    } \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
   source.append("  } \n");
 
   // parallel reduction in work group
@@ -118,9 +163,10 @@ void generate_compressed_matrix_pipelined_cg_prod(StringT & source, std::string 
   source.append("    inner_prod_buffer[2*buffer_size + get_group_id(0)] = shared_array_pAp[0]; \n");
   source.append("  } \n");
 
-  source.append("} \n \n");
+  source.append("} \n");
 
 }
+
 
 template<typename StringT>
 void generate_coordinate_matrix_pipelined_cg_prod(StringT & source, std::string const & numeric_string)
@@ -535,7 +581,9 @@ void generate_compressed_matrix_pipelined_bicgstab_prod(StringT & source, std::s
   source.append("__kernel void bicgstab_csr_prod( \n");
   source.append("  __global const unsigned int * row_indices, \n");
   source.append("  __global const unsigned int * column_indices, \n");
+  source.append("  __global const unsigned int * row_blocks, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
+  source.append("  unsigned int num_blocks, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * r0star, \n");
@@ -547,19 +595,61 @@ void generate_compressed_matrix_pipelined_bicgstab_prod(StringT & source, std::s
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp, \n");
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_r0Ap) \n");
   source.append("{ \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" shared_elements[1024]; \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_ApAp = 0; \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_pAp = 0; \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_r0Ap = 0; \n");
-  source.append("  for (unsigned int row = get_global_id(0); row < size; row += get_global_size(0)) \n");
-  source.append("  { \n");
-  source.append("    "); source.append(numeric_string); source.append(" dot_prod = ("); source.append(numeric_string); source.append(")0; \n");
-  source.append("    unsigned int row_end = row_indices[row+1]; \n");
-  source.append("    for (unsigned int i = row_indices[row]; i < row_end; ++i) \n");
-  source.append("      dot_prod += elements[i] * p[column_indices[i]]; \n");
-  source.append("    Ap[row] = dot_prod; \n");
-  source.append("    inner_prod_ApAp  +=    dot_prod * dot_prod; \n");
-  source.append("    inner_prod_pAp   +=      p[row] * dot_prod; \n");
-  source.append("    inner_prod_r0Ap  += r0star[row] * dot_prod; \n");
+
+  source.append("  for (unsigned int block_id = get_group_id(0); block_id < num_blocks; block_id += get_num_groups(0)) { \n");
+  source.append("    unsigned int row_start = row_blocks[block_id]; \n");
+  source.append("    unsigned int row_stop  = row_blocks[block_id + 1]; \n");
+  source.append("    unsigned int rows_to_process = row_stop - row_start; \n");
+  source.append("    unsigned int element_start = row_indices[row_start]; \n");
+  source.append("    unsigned int element_stop = row_indices[row_stop]; \n");
+
+  source.append("    if (rows_to_process > 1) { \n"); // CSR stream
+      // load to shared buffer:
+  source.append("      for (unsigned int i = element_start + get_local_id(0); i < element_stop; i += get_local_size(0)) \n");
+  source.append("        shared_elements[i - element_start] = elements[i] * p[column_indices[i]]; \n");
+
+  source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+      // use one thread per row to sum:
+  source.append("      for (unsigned int row = row_start + get_local_id(0); row < row_stop; row += get_local_size(0)) { \n");
+  source.append("        "); source.append(numeric_string); source.append(" dot_prod = 0; \n");
+  source.append("        unsigned int thread_row_start = row_indices[row]     - element_start; \n");
+  source.append("        unsigned int thread_row_stop  = row_indices[row + 1] - element_start; \n");
+  source.append("        for (unsigned int i = thread_row_start; i < thread_row_stop; ++i) \n");
+  source.append("          dot_prod += shared_elements[i]; \n");
+  source.append("        Ap[row] = dot_prod; \n");
+  source.append("        inner_prod_ApAp += dot_prod * dot_prod; \n");
+  source.append("        inner_prod_pAp  +=   p[row] * dot_prod; \n");
+  source.append("        inner_prod_r0Ap  += r0star[row] * dot_prod; \n");
+  source.append("      } \n");
+  source.append("    } \n");
+
+  source.append("    else  \n"); // CSR vector for a single row
+  source.append("    { \n");
+      // load and sum to shared buffer:
+  source.append("      shared_elements[get_local_id(0)] = 0; \n");
+  source.append("      for (unsigned int i = element_start + get_local_id(0); i < element_stop; i += get_local_size(0)) \n");
+  source.append("        shared_elements[get_local_id(0)] += elements[i] * p[column_indices[i]]; \n");
+
+      // reduction to obtain final result
+  source.append("      for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < stride) \n");
+  source.append("          shared_elements[get_local_id(0)] += shared_elements[get_local_id(0) + stride]; \n");
+  source.append("      } \n");
+
+  source.append("      if (get_local_id(0) == 0) { \n");
+  source.append("        Ap[row_start] = shared_elements[0]; \n");
+  source.append("        inner_prod_ApAp += shared_elements[0] * shared_elements[0]; \n");
+  source.append("        inner_prod_pAp  +=       p[row_start] * shared_elements[0]; \n");
+  source.append("        inner_prod_r0Ap +=  r0star[row_start] * shared_elements[0]; \n");
+  source.append("      } \n");
+  source.append("    } \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
   source.append("  } \n");
 
   // parallel reduction in work group
@@ -1128,20 +1218,22 @@ template <typename StringType>
 void generate_compressed_matrix_pipelined_gmres_prod(StringType & source, std::string const & numeric_string)
 {
   source.append("__kernel void gmres_csr_prod( \n");
-  source.append("          __global const unsigned int * row_indices, \n");
-  source.append("          __global const unsigned int * column_indices, \n");
-  source.append("          __global const "); source.append(numeric_string); source.append(" * elements, \n");
-  source.append("          __global const "); source.append(numeric_string); source.append(" * p, \n");
-  source.append("          unsigned int offset_p, \n");
-  source.append("          __global "); source.append(numeric_string); source.append(" * Ap, \n");
-  source.append("          unsigned int offset_Ap, \n");
-  source.append("          unsigned int size, \n");
-  source.append("          __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
-  source.append("          unsigned int buffer_size, \n");
-  source.append("         __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
-  source.append("         __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
+  source.append("  __global const unsigned int * row_indices, \n");
+  source.append("  __global const unsigned int * column_indices, \n");
+  source.append("  __global const unsigned int * row_blocks, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
+  source.append("  unsigned int num_blocks, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
+  source.append("  unsigned int offset_p, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
+  source.append("  unsigned int offset_Ap, \n");
+  source.append("  unsigned int size, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
+  source.append("  unsigned int buffer_size, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
   source.append("{ \n");
-  source.append("  cg_csr_prod(row_indices, column_indices, elements, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
+  source.append("  cg_csr_prod(row_indices, column_indices, row_blocks, elements, num_blocks, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
   source.append("} \n \n");
 
 }

@@ -82,7 +82,7 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
 
   k.local_work_size(0, 128);
   k.global_work_size(0, 128*128);
-  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
                            p,
                            Ap,
                            vec_size,
@@ -314,7 +314,7 @@ void pipelined_bicgstab_prod(compressed_matrix<NumericT> const & A,
 
   k.local_work_size(0, 128);
   k.global_work_size(0, 128*128);
-  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
                            p,
                            Ap,
                            r0star,
@@ -633,7 +633,7 @@ void pipelined_gmres_prod(compressed_matrix<T> const & A,
 
   k.local_work_size(0, 128);
   k.global_work_size(0, 128*128);
-  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
                            p, start_p,
                            Ap, start_Ap,
                            vec_size,
