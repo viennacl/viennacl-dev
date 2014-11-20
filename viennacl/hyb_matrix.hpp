@@ -278,7 +278,8 @@ void copy(const hyb_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
       {
         vcl_size_t offset = gpu_matrix.internal_size1() * ind + row;
 
-        if (!bool(ell_elements[offset]))
+        NumericT val = ell_elements[offset];
+        if (val <= 0 && val >= 0) // val == 0 without compiler warnings
           continue;
 
         if (ell_coords[offset] >= gpu_matrix.size2())
@@ -287,12 +288,13 @@ void copy(const hyb_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
           return;
         }
 
-        cpu_matrix(row, ell_coords[offset]) = ell_elements[offset];
+        cpu_matrix(row, ell_coords[offset]) = val;
       }
 
       for (vcl_size_t ind = csr_rows[row]; ind < csr_rows[row+1]; ind++)
       {
-        if (!bool(csr_elements[ind]))
+        NumericT val = csr_elements[ind];
+        if (val <= 0 && val >= 0) // val == 0 without compiler warnings
           continue;
 
         if (csr_cols[ind] >= gpu_matrix.size2())
@@ -301,7 +303,7 @@ void copy(const hyb_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
           return;
         }
 
-        cpu_matrix(row, csr_cols[ind]) = csr_elements[ind];
+        cpu_matrix(row, csr_cols[ind]) = val;
       }
     }
   }

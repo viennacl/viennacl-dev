@@ -210,7 +210,8 @@ void copy(const ell_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
       {
         vcl_size_t offset = gpu_matrix.internal_size1() * ind + row;
 
-        if (!bool(elements[offset]))
+        NumericT val = elements[offset];
+        if (val <= 0 && val >= 0) // val == 0 without compiler warnings
           continue;
 
         if (coords[offset] >= gpu_matrix.size2())
@@ -219,7 +220,7 @@ void copy(const ell_matrix<NumericT, AlignmentV>& gpu_matrix, CPUMatrixT& cpu_ma
           return;
         }
 
-        cpu_matrix(row, coords[offset]) = elements[offset];
+        cpu_matrix(row, coords[offset]) = val;
       }
     }
   }

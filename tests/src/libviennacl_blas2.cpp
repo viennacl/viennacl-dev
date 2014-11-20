@@ -32,7 +32,7 @@
 template<typename ScalarType>
 ScalarType diff(ScalarType const & s1, ScalarType const & s2)
 {
-  if (std::fabs(s1 - s2) > 0)
+  if (s1 > s2 || s1 < s2)
     return (s1 - s2) / std::max(std::fabs(s1), std::fabs(s2));
   return ScalarType(0);
 }
@@ -62,7 +62,7 @@ ScalarType diff(std::vector<ScalarType> const & v1, ViennaCLVectorType const & v
 template<typename T, typename U, typename EpsilonT>
 void check(T const & t, U const & u, EpsilonT eps)
 {
-  EpsilonT rel_error = diff(t,u);
+  EpsilonT rel_error = std::fabs(static_cast<EpsilonT>(diff(t,u)));
   if (rel_error > eps)
   {
     std::cerr << "Relative error: " << rel_error << std::endl;
