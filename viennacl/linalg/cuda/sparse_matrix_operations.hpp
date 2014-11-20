@@ -186,37 +186,7 @@ __global__ void compressed_matrix_vec_mul_adaptive_kernel(
         result[row * inc_result + start_result] = dot_prod;
       }
     }
-    /*else if (rows_to_process > 1)  // CSR stream with local reduction
-    {
-      // load to shared buffer:
-      for (unsigned int i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
-        shared_elements[i - element_start] = elements[i] * x[column_indices[i] * inc_x + start_x];
-
-      __syncthreads();
-
-      // sum each row separately using a reduction:
-      for (unsigned int row = row_start; row < row_stop; ++row)
-      {
-        unsigned int current_row_start = row_indices[row]     - element_start;
-        unsigned int current_row_stop  = row_indices[row + 1] - element_start;
-
-        // sum whatever exceeds the current buffer:
-        shared_reduction_helper[threadIdx.x] = 0;
-        for (unsigned int j = current_row_start + threadIdx.x; j < current_row_stop; j += blockDim.x)
-          shared_reduction_helper[threadIdx.x] += shared_elements[j];
-
-        // reduction
-        for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
-        {
-          __syncthreads();
-          if (threadIdx.x < stride)
-            shared_reduction_helper[threadIdx.x] += shared_reduction_helper[threadIdx.x+stride];
-        }
-        if (threadIdx.x == 0)
-          result[row * inc_result + start_result] = shared_reduction_helper[0];
-      }
-    }*/
-    // TODO here: CSR vector for two rows
+    // TODO here: Consider CSR vector for two to four rows (cf. OpenCL implementation. Experience on Fermi suggests that this may not be necessary)
     else // CSR vector for a single row
     {
       // load and sum to shared buffer:
@@ -256,7 +226,7 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & mat,
                const viennacl::vector_base<NumericT> & vec,
                      viennacl::vector_base<NumericT> & result)
 {
-  compressed_matrix_vec_mul_adaptive_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+  compressed_matrix_vec_mul_adaptive_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
                                                  detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
                                                  detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
                                                  detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
