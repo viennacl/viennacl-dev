@@ -799,6 +799,7 @@ public:
   {
     viennacl::backend::switch_memory_context<unsigned int>(row_buffer_, new_ctx);
     viennacl::backend::switch_memory_context<unsigned int>(col_buffer_, new_ctx);
+    viennacl::backend::switch_memory_context<unsigned int>(row_blocks_, new_ctx);
     viennacl::backend::switch_memory_context<NumericT>(elements_, new_ctx);
   }
 
