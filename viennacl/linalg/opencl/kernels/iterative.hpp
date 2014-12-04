@@ -1000,7 +1000,7 @@ void generate_hyb_matrix_pipelined_bicgstab_prod(StringT & source, std::string c
 
 
 template <typename StringType>
-void generate_pipelined_gmres_gram_schmidt_stage1(StringType & source, std::string const & numeric_string)
+void generate_pipelined_gmres_gram_schmidt_stage1(StringType & source, std::string const & numeric_string, bool is_nvidia)
 {
   source.append("__kernel void gmres_gram_schmidt_1( \n");
   source.append("          __global "); source.append(numeric_string); source.append(" const * krylov_basis, \n");
@@ -1012,23 +1012,47 @@ void generate_pipelined_gmres_gram_schmidt_stage1(StringType & source, std::stri
   source.append("{ \n");
 
   source.append("  __local "); source.append(numeric_string); source.append(" shared_array[7*128]; \n");
+  if (!is_nvidia)  // use of thread-local variables entails a 2x performance drop on NVIDIA GPUs, but is faster an AMD
+  {
+    source.append("  "); source.append(numeric_string); source.append(" vi_in_vk[7]; \n");
+  }
   source.append("  "); source.append(numeric_string); source.append(" value_vk = 0; \n");
 
   source.append("  unsigned int k_base = 0;   \n");
   source.append("  while (k_base < k) {   \n");
   source.append("    unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);   \n");
 
-  source.append("    for (uint j=0; j<vecs_in_iteration; ++j) \n");
-  source.append("      shared_array[get_local_id(0) + j*chunk_size] = 0; \n");
-
+  if (is_nvidia)
+  {
+    source.append("    for (uint j=0; j<vecs_in_iteration; ++j) \n");
+    source.append("      shared_array[get_local_id(0) + j*chunk_size] = 0; \n");
+  }
+  else
+  {
+    source.append("    vi_in_vk[0] = 0;\n");
+    source.append("    vi_in_vk[1] = 0;\n");
+    source.append("    vi_in_vk[2] = 0;\n");
+    source.append("    vi_in_vk[3] = 0;\n");
+    source.append("    vi_in_vk[4] = 0;\n");
+    source.append("    vi_in_vk[5] = 0;\n");
+    source.append("    vi_in_vk[6] = 0;\n");
+  }
   source.append("    for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0)) { \n");
   source.append("      value_vk = krylov_basis[i + k * internal_size]; \n");
   source.append("       \n");
   source.append("      for (unsigned int j=0; j<vecs_in_iteration; ++j) \n");
-  source.append("        shared_array[get_local_id(0) + j*chunk_size] += value_vk * krylov_basis[i + (k_base + j) * internal_size]; \n");
+  if (is_nvidia)
+    source.append("        shared_array[get_local_id(0) + j*chunk_size] += value_vk * krylov_basis[i + (k_base + j) * internal_size]; \n");
+  else
+    source.append("        vi_in_vk[j] += value_vk * krylov_basis[i + (k_base + j) * internal_size]; \n");
   source.append("    }  \n");
 
   // parallel reduction in work group
+  if (!is_nvidia)
+  {
+    source.append("    for (uint j=0; j<vecs_in_iteration; ++j) \n");
+    source.append("      shared_array[get_local_id(0) + j*chunk_size] = vi_in_vk[j]; \n");
+  }
   source.append("    for (uint stride=get_local_size(0)/2; stride > 0; stride /= 2) \n");
   source.append("    { \n");
   source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
@@ -1371,7 +1395,7 @@ struct iterative
       generate_sliced_ell_matrix_pipelined_bicgstab_prod(source, numeric_string);
       generate_hyb_matrix_pipelined_bicgstab_prod(source, numeric_string);
 
-      generate_pipelined_gmres_gram_schmidt_stage1(source, numeric_string);
+      generate_pipelined_gmres_gram_schmidt_stage1(source, numeric_string, ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id); // NVIDIA GPUs require special treatment here
       generate_pipelined_gmres_gram_schmidt_stage2(source, numeric_string);
       generate_pipelined_gmres_normalize_vk(source, numeric_string);
       generate_pipelined_gmres_update_result(source, numeric_string);
