@@ -50,16 +50,16 @@ public:
   typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<ScalarT>::ResultType>   value_type;
   typedef vcl_size_t                                                                              size_type;
 
-  explicit sliced_ell_matrix() : rows_(0), cols_(0), rows_per_block_(128) {}
+  explicit sliced_ell_matrix() : rows_(0), cols_(0), rows_per_block_(0) {}
 
   sliced_ell_matrix(size_type num_rows,
                     size_type num_cols,
-                    size_type num_rows_per_block_ = 128)
+                    size_type num_rows_per_block_ = 0)
     : rows_(num_rows),
       cols_(num_cols),
       rows_per_block_(num_rows_per_block_) {}
 
-  explicit sliced_ell_matrix(viennacl::context ctx) : rows_(0), cols_(0), rows_per_block_(128)
+  explicit sliced_ell_matrix(viennacl::context ctx) : rows_(0), cols_(0), rows_per_block_(0)
   {
     columns_per_block_.switch_active_handle_id(ctx.memory_type());
     column_indices_.switch_active_handle_id(ctx.memory_type());
@@ -138,6 +138,22 @@ void copy(CPUMatrixT const & cpu_matrix, sliced_ell_matrix<ScalarT, IndexT> & gp
 {
   assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
   assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
+
+  if (gpu_matrix.rows_per_block() == 0) // not yet initialized by user. Set defaults.
+  {
+    viennacl::context ctx = traits::context(gpu_matrix.handle1());
+    gpu_matrix.rows_per_block_ = 128;
+
+    if (ctx.memory_type() == CUDA_MEMORY)
+      gpu_matrix.rows_per_block_ = 256;
+    else if (ctx.memory_type() == OPENCL_MEMORY)
+    {
+#ifdef VIENNACL_WITH_OPENCL
+      if (ctx.opencl_context().current_device().vendor_id() == viennacl::ocl::nvidia_id)
+        gpu_matrix.rows_per_block_ = 256;
+#endif
+    }
+  }
 
   if (viennacl::traits::size1(cpu_matrix) > 0 && viennacl::traits::size2(cpu_matrix) > 0)
   {
