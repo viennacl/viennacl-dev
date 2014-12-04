@@ -63,6 +63,15 @@ void pipelined_cg_vector_update(vector_base<NumericT> & result,
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), "cg_vector_update");
   cl_uint    vec_size = cl_uint(viennacl::traits::size(result));
 
+  k.local_work_size(0, 128);
+  k.global_work_size(0, 128*128);
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
+
   viennacl::ocl::enqueue(k(result, alpha, p, r, Ap, beta, inner_prod_buffer, vec_size, viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT))));
 }
 
@@ -82,6 +91,13 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
 
   k.local_work_size(0, 128);
   k.global_work_size(0, 128*128);
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
+
   viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
                            p,
                            Ap,
@@ -147,6 +163,12 @@ void pipelined_cg_prod(ell_matrix<NumericT> const & A,
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
 
   viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
                            A.handle().opencl_handle(),
@@ -214,11 +236,17 @@ void pipelined_cg_prod(hyb_matrix<NumericT> const & A,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), "cg_hyb_prod");
 
-  unsigned int thread_num = 256;
+  unsigned int thread_num = 128;
   unsigned int group_num = 128;
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
 
   viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
                            A.handle().opencl_handle(),
@@ -259,6 +287,12 @@ void pipelined_bicgstab_update_s(vector_base<NumericT> & s,
   k.local_work_size(0, 128);
   k.global_work_size(0, 128*128);
 
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
+
   cl_uint chunk_size   = cl_uint(buffer_chunk_size);
   cl_uint chunk_offset = cl_uint(buffer_chunk_offset);
   viennacl::ocl::enqueue(k(s, r, Ap,
@@ -284,6 +318,13 @@ void pipelined_bicgstab_vector_update(vector_base<NumericT> & result, NumericT a
 
   k.local_work_size(0, 128);
   k.global_work_size(0, 128*128);
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
+
   viennacl::ocl::enqueue(k(result, alpha, p, omega, s,
                            residual, As,
                            beta, Ap,
@@ -314,6 +355,13 @@ void pipelined_bicgstab_prod(compressed_matrix<NumericT> const & A,
 
   k.local_work_size(0, 128);
   k.global_work_size(0, 128*128);
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
+
   viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
                            p,
                            Ap,
@@ -391,6 +439,12 @@ void pipelined_bicgstab_prod(ell_matrix<NumericT> const & A,
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
 
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
+
   viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
                            A.handle().opencl_handle(),
                            cl_uint(A.internal_size1()),
@@ -427,7 +481,7 @@ void pipelined_bicgstab_prod(sliced_ell_matrix<NumericT> const & A,
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), "bicgstab_sliced_ell_prod");
 
   unsigned int thread_num = A.rows_per_block();
-  unsigned int group_num = 128;
+  unsigned int group_num = (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id) ? 256 : 128;
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
@@ -472,6 +526,12 @@ void pipelined_bicgstab_prod(hyb_matrix<NumericT> const & A,
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*256);
+  }
 
   viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
                            A.handle().opencl_handle(),
@@ -577,6 +637,9 @@ void pipelined_gmres_gram_schmidt_stage2(vector_base<T> & device_krylov_basis,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_gram_schmidt_2");
 
+  k.local_work_size(0, 128);
+  k.global_work_size(0, 128*128);
+
   cl_uint size_vk          = cl_uint(v_k_size);
   cl_uint internal_size_vk = cl_uint(v_k_internal_size);
   cl_uint ocl_k            = cl_uint(param_k);
@@ -603,6 +666,9 @@ void pipelined_gmres_update_result(vector_base<T> & result,
   viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_update_result");
+
+  k.local_work_size(0, 128);
+  k.global_work_size(0, 128*128);
 
   cl_uint size_vk          = cl_uint(v_k_size);
   cl_uint internal_size_vk = cl_uint(v_k_internal_size);
@@ -633,6 +699,13 @@ void pipelined_gmres_prod(compressed_matrix<T> const & A,
 
   k.local_work_size(0, 128);
   k.global_work_size(0, 128*128);
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+  {
+    k.local_work_size(0, 256);
+    k.global_work_size(0, 256*128);
+  }
+
   viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
                            p, start_p,
                            Ap, start_Ap,
@@ -698,7 +771,7 @@ void pipelined_gmres_prod(ell_matrix<T> const & A,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_ell_prod");
 
-  unsigned int thread_num = 128;
+  unsigned int thread_num = (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id) ? 256 : 128;
   unsigned int group_num = 128;
 
   k.local_work_size(0, thread_num);
@@ -774,11 +847,12 @@ void pipelined_gmres_prod(hyb_matrix<T> const & A,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_hyb_prod");
 
-  unsigned int thread_num = 128;
+  unsigned int thread_num = (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id) ? 256 : 128;
   unsigned int group_num = 128;
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
+
 
   viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
                            A.handle().opencl_handle(),

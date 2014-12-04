@@ -218,7 +218,7 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_csr_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+  pipelined_cg_csr_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                 detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
@@ -433,7 +433,7 @@ void pipelined_cg_prod(ell_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_ell_vec_mul_kernel<<<256, 128>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  pipelined_cg_ell_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                 detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
                                                 static_cast<unsigned int>(A.internal_size1()),
                                                 static_cast<unsigned int>(A.maxnnz()),
@@ -520,7 +520,7 @@ void pipelined_cg_prod(sliced_ell_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_sliced_ell_vec_mul_kernel<<<128, A.rows_per_block()>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+  pipelined_cg_sliced_ell_vec_mul_kernel<<<256, A.rows_per_block()>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
                                                                       detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                                       detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                                       detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
@@ -615,7 +615,7 @@ void pipelined_cg_prod(hyb_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_hyb_vec_mul_kernel<<<256, 128>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  pipelined_cg_hyb_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                 detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle4().cuda_handle()),
@@ -703,7 +703,7 @@ void pipelined_bicgstab_update_s(vector_base<NumericT> & s,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_update_s_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(s),
+  pipelined_bicgstab_update_s_kernel<<<256, 256>>>(detail::cuda_arg<NumericT>(s),
                                                    detail::cuda_arg<NumericT>(r),
                                                    detail::cuda_arg<NumericT>(Ap),
                                                    size,
@@ -774,7 +774,7 @@ void pipelined_bicgstab_vector_update(vector_base<NumericT> & result, NumericT a
   (void)buffer_chunk_size;
   unsigned int size = static_cast<unsigned int>(result.size());
 
-  pipelined_bicgstab_vector_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(result),
+  pipelined_bicgstab_vector_kernel<<<256, 256>>>(detail::cuda_arg<NumericT>(result),
                                                  alpha,
                                                  detail::cuda_arg<NumericT>(p),
                                                  omega,
@@ -917,7 +917,7 @@ void pipelined_bicgstab_prod(compressed_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_csr_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+  pipelined_bicgstab_csr_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
                                                       detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                       detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                       detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
@@ -1162,7 +1162,7 @@ void pipelined_bicgstab_prod(ell_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_ell_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  pipelined_bicgstab_ell_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                       detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
                                                       static_cast<unsigned int>(A.internal_size1()),
                                                       static_cast<unsigned int>(A.maxnnz()),
@@ -1263,7 +1263,7 @@ void pipelined_bicgstab_prod(sliced_ell_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_sliced_ell_vec_mul_kernel<<<128, A.rows_per_block()>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+  pipelined_bicgstab_sliced_ell_vec_mul_kernel<<<256, A.rows_per_block()>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
                                                                             detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                                             detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                                             detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
@@ -1372,7 +1372,7 @@ void pipelined_bicgstab_prod(hyb_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_hyb_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  pipelined_bicgstab_hyb_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                       detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
                                                       detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                       detail::cuda_arg<unsigned int>(A.handle4().cuda_handle()),
@@ -1714,7 +1714,7 @@ void pipelined_gmres_prod(compressed_matrix<T> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_csr_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+  pipelined_cg_csr_vec_mul_kernel<<<128, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                 detail::cuda_arg<T>(A.handle().cuda_handle()),
@@ -1758,7 +1758,7 @@ void pipelined_gmres_prod(ell_matrix<T> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_ell_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  pipelined_cg_ell_vec_mul_kernel<<<128, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                 detail::cuda_arg<T>(A.handle().cuda_handle()),
                                                 static_cast<unsigned int>(A.internal_size1()),
                                                 static_cast<unsigned int>(A.maxnnz()),
@@ -1801,7 +1801,7 @@ void pipelined_gmres_prod(hyb_matrix<T> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_hyb_vec_mul_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  pipelined_cg_hyb_vec_mul_kernel<<<128, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
                                                 detail::cuda_arg<T>(A.handle().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
                                                 detail::cuda_arg<unsigned int>(A.handle4().cuda_handle()),
