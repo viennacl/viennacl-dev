@@ -1008,33 +1008,27 @@ void generate_pipelined_gmres_gram_schmidt_stage1(StringType & source, std::stri
   source.append("          unsigned int internal_size, \n");
   source.append("          unsigned int k, \n");
   source.append("          __global "); source.append(numeric_string); source.append(" * vi_in_vk_buffer, \n");
-  source.append("          unsigned int chunk_size, \n");
-  source.append("         __local "); source.append(numeric_string); source.append(" * shared_array) \n");
+  source.append("          unsigned int chunk_size) \n");
   source.append("{ \n");
 
-  source.append("  "); source.append(numeric_string); source.append(" vi_in_vk[7]; \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" shared_array[7*128]; \n");
   source.append("  "); source.append(numeric_string); source.append(" value_vk = 0; \n");
 
   source.append("  unsigned int k_base = 0;   \n");
   source.append("  while (k_base < k) {   \n");
   source.append("    unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);   \n");
-  source.append("    vi_in_vk[0] = 0;\n");
-  source.append("    vi_in_vk[1] = 0;\n");
-  source.append("    vi_in_vk[2] = 0;\n");
-  source.append("    vi_in_vk[3] = 0;\n");
-  source.append("    vi_in_vk[4] = 0;\n");
-  source.append("    vi_in_vk[5] = 0;\n");
-  source.append("    vi_in_vk[6] = 0;\n");
+
+  source.append("    for (uint j=0; j<vecs_in_iteration; ++j) \n");
+  source.append("      shared_array[get_local_id(0) + j*chunk_size] = 0; \n");
+
   source.append("    for (unsigned int i = get_global_id(0); i < size; i += get_global_size(0)) { \n");
   source.append("      value_vk = krylov_basis[i + k * internal_size]; \n");
   source.append("       \n");
   source.append("      for (unsigned int j=0; j<vecs_in_iteration; ++j) \n");
-  source.append("        vi_in_vk[j] += value_vk * krylov_basis[i + (k_base + j) * internal_size]; \n");
+  source.append("        shared_array[get_local_id(0) + j*chunk_size] += value_vk * krylov_basis[i + (k_base + j) * internal_size]; \n");
   source.append("    }  \n");
 
   // parallel reduction in work group
-  source.append("    for (uint j=0; j<vecs_in_iteration; ++j) \n");
-  source.append("      shared_array[get_local_id(0) + j*chunk_size] = vi_in_vk[j]; \n");
   source.append("    for (uint stride=get_local_size(0)/2; stride > 0; stride /= 2) \n");
   source.append("    { \n");
   source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");

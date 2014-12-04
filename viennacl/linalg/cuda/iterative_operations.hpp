@@ -1493,30 +1493,25 @@ __global__ void pipelined_gmres_gram_schmidt_stage1_kernel(T const * krylov_basi
                                                            unsigned int chunk_size)
 {
   __shared__ T shared_array[7*128];
-  T vi_in_vk[7];
   T value_vk = 0;
 
   unsigned int k_base = 0;
   while (k_base < k)
   {
     unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);
-    vi_in_vk[0] = 0;
-    vi_in_vk[1] = 0;
-    vi_in_vk[2] = 0;
-    vi_in_vk[3] = 0;
-    vi_in_vk[4] = 0;
-    vi_in_vk[5] = 0;
-    vi_in_vk[6] = 0;
-    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+
+    for (uint j=0; j<vecs_in_iteration; ++j)
+      shared_array[threadIdx.x + j*chunk_size] = 0;
+
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x)
+    {
       value_vk = krylov_basis[i + k * internal_size];
 
       for (unsigned int j=0; j<vecs_in_iteration; ++j)
-        vi_in_vk[j] += value_vk * krylov_basis[i + (k_base + j) * internal_size];
+        shared_array[threadIdx.x + j*chunk_size] += value_vk * krylov_basis[i + (k_base + j) * internal_size];
     }
 
     // parallel reduction in work group
-    for (uint j=0; j<vecs_in_iteration; ++j)
-      shared_array[threadIdx.x + j*chunk_size] = vi_in_vk[j];
     for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
     {
       __syncthreads();

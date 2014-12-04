@@ -616,8 +616,7 @@ void pipelined_gmres_gram_schmidt_stage1(vector_base<T> const & device_krylov_ba
   cl_uint ocl_k            = cl_uint(param_k);
   cl_uint chunk_size = cl_uint(buffer_chunk_size);
   viennacl::ocl::enqueue(k(device_krylov_basis, size_vk, internal_size_vk, ocl_k,
-                           vi_in_vk_buffer, chunk_size,
-                           viennacl::ocl::local_mem(7 * k.local_work_size() * sizeof(T))
+                           vi_in_vk_buffer, chunk_size
                            ));
 }
 
