@@ -211,8 +211,8 @@ public:
   typedef typename base_type::size_type             size_type;
   typedef typename base_type::difference_type           difference_type;
 
-  vector_iterator() : base_type(), elements_(NULL) {}
-  vector_iterator(handle_type & elements,
+  vector_iterator() : base_type(), elements_() {}
+  vector_iterator(handle_type elements,
                   size_type index,
                   size_type start = 0,
                   size_type stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {}
@@ -244,7 +244,7 @@ public:
   //  return base_type(base_type::elements_, base_type::index_, base_type::start_, base_type::stride_);
   //}
 private:
-  handle_type & elements_;
+  handle_type elements_;
 };
 
 
