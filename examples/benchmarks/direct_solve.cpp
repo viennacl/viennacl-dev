@@ -23,7 +23,6 @@
 #include <iostream>
 
 
-#define VIENNACL_WITH_UBLAS 1
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/matrix_proxy.hpp"
