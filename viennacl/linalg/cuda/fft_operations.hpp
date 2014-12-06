@@ -207,7 +207,7 @@ void direct(viennacl::vector<NumericT, AlignmentV> const & in,
                           static_cast<unsigned int>(stride),
                           static_cast<unsigned int>(batch_num),
                           sign,
-                          static_cast<bool>(data_order));
+                          bool(data_order == viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR));
   VIENNACL_CUDA_LAST_ERROR_CHECK("fft_direct");
 }
 
@@ -232,7 +232,7 @@ void direct(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> const & 
                           static_cast<unsigned int>(stride),
                           static_cast<unsigned int>(batch_num),
                           sign,
-                          static_cast<bool>(data_order));
+                          bool(data_order == viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR));
   VIENNACL_CUDA_LAST_ERROR_CHECK("fft_direct");
 }
 
@@ -828,9 +828,9 @@ void complex_to_real(viennacl::vector_base<NumericT> const & in,
 }
 
 template<typename NumericT>
-__global__ void reverse_inplace(NumericT * vec, uint size)
+__global__ void reverse_inplace(NumericT * vec, unsigned int size)
 {
-  for (uint i = blockIdx.x * blockDim.x + threadIdx.x; i < (size >> 1); i+=gridDim.x * blockDim.x)
+  for (unsigned int i = blockIdx.x * blockDim.x + threadIdx.x; i < (size >> 1); i+=gridDim.x * blockDim.x)
   {
     NumericT val1 = vec[i];
     NumericT val2 = vec[size - i - 1];

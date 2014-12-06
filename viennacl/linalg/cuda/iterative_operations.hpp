@@ -68,7 +68,7 @@ __global__ void pipelined_cg_vector_kernel(NumericT * result,
   // parallel reduction in work group
   __shared__ NumericT shared_array[256];
   shared_array[threadIdx.x] = inner_prod_contrib;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -189,7 +189,7 @@ __global__ void pipelined_cg_csr_vec_mul_kernel(
   __shared__ NumericT shared_array_pAp[256];
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -322,7 +322,7 @@ __global__ void pipelined_cg_coo_vec_mul_kernel(const unsigned int * coords, //(
   __shared__ NumericT shared_array_pAp[256];
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -406,7 +406,7 @@ __global__ void pipelined_cg_ell_vec_mul_kernel(const unsigned int * coords,
   __shared__ NumericT shared_array_pAp[256];
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -494,7 +494,7 @@ __global__ void pipelined_cg_sliced_ell_vec_mul_kernel(const unsigned int * colu
   __shared__ NumericT shared_array_pAp[256];
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -587,7 +587,7 @@ __global__ void pipelined_cg_hyb_vec_mul_kernel(const unsigned int * ell_coords,
   __shared__ NumericT shared_array_pAp[256];
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -651,7 +651,7 @@ __global__ void pipelined_bicgstab_update_s_kernel(NumericT * s,
 
   shared_array[threadIdx.x] = inner_prod_buffer[threadIdx.x];
   shared_array_Ap_in_r0[threadIdx.x] = inner_prod_buffer[threadIdx.x + 3 * chunk_size];
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride) {
@@ -679,7 +679,7 @@ __global__ void pipelined_bicgstab_update_s_kernel(NumericT * s,
 
   // parallel reduction in work group
   shared_array[threadIdx.x] = inner_prod_contrib;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -751,7 +751,7 @@ __global__ void pipelined_bicgstab_vector_kernel(NumericT * result,
   // parallel reduction in work group
   __shared__ NumericT shared_array[256];
   shared_array[threadIdx.x] = inner_prod_r_r0star;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -882,7 +882,7 @@ __global__ void pipelined_bicgstab_csr_vec_mul_kernel(
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
   shared_array_r0Ap[threadIdx.x] = inner_prod_r0Ap;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -1031,7 +1031,7 @@ __global__ void pipelined_bicgstab_coo_vec_mul_kernel(const unsigned int * coord
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
   shared_array_r0Ap[threadIdx.x] = inner_prod_r0Ap;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -1129,7 +1129,7 @@ __global__ void pipelined_bicgstab_ell_vec_mul_kernel(const unsigned int * coord
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
   shared_array_r0Ap[threadIdx.x] = inner_prod_r0Ap;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -1231,7 +1231,7 @@ __global__ void pipelined_bicgstab_sliced_ell_vec_mul_kernel(const unsigned int 
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
   shared_array_r0Ap[threadIdx.x] = inner_prod_r0Ap;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -1338,7 +1338,7 @@ __global__ void pipelined_bicgstab_hyb_vec_mul_kernel(const unsigned int * ell_c
   shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
   shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
   shared_array_r0Ap[threadIdx.x] = inner_prod_r0Ap;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -1408,7 +1408,7 @@ __global__ void pipelined_gmres_normalize_vk_kernel(T * vk,
 
   // parallel reduction in work group to compute <vk, vk>
   shared_array[threadIdx.x] = inner_prod_buffer[threadIdx.x + chunk_size];
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -1431,7 +1431,7 @@ __global__ void pipelined_gmres_normalize_vk_kernel(T * vk,
 
   // parallel reduction in work group
   shared_array[threadIdx.x] = inner_prod_contrib;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)
@@ -1500,7 +1500,7 @@ __global__ void pipelined_gmres_gram_schmidt_stage1_kernel(T const * krylov_basi
   {
     unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);
 
-    for (uint j=0; j<vecs_in_iteration; ++j)
+    for (unsigned int j=0; j<vecs_in_iteration; ++j)
       shared_array[threadIdx.x + j*chunk_size] = 0;
 
     for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x)
@@ -1512,11 +1512,11 @@ __global__ void pipelined_gmres_gram_schmidt_stage1_kernel(T const * krylov_basi
     }
 
     // parallel reduction in work group
-    for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+    for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
     {
       __syncthreads();
       if (threadIdx.x < stride) {
-        for (uint j=0; j<vecs_in_iteration; ++j)
+        for (unsigned int j=0; j<vecs_in_iteration; ++j)
           shared_array[threadIdx.x + j*chunk_size] += shared_array[threadIdx.x + j*chunk_size + stride];
       }
     }
@@ -1577,13 +1577,13 @@ __global__ void pipelined_gmres_gram_schmidt_stage2_kernel(T * krylov_basis,
     unsigned int vecs_in_iteration = (k - k_base > 7) ? 7 : (k - k_base);
 
     // parallel reduction in work group for <v_i, v_k>
-    for (uint j=0; j<vecs_in_iteration; ++j)
+    for (unsigned int j=0; j<vecs_in_iteration; ++j)
       shared_array[threadIdx.x + j*chunk_size] = vi_in_vk_buffer[threadIdx.x + (k_base + j) * chunk_size];
-    for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+    for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
     {
       __syncthreads();
       if (threadIdx.x < stride) {
-        for (uint j=0; j<vecs_in_iteration; ++j)
+        for (unsigned int j=0; j<vecs_in_iteration; ++j)
           shared_array[threadIdx.x + j*chunk_size] += shared_array[threadIdx.x + j*chunk_size + stride];
       }
     }
@@ -1611,7 +1611,7 @@ __global__ void pipelined_gmres_gram_schmidt_stage2_kernel(T * krylov_basis,
 
   // parallel reduction in work group for <v_k, v_k>
   shared_array[threadIdx.x] = vk_dot_vk;
-  for (uint stride=blockDim.x/2; stride > 0; stride /= 2)
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
     if (threadIdx.x < stride)

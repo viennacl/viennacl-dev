@@ -1414,15 +1414,15 @@ __global__ void bidiag_pack_row_major_kernel(
             T * A,
             T * D,
             T * S,
-            uint size1,
-            uint size2,
-            uint stride)
+            unsigned int size1,
+            unsigned int size2,
+            unsigned int stride)
 {
-  uint size = min(size1, size2);
+  unsigned int size = min(size1, size2);
   if(blockIdx.x * blockDim.x + threadIdx.x == 0)
     S[0] = 0;
 
-  for(uint i = blockIdx.x * blockDim.x + threadIdx.x;
+  for(unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
            i < size;
            i += gridDim.x * blockDim.x)
     {
@@ -1436,15 +1436,15 @@ __global__ void bidiag_pack_column_major_kernel(
             T * A,
             T * D,
             T * S,
-            uint size1,
-            uint size2,
-            uint stride)
+            unsigned int size1,
+            unsigned int size2,
+            unsigned int stride)
 {
-  uint size = min(size1, size2);
+  unsigned int size = min(size1, size2);
   if(blockIdx.x * blockDim.x + threadIdx.x == 0)
     S[0] = 0;
 
-  for(uint i = blockIdx.x * blockDim.x + threadIdx.x;
+  for(unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
            i < size;
            i += gridDim.x * blockDim.x)
     {
@@ -1459,15 +1459,15 @@ template<typename T>
 __global__ void copy_col_row_major_kernel(
         T * A,
         T * V,
-        uint row_start,
-        uint col_start,
-        uint size,
-        uint stride)
+        unsigned int row_start,
+        unsigned int col_start,
+        unsigned int size,
+        unsigned int stride)
 {
-    uint x = blockIdx.x * blockDim.x + threadIdx.x;
-    uint sz = gridDim.x * blockDim.x;
+    unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int sz = gridDim.x * blockDim.x;
 
-    for(uint i = row_start + x; i < size; i += sz)
+    for(unsigned int i = row_start + x; i < size; i += sz)
     {
         V[i - row_start] = A[i * stride + col_start];
     }
@@ -1477,15 +1477,15 @@ template<typename T>
 __global__ void copy_col_column_major_kernel(
         T * A,
         T * V,
-        uint row_start,
-        uint col_start,
-        uint size,
-        uint stride)
+        unsigned int row_start,
+        unsigned int col_start,
+        unsigned int size,
+        unsigned int stride)
 {
-    uint x = blockIdx.x * blockDim.x + threadIdx.x;
-    uint sz = gridDim.x * blockDim.x;
+    unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int sz = gridDim.x * blockDim.x;
 
-    for(uint i = row_start + x; i < size; i += sz)
+    for(unsigned int i = row_start + x; i < size; i += sz)
     {
         V[i - row_start] = A[i + col_start * stride];
     }
@@ -1495,15 +1495,15 @@ template<typename T>
 __global__ void copy_row_row_major_kernel(
         T * A,
         T * V,
-        uint row_start,
-        uint col_start,
-        uint size,
-        uint stride)
+        unsigned int row_start,
+        unsigned int col_start,
+        unsigned int size,
+        unsigned int stride)
 {
-    uint x = blockIdx.x * blockDim.x + threadIdx.x;
-    uint sz = gridDim.x * blockDim.x;
+    unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int sz = gridDim.x * blockDim.x;
 
-    for(uint i = col_start + x; i < size; i += sz)
+    for(unsigned int i = col_start + x; i < size; i += sz)
     {
         V[i - col_start] = A[row_start * stride + i];
     }
@@ -1514,15 +1514,15 @@ template<typename T>
 __global__ void copy_row_column_major_kernel(
         T * A,
         T * V,
-        uint row_start,
-        uint col_start,
-        uint size,
-        uint stride)
+        unsigned int row_start,
+        unsigned int col_start,
+        unsigned int size,
+        unsigned int stride)
 {
-    uint x = blockIdx.x * blockDim.x + threadIdx.x;
-    uint sz = gridDim.x * blockDim.x;
+    unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int sz = gridDim.x * blockDim.x;
 
-    for(uint i = col_start + x; i < size; i += sz)
+    for(unsigned int i = col_start + x; i < size; i += sz)
     {
         V[i - col_start] = A[row_start + i * stride];
     }
@@ -1535,23 +1535,23 @@ template<typename T>
 __global__ void house_update_A_left_row_major_kernel(
         T * A,
         T * V,        //householder vector
-        uint row_start,
-        uint col_start,
-        uint size1,
-        uint size2,
-        uint stride)
+        unsigned int row_start,
+        unsigned int col_start,
+        unsigned int size1,
+        unsigned int size2,
+        unsigned int stride)
 {
     T ss = 0;
 
-    for(uint i = blockIdx.x * blockDim.x + threadIdx.x + col_start;
+    for(unsigned int i = blockIdx.x * blockDim.x + threadIdx.x + col_start;
         i < size2;
         i += gridDim.x * blockDim.x)
     {
         ss = 0;
-        for(uint j = row_start; j < size1; j++)
+        for(unsigned int j = row_start; j < size1; j++)
             ss = ss +(V[j] * A[j * stride + i]);
 
-        for(uint j = row_start; j < size1; j++)
+        for(unsigned int j = row_start; j < size1; j++)
             A[j * stride + i] = A[j * stride + i] - (2 * V[j] * ss);
     }
 }
@@ -1560,23 +1560,23 @@ template<typename T>
 __global__ void house_update_A_left_column_major_kernel(
         T * A,
         T * V,        //householder vector
-        uint row_start,
-        uint col_start,
-        uint size1,
-        uint size2,
-        uint stride)
+        unsigned int row_start,
+        unsigned int col_start,
+        unsigned int size1,
+        unsigned int size2,
+        unsigned int stride)
 {
     T ss = 0;
 
-    for(uint i = blockIdx.x * blockDim.x + threadIdx.x + col_start;
+    for(unsigned int i = blockIdx.x * blockDim.x + threadIdx.x + col_start;
         i < size2;
         i += gridDim.x * blockDim.x)
     {
         ss = 0;
-        for(uint j = row_start; j < size1; j++)
+        for(unsigned int j = row_start; j < size1; j++)
             ss = ss +(V[j] * A[j + i * stride]);
 
-        for(uint j = row_start; j < size1; j++)
+        for(unsigned int j = row_start; j < size1; j++)
             A[j + i * stride] = A[j + i * stride] - (2 * V[j] * ss);
     }
 }
@@ -1587,19 +1587,19 @@ template<typename T>
 __global__ void house_update_A_right_row_major_kernel(
         T * A,
         T * V,  //householder vector
-        uint row_start,
-        uint col_start,
-        uint size1,
-        uint size2,
-        uint stride)
+        unsigned int row_start,
+        unsigned int col_start,
+        unsigned int size1,
+        unsigned int size2,
+        unsigned int stride)
 {
     __shared__ T sums[128];
     T ss = 0;
 
-    for(uint i = blockIdx.x + row_start; i < size1; i+= gridDim.x)
+    for(unsigned int i = blockIdx.x + row_start; i < size1; i+= gridDim.x)
     {
         ss = 0;
-        for(uint j = threadIdx.x; j < size2; j+= blockDim.x)
+        for(unsigned int j = threadIdx.x; j < size2; j+= blockDim.x)
             ss = ss + (V[j] * A[i * stride + j]);
         sums[threadIdx.x] = ss;
 
@@ -1609,7 +1609,7 @@ __global__ void house_update_A_right_row_major_kernel(
 
         T sum_Av = sums[0];
 
-        for(uint j = threadIdx.x; j < size2; j+= blockDim.x)
+        for(unsigned int j = threadIdx.x; j < size2; j+= blockDim.x)
             A[i * stride + j] = A[i * stride + j] - (2 * V[j] * sum_Av);
     }
 }
@@ -1618,19 +1618,19 @@ template<typename T>
 __global__ void house_update_A_right_column_major_kernel(
         T * A,
         T * V,  //householder vector
-        uint row_start,
-        uint col_start,
-        uint size1,
-        uint size2,
-        uint stride)
+        unsigned int row_start,
+        unsigned int col_start,
+        unsigned int size1,
+        unsigned int size2,
+        unsigned int stride)
 {
     __shared__ T sums[128];
     T ss = 0;
 
-    for(uint i = blockIdx.x + row_start; i < size1; i+= gridDim.x)
+    for(unsigned int i = blockIdx.x + row_start; i < size1; i+= gridDim.x)
     {
         ss = 0;
-        for(uint j = threadIdx.x; j < size2; j+= blockDim.x)
+        for(unsigned int j = threadIdx.x; j < size2; j+= blockDim.x)
             ss = ss + (V[j] * A[i + j * stride]);
         sums[threadIdx.x] = ss;
 
@@ -1640,7 +1640,7 @@ __global__ void house_update_A_right_column_major_kernel(
 
         T sum_Av = sums[0];
 
-        for(uint j = threadIdx.x; j < size2; j+= blockDim.x)
+        for(unsigned int j = threadIdx.x; j < size2; j+= blockDim.x)
             A[i + j * stride] = A[i + j * stride] - (2 * V[j] * sum_Av);
     }
 }
@@ -1650,10 +1650,10 @@ __global__ void house_update_A_right_column_major_kernel(
 template<typename T>
 __device__ void col_reduce_lcl_array(
         T * sums,
-        uint th_Idx,
-        uint bl_Dim)
+        unsigned int th_Idx,
+        unsigned int bl_Dim)
 {
-    uint step = bl_Dim >> 1;
+    unsigned int step = bl_Dim >> 1;
 
     while(step > 0)
     {
@@ -1669,15 +1669,15 @@ template <typename T>
 __global__ void house_update_QL_row_major_kernel(
         T * QL,
         T * V,
-        uint size1,
-        uint strideQ)
+        unsigned int size1,
+        unsigned int strideQ)
 {
   __shared__ T sums[128];
   T ss = 0;
-  for(uint i = blockIdx.x; i < size1; i += gridDim.x)
+  for(unsigned int i = blockIdx.x; i < size1; i += gridDim.x)
   {
     ss = 0;
-    for(uint j = threadIdx.x; j < size1; j += blockDim.x)
+    for(unsigned int j = threadIdx.x; j < size1; j += blockDim.x)
       ss = ss + (V[j] * QL[i * strideQ + j]);
     sums[threadIdx.x] = ss;
 
@@ -1687,7 +1687,7 @@ __global__ void house_update_QL_row_major_kernel(
 
     T sum_Qv = sums[0];
 
-    for(uint j = threadIdx.x; j < size1; j += blockDim.x)
+    for(unsigned int j = threadIdx.x; j < size1; j += blockDim.x)
       QL[i * strideQ + j] = QL[i * strideQ + j] - (2 * V[j] * sum_Qv);
   }
 }
@@ -1696,15 +1696,15 @@ template <typename T>
 __global__ void house_update_QL_column_major_kernel(
         T * QL,
         T * V,
-        uint size1,
-        uint strideQ)
+        unsigned int size1,
+        unsigned int strideQ)
 {
   __shared__ T sums[128];
   T ss = 0;
-  for(uint i = blockIdx.x; i < size1; i += gridDim.x)
+  for(unsigned int i = blockIdx.x; i < size1; i += gridDim.x)
   {
     ss = 0;
-    for(uint j = threadIdx.x; j < size1; j += blockDim.x)
+    for(unsigned int j = threadIdx.x; j < size1; j += blockDim.x)
       ss = ss + (V[j] * QL[i + j * strideQ]);
     sums[threadIdx.x] = ss;
 
@@ -1714,7 +1714,7 @@ __global__ void house_update_QL_column_major_kernel(
 
     T sum_Qv = sums[0];
 
-    for(uint j = threadIdx.x; j < size1; j += blockDim.x)
+    for(unsigned int j = threadIdx.x; j < size1; j += blockDim.x)
       QL[i + j * strideQ] = QL[i + j * strideQ] - (2 * V[j] * sum_Qv);
   }
 }
@@ -1725,23 +1725,23 @@ __global__ void givens_next_row_major_kernel(
         T * matr,
         T * cs,
         T * ss,
-        uint size,
-        uint stride,
-        uint start_i,
-        uint end_i)
+        unsigned int size,
+        unsigned int stride,
+        unsigned int start_i,
+        unsigned int end_i)
 {
-    uint j = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int j = blockIdx.x * blockDim.x + threadIdx.x;
     __shared__ T cs_lcl[256];
     __shared__ T ss_lcl[256];
 
     T x = (j < size) ? matr[(end_i + 1) + j * stride] : 0;
 
-    uint elems_num = end_i - start_i + 1;
-    uint block_num = (elems_num + blockDim.x - 1) / blockDim.x;
+    unsigned int elems_num = end_i - start_i + 1;
+    unsigned int block_num = (elems_num + blockDim.x - 1) / blockDim.x;
 
-    for(uint block_id = 0; block_id < block_num; block_id++)
+    for(unsigned int block_id = 0; block_id < block_num; block_id++)
     {
-        uint to = min(elems_num - block_id * blockDim.x, blockDim.x);
+        unsigned int to = min(elems_num - block_id * blockDim.x, blockDim.x);
 
         if(threadIdx.x < to)
         {
@@ -1751,9 +1751,9 @@ __global__ void givens_next_row_major_kernel(
         __syncthreads();
         if(j < size)
         {
-            for(uint ind = 0; ind < to; ind++)
+            for(unsigned int ind = 0; ind < to; ind++)
             {
-                uint i = end_i - (ind + block_id * blockDim.x);
+                unsigned int i = end_i - (ind + block_id * blockDim.x);
                 T z = matr[i + j * stride];
                 T cs_val = cs_lcl[ind];
                 T ss_val = ss_lcl[ind];
@@ -1772,23 +1772,23 @@ __global__ void givens_next_column_major_kernel(
         T * matr,
         T * cs,
         T * ss,
-        uint size,
-        uint stride,
-        uint start_i,
-        uint end_i)
+        unsigned int size,
+        unsigned int stride,
+        unsigned int start_i,
+        unsigned int end_i)
 {
-    uint j = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int j = blockIdx.x * blockDim.x + threadIdx.x;
     __shared__ T cs_lcl[256];
     __shared__ T ss_lcl[256];
 
     T x = (j < size) ? matr[(end_i + 1) *stride + j] : 0;
 
-    uint elems_num = end_i - start_i + 1;
-    uint block_num = (elems_num + blockDim.x - 1) / blockDim.x;
+    unsigned int elems_num = end_i - start_i + 1;
+    unsigned int block_num = (elems_num + blockDim.x - 1) / blockDim.x;
 
-    for(uint block_id = 0; block_id < block_num; block_id++)
+    for(unsigned int block_id = 0; block_id < block_num; block_id++)
     {
-        uint to = min(elems_num - block_id * blockDim.x, blockDim.x);
+        unsigned int to = min(elems_num - block_id * blockDim.x, blockDim.x);
 
         if(threadIdx.x < to)
         {
@@ -1798,9 +1798,9 @@ __global__ void givens_next_column_major_kernel(
         __syncthreads();
         if(j < size)
         {
-            for(uint ind = 0; ind < to; ind++)
+            for(unsigned int ind = 0; ind < to; ind++)
             {
-                uint i = end_i - (ind + block_id * blockDim.x);
+                unsigned int i = end_i - (ind + block_id * blockDim.x);
                 T z = matr[i *stride + j];
                 T cs_val = cs_lcl[ind];
                 T ss_val = ss_lcl[ind];
