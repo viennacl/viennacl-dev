@@ -414,7 +414,11 @@ class kernel_generation_stream : public std::ostream
       str("");
       return !oss_;
     }
+#if defined(_MSC_VER)
+    ~kgenstream() throw() {  pubsync(); }
+#else
     ~kgenstream() {  pubsync(); }
+#endif
   private:
     std::ostream& oss_;
     unsigned int const & tab_count_;
@@ -422,7 +426,11 @@ class kernel_generation_stream : public std::ostream
 
 public:
   kernel_generation_stream() : std::ostream(new kgenstream(oss,tab_count_)), tab_count_(0){ }
+#if defined(_MSC_VER)
+  ~kernel_generation_stream() throw() { delete rdbuf(); }
+#else
   ~kernel_generation_stream(){ delete rdbuf(); }
+#endif
 
   std::string str(){ return oss.str(); }
   void inc_tab(){ ++tab_count_; }
