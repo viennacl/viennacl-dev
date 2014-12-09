@@ -129,6 +129,12 @@ private:
   unsigned int i_,j_;
   NumericT s_;
 
+  template <typename T>
+  bool is_zero(T value) const { return value <= 0 && value >= 0; }
+
+  template <typename T>
+  bool is_zero(T * value) const { return value == NULL; }
+
 public:
   amg_nonzero_scalar();
 
@@ -152,7 +158,7 @@ public:
   {
     s_ = value;
     // Only write if scalar is nonzero
-    if (s_ <= 0 && s_ >= 0) return s_;
+    if (is_zero(s_)) return s_;
     // Write to m_ using iterator iter_ or indices (i_,j_)
     m_->addscalar(iter_,i_,j_,s_);
     return s_;
@@ -164,12 +170,12 @@ public:
   NumericT operator+=(const NumericT value)
   {
     // If zero is added, then no change necessary
-    if (value <= 0 && value >= 0)
+    if (is_zero(value))
       return s_;
 
     s_ += value;
     // Remove entry if resulting scalar is zero
-    if (s_ <= 0 && s_ >= 0)
+    if (is_zero(s_))
     {
       m_->removescalar(iter_,i_);
       return s_;
@@ -181,7 +187,7 @@ public:
   NumericT operator++(int)
   {
     s_++;
-    if (s_ == 0)
+    if (is_zero(s_))
       m_->removescalar(iter_,i_);
     m_->addscalar (iter_,i_,j_,s_);
     return s_;
@@ -189,7 +195,7 @@ public:
   NumericT operator++()
   {
     s_++;
-    if (s_ == 0)
+    if (is_zero(s_))
       m_->removescalar(iter_,i_);
     m_->addscalar(iter_,i_,j_,s_);
     return s_;
@@ -266,6 +272,12 @@ private:
   unsigned int size_;
   InternalType internal_vector_;
 
+  template <typename T>
+  bool is_zero(T value) const { return value <= 0 && value >= 0; }
+
+  template <typename T>
+  bool is_zero(T * value) const { return value == NULL; }
+
 public:
   typedef amg_sparsevector_iterator<InternalType> iterator;
   typedef typename InternalType::const_iterator const_iterator;
@@ -309,7 +321,7 @@ public:
   void addscalar(IteratorT & iter, unsigned int i, unsigned int /* j */, NumericT s)
   {
     // Don't write if value is zero
-    if (s <= 0 && s >= 0)
+    if (is_zero(s))
       return;
 
     // If entry is already present, overwrite value, otherwise make new entry

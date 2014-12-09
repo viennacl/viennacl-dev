@@ -302,16 +302,16 @@ int test(NumericT epsilon)
   vcl_x = viennacl::linalg::prod(vcl_A, vcl_x);
   check(std_y, vcl_x, "x = A*x", epsilon);
 
-
-  std::vector< std::map<unsigned int, NumericT> > std_Asparse(N);
+  typedef unsigned int     KeyType;
+  std::vector< std::map<KeyType, NumericT> > std_Asparse(N);
 
   for (std::size_t i=0; i<std_Asparse.size(); ++i)
   {
     if (i > 0)
-      std_Asparse[i][i-1] = random<NumericT>();
-    std_Asparse[i][i] = NumericT(1) + random<NumericT>();
+      std_Asparse[i][KeyType(i-1)] = random<NumericT>();
+    std_Asparse[i][KeyType(i)] = NumericT(1) + random<NumericT>();
     if (i < std_Asparse.size() - 1)
-      std_Asparse[i][i+1] = random<NumericT>();
+      std_Asparse[i][KeyType(i+1)] = random<NumericT>();
   }
 
   // Sparse
@@ -387,7 +387,7 @@ int test(NumericT epsilon)
     {
       NumericT tmp = 0;
       for (std::size_t k = 0; k<std_A[i].size(); ++k)
-        tmp += std_Asparse[i][k] * std_A[k][j];
+        tmp += std_Asparse[i][KeyType(k)] * std_A[k][j];
       std_C[i][j] = tmp;
     }
 
@@ -418,7 +418,7 @@ int test(NumericT epsilon)
     {
       NumericT tmp = 0;
       for (std::size_t k = 0; k<std_A[i].size(); ++k)
-        tmp += std_Asparse[i][k] * std_A[j][k];
+        tmp += std_Asparse[i][KeyType(k)] * std_A[j][k];
       std_C[i][j] = tmp;
     }
 
