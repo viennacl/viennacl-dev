@@ -207,7 +207,7 @@ void direct(viennacl::vector<NumericT, AlignmentV> const & in,
                           static_cast<unsigned int>(stride),
                           static_cast<unsigned int>(batch_num),
                           sign,
-                          bool(data_order == viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR));
+                          bool(data_order != viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR));
   VIENNACL_CUDA_LAST_ERROR_CHECK("fft_direct");
 }
 
@@ -232,7 +232,7 @@ void direct(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> const & 
                           static_cast<unsigned int>(stride),
                           static_cast<unsigned int>(batch_num),
                           sign,
-                          bool(data_order == viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR));
+                          bool(data_order != viennacl::linalg::host_based::detail::fft::FFT_DATA_ORDER::ROW_MAJOR));
   VIENNACL_CUDA_LAST_ERROR_CHECK("fft_direct");
 }
 
