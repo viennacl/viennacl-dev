@@ -103,72 +103,296 @@ namespace detail
 
 }
 
-/** @brief Implementation of the standard conjugate gradient algorithm (no preconditioner), specialized for ViennaCL types.
-*
-* Pipelined version from A. T. Chronopoulos and C. W. Gear, J. Comput. Appl. Math. 25(2), 153–168 (1989)
-*
-* @param A          The system matrix
-* @param rhs        The load vector
-* @param tag        Solver configuration tag
-* @return The result vector
-*/
-//template<typename MatrixType, typename ScalarType>
-template<typename MatrixT, typename NumericT>
-viennacl::vector<NumericT> solve(MatrixT const & A, //MatrixType const & A,
+namespace detail
+{
+
+  /** @brief Implementation of a pipelined conjugate gradient algorithm (no preconditioner), specialized for ViennaCL types.
+  *
+  * Pipelined version from A. T. Chronopoulos and C. W. Gear, J. Comput. Appl. Math. 25(2), 153–168 (1989)
+  *
+  * @param A          The system matrix
+  * @param rhs        The load vector
+  * @param tag        Solver configuration tag
+  * @return The result vector
+  */
+  //template<typename MatrixType, typename ScalarType>
+  template<typename MatrixT, typename NumericT>
+  viennacl::vector<NumericT> pipelined_solve(MatrixT const & A, //MatrixType const & A,
+                                             viennacl::vector<NumericT> const & rhs,
+                                             cg_tag const & tag,
+                                             viennacl::linalg::no_precond)
+  {
+    typedef typename viennacl::vector<NumericT>::difference_type   difference_type;
+
+    viennacl::vector<NumericT> result(rhs);
+    viennacl::traits::clear(result);
+
+    viennacl::vector<NumericT> residual(rhs);
+    viennacl::vector<NumericT> p(rhs);
+    viennacl::vector<NumericT> Ap = viennacl::linalg::prod(A, p);
+    viennacl::vector<NumericT> inner_prod_buffer = viennacl::zero_vector<NumericT>(3*256, viennacl::traits::context(rhs)); // temporary buffer
+    std::vector<NumericT>      host_inner_prod_buffer(inner_prod_buffer.size());
+    vcl_size_t                 buffer_size_per_vector = inner_prod_buffer.size() / 3;
+    difference_type            buffer_offset_per_vector = static_cast<difference_type>(buffer_size_per_vector);
+
+    NumericT norm_rhs_squared = viennacl::linalg::norm_2(residual); norm_rhs_squared *= norm_rhs_squared;
+
+    if (!norm_rhs_squared) //check for early convergence of A*x = 0
+      return result;
+
+    NumericT inner_prod_rr = norm_rhs_squared;
+    NumericT alpha = inner_prod_rr / viennacl::linalg::inner_prod(p, Ap);
+    NumericT beta  = viennacl::linalg::norm_2(Ap); beta = (alpha * alpha * beta * beta - inner_prod_rr) / inner_prod_rr;
+    NumericT inner_prod_ApAp = 0;
+    NumericT inner_prod_pAp  = 0;
+
+    for (unsigned int i = 0; i < tag.max_iterations(); ++i)
+    {
+      tag.iters(i+1);
+
+      viennacl::linalg::pipelined_cg_vector_update(result, alpha, p, residual, Ap, beta, inner_prod_buffer);
+      viennacl::linalg::pipelined_cg_prod(A, p, Ap, inner_prod_buffer);
+
+      // bring back the partial results to the host:
+      viennacl::fast_copy(inner_prod_buffer.begin(), inner_prod_buffer.end(), host_inner_prod_buffer.begin());
+
+      inner_prod_rr   = std::accumulate(host_inner_prod_buffer.begin(),                                host_inner_prod_buffer.begin() +     buffer_offset_per_vector, NumericT(0));
+      inner_prod_ApAp = std::accumulate(host_inner_prod_buffer.begin() +     buffer_offset_per_vector, host_inner_prod_buffer.begin() + 2 * buffer_offset_per_vector, NumericT(0));
+      inner_prod_pAp  = std::accumulate(host_inner_prod_buffer.begin() + 2 * buffer_offset_per_vector, host_inner_prod_buffer.begin() + 3 * buffer_offset_per_vector, NumericT(0));
+
+      if (std::fabs(inner_prod_rr / norm_rhs_squared) < tag.tolerance() *  tag.tolerance())    //squared norms involved here
+        break;
+
+      alpha = inner_prod_rr / inner_prod_pAp;
+      beta  = (alpha*alpha*inner_prod_ApAp - inner_prod_rr) / inner_prod_rr;
+    }
+
+    //store last error estimate:
+    tag.error(std::sqrt(std::fabs(inner_prod_rr) / norm_rhs_squared));
+
+    return result;
+  }
+}
+
+// compressed_matrix
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
+                                 viennacl::vector_base<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
                                  viennacl::vector<NumericT> const & rhs,
                                  cg_tag const & tag,
                                  viennacl::linalg::no_precond)
 {
-  typedef typename viennacl::vector<NumericT>::difference_type   difference_type;
-
-  viennacl::vector<NumericT> result(rhs);
-  viennacl::traits::clear(result);
-
-  viennacl::vector<NumericT> residual(rhs);
-  viennacl::vector<NumericT> p(rhs);
-  viennacl::vector<NumericT> Ap = viennacl::linalg::prod(A, p);
-  viennacl::vector<NumericT> inner_prod_buffer = viennacl::zero_vector<NumericT>(3*256, viennacl::traits::context(rhs)); // temporary buffer
-  std::vector<NumericT>      host_inner_prod_buffer(inner_prod_buffer.size());
-  vcl_size_t                 buffer_size_per_vector = inner_prod_buffer.size() / 3;
-  difference_type            buffer_offset_per_vector = static_cast<difference_type>(buffer_size_per_vector);
-
-  NumericT norm_rhs_squared = viennacl::linalg::norm_2(residual); norm_rhs_squared *= norm_rhs_squared;
-
-  if (!norm_rhs_squared) //check for early convergence of A*x = 0
-    return result;
-
-  NumericT inner_prod_rr = norm_rhs_squared;
-  NumericT alpha = inner_prod_rr / viennacl::linalg::inner_prod(p, Ap);
-  NumericT beta  = viennacl::linalg::norm_2(Ap); beta = (alpha * alpha * beta * beta - inner_prod_rr) / inner_prod_rr;
-  NumericT inner_prod_ApAp = 0;
-  NumericT inner_prod_pAp  = 0;
-
-  for (unsigned int i = 0; i < tag.max_iterations(); ++i)
-  {
-    tag.iters(i+1);
-
-    viennacl::linalg::pipelined_cg_vector_update(result, alpha, p, residual, Ap, beta, inner_prod_buffer);
-    viennacl::linalg::pipelined_cg_prod(A, p, Ap, inner_prod_buffer);
-
-    // bring back the partial results to the host:
-    viennacl::fast_copy(inner_prod_buffer.begin(), inner_prod_buffer.end(), host_inner_prod_buffer.begin());
-
-    inner_prod_rr   = std::accumulate(host_inner_prod_buffer.begin(),                                host_inner_prod_buffer.begin() +     buffer_offset_per_vector, NumericT(0));
-    inner_prod_ApAp = std::accumulate(host_inner_prod_buffer.begin() +     buffer_offset_per_vector, host_inner_prod_buffer.begin() + 2 * buffer_offset_per_vector, NumericT(0));
-    inner_prod_pAp  = std::accumulate(host_inner_prod_buffer.begin() + 2 * buffer_offset_per_vector, host_inner_prod_buffer.begin() + 3 * buffer_offset_per_vector, NumericT(0));
-
-    if (std::fabs(inner_prod_rr / norm_rhs_squared) < tag.tolerance() *  tag.tolerance())    //squared norms involved here
-      break;
-
-    alpha = inner_prod_rr / inner_prod_pAp;
-    beta  = (alpha*alpha*inner_prod_ApAp - inner_prod_rr) / inner_prod_rr;
-  }
-
-  //store last error estimate:
-  tag.error(std::sqrt(std::fabs(inner_prod_rr) / norm_rhs_squared));
-
-  return result;
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
 }
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
+                                 viennacl::vector_range<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
+                                 viennacl::vector_slice<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+// coordinate_matrix
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
+                                 viennacl::vector_base<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
+                                 viennacl::vector<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
+                                 viennacl::vector_range<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
+                                 viennacl::vector_slice<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+// ell_matrix
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
+                                 viennacl::vector_base<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
+                                 viennacl::vector<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
+                                 viennacl::vector_range<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
+                                 viennacl::vector_slice<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+
+
+// sliced_ell_matrix
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
+                                 viennacl::vector_base<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
+                                 viennacl::vector<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
+                                 viennacl::vector_range<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
+                                 viennacl::vector_slice<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+
+// hyb_matrix
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
+                                 viennacl::vector_base<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
+                                 viennacl::vector<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
+                                 viennacl::vector_range<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
+template<typename NumericT>
+viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
+                                 viennacl::vector_slice<NumericT> const & rhs,
+                                 cg_tag const & tag,
+                                 viennacl::linalg::no_precond)
+{
+  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+}
+
+
+
+
+
+
+
 
 /** @brief Implementation of the preconditioned conjugate gradient solver, generic implementation for non-ViennaCL types.
 *
