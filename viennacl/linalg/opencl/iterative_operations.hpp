@@ -105,7 +105,8 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
                            inner_prod_buffer,
                            buffer_size_per_vector,
                            viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT))
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
+                           viennacl::ocl::local_mem(1024 * sizeof(NumericT))
                           ));
 
 }
@@ -712,7 +713,8 @@ void pipelined_gmres_prod(compressed_matrix<T> const & A,
                            inner_prod_buffer,
                            buffer_size_per_vector,
                            viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))
+                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                           viennacl::ocl::local_mem(1024 * sizeof(T))
                           ));
 
 }

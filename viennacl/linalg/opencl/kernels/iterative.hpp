@@ -88,9 +88,9 @@ void generate_compressed_matrix_pipelined_cg_prod(StringT & source, std::string 
   source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
   source.append("  unsigned int buffer_size, \n");
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
-  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_elements) \n");
   source.append("{ \n");
-  source.append("  __local "); source.append(numeric_string); source.append(" shared_elements[1024]; \n");
 
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_ApAp = 0; \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_pAp = 0; \n");
@@ -1249,9 +1249,10 @@ void generate_compressed_matrix_pipelined_gmres_prod(StringType & source, std::s
   source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
   source.append("  unsigned int buffer_size, \n");
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
-  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" * shared_elements) \n");
   source.append("{ \n");
-  source.append("  cg_csr_prod(row_indices, column_indices, row_blocks, elements, num_blocks, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
+  source.append("  cg_csr_prod(row_indices, column_indices, row_blocks, elements, num_blocks, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp, shared_elements); \n");
   source.append("} \n \n");
 
 }
