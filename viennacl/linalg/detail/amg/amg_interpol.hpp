@@ -77,11 +77,6 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
   typedef typename SparseMatrixType::iterator1    InternalRowIterator;
   typedef typename SparseMatrixType::iterator2    InternalColIterator;
 
-  ScalarType temp_res;
-  ScalarType row_sum, c_sum, diag;
-  //int diag_sign;
-  long x, y;
-  amg_point *pointx, *pointy;
   unsigned int c_points = pointvector[level].get_cpoints();
 
   // Setup Prolongation/Interpolation matrix
@@ -93,11 +88,11 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
 
   // Direct Interpolation (Yang, p.14)
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (pointx, pointy, row_sum, c_sum, temp_res, y, x, diag)
+  #pragma omp parallel for
 #endif
-  for (x=0; x < static_cast<long>(pointvector[level].size()); ++x)
+  for (long x=0; x < static_cast<long>(pointvector[level].size()); ++x)
   {
-    pointx = pointvector[level][static_cast<unsigned int>(x)];
+    amg_point *pointx = pointvector[level][static_cast<unsigned int>(x)];
     /*if (A[level](x,x) > 0)
       diag_sign = 1;
     else
@@ -115,10 +110,12 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
       row_iter += vcl_size_t(x);
 
       // Row sum of coefficients (without diagonal) and sum of influencing C point coefficients has to be computed
-      row_sum = c_sum = diag = 0;
+      ScalarType row_sum = 0;
+      ScalarType c_sum   = 0;
+      ScalarType diag    = 0;
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
-        y = static_cast<long>(col_iter.index2());
+        long y = static_cast<long>(col_iter.index2());
         if (x == y)// || *col_iter * diag_sign > 0)
         {
           diag += *col_iter;
@@ -128,18 +125,18 @@ void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, Int
         // Sum all other coefficients in line x
         row_sum += *col_iter;
 
-        pointy = pointvector[level][static_cast<unsigned int>(y)];
+        amg_point *pointy = pointvector[level][static_cast<unsigned int>(y)];
         // Sum all coefficients that correspond to a strongly influencing C point
         if (pointy->is_cpoint())
           if (pointx->is_influencing(pointy))
             c_sum += *col_iter;
       }
-      temp_res = -row_sum/(c_sum*diag);
+      ScalarType temp_res = -row_sum/(c_sum*diag);
 
       // Iterate over all strongly influencing points of point x
       for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
       {
-        pointy = *iter;
+        amg_point *pointy = *iter;
         // The value is only non-zero for columns that correspond to a C point
         if (pointy->is_cpoint())
         {
@@ -179,13 +176,6 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
   typedef typename SparseMatrixType::iterator1      InternalRowIterator;
   typedef typename SparseMatrixType::iterator2      InternalColIterator;
 
-  ScalarType temp_res;
-  ScalarType weak_sum, strong_sum;
-  int diag_sign;
-  amg_sparsevector<ScalarType> c_sum_row;
-  amg_point *pointx, *pointy, *pointk, *pointm;
-  long x, y, k, m;
-
   unsigned int c_points = pointvector[level].get_cpoints();
 
   // Setup Prolongation/Interpolation matrix
@@ -197,15 +187,12 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
 
   // Classical Interpolation (Yang, p.13-14)
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (pointx,pointy,pointk,pointm,weak_sum,strong_sum,c_sum_row,temp_res,x,y,k,m,diag_sign)
+  #pragma omp parallel for
 #endif
-  for (x=0; x < static_cast<long>(pointvector[level].size()); ++x)
+  for (long x=0; x < static_cast<long>(pointvector[level].size()); ++x)
   {
-    pointx = pointvector[level][static_cast<unsigned int>(x)];
-    if (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(x)) > 0)
-      diag_sign = 1;
-    else
-      diag_sign = -1;
+    amg_point *pointx = pointvector[level][static_cast<unsigned int>(x)];
+    int diag_sign = (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(x)) > 0) ? 1 : -1;
 
     // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
     if (pointx->is_cpoint())
@@ -218,13 +205,13 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
       InternalRowIterator row_iter = A[level].begin1();
       row_iter += vcl_size_t(x);
 
-      weak_sum = 0;
-      c_sum_row = amg_sparsevector<ScalarType>(static_cast<unsigned int>(A[level].size1()));
+      ScalarType weak_sum = 0;
+      amg_sparsevector<ScalarType> c_sum_row(static_cast<unsigned int>(A[level].size1()));
       c_sum_row.clear();
       for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
       {
-        k = static_cast<unsigned int>(col_iter.index2());
-        pointk = pointvector[level][static_cast<unsigned int>(k)];
+        long k = static_cast<unsigned int>(col_iter.index2());
+        amg_point *pointk = pointvector[level][static_cast<unsigned int>(k)];
 
         // Sum of weakly influencing neighbors + diagonal coefficient
         if (x == k || !pointx->is_influencing(pointk))// || *col_iter * diag_sign > 0)
@@ -238,8 +225,8 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
         {
           for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
           {
-            pointm = *iter;
-            m = pointm->get_index();
+            amg_point *pointm = *iter;
+            long m = pointm->get_index();
 
             if (pointm->is_cpoint())
               // Only use coefficients that have opposite sign of diagonal.
@@ -253,24 +240,24 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
       // Iterate over all strongly influencing points of point x
       for (amg_point::iterator iter = pointx->begin_influencing(); iter != pointx->end_influencing(); ++iter)
       {
-        pointy = *iter;
-        y = pointy->get_index();
+        amg_point *pointy = *iter;
+        long y = pointy->get_index();
 
         // The value is only non-zero for columns that correspond to a C point
         if (pointy->is_cpoint())
         {
-          strong_sum = 0;
+          ScalarType strong_sum = 0;
           // Calculate term for strongly influencing F neighbors
           for (typename amg_sparsevector<ScalarType>::iterator iter2 = c_sum_row.begin(); iter2 != c_sum_row.end(); ++iter2)
           {
-            k = iter2.index();
+            long k = iter2.index();
             // Only use coefficients that have opposite sign of diagonal.
             if (A[level](static_cast<unsigned int>(k),static_cast<unsigned int>(y)) * ScalarType(diag_sign) < 0)
               strong_sum += (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(k)) * A[level](static_cast<unsigned int>(k),static_cast<unsigned int>(y))) / (*iter2);
           }
 
           // Calculate coefficient
-          temp_res = - (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(y)) + strong_sum) / (weak_sum);
+          ScalarType temp_res = - (A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(y)) + strong_sum) / (weak_sum);
           if (temp_res < 0 || temp_res > 0)
             P[level](static_cast<unsigned int>(x),pointy->get_coarse_index()) = temp_res;
         }
@@ -368,8 +355,6 @@ void amg_interpol_ag(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
   //typedef typename SparseMatrixType::iterator1 InternalRowIterator;
   //typedef typename SparseMatrixType::iterator2 InternalColIterator;
 
-  long x;
-  amg_point *pointx, *pointy;
   unsigned int c_points = pointvector[level].get_cpoints();
 
   P[level] = SparseMatrixType(static_cast<unsigned int>(A[level].size1()), c_points);
@@ -380,12 +365,12 @@ void amg_interpol_ag(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
 
   // Set prolongation such that F point is interpolated (weight=1) by the aggregate it belongs to (Vanek et al p.6)
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (x,pointx)
+  #pragma omp parallel for
 #endif
-  for (x=0; x<static_cast<long>(pointvector[level].size()); ++x)
+  for (long x=0; x<static_cast<long>(pointvector[level].size()); ++x)
   {
-    pointx = pointvector[level][static_cast<unsigned int>(x)];
-    pointy = pointvector[level][pointx->get_aggregate()];
+    amg_point *pointx = pointvector[level][static_cast<unsigned int>(x)];
+    amg_point *pointy = pointvector[level][pointx->get_aggregate()];
     // Point x belongs to aggregate y.
     P[level](static_cast<unsigned int>(x), pointy->get_coarse_index()) = 1;
   }
@@ -412,8 +397,6 @@ void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
   typedef typename SparseMatrixType::iterator1    InternalRowIterator;
   typedef typename SparseMatrixType::iterator2    InternalColIterator;
 
-  long x,y;
-  ScalarType diag = 0;
   unsigned int c_points = pointvector[level].get_cpoints();
 
   InternalT1 P_tentative = InternalT1(P.size());
@@ -424,16 +407,16 @@ void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
 
   // Build Jacobi Matrix via filtered A matrix (Vanek et al. p.6)
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (x,y,diag)
+  #pragma omp parallel for
 #endif
-  for (x=0; x<static_cast<long>(A[level].size1()); ++x)
+  for (long x=0; x<static_cast<long>(A[level].size1()); ++x)
   {
-    diag = 0;
+    ScalarType diag = 0;
     InternalRowIterator row_iter = A[level].begin1();
     row_iter += vcl_size_t(x);
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
-      y = static_cast<long>(col_iter.index2());
+      long y = static_cast<long>(col_iter.index2());
       // Determine the structure of the Jacobi matrix by using a filtered matrix of A:
       // The diagonal consists of the diagonal coefficient minus all coefficients of points not in the neighborhood of x.
       // All other coefficients are the same as in A.

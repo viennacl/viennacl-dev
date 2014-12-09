@@ -62,7 +62,7 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
   vcl_size_t temp_int_size2=temp_trans.internal_size2();
 
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for shared(proxy_int_size1,proxy_int_size2,temp_int_size1,temp_int_size2)
+  #pragma omp parallel for
 #endif
   for (vcl_size_t i = 0; i < proxy_int_size1*proxy_int_size2;++i)
   {

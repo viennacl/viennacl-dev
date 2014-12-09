@@ -76,22 +76,19 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
   typedef typename SparseMatrixType::const_iterator1  ConstRowIterator;
   typedef typename SparseMatrixType::const_iterator2  ConstColIterator;
 
-  ScalarType max;
-  int diag_sign;
-
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (max,diag_sign)
+  #pragma omp parallel for
 #endif
   for (long i=0; i<static_cast<long>(A[level].size1()); ++i)
   {
-    diag_sign = 1;
+    int diag_sign = 1;
     if (A[level](static_cast<unsigned int>(i),static_cast<unsigned int>(i)) < 0)
       diag_sign = -1;
 
     ConstRowIterator row_iter = A[level].begin1();
     row_iter += static_cast<unsigned int>(i);
     // Find greatest non-diagonal negative value (positive if diagonal is negative) in row
-    max = 0;
+    ScalarType max = 0;
     for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
         if (i == (unsigned int) col_iter.index2()) continue;
@@ -161,12 +158,11 @@ void amg_coarse_classic_onepass(unsigned int level, InternalT1 & A, InternalT2 &
   amg_influence(level, A, pointvector, tag);
 
   // Traverse through points and calculate initial influence measure
-  long i;
   #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (i)
+  #pragma omp parallel for
   #endif
-  for (i=0; i<static_cast<long>(pointvector[level].size()); ++i)
-  pointvector[level][static_cast<unsigned int>(i)]->calc_influence();
+  for (long i=0; i<static_cast<long>(pointvector[level].size()); ++i)
+    pointvector[level][static_cast<unsigned int>(i)]->calc_influence();
 
   // Do initial sorting
   pointvector[level].sort();
@@ -582,8 +578,6 @@ void amg_coarse_ag(unsigned int level, InternalT1 & A, InternalT2 & pointvector,
   typedef typename SparseMatrixType::iterator1    InternalRowIterator;
   typedef typename SparseMatrixType::iterator2    InternalColIterator;
 
-  long x,y;
-  ScalarType diag;
   amg_point *pointx, *pointy;
 
   // Cannot determine aggregates if size == 1 as then a new aggregate would always consist of this point (infinite loop)
@@ -593,16 +587,16 @@ void amg_coarse_ag(unsigned int level, InternalT1 & A, InternalT2 & pointvector,
   // SA algorithm (Vanek et al. p.6)
   // Build neighborhoods
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (x,y,diag)
+  #pragma omp parallel for
 #endif
-  for (x=0; x<static_cast<long>(A[level].size1()); ++x)
+  for (long x=0; x<static_cast<long>(A[level].size1()); ++x)
   {
     InternalRowIterator row_iter = A[level].begin1();
     row_iter += std::size_t(x);
-    diag = A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(x));
+    ScalarType diag = A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(x));
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
-      y = static_cast<long>(col_iter.index2());
+      long y = static_cast<long>(col_iter.index2());
       if (y == x || (std::fabs(*col_iter) >= tag.get_threshold()*pow(0.5, static_cast<double>(level-1)) * std::sqrt(std::fabs(diag*A[level](static_cast<unsigned int>(y),static_cast<unsigned int>(y))))))
       {
         // Neighborhood x includes point y

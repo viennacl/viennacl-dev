@@ -386,9 +386,9 @@ void fft_radix2(std::complex<NumericT> * input_complex, vcl_size_t batch_num,
   {
     vcl_size_t ss = 1 << step;
     vcl_size_t half_size = size >> 1;
-    NumericT cs, sn;
+
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for private(cs,sn) shared(ss,half_size,step)
+    #pragma omp parallel for
 #endif
     for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
     {
@@ -412,8 +412,8 @@ void fft_radix2(std::complex<NumericT> * input_complex, vcl_size_t batch_num,
           in2 = input_complex[offset + ss * stride];
         }
         NumericT arg = NumericT(group) * sign * NUM_PI / NumericT(ss);
-        sn = std::sin(arg);
-        cs = std::cos(arg);
+        NumericT sn = std::sin(arg);
+        NumericT cs = std::cos(arg);
         std::complex<NumericT> ex(cs, sn);
         std::complex<NumericT> tmp(in2.real() * ex.real() - in2.imag() * ex.imag(),
                                    in2.real() * ex.imag() + in2.imag() * ex.real());
@@ -644,16 +644,15 @@ void bluestein(viennacl::vector<NumericT, AlignmentV>& in, viennacl::vector<Nume
 
   viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&Z_complex[0], Z, ext_size);
 
-  NumericT sn_a, cs_a;
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private(sn_a,cs_a)
+  #pragma omp parallel for
 #endif
   for (vcl_size_t i = 0; i < size; i++)
   {
     vcl_size_t rm = i * i % (double_size);
     NumericT angle = NumericT(rm) / NumericT(size) * NumericT(-NUM_PI);
-    sn_a = std::sin(angle);
-    cs_a = std::cos(angle);
+    NumericT sn_a = std::sin(angle);
+    NumericT cs_a = std::cos(angle);
     std::complex<NumericT> b_i(cs_a, sn_a);
     output_complex[i] = std::complex<NumericT>(Z_complex[i].real() * b_i.real() - Z_complex[i].imag() * b_i.imag(),
                                                Z_complex[i].real() * b_i.imag() + Z_complex[i].imag() * b_i.real());
@@ -721,7 +720,7 @@ void transpose(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> & inp
 
   viennacl::linalg::host_based::detail::fft::copy_to_complex_array(&input_complex[0], data, size);
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for shared(row_num,col_num)
+  #pragma omp parallel for
 #endif
   for (vcl_size_t i = 0; i < size; i++)
   {

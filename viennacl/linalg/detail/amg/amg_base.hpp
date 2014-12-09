@@ -1264,15 +1264,14 @@ private:
     typedef typename SparseMatrixType::const_iterator1 ConstRowIterator;
     typedef typename SparseMatrixType::const_iterator2 ConstColIterator;
 
-    unsigned int x, y;
-    amg_point *point;
-
   #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for private (x,y,point)
+    #pragma omp parallel for
   #endif
     for (long i2=0; i2<static_cast<long>(threads_); ++i2)
     {
       std::size_t i = static_cast<std::size_t>(i2);
+
+      amg_point *point;
 
       // Allocate space for the matrix slice and the pointvector.
       A_slice_[i][level] = SparseMatrixType(offset_[i+1][level]-offset_[i][level], offset_[i+1][level]-offset_[i][level]);
@@ -1281,7 +1280,7 @@ private:
       // Iterate over the part that belongs to thread i (from Offset[i][level] to Offset[i+1][level]).
       ConstRowIterator row_iter = A[level].begin1();
       row_iter += offset_[i][level];
-      x = static_cast<unsigned int>(row_iter.index1());
+      unsigned int x = static_cast<unsigned int>(row_iter.index1());
 
       while (x < offset_[i+1][level] && row_iter != A[level].end1())
       {
@@ -1291,7 +1290,7 @@ private:
         pointvector_slice_[i][level].add_point(point);
 
         ConstColIterator col_iter = row_iter.begin();
-        y = static_cast<unsigned int>(col_iter.index2());
+        unsigned int y = static_cast<unsigned int>(col_iter.index2());
 
         // Save all coefficients from the matrix slice
         while (y < offset_[i+1][level] && col_iter != row_iter.end())
@@ -1322,28 +1321,26 @@ void amg_mat_prod (SparseMatrixT & A, SparseMatrixT & B, SparseMatrixT & RES)
   typedef typename SparseMatrixT::iterator1 InternalRowIterator;
   typedef typename SparseMatrixT::iterator2 InternalColIterator;
 
-  long x,y,z;
-  ScalarType prod;
   RES = SparseMatrixT(static_cast<unsigned int>(A.size1()), static_cast<unsigned int>(B.size2()));
   RES.clear();
 
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (x,y,z,prod)
+  #pragma omp parallel for
 #endif
-  for (x=0; x<static_cast<long>(A.size1()); ++x)
+  for (long x=0; x<static_cast<long>(A.size1()); ++x)
   {
     InternalRowIterator row_iter = A.begin1();
     row_iter += vcl_size_t(x);
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
-      y = static_cast<unsigned int>(col_iter.index2());
+      unsigned int y = static_cast<unsigned int>(col_iter.index2());
       InternalRowIterator row_iter2 = B.begin1();
       row_iter2 += vcl_size_t(y);
 
       for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
       {
-        z = static_cast<unsigned int>(col_iter2.index2());
-        prod = *col_iter * *col_iter2;
+        unsigned int z = static_cast<unsigned int>(col_iter2.index2());
+        ScalarType prod = *col_iter * *col_iter2;
         RES.add(static_cast<unsigned int>(x),static_cast<unsigned int>(z),prod);
       }
     }
@@ -1362,41 +1359,39 @@ void amg_galerkin_prod (SparseMatrixT & A, SparseMatrixT & P, SparseMatrixT & RE
   typedef typename SparseMatrixT::iterator1    InternalRowIterator;
   typedef typename SparseMatrixT::iterator2    InternalColIterator;
 
-  long x,y1,y2,z;
-  amg_sparsevector<ScalarType> row;
   RES = SparseMatrixT(static_cast<unsigned int>(P.size2()), static_cast<unsigned int>(P.size2()));
   RES.clear();
 
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private (x,y1,y2,z,row)
+  #pragma omp parallel for
 #endif
-  for (x=0; x<static_cast<long>(P.size2()); ++x)
+  for (long x=0; x<static_cast<long>(P.size2()); ++x)
   {
-    row = amg_sparsevector<ScalarType>(static_cast<unsigned int>(A.size2()));
+    amg_sparsevector<ScalarType> row(static_cast<unsigned int>(A.size2()));
     InternalRowIterator row_iter = P.begin1(true);
     row_iter += vcl_size_t(x);
 
     for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
     {
-      y1 = static_cast<long>(col_iter.index2());
+      long y1 = static_cast<long>(col_iter.index2());
       InternalRowIterator row_iter2 = A.begin1();
       row_iter2 += vcl_size_t(y1);
 
       for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
       {
-        y2 = static_cast<long>(col_iter2.index2());
+        long y2 = static_cast<long>(col_iter2.index2());
         row.add (static_cast<unsigned int>(y2), *col_iter * *col_iter2);
       }
     }
     for (typename amg_sparsevector<ScalarType>::iterator iter = row.begin(); iter != row.end(); ++iter)
     {
-      y2 = iter.index();
+      long y2 = iter.index();
       InternalRowIterator row_iter3 = P.begin1();
       row_iter3 += vcl_size_t(y2);
 
       for (InternalColIterator col_iter3 = row_iter3.begin(); col_iter3 != row_iter3.end(); ++col_iter3)
       {
-        z = static_cast<long>(col_iter3.index2());
+        long z = static_cast<long>(col_iter3.index2());
         RES.add (static_cast<unsigned int>(x), static_cast<unsigned int>(z), *col_iter3 * *iter);
       }
     }

@@ -527,21 +527,20 @@ public:
   {
     VectorT old_result(x.size());
     long index;
-    NumericType sum = 0, diag = 1;
 
     for (int i=0; i<iterations; ++i)
     {
       old_result = x;
       x.clear();
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for private (sum,diag) shared (rhs_smooth, x)
+      #pragma omp parallel for
 #endif
       for (index=0; index < static_cast<long>(A_setup_[level].size1()); ++index)
       {
         InternalConstRowIterator row_iter = A_setup_[level].begin1();
         row_iter += index;
-        sum = 0;
-        diag = 1;
+        NumericType sum  = 0;
+        NumericType diag = 1;
         for (InternalConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
         {
           if (col_iter.index1() == col_iter.index2())

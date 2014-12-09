@@ -491,14 +491,13 @@ void norm_2_impl(vector_base<NumericT> const & vec1,
   vcl_size_t size1  = viennacl::traits::size(vec1);
 
   value_type temp = 0;
-  value_type data = 0;
 
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for reduction(+: temp) private(data) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
   for (long i = 0; i < static_cast<long>(size1); ++i)
   {
-    data = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
+    value_type data = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
     temp += data * data;
   }
 
@@ -648,18 +647,16 @@ void plane_rotation(vector_base<NumericT> & vec1,
   vcl_size_t start2 = viennacl::traits::start(vec2);
   vcl_size_t inc2   = viennacl::traits::stride(vec2);
 
-  value_type temp1 = 0;
-  value_type temp2 = 0;
   value_type data_alpha = alpha;
   value_type data_beta  = beta;
 
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for private(temp1, temp2) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+  #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
   for (long i = 0; i < static_cast<long>(size1); ++i)
   {
-    temp1 = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
-    temp2 = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2];
+    value_type temp1 = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
+    value_type temp2 = data_vec2[static_cast<vcl_size_t>(i)*inc2+start2];
 
     data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] = data_alpha * temp1 + data_beta * temp2;
     data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] = data_alpha * temp2 - data_beta * temp1;
