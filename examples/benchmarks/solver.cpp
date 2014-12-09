@@ -37,6 +37,7 @@
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/ell_matrix.hpp"
+#include "viennacl/sliced_ell_matrix.hpp"
 #include "viennacl/hyb_matrix.hpp"
 #include "viennacl/context.hpp"
 
@@ -153,6 +154,7 @@ int run_benchmark(viennacl::context ctx)
   viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(ublas_vec1.size(), ublas_vec1.size(), ctx);
   viennacl::coordinate_matrix<ScalarType> vcl_coordinate_matrix(ublas_vec1.size(), ublas_vec1.size(), ctx);
   viennacl::ell_matrix<ScalarType> vcl_ell_matrix(ctx);
+  viennacl::sliced_ell_matrix<ScalarType> vcl_sliced_ell_matrix(ctx);
   viennacl::hyb_matrix<ScalarType> vcl_hyb_matrix(ctx);
 
   viennacl::vector<ScalarType> vcl_vec1(ublas_vec1.size(), ctx);
@@ -164,6 +166,7 @@ int run_benchmark(viennacl::context ctx)
   viennacl::copy(ublas_matrix, vcl_compressed_matrix);
   viennacl::copy(ublas_matrix, vcl_coordinate_matrix);
   viennacl::copy(ublas_matrix, vcl_ell_matrix);
+  viennacl::copy(ublas_matrix, vcl_sliced_ell_matrix);
   viennacl::copy(ublas_matrix, vcl_hyb_matrix);
   viennacl::copy(ublas_vec1, vcl_vec1);
   viennacl::copy(ublas_vec2, vcl_vec2);
@@ -412,6 +415,9 @@ int run_benchmark(viennacl::context ctx)
   std::cout << "------- CG solver (no preconditioner) via ViennaCL, ell_matrix ----------" << std::endl;
   run_solver(vcl_ell_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
 
+  std::cout << "------- CG solver (no preconditioner) via ViennaCL, sliced_ell_matrix ----------" << std::endl;
+  run_solver(vcl_sliced_ell_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
+
   std::cout << "------- CG solver (no preconditioner) via ViennaCL, hyb_matrix ----------" << std::endl;
   run_solver(vcl_hyb_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
 
@@ -484,9 +490,17 @@ int run_benchmark(viennacl::context ctx)
   std::cout << "------- BiCGStab solver (no preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, bicgstab_solver, viennacl::linalg::no_precond(), bicgstab_ops);
 
-  std::cout << "------- BiCGStab solver (no preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
-  run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, bicgstab_solver, viennacl::linalg::no_precond(), bicgstab_ops);
+  std::cout << "------- BiCGStab solver (no preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
+  run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, bicgstab_solver, viennacl::linalg::no_precond(), bicgstab_ops);
 
+  std::cout << "------- BiCGStab solver (no preconditioner) via ViennaCL, ell_matrix ----------" << std::endl;
+  run_solver(vcl_ell_matrix, vcl_vec2, vcl_result, bicgstab_solver, viennacl::linalg::no_precond(), bicgstab_ops);
+
+  std::cout << "------- BiCGStab solver (no preconditioner) via ViennaCL, sliced_ell_matrix ----------" << std::endl;
+  run_solver(vcl_sliced_ell_matrix, vcl_vec2, vcl_result, bicgstab_solver, viennacl::linalg::no_precond(), bicgstab_ops);
+
+  std::cout << "------- BiCGStab solver (no preconditioner) via ViennaCL, hyb_matrix ----------" << std::endl;
+  run_solver(vcl_hyb_matrix, vcl_vec2, vcl_result, bicgstab_solver, viennacl::linalg::no_precond(), bicgstab_ops);
 
   std::cout << "------- BiCGStab solver (ILUT preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, bicgstab_solver, ublas_ilut, bicgstab_ops);
@@ -542,6 +556,14 @@ int run_benchmark(viennacl::context ctx)
   std::cout << "------- GMRES solver (no preconditioner) on GPU, coordinate_matrix ----------" << std::endl;
   run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, gmres_solver, viennacl::linalg::no_precond(), gmres_ops);
 
+  std::cout << "------- GMRES solver (no preconditioner) on GPU, ell_matrix ----------" << std::endl;
+  run_solver(vcl_ell_matrix, vcl_vec2, vcl_result, gmres_solver, viennacl::linalg::no_precond(), gmres_ops);
+
+  std::cout << "------- GMRES solver (no preconditioner) on GPU, sliced_ell_matrix ----------" << std::endl;
+  run_solver(vcl_sliced_ell_matrix, vcl_vec2, vcl_result, gmres_solver, viennacl::linalg::no_precond(), gmres_ops);
+
+  std::cout << "------- GMRES solver (no preconditioner) on GPU, hyb_matrix ----------" << std::endl;
+  run_solver(vcl_hyb_matrix, vcl_vec2, vcl_result, gmres_solver, viennacl::linalg::no_precond(), gmres_ops);
 
   std::cout << "------- GMRES solver (ILUT preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, gmres_solver, ublas_ilut, gmres_ops);
