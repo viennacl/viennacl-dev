@@ -372,7 +372,99 @@ void element_op(vector_base<NumericT> & vec1,
 
 
 //implementation of inner product:
-//namespace {
+
+namespace detail
+{
+
+// the following circumvents problems when trying to use a variable of template parameter type for a reduction.
+// Such a behavior is not covered by the OpenMP standard, hence we manually apply some preprocessor magic to resolve the problem.
+// See https://github.com/viennacl/viennacl-dev/issues/112 for a detailed explanation and discussion.
+
+#define VIENNACL_INNER_PROD_IMPL_1(SCALART) \
+  inline SCALART inner_prod_impl(SCALART const * data_vec1, vcl_size_t start1, vcl_size_t inc1, vcl_size_t size1, \
+                                 SCALART const * data_vec2, vcl_size_t start2, vcl_size_t inc2) { \
+    SCALART temp = 0;
+
+#define VIENNACL_INNER_PROD_IMPL_2 \
+    for (long i = 0; i < static_cast<long>(size1); ++i) \
+      temp += data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] * data_vec2[static_cast<vcl_size_t>(i)*inc2+start2]; \
+    return temp; \
+  }
+
+// char
+VIENNACL_INNER_PROD_IMPL_1(char)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+VIENNACL_INNER_PROD_IMPL_1(unsigned char)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+
+// short
+VIENNACL_INNER_PROD_IMPL_1(short)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+VIENNACL_INNER_PROD_IMPL_1(unsigned short)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+
+// int
+VIENNACL_INNER_PROD_IMPL_1(int)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+VIENNACL_INNER_PROD_IMPL_1(unsigned int)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+
+// long
+VIENNACL_INNER_PROD_IMPL_1(long)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+VIENNACL_INNER_PROD_IMPL_1(unsigned long)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+
+// float
+VIENNACL_INNER_PROD_IMPL_1(float)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+// double
+VIENNACL_INNER_PROD_IMPL_1(double)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_INNER_PROD_IMPL_2
+
+#undef VIENNACL_INNER_PROD_IMPL_1
+#undef VIENNACL_INNER_PROD_IMPL_2
+}
+
 /** @brief Computes the inner product of two vectors - implementation. Library users should call inner_prod(vec1, vec2).
 *
 * @param vec1 The first vector
@@ -396,15 +488,8 @@ void inner_prod_impl(vector_base<NumericT> const & vec1,
   vcl_size_t start2 = viennacl::traits::start(vec2);
   vcl_size_t inc2   = viennacl::traits::stride(vec2);
 
-  value_type temp = 0;
-
-#ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
-#endif
-  for (long i = 0; i < static_cast<long>(size1); ++i)
-    temp += data_vec1[static_cast<vcl_size_t>(i)*inc1+start1] * data_vec2[static_cast<vcl_size_t>(i)*inc2+start2];
-
-  result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+  result = detail::inner_prod_impl(data_vec1, start1, inc1, size1,
+                                   data_vec2, start2, inc2);  //Note: Assignment to result might be expensive, thus a temporary is introduced here
 }
 
 template<typename NumericT>
@@ -445,6 +530,93 @@ void inner_prod_impl(vector_base<NumericT> const & x,
 }
 
 
+namespace detail
+{
+
+#define VIENNACL_NORM_1_IMPL_1(SCALART) \
+  inline SCALART norm_1_impl(SCALART const * data_vec1, vcl_size_t start1, vcl_size_t inc1, vcl_size_t size1) { \
+    SCALART temp = 0;
+
+#define VIENNACL_NORM_1_IMPL_2(SCALART) \
+    for (long i = 0; i < static_cast<long>(size1); ++i) \
+      temp += static_cast<SCALART>(std::fabs(static_cast<double>(data_vec1[static_cast<vcl_size_t>(i)*inc1+start1]))); \
+    return temp; \
+  }
+
+// char
+VIENNACL_NORM_1_IMPL_1(char)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(char)
+
+VIENNACL_NORM_1_IMPL_1(unsigned char)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(unsigned char)
+
+// short
+VIENNACL_NORM_1_IMPL_1(short)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(short)
+
+VIENNACL_NORM_1_IMPL_1(unsigned short)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(unsigned short)
+
+
+// int
+VIENNACL_NORM_1_IMPL_1(int)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(int)
+
+VIENNACL_NORM_1_IMPL_1(unsigned int)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(unsigned int)
+
+
+// long
+VIENNACL_NORM_1_IMPL_1(long)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(long)
+
+VIENNACL_NORM_1_IMPL_1(unsigned long)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(unsigned long)
+
+
+// float
+VIENNACL_NORM_1_IMPL_1(float)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(float)
+
+// double
+VIENNACL_NORM_1_IMPL_1(double)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_1_IMPL_2(double)
+
+#undef VIENNACL_NORM_1_IMPL_1
+#undef VIENNACL_NORM_1_IMPL_2
+
+}
+
 /** @brief Computes the l^1-norm of a vector
 *
 * @param vec1 The vector
@@ -462,16 +634,101 @@ void norm_1_impl(vector_base<NumericT> const & vec1,
   vcl_size_t inc1   = viennacl::traits::stride(vec1);
   vcl_size_t size1  = viennacl::traits::size(vec1);
 
-  value_type temp = 0;
+  result = detail::norm_1_impl(data_vec1, start1, inc1, size1);  //Note: Assignment to result might be expensive, thus using a temporary for accumulation
+}
 
+
+
+namespace detail
+{
+
+#define VIENNACL_NORM_2_IMPL_1(SCALART) \
+  inline SCALART norm_2_impl(SCALART const * data_vec1, vcl_size_t start1, vcl_size_t inc1, vcl_size_t size1) { \
+    SCALART temp = 0;
+
+#define VIENNACL_NORM_2_IMPL_2(SCALART) \
+    for (long i = 0; i < static_cast<long>(size1); ++i) { \
+      SCALART data = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1]; \
+      temp += data * data; \
+    } \
+    return temp; \
+  }
+
+// char
+VIENNACL_NORM_2_IMPL_1(char)
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-  for (long i = 0; i < static_cast<long>(size1); ++i)
-    temp += static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[static_cast<vcl_size_t>(i)*inc1+start1])));  //casting to double in order to avoid problems if T is an integer type
+VIENNACL_NORM_2_IMPL_2(char)
 
-  result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+VIENNACL_NORM_2_IMPL_1(unsigned char)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(unsigned char)
+
+
+// short
+VIENNACL_NORM_2_IMPL_1(short)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(short)
+
+VIENNACL_NORM_2_IMPL_1(unsigned short)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(unsigned short)
+
+
+// int
+VIENNACL_NORM_2_IMPL_1(int)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(int)
+
+VIENNACL_NORM_2_IMPL_1(unsigned int)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(unsigned int)
+
+
+// long
+VIENNACL_NORM_2_IMPL_1(long)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(long)
+
+VIENNACL_NORM_2_IMPL_1(unsigned long)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(unsigned long)
+
+
+// float
+VIENNACL_NORM_2_IMPL_1(float)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(float)
+
+// double
+VIENNACL_NORM_2_IMPL_1(double)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+VIENNACL_NORM_2_IMPL_2(double)
+
+#undef VIENNACL_NORM_2_IMPL_1
+#undef VIENNACL_NORM_2_IMPL_2
+
 }
+
 
 /** @brief Computes the l^2-norm of a vector - implementation
 *
@@ -490,18 +747,7 @@ void norm_2_impl(vector_base<NumericT> const & vec1,
   vcl_size_t inc1   = viennacl::traits::stride(vec1);
   vcl_size_t size1  = viennacl::traits::size(vec1);
 
-  value_type temp = 0;
-
-#ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for reduction(+: temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
-#endif
-  for (long i = 0; i < static_cast<long>(size1); ++i)
-  {
-    value_type data = data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
-    temp += data * data;
-  }
-
-  result = std::sqrt(temp);  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+  result = std::sqrt(detail::norm_2_impl(data_vec1, start1, inc1, size1));  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
 }
 
 /** @brief Computes the supremum-norm of a vector

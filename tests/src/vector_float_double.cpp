@@ -230,6 +230,9 @@ int test(Epsilon const& epsilon,
   NumericT cpu_result2 = viennacl::linalg::inner_prod(vcl_v1, vcl_v2);
   gpu_result = viennacl::linalg::inner_prod(vcl_v1, vcl_v2);
 
+  std::cout << "Reference: " << cpu_result << std::endl;
+  std::cout << cpu_result2 << std::endl;
+  std::cout << gpu_result << std::endl;
   if (check(cpu_result, cpu_result2, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
@@ -241,6 +244,9 @@ int test(Epsilon const& epsilon,
   NumericT cpu_result3 = viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, vcl_v2 - vcl_v1);
   gpu_result = viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, vcl_v2 - vcl_v1);
 
+  std::cout << "Reference: " << cpu_result << std::endl;
+  std::cout << cpu_result3 << std::endl;
+  std::cout << gpu_result << std::endl;
   if (check(cpu_result, cpu_result3, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
