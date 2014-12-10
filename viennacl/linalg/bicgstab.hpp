@@ -177,11 +177,11 @@ namespace detail
       As_dot_r0 = std::accumulate(host_inner_prod_buffer.begin() + 4 * buffer_size_per_vector, host_inner_prod_buffer.begin() + 5 * buffer_size_per_vector, NumericT(0));
        s_dot_s  = std::accumulate(host_inner_prod_buffer.begin() + 5 * buffer_size_per_vector, host_inner_prod_buffer.begin() + 6 * buffer_size_per_vector, NumericT(0));
 
-      alpha =         r_dot_r0 / Ap_dot_r0;
-      beta  = -1.0 * As_dot_r0 / Ap_dot_r0;
-      omega =        As_dot_s  / As_dot_As;
+      alpha =   r_dot_r0 / Ap_dot_r0;
+      beta  = - As_dot_r0 / Ap_dot_r0;
+      omega =   As_dot_s  / As_dot_As;
 
-      residual_norm = std::sqrt(s_dot_s - 2.0 * omega * As_dot_s + omega * omega *  As_dot_As);
+      residual_norm = std::sqrt(s_dot_s - NumericT(2.0) * omega * As_dot_s + omega * omega *  As_dot_As);
       if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance())
         break;
 

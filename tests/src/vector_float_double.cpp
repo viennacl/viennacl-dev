@@ -508,21 +508,21 @@ int test(Epsilon const& epsilon,
   viennacl::scalar<NumericT> gpu_alpha = alpha;
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i]  *= long(alpha);
+    host_v1[i]  *= NumericT(long(alpha));
   vcl_v1    *= long(alpha);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i]  *= float(alpha);
+    host_v1[i]  *= NumericT(float(alpha));
   vcl_v1    *= float(alpha);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i]  *= double(alpha);
+    host_v1[i]  *= NumericT(double(alpha));
   vcl_v1    *= double(alpha);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
@@ -553,21 +553,21 @@ int test(Epsilon const& epsilon,
 
   std::cout << "Testing shrinking with CPU scalar..." << std::endl;
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] /= long(beta);
+    host_v1[i] /= NumericT(long(beta));
   vcl_v1   /= long(beta);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] /= float(beta);
+    host_v1[i] /= NumericT(float(beta));
   vcl_v1   /= float(beta);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] /= double(beta);
+    host_v1[i] /= NumericT(double(beta));
   vcl_v1   /= double(beta);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
@@ -751,21 +751,21 @@ int test(Epsilon const& epsilon,
   proxy_copy(host_v2, vcl_v2);
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] += host_v2[i] * long(alpha);
+    host_v1[i] += host_v2[i] * NumericT(long(alpha));
   vcl_v1   +=   vcl_v2 * long(alpha);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] += host_v2[i] * float(alpha);
+    host_v1[i] += host_v2[i] * NumericT(float(alpha));
   vcl_v1   +=   vcl_v2 * float(alpha);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] += double(alpha) * host_v2[i];
+    host_v1[i] += NumericT(double(alpha)) * host_v2[i];
   vcl_v1   += double(alpha) *   vcl_v2;
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
@@ -867,14 +867,14 @@ int test(Epsilon const& epsilon,
   proxy_copy(host_v2, vcl_v2);
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] = host_v1[i] + host_v2[i] / long(alpha);
+    host_v1[i] = host_v1[i] + host_v2[i] / NumericT(long(alpha));
   vcl_v1   = vcl_v1   + vcl_v2 / long(alpha);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] = host_v1[i] + host_v2[i] / float(alpha);
+    host_v1[i] = host_v1[i] + host_v2[i] / NumericT(float(alpha));
   vcl_v1   = vcl_v1   + vcl_v2 / float(alpha);
 
   if (check(host_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
