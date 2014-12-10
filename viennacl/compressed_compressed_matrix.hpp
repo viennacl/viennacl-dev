@@ -442,8 +442,8 @@ public:
   /** @brief Resets all entries in the matrix back to zero without changing the matrix size. Resets the sparsity pattern. */
   void clear()
   {
-    viennacl::backend::typesafe_host_array<unsigned int> host_row_buffer(row_buffer_, 1);
-    viennacl::backend::typesafe_host_array<unsigned int> host_row_indices(row_indices_, 1);
+    viennacl::backend::typesafe_host_array<unsigned int> host_row_buffer(row_buffer_, rows_ + 1);
+    viennacl::backend::typesafe_host_array<unsigned int> host_row_indices(row_indices_, rows_ + 1);
     viennacl::backend::typesafe_host_array<unsigned int> host_col_buffer(col_buffer_, 1);
     std::vector<NumericT> host_elements(1);
 
