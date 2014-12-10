@@ -8,7 +8,7 @@ before_install:
 script:
 - mkdir -p build
 - cd build
-- cmake ..
+- cmake -DENABLE_ASAN:BOOL=ON ..
 - make -j4
 - ./examples/tutorial/viennacl-info
 - ctest -j4 --output-on-failure
