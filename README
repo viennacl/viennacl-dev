@@ -26,9 +26,9 @@ ViennaCL requires the following:
 The first step is to extract the file:
 
 Unix-based OS:
-$> gunzip ViennaCL-1.6.1.tar.gz
-$> tar -xf ViennaCL-1.6.1.tar
-$> cd ViennaCL-1.6.1
+$> gunzip ViennaCL-1.6.2.tar.gz
+$> tar -xf ViennaCL-1.6.2.tar
+$> cd ViennaCL-1.6.2
 
 Windows:
 Extract the file using your favorite compressor/decompressor, e.g. 7-zip.
