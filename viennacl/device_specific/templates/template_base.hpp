@@ -588,7 +588,6 @@ public:
 
 protected:
   parameters_type p_;
-  binding_policy_t binding_policy_;
 };
 
 }
