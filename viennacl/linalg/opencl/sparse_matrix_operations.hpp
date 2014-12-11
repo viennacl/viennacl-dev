@@ -894,12 +894,6 @@ void prod_impl(viennacl::hyb_matrix<NumericT, AlignmentV> const & A,
 
   viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(), "vec_mul");
 
-  unsigned int thread_num = 256;
-  unsigned int  group_num = 32;
-
-  k.local_work_size(0, thread_num);
-  k.global_work_size(0, thread_num * group_num);
-
   viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
                            A.handle().opencl_handle(),
                            A.handle3().opencl_handle(),
@@ -926,12 +920,6 @@ void prod_impl(viennacl::hyb_matrix<NumericT, AlignmentV> const & A,
   viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::init(ctx);
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(),
                                              detail::sparse_dense_matmult_kernel_name(false, d_A.row_major(), y.row_major()));
-
-  unsigned int thread_num = 256;
-  unsigned int  group_num = 32;
-
-  k.local_work_size(0, thread_num);
-  k.global_work_size(0, thread_num * group_num);
 
   viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
                            A.handle().opencl_handle(),
@@ -967,12 +955,6 @@ void prod_impl(viennacl::hyb_matrix<NumericT, AlignmentV> const & A,
   viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::init(ctx);
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(),
                                              detail::sparse_dense_matmult_kernel_name(true, d_A.lhs().row_major(), y.row_major()));
-
-  unsigned int thread_num = 256;
-  unsigned int  group_num = 32;
-
-  k.local_work_size(0, thread_num);
-  k.global_work_size(0, thread_num * group_num);
 
   viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
                            A.handle().opencl_handle(),
