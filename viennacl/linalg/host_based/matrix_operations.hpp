@@ -64,10 +64,10 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t i = 0; i < proxy_int_size1*proxy_int_size2;++i)
+  for (long i2 = 0; i2 < static_cast<long>(proxy_int_size1*proxy_int_size2); ++i2)
   {
-    vcl_size_t row = i / proxy_int_size2;
-    vcl_size_t col = i % proxy_int_size2;
+    vcl_size_t row = vcl_size_t(i2) / proxy_int_size2;
+    vcl_size_t col = vcl_size_t(i2) % proxy_int_size2;
 
     if (row < proxy.lhs().size1() && col < proxy.lhs().size2())
     {
@@ -1475,29 +1475,30 @@ template <typename NumericT, typename S1>
    if (A.row_major())
    {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+     #pragma omp parallel for
 #endif
-       for(vcl_size_t i = 0;  i < size -1; i++)
-         {
-
-           data_D[start1 + inc1 * i] =        data_A[viennacl::row_major::mem_index(i * A_inc1 + A_start1, i * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
-           data_S[start2 + inc2 * (i + 1)] =  data_A[viennacl::row_major::mem_index(i * A_inc1 + A_start1, (i + 1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
-         }
-       data_D[start1 + inc1 * (size-1)] = data_A[viennacl::row_major::mem_index((size-1) * A_inc1 + A_start1, (size-1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+     for(long i2 = 0;  i2 < long(size) - 1; i2++)
+     {
+       vcl_size_t i = vcl_size_t(i2);
+       data_D[start1 + inc1 * i] =        data_A[viennacl::row_major::mem_index(i * A_inc1 + A_start1, i * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+       data_S[start2 + inc2 * (i + 1)] =  data_A[viennacl::row_major::mem_index(i * A_inc1 + A_start1, (i + 1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+     }
+     data_D[start1 + inc1 * (size-1)] = data_A[viennacl::row_major::mem_index((size-1) * A_inc1 + A_start1, (size-1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
 
     }
    else
-     {
+   {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+    #pragma omp parallel for
 #endif
-       for(vcl_size_t i = 0;  i < size -1; i++)
-         {
-           data_D[start1 + inc1 * i] =        data_A[viennacl::column_major::mem_index(i * A_inc1 + A_start1, i * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
-           data_S[start2 + inc2 * (i + 1)] =  data_A[viennacl::column_major::mem_index(i * A_inc1 + A_start1, (i + 1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
-         }
-       data_D[start1 + inc1 * (size-1)] = data_A[viennacl::column_major::mem_index((size-1) * A_inc1 + A_start1, (size-1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+     for(long i2 = 0;  i2 < long(size) - 1; i2++)
+     {
+       vcl_size_t i = vcl_size_t(i2);
+       data_D[start1 + inc1 * i] =        data_A[viennacl::column_major::mem_index(i * A_inc1 + A_start1, i * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+       data_S[start2 + inc2 * (i + 1)] =  data_A[viennacl::column_major::mem_index(i * A_inc1 + A_start1, (i + 1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
      }
+     data_D[start1 + inc1 * (size-1)] = data_A[viennacl::column_major::mem_index((size-1) * A_inc1 + A_start1, (size-1) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
+   }
 
  }
 

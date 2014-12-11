@@ -136,8 +136,9 @@ namespace host_based
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for
 #endif
-    for (vcl_size_t i = 0; i < size; i++)
+    for (long i2 = 0; i2 < long(size); i2++)
     {
+      vcl_size_t i = vcl_size_t(i2);
       NumericT val     = matrix1[i] * matrix2[i];
       NumericT divisor = matrix3[i];
       matrix1[i] = (divisor > (NumericT) 0.00001) ? (val / divisor) : (NumericT) 0;

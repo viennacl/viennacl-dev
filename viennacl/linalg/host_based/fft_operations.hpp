@@ -99,8 +99,9 @@ namespace detail
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (vcl_size_t i = 0; i < size * 2; i += 2)
+      for (long i2 = 0; i2 < long(size * 2); i2 += 2)
       { //change array to complex array
+        vcl_size_t i = vcl_size_t(i2);
         input_complex[i / 2] = std::complex<NumericT>(in[i], in[i + 1]);
       }
     }
@@ -112,8 +113,9 @@ namespace detail
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (vcl_size_t i = 0; i < size * 2; i += 2)
+      for (long i2 = 0; i2 < long(size * 2); i2 += 2)
       { //change array to complex array
+        vcl_size_t i = vcl_size_t(i2);
         input_complex[i / 2] = std::complex<NumericT>(in[i], in[i + 1]);
       }
     }
@@ -125,8 +127,9 @@ namespace detail
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (vcl_size_t i = 0; i < size; i += 1)
+      for (long i2 = 0; i2 < long(size); i2++)
       {
+        vcl_size_t i = vcl_size_t(i2);
         in(i * 2)     = static_cast<NumericT>(std::real(input_complex[i]));
         in(i * 2 + 1) = static_cast<NumericT>(std::imag(input_complex[i]));
       }
@@ -139,8 +142,9 @@ namespace detail
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (vcl_size_t i = 0; i < size * 2; i += 2)
+      for (long i2 = 0; i2 < long(size * 2); i2 += 2)
       { //change array to complex array
+        vcl_size_t i = vcl_size_t(i2);
         input_complex[i / 2] = std::complex<NumericT>(in[i], in[i + 1]);
       }
     }
@@ -151,8 +155,9 @@ namespace detail
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (vcl_size_t i = 0; i < size; i += 1)
+      for (long i2 = 0; i2 < long(size); i2++)
       {
+        vcl_size_t i = vcl_size_t(i2);
         in[i * 2]     = static_cast<NumericT>(std::real(input_complex[i]));
         in[i * 2 + 1] = static_cast<NumericT>(std::imag(input_complex[i]));
       }
@@ -166,8 +171,9 @@ namespace detail
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (vcl_size_t i = 0; i < size; i += 1)
+      for (long i2 = 0; i2 < long(size); i2++)
       {
+        vcl_size_t i = vcl_size_t(i2);
         temp[i * 2]     = static_cast<NumericT>(std::real(input_complex[i]));
         temp[i * 2 + 1] = static_cast<NumericT>(std::imag(input_complex[i]));
       }
@@ -180,8 +186,9 @@ namespace detail
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-      for (vcl_size_t i = 0; i < size; i += 1)
+      for (long i2 = 0; i2 < long(size); i2++)
       {
+        vcl_size_t i = vcl_size_t(i2);
         input1[i] = 0;
         input2[i] = 0;
       }
@@ -203,8 +210,9 @@ void fft_direct(std::complex<NumericT> * input_complex, std::complex<NumericT> *
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel
 #endif
-  for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
+  for (long batch_id2 = 0; batch_id2 < long(batch_num); batch_id2++)
   {
+    vcl_size_t batch_id = vcl_size_t(batch_id2);
     for (vcl_size_t k = 0; k < size; k += 1)
     {
       std::complex<NumericT> f = 0;
@@ -300,8 +308,9 @@ void reorder(viennacl::vector<NumericT, AlignmentV>& in, vcl_size_t size, vcl_si
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
+  for (long batch_id2 = 0; batch_id2 < long(batch_num); batch_id2++)
   {
+    vcl_size_t batch_id = vcl_size_t(batch_id2);
     for (vcl_size_t i = 0; i < size; i++)
     {
       vcl_size_t v = viennacl::linalg::host_based::detail::fft::get_reorder_num(i, bits_datasize);
@@ -347,8 +356,9 @@ void reorder(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV>& in,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
+  for (long batch_id2 = 0; batch_id2 < long(batch_num); batch_id2++)
   {
+    vcl_size_t batch_id = vcl_size_t(batch_id2);
     for (vcl_size_t i = 0; i < size; i++)
     {
       vcl_size_t v = viennacl::linalg::host_based::detail::fft::get_reorder_num(i, bits_datasize);
@@ -390,8 +400,9 @@ void fft_radix2(std::complex<NumericT> * input_complex, vcl_size_t batch_num,
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for
 #endif
-    for (vcl_size_t batch_id = 0; batch_id < batch_num; batch_id++)
+    for (long batch_id2 = 0; batch_id2 < long(batch_num); batch_id2++)
     {
+      vcl_size_t batch_id = vcl_size_t(batch_id2);
       for (vcl_size_t tid = 0; tid < half_size; tid++)
       {
         vcl_size_t group = (tid & (ss - 1));
@@ -445,10 +456,10 @@ void fft_radix2_local(std::complex<NumericT> * input_complex,
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp parallel for
 #endif
-    for (vcl_size_t p = 0; p < size; p += 1)
+    for (long p2 = 0; p2 < long(size); p2 += 1)
     {
-      vcl_size_t v = viennacl::linalg::host_based::detail::fft::get_reorder_num(p,
-          bit_size);
+      vcl_size_t p = vcl_size_t(p2);
+      vcl_size_t v = viennacl::linalg::host_based::detail::fft::get_reorder_num(p, bit_size);
 
       if (!data_order)
         lcl_input[v] = input_complex[batch_id * stride + p]; //index
@@ -462,8 +473,9 @@ void fft_radix2_local(std::complex<NumericT> * input_complex,
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for
 #endif
-      for (vcl_size_t tid = 0; tid < size; tid++)
+      for (long tid2 = 0; tid2 < long(size); tid2++)
       {
+        vcl_size_t tid = vcl_size_t(tid2);
         vcl_size_t group = (tid & (ss - 1));
         vcl_size_t pos = ((tid >> s) << (s + 1)) + group;
 
@@ -488,8 +500,9 @@ void fft_radix2_local(std::complex<NumericT> * input_complex,
     #pragma omp parallel for
 #endif
     //copy local array back to global memory
-    for (vcl_size_t p = 0; p < size; p += 1)
+    for (long p2 = 0; p2 < long(size); p2 += 1)
     {
+      vcl_size_t p = vcl_size_t(p2);
       if (!data_order)
         input_complex[batch_id * stride + p] = lcl_input[p];
       else
@@ -604,8 +617,9 @@ void bluestein(viennacl::vector<NumericT, AlignmentV>& in, viennacl::vector<Nume
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t i = 0; i < ext_size; i++)
+  for (long i2 = 0; i2 < long(ext_size); i2++)
   {
+    vcl_size_t i = vcl_size_t(i2);
     A_complex[i] = 0;
     B_complex[i] = 0;
   }
@@ -616,8 +630,9 @@ void bluestein(viennacl::vector<NumericT, AlignmentV>& in, viennacl::vector<Nume
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t i = 0; i < size; i++)
+  for (long i2 = 0; i2 < long(size); i2++)
   {
+    vcl_size_t i = vcl_size_t(i2);
     vcl_size_t rm = i * i % (double_size);
     NumericT angle = NumericT(rm) / NumericT(size) * NumericT(NUM_PI);
 
@@ -647,8 +662,9 @@ void bluestein(viennacl::vector<NumericT, AlignmentV>& in, viennacl::vector<Nume
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t i = 0; i < size; i++)
+  for (long i2 = 0; i2 < long(size); i2++)
   {
+    vcl_size_t i = vcl_size_t(i2);
     vcl_size_t rm = i * i % (double_size);
     NumericT angle = NumericT(rm) / NumericT(size) * NumericT(-NUM_PI);
     NumericT sn_a = std::sin(angle);
@@ -693,8 +709,9 @@ void multiply_complex(viennacl::vector<NumericT, AlignmentV> const & input1,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t i = 0; i < size; i++)
+  for (long i2 = 0; i2 < long(size); i2++)
   {
+    vcl_size_t i = vcl_size_t(i2);
     std::complex<NumericT> in1 = input1_complex[i];
     std::complex<NumericT> in2 = input2_complex[i];
     output_complex[i] = std::complex<NumericT>(in1.real() * in2.real() - in1.imag() * in2.imag(),
@@ -722,8 +739,9 @@ void transpose(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> & inp
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t i = 0; i < size; i++)
+  for (long i2 = 0; i2 < long(size); i2++)
   {
+    vcl_size_t i = vcl_size_t(i2);
     vcl_size_t row = i / col_num;
     vcl_size_t col = i - row * col_num;
     vcl_size_t new_pos = col * row_num + row;
@@ -761,8 +779,9 @@ void transpose(viennacl::matrix<NumericT, viennacl::row_major, AlignmentV> const
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (vcl_size_t i = 0; i < size; i++)
+  for (long i2 = 0; i2 < long(size); i2++)
   {
+    vcl_size_t i = vcl_size_t(i2);
     vcl_size_t row = i / col_num;
     vcl_size_t col = i % col_num;
     vcl_size_t new_pos = col * row_num + row;
@@ -820,8 +839,9 @@ void reverse(viennacl::vector_base<NumericT> & in)
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for if (size > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-  for (vcl_size_t i = 0; i < size; i++)
+  for (long i2 = 0; i2 < long(size); i2++)
   {
+    vcl_size_t i = vcl_size_t(i2);
     NumericT val1 = in[i];
     NumericT val2 = in[size - i - 1];
     in[i] = val2;
