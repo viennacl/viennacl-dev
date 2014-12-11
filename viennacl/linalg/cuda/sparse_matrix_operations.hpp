@@ -1016,12 +1016,11 @@ namespace detail
         default:
           break;
       }
-      NumericT left = 0;
       __syncthreads();
 
       for (unsigned int stride = 1; stride < blockDim.x; stride *= 2)
       {
-        left = (threadIdx.x >= stride && tmp.x == shared_rows[threadIdx.x - stride]) ? inter_results[threadIdx.x - stride] : 0;
+        NumericT left = (threadIdx.x >= stride && tmp.x == shared_rows[threadIdx.x - stride]) ? inter_results[threadIdx.x - stride] : 0;
         __syncthreads();
         switch (option)
         {
@@ -1055,8 +1054,8 @@ namespace detail
       __syncthreads();
     } //for k
 
-    if (threadIdx.x == last_index && inter_results[last_index] != 0)
-      result[tmp.x] = (option == 2) ? sqrt(inter_results[last_index]) : inter_results[last_index];
+    if (local_index + 1 == group_end && inter_results[threadIdx.x] != 0)
+      result[tmp.x] = (option == 2) ? sqrt(inter_results[threadIdx.x]) : inter_results[threadIdx.x];
   }
 
   template<typename NumericT, unsigned int AlignmentV>

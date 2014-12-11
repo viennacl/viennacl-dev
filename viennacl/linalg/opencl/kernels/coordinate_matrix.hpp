@@ -291,12 +291,11 @@ void generate_coordinate_matrix_row_info_extractor(StringT & source, std::string
   source.append("      default: \n");
   source.append("        break; \n");
   source.append("    } \n");
-  source.append("    "); source.append(numeric_string); source.append(" left = 0; \n");
   source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
 
   source.append("    for (unsigned int stride = 1; stride < get_local_size(0); stride *= 2) \n");
   source.append("    { \n");
-  source.append("      left = (get_local_id(0) >= stride && tmp.x == shared_rows[get_local_id(0) - stride]) ? inter_results[get_local_id(0) - stride] : ("); source.append(numeric_string); source.append(")0; \n");
+  source.append("      "); source.append(numeric_string); source.append(" left = (get_local_id(0) >= stride && tmp.x == shared_rows[get_local_id(0) - stride]) ? inter_results[get_local_id(0) - stride] : ("); source.append(numeric_string); source.append(")0; \n");
   source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
   source.append("      switch (option) \n");
   source.append("      { \n");
@@ -330,8 +329,8 @@ void generate_coordinate_matrix_row_info_extractor(StringT & source, std::string
   source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
   source.append("  } \n"); //for k
 
-  source.append("  if (get_local_id(0) == last_index && inter_results[last_index] != 0) \n");
-  source.append("    result[tmp.x] = (option == 2) ? sqrt(inter_results[last_index]) : inter_results[last_index]; \n");
+  source.append("  if (local_index + 1 == group_end && inter_results[get_local_id(0)] != 0) \n");
+  source.append("    result[tmp.x] = (option == 2) ? sqrt(inter_results[get_local_id(0)]) : inter_results[get_local_id(0)]; \n");
   source.append("} \n");
 }
 
