@@ -237,7 +237,7 @@ Similarly the following initializer types are available for matrices:
 Several different sparse matrix types are provided in ViennaCL, which will be discussed in the following.
 
 \subsection manual-types-sparse-compressed Compressed Matrix
-`compressed_matrix<T, alignment>` represents a sparse matrix using a compressed sparse row scheme.
+`compressed_matrix<T, alignment>` represents a sparse matrix using a compressed sparse row (CSR) scheme, for which a sparse matrix-vector multiplication kernel based on CSR-adaptive \cite Greathouse-CSR-adaptive is available.
 `T` is the floating point type.
 `alignment` is the alignment and defaults to `1` at present.
 In general, sparse matrices should be set up on the CPU and then be pushed to the compute device using `copy()`, because dynamic memory management of sparse matrices is not provided on OpenCL compute devices such as GPUs.
