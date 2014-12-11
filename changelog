@@ -8,11 +8,14 @@ The focus of this bugfix release is to further improve the portability of the li
   - pipelined CG/BiCGStab/GMRES: Improved parameters and one kernel for NVIDIA GPUs.
   - pipelined CG/BiCGStab/GMRES: Improved function overloads so that a user call does not accidentally use the non-pipelined implementation.
   - compressed_matrix: Fixed runtime error when switching the memory location at runtime.
-  - compressed_compressed_matrix: Fixed a wrong buffer size in clear()
-  - CUDA with Visual Studio: Fixed compilation errors and warnings (thanks to Andreas Rost for the hint)
-  - direct solve benchmark: Removed unnecessary Boost.uBLAS dependency
-  - OpenMP: Fixed unspecified behavior for private and shared variables as well as reductions if the type is deduced from a template parameter (thanks to GitHub user aokomoriuta for precious input)
-  - AMG: Fixed a regression
+  - compressed_compressed_matrix: Fixed a wrong buffer size in clear().
+  - hyb_matrix: Using more portable and faster default settings with OpenCL.
+  - coordinate_matrix: Fixed incorrect CUDA and OpenCL kernels for the extraction of diagonals and row-norms.
+  - CUDA with Visual Studio: Fixed compilation errors and warnings (thanks to Andreas Rost for the hint).
+  - direct solve benchmark: Removed unnecessary Boost.uBLAS dependency.
+  - OpenMP: Fixed unspecified behavior for private and shared variables as well as reductions if the type is deduced from a template parameter (thanks to GitHub user aokomoriuta for precious input).
+  - OpenMP: Ensured compatibility with version 2.0 (no unsigned integers as loop variables).
+  - AMG: Fixed incorrect detection of coarse level operator dimensions (thanks again to Andreas Rost).
 
 ### Version 1.6.1
 This bugfix release focuses on performance improvements and provides a couple of bugfixes for issues reported by our users:
