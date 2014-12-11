@@ -14,7 +14,7 @@ script:
 - mkdir -p build
 - cd build
 - cmake -DENABLE_ASAN:BOOL=ON ..
-- make -j4
+- make -j2
 - ./examples/tutorial/viennacl-info
 - ctest -j4 --output-on-failure
 
