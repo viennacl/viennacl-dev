@@ -520,7 +520,7 @@ namespace detail
     viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
     viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
     viennacl::ocl::kernel & row_info_kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(), "row_info_extractor");
-    unsigned int thread_num = 256; //k.local_work_size(0);
+    unsigned int thread_num = 128; //k.local_work_size(0);
 
     row_info_kernel.local_work_size(0, thread_num);
 
@@ -566,7 +566,7 @@ void prod_impl(viennacl::coordinate_matrix<NumericT, AlignmentV> const & A,
   //std::cout << "prod(coordinate_matrix" << AlignmentV << ", vector) called with internal_nnz=" << A.internal_nnz() << std::endl;
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::program_name(), "vec_mul");
-  unsigned int thread_num = 256; //k.local_work_size(0);
+  unsigned int thread_num = 128; //k.local_work_size(0);
 
   k.local_work_size(0, thread_num);
 
@@ -604,7 +604,7 @@ void prod_impl(viennacl::coordinate_matrix<NumericT, AlignmentV> const & A,
 
   y.clear();
 
-  unsigned int thread_num = 256; //k.local_work_size(0);
+  unsigned int thread_num = 128; //k.local_work_size(0);
   k.local_work_size(0, thread_num);
   k.global_work_size(0, 64 * thread_num);  //64 work groups are hard-coded for now. Gives reasonable performance in most cases
 
@@ -647,7 +647,7 @@ void prod_impl(viennacl::coordinate_matrix<NumericT, AlignmentV> const & A,
 
   y.clear();
 
-  unsigned int thread_num = 256; //k.local_work_size(0);
+  unsigned int thread_num = 128; //k.local_work_size(0);
   k.local_work_size(0, thread_num);
   k.global_work_size(0, 64 * thread_num);  //64 work groups are hard-coded for now. Gives reasonable performance in most cases
 
