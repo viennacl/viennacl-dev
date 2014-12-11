@@ -218,6 +218,8 @@ void amg_transform_cpu(InternalT1 & A, InternalT1 & P, InternalT1 & R, InternalT
 template<typename InternalT1, typename InternalT2>
 void amg_transform_gpu(InternalT1 & A, InternalT1 & P, InternalT1 & R, InternalT2 & A_setup, InternalT2 & P_setup, amg_tag & tag, viennacl::context ctx)
 {
+  typedef typename InternalT2::value_type::value_type    NumericType;
+
   // Resize internal data structures to actual size.
   A.resize(tag.get_coarselevels()+1);
   P.resize(tag.get_coarselevels());
@@ -232,17 +234,20 @@ void amg_transform_gpu(InternalT1 & A, InternalT1 & P, InternalT1 & R, InternalT
   }
   for (unsigned int i=0; i<tag.get_coarselevels(); ++i)
   {
+    // find number of nonzeros in P:
+    vcl_size_t nonzeros = 0;
+    for (vcl_size_t j=0; j<P_setup[i].get_internal_pointer()->size(); ++j)
+      nonzeros += (*P_setup[i].get_internal_pointer())[j].size();
+
     viennacl::switch_memory_context(P[i], ctx);
     //P[i].resize(P_setup[i].size1(),P_setup[i].size2(),false);
-    viennacl::copy(*(P_setup[i].get_internal_pointer()),P[i]);
+    viennacl::detail::copy_impl(tools::const_sparse_matrix_adapter<NumericType>(*(P_setup[i].get_internal_pointer()), P_setup[i].size1(), P_setup[i].size2()), P[i], nonzeros);
     //viennacl::copy((boost::numeric::ublas::compressed_matrix<ScalarType>)P_setup[i],P[i]);
-  }
-  for (unsigned int i=0; i<tag.get_coarselevels(); ++i)
-  {
+
     viennacl::switch_memory_context(R[i], ctx);
     //R[i].resize(P_setup[i].size2(),P_setup[i].size1(),false);
     P_setup[i].set_trans(true);
-    viennacl::copy(*(P_setup[i].get_internal_pointer()),R[i]);
+    viennacl::detail::copy_impl(tools::const_sparse_matrix_adapter<NumericType>(*(P_setup[i].get_internal_pointer()), P_setup[i].size1(), P_setup[i].size2()), R[i], nonzeros);
     P_setup[i].set_trans(false);
   }
 }
