@@ -298,119 +298,63 @@ namespace detail
 
 
   /**
-  *   @brief Implementation of the lanczos algorithm without reorthogonalization
-  *
-  *   @param A            The system matrix
-  *   @param r            Random start vector
-  *   @param size         Size of krylov-space
-  *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
-  */
-  template<typename MatrixT, typename VectorT>
-  std::vector<
-          typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
-          >
-  lanczos (MatrixT const& A, VectorT & r, vcl_size_t size, lanczos_tag)
-  {
-    typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
-    typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-
-    ScalarType vcl_beta;
-    ScalarType vcl_alpha;
-    std::vector<CPU_ScalarType> alphas, betas;
-    CPU_ScalarType norm;
-    vcl_size_t n = r.size();
-    VectorT u(n), t(n);
-    boost::numeric::ublas::vector<CPU_ScalarType> s(r.size()), u_zero(n), q(n);
-    boost::numeric::ublas::matrix<CPU_ScalarType> Q(n, size);
-
-    u_zero = boost::numeric::ublas::zero_vector<CPU_ScalarType>(n);
-    detail::copy_vec_to_vec(u_zero, u);
-    norm = norm_2(r);
-
-    for (vcl_size_t i = 0;i < size; i++)
-    {
-      r /= norm;
-      vcl_beta = norm;
-
-      detail::copy_vec_to_vec(r,s);
-      boost::numeric::ublas::column(Q, i) = s;
-
-      u += prod(A, r);
-      vcl_alpha = inner_prod(u, r);
-      r = u - vcl_alpha * r;
-      norm = norm_2(r);
-
-      q = boost::numeric::ublas::column(Q, i);
-      detail::copy_vec_to_vec(q, t);
-
-      u = - norm * t;
-      alphas.push_back(vcl_alpha);
-      betas.push_back(vcl_beta);
-      s.clear();
-    }
-
-    return bisect(alphas, betas);
-  }
-
-  /**
   *   @brief Implementation of the Lanczos FRO algorithm
   *
   *   @param A            The system matrix
   *   @param r            Random start vector
-  *   @param size         Size of krylov-space
+  *   @param krylov_dim   Size of krylov-space
   *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
   */
-  template< typename MatrixT, typename VectorT >
-  std::vector<
-          typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
-          >
-  lanczosFRO (MatrixT const& A, VectorT & r, vcl_size_t size, lanczos_tag)
+  template< typename MatrixT, typename NumericT>
+  std::vector<NumericT>
+  lanczos(MatrixT const& A, vector_base<NumericT> & r, vcl_size_t krylov_dim, lanczos_tag const & tag)
   {
-    typedef typename viennacl::result_of::value_type<MatrixT>::type            NumericType;
-    typedef typename viennacl::result_of::cpu_value_type<NumericType>::type    CPU_NumericType;
+    std::vector<NumericT> alphas, betas;
+    viennacl::vector<NumericT> Aq(r.size());
+    viennacl::matrix<NumericT, viennacl::column_major> Q(r.size(), krylov_dim + 1);  // Krylov basis (each Krylov vector is one column)
 
-    CPU_NumericType temp;
-    CPU_NumericType norm;
-    NumericType vcl_beta;
-    NumericType vcl_alpha;
-    std::vector<CPU_NumericType> alphas, betas;
-    vcl_size_t n = r.size();
-    VectorT u(n), t(n);
-    NumericType inner_rt;
-    boost::numeric::ublas::vector<CPU_NumericType> u_zero(n), s(r.size()), q(n);
-    boost::numeric::ublas::matrix<CPU_NumericType> Q(n, size);
+    NumericT norm_r = norm_2(r);
+    NumericT beta = norm_r;
+    r /= norm_r;
 
-    long reorths = 0;
-    norm = norm_2(r);
+    // first Krylov vector:
+    viennacl::vector_base<NumericT> q0(Q.handle(), Q.size1(), 0, 1);
+    q0 = r;
 
-
-    for (vcl_size_t i = 0; i < size; i++)
+    for (vcl_size_t i = 0; i < krylov_dim; i++)
     {
-      r /= norm;
+      betas.push_back(beta);
+      viennacl::vector_base<NumericT> q_i(Q.handle(), Q.size1(), i * Q.internal_size1(), 1);
 
-      for (vcl_size_t j = 0; j < i; j++)
+      // Lanczos algorithm:
+      // - Compute A * q and orthogonalize:
+      Aq = viennacl::linalg::prod(A, q_i);
+      NumericT alpha = viennacl::linalg::inner_prod(Aq, q_i);
+      Aq -= alpha * q_i;
+
+      if (i > 0)
       {
-        q = boost::numeric::ublas::column(Q, j);
-        detail::copy_vec_to_vec(q, t);
-        inner_rt = viennacl::linalg::inner_prod(r,t);
-        r = r - inner_rt * t;
-        reorths++;
-      }
-      temp = viennacl::linalg::norm_2(r);
-      r = r / temp;
-      vcl_beta = temp * norm;
-      detail::copy_vec_to_vec(r,s);
-      boost::numeric::ublas::column(Q, i) = s;
+        viennacl::vector_base<NumericT> q_iminus1(Q.handle(), Q.size1(), (i-1) * Q.internal_size1(), 1);
+        Aq -= beta * q_iminus1;
 
-      u += viennacl::linalg::prod(A, r);
-      vcl_alpha = viennacl::linalg::inner_prod(u, r);
-      r = u - vcl_alpha * r;
-      norm = viennacl::linalg::norm_2(r);
-      q = boost::numeric::ublas::column(Q, i);
-      detail::copy_vec_to_vec(q, t);
-      u = - norm * t;
-      alphas.push_back(vcl_alpha);
-      betas.push_back(vcl_beta);
+        if (tag.method() == lanczos_tag::full_reorthogonalization)
+        {
+          // Gram-Schmidt (re-)orthogonalization:
+          // TODO: Reuse fast (pipelined) routines from GMRES or GEMV
+          for (vcl_size_t j = 0; j < i; j++)
+          {
+            viennacl::vector_base<NumericT> q_j(Q.handle(), Q.size1(), j * Q.internal_size1(), 1);
+            NumericT inner_rq = viennacl::linalg::inner_prod(Aq, q_j);
+            Aq -= inner_rq * q_j;
+          }
+        }
+      }
+
+      beta = viennacl::linalg::norm_2(Aq);
+      viennacl::vector_base<NumericT> q_iplus1(Q.handle(), Q.size1(), (i+1) * Q.internal_size1(), 1);
+      q_iplus1 = Aq / beta;
+
+      alphas.push_back(alpha);
     }
 
     return bisect(alphas, betas);
@@ -419,7 +363,9 @@ namespace detail
 } // end namespace detail
 
 /**
-*   @brief Implementation of the calculation of eigenvalues using lanczos
+*   @brief Implementation of the calculation of eigenvalues using lanczos (with and without reorthogonalization).
+*
+*   Implementation of Lanczos with partial reorthogonalization is implemented separately.
 *
 *   @param matrix        The system matrix
 *   @param tag           Tag with several options for the lanczos algorithm
@@ -457,15 +403,13 @@ eig(MatrixT const & matrix, lanczos_tag const & tag)
 
   switch (tag.method())
   {
-    case lanczos_tag::partial_reorthogonalization:
-      eigenvalues = detail::lanczosPRO(matrix, r, size_krylov, tag);
-      break;
-    case lanczos_tag::full_reorthogonalization:
-      eigenvalues = detail::lanczosFRO(matrix, r, size_krylov, tag);
-      break;
-    case lanczos_tag::no_reorthogonalization:
-      eigenvalues = detail::lanczos(matrix, r, size_krylov, tag);
-      break;
+  case lanczos_tag::partial_reorthogonalization:
+    eigenvalues = detail::lanczosPRO(matrix, r, size_krylov, tag);
+    break;
+  case lanczos_tag::full_reorthogonalization:
+  case lanczos_tag::no_reorthogonalization:
+    eigenvalues = detail::lanczos(matrix, r, size_krylov, tag);
+    break;
   }
 
   std::vector<CPU_NumericType> largest_eigenvalues;
