@@ -75,13 +75,21 @@ int main()
   *  Run the Lanczos method by passing the tag to the routine viennacl::linalg::eig()
   **/
   std::cout << "Running Lanczos algorithm (this might take a while)..." << std::endl;
-  std::vector<ScalarType> lanczos_eigenvalues = viennacl::linalg::eig(A, ltag);
+  viennacl::matrix<ScalarType, viennacl::column_major> approx_eigenvectors_A(A.size1(), ltag.num_eigenvalues());
+  std::vector<ScalarType> lanczos_eigenvalues = viennacl::linalg::eig(A, approx_eigenvectors_A, ltag);
 
   /**
   *  Print the computed eigenvalues and exit:
   **/
   for (std::size_t i = 0; i< lanczos_eigenvalues.size(); i++)
-    std::cout << "Eigenvalue " << i+1 << ": " << std::setprecision(10) << lanczos_eigenvalues[i] << std::endl;
+  {
+    std::cout << "* Eigenvalue " << i+1 << ": " << std::setprecision(10) << lanczos_eigenvalues[i] << std::endl;
+
+    // test eigenvector of full matrix A:
+    viennacl::vector_base<ScalarType> approx_eigenvector(approx_eigenvectors_A.handle(), approx_eigenvectors_A.size1(), i * approx_eigenvectors_A.internal_size1(), 1);
+    viennacl::vector<ScalarType> Aq = viennacl::linalg::prod(A, approx_eigenvector);
+    std::cout << "  Approximated eigenvalue of A via eigenvector: " << viennacl::linalg::inner_prod(Aq, approx_eigenvector) << std::endl;
+  }
 
   return EXIT_SUCCESS;
 }

@@ -64,6 +64,9 @@ namespace detail
 /**
 *   @brief Implementation of the bisect-algorithm for the calculation of the eigenvalues of a tridiagonal matrix. Experimental - interface might change.
 *
+*   Refer to "Calculation of the Eigenvalues of a Symmetric Tridiagonal Matrix by the Method of Bisection" in the Handbook Series Linear Algebra, contributed by Barth, Martin, and Wilkinson.
+*   http://www.maths.ed.ac.uk/~aar/papers/bamawi.pdf
+*
 *   @param alphas       Elements of the main diagonal
 *   @param betas        Elements of the secondary diagonal
 *   @return             Returns the eigenvalues of the tridiagonal matrix defined by alpha and beta
