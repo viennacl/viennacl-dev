@@ -365,7 +365,7 @@ public:
   typedef SizeT                                              size_type;
 
   sparse_matrix_adapter(std::vector<std::map<SizeT, NumericT> > & mat)
-    : BaseType(mat), mat_(mat), size1_(mat_.size()), size2_(mat_.size()) {}
+    : BaseType(mat), mat_(mat), size1_(static_cast<SizeT>(mat_.size())), size2_(static_cast<SizeT>(mat_.size())) {}
 
   sparse_matrix_adapter(std::vector<std::map<SizeT, NumericT> > & mat,
                         vcl_size_t num_rows,
