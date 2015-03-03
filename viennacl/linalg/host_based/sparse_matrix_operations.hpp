@@ -300,6 +300,169 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & sp_mat,
 }
 
 
+
+/** @brief Carries out sparse_matrix-sparse_matrix multiplication for CSR matrices
+*
+* Implementation of the convenience expression C = prod(A, B);
+* Based on computing C(i, :) = A(i, :) * B via merging the respective rows of B
+*
+* @param A     Left factor
+* @param B     Right factor
+* @param C     Result matrix
+*/
+template<typename NumericT, unsigned int AlignmentV>
+void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
+               viennacl::compressed_matrix<NumericT, AlignmentV> const & B,
+               viennacl::compressed_matrix<NumericT, AlignmentV> & C)
+{
+
+  NumericT     const * A_elements   = detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  NumericT     const * B_elements   = detail::extract_raw_pointer<NumericT>(B.handle());
+  unsigned int const * B_row_buffer = detail::extract_raw_pointer<unsigned int>(B.handle1());
+  unsigned int const * B_col_buffer = detail::extract_raw_pointer<unsigned int>(B.handle2());
+
+
+  /*
+   * Stage 1: Determine sparsity pattern of C
+   */
+  std::vector<unsigned int> nnz_per_row_in_C(A.size1() + 1);
+
+  for (std::size_t i=0; i<A.size1(); ++i)
+  {
+    std::size_t row_start_A = A_row_buffer[i];
+    std::size_t nnz_in_row_A = A_row_buffer[i+1] - row_start_A;
+    std::vector<unsigned int> row_front(nnz_in_row_A);
+    std::vector<unsigned int> row_starts(nnz_in_row_A);
+    std::vector<unsigned int> row_stops(nnz_in_row_A);
+
+    // load row arrays for B:
+    for (std::size_t j=0; j<nnz_in_row_A; ++j)
+    {
+      unsigned int row_index_B = A_col_buffer[row_start_A + j];
+      row_starts[j] = B_row_buffer[row_index_B];
+      row_stops[j]  = B_row_buffer[row_index_B + 1];
+      row_front[j]  = (row_stops[j] > row_starts[j]) ? B_col_buffer[row_starts[j]] : B.size2();   // set end marker if row is empty
+    }
+
+    std::size_t nnz_in_row_C = 0;
+    while (1) // step through the entries in C
+    {
+      // find lowest unconsidered column index in row front:
+      unsigned int min_index = B.size2();
+      for (std::size_t j=0; j<row_front.size(); ++j)
+        if (row_front[j] < min_index)
+          min_index = row_front[j];
+
+      if (min_index == B.size2()) // we're done, all column indices processed
+        break;
+
+      // advance row front for min_index ('merge' operation)
+      for (std::size_t j=0; j<row_front.size(); ++j)
+      {
+        if (row_front[j] == min_index)
+        {
+          // load next column index if available, otherwise set end marker (B.size2())
+          ++row_starts[j];
+          if (row_starts[j] < row_stops[j])
+            row_front[j] = B_col_buffer[row_starts[j]];
+          else
+            row_front[j] = B.size2();
+        }
+      }
+
+      // increase counter for nonzeros in C:
+      ++nnz_in_row_C;
+    }
+
+    nnz_per_row_in_C[i] = nnz_in_row_C;
+  }
+
+  // exclusive scan to obtain row start indices:
+  unsigned int current_offset = 0;
+  for (std::size_t i=0; i<nnz_per_row_in_C.size(); ++i)
+  {
+    unsigned int tmp = nnz_per_row_in_C[i];
+    nnz_per_row_in_C[i] = current_offset;
+    current_offset += tmp;
+  }
+
+
+  /*
+   * Stage 2: Compute product (code similar, maybe pull out into a separate function to avoid code duplication?)
+   */
+  C.resize(A.size1(), B.size2(), false);
+  C.reserve(nnz_per_row_in_C.back());
+
+  NumericT     * C_elements   = detail::extract_raw_pointer<NumericT>(C.handle());
+  unsigned int * C_row_buffer = detail::extract_raw_pointer<unsigned int>(C.handle1());
+  unsigned int * C_col_buffer = detail::extract_raw_pointer<unsigned int>(C.handle2());
+
+  for (std::size_t i=0; i<A.size1(); ++i)
+  {
+    std::size_t C_element_index = nnz_per_row_in_C[i];
+    C_row_buffer[i] = C_element_index;
+
+    std::size_t row_start_A = A_row_buffer[i];
+    std::size_t nnz_in_row_A = A_row_buffer[i+1] - row_start_A;
+    std::vector<unsigned int> row_front(nnz_in_row_A);
+    std::vector<unsigned int> row_starts(nnz_in_row_A);
+    std::vector<unsigned int> row_stops(nnz_in_row_A);
+
+    // load row arrays for B:
+    for (std::size_t j=0; j<nnz_in_row_A; ++j)
+    {
+      unsigned int row_index_B = A_col_buffer[row_start_A + j];
+      row_starts[j] = B_row_buffer[row_index_B];
+      row_stops[j]  = B_row_buffer[row_index_B + 1];
+      row_front[j]  = (row_stops[j] > row_starts[j]) ? B_col_buffer[row_starts[j]] : B.size2();   // set end marker if row is empty
+    }
+
+    while (1) // step through the entries in C
+    {
+      // find lowest unconsidered column index in row front:
+      unsigned int min_index = B.size2();
+      for (std::size_t j=0; j<row_front.size(); ++j)
+        if (row_front[j] < min_index)
+          min_index = row_front[j];
+
+      if (min_index == B.size2()) // we're done, all column indices processed
+        break;
+
+      // advance row front for min_index ('merge' operation)
+      NumericT val_C = 0;
+      for (std::size_t j=0; j<row_front.size(); ++j)
+      {
+        if (row_front[j] == min_index)
+        {
+          val_C += A_elements[row_start_A + j] * B_elements[row_starts[j]];
+          // load next column index if available, otherwise set end marker (B.size2())
+          ++row_starts[j];
+          if (row_starts[j] < row_stops[j])
+            row_front[j] = B_col_buffer[row_starts[j]];
+          else
+            row_front[j] = B.size2();
+        }
+      }
+
+      // write entry to C:
+      C_col_buffer[C_element_index] = min_index;
+      C_elements[C_element_index] = val_C;
+
+      // increase counter for nonzeros in C:
+      ++C_element_index;
+    }
+  }
+
+  C_row_buffer[C.size1()] = nnz_per_row_in_C.back();
+
+}
+
+
+
+
 //
 // Triangular solve for compressed_matrix, A \ b
 //
