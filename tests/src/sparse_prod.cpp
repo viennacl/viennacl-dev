@@ -140,11 +140,11 @@ int test(Epsilon const& epsilon)
 
   for (std::size_t i=0; i<ublas_A.size1(); ++i)
     for (std::size_t j=0; j<nnz_row; ++j)
-      ublas_A(i, std::size_t(random<double>() * ublas_A.size2())) = NumericT(1.0) + random<NumericT>();
+      ublas_A(i, std::size_t(random<double>() * double(ublas_A.size2()))) = NumericT(1.0) + random<NumericT>();
 
   for (std::size_t i=0; i<ublas_B.size1(); ++i)
     for (std::size_t j=0; j<nnz_row; ++j)
-      ublas_B(i, std::size_t(random<double>() * ublas_B.size2())) = NumericT(1.0) + random<NumericT>();
+      ublas_B(i, std::size_t(random<double>() * double(ublas_B.size2()))) = NumericT(1.0) + random<NumericT>();
 
 
   viennacl::compressed_matrix<NumericT>  vcl_A(ublas_A.size1(), ublas_A.size2());
@@ -159,7 +159,7 @@ int test(Epsilon const& epsilon)
   ublas_C = prod(ublas_A, ublas_B);
 
   std::cout << "Testing products: compressed_matrix" << std::endl;
-  viennacl::linalg::host_based::prod_impl(vcl_A, vcl_B, vcl_C);
+  vcl_C = viennacl::linalg::prod(vcl_A, vcl_B);
 
   if ( std::fabs(diff(ublas_C, vcl_C)) > epsilon )
   {

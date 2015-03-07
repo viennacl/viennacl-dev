@@ -344,14 +344,14 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
       unsigned int row_index_B = A_col_buffer[row_start_A + j];
       row_starts[j] = B_row_buffer[row_index_B];
       row_stops[j]  = B_row_buffer[row_index_B + 1];
-      row_front[j]  = (row_stops[j] > row_starts[j]) ? B_col_buffer[row_starts[j]] : B.size2();   // set end marker if row is empty
+      row_front[j]  = (row_stops[j] > row_starts[j]) ? B_col_buffer[row_starts[j]] : static_cast<unsigned int>(B.size2());   // set end marker if row is empty
     }
 
-    std::size_t nnz_in_row_C = 0;
+    unsigned int nnz_in_row_C = 0;
     while (1) // step through the entries in C
     {
       // find lowest unconsidered column index in row front:
-      unsigned int min_index = B.size2();
+      unsigned int min_index = static_cast<unsigned int>(B.size2());
       for (std::size_t j=0; j<row_front.size(); ++j)
         if (row_front[j] < min_index)
           min_index = row_front[j];
@@ -369,7 +369,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
           if (row_starts[j] < row_stops[j])
             row_front[j] = B_col_buffer[row_starts[j]];
           else
-            row_front[j] = B.size2();
+            row_front[j] = static_cast<unsigned int>(B.size2());
         }
       }
 
@@ -402,11 +402,11 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   for (std::size_t i=0; i<A.size1(); ++i)
   {
-    std::size_t C_element_index = nnz_per_row_in_C[i];
+    unsigned int C_element_index = nnz_per_row_in_C[i];
     C_row_buffer[i] = C_element_index;
 
-    std::size_t row_start_A = A_row_buffer[i];
-    std::size_t nnz_in_row_A = A_row_buffer[i+1] - row_start_A;
+    std::size_t row_start_A  = std::size_t(A_row_buffer[i]);
+    std::size_t nnz_in_row_A = std::size_t(A_row_buffer[i+1]) - row_start_A;
     std::vector<unsigned int> row_front(nnz_in_row_A);
     std::vector<unsigned int> row_starts(nnz_in_row_A);
     std::vector<unsigned int> row_stops(nnz_in_row_A);
@@ -417,13 +417,13 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
       unsigned int row_index_B = A_col_buffer[row_start_A + j];
       row_starts[j] = B_row_buffer[row_index_B];
       row_stops[j]  = B_row_buffer[row_index_B + 1];
-      row_front[j]  = (row_stops[j] > row_starts[j]) ? B_col_buffer[row_starts[j]] : B.size2();   // set end marker if row is empty
+      row_front[j]  = (row_stops[j] > row_starts[j]) ? B_col_buffer[row_starts[j]] : static_cast<unsigned int>(B.size2());   // set end marker if row is empty
     }
 
     while (1) // step through the entries in C
     {
       // find lowest unconsidered column index in row front:
-      unsigned int min_index = B.size2();
+      unsigned int min_index = static_cast<unsigned int>(B.size2());
       for (std::size_t j=0; j<row_front.size(); ++j)
         if (row_front[j] < min_index)
           min_index = row_front[j];
@@ -443,7 +443,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
           if (row_starts[j] < row_stops[j])
             row_front[j] = B_col_buffer[row_starts[j]];
           else
-            row_front[j] = B.size2();
+            row_front[j] = static_cast<unsigned int>(B.size2());
         }
       }
 

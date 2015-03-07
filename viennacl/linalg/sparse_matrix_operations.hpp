@@ -201,6 +201,45 @@ namespace viennacl
       }
     }
 
+    // A * B with both A and B sparse
+
+    /** @brief Carries out matrix-vector multiplication involving a sparse matrix type
+    *
+    * Implementation of the convenience expression result = prod(mat, vec);
+    *
+    * @param mat    The matrix
+    * @param vec    The vector
+    * @param result The result vector
+    */
+    template<typename NumericT>
+    void
+    prod_impl(const viennacl::compressed_matrix<NumericT> & A,
+              const viennacl::compressed_matrix<NumericT> & B,
+                    viennacl::compressed_matrix<NumericT> & C)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::prod_impl(A, B, C);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(A, B, C);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::prod_impl(A, B, C);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+
     /** @brief Carries out triangular inplace solves
     *
     * @param mat    The matrix

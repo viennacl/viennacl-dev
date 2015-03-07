@@ -607,6 +607,18 @@ public:
     return *this;
   }
 
+  /** @brief Assignment a compressed matrix from the product of two compressed_matrix objects (C = A * B). */
+  compressed_matrix & operator=(matrix_expression<const compressed_matrix, const compressed_matrix, op_prod> const & proxy)
+  {
+    assert( (rows_ == 0 || rows_ == proxy.lhs().size1()) && bool("Size mismatch") );
+    assert( (cols_ == 0 || cols_ == proxy.rhs().size2()) && bool("Size mismatch") );
+
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+    generate_row_block_information();
+
+    return *this;
+  }
+
 
   /** @brief Sets the row, column and value arrays of the compressed matrix
     *

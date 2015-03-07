@@ -315,6 +315,19 @@ namespace viennacl
                                op_prod >(mat, vec);
     }
 
+    /** @brief Sparse matrix-matrix product with compressed_matrix objects */
+    template<typename NumericT>
+    viennacl::matrix_expression<const compressed_matrix<NumericT>,
+                                const compressed_matrix<NumericT>,
+                                op_prod >
+    prod(compressed_matrix<NumericT> const & A,
+         compressed_matrix<NumericT> const & B)
+    {
+      return viennacl::matrix_expression<const compressed_matrix<NumericT>,
+                                         const compressed_matrix<NumericT>,
+                                         op_prod >(A, B);
+    }
+
   } // end namespace linalg
 } // end namespace viennacl
 #endif
