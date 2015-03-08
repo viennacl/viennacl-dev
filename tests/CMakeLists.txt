@@ -25,7 +25,7 @@ if (ENABLE_OPENCL)
                matrix_row_float matrix_row_double matrix_row_int
                matrix_col_float matrix_col_double matrix_col_int
                nmf qr_method qr_method_func scan
-               scalar self_assign sparse structured-matrices svd tql
+               scalar self_assign sparse sparse_prod structured-matrices svd tql
                vector_float_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      add_executable(${PROG}-test-opencl src/${PROG}.cpp)

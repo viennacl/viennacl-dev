@@ -29,6 +29,7 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
+#include "viennacl/linalg/host_based/common.hpp"
 #include "viennacl/linalg/opencl/kernels/compressed_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/coordinate_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/ell_matrix.hpp"
@@ -191,7 +192,92 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & sp_A,
                            cl_uint(viennacl::traits::internal_size1(y)), cl_uint(viennacl::traits::internal_size2(y)) ) );
 }
 
+/** @brief Carries out sparse_matrix-sparse_matrix multiplication for CSR matrices
+*
+* Implementation of the convenience expression C = prod(A, B);
+* Based on computing C(i, :) = A(i, :) * B via merging the respective rows of B
+*
+* @param A     Left factor
+* @param B     Right factor
+* @param C     Result matrix
+*/
+template<typename NumericT, unsigned int AlignmentV>
+void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
+               viennacl::compressed_matrix<NumericT, AlignmentV> const & B,
+               viennacl::compressed_matrix<NumericT, AlignmentV> & C)
+{
 
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+
+  /*
+   * Stage 1: Analyze sparsity pattern in order to properly allocate temporary arrays
+   *
+   * - Upper bound for the row lengths in C
+   */
+  viennacl::vector<unsigned int> upper_bound_nonzeros_per_row_C(128, ctx); // upper bound for the nonzeros per row encountered for each work group
+
+  viennacl::ocl::kernel & k1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_stage1");
+  viennacl::ocl::enqueue(k1(A.handle1().opencl_handle(), A.handle2().opencl_handle(), cl_uint(A.size1()),
+                            B.handle1().opencl_handle(), B.handle2().opencl_handle(), cl_uint(B.size1()),
+                            viennacl::traits::opencl_handle(upper_bound_nonzeros_per_row_C)
+                        )  );
+
+  upper_bound_nonzeros_per_row_C.switch_memory_context(viennacl::context(MAIN_MEMORY));
+  unsigned int * upper_bound_nonzeros_per_row_C_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(upper_bound_nonzeros_per_row_C.handle());
+
+  unsigned int max_nnz_per_row_C = 0;
+  for (std::size_t i=0; i<upper_bound_nonzeros_per_row_C.size(); ++i)
+  {
+    max_nnz_per_row_C = (max_nnz_per_row_C < upper_bound_nonzeros_per_row_C_ptr[i]) ? upper_bound_nonzeros_per_row_C_ptr[i] : max_nnz_per_row_C;
+  }
+
+
+  /*
+   * Stage 2: Determine sparsity pattern of C
+   */
+  C.resize(A.size1(), B.size2(), false);
+
+  viennacl::vector<unsigned int> scratchpad_memory(256 * max_nnz_per_row_C, ctx);
+  viennacl::ocl::kernel & k2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_stage2");
+  viennacl::ocl::enqueue(k2(A.handle1().opencl_handle(), A.handle2().opencl_handle(), cl_uint(A.size1()),
+                            B.handle1().opencl_handle(), B.handle2().opencl_handle(), cl_uint(B.size2()),
+                            C.handle1().opencl_handle(),
+                            scratchpad_memory.handle().opencl_handle(),
+                            cl_uint(max_nnz_per_row_C)
+                        )  );
+
+  // exclusive scan on host to obtain row start indices:
+  viennacl::backend::typesafe_host_array<unsigned int> row_buffer(C.handle1(), C.size1() + 1);
+  viennacl::backend::memory_read(C.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+  unsigned int current_offset = 0;
+  for (std::size_t i=0; i<C.size1(); ++i)
+  {
+    unsigned int tmp = row_buffer[i];
+    row_buffer.set(i, current_offset);
+    current_offset += tmp;
+  }
+  row_buffer.set(C.size1(), current_offset);
+  viennacl::backend::memory_write(C.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+
+
+  /*
+   * Stage 3: Compute entries in C
+   */
+
+  C.reserve(current_offset);
+
+  viennacl::vector<NumericT> scratchpad_memory2(256 * max_nnz_per_row_C, ctx);  // temporary rows and such
+  viennacl::ocl::kernel & k3 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_stage3");
+  viennacl::ocl::enqueue(k3(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.size1()),
+                            B.handle1().opencl_handle(), B.handle2().opencl_handle(), B.handle().opencl_handle(), cl_uint(B.size2()),
+                            C.handle1().opencl_handle(), C.handle2().opencl_handle(), C.handle().opencl_handle(),
+                            scratchpad_memory.handle().opencl_handle(),
+                            scratchpad_memory2.handle().opencl_handle(),
+                            cl_uint(max_nnz_per_row_C)
+                        )  );
+
+}
 
 // triangular solvers
 
