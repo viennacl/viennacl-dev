@@ -238,8 +238,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
    */
   C.resize(A.size1(), B.size2(), false);
 
-  viennacl::vector<unsigned int> scratchpad_memory(256 * max_nnz_per_row_C, ctx);
   viennacl::ocl::kernel & k2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_stage2");
+  viennacl::vector<unsigned int> scratchpad_memory(2 * k2.local_work_size(0) * max_nnz_per_row_C, ctx);
   viennacl::ocl::enqueue(k2(A.handle1().opencl_handle(), A.handle2().opencl_handle(), cl_uint(A.size1()),
                             B.handle1().opencl_handle(), B.handle2().opencl_handle(), cl_uint(B.size2()),
                             C.handle1().opencl_handle(),
@@ -267,8 +267,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   C.reserve(current_offset);
 
-  viennacl::vector<NumericT> scratchpad_memory2(256 * max_nnz_per_row_C, ctx);  // temporary rows and such
   viennacl::ocl::kernel & k3 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_stage3");
+  viennacl::vector<NumericT> scratchpad_memory2(2 * k3.local_work_size(0) * max_nnz_per_row_C, ctx);  // temporary rows and such
   viennacl::ocl::enqueue(k3(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.size1()),
                             B.handle1().opencl_handle(), B.handle2().opencl_handle(), B.handle().opencl_handle(), cl_uint(B.size2()),
                             C.handle1().opencl_handle(), C.handle2().opencl_handle(), C.handle().opencl_handle(),

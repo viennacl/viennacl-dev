@@ -1170,49 +1170,60 @@ void generate_compressed_matrix_compressed_matrix_prod_2(StringT & source)
   source.append("  __global const unsigned int * B_column_indices, \n");
   source.append("  unsigned int B_size2, \n");
   source.append("  __global unsigned int * C_row_indices, \n");
-  source.append("  __global unsigned int * scratchpad_start, \n");
+  source.append("  __global unsigned int * scratchpad_column_indices, \n");
   source.append("  unsigned int scratchpad_size_per_group) \n");
   source.append("{ \n");
   source.append("  unsigned int work_per_item = max((uint) (A_size1 / get_global_size(0)), (uint) 1); \n");
   source.append("  unsigned int row_C_start = get_group_id(0) * get_local_size(0) * work_per_item; \n");
   source.append("  unsigned int row_C_stop  = min( (uint) ((get_group_id(0) + 1) * get_local_size(0) * work_per_item), (uint) A_size1); \n");
-  source.append("  __global unsigned int * scratchpad = scratchpad_start + get_group_id(0) * scratchpad_size_per_group; \n");
   source.append("  __local unsigned int shared_front[256]; \n");
 
   source.append("  for (unsigned int row_C = row_C_start; row_C < row_C_stop; ++row_C) \n");
   source.append("  { \n");
-  source.append("    unsigned int row_C_nnz = 0; \n");
-  source.append("    unsigned int row_A_index = A_row_indices[row_C] + get_local_id(0); \n");
+  source.append("    unsigned int scratchpad_nnz = 0; \n");
+  source.append("    unsigned int row_A_start = A_row_indices[row_C]; \n");
   source.append("    unsigned int row_A_stop  = A_row_indices[row_C+1]; \n");
-  source.append("    unsigned int row_index_B = (row_A_index < row_A_stop) ? A_column_indices[row_A_index] : 0; \n");
-  source.append("    unsigned int front_start = (row_A_index < row_A_stop) ? B_row_indices[row_index_B]     : 0; \n");
-  source.append("    unsigned int front_stop  = (row_A_index < row_A_stop) ? B_row_indices[row_index_B + 1] : 0; \n");
-  source.append("    unsigned int front = (front_stop > front_start) ? B_column_indices[front_start] : B_size2; \n");
-  source.append("    \n");
-  source.append("    while (1) {\n");
+  source.append("    unsigned int iterations_A  = (row_A_stop == row_A_start) ? 0 : (row_A_stop - row_A_start - 1) / (get_local_size(0)-1) + 1; \n");
+  source.append("    unsigned int row_C_nnz = 0; \n");
+  source.append("    for (unsigned int iter_A = 0; iter_A < iterations_A; ++iter_A) \n");
+  source.append("    { \n");
+  source.append("      __global unsigned int * scratchpad_read  = scratchpad_column_indices + (2 * get_group_id(0) +     iter_A % 2) * scratchpad_size_per_group; \n");
+  source.append("      __global unsigned int * scratchpad_write = scratchpad_column_indices + (2 * get_group_id(0) + 1 - iter_A % 2) * scratchpad_size_per_group; \n");
+  source.append("      row_C_nnz = 0; \n");
+  source.append("      unsigned int row_A_index = row_A_start + iter_A * (get_local_size(0)-1) + ((get_local_id(0) > 0) ? get_local_id(0) - 1 : 0); \n");
+  source.append("      unsigned int row_index_B = (row_A_index < row_A_stop && get_local_id(0) > 0) ? A_column_indices[row_A_index] : 0; \n");
+  source.append("      unsigned int front_start = (get_local_id(0) > 0) ? ((row_A_index < row_A_stop) ? B_row_indices[row_index_B]     : 0) : 0; \n");
+  source.append("      unsigned int front_stop  = (get_local_id(0) > 0) ? ((row_A_index < row_A_stop) ? B_row_indices[row_index_B + 1] : 0) : scratchpad_nnz; \n");
+  source.append("      unsigned int front = (front_stop > front_start) ? ((get_local_id(0) > 0) ? B_column_indices[front_start] : scratchpad_read[front_start]) : B_size2; \n");
+  source.append("      \n");
+  source.append("      while (1) {\n");
 
   // find minimum index via reduction:
-  source.append("      shared_front[get_local_id(0)] = front; \n");
-  source.append("      for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
-  source.append("        if (get_local_id(0) < stride) \n");
-  source.append("          shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + stride]); \n");
-  source.append("      } \n");
+  source.append("        shared_front[get_local_id(0)] = front; \n");
+  source.append("        for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
+  source.append("          barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("          if (get_local_id(0) < stride) \n");
+  source.append("            shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + stride]); \n");
+  source.append("        } \n");
 
   // check whether more work is required
-  source.append("      if (shared_front[0] == B_size2) \n");
-  source.append("        break; \n");
+  source.append("        if (shared_front[0] == B_size2) \n");
+  source.append("          break; \n");
 
   // advance front where necessary
-  source.append("      if (front == shared_front[0]) { \n");
-  source.append("        ++front_start; \n");
-  source.append("        front = (front_stop > front_start) ? B_column_indices[front_start] : B_size2; \n");
-  source.append("      } \n");
+  source.append("        if (front == shared_front[0]) { \n");
+  source.append("          ++front_start; \n");
+  source.append("          front = (front_stop > front_start) ? ((get_local_id(0) > 0) ? B_column_indices[front_start] : scratchpad_read[front_start]) : B_size2; \n");
+  source.append("        } \n");
 
   // increase counter for number of entries in C:
-  source.append("      ++row_C_nnz;\n");
+  source.append("        if (iter_A + 1 < iterations_A && get_local_id(0) == 0)\n"); // need to record for later.
+  source.append("          scratchpad_write[row_C_nnz] = shared_front[0];\n");
+  source.append("        ++row_C_nnz;\n");
 
-  source.append("    } \n"); //while
+  source.append("      } \n"); //while
+  source.append("      scratchpad_nnz = row_C_nnz; \n");
+  source.append("    } \n"); //for
 
   // write number of entries found:
   source.append("    if (get_local_id(0) == 0) \n");
@@ -1244,67 +1255,85 @@ void generate_compressed_matrix_compressed_matrix_prod_3(StringT & source, std::
   source.append("  __global unsigned int * C_row_indices, \n");
   source.append("  __global unsigned int * C_column_indices, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * C_elements, \n");
-  source.append("  __global unsigned int * scratchpad_start, \n");
-  source.append("  __global "); source.append(numeric_string); source.append(" * scratchpad2_start, \n");
+  source.append("  __global unsigned int * scratchpad_column_indices, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * scratchpad_values, \n");
   source.append("  unsigned int scratchpad_size_per_group) \n");
   source.append("{ \n");
   source.append("  unsigned int work_per_item = max((uint) (A_size1 / get_global_size(0)), (uint) 1); \n");
   source.append("  unsigned int row_C_start = get_group_id(0) * get_local_size(0) * work_per_item; \n");
   source.append("  unsigned int row_C_stop  = min( (uint) ((get_group_id(0) + 1) * get_local_size(0) * work_per_item), (uint) A_size1); \n");
-  source.append("  __global unsigned int * scratchpad = scratchpad_start + get_group_id(0) * scratchpad_size_per_group; \n");
   source.append("  __local unsigned int shared_front[256]; \n");
   source.append("  __local "); source.append(numeric_string); source.append(" shared_front_values[256]; \n");
 
   source.append("  for (unsigned int row_C = row_C_start; row_C < row_C_stop; ++row_C) \n");
   source.append("  { \n");
+  source.append("    unsigned int scratchpad_nnz = 0; \n");
   source.append("    unsigned int nnz_index_C = C_row_indices[row_C]; \n");
-  source.append("    unsigned int row_A_index = A_row_indices[row_C] + get_local_id(0); \n");
+  source.append("    unsigned int row_A_start = A_row_indices[row_C]; \n");
   source.append("    unsigned int row_A_stop  = A_row_indices[row_C+1]; \n");
-  source.append("    unsigned int row_index_B = (row_A_index < row_A_stop) ? A_column_indices[row_A_index] : 0; \n");
-  source.append("    "); source.append(numeric_string); source.append(" value_A = (row_A_index < row_A_stop) ? A_elements[row_A_index] : 0;\n");
-  source.append("    unsigned int front_start = (row_A_index < row_A_stop) ? B_row_indices[row_index_B]     : 0; \n");
-  source.append("    unsigned int front_stop  = (row_A_index < row_A_stop) ? B_row_indices[row_index_B + 1] : 0; \n");
-  source.append("    unsigned int front = (front_stop > front_start) ? B_column_indices[front_start] : B_size2; \n");
-  source.append("    \n");
-  source.append("    while (1) {\n");
+  source.append("    unsigned int iterations_A  = (row_A_stop == row_A_start) ? 0 : (row_A_stop - row_A_start - 1) / (get_local_size(0)-1) + 1; \n");
+  source.append("    unsigned int row_C_nnz = 0; \n");
+  source.append("    for (unsigned int iter_A = 0; iter_A < iterations_A; ++iter_A) \n");
+  source.append("    { \n");
+  source.append("      __global unsigned int * scratchpad_indices_read  = scratchpad_column_indices + (2 * get_group_id(0) +     iter_A % 2) * scratchpad_size_per_group; \n");
+  source.append("      __global unsigned int * scratchpad_indices_write = scratchpad_column_indices + (2 * get_group_id(0) + 1 - iter_A % 2) * scratchpad_size_per_group; \n");
+  source.append("      __global "); source.append(numeric_string); source.append(" * scratchpad_values_read  = scratchpad_values + (2 * get_group_id(0) +     iter_A % 2) * scratchpad_size_per_group; \n");
+  source.append("      __global "); source.append(numeric_string); source.append(" * scratchpad_values_write = scratchpad_values + (2 * get_group_id(0) + 1 - iter_A % 2) * scratchpad_size_per_group; \n");
+  source.append("      row_C_nnz = 0; \n");
+  source.append("      unsigned int row_A_index = row_A_start + iter_A * (get_local_size(0)-1) + ((get_local_id(0) > 0) ? get_local_id(0) - 1 : 0); \n");
+  source.append("      "); source.append(numeric_string); source.append(" value_A = (row_A_index < row_A_stop && get_local_id(0) > 0) ? A_elements[row_A_index] : 1;\n");
+  source.append("      unsigned int row_index_B = (row_A_index < row_A_stop && get_local_id(0) > 0) ? A_column_indices[row_A_index] : 0; \n");
+  source.append("      unsigned int front_start = (row_A_index < row_A_stop && get_local_id(0) > 0) ? B_row_indices[row_index_B]    : 0; \n");
+  source.append("      unsigned int front_stop  = (get_local_id(0) > 0) ? ((row_A_index < row_A_stop) ? B_row_indices[row_index_B + 1] : 0) : scratchpad_nnz; \n");
+  source.append("      unsigned int front = (front_stop > front_start) ? ((get_local_id(0) > 0) ? B_column_indices[front_start] : scratchpad_indices_read[front_start]) : B_size2; \n");
+  source.append("      \n");
+  source.append("      while (1) {\n");
 
   // find minimum index via reduction:
-  source.append("      shared_front[get_local_id(0)] = front; \n");
-  source.append("      for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
-  source.append("        if (get_local_id(0) < stride) \n");
-  source.append("          shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + stride]); \n");
-  source.append("      } \n");
+  source.append("        shared_front[get_local_id(0)] = front; \n");
+  source.append("        for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
+  source.append("          barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("          if (get_local_id(0) < stride) \n");
+  source.append("            shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + stride]); \n");
+  source.append("        } \n");
 
   // check whether more work is required
-  source.append("      if (shared_front[0] == B_size2) \n");
-  source.append("        break; \n");
+  source.append("        if (shared_front[0] == B_size2) \n");
+  source.append("          break; \n");
 
   // advance front where necessary
-  source.append("      if (front == shared_front[0]) { \n");
-  source.append("        shared_front_values[get_local_id(0)] = value_A * B_elements[front_start]; \n");
-  source.append("        ++front_start; \n");
-  source.append("        front = (front_stop > front_start) ? B_column_indices[front_start] : B_size2; \n");
-  source.append("      } else { \n");
-  source.append("        shared_front_values[get_local_id(0)] = 0; \n");
-  source.append("      } \n");
-
+  source.append("        if (front == shared_front[0]) { \n");
+  source.append("          shared_front_values[get_local_id(0)] = value_A * ((get_local_id(0) > 0) ? B_elements[front_start] : scratchpad_values_read[front_start]); \n");
+  source.append("          ++front_start; \n");
+  source.append("          front = (front_stop > front_start) ? ((get_local_id(0) > 0) ? B_column_indices[front_start] : scratchpad_indices_read[front_start]) : B_size2; \n");
+  source.append("        } else { \n");
+  source.append("          shared_front_values[get_local_id(0)] = 0; \n");
+  source.append("        } \n");
 
   // write entry to C after summing all contributions:
-  source.append("      for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
-  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
-  source.append("        if (get_local_id(0) < stride) \n");
-  source.append("          shared_front_values[get_local_id(0)] += shared_front_values[get_local_id(0) + stride]; \n");
-  source.append("      } \n");
-  source.append("      if (get_local_id(0) == 0) { \n");
-  source.append("        C_column_indices[nnz_index_C] = shared_front[0]; \n");
-  source.append("        C_elements[nnz_index_C]       = shared_front_values[0]; \n");
-  source.append("        ++nnz_index_C; \n");
-  source.append("      } \n");
+  source.append("        for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
+  source.append("          barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("          if (get_local_id(0) < stride) \n");
+  source.append("            shared_front_values[get_local_id(0)] += shared_front_values[get_local_id(0) + stride]; \n");
+  source.append("        } \n");
+  source.append("        if (get_local_id(0) == 0) { \n");
+  source.append("          if (iter_A + 1 < iterations_A) {\n"); // need to record for later.
+  source.append("            scratchpad_indices_write[row_C_nnz] = shared_front[0];\n");
+  source.append("            scratchpad_values_write[row_C_nnz] = shared_front_values[0];\n");
+  source.append("            ++row_C_nnz;\n");
+  source.append("          } else { \n");
+  source.append("            C_column_indices[nnz_index_C] = shared_front[0]; \n");
+  source.append("            C_elements[nnz_index_C]       = shared_front_values[0]; \n");
+  source.append("            ++nnz_index_C;\n");
+  source.append("          } \n");
+  source.append("        } \n");
 
-  source.append("    } \n"); // while
+  source.append("      } \n"); //while
+  source.append("      scratchpad_nnz = row_C_nnz; \n");
+  source.append("    } \n"); //for
 
-  source.append("  } \n"); // for
+  source.append("  } \n"); //for
+
   source.append("} \n");
 
 }
