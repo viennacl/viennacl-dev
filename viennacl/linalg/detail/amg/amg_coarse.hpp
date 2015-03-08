@@ -61,6 +61,61 @@ void amg_coarse(unsigned int level, InternalT1 & A, InternalT2 & pointvector, In
   }
 }
 
+
+template<typename NumericT, typename PointListT>
+void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvector, amg_tag & tag)
+{
+  NumericT     const * A_elements   = detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  for (std::size_t i=0; i<A.size1(); ++i)
+  {
+    unsigned int row_start = A_row_buffer[i];
+    unsigned int row_stop  = A_row_buffer[i+1];
+    NumericT diag = 0;
+    NumericT largest_positive = 0;
+    NumericT largest_negative = 0;
+
+    // obtain diagonal element as well as maximum positive and negative off-diagonal entries
+    for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
+    {
+      unsigned int col = A_col_buffer[nnz_index];
+      NumericT value   = A_elements[nnz_index];
+
+      if (col == i)
+        diag = value;
+      else if (value > largest_positive)
+        largest_positive = value;
+      else if (value < largest_negative)
+        largest_negative = value;
+    }
+
+    if (largest_positive <= 0 && largest_negative >= 0) // no offdiagonal entries
+      continue;
+
+    // Find all points that strongly influence current point (Yang, p.5)
+    for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
+    {
+      unsigned int col = A_col_buffer[nnz_index];
+
+      if (i == col)
+        continue;
+
+      NumericT value   = A_elements[nnz_index];
+
+      if (   (diag > 0 && diag * *col_iter <= tag.get_threshold() * diag * largest_negative)
+          || (diag < 0 && diag * *col_iter <= tag.get_threshold() * diag * largest_positive))
+      {
+        pointvector.add_influence(i, col);
+      }
+    }
+  }
+}
+
+
+
+
 /** @brief Determines strong influences in system matrix, classical approach (RS). Multithreaded!
 * @param level        Coarse level identifier
 * @param A            Operator matrix on all levels
@@ -68,7 +123,7 @@ void amg_coarse(unsigned int level, InternalT1 & A, InternalT2 & pointvector, In
 * @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
-void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointvector, amg_tag & tag)
+void amg_influence_old(unsigned int level, InternalT1 const & A, InternalT2 & pointvector, amg_tag & tag)
 {
   typedef typename InternalT1::value_type             SparseMatrixType;
   typedef typename InternalT2::value_type             PointVectorType;
@@ -143,6 +198,61 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
 }
 
 
+struct amg_id_influence
+{
+  amg_id_influence(std::size_t id2, std::size_t influences2) : id(id2), influences(influences2) {}
+
+  std::size_t  id;
+  std::size_t  influences;
+};
+
+bool operator<(amg_id_influence const & a, amg_id_influence const & b) { return a.influences < b.influences; }
+
+/** @brief Classical (RS) one-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC_ONEPASS)
+* @param level         Course level identifier
+* @param A             Operator matrix on all levels
+* @param pointvector   Vector of points on all levels
+* @param tag           AMG preconditioner tag
+*/
+template<typename NumericT, typename PointListT>
+void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointListT & pointvector, amg_tag & tag)
+{
+  typedef typename PointListT::influence_const_iterator  InfluenceIteratorType;
+
+  //get influences:
+  amg_influence(A, pointvector, tag);
+
+  std::vector<amg_id_influence> points_by_influences(A.size1());
+
+  for (std::size_t i=0; i<pointvector.size(); ++i)
+    points_by_influences[i] = amg_id_influence(i, pointvector.influences(i));
+
+  std::sort(points_by_influences.begin(), points_by_influences.end());
+
+  for (std::size_t i=0; i<points_by_influences.size(); ++i)
+  {
+    std::size_t point_id = points_by_influences[i];
+
+    if (!pointvector.is_undecided(point_id))
+      continue;
+
+    pointvector.set_coarse(point_id);
+
+    // Set strongly influenced points to fine points:
+    InfluenceIteratorType influence_end = pointvector.influence_cend(point_id);
+    for (InfluenceIteratorType influence_iter = pointvector.influence_cbegin(point_id); influence_iter != influence_end; ++influence_iter)
+    {
+
+    }
+
+
+
+  }
+
+}
+
+
+
 /** @brief Classical (RS) one-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC_ONEPASS)
 * @param level         Course level identifier
 * @param A             Operator matrix on all levels
@@ -150,7 +260,7 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
 * @param tag           AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
-void amg_coarse_classic_onepass(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
+void amg_coarse_classic_onepass_old(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
 {
   amg_point* c_point, *point1, *point2;
 
