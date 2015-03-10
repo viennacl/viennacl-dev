@@ -50,14 +50,15 @@ namespace amg
  * @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2>
-void amg_interpol(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
+void amg_interpol(InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
 {
   switch (tag.get_interpol())
   {
-  case VIENNACL_AMG_INTERPOL_DIRECT:  amg_interpol_direct (level, A, P, pointvector, tag); break;
-  case VIENNACL_AMG_INTERPOL_CLASSIC: amg_interpol_classic(level, A, P, pointvector, tag); break;
+  case VIENNACL_AMG_INTERPOL_DIRECT:  amg_interpol_direct (A, P, pointvector, tag); break;
+  /*case VIENNACL_AMG_INTERPOL_CLASSIC: amg_interpol_classic(level, A, P, pointvector, tag); break;
   case VIENNACL_AMG_INTERPOL_AG:      amg_interpol_ag     (level, A, P, pointvector, tag); break;
-  case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (level, A, P, pointvector, tag); break;
+  case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (level, A, P, pointvector, tag); break; */
+  default: throw std::runtime_error("Not implemented yet!");
   }
 }
 
@@ -68,8 +69,93 @@ void amg_interpol(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2
  * @param pointvector  Vector of points on all levels
  * @param tag          AMG preconditioner tag
 */
+template<typename NumericT, typename PointListT>
+void amg_interpol_direct(compressed_matrix<NumericT> const & A, compressed_matrix<NumericT> & P, PointListT & pointvector, amg_tag & tag)
+{
+  typedef typename PointListT::influence_const_iterator  InfluenceIteratorType;
+
+  NumericT     const * A_elements   = detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  pointvector.enumerate_coarse_points();
+  unsigned int num_coarse = pointvector.num_coarse_points();
+
+  P.resize(A.size1(), num_coarse);
+
+  std::vector<std::map<unsigned int, NumericT> > P_setup(A.size1());
+
+  // Iterate over all points to build the interpolation matrix row-by-row
+  // Interpolation for coarse points is immediate using '1'.
+  // Interpolation for fine points is set up via corresponding row weights (cf. Yang paper, p. 14)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (unsigned int row = 0; row<A.size1(); ++row)
+  {
+    if (pointvector.is_coarse(row))
+      P_setup[row][row] = NumericT(1);
+    else if (pointvector.is_fine(row))
+    {
+      NumericT row_sum = 0;
+      NumericT row_coarse_sum = 0;
+      NumericT diag = 0;
+
+      // Row sum of coefficients (without diagonal) and sum of influencing coarse point coefficients has to be computed
+      unsigned int row_A_start = A_row_buffer[row];
+      unsigned int row_A_end   = A_row_buffer[row + 1];
+      for (unsigned int index = row_A_start; index < row_A_end; ++index)
+      {
+        unsigned int col = A_col_buffer[index];
+        NumericT value = A_elements[index];
+
+        if (col == row)
+          diag = value;
+        else if (pointvector.is_coarse(col) && pointvector.has_influence(row, col)) // sum contributions from coarse points with strong influence
+          row_coarse_sum += value;
+
+        row_sum += value;
+      }
+
+      NumericT temp_res = -row_sum/(row_coarse_sum*diag);
+
+      // Iterate over all strongly influencing points to build the interpolant
+      for (unsigned int index = row_A_start; index < row_A_end; ++index)
+      {
+        unsigned int col = A_col_buffer[index];
+        NumericT value = A_elements[index];
+
+        // The value is only non-zero for columns that correspond to a strongly influencing coarse point
+        if (pointvector.is_coarse(col) && pointvector.has_influence(row, col))
+        {
+          if (temp_res > 0 || temp_res < 0)
+            P_setup[row][pointvector.get_coarse_index(col)] = temp_res * value;
+        }
+      }
+
+      // TODO truncate interpolation if specified by the user.
+    }
+    else
+      throw std::runtime_error("Logic error in direct interpolation: Point is neither coarse-point nor fine-point!");
+  }
+
+  // TODO: P_setup can be avoided without sacrificing parallelism.
+  viennacl::tools::sparse_matrix_adapter<NumericT> P_adapter(P_setup, P.size1(), P.size2());
+  viennacl::copy(P_adapter, P);
+}
+
+
+
+
+/** @brief Direct interpolation. Multi-threaded! (VIENNACL_AMG_INTERPOL_DIRECT)
+ * @param level        Coarse level identifier
+ * @param A            Operator matrix on all levels
+ * @param P            Prolongation matrices. P[level] is constructed
+ * @param pointvector  Vector of points on all levels
+ * @param tag          AMG preconditioner tag
+*/
 template<typename InternalT1, typename InternalT2>
-void amg_interpol_direct(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
+void amg_interpol_direct_old(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
 {
   typedef typename InternalT1::value_type         SparseMatrixType;
   //typedef typename InternalType2::value_type    PointVectorType;

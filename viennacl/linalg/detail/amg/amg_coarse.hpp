@@ -26,6 +26,7 @@
 #include "viennacl/linalg/detail/amg/amg_base.hpp"
 
 #include <map>
+#include <set>
 #ifdef VIENNACL_WITH_OPENMP
 #include <omp.h>
 #endif
@@ -49,15 +50,17 @@ namespace amg
 * @param tag          AMG preconditioner tag
 */
 template<typename InternalT1, typename InternalT2, typename InternalT3>
-void amg_coarse(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
+void amg_coarse(InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
 {
   switch (tag.get_coarse())
   {
-  case VIENNACL_AMG_COARSE_RS:      amg_coarse_classic(level, A, pointvector, tag); break;
-  case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass(level, A, pointvector, tag); break;
+  case VIENNACL_AMG_COARSE_RS:      amg_coarse_classic(A, pointvector, tag); break;
+  /*case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass(level, A, pointvector, tag); break;
   case VIENNACL_AMG_COARSE_RS0:     amg_coarse_rs0(level, A, pointvector, slicing, tag); break;
   case VIENNACL_AMG_COARSE_RS3:     amg_coarse_rs3(level, A, pointvector, slicing, tag); break;
   case VIENNACL_AMG_COARSE_AG:      amg_coarse_ag(level, A, pointvector, tag); break;
+  */
+  default: throw std::runtime_error("not implemented yet");
   }
 }
 
@@ -104,8 +107,8 @@ void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvect
 
       NumericT value   = A_elements[nnz_index];
 
-      if (   (diag > 0 && diag * *col_iter <= tag.get_threshold() * diag * largest_negative)
-          || (diag < 0 && diag * *col_iter <= tag.get_threshold() * diag * largest_positive))
+      if (   (diag > 0 && diag * value <= tag.get_threshold() * diag * largest_negative)
+          || (diag < 0 && diag * value <= tag.get_threshold() * diag * largest_positive))
       {
         pointvector.add_influence(i, col);
       }
@@ -202,11 +205,18 @@ struct amg_id_influence
 {
   amg_id_influence(std::size_t id2, std::size_t influences2) : id(id2), influences(influences2) {}
 
-  std::size_t  id;
-  std::size_t  influences;
+  unsigned int  id;
+  unsigned int  influences;
 };
 
-bool operator<(amg_id_influence const & a, amg_id_influence const & b) { return a.influences < b.influences; }
+bool operator<(amg_id_influence const & a, amg_id_influence const & b)
+{
+  if (a.influences < b.influences)
+    return true;
+  if (a.influences == b.influences)
+    return a.id < b.id;
+  return false;
+}
 
 /** @brief Classical (RS) one-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC_ONEPASS)
 * @param level         Course level identifier
@@ -222,30 +232,54 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointList
   //get influences:
   amg_influence(A, pointvector, tag);
 
-  std::vector<amg_id_influence> points_by_influences(A.size1());
+  std::set<amg_id_influence> points_by_influences(A.size1());
 
   for (std::size_t i=0; i<pointvector.size(); ++i)
-    points_by_influences[i] = amg_id_influence(i, pointvector.influences(i));
+    points_by_influences.insert(amg_id_influence(i, pointvector.influences(i)));
 
-  std::sort(points_by_influences.begin(), points_by_influences.end());
 
-  for (std::size_t i=0; i<points_by_influences.size(); ++i)
+  while (!points_by_influences.empty())
   {
-    std::size_t point_id = points_by_influences[i];
+    amg_id_influence point = *(points_by_influences.begin());
 
-    if (!pointvector.is_undecided(point_id))
+    // remove point from queue:
+    points_by_influences.erase(points_by_influences.begin());
+
+    // point is already coarse or fine point, continue;
+    if (!pointvector.is_undecided(point.id))
       continue;
 
-    pointvector.set_coarse(point_id);
+    // make this a coarse point:
+    pointvector.set_coarse(point.id);
 
     // Set strongly influenced points to fine points:
-    InfluenceIteratorType influence_end = pointvector.influence_cend(point_id);
-    for (InfluenceIteratorType influence_iter = pointvector.influence_cbegin(point_id); influence_iter != influence_end; ++influence_iter)
+    InfluenceIteratorType influence_end = pointvector.influence_cend(point.id);
+    for (InfluenceIteratorType influence_iter = pointvector.influence_cbegin(point.id); influence_iter != influence_end; ++influence_iter)
     {
+      unsigned int influenced_point_id = *influence_iter;
 
+      if (!pointvector.is_undecided(influenced_point_id))
+        continue;
+
+      pointvector.set_fine(influenced_point_id);
+
+      // add one to influence measure for all undecided points strongly influencing this fine point.
+      InfluenceIteratorType influence2_end = pointvector.influence_cend(influenced_point_id);
+      for (InfluenceIteratorType influence2_iter = pointvector.influence_cbegin(influenced_point_id); influence2_iter != influence2_end; ++influence2_iter)
+      {
+        if (pointvector.is_undecided(*influence2_iter))
+        {
+          // grab and remove from set, increase influence counter, store back:
+          amg_id_influence point_to_find(*influence2_iter, pointvector.influences(*influence2_iter));
+          points_by_influences.erase(point_to_find);
+
+          ++point_to_find.influences;
+          pointvector.set_influence(point_to_find.id, point_to_find.influences); // for consistency
+
+          points_by_influences.insert(point_to_find);
+        }
+      }
     }
-
-
 
   }
 
