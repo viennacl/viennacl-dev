@@ -93,28 +93,16 @@ void run_amg(viennacl::linalg::cg_tag & cg_solver,
              viennacl::linalg::amg_tag & amg_tag)
 {
 
-  viennacl::linalg::amg_precond<boost::numeric::ublas::compressed_matrix<ScalarType> > ublas_amg = viennacl::linalg::amg_precond<boost::numeric::ublas::compressed_matrix<ScalarType> > (ublas_matrix, amg_tag);
-  boost::numeric::ublas::vector<ScalarType> avgstencil;
+  //boost::numeric::ublas::vector<ScalarType> avgstencil;
   unsigned int coarselevels = amg_tag.get_coarselevels();
 
   std::cout << "-- CG with AMG preconditioner, " << info << " --" << std::endl;
-
-  std::cout << " * Setup phase (ublas types)..." << std::endl;
-
-  // Coarse level measure might have been changed during setup. Reload!
-  ublas_amg.tag().set_coarselevels(coarselevels);
-  ublas_amg.setup();
-
-  std::cout << " * Operator complexity: " << ublas_amg.calc_complexity(avgstencil) << std::endl;
 
   amg_tag.set_coarselevels(coarselevels);
   viennacl::linalg::amg_precond<viennacl::compressed_matrix<ScalarType> > vcl_amg = viennacl::linalg::amg_precond<viennacl::compressed_matrix<ScalarType> > (vcl_compressed_matrix, amg_tag);
   std::cout << " * Setup phase (ViennaCL types)..." << std::endl;
   vcl_amg.tag().set_coarselevels(coarselevels);
   vcl_amg.setup();
-
-  std::cout << " * CG solver (ublas types)..." << std::endl;
-  //run_solver(ublas_matrix, ublas_vec, ublas_result, cg_solver, ublas_amg);
 
   std::cout << " * CG solver (ViennaCL types)..." << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, vcl_amg);
@@ -221,19 +209,20 @@ int main()
                                       3,    // presmoothing steps
                                       3,    // postsmoothing steps
                                       0);   // number of coarse levels to be used (0: automatically use as many as reasonable)
-  run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS COARSENING, DIRECT INTERPOLATION", amg_tag);
-
-  /**
-  * Generate the setup for an AMG preconditioner of Ruge-Stueben type with classic interpolation (RS+CLASSIC) and run the solver:
-  **/
-  amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_RS, VIENNACL_AMG_INTERPOL_CLASSIC, 0.25, 0.2, 0.67, 3, 3, 0);
-  run_amg ( cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS COARSENING, CLASSIC INTERPOLATION", amg_tag);
+  //run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS COARSENING, DIRECT INTERPOLATION", amg_tag);
 
   /**
   * Generate the setup for an AMG preconditioner of Ruge-Stueben type with only one pass and direct interpolation (ONEPASS+DIRECT)
   **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_ONEPASS, VIENNACL_AMG_INTERPOL_DIRECT,0.25, 0.2, 0.67, 3, 3, 0);
   run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag);
+
+
+  /**
+  * Generate the setup for an AMG preconditioner of Ruge-Stueben type with classic interpolation (RS+CLASSIC) and run the solver:
+  **/
+  amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_RS, VIENNACL_AMG_INTERPOL_CLASSIC, 0.25, 0.2, 0.67, 3, 3, 0);
+  run_amg ( cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS COARSENING, CLASSIC INTERPOLATION", amg_tag);
 
   /**
   * Generate the setup for an AMG preconditioner of parallel Ruge-Stueben type with direct interpolation (RS0+DIRECT)

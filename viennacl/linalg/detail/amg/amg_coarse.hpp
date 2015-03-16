@@ -49,13 +49,14 @@ namespace amg
 * @param slicing      Partitioning of the system matrix to different processors (only used in RS0 and RS3)
 * @param tag          AMG preconditioner tag
 */
-template<typename InternalT1, typename InternalT2, typename InternalT3>
+template<typename InternalT1, typename InternalT2>
 void amg_coarse(InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
 {
   switch (tag.get_coarse())
   {
-  case VIENNACL_AMG_COARSE_RS:      amg_coarse_classic(A, pointvector, tag); break;
-  /*case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass(level, A, pointvector, tag); break;
+  case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass(A, pointvector, tag); break;
+  /*case VIENNACL_AMG_COARSE_RS:      amg_coarse_classic(A, pointvector, tag); break;
+  case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass(level, A, pointvector, tag); break;
   case VIENNACL_AMG_COARSE_RS0:     amg_coarse_rs0(level, A, pointvector, slicing, tag); break;
   case VIENNACL_AMG_COARSE_RS3:     amg_coarse_rs3(level, A, pointvector, slicing, tag); break;
   case VIENNACL_AMG_COARSE_AG:      amg_coarse_ag(level, A, pointvector, tag); break;
@@ -68,9 +69,9 @@ void amg_coarse(InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
 template<typename NumericT, typename PointListT>
 void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvector, amg_tag & tag)
 {
-  NumericT     const * A_elements   = detail::extract_raw_pointer<NumericT>(A.handle());
-  unsigned int const * A_row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
-  unsigned int const * A_col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
+  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
 
   for (std::size_t i=0; i<A.size1(); ++i)
   {
@@ -124,7 +125,7 @@ void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvect
 * @param A            Operator matrix on all levels
 * @param pointvector  Vector of points on all levels
 * @param tag          AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2>
 void amg_influence_old(unsigned int level, InternalT1 const & A, InternalT2 & pointvector, amg_tag & tag)
 {
@@ -198,7 +199,7 @@ void amg_influence_old(unsigned int level, InternalT1 const & A, InternalT2 & po
   printvector (temp);
   #endif
 
-}
+} */
 
 
 struct amg_id_influence
@@ -232,10 +233,10 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointList
   //get influences:
   amg_influence(A, pointvector, tag);
 
-  std::set<amg_id_influence> points_by_influences(A.size1());
+  std::set<amg_id_influence> points_by_influences;
 
   for (std::size_t i=0; i<pointvector.size(); ++i)
-    points_by_influences.insert(amg_id_influence(i, pointvector.influences(i)));
+    points_by_influences.insert(amg_id_influence(i, pointvector.influence_count(i)));
 
 
   while (!points_by_influences.empty())
@@ -270,11 +271,11 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointList
         if (pointvector.is_undecided(*influence2_iter))
         {
           // grab and remove from set, increase influence counter, store back:
-          amg_id_influence point_to_find(*influence2_iter, pointvector.influences(*influence2_iter));
+          amg_id_influence point_to_find(*influence2_iter, pointvector.influence_count(*influence2_iter));
           points_by_influences.erase(point_to_find);
 
           ++point_to_find.influences;
-          pointvector.set_influence(point_to_find.id, point_to_find.influences); // for consistency
+          pointvector.augment_influence(point_to_find.id); // for consistency
 
           points_by_influences.insert(point_to_find);
         }
@@ -282,6 +283,8 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointList
     }
 
   }
+
+  pointvector.enumerate_coarse_points();
 
 }
 
@@ -292,7 +295,7 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointList
 * @param A             Operator matrix on all levels
 * @param pointvector   Vector of points on all levels
 * @param tag           AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2>
 void amg_coarse_classic_onepass_old(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
 {
@@ -353,7 +356,7 @@ void amg_coarse_classic_onepass_old(unsigned int level, InternalT1 & A, Internal
     }
   }
   }*/
-
+/*
   #if defined (VIENNACL_AMG_DEBUG)//  or defined (VIENNACL_AMG_DEBUGBENCH)
   unsigned int c_points = pointvector[level].get_cpoints();
   unsigned int f_points = pointvector[level].get_fpoints();
@@ -372,14 +375,14 @@ void amg_coarse_classic_onepass_old(unsigned int level, InternalT1 & A, Internal
   pointvector[level].get_F(F);
   printvector(F);
   #endif
-}
+} */
 
 /** @brief Classical (RS) two-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC)
 * @param level        Coarse level identifier
 * @param A            Operator matrix on all levels
 * @param pointvector  Vector of points on all levels
 * @param tag          AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2>
 void amg_coarse_classic(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
 {
@@ -494,7 +497,7 @@ void amg_coarse_classic(unsigned int level, InternalT1 & A, InternalT2 & pointve
   std::cout << std::endl;
   }
   #endif
-}
+} */
 
 /** @brief Parallel classical RS0 coarsening. Multi-Threaded! (VIENNACL_AMG_COARSE_RS0 || VIENNACL_AMG_COARSE_RS3)
 * @param level         Coarse level identifier
@@ -502,7 +505,7 @@ void amg_coarse_classic(unsigned int level, InternalT1 & A, InternalT2 & pointve
 * @param pointvector   Vector of points on all levels
 * @param slicing       Partitioning of the system matrix and the other data structures to different processors
 * @param tag           AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2, typename InternalT3>
 void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
 {
@@ -574,7 +577,7 @@ void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector
     std::cout << "No of F points = " << f_points << std::endl;
   }
   #endif
-}
+} */
 
 /** @brief RS3 coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_RS3)
 * @param level        Coarse level identifier
@@ -582,7 +585,7 @@ void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector
 * @param pointvector  Vector of points on all levels
 * @param slicing      Partitioning of the system matrix and the other data structures to different processors
 * @param tag          AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2, typename InternalT3>
 void amg_coarse_rs3(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
 {
@@ -703,7 +706,7 @@ void amg_coarse_rs3(unsigned int level, InternalT1 & A, InternalT2 & pointvector
   pointvector[level].get_F(F);
   printvector (F);
   #endif
-}
+} */
 
 /** @brief AG (aggregation based) coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_SA)
 *
@@ -711,7 +714,7 @@ void amg_coarse_rs3(unsigned int level, InternalT1 & A, InternalT2 & pointvector
 * @param A            Operator matrix on all levels
 * @param pointvector  Vector of points on all levels
 * @param tag          AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2>
 void amg_coarse_ag(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
 {
@@ -793,7 +796,7 @@ void amg_coarse_ag(unsigned int level, InternalT1 & A, InternalT2 & pointvector,
   std::cout << "Aggregates:" << std::endl;
   printvector(Aggregates[level]);
   #endif
-}
+} */
 
 } //namespace amg
 } //namespace detail

@@ -70,15 +70,17 @@ void amg_interpol(InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_
  * @param tag          AMG preconditioner tag
 */
 template<typename NumericT, typename PointListT>
-void amg_interpol_direct(compressed_matrix<NumericT> const & A, compressed_matrix<NumericT> & P, PointListT & pointvector, amg_tag & tag)
+void amg_interpol_direct(compressed_matrix<NumericT> const & A,
+                         compressed_matrix<NumericT> & P,
+                         PointListT & pointvector,
+                         amg_tag & tag)
 {
   typedef typename PointListT::influence_const_iterator  InfluenceIteratorType;
 
-  NumericT     const * A_elements   = detail::extract_raw_pointer<NumericT>(A.handle());
-  unsigned int const * A_row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
-  unsigned int const * A_col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
+  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
 
-  pointvector.enumerate_coarse_points();
   unsigned int num_coarse = pointvector.num_coarse_points();
 
   P.resize(A.size1(), num_coarse);
@@ -93,8 +95,9 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A, compressed_matri
 #endif
   for (unsigned int row = 0; row<A.size1(); ++row)
   {
+    std::map<unsigned int, NumericT> & P_setup_row = P_setup[row];
     if (pointvector.is_coarse(row))
-      P_setup[row][row] = NumericT(1);
+      P_setup_row[row] = NumericT(1);
     else if (pointvector.is_fine(row))
     {
       NumericT row_sum = 0;
@@ -104,32 +107,47 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A, compressed_matri
       // Row sum of coefficients (without diagonal) and sum of influencing coarse point coefficients has to be computed
       unsigned int row_A_start = A_row_buffer[row];
       unsigned int row_A_end   = A_row_buffer[row + 1];
+      InfluenceIteratorType influence_iter = pointvector.influence_cbegin(row);
+      InfluenceIteratorType influence_end = pointvector.influence_cend(row);
       for (unsigned int index = row_A_start; index < row_A_end; ++index)
       {
         unsigned int col = A_col_buffer[index];
         NumericT value = A_elements[index];
 
+        // TODO: Fix use of .has_influence(), which is too expensive
+
         if (col == row)
           diag = value;
-        else if (pointvector.is_coarse(col) && pointvector.has_influence(row, col)) // sum contributions from coarse points with strong influence
-          row_coarse_sum += value;
+        else if (pointvector.is_coarse(col))
+        {
+          // Note: One increment is sufficient, because influence_iter traverses an ordered subset of the column indices in this row
+          if (influence_iter != influence_end && *influence_iter < col)
+            ++influence_iter;
+
+          if (influence_iter != influence_end && *influence_iter == col)
+            row_coarse_sum += value;
+        }
 
         row_sum += value;
       }
 
       NumericT temp_res = -row_sum/(row_coarse_sum*diag);
 
-      // Iterate over all strongly influencing points to build the interpolant
-      for (unsigned int index = row_A_start; index < row_A_end; ++index)
+      if (temp_res > 0 || temp_res < 0)
       {
-        unsigned int col = A_col_buffer[index];
-        NumericT value = A_elements[index];
-
-        // The value is only non-zero for columns that correspond to a strongly influencing coarse point
-        if (pointvector.is_coarse(col) && pointvector.has_influence(row, col))
+        // Iterate over all strongly influencing points to build the interpolant
+        influence_iter = pointvector.influence_cbegin(row);
+        for (unsigned int index = row_A_start; index < row_A_end; ++index)
         {
-          if (temp_res > 0 || temp_res < 0)
-            P_setup[row][pointvector.get_coarse_index(col)] = temp_res * value;
+          unsigned int col = A_col_buffer[index];
+          NumericT value = A_elements[index];
+
+          // Note: One increment is sufficient, because influence_iter traverses an ordered subset of the column indices in this row
+          if (influence_iter != influence_end && *influence_iter < col)
+            ++influence_iter;
+
+          if (influence_iter != influence_end && *influence_iter == col)
+            P_setup_row[pointvector.get_coarse_index(col)] = temp_res * value;
         }
       }
 
@@ -153,7 +171,7 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A, compressed_matri
  * @param P            Prolongation matrices. P[level] is constructed
  * @param pointvector  Vector of points on all levels
  * @param tag          AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2>
 void amg_interpol_direct_old(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
 {
@@ -179,10 +197,10 @@ void amg_interpol_direct_old(unsigned int level, InternalT1 & A, InternalT1 & P,
   for (long x=0; x < static_cast<long>(pointvector[level].size()); ++x)
   {
     amg_point *pointx = pointvector[level][static_cast<unsigned int>(x)];
-    /*if (A[level](x,x) > 0)
-      diag_sign = 1;
-    else
-      diag_sign = -1;*/
+    //if (A[level](x,x) > 0)
+    //  diag_sign = 1;
+    //else
+    //  diag_sign = -1;
 
     // When the current line corresponds to a C point then the diagonal coefficient is 1 and the rest 0
     if (pointx->is_cpoint())
@@ -244,7 +262,7 @@ void amg_interpol_direct_old(unsigned int level, InternalT1 & A, InternalT1 & P,
   std::cout << "Prolongation Matrix:" << std::endl;
   printmatrix (P[level]);
   #endif
-}
+} */
 
 /** @brief Classical interpolation. Don't use with onepass classical coarsening or RS0 (Yang, p.14)! Multi-threaded! (VIENNACL_AMG_INTERPOL_CLASSIC)
  * @param level        Coarse level identifier
@@ -252,7 +270,7 @@ void amg_interpol_direct_old(unsigned int level, InternalT1 & A, InternalT1 & P,
  * @param P            Prolongation matrices. P[level] is constructed
  * @param pointvector  Vector of points on all levels
  * @param tag          AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2>
 void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
 {
@@ -359,7 +377,7 @@ void amg_interpol_classic(unsigned int level, InternalT1 & A, InternalT1 & P, In
   std::cout << "Prolongation Matrix:" << std::endl;
   printmatrix (P[level]);
   #endif
-}
+} */
 
 /** @brief Interpolation truncation (for VIENNACL_AMG_INTERPOL_DIRECT and VIENNACL_AMG_INTERPOL_CLASSIC)
 *
@@ -431,7 +449,7 @@ void amg_truncate_row(SparseMatrixT & P, unsigned int row, amg_tag & tag)
  * @param A            Operator matrix on all levels
  * @param P            Prolongation matrices. P[level] is constructed
  * @param pointvector  Vector of points on all levels
-*/
+*
 template<typename InternalT1, typename InternalT2>
 void amg_interpol_ag(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag)
 {
@@ -465,7 +483,7 @@ void amg_interpol_ag(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
   std::cout << "Aggregation based Prolongation:" << std::endl;
   printmatrix(P[level]);
   #endif
-}
+} */
 
 /** @brief SA (smoothed aggregate) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)
  * @param level        Coarse level identifier
@@ -473,7 +491,7 @@ void amg_interpol_ag(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
  * @param P            Prolongation matrices. P[level] is constructed
  * @param pointvector  Vector of points on all levels
  * @param tag          AMG preconditioner tag
-*/
+*
 template<typename InternalT1, typename InternalT2>
 void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_tag & tag)
 {
@@ -545,7 +563,7 @@ void amg_interpol_sa(unsigned int level, InternalT1 & A, InternalT1 & P, Interna
   std::cout << "Prolongation Matrix:" << std::endl;
   printmatrix(P[level]);
   #endif
-}
+} */
 
 } //namespace amg
 } //namespace detail
