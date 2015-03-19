@@ -72,7 +72,7 @@ void amg_interpol(InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_
 template<typename NumericT, typename PointListT>
 void amg_interpol_direct(compressed_matrix<NumericT> const & A,
                          compressed_matrix<NumericT> & P,
-                         PointListT & pointvector,
+                         PointListT const & pointvector,
                          amg_tag & tag)
 {
   typedef typename PointListT::influence_const_iterator  InfluenceIteratorType;
@@ -97,9 +97,11 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
   {
     std::map<unsigned int, NumericT> & P_setup_row = P_setup[row];
     if (pointvector.is_coarse(row))
-      P_setup_row[row] = NumericT(1);
+      P_setup_row[pointvector.get_coarse_index(row)] = NumericT(1);
     else if (pointvector.is_fine(row))
     {
+      //std::cout << "Building interpolant for fine point " << row << std::endl;
+
       NumericT row_sum = 0;
       NumericT row_coarse_sum = 0;
       NumericT diag = 0;
@@ -114,14 +116,15 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
         unsigned int col = A_col_buffer[index];
         NumericT value = A_elements[index];
 
-        // TODO: Fix use of .has_influence(), which is too expensive
-
         if (col == row)
+        {
           diag = value;
+          continue;
+        }
         else if (pointvector.is_coarse(col))
         {
           // Note: One increment is sufficient, because influence_iter traverses an ordered subset of the column indices in this row
-          if (influence_iter != influence_end && *influence_iter < col)
+          while (influence_iter != influence_end && *influence_iter < col)
             ++influence_iter;
 
           if (influence_iter != influence_end && *influence_iter == col)
@@ -140,18 +143,24 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
         for (unsigned int index = row_A_start; index < row_A_end; ++index)
         {
           unsigned int col = A_col_buffer[index];
+          if (!pointvector.is_coarse(col))
+            continue;
           NumericT value = A_elements[index];
 
-          // Note: One increment is sufficient, because influence_iter traverses an ordered subset of the column indices in this row
-          if (influence_iter != influence_end && *influence_iter < col)
+          // Advance to correct influence metric:
+          while (influence_iter != influence_end && *influence_iter < col)
             ++influence_iter;
 
           if (influence_iter != influence_end && *influence_iter == col)
+          {
+            //std::cout << " Setting entry "  << temp_res * value << " at " << pointvector.get_coarse_index(col) << " for point " << col << std::endl;
             P_setup_row[pointvector.get_coarse_index(col)] = temp_res * value;
+          }
         }
       }
 
       // TODO truncate interpolation if specified by the user.
+      (void)tag;
     }
     else
       throw std::runtime_error("Logic error in direct interpolation: Point is neither coarse-point nor fine-point!");

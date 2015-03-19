@@ -73,6 +73,7 @@ void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvect
   unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
   unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
 
+  //std::cout << "Calculating influences..." << std::endl;
   for (std::size_t i=0; i<A.size1(); ++i)
   {
     unsigned int row_start = A_row_buffer[i];
@@ -99,6 +100,7 @@ void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvect
       continue;
 
     // Find all points that strongly influence current point (Yang, p.5)
+    //std::cout << "Looking for strongly influencing points for point " << i << std::endl;
     for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
     {
       unsigned int col = A_col_buffer[nnz_index];
@@ -111,6 +113,7 @@ void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvect
       if (   (diag > 0 && diag * value <= tag.get_threshold() * diag * largest_negative)
           || (diag < 0 && diag * value <= tag.get_threshold() * diag * largest_positive))
       {
+        //std::cout << " - Adding influence from point " << col << std::endl;
         pointvector.add_influence(i, col);
       }
     }
@@ -210,12 +213,12 @@ struct amg_id_influence
   unsigned int  influences;
 };
 
-bool operator<(amg_id_influence const & a, amg_id_influence const & b)
+bool operator>(amg_id_influence const & a, amg_id_influence const & b)
 {
-  if (a.influences < b.influences)
+  if (a.influences > b.influences)
     return true;
   if (a.influences == b.influences)
-    return a.id < b.id;
+    return a.id > b.id;
   return false;
 }
 
@@ -233,11 +236,12 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointList
   //get influences:
   amg_influence(A, pointvector, tag);
 
-  std::set<amg_id_influence> points_by_influences;
+  std::set<amg_id_influence, std::greater<amg_id_influence> > points_by_influences;
 
   for (std::size_t i=0; i<pointvector.size(); ++i)
     points_by_influences.insert(amg_id_influence(i, pointvector.influence_count(i)));
 
+  //std::cout << "Starting coarsening process..." << std::endl;
 
   while (!points_by_influences.empty())
   {
@@ -246,10 +250,13 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointList
     // remove point from queue:
     points_by_influences.erase(points_by_influences.begin());
 
+    //std::cout << "Working on point " << point.id << std::endl;
+
     // point is already coarse or fine point, continue;
     if (!pointvector.is_undecided(point.id))
       continue;
 
+    //std::cout << " Setting point " << point.id << " to a coarse point." << std::endl;
     // make this a coarse point:
     pointvector.set_coarse(point.id);
 
@@ -259,9 +266,11 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointList
     {
       unsigned int influenced_point_id = *influence_iter;
 
+      //std::cout << "Checking point " << influenced_point_id << std::endl;
       if (!pointvector.is_undecided(influenced_point_id))
         continue;
 
+      //std::cout << " Setting point " << influenced_point_id << " to a fine point." << std::endl;
       pointvector.set_fine(influenced_point_id);
 
       // add one to influence measure for all undecided points strongly influencing this fine point.

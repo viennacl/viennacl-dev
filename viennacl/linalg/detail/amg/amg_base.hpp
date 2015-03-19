@@ -139,6 +139,7 @@ public:
     influences_.resize(num_points * max_influences, static_cast<unsigned int>(num_points));
     influence_count_.resize(num_points);
     influence_extra_.resize(num_points);
+    max_influences_ = max_influences;
     point_types_.resize(num_points);
     coarse_id_.resize(num_points);
   }
@@ -149,6 +150,7 @@ public:
     {
       influences_.at(point * max_influences_ + influence_count_.at(point)) = influenced_point;
       ++influence_count_.at(point);
+      //std::cout << "New influence count for point " << point << ": " << influence_count_.at(point) << std::endl;
     }
     else
     {
@@ -159,13 +161,14 @@ public:
     }
   }
 
-  influence_const_iterator influence_cbegin(unsigned int point) const { return &(influences_.at(point *  max_influences_     )); }
-  influence_const_iterator influence_cend  (unsigned int point) const { return &(influences_.at(point * (max_influences_ + 1))); }
+  influence_const_iterator influence_cbegin(unsigned int point) const { return &(influences_.at(point * max_influences_     )); }
+  influence_const_iterator influence_cend  (unsigned int point) const { return &(influences_.at(point * max_influences_  + influence_count_.at(point))); }
 
   void augment_influence(unsigned int point) { influence_extra_.at(point) += 1; }
   std::size_t influence_count(unsigned int point) const { return influence_count_.at(point) + influence_extra_.at(point); }
 
-  std::size_t size() const { return influences_.size(); }
+  /** @brief Returns the number of points managed by the pointlist */
+  std::size_t size() const { return influence_count_.size(); }
 
   bool is_undecided(unsigned int point) const { return point_types_.at(point) == POINT_TYPE_UNDECIDED; }
   bool is_coarse   (unsigned int point) const { return point_types_.at(point) == POINT_TYPE_COARSE; }
@@ -177,15 +180,19 @@ public:
   void enumerate_coarse_points()
   {
     num_coarse_ = 0;
+    //std::cout << "Assigning coarse indices to array starting at " << &(coarse_id_.at(0)) << std::endl;
     for (std::size_t i=0; i<point_types_.size(); ++i)
     {
       if (is_coarse(i))
+      {
+        //std::cout << "Assigning coarse grid ID " << num_coarse_ << " to point " << i << std::endl;
         coarse_id_.at(i) = num_coarse_++;
+      }
     }
   }
 
   std::size_t num_coarse_points() const { return num_coarse_; }
-  unsigned int get_coarse_index(unsigned int point) const { coarse_id_.at(point); }
+  unsigned int get_coarse_index(unsigned int point) const { return coarse_id_.at(point); }
 
   // Slow. Use for debugging only
   std::size_t num_fine_points() const
@@ -216,7 +223,7 @@ private:
   std::vector<char> point_types_;  // Note: Using char here because type for enum might be a larger type
 
   std::vector<unsigned int> coarse_id_;
-  std::size_t num_coarse_;
+  unsigned int num_coarse_;
 };
 
 
@@ -274,18 +281,36 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
   unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
   unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
 
+  //std::cout << "Size of A: " << A.size1() << " times " << A.size2() << std::endl;
+  //std::cout << "Matrix to transpose: " << std::endl;
+
   std::vector< std::map<unsigned int, NumericT> > B_temp(A.size2());
 
   for (std::size_t row = 0; row < A.size1(); ++row)
   {
+    //std::cout << "Row " << row << ": ";
     unsigned int row_start = A_row_buffer[row];
     unsigned int row_stop  = A_row_buffer[row+1];
 
     for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
-      B_temp[A_col_buffer[nnz_index]][row] = A_elements[nnz_index];
+    {
+      //std::cout << A_col_buffer[nnz_index] << ": " << A_elements[nnz_index] << "; ";
+      B_temp.at(A_col_buffer[nnz_index])[row] = A_elements[nnz_index];
+    }
+    //std::cout << std::endl;
   }
 
+  /*std::cout << "Transposed matrix: " << std::endl;
+  for (std::size_t i=0; i<B_temp.size(); ++i)
+  {
+    std::cout << "Row " << i << ": ";
+    for (typename std::map<unsigned int, NumericT>::const_iterator it = B_temp.at(i).begin(); it != B_temp.at(i).end(); ++it)
+      std::cout << it->first << ": " << it->second << "; ";
+    std::cout << std::endl;
+  }*/
   viennacl::copy(B_temp, B);
+
+
 }
 
 
@@ -297,18 +322,30 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
 template<typename NumericT>
 void amg_galerkin_prod(compressed_matrix<NumericT> const & A_fine,
                        compressed_matrix<NumericT> const & P,
+                       compressed_matrix<NumericT> & R, //P^T
                        compressed_matrix<NumericT> & A_coarse)
 {
 
   compressed_matrix<NumericT> A_fine_times_P;
-  compressed_matrix<NumericT> P_trans;
 
   // transpose P in memory (no known way of efficiently multiplying P^T * B for CSR-matrices P and B):
-  amg_transpose(P, P_trans);
+  amg_transpose(P, R);
 
   // compute Galerkin product using a temporary for the result of A_fine * P
   A_fine_times_P = viennacl::linalg::prod(A_fine, P);
-  A_coarse = viennacl::linalg::prod(P_trans, A_fine_times_P);
+  A_coarse = viennacl::linalg::prod(R, A_fine_times_P);
+
+  /*std::vector< std::map<unsigned int, NumericT> > B(A_coarse.size1());
+  viennacl::copy(A_coarse, B);
+  std::cout << "Galerkin matrix: " << std::endl;
+  for (std::size_t i=0; i<B.size(); ++i)
+  {
+    std::cout << "Row " << i << ": ";
+    for (typename std::map<unsigned int, NumericT>::const_iterator it = B.at(i).begin(); it != B.at(i).end(); ++it)
+      std::cout << it->first << ": " << it->second << "; ";
+    std::cout << std::endl;
+  }*/
+
 }
 
 

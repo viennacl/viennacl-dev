@@ -42,6 +42,7 @@
 #include "viennacl/linalg/bicgstab.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/linalg/norm_2.hpp"
+#include "viennacl/tools/matrix_generation.hpp"
 
 /**
 * Import the AMG functionality:
@@ -153,6 +154,8 @@ int main()
   boost::numeric::ublas::vector<ScalarType> ublas_vec, ublas_result;
   boost::numeric::ublas::compressed_matrix<ScalarType> ublas_matrix;
 
+  //viennacl::tools::generate_fdm_laplace(ublas_matrix, 3, 3);
+
   // Read matrix
   if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
   {
@@ -160,18 +163,13 @@ int main()
     return EXIT_FAILURE;
   }
 
-  // Set up rhs and result vector
-  if (!readVectorFromFile("../examples/testdata/rhs65025.txt", ublas_vec))
-  {
-    std::cout << "Error reading RHS file" << std::endl;
-    return 0;
-  }
+  // rhs and result vector:
+  ublas_vec.resize(ublas_matrix.size1());
+  ublas_result.resize(ublas_matrix.size1());
+  for (std::size_t i=0; i<ublas_result.size(); ++i)
+    ublas_result[i] = ScalarType(1);
 
-  if (!readVectorFromFile("../examples/testdata/result65025.txt", ublas_result))
-  {
-    std::cout << "Error reading Result file" << std::endl;
-    return 0;
-  }
+  ublas_vec = prod(ublas_matrix, ublas_result);
 
   viennacl::vector<ScalarType> vcl_vec(ublas_vec.size(), ctx);
   viennacl::vector<ScalarType> vcl_result(ublas_vec.size(), ctx);

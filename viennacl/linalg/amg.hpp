@@ -51,7 +51,7 @@
 #include "viennacl/linalg/detail/amg/amg_debug.hpp"
 
 #define VIENNACL_AMG_COARSE_LIMIT 50
-#define VIENNACL_AMG_MAX_LEVELS 100
+#define VIENNACL_AMG_MAX_LEVELS 20
 
 namespace viennacl
 {
@@ -72,6 +72,7 @@ typedef detail::amg::amg_tag          amg_tag;
 template<typename NumericT, typename PointListT>
 void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
                std::vector<compressed_matrix<NumericT> > & list_of_P,
+               std::vector<compressed_matrix<NumericT> > & list_of_R,
                PointListT & list_of_pointvectors,
                amg_tag & tag)
 {
@@ -83,7 +84,10 @@ void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
 
   for (unsigned int i=0; i<iterations; ++i)
   {
+    //std::cout << "Working on Level " << i << std::endl;
+
     unsigned int max_nnz_per_row = (list_of_A[i].nnz() / list_of_A[i].size1()) + 5; // crude estimate
+    //std::cout << "Resizing for " << max_nnz_per_row << " nonzeros per row" << std::endl;
     list_of_pointvectors[i].resize(list_of_A[i].size1(), max_nnz_per_row);
 
     // Construct C and F points on coarse level (i is fine level, i+1 coarse level).
@@ -93,11 +97,9 @@ void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
     unsigned int c_points = list_of_pointvectors[i].num_coarse_points();
     unsigned int f_points = list_of_A[i].size1() - c_points;
 
-    #if defined (VIENNACL_AMG_DEBUG) //or defined(VIENNACL_AMG_DEBUGBENCH)
-    std::cout << "Level " << i << ": ";
-    std::cout << "No of C points = " << c_points << ", ";
-    std::cout << "No of F points = " << f_points << std::endl;
-    #endif
+    //std::cout << "Level " << i << ": ";
+    //std::cout << "No of C points = " << c_points << ", ";
+    //std::cout << "No of F points = " << f_points << std::endl;
 
     // Stop routine when the maximal coarse level is found (no C or F point). Coarsest level is level i.
     if (c_points == 0 || f_points == 0)
@@ -107,7 +109,7 @@ void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
     detail::amg::amg_interpol(list_of_A[i], list_of_P[i], list_of_pointvectors[i], tag);
 
     // Compute coarse grid operator (A[i+1] = R * A[i] * P) with R = trans(P).
-    detail::amg::amg_galerkin_prod(list_of_A[i], list_of_P[i], list_of_A[i+1]);
+    detail::amg::amg_galerkin_prod(list_of_A[i], list_of_P[i], list_of_R[i], list_of_A[i+1]);
 
 
     // If Limit of coarse points is reached then stop. Coarsest level is level i+1.
@@ -382,6 +384,7 @@ void amg_lu(boost::numeric::ublas::matrix<NumericT> & op,
             boost::numeric::ublas::permutation_matrix<> & permutation,
             SparseMatrixT const & A)
 {
+  op.resize(A.size1(), A.size2());
   viennacl::copy(A, op);
 
   // Permutation matrix has to be reinitialized with actual size. Do not clear() or resize()!
@@ -452,7 +455,7 @@ public:
   void setup()
   {
     // Start setup phase.
-    amg_setup(A_list_, P_list_, pointvector_list_, tag_);
+    amg_setup(A_list_, P_list_, R_list_, pointvector_list_, tag_);
 
     // Setup precondition phase (Data structures).
     amg_setup_apply(result_list_, rhs_list_, residual_list_, A_list_, tag_, ctx_);
