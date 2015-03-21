@@ -41,6 +41,7 @@
 #include "viennacl/linalg/detail/amg/amg_base.hpp"
 #include "viennacl/linalg/detail/amg/amg_coarse.hpp"
 #include "viennacl/linalg/detail/amg/amg_interpol.hpp"
+#include "viennacl/tools/timer.hpp"
 
 #include <map>
 
@@ -76,6 +77,7 @@ void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
                PointListT & list_of_pointvectors,
                amg_tag & tag)
 {
+  viennacl::tools::timer timer;
 
   // Set number of iterations. If automatic coarse grid construction is chosen (0), then set a maximum size and stop during the process.
   unsigned int iterations = tag.get_coarselevels();
@@ -84,32 +86,38 @@ void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
 
   for (unsigned int i=0; i<iterations; ++i)
   {
-    //std::cout << "Working on Level " << i << std::endl;
+    std::cout << "Working on Level " << i << std::endl;
 
     unsigned int max_nnz_per_row = (list_of_A[i].nnz() / list_of_A[i].size1()) + 5; // crude estimate
     //std::cout << "Resizing for " << max_nnz_per_row << " nonzeros per row" << std::endl;
     list_of_pointvectors[i].resize(list_of_A[i].size1(), max_nnz_per_row);
 
     // Construct C and F points on coarse level (i is fine level, i+1 coarse level).
+    timer.start();
     detail::amg::amg_coarse(list_of_A[i], list_of_pointvectors[i], tag);
+    std::cout << " Coarse grid construction time: " << timer.get() << std::endl;
 
     // Calculate number of C and F points on level i.
     unsigned int c_points = list_of_pointvectors[i].num_coarse_points();
     unsigned int f_points = list_of_A[i].size1() - c_points;
 
     //std::cout << "Level " << i << ": ";
-    //std::cout << "No of C points = " << c_points << ", ";
-    //std::cout << "No of F points = " << f_points << std::endl;
+    std::cout << " No of C points = " << c_points << ", ";
+    std::cout << " No of F points = " << f_points << std::endl;
 
     // Stop routine when the maximal coarse level is found (no C or F point). Coarsest level is level i.
     if (c_points == 0 || f_points == 0)
       break;
 
     // Construct interpolation matrix for level i.
+    timer.start();
     detail::amg::amg_interpol(list_of_A[i], list_of_P[i], list_of_pointvectors[i], tag);
+    std::cout << " Interpolation construction time: " << timer.get() << std::endl;
 
     // Compute coarse grid operator (A[i+1] = R * A[i] * P) with R = trans(P).
+    timer.start();
     detail::amg::amg_galerkin_prod(list_of_A[i], list_of_P[i], list_of_R[i], list_of_A[i+1]);
+    std::cout << " Galerkin product time: " << timer.get() << std::endl;
 
 
     // If Limit of coarse points is reached then stop. Coarsest level is level i+1.

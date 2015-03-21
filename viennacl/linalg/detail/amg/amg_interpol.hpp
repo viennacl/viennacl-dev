@@ -55,9 +55,9 @@ void amg_interpol(InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg_
   switch (tag.get_interpol())
   {
   case VIENNACL_AMG_INTERPOL_DIRECT:  amg_interpol_direct (A, P, pointvector, tag); break;
-  /*case VIENNACL_AMG_INTERPOL_CLASSIC: amg_interpol_classic(level, A, P, pointvector, tag); break;
-  case VIENNACL_AMG_INTERPOL_AG:      amg_interpol_ag     (level, A, P, pointvector, tag); break;
-  case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (level, A, P, pointvector, tag); break; */
+  //case VIENNACL_AMG_INTERPOL_CLASSIC: amg_interpol_classic(level, A, P, pointvector, tag); break;
+  case VIENNACL_AMG_INTERPOL_AG:      amg_interpol_ag     (A, P, pointvector, tag); break;
+  //case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (level, A, P, pointvector, tag); break;
   default: throw std::runtime_error("Not implemented yet!");
   }
 }
@@ -451,6 +451,32 @@ void amg_truncate_row(SparseMatrixT & P, unsigned int row, amg_tag & tag)
     if (*col_iter < 0)
       *col_iter = *col_iter *(row_sum_neg/row_sum_neg_scale);
   }
+}
+
+template<typename NumericT, typename PointListT>
+void amg_interpol_ag(compressed_matrix<NumericT> const & A,
+                     compressed_matrix<NumericT> & P,
+                     PointListT & pointvector,
+                     amg_tag & tag)
+{
+  typedef typename PointListT::influence_const_iterator  InfluenceIteratorType;
+
+  (void)tag;
+  P.resize(A.size1(), pointvector.num_coarse_points());
+
+  std::vector<std::map<unsigned int, NumericT> > P_setup(A.size1());
+
+  // Build interpolation matrix:
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (unsigned int row = 0; row<A.size1(); ++row)
+  {
+    P_setup[row][pointvector.get_coarse_aggregate(row)] = NumericT(1);
+  }
+
+  viennacl::tools::sparse_matrix_adapter<NumericT> P_adapter(P_setup, P.size1(), P.size2());
+  viennacl::copy(P_adapter, P);
 }
 
 /** @brief AG (aggregation based) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)
