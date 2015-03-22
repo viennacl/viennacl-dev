@@ -31,8 +31,6 @@
 #include <omp.h>
 #endif
 
-#include "viennacl/linalg/detail/amg/amg_debug.hpp"
-
 namespace viennacl
 {
 namespace linalg

@@ -49,8 +49,6 @@
  #include <omp.h>
 #endif
 
-#include "viennacl/linalg/detail/amg/amg_debug.hpp"
-
 #define VIENNACL_AMG_COARSE_LIMIT 50
 #define VIENNACL_AMG_MAX_LEVELS 20
 

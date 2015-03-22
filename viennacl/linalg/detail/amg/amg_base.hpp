@@ -36,7 +36,6 @@
 #include <omp.h>
 #endif
 
-#include "amg_debug.hpp"
 #include "viennacl/tools/timer.hpp"
 
 #define VIENNACL_AMG_COARSE_RS      1
