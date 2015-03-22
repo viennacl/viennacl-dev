@@ -22,7 +22,6 @@
     @brief Implementations of several variants of the AMG interpolation operators (setup phase). Experimental.
 */
 
-#include <boost/numeric/ublas/vector.hpp>
 #include <cmath>
 #include "viennacl/linalg/detail/amg/amg_base.hpp"
 

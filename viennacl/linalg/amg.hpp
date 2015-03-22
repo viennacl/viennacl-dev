@@ -24,13 +24,6 @@
     Implementation contributed by Markus Wagner
 */
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/lu.hpp>
-#include <boost/numeric/ublas/operation.hpp>
-#include <boost/numeric/ublas/vector_proxy.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
 #include <vector>
 #include <cmath>
 #include "viennacl/forwards.h"
@@ -42,6 +35,8 @@
 #include "viennacl/linalg/detail/amg/amg_coarse.hpp"
 #include "viennacl/linalg/detail/amg/amg_interpol.hpp"
 #include "viennacl/tools/timer.hpp"
+#include "viennacl/linalg/direct_solve.hpp"
+#include "viennacl/linalg/lu.hpp"
 
 #include <map>
 
@@ -386,16 +381,26 @@ void amg_setup_apply(InternalVectorT & result, InternalVectorT & rhs, InternalVe
 * @param A            Operator matrix on coarsest level
 */
 template<typename NumericT, typename SparseMatrixT>
-void amg_lu(boost::numeric::ublas::matrix<NumericT> & op,
-            boost::numeric::ublas::permutation_matrix<> & permutation,
+void amg_lu(viennacl::matrix<NumericT> & op,
             SparseMatrixT const & A)
 {
-  op.resize(A.size1(), A.size2());
-  viennacl::copy(A, op);
+  op.resize(A.size1(), A.size2(), false);
 
-  // Permutation matrix has to be reinitialized with actual size. Do not clear() or resize()!
-  permutation = boost::numeric::ublas::permutation_matrix<> (op.size1());
-  boost::numeric::ublas::lu_factorize(op, permutation);
+  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  NumericT           * op_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(op.handle());
+
+  for (std::size_t row = 0; row < A.size1(); ++row)
+  {
+    unsigned int row_stop  = A_row_buffer[row+1];
+
+    for (unsigned int nnz_index = A_row_buffer[row]; nnz_index < row_stop; ++nnz_index)
+      op_elements[row * op.internal_size2() + A_col_buffer[nnz_index]] = A_elements[nnz_index];
+  }
+
+  viennacl::linalg::lu_factorize(op);
 }
 
 /** @brief AMG preconditioner class, can be supplied to solve()-routines
@@ -420,8 +425,7 @@ class amg_precond< compressed_matrix<NumericT, AlignmentV> >
   std::vector<SparseMatrixType> R_list_;
   std::vector<PointListType>  pointvector_list_;
 
-  boost::numeric::ublas::matrix<NumericT>        coarsest_op_;
-  boost::numeric::ublas::permutation_matrix<>    coarsest_permutation_;
+  viennacl::matrix<NumericT>        coarsest_op_;
 
   mutable std::vector<VectorType> result_list_;
   mutable std::vector<VectorType> rhs_list_;
@@ -435,7 +439,7 @@ class amg_precond< compressed_matrix<NumericT, AlignmentV> >
 
 public:
 
-  amg_precond(): coarsest_permutation_(0) {}
+  amg_precond() {}
 
   /** @brief The constructor. Builds data structures.
   *
@@ -444,13 +448,9 @@ public:
   */
   amg_precond(compressed_matrix<NumericT, AlignmentV> const & mat,
               amg_tag const & tag)
-    : coarsest_permutation_(0), ctx_(viennacl::traits::context(mat))
+    : ctx_(viennacl::traits::context(mat))
   {
     tag_ = tag;
-
-    // Copy to CPU. Internal structure of sparse matrix is used for copy operation.
-    std::vector<std::map<unsigned int, NumericT> > mat2(mat.size1());
-    viennacl::copy(mat, mat2);
 
     // Initialize data structures.
     amg_init(mat, A_list_, P_list_, R_list_, pointvector_list_, tag_);
@@ -467,7 +467,7 @@ public:
     amg_setup_apply(result_list_, rhs_list_, residual_list_, A_list_, tag_, ctx_);
 
     // LU factorization for direct solve.
-    amg_lu(coarsest_op_, coarsest_permutation_, A_list_[tag_.get_coarselevels()]);
+    amg_lu(coarsest_op_, A_list_[tag_.get_coarselevels()]);
   }
 
 
@@ -534,11 +534,7 @@ public:
     // Part 2: On highest level use direct solve to solve equation (on the CPU)
     //TODO: Use GPU direct solve!
     result_list_[level] = rhs_list_[level];
-    boost::numeric::ublas::vector<NumericT> result_cpu(result_list_[level].size());
-
-    viennacl::copy(result_list_[level], result_cpu);
-    boost::numeric::ublas::lu_substitute(coarsest_op_, coarsest_permutation_, result_cpu);
-    viennacl::copy(result_cpu, result_list_[level]);
+    viennacl::linalg::lu_substitute(coarsest_op_, result_list_[level]);
 
     // Part 3: Prolongation to finest level
     for (int level2 = static_cast<int>(tag_.get_coarselevels()-1); level2 >= 0; level2--)

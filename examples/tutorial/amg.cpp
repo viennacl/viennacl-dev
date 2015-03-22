@@ -24,16 +24,6 @@
 *   We start with some rather general includes and preprocessor variables:
 **/
 
-
-#ifndef NDEBUG     //without NDEBUG the performance of sparse ublas matrices is poor.
- #define BOOST_UBLAS_NDEBUG
-#endif
-
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/operation_sparse.hpp>
-
-#define VIENNACL_WITH_UBLAS 1
-
 #include "viennacl/vector.hpp"
 #include "viennacl/coordinate_matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"
@@ -84,17 +74,12 @@ void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType co
 **/
 template<typename ScalarType>
 void run_amg(viennacl::linalg::cg_tag & cg_solver,
-             boost::numeric::ublas::vector<ScalarType> & /*ublas_vec*/,
-             boost::numeric::ublas::vector<ScalarType> & /*ublas_result*/,
-             boost::numeric::ublas::compressed_matrix<ScalarType> & ublas_matrix,
              viennacl::vector<ScalarType> & vcl_vec,
              viennacl::vector<ScalarType> & vcl_result,
              viennacl::compressed_matrix<ScalarType> & vcl_compressed_matrix,
              std::string info,
              viennacl::linalg::amg_tag & amg_tag)
 {
-  (void)ublas_matrix;
-
   //boost::numeric::ublas::vector<ScalarType> avgstencil;
   unsigned int coarselevels = amg_tag.get_coarselevels();
 
@@ -163,29 +148,27 @@ int main()
   viennacl::vector<ScalarType> vcl_vec(vcl_compressed_matrix.size1(), ctx);
   viennacl::vector<ScalarType> vcl_result(vcl_compressed_matrix.size1(), ctx);
 
-  boost::numeric::ublas::vector<ScalarType> ublas_vec, ublas_result;
-  boost::numeric::ublas::compressed_matrix<ScalarType> ublas_matrix(vcl_compressed_matrix.size1(), vcl_compressed_matrix.size2(), vcl_compressed_matrix.nnz());
-
-  viennacl::copy(vcl_compressed_matrix, ublas_matrix);
+  std::vector<ScalarType> std_vec, std_result;
 
   // Read matrix
-  /*if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx"))
+  /*if (!viennacl::io::read_matrix_market_file(vcl_compressed_matrix, "../examples/testdata/mat65k.mtx"))
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;
   }*/
 
   // rhs and result vector:
-  ublas_vec.resize(ublas_matrix.size1());
-  ublas_result.resize(ublas_matrix.size1());
-  for (std::size_t i=0; i<ublas_result.size(); ++i)
-    ublas_result[i] = ScalarType(1);
-
-  ublas_vec = prod(ublas_matrix, ublas_result);
+  std_vec.resize(vcl_compressed_matrix.size1());
+  std_result.resize(vcl_compressed_matrix.size1());
+  for (std::size_t i=0; i<std_result.size(); ++i)
+    std_result[i] = ScalarType(1);
 
   // Copy to GPU
-  viennacl::copy(ublas_vec, vcl_vec);
-  viennacl::copy(ublas_result, vcl_result);
+  viennacl::copy(std_vec, vcl_vec);
+  viennacl::copy(std_result, vcl_result);
+
+  vcl_vec = viennacl::linalg::prod(vcl_compressed_matrix, vcl_result);
+
 
   /**
   * Instantiate a tag for the conjugate gradient solver, the AMG preconditioner tag, and create an AMG preconditioner object:
@@ -197,10 +180,7 @@ int main()
   * Run solver without preconditioner. This serves as a baseline for comparison.
   * Note that iterative solvers without preconditioner on GPUs can be very efficient because they map well to the massively parallel hardware.
   **/
-  std::cout << "-- CG solver (CPU, no preconditioner) --" << std::endl;
-  run_solver(ublas_matrix, ublas_vec, ublas_result, cg_solver, viennacl::linalg::no_precond());
-
-  std::cout << "-- CG solver (GPU, no preconditioner) --" << std::endl;
+  std::cout << "-- CG solver (no preconditioner) --" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, viennacl::linalg::no_precond());
 
   /**
@@ -220,7 +200,7 @@ int main()
   * Generate the setup for an AMG preconditioner of Ruge-Stueben type with only one pass and direct interpolation (ONEPASS+DIRECT)
   **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_ONEPASS, VIENNACL_AMG_INTERPOL_DIRECT,0.25, 0.2, 0.67, 1, 1, 0);
-  run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag);
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag);
 
 
   /**
@@ -245,7 +225,7 @@ int main()
   * Generate the setup for an AMG preconditioner which as aggregation-based (AG)
   **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
-  run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION", amg_tag);
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION", amg_tag);
 
   /**
   * Generate the setup for an AMG preconditioner with smoothed aggregation (SA)
