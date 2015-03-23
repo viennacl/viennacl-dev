@@ -36,6 +36,8 @@
 #endif
 
 #include "viennacl/tools/timer.hpp"
+#include "viennacl/context.hpp"
+#include "viennacl/linalg/sparse_matrix_operations.hpp"
 
 #define VIENNACL_AMG_COARSE_RS      1
 #define VIENNACL_AMG_COARSE_ONEPASS 2
@@ -84,7 +86,37 @@ public:
           unsigned int coarselevels = 0)
   : coarse_(coarse), interpol_(interpol),
     threshold_(threshold), interpolweight_(interpolweight), jacobiweight_(jacobiweight),
-    presmooth_(presmooth), postsmooth_(postsmooth), coarselevels_(coarselevels) {}
+    presmooth_(presmooth), postsmooth_(postsmooth), coarselevels_(coarselevels),
+    coarse_info_(20), use_coarse_info_(false), save_coarse_info_(false) {}
+
+  amg_tag & operator=(amg_tag const & other)
+  {
+    coarse_ = other.coarse_;
+    interpol_ = other.interpol_;
+    threshold_ = other.threshold_;
+    interpolweight_ = other.interpolweight_;
+    jacobiweight_ = other.jacobiweight_;
+    presmooth_ = other.presmooth_;
+    postsmooth_ = other.postsmooth_;
+    coarselevels_ = other.coarselevels_;
+    setup_ctx_ = other.setup_ctx_;
+    target_ctx_ = other.target_ctx_;
+
+    for (std::size_t i=0; i < coarselevels_; ++i)
+    {
+      if (other.coarse_info_[i].size() > 0)
+      {
+        std::vector<char> tmp(other.coarse_info_[i].size());
+        viennacl::copy(other.coarse_info_[i], tmp);
+        coarse_info_[i].resize(tmp.size(), false);
+        viennacl::copy(tmp, coarse_info_[i]);
+      }
+    }
+    use_coarse_info_ = other.use_coarse_info_;
+    save_coarse_info_ = other.save_coarse_info_;
+
+    return *this;
+  }
 
   // Getter-/Setter-Functions
   void set_coarse(unsigned int coarse) { coarse_ = coarse; }
@@ -111,10 +143,29 @@ public:
   void set_coarselevels(unsigned int coarselevels)  { coarselevels_ = coarselevels; }
   unsigned int get_coarselevels() const { return coarselevels_; }
 
+  void set_setup_context(viennacl::context ctx)  { setup_ctx_ = ctx; }
+  viennacl::context const & get_setup_context() const { return setup_ctx_; }
+
+  void set_target_context(viennacl::context ctx)  { target_ctx_ = ctx; }
+  viennacl::context const & get_target_context() const { return target_ctx_; }
+
+  void set_coarse_information(std::size_t level, viennacl::vector<char> const & c_info) { coarse_info_.at(level) = c_info; }
+  void set_coarse_information(std::size_t level,      std::vector<char> const & c_info) { viennacl::copy(c_info, coarse_info_.at(level)); }
+  viennacl::vector<char> & get_coarse_information(std::size_t level) { return coarse_info_.at(level); }
+
+  void use_coarse_information(bool b) { use_coarse_info_ = b; }
+  bool use_coarse_information() const { return use_coarse_info_; }
+
+  void save_coarse_information(bool b) { save_coarse_info_ = b; }
+  bool save_coarse_information() const { return save_coarse_info_; }
+
 private:
   unsigned int coarse_, interpol_;
   double threshold_, interpolweight_, jacobiweight_;
   unsigned int presmooth_, postsmooth_, coarselevels_;
+  viennacl::context setup_ctx_, target_ctx_;
+  std::vector<viennacl::vector<char> > coarse_info_;
+  bool use_coarse_info_, save_coarse_info_;
 };
 
 
@@ -175,6 +226,8 @@ public:
 
   void set_coarse(unsigned int point) { point_types_.at(point) = POINT_TYPE_COARSE; }
   void set_fine  (unsigned int point) { point_types_.at(point) = POINT_TYPE_FINE; }
+
+  std::vector<char> const & point_types() const { return point_types_; }
 
   void enumerate_coarse_points()
   {
@@ -277,13 +330,13 @@ void amg_mat_prod (SparseMatrixT & A, SparseMatrixT & B, SparseMatrixT & RES)
   * @param C_coarse    Result Matrix (Galerkin operator)
   */
 template<typename NumericT>
-void amg_galerkin_prod(compressed_matrix<NumericT> const & A_fine,
+void amg_galerkin_prod(compressed_matrix<NumericT> & A_fine,
                        compressed_matrix<NumericT> & P,
                        compressed_matrix<NumericT> & R, //P^T
                        compressed_matrix<NumericT> & A_coarse)
 {
 
-  compressed_matrix<NumericT> A_fine_times_P;
+  compressed_matrix<NumericT> A_fine_times_P(viennacl::traits::context(A_fine));
 
   // transpose P in memory (no known way of efficiently multiplying P^T * B for CSR-matrices P and B):
   viennacl::tools::timer timer;

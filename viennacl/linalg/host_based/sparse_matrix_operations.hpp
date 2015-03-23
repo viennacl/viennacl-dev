@@ -1178,7 +1178,112 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
     }
   }
 
+  // Step 3: Make datastructure consistent (row blocks!)
+  B.generate_row_block_information();
 }
+
+
+template<typename NumericT>
+std::size_t amg_agg(compressed_matrix<NumericT> const & A,
+                    viennacl::vector<unsigned int> & coarse_agg_ids,
+                    viennacl::vector<char> const & point_type)
+{
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  unsigned int       * coarse_agg_ids_elements = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(coarse_agg_ids.handle());
+  char         const * point_type_elements     = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(point_type.handle());
+
+  //
+  // Stage 1: Enumerate coarse points:
+  //
+  std::size_t num_coarse = 0;
+  for (std::size_t i=0; i<A.size1(); ++i)
+  {
+    if (point_type_elements[i] == 1)
+    {
+      coarse_agg_ids_elements[i] = num_coarse;
+      ++num_coarse;
+    }
+    else
+      coarse_agg_ids_elements[i] = A.size1(); // start from defined state
+  }
+
+  //
+  // Stage 2: Propagate coarse aggregate indices to neighbors:
+  //
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (unsigned int row = 0; row<A.size1(); ++row)
+  {
+    if (point_type_elements[row] == 1)
+    {
+      unsigned int coarse_index = coarse_agg_ids_elements[row];
+
+      unsigned int row_stop  = A_row_buffer[row+1];
+      for (unsigned int index = A_row_buffer[row]; index != row_stop; ++index)
+        coarse_agg_ids_elements[A_col_buffer[index]] = coarse_index;
+    }
+  }
+
+
+  //
+  // Stage 3: Merge remaining undecided points (merging to first aggregate found when cycling over the hierarchy
+  //
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (std::size_t i=0; i<A.size1(); ++i)
+  {
+    if (coarse_agg_ids_elements[i] == A.size1())
+    {
+      unsigned int row_stop  = A_row_buffer[i+1];
+      for (unsigned int index = A_row_buffer[i]; index != row_stop; ++index)
+      {
+        unsigned int other_agg_index = coarse_agg_ids_elements[A_col_buffer[index]];
+        if (other_agg_index < A.size1())
+        {
+          coarse_agg_ids_elements[i] = other_agg_index;
+          break;
+        }
+      }
+    }
+  }
+
+  return num_coarse;
+}
+
+template<typename NumericT>
+void amg_agg_interpol(compressed_matrix<NumericT> const & A,
+                      compressed_matrix<NumericT> & P,
+                      std::size_t num_coarse,
+                      viennacl::vector<unsigned int> const & coarse_agg_ids)
+{
+  P = compressed_matrix<NumericT>(A.size1(), num_coarse, A.size1(), viennacl::traits::context(A));
+
+  NumericT     * P_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(P.handle());
+  unsigned int * P_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(P.handle1());
+  unsigned int * P_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(P.handle2());
+
+  unsigned int const * coarse_agg_ids_elements = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(coarse_agg_ids.handle());
+
+  // Build interpolation matrix:
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (unsigned int row = 0; row<A.size1(); ++row)
+  {
+    P_elements[row]   = NumericT(1);
+    P_row_buffer[row] = row;
+    P_col_buffer[row] = coarse_agg_ids_elements[row];
+  }
+  P_row_buffer[A.size1()] = A.size1(); // don't forget finalizer
+
+  P.generate_row_block_information();
+}
+
 
 //
 // Compressed Compressed Matrix

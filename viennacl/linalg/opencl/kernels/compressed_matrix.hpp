@@ -1481,6 +1481,87 @@ void generate_compressed_matrix_assign_to_dense(StringT & source, std::string co
  source.append("  } \n");
 
 }
+
+template<typename StringT>
+void generate_compressed_matrix_amg_agg_2(StringT & source, std::string const & numeric_string)
+{
+
+ source.append(" __kernel void amg_agg_2( \n");
+ source.append("  __global const unsigned int * A_row_indices, \n");
+ source.append("  __global const unsigned int * A_col_indices, \n");
+ source.append("  __global const "); source.append(numeric_string); source.append(" * A_elements, \n");
+ source.append("  unsigned int A_size1, \n");
+ source.append("  __global unsigned int * coarse_agg_ids, \n");
+ source.append("  __global const char * point_type) { \n");
+
+ source.append("   for (unsigned int i = get_global_id(0); i < A_size1; i += get_global_size(0)) \n");
+ source.append("   { \n");
+ source.append("     if (point_type[i] == 1) \n");
+ source.append("     { \n");
+ source.append("       unsigned int coarse_index = coarse_agg_ids[i]; \n");
+ source.append("       unsigned int row_end = A_row_indices[i+1]; \n");
+ source.append("       for (unsigned int j = A_row_indices[i]; j<row_end; j++) \n");
+ source.append("       { \n");
+ source.append("         coarse_agg_ids[A_col_indices[j]] = coarse_index; \n");
+ source.append("       } \n");
+ source.append("     } \n");
+ source.append("   } \n");
+ source.append("  } \n");
+
+}
+
+template<typename StringT>
+void generate_compressed_matrix_amg_agg_3(StringT & source, std::string const & numeric_string)
+{
+
+ source.append(" __kernel void amg_agg_3( \n");
+ source.append("  __global const unsigned int * A_row_indices, \n");
+ source.append("  __global const unsigned int * A_col_indices, \n");
+ source.append("  __global const "); source.append(numeric_string); source.append(" * A_elements, \n");
+ source.append("  unsigned int A_size1, \n");
+ source.append("  __global unsigned int * coarse_agg_ids) { \n");
+
+ source.append("   for (unsigned int i = get_global_id(0); i < A_size1; i += get_global_size(0)) \n");
+ source.append("   { \n");
+ source.append("     if (coarse_agg_ids[i] == A_size1) \n");
+ source.append("     { \n");
+ source.append("       unsigned int row_end = A_row_indices[i+1]; \n");
+ source.append("       for (unsigned int j = A_row_indices[i]; j<row_end; j++) \n");
+ source.append("       { \n");
+ source.append("         unsigned int other_agg_index = coarse_agg_ids[A_col_indices[j]]; \n");
+ source.append("         if (other_agg_index < A_size1) {\n");
+ source.append("           coarse_agg_ids[i] = other_agg_index; \n");
+ source.append("           break; \n");
+ source.append("         } \n");
+ source.append("       } \n");
+ source.append("     } \n");
+ source.append("   } \n");
+ source.append("  } \n");
+
+}
+
+template<typename StringT>
+void generate_compressed_matrix_amg_agg_interpol(StringT & source, std::string const & numeric_string)
+{
+
+ source.append(" __kernel void amg_agg_interpol( \n");
+ source.append("  __global unsigned int * P_row_indices, \n");
+ source.append("  __global unsigned int * P_column_indices, \n");
+ source.append("  __global "); source.append(numeric_string); source.append(" * P_elements, \n");
+ source.append("  unsigned int P_size1, \n");
+ source.append("  __global const unsigned int * coarse_agg_ids) { \n");
+
+ source.append("   for (unsigned int i = get_global_id(0); i < P_size1; i += get_global_size(0)) \n");
+ source.append("   { \n");
+ source.append("     P_elements[i] = 1; \n");
+ source.append("     P_row_indices[i] = i; \n");
+ source.append("     P_column_indices[i] = coarse_agg_ids[i]; \n");
+ source.append("   } \n");
+ source.append("   if (get_global_id(0) == 0) P_row_indices[P_size1] = P_size1; \n");
+ source.append("  } \n");
+
+}
+
 //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
 // main kernel class
@@ -1508,9 +1589,9 @@ struct compressed_matrix
 
       if (numeric_string == "float" || numeric_string == "double")
       {
-        generate_compressed_matrix_block_trans_lu_backward(source, numeric_string);
-        generate_compressed_matrix_block_trans_unit_lu_forward(source, numeric_string);
         generate_compressed_matrix_jacobi(source, numeric_string);
+        /*generate_compressed_matrix_block_trans_lu_backward(source, numeric_string);
+        generate_compressed_matrix_block_trans_unit_lu_forward(source, numeric_string);
         generate_compressed_matrix_lu_backward(source, numeric_string);
         generate_compressed_matrix_lu_forward(source, numeric_string);
         generate_compressed_matrix_trans_lu_backward(source, numeric_string);
@@ -1519,9 +1600,9 @@ struct compressed_matrix
         generate_compressed_matrix_trans_unit_lu_forward(source, numeric_string);
         generate_compressed_matrix_trans_unit_lu_forward_slow(source, numeric_string);
         generate_compressed_matrix_unit_lu_backward(source, numeric_string);
-        generate_compressed_matrix_unit_lu_forward(source, numeric_string);
+        generate_compressed_matrix_unit_lu_forward(source, numeric_string);*/
       }
-      generate_compressed_matrix_dense_matrix_multiplication(source, numeric_string);
+      //generate_compressed_matrix_dense_matrix_multiplication(source, numeric_string);
       generate_compressed_matrix_row_info_extractor(source, numeric_string);
       generate_compressed_matrix_vec_mul(source, numeric_string);
       generate_compressed_matrix_vec_mul4(source, numeric_string);
@@ -1529,6 +1610,9 @@ struct compressed_matrix
       generate_compressed_matrix_vec_mul_cpu(source, numeric_string);
       generate_compressed_matrix_compressed_matrix_prod(source, numeric_string);
       generate_compressed_matrix_assign_to_dense(source, numeric_string);
+      generate_compressed_matrix_amg_agg_2(source, numeric_string);
+      generate_compressed_matrix_amg_agg_3(source, numeric_string);
+      generate_compressed_matrix_amg_agg_interpol(source, numeric_string);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO

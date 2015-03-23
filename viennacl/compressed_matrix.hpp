@@ -862,6 +862,7 @@ private:
     return nonzeros_;
   }
 
+public:
   void generate_row_block_information()
   {
     viennacl::backend::typesafe_host_array<unsigned int> row_buffer(row_buffer_, rows_ + 1);
@@ -903,7 +904,7 @@ private:
   // /** @brief Copy constructor is by now not available. */
   //compressed_matrix(compressed_matrix const &);
 
-
+private:
   vcl_size_t rows_;
   vcl_size_t cols_;
   vcl_size_t nonzeros_;

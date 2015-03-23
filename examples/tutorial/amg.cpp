@@ -46,6 +46,7 @@
 #include <vector>
 #include <ctime>
 #include "vector-io.hpp"
+#include "viennacl/tools/timer.hpp"
 
 
 /** <h2>Part 1: Worker routines</h2>
@@ -59,7 +60,10 @@ void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType co
   VectorType result(rhs);
   VectorType residual(rhs);
 
+  viennacl::tools::timer timer;
+  timer.start();
   result = viennacl::linalg::solve(matrix, rhs, solver, precond);
+  std::cout << "  > Solver time: " << timer.get() << std::endl;
   residual -= viennacl::linalg::prod(matrix, result);
   std::cout << "  > Relative residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(rhs) << std::endl;
   std::cout << "  > Iterations: " << solver.iters() << std::endl;
@@ -94,6 +98,17 @@ void run_amg(viennacl::linalg::cg_tag & cg_solver,
   std::cout << " * CG solver (ViennaCL types)..." << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, vcl_amg);
 
+  // note: direct assignment runs into issues with OpenCL (kernels for char poor)
+  amg_tag.set_coarselevels(vcl_amg.tag().get_coarselevels());
+  for (std::size_t i=0; i<amg_tag.get_coarselevels(); ++i)
+  {
+    if (vcl_amg.tag().get_coarse_information(i).size() > 0)
+    {
+      std::vector<char> tmp(vcl_amg.tag().get_coarse_information(i).size());
+      viennacl::copy(vcl_amg.tag().get_coarse_information(i), tmp);
+      viennacl::copy(tmp, amg_tag.get_coarse_information(i));
+    }
+  }
 }
 
 /**
@@ -176,10 +191,16 @@ int main()
   viennacl::linalg::cg_tag cg_solver;
   viennacl::linalg::amg_tag amg_tag;
 
+  viennacl::context host_ctx(viennacl::MAIN_MEMORY);
+  viennacl::context target_ctx = viennacl::traits::context(vcl_compressed_matrix);
+
   /**
   * Run solver without preconditioner. This serves as a baseline for comparison.
   * Note that iterative solvers without preconditioner on GPUs can be very efficient because they map well to the massively parallel hardware.
   **/
+  std::cout << "-- CG solver (no preconditioner, warmup) --" << std::endl;
+  run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, viennacl::linalg::no_precond());
+
   std::cout << "-- CG solver (no preconditioner) --" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, viennacl::linalg::no_precond());
 
@@ -200,6 +221,8 @@ int main()
   * Generate the setup for an AMG preconditioner of Ruge-Stueben type with only one pass and direct interpolation (ONEPASS+DIRECT)
   **/
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_ONEPASS, VIENNACL_AMG_INTERPOL_DIRECT,0.25, 0.2, 0.67, 1, 1, 0);
+  amg_tag.set_setup_context(host_ctx);
+  amg_tag.set_target_context(target_ctx);
   run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag);
 
 
@@ -224,8 +247,28 @@ int main()
   /**
   * Generate the setup for an AMG preconditioner which as aggregation-based (AG)
   **/
+  viennacl::linalg::amg_tag amg_tag_host(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
+  amg_tag_host.set_setup_context(host_ctx);
+  amg_tag_host.set_target_context(target_ctx);
+  amg_tag_host.save_coarse_information(true);
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION (host)", amg_tag_host);
+
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
-  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION", amg_tag);
+  amg_tag.set_setup_context(target_ctx);
+  amg_tag.set_target_context(target_ctx);
+  for (std::size_t i=0; i < amg_tag_host.get_coarselevels(); ++i)
+  {
+    if (amg_tag_host.get_coarse_information(i).size() > 0)
+    {
+      std::vector<char> tmp(amg_tag_host.get_coarse_information(i).size());
+      viennacl::copy(amg_tag_host.get_coarse_information(i), tmp);
+      viennacl::copy(tmp, amg_tag.get_coarse_information(i));
+    }
+    //amg_tag.set_coarse_information(i, amg_tag_host.get_coarse_information(i));
+  }
+  amg_tag.set_coarselevels(amg_tag_host.get_coarselevels());
+  amg_tag.use_coarse_information(true);
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION (device)", amg_tag);
 
   /**
   * Generate the setup for an AMG preconditioner with smoothed aggregation (SA)

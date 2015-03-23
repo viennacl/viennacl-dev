@@ -477,6 +477,8 @@ void amg_interpol_ag(compressed_matrix<NumericT> const & A,
     P_col_buffer[row] = pointvector.get_coarse_aggregate(row);
   }
   P_row_buffer[A.size1()] = A.size1(); // don't forget finalizer
+
+  P.generate_row_block_information();
 }
 
 /** @brief AG (aggregation based) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)

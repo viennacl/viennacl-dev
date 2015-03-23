@@ -55,7 +55,6 @@ namespace linalg
 typedef detail::amg::amg_tag          amg_tag;
 
 
-
 /** @brief Setup AMG preconditioner
 *
 * @param A            Operator matrices on all levels
@@ -63,11 +62,12 @@ typedef detail::amg::amg_tag          amg_tag;
 * @param pointvector  Vector of points on all levels
 * @param tag          AMG preconditioner tag
 */
-template<typename NumericT, typename PointListT>
+template<typename NumericT, typename PointListT, typename CoarseListT>
 void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
                std::vector<compressed_matrix<NumericT> > & list_of_P,
                std::vector<compressed_matrix<NumericT> > & list_of_R,
                PointListT & list_of_pointvectors,
+               CoarseListT & list_of_coarse_agg_id,
                amg_tag & tag)
 {
   viennacl::tools::timer timer;
@@ -84,14 +84,24 @@ void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
     unsigned int max_nnz_per_row = (list_of_A[i].nnz() / list_of_A[i].size1()) + 5; // crude estimate
     //std::cout << "Resizing for " << max_nnz_per_row << " nonzeros per row" << std::endl;
     list_of_pointvectors[i].resize(list_of_A[i].size1(), max_nnz_per_row);
+    list_of_coarse_agg_id[i] = viennacl::vector<unsigned int>(list_of_A[i].size1(), tag.get_setup_context());
 
     // Construct C and F points on coarse level (i is fine level, i+1 coarse level).
+    std::size_t num_coarse = 0;
     timer.start();
-    detail::amg::amg_coarse(list_of_A[i], list_of_pointvectors[i], tag);
+    if (tag.use_coarse_information()) {
+      num_coarse = viennacl::linalg::amg_agg(list_of_A[i], list_of_coarse_agg_id[i], tag.get_coarse_information(i));
+    }
+    else
+      detail::amg::amg_coarse(list_of_A[i], list_of_pointvectors[i], tag);
     std::cout << " Coarse grid construction time: " << timer.get() << std::endl;
 
+    // save coarse information if on main memory:
+    if (tag.save_coarse_information())
+      tag.set_coarse_information(i, list_of_pointvectors[i].point_types());
+
     // Calculate number of C and F points on level i.
-    unsigned int c_points = list_of_pointvectors[i].num_coarse_points();
+    unsigned int c_points = tag.use_coarse_information() ? num_coarse : list_of_pointvectors[i].num_coarse_points();
     unsigned int f_points = list_of_A[i].size1() - c_points;
 
     //std::cout << "Level " << i << ": ";
@@ -104,7 +114,10 @@ void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
 
     // Construct interpolation matrix for level i.
     timer.start();
-    detail::amg::amg_interpol(list_of_A[i], list_of_P[i], list_of_pointvectors[i], tag);
+    if (tag.use_coarse_information())
+      viennacl::linalg::amg_agg_interpol(list_of_A[i], list_of_P[i], num_coarse, list_of_coarse_agg_id[i]);
+    else
+      detail::amg::amg_interpol(list_of_A[i], list_of_P[i], list_of_pointvectors[i], tag);
     std::cout << " Interpolation construction time: " << timer.get() << std::endl;
 
     // Compute coarse grid operator (A[i+1] = R * A[i] * P) with R = trans(P).
@@ -112,6 +125,10 @@ void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
     detail::amg::amg_galerkin_prod(list_of_A[i], list_of_P[i], list_of_R[i], list_of_A[i+1]);
     std::cout << " Galerkin product time: " << timer.get() << std::endl;
 
+    // send matrices to target context:
+    list_of_A[i].switch_memory_context(tag.get_target_context());
+    list_of_P[i].switch_memory_context(tag.get_target_context());
+    list_of_R[i].switch_memory_context(tag.get_target_context());
 
     // If Limit of coarse points is reached then stop. Coarsest level is level i+1.
     if (tag.get_coarselevels() == 0 && c_points <= VIENNACL_AMG_COARSE_LIMIT)
@@ -206,23 +223,26 @@ void amg_setup_old(InternalT1 & A, InternalT1 & P, InternalT2 & pointvector, amg
 * @param pointvector  Vector of points on all levels
 * @param tag          AMG preconditioner tag
 */
-template<typename MatrixT, typename InternalT1, typename InternalT2>
-void amg_init(MatrixT const & mat, InternalT1 & A, InternalT1 & P, InternalT1 & R, InternalT2 & pointvector, amg_tag & tag)
+template<typename MatrixT, typename InternalT1, typename InternalT2, typename CoarseListT>
+void amg_init(MatrixT const & mat, InternalT1 & A, InternalT1 & P, InternalT1 & R, InternalT2 & pointvector, CoarseListT & list_of_coarse_agg_ids, amg_tag & tag)
 {
   //typedef typename MatrixType::value_type ScalarType;
   typedef typename InternalT1::value_type SparseMatrixType;
 
   std::size_t num_levels = (tag.get_coarselevels() > 0) ? tag.get_coarselevels() : VIENNACL_AMG_MAX_LEVELS;
 
-  A.resize(num_levels+1);
-  P.resize(num_levels);
-  R.resize(num_levels);
+  A.resize(num_levels+1, SparseMatrixType(tag.get_setup_context()));
+  P.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
+  R.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
   pointvector.resize(num_levels);
+  list_of_coarse_agg_ids.resize(num_levels);
 
   // Insert operator matrix as operator for finest level.
   //SparseMatrixType A0(mat);
   //A.insert_element(0, A0);
+  A[0].switch_memory_context(viennacl::traits::context(mat));
   A[0] = mat;
+  A[0].switch_memory_context(tag.get_setup_context());
 }
 
 /** @brief Save operators after setup phase for CPU computation.
@@ -358,8 +378,7 @@ void amg_setup_apply(InternalVectorT & result,
                      InternalVectorT & rhs,
                      InternalVectorT & residual,
                      SparseMatrixT const & A,
-                     amg_tag const & tag,
-                     viennacl::context ctx)
+                     amg_tag const & tag)
 {
   typedef typename InternalVectorT::value_type VectorType;
 
@@ -370,13 +389,13 @@ void amg_setup_apply(InternalVectorT & result,
 
   for (unsigned int level=0; level < tag.get_coarselevels()+1; ++level)
   {
-    result[level] = VectorType(A[level].size1(), ctx);
-    result_backup[level] = VectorType(A[level].size1(), ctx);
-      rhs[level] = VectorType(A[level].size1(), ctx);
+           result[level] = VectorType(A[level].size1(), tag.get_target_context());
+    result_backup[level] = VectorType(A[level].size1(), tag.get_target_context());
+              rhs[level] = VectorType(A[level].size1(), tag.get_target_context());
   }
   for (unsigned int level=0; level < tag.get_coarselevels(); ++level)
   {
-    residual[level] = VectorType(A[level].size1(), ctx);
+    residual[level] = VectorType(A[level].size1(), tag.get_target_context());
   }
 }
 
@@ -390,12 +409,15 @@ void amg_setup_apply(InternalVectorT & result,
 */
 template<typename NumericT, typename SparseMatrixT>
 void amg_lu(viennacl::matrix<NumericT> & op,
-            SparseMatrixT const & A)
+            SparseMatrixT const & A,
+            amg_tag const & tag)
 {
+  op.switch_memory_context(tag.get_setup_context());
   op.resize(A.size1(), A.size2(), false);
   viennacl::linalg::assign_to_dense(A, op);
 
   viennacl::linalg::lu_factorize(op);
+  op.switch_memory_context(tag.get_target_context());
 }
 
 /** @brief AMG preconditioner class, can be supplied to solve()-routines
@@ -419,6 +441,7 @@ class amg_precond< compressed_matrix<NumericT, AlignmentV> >
   std::vector<SparseMatrixType> P_list_;
   std::vector<SparseMatrixType> R_list_;
   std::vector<PointListType>  pointvector_list_;
+  std::vector<viennacl::vector<unsigned int> > coarse_agg_list_;
 
   viennacl::matrix<NumericT>        coarsest_op_;
 
@@ -426,8 +449,6 @@ class amg_precond< compressed_matrix<NumericT, AlignmentV> >
   mutable std::vector<VectorType> result_backup_list_;
   mutable std::vector<VectorType> rhs_list_;
   mutable std::vector<VectorType> residual_list_;
-
-  viennacl::context ctx_;
 
   mutable bool done_init_apply_;
 
@@ -444,12 +465,11 @@ public:
   */
   amg_precond(compressed_matrix<NumericT, AlignmentV> const & mat,
               amg_tag const & tag)
-    : ctx_(viennacl::traits::context(mat))
   {
     tag_ = tag;
 
     // Initialize data structures.
-    amg_init(mat, A_list_, P_list_, R_list_, pointvector_list_, tag_);
+    amg_init(mat, A_list_, P_list_, R_list_, pointvector_list_, coarse_agg_list_, tag_);
   }
 
   /** @brief Start setup phase for this class and copy data structures.
@@ -457,13 +477,13 @@ public:
   void setup()
   {
     // Start setup phase.
-    amg_setup(A_list_, P_list_, R_list_, pointvector_list_, tag_);
+    amg_setup(A_list_, P_list_, R_list_, pointvector_list_, coarse_agg_list_, tag_);
 
     // Setup precondition phase (Data structures).
-    amg_setup_apply(result_list_, result_backup_list_, rhs_list_, residual_list_, A_list_, tag_, ctx_);
+    amg_setup_apply(result_list_, result_backup_list_, rhs_list_, residual_list_, A_list_, tag_);
 
     // LU factorization for direct solve.
-    amg_lu(coarsest_op_, A_list_[tag_.get_coarselevels()]);
+    amg_lu(coarsest_op_, A_list_[tag_.get_coarselevels()], tag_);
   }
 
 

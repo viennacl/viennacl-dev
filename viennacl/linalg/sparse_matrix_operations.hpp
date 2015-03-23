@@ -397,6 +397,7 @@ namespace viennacl
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
           A.switch_memory_context(cpu_ctx);
+          B.switch_memory_context(cpu_ctx);
           viennacl::linalg::host_based::amg_transpose(A, B);
           A.switch_memory_context(orig_ctx);
           B.switch_memory_context(orig_ctx);
@@ -406,6 +407,55 @@ namespace viennacl
         case viennacl::CUDA_MEMORY:
           viennacl::linalg::cuda::amg_transpose(A, B);
           break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    template<typename NumericT>
+    std::size_t amg_agg(compressed_matrix<NumericT> const & A,
+                        viennacl::vector<unsigned int> & coarse_agg_ids,
+                        viennacl::vector<char> & point_type)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          return viennacl::linalg::host_based::amg_agg(A, coarse_agg_ids, point_type);
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          return viennacl::linalg::opencl::amg_agg(A, coarse_agg_ids, point_type);
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          return viennacl::linalg::cuda::amg_agg(A, coarse_agg_ids, point_type);
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    template<typename NumericT>
+    void amg_agg_interpol(compressed_matrix<NumericT> const & A,
+                          compressed_matrix<NumericT> & P,
+                          std::size_t num_coarse,
+                          viennacl::vector<unsigned int> const & coarse_agg_ids)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          return viennacl::linalg::host_based::amg_agg_interpol(A, P, num_coarse, coarse_agg_ids);
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          return viennacl::linalg::opencl::amg_agg_interpol(A, P, num_coarse, coarse_agg_ids);
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          return viennacl::linalg::cuda::amg_agg_interpol(A, P, num_coarse, coarse_agg_ids);
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:
           throw memory_exception("not initialised!");

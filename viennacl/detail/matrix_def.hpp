@@ -237,9 +237,9 @@ public:
   const handle_type & handle() const { return elements_; }
   viennacl::memory_types memory_domain() const { return elements_.get_active_handle_id(); }
   bool row_major() const { return row_major_; }
+  void switch_memory_context(viennacl::context new_ctx) { viennacl::backend::switch_memory_context<NumericT>(elements_, new_ctx); }
 protected:
   void set_handle(viennacl::backend::mem_handle const & h);
-  void switch_memory_context(viennacl::context new_ctx);
   void resize(size_type rows, size_type columns, bool preserve = true);
 private:
   size_type size1_;
