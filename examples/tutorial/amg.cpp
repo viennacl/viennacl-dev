@@ -160,17 +160,17 @@ int main(int argc, char **argv)
   **/
   viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix(ctx);
 
-  std::cout << "Number of grid points per dimension: " << std::endl;
-  std::size_t points_per_dim;
-  std::cin >> points_per_dim;
-
   //viennacl::tools::generate_fdm_laplace(vcl_compressed_matrix, points_per_dim, points_per_dim);
   // Read matrix
-  if (!viennacl::io::read_matrix_market_file(vcl_compressed_matrix, argv[1]))
+  std::cout << "Reading matrix..." << std::endl;
+  std::vector< std::map<unsigned int, ScalarType> > read_in_matrix;
+  if (!viennacl::io::read_matrix_market_file(read_in_matrix, argv[1]))
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;
   }
+  viennacl::copy(read_in_matrix, vcl_compressed_matrix);
+  std::cout << "Reading matrix completed." << std::endl;
 
   viennacl::vector<ScalarType> vcl_vec(vcl_compressed_matrix.size1(), ctx);
   viennacl::vector<ScalarType> vcl_result(vcl_compressed_matrix.size1(), ctx);
