@@ -598,6 +598,24 @@ void inplace_solve(matrix_expression< const compressed_matrix<NumericT, Alignmen
                         );
 }
 
+/** Assign sparse matrix A to dense matrix B */
+template<typename NumericT, unsigned int AlignmentV>
+void assign_to_dense(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
+                     viennacl::matrix_base<NumericT> & B)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(),
+                                             "assign_to_dense");
+
+  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                           viennacl::traits::opencl_handle(B),
+                           cl_uint(viennacl::traits::start1(B)),         cl_uint(viennacl::traits::start2(B)),
+                           cl_uint(viennacl::traits::stride1(B)),        cl_uint(viennacl::traits::stride2(B)),
+                           cl_uint(viennacl::traits::size1(B)),          cl_uint(viennacl::traits::size2(B)),
+                           cl_uint(viennacl::traits::internal_size1(B)), cl_uint(viennacl::traits::internal_size2(B)) ));
+
+}
 
 //
 // Compressed Compressed matrix

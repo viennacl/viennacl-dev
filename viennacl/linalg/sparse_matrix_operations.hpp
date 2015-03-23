@@ -319,6 +319,36 @@ namespace viennacl
       }
     }
 
+    /** Assign sparse matrix A to dense matrix B */
+    template<typename SparseMatrixType, typename NumericT>
+    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
+    assign_to_dense(SparseMatrixType const & A,
+                    viennacl::matrix_base<NumericT> & B)
+    {
+      assert( (sp_mat.size1() == B.size1()) && bool("Size check failed for assignment to dense matrix: size1(A) != size1(B)"));
+      assert( (sp_mat.size2() == B.size1()) && bool("Size check failed for assignment to dense matrix: size2(A) != size2(B)"));
+
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::assign_to_dense(A, B);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::assign_to_dense(A, B);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::assign_to_dense(A, B);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
 
 
     namespace detail

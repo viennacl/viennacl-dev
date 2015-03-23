@@ -385,20 +385,7 @@ void amg_lu(viennacl::matrix<NumericT> & op,
             SparseMatrixT const & A)
 {
   op.resize(A.size1(), A.size2(), false);
-
-  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
-  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
-  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
-
-  NumericT           * op_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(op.handle());
-
-  for (std::size_t row = 0; row < A.size1(); ++row)
-  {
-    unsigned int row_stop  = A_row_buffer[row+1];
-
-    for (unsigned int nnz_index = A_row_buffer[row]; nnz_index < row_stop; ++nnz_index)
-      op_elements[row * op.internal_size2() + A_col_buffer[nnz_index]] = A_elements[nnz_index];
-  }
+  viennacl::linalg::assign_to_dense(A, op);
 
   viennacl::linalg::lu_factorize(op);
 }

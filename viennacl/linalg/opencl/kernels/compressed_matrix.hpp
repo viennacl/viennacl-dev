@@ -1450,6 +1450,37 @@ void generate_compressed_matrix_compressed_matrix_prod(StringT & source, std::st
   generate_compressed_matrix_compressed_matrix_prod_3(source, numeric_string);
 }
 
+
+
+template<typename StringT>
+void generate_compressed_matrix_assign_to_dense(StringT & source, std::string const & numeric_string)
+{
+
+ source.append(" __kernel void assign_to_dense( \n");
+ source.append("  __global const unsigned int * row_indices, \n");
+ source.append("  __global const unsigned int * column_indices, \n");
+ source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
+ source.append("  __global "); source.append(numeric_string); source.append(" * B, \n");
+ source.append("  unsigned int B_row_start, \n");
+ source.append("  unsigned int B_col_start, \n");
+ source.append("  unsigned int B_row_inc, \n");
+ source.append("  unsigned int B_col_inc, \n");
+ source.append("  unsigned int B_row_size, \n");
+ source.append("  unsigned int B_col_size, \n");
+ source.append("  unsigned int B_internal_rows, \n");
+ source.append("  unsigned int B_internal_cols) { \n");
+
+ source.append("   for (unsigned int i = get_global_id(0); i < B_row_size; i += get_global_size(0)) \n");
+ source.append("   { \n");
+ source.append("     unsigned int row_end = row_indices[i+1]; \n");
+ source.append("     for (unsigned int j = row_indices[i]; j<row_end; j++) \n");
+ source.append("     { \n");
+ source.append("       B[(B_row_start + i * B_row_inc) * B_internal_cols + B_col_start + column_indices[j] * B_col_inc] = elements[j]; \n");
+ source.append("     } \n");
+ source.append("   } \n");
+ source.append("  } \n");
+
+}
 //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
 // main kernel class
@@ -1497,6 +1528,7 @@ struct compressed_matrix
       generate_compressed_matrix_vec_mul8(source, numeric_string);
       generate_compressed_matrix_vec_mul_cpu(source, numeric_string);
       generate_compressed_matrix_compressed_matrix_prod(source, numeric_string);
+      generate_compressed_matrix_assign_to_dense(source, numeric_string);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO

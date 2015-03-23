@@ -1034,7 +1034,29 @@ void inplace_solve(matrix_expression< const compressed_matrix<NumericT, Alignmen
   detail::csr_trans_inplace_solve<NumericT>(row_buffer, col_buffer, elements, vec_buf, proxy.lhs().size1(), tag);
 }
 
+/** Assign sparse matrix A to dense matrix B */
+template<typename NumericT, unsigned int AlignmentV>
+void assign_to_dense(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
+                     viennacl::matrix_base<NumericT> & B)
+{
+  NumericT     const * A_elements   = detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = detail::extract_raw_pointer<unsigned int>(A.handle2());
 
+  NumericT           * B_elements   = detail::extract_raw_pointer<NumericT>(B.handle());
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long row = 0; row < static_cast<long>(A.size1()); ++row)
+  {
+    unsigned int row_stop  = A_row_buffer[row+1];
+
+    for (unsigned int nnz_index = A_row_buffer[row]; nnz_index < row_stop; ++nnz_index)
+      B_elements[row * B.internal_size2() + A_col_buffer[nnz_index]] = A_elements[nnz_index];
+  }
+
+}
 
 //
 // Compressed Compressed Matrix
