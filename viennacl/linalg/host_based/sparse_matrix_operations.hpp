@@ -1058,6 +1058,122 @@ void assign_to_dense(viennacl::compressed_matrix<NumericT, AlignmentV> const & A
 
 }
 
+template<typename NumericT>
+void smooth_jacobi(unsigned int iterations,
+                   compressed_matrix<NumericT> const & A,
+                   vector<NumericT> & x,
+                   vector<NumericT> & x_backup,
+                   vector<NumericT> const & rhs_smooth,
+                   NumericT weight)
+{
+
+  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
+  NumericT     const * rhs_elements = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(rhs_smooth.handle());
+
+  NumericT           * x_elements     = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(x.handle());
+  NumericT     const * x_old_elements = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(x_backup.handle());
+
+  for (unsigned int i=0; i<iterations; ++i)
+  {
+    x_backup = x;
+
+    #ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for
+    #endif
+    for (unsigned int row=0; row < static_cast<unsigned int>(A.size1()); ++row)
+    {
+      unsigned int col_end   = A_row_buffer[row+1];
+
+      NumericT sum  = NumericT(0);
+      NumericT diag = NumericT(1);
+      for (unsigned int index = A_row_buffer[row]; index != col_end; ++index)
+      {
+        unsigned int col = A_col_buffer[index];
+        if (col == row)
+          diag = A_elements[index];
+        else
+          sum += A_elements[index] * x_old_elements[col];
+      }
+
+      x_elements[row] = weight * (rhs_elements[row] - sum) / diag + (NumericT(1) - weight) * x_old_elements[row];
+    }
+  }
+}
+
+
+/** @brief Computes B = trans(A).
+  *
+  * To be replaced by native functionality in ViennaCL.
+  */
+template<typename NumericT>
+void amg_transpose(compressed_matrix<NumericT> const & A,
+                   compressed_matrix<NumericT> & B)
+{
+  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  // initialize datastructures for B:
+  B = compressed_matrix<NumericT>(A.size2(), A.size1(), A.nnz(), viennacl::traits::context(A));
+
+  NumericT     * B_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(B.handle());
+  unsigned int * B_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(B.handle1());
+  unsigned int * B_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(B.handle2());
+
+  // prepare uninitialized B_row_buffer:
+  for (std::size_t i = 0; i < B.size1(); ++i)
+    B_row_buffer[i] = 0;
+
+  //
+  // Stage 1: Compute pattern for B
+  //
+  for (std::size_t row = 0; row < A.size1(); ++row)
+  {
+    unsigned int row_start = A_row_buffer[row];
+    unsigned int row_stop  = A_row_buffer[row+1];
+
+    for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
+      B_row_buffer[A_col_buffer[nnz_index]] += 1;
+  }
+
+  // Bring row-start array in place using inclusive-scan:
+  unsigned int offset = B_row_buffer[0];
+  B_row_buffer[0] = 0;
+  for (std::size_t row = 1; row < B.size1(); ++row)
+  {
+    unsigned int tmp = B_row_buffer[row];
+    B_row_buffer[row] = offset;
+    offset += tmp;
+  }
+  B_row_buffer[B.size1()] = offset;
+
+  //
+  // Stage 2: Fill with data
+  //
+
+  std::vector<unsigned int> B_row_offsets(B.size1()); //number of elements already written per row
+
+  for (std::size_t row = 0; row < A.size1(); ++row)
+  {
+    //std::cout << "Row " << row << ": ";
+    unsigned int row_start = A_row_buffer[row];
+    unsigned int row_stop  = A_row_buffer[row+1];
+
+    for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
+    {
+      unsigned int col_in_A = A_col_buffer[nnz_index];
+      unsigned int B_nnz_index = B_row_buffer[col_in_A] + B_row_offsets[col_in_A];
+      B_col_buffer[B_nnz_index] = row;
+      B_elements[B_nnz_index] = A_elements[nnz_index];
+      ++B_row_offsets[col_in_A];
+      //B_temp.at(A_col_buffer[nnz_index])[row] = A_elements[nnz_index];
+    }
+  }
+
+}
+
 //
 // Compressed Compressed Matrix
 //

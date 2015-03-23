@@ -271,51 +271,6 @@ void amg_mat_prod (SparseMatrixT & A, SparseMatrixT & B, SparseMatrixT & RES)
 }
 
 
-/** @brief Computes B = trans(A).
-  *
-  * To be replaced by native functionality in ViennaCL.
-  */
-template<typename NumericT>
-void amg_transpose(compressed_matrix<NumericT> const & A,
-                   compressed_matrix<NumericT> & B)
-{
-  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
-  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
-  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
-
-  //std::cout << "Size of A: " << A.size1() << " times " << A.size2() << std::endl;
-  //std::cout << "Matrix to transpose: " << std::endl;
-
-  std::vector< std::map<unsigned int, NumericT> > B_temp(A.size2());
-
-  for (std::size_t row = 0; row < A.size1(); ++row)
-  {
-    //std::cout << "Row " << row << ": ";
-    unsigned int row_start = A_row_buffer[row];
-    unsigned int row_stop  = A_row_buffer[row+1];
-
-    for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
-    {
-      //std::cout << A_col_buffer[nnz_index] << ": " << A_elements[nnz_index] << "; ";
-      B_temp.at(A_col_buffer[nnz_index])[row] = A_elements[nnz_index];
-    }
-    //std::cout << std::endl;
-  }
-
-  /*std::cout << "Transposed matrix: " << std::endl;
-  for (std::size_t i=0; i<B_temp.size(); ++i)
-  {
-    std::cout << "Row " << i << ": ";
-    for (typename std::map<unsigned int, NumericT>::const_iterator it = B_temp.at(i).begin(); it != B_temp.at(i).end(); ++it)
-      std::cout << it->first << ": " << it->second << "; ";
-    std::cout << std::endl;
-  }*/
-  viennacl::copy(B_temp, B);
-
-
-}
-
-
 /** @brief Sparse Galerkin product: Calculates A_coarse = trans(P)*A_fine*P
   * @param A    Operator matrix on fine grid (quadratic)
   * @param P    Prolongation/Interpolation matrix
@@ -323,7 +278,7 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
   */
 template<typename NumericT>
 void amg_galerkin_prod(compressed_matrix<NumericT> const & A_fine,
-                       compressed_matrix<NumericT> const & P,
+                       compressed_matrix<NumericT> & P,
                        compressed_matrix<NumericT> & R, //P^T
                        compressed_matrix<NumericT> & A_coarse)
 {
@@ -333,7 +288,7 @@ void amg_galerkin_prod(compressed_matrix<NumericT> const & A_fine,
   // transpose P in memory (no known way of efficiently multiplying P^T * B for CSR-matrices P and B):
   viennacl::tools::timer timer;
   timer.start();
-  amg_transpose(P, R);
+  viennacl::linalg::amg_transpose(P, R);
   std::cout << "  Time for transpose: " << timer.get() << std::endl;
 
   // compute Galerkin product using a temporary for the result of A_fine * P

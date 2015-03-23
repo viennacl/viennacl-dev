@@ -202,11 +202,11 @@ void generate_compressed_matrix_jacobi(StringT & source, std::string const & num
  source.append("     { \n");
  source.append("       col = column_indices[j]; \n");
  source.append("       if (i == col) \n");
- source.append("   diag = elements[j]; \n");
+ source.append("         diag = elements[j]; \n");
  source.append("       else \n");
- source.append("   sum += elements[j] * old_result[col]; \n");
+ source.append("         sum += elements[j] * old_result[col]; \n");
  source.append("     } \n");
- source.append("       new_result[i] = weight * (rhs[i]-sum) / diag + (1-weight) * old_result[i]; \n");
+ source.append("     new_result[i] = weight * (rhs[i]-sum) / diag + (1-weight) * old_result[i]; \n");
  source.append("    } \n");
  source.append("  } \n");
 

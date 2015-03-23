@@ -617,6 +617,53 @@ void assign_to_dense(viennacl::compressed_matrix<NumericT, AlignmentV> const & A
 
 }
 
+/** @brief Jacobi Smoother (OpenCL version)
+* @param level       Coarse level to which smoother is applied to
+* @param iterations  Number of smoother iterations
+* @param x           The vector smoothing is applied to
+* @param x_backup    Vector holding the same values as x (but diffferent from x)
+* @param rhs_smooth  The right hand side of the equation for the smoother
+*/
+template<typename NumericT>
+void smooth_jacobi(unsigned int iterations,
+                   compressed_matrix<NumericT> const & A,
+                   vector<NumericT> & x,
+                   vector<NumericT> & x_backup,
+                   vector<NumericT> const & rhs_smooth,
+                   NumericT weight)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
+  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "jacobi");
+
+  for (unsigned int i=0; i<iterations; ++i)
+  {
+    x_backup = x;
+
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                            static_cast<NumericT>(weight),
+                            viennacl::traits::opencl_handle(x_backup),
+                            viennacl::traits::opencl_handle(x),
+                            viennacl::traits::opencl_handle(rhs_smooth),
+                            static_cast<cl_uint>(rhs_smooth.size())));
+
+  }
+}
+
+
+
+/** @brief Computes B = trans(A).
+  *
+  * To be replaced by native functionality in ViennaCL.
+  */
+template<typename NumericT>
+void amg_transpose(compressed_matrix<NumericT> const & A,
+                   compressed_matrix<NumericT> & B)
+{
+  // headache
+}
+
+
 //
 // Compressed Compressed matrix
 //

@@ -72,6 +72,9 @@ void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvect
   unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
 
   //std::cout << "Calculating influences..." << std::endl;
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
   for (std::size_t i=0; i<A.size1(); ++i)
   {
     unsigned int row_start = A_row_buffer[i];

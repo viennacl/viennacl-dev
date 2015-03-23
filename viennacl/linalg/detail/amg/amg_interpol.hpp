@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include "viennacl/linalg/detail/amg/amg_base.hpp"
+#include "viennacl/traits/context.hpp"
 
 #include <map>
 #ifdef VIENNACL_WITH_OPENMP
@@ -459,9 +460,11 @@ void amg_interpol_ag(compressed_matrix<NumericT> const & A,
   typedef typename PointListT::influence_const_iterator  InfluenceIteratorType;
 
   (void)tag;
-  P.resize(A.size1(), pointvector.num_coarse_points());
+  P = compressed_matrix<NumericT>(A.size1(), pointvector.num_coarse_points(), A.size1(), viennacl::traits::context(A));
 
-  std::vector<std::map<unsigned int, NumericT> > P_setup(A.size1());
+  NumericT     * P_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(P.handle());
+  unsigned int * P_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(P.handle1());
+  unsigned int * P_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(P.handle2());
 
   // Build interpolation matrix:
 #ifdef VIENNACL_WITH_OPENMP
@@ -469,11 +472,11 @@ void amg_interpol_ag(compressed_matrix<NumericT> const & A,
 #endif
   for (unsigned int row = 0; row<A.size1(); ++row)
   {
-    P_setup[row][pointvector.get_coarse_aggregate(row)] = NumericT(1);
+    P_elements[row]   = NumericT(1);
+    P_row_buffer[row] = row;
+    P_col_buffer[row] = pointvector.get_coarse_aggregate(row);
   }
-
-  viennacl::tools::sparse_matrix_adapter<NumericT> P_adapter(P_setup, P.size1(), P.size2());
-  viennacl::copy(P_adapter, P);
+  P_row_buffer[A.size1()] = A.size1(); // don't forget finalizer
 }
 
 /** @brief AG (aggregation based) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)

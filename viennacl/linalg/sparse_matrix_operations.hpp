@@ -325,8 +325,8 @@ namespace viennacl
     assign_to_dense(SparseMatrixType const & A,
                     viennacl::matrix_base<NumericT> & B)
     {
-      assert( (sp_mat.size1() == B.size1()) && bool("Size check failed for assignment to dense matrix: size1(A) != size1(B)"));
-      assert( (sp_mat.size2() == B.size1()) && bool("Size check failed for assignment to dense matrix: size2(A) != size2(B)"));
+      assert( (A.size1() == B.size1()) && bool("Size check failed for assignment to dense matrix: size1(A) != size1(B)"));
+      assert( (A.size2() == B.size1()) && bool("Size check failed for assignment to dense matrix: size2(A) != size2(B)"));
 
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
@@ -350,6 +350,69 @@ namespace viennacl
       }
     }
 
+    template<typename NumericT>
+    void smooth_jacobi(unsigned int iterations,
+                       compressed_matrix<NumericT> const & A,
+                       vector<NumericT> & x,
+                       vector<NumericT> & x_backup,
+                       vector<NumericT> const & rhs_smooth,
+                       NumericT weight)
+    {
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::smooth_jacobi(iterations, A, x, x_backup, rhs_smooth, weight);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::smooth_jacobi(iterations, A, x, x_backup, rhs_smooth, weight);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::smooth_jacobi(iterations, A, x, x_backup, rhs_smooth, weight);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    template<typename NumericT>
+    void amg_transpose(compressed_matrix<NumericT> & A,
+                       compressed_matrix<NumericT> & B)
+    {
+      viennacl::context orig_ctx = viennacl::traits::context(A);
+      viennacl::context cpu_ctx(viennacl::MAIN_MEMORY);
+      (void)orig_ctx;
+      (void)cpu_ctx;
+
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::amg_transpose(A, B);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          A.switch_memory_context(cpu_ctx);
+          viennacl::linalg::host_based::amg_transpose(A, B);
+          A.switch_memory_context(orig_ctx);
+          B.switch_memory_context(orig_ctx);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::amg_transpose(A, B);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
 
     namespace detail
     {

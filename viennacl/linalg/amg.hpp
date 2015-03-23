@@ -353,17 +353,25 @@ void amg_setup_apply(InternalVectorT & result, InternalVectorT & rhs, InternalVe
 * @param ctx         Optional context in which the auxiliary objects are created (one out of multiple OpenCL contexts, CUDA, host)
 */
 template<typename InternalVectorT, typename SparseMatrixT>
-void amg_setup_apply(InternalVectorT & result, InternalVectorT & rhs, InternalVectorT & residual, SparseMatrixT const & A, amg_tag const & tag, viennacl::context ctx)
+void amg_setup_apply(InternalVectorT & result,
+                     InternalVectorT & result_backup,
+                     InternalVectorT & rhs,
+                     InternalVectorT & residual,
+                     SparseMatrixT const & A,
+                     amg_tag const & tag,
+                     viennacl::context ctx)
 {
   typedef typename InternalVectorT::value_type VectorType;
 
   result.resize(tag.get_coarselevels()+1);
+  result_backup.resize(tag.get_coarselevels()+1);
   rhs.resize(tag.get_coarselevels()+1);
   residual.resize(tag.get_coarselevels());
 
   for (unsigned int level=0; level < tag.get_coarselevels()+1; ++level)
   {
     result[level] = VectorType(A[level].size1(), ctx);
+    result_backup[level] = VectorType(A[level].size1(), ctx);
       rhs[level] = VectorType(A[level].size1(), ctx);
   }
   for (unsigned int level=0; level < tag.get_coarselevels(); ++level)
@@ -415,6 +423,7 @@ class amg_precond< compressed_matrix<NumericT, AlignmentV> >
   viennacl::matrix<NumericT>        coarsest_op_;
 
   mutable std::vector<VectorType> result_list_;
+  mutable std::vector<VectorType> result_backup_list_;
   mutable std::vector<VectorType> rhs_list_;
   mutable std::vector<VectorType> residual_list_;
 
@@ -451,7 +460,7 @@ public:
     amg_setup(A_list_, P_list_, R_list_, pointvector_list_, tag_);
 
     // Setup precondition phase (Data structures).
-    amg_setup_apply(result_list_, rhs_list_, residual_list_, A_list_, tag_, ctx_);
+    amg_setup_apply(result_list_, result_backup_list_, rhs_list_, residual_list_, A_list_, tag_, ctx_);
 
     // LU factorization for direct solve.
     amg_lu(coarsest_op_, A_list_[tag_.get_coarselevels()]);
@@ -506,7 +515,12 @@ public:
       result_list_[level].clear();
 
       // Apply Smoother presmooth_ times.
-      smooth_jacobi(tag_.get_presmooth(), A_list_[level], result_list_[level], rhs_list_[level]);
+      viennacl::linalg::smooth_jacobi(tag_.get_presmooth(),
+                                      A_list_[level],
+                                      result_list_[level],
+                                      result_backup_list_[level],
+                                      rhs_list_[level],
+                                      static_cast<NumericT>(tag_.get_jacobiweight()));
 
       // Compute residual.
       //residual[level] = rhs_[level] - viennacl::linalg::prod(A_[level], result_[level]);
@@ -519,7 +533,6 @@ public:
     }
 
     // Part 2: On highest level use direct solve to solve equation (on the CPU)
-    //TODO: Use GPU direct solve!
     result_list_[level] = rhs_list_[level];
     viennacl::linalg::lu_substitute(coarsest_op_, result_list_[level]);
 
@@ -529,84 +542,21 @@ public:
       level = static_cast<vcl_size_t>(level2);
 
       // Interpolate error to fine level and correct solution.
-      result_list_[level] += viennacl::linalg::prod(P_list_[level], result_list_[level+1]);
+      result_backup_list_[level] = viennacl::linalg::prod(P_list_[level], result_list_[level+1]);
+      result_list_[level] += result_backup_list_[level];
 
       // Apply Smoother postsmooth_ times.
-      smooth_jacobi(tag_.get_postsmooth(), A_list_[level], result_list_[level], rhs_list_[level]);
+      viennacl::linalg::smooth_jacobi(tag_.get_postsmooth(),
+                                      A_list_[level],
+                                      result_list_[level],
+                                      result_backup_list_[level],
+                                      rhs_list_[level],
+                                      static_cast<NumericT>(tag_.get_jacobiweight()));
     }
     vec = result_list_[0];
   }
 
-  template<typename MatrixT, typename VectorT>
-  void smooth_jacobi(unsigned int iterations, MatrixT const & A, VectorT & x, VectorT const & rhs_smooth) const
-  {
-    typedef typename viennacl::result_of::cpu_value_type<VectorT>::type   NumericType;
 
-    NumericType  const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericType>(A.handle());
-    unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
-    unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
-    VectorT old_result(x);
-
-    NumericType weight = static_cast<NumericType>(tag_.get_jacobiweight());
-
-    for (unsigned int i=0; i<iterations; ++i)
-    {
-      old_result = x;
-      x.clear();
-
-      #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
-      #endif
-      for (unsigned int row=0; row < static_cast<unsigned int>(A.size1()); ++row)
-      {
-
-        unsigned int col_end   = A_row_buffer[row+1];
-
-        NumericType sum  = NumericType(0);
-        NumericType diag = NumericType(1);
-        for (unsigned int index = A_row_buffer[row]; index != col_end; ++index)
-        {
-          unsigned int col = A_col_buffer[index];
-          if (col == row)
-            diag = A_elements[index];
-          else
-            sum += A_elements[index] * old_result[col];
-        }
-
-        x[row]= weight * (rhs_smooth[row] - sum) / diag + (NumericType(1) - weight) * old_result[row];
-      }
-    }
-  }
-
-  /** @brief Jacobi Smoother (OpenCL version)
-  * @param level       Coarse level to which smoother is applied to
-  * @param iterations  Number of smoother iterations
-  * @param x           The vector smoothing is applied to
-  * @param rhs_smooth  The right hand side of the equation for the smoother
-  *
-  template<typename MatrixT, typename VectorT>
-  void smooth_jacobi(unsigned int iterations, MatrixT const & A, VectorT & x, VectorT const & rhs_smooth) const
-  {
-    VectorT old_result(x);  // TODO: This is too expensive
-
-    viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(x).context());
-    viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
-    viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "jacobi");
-
-    for (unsigned int i=0; i<iterations; ++i)
-    {
-      if (i > 0)
-        old_result = x;
-      x.clear();
-      viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
-                              static_cast<NumericT>(tag_.get_jacobiweight()),
-                              viennacl::traits::opencl_handle(old_result),
-                              viennacl::traits::opencl_handle(x),
-                              viennacl::traits::opencl_handle(rhs_smooth),
-                              static_cast<cl_uint>(rhs_smooth.size())));
-
-    }
-  }*/
 
   amg_tag & tag() { return tag_; }
 };
