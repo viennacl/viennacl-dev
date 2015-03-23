@@ -116,8 +116,14 @@ void run_amg(viennacl::linalg::cg_tag & cg_solver,
 *
 *  In this
 **/
-int main()
+int main(int argc, char **argv)
 {
+  if (argc < 2)
+  {
+    std::cout << "Missing argument: filename" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
   /**
   * Print some device info at the beginning. If there is more than one OpenCL device available, use the second device.
   **/
@@ -141,7 +147,7 @@ int main()
     viennacl::ocl::setup_context(1, devices[0]);
 
   std::cout << viennacl::ocl::current_device().info() << std::endl;
-  viennacl::context ctx(viennacl::ocl::get_context(1));
+  viennacl::context ctx(viennacl::ocl::get_context(0));
 #else
   viennacl::context ctx;
 #endif
@@ -158,19 +164,19 @@ int main()
   std::size_t points_per_dim;
   std::cin >> points_per_dim;
 
-  viennacl::tools::generate_fdm_laplace(vcl_compressed_matrix, points_per_dim, points_per_dim);
+  //viennacl::tools::generate_fdm_laplace(vcl_compressed_matrix, points_per_dim, points_per_dim);
+  // Read matrix
+  if (!viennacl::io::read_matrix_market_file(vcl_compressed_matrix, argv[1]))
+  {
+    std::cout << "Error reading Matrix file" << std::endl;
+    return EXIT_FAILURE;
+  }
 
   viennacl::vector<ScalarType> vcl_vec(vcl_compressed_matrix.size1(), ctx);
   viennacl::vector<ScalarType> vcl_result(vcl_compressed_matrix.size1(), ctx);
 
   std::vector<ScalarType> std_vec, std_result;
 
-  // Read matrix
-  /*if (!viennacl::io::read_matrix_market_file(vcl_compressed_matrix, "../examples/testdata/mat65k.mtx"))
-  {
-    std::cout << "Error reading Matrix file" << std::endl;
-    return EXIT_FAILURE;
-  }*/
 
   // rhs and result vector:
   std_vec.resize(vcl_compressed_matrix.size1());
@@ -188,7 +194,7 @@ int main()
   /**
   * Instantiate a tag for the conjugate gradient solver, the AMG preconditioner tag, and create an AMG preconditioner object:
   **/
-  viennacl::linalg::cg_tag cg_solver;
+  viennacl::linalg::cg_tag cg_solver(1e-8, 10000);
   viennacl::linalg::amg_tag amg_tag;
 
   viennacl::context host_ctx(viennacl::MAIN_MEMORY);
@@ -248,11 +254,14 @@ int main()
   * Generate the setup for an AMG preconditioner which as aggregation-based (AG)
   **/
   viennacl::linalg::amg_tag amg_tag_host(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
+#ifdef VIENNACL_WITH_OPENCL
   amg_tag_host.set_setup_context(host_ctx);
   amg_tag_host.set_target_context(target_ctx);
   amg_tag_host.save_coarse_information(true);
+#endif
   run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION (host)", amg_tag_host);
 
+#ifdef VIENNACL_WITH_OPENCL
   amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
   amg_tag.set_setup_context(target_ctx);
   amg_tag.set_target_context(target_ctx);
@@ -269,6 +278,7 @@ int main()
   amg_tag.set_coarselevels(amg_tag_host.get_coarselevels());
   amg_tag.use_coarse_information(true);
   run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION (device)", amg_tag);
+#endif
 
   /**
   * Generate the setup for an AMG preconditioner with smoothed aggregation (SA)
