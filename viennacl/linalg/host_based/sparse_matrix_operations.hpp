@@ -31,6 +31,8 @@
 #include "viennacl/linalg/host_based/common.hpp"
 #include "viennacl/linalg/host_based/vector_operations.hpp"
 
+#include <omp.h>
+
 namespace viennacl
 {
 namespace linalg
@@ -330,54 +332,77 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
    */
   std::vector<unsigned int> nnz_per_row_in_C(A.size1() + 1);
 
-  for (std::size_t i=0; i<A.size1(); ++i)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel
+#endif
   {
-    std::size_t row_start_A = A_row_buffer[i];
-    std::size_t nnz_in_row_A = A_row_buffer[i+1] - row_start_A;
-    std::vector<unsigned int> row_front(nnz_in_row_A);
-    std::vector<unsigned int> row_starts(nnz_in_row_A);
-    std::vector<unsigned int> row_stops(nnz_in_row_A);
+    unsigned int *row_C_buffer = NULL;
+    std::size_t row_C_buffer_alloc_size = 0;
 
-    // load row arrays for B:
-    for (std::size_t j=0; j<nnz_in_row_A; ++j)
+#ifdef VIENNACL_WITH_OPENMP
+    std::size_t thread_work = A.size1() / omp_get_num_threads() + 1;
+    std::size_t thread_start = std::min<std::size_t>( omp_get_thread_num()    * thread_work, A.size1());
+    std::size_t thread_stop  = std::min<std::size_t>((omp_get_thread_num()+1) * thread_work, A.size1());
+#else
+    std::size_t thread_start = 0;
+    std::size_t thread_stop  = A.size1();
+#endif
+
+    for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
-      unsigned int row_index_B = A_col_buffer[row_start_A + j];
-      row_starts[j] = B_row_buffer[row_index_B];
-      row_stops[j]  = B_row_buffer[row_index_B + 1];
-      row_front[j]  = (row_stops[j] > row_starts[j]) ? B_col_buffer[row_starts[j]] : static_cast<unsigned int>(B.size2());   // set end marker if row is empty
-    }
+      std::size_t row_start_A = A_row_buffer[i];
+      std::size_t row_end_A   = A_row_buffer[i+1];
 
-    unsigned int nnz_in_row_C = 0;
-    while (1) // step through the entries in C
-    {
-      // find lowest unconsidered column index in row front:
-      unsigned int min_index = static_cast<unsigned int>(B.size2());
-      for (std::size_t j=0; j<row_front.size(); ++j)
-        if (row_front[j] < min_index)
-          min_index = row_front[j];
-
-      if (min_index == B.size2()) // we're done, all column indices processed
-        break;
-
-      // advance row front for min_index ('merge' operation)
-      for (std::size_t j=0; j<row_front.size(); ++j)
+      std::size_t max_entries_C = 0;
+      for (std::size_t j=row_start_A; j<row_end_A; ++j)
       {
-        if (row_front[j] == min_index)
+        unsigned int row_index_B = A_col_buffer[j];
+        max_entries_C += B_row_buffer[row_index_B+1] - B_row_buffer[row_index_B];
+      }
+
+      if (row_C_buffer_alloc_size < max_entries_C)
+      {
+        free(row_C_buffer);
+        row_C_buffer = (unsigned int*)malloc(sizeof(unsigned int)*max_entries_C);
+        row_C_buffer_alloc_size = max_entries_C;
+      }
+      std::size_t row_C_buffer_size = 0;
+
+      for (std::size_t j=row_start_A; j<row_end_A; ++j)
+      {
+        unsigned int row_index_B = A_col_buffer[j];
+        unsigned int row_start_B = B_row_buffer[row_index_B];
+        unsigned int row_end_B   = B_row_buffer[row_index_B+1];
+
+        std::size_t index = 0;
+        for (std::size_t k=row_start_B; k<row_end_B; ++k)
         {
-          // load next column index if available, otherwise set end marker (B.size2())
-          ++row_starts[j];
-          if (row_starts[j] < row_stops[j])
-            row_front[j] = B_col_buffer[row_starts[j]];
-          else
-            row_front[j] = static_cast<unsigned int>(B.size2());
+          unsigned int new_index = B_col_buffer[k];
+          // search:
+          bool found = false;
+          for (; index<row_C_buffer_size; ++index)
+          {
+            if (row_C_buffer[index] == new_index)
+              found = true;
+
+            if (row_C_buffer[index] >= new_index)
+              break;
+          }
+
+          if (!found) // sorted insert:
+          {
+            unsigned int tmp = new_index;
+            for (std::size_t r = index; r < row_C_buffer_size; ++r)
+              std::swap(tmp, row_C_buffer[r]);
+            row_C_buffer[row_C_buffer_size] = tmp;
+            ++row_C_buffer_size;
+          }
         }
       }
 
-      // increase counter for nonzeros in C:
-      ++nnz_in_row_C;
+      nnz_per_row_in_C[i] = static_cast<unsigned int>(row_C_buffer_size);
     }
-
-    nnz_per_row_in_C[i] = nnz_in_row_C;
+    free(row_C_buffer);
   }
 
   // exclusive scan to obtain row start indices:
@@ -394,69 +419,80 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
    * Stage 2: Compute product (code similar, maybe pull out into a separate function to avoid code duplication?)
    */
   C.resize(A.size1(), B.size2(), false);
-  C.reserve(nnz_per_row_in_C.back());
+  C.reserve(current_offset);
 
   NumericT     * C_elements   = detail::extract_raw_pointer<NumericT>(C.handle());
   unsigned int * C_row_buffer = detail::extract_raw_pointer<unsigned int>(C.handle1());
   unsigned int * C_col_buffer = detail::extract_raw_pointer<unsigned int>(C.handle2());
 
-  for (std::size_t i=0; i<A.size1(); ++i)
+  C_row_buffer[C.size1()] = current_offset;
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel
+#endif
   {
-    unsigned int C_element_index = nnz_per_row_in_C[i];
-    C_row_buffer[i] = C_element_index;
+#ifdef VIENNACL_WITH_OPENMP
+    std::size_t thread_work = A.size1() / omp_get_num_threads() + 1;
+    std::size_t thread_start = std::min<std::size_t>( omp_get_thread_num()    * thread_work, A.size1());
+    std::size_t thread_stop  = std::min<std::size_t>((omp_get_thread_num()+1) * thread_work, A.size1());
+#else
+    std::size_t thread_start = 0;
+    std::size_t thread_stop  = A.size1();
+#endif
 
-    std::size_t row_start_A  = std::size_t(A_row_buffer[i]);
-    std::size_t nnz_in_row_A = std::size_t(A_row_buffer[i+1]) - row_start_A;
-    std::vector<unsigned int> row_front(nnz_in_row_A);
-    std::vector<unsigned int> row_starts(nnz_in_row_A);
-    std::vector<unsigned int> row_stops(nnz_in_row_A);
-
-    // load row arrays for B:
-    for (std::size_t j=0; j<nnz_in_row_A; ++j)
+    for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
-      unsigned int row_index_B = A_col_buffer[row_start_A + j];
-      row_starts[j] = B_row_buffer[row_index_B];
-      row_stops[j]  = B_row_buffer[row_index_B + 1];
-      row_front[j]  = (row_stops[j] > row_starts[j]) ? B_col_buffer[row_starts[j]] : static_cast<unsigned int>(B.size2());   // set end marker if row is empty
-    }
+      unsigned int C_element_index = nnz_per_row_in_C[i];
+      C_row_buffer[i] = C_element_index;
 
-    while (1) // step through the entries in C
-    {
-      // find lowest unconsidered column index in row front:
-      unsigned int min_index = static_cast<unsigned int>(B.size2());
-      for (std::size_t j=0; j<row_front.size(); ++j)
-        if (row_front[j] < min_index)
-          min_index = row_front[j];
+      std::size_t row_start_A  = std::size_t(A_row_buffer[i]);
+      std::size_t row_end_A    = std::size_t(A_row_buffer[i+1]);
 
-      if (min_index == B.size2()) // we're done, all column indices processed
-        break;
+      std::size_t row_C_buffer_end = C_element_index;
 
-      // advance row front for min_index ('merge' operation)
-      NumericT val_C = 0;
-      for (std::size_t j=0; j<row_front.size(); ++j)
+      for (std::size_t j=row_start_A; j<row_end_A; ++j)
       {
-        if (row_front[j] == min_index)
+        NumericT val_A = A_elements[j];
+        unsigned int row_index_B = A_col_buffer[j];
+        unsigned int row_start_B = B_row_buffer[row_index_B];
+        unsigned int row_end_B   = B_row_buffer[row_index_B+1];
+
+        std::size_t index = nnz_per_row_in_C[i];
+        for (std::size_t k=row_start_B; k<row_end_B; ++k)
         {
-          val_C += A_elements[row_start_A + j] * B_elements[row_starts[j]];
-          // load next column index if available, otherwise set end marker (B.size2())
-          ++row_starts[j];
-          if (row_starts[j] < row_stops[j])
-            row_front[j] = B_col_buffer[row_starts[j]];
-          else
-            row_front[j] = static_cast<unsigned int>(B.size2());
+          unsigned int new_index = B_col_buffer[k];
+          // search:
+          bool found = false;
+          for (; index<row_C_buffer_end; ++index)
+          {
+            unsigned int col_index_in_C = C_col_buffer[index];
+            if (col_index_in_C == new_index)
+            {
+              found = true;
+              C_elements[index] += val_A * B_elements[k];
+            }
+
+            if (col_index_in_C >= new_index)
+              break;
+          }
+
+          if (!found) // sorted insert:
+          {
+            unsigned int tmp_col = new_index;
+            NumericT     tmp_val = val_A * B_elements[k];
+            for (std::size_t r = index; r < row_C_buffer_end; ++r)
+            {
+              std::swap(tmp_col, C_col_buffer[r]);
+              std::swap(tmp_val, C_elements[r]);
+            }
+            C_col_buffer[row_C_buffer_end] = tmp_col;
+            C_elements[row_C_buffer_end]   = tmp_val;
+            ++row_C_buffer_end;
+          }
         }
       }
-
-      // write entry to C:
-      C_col_buffer[C_element_index] = min_index;
-      C_elements[C_element_index] = val_C;
-
-      // increase counter for nonzeros in C:
-      ++C_element_index;
     }
   }
-
-  C_row_buffer[C.size1()] = nnz_per_row_in_C.back();
 
 }
 
