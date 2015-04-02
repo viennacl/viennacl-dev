@@ -301,6 +301,116 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & sp_mat,
 
 }
 
+/** @brief Highly optimized single-linked list implementation for SpGEMM.
+ *
+ *  Don't try to 'generalize' unless you know what you're doing. Performance is important here.
+ */
+template<typename T>
+struct sp_gemm_list_value_item
+{
+  sp_gemm_list_value_item(unsigned int next, unsigned int col, T val) : next_idx(next), col_idx(col), value(val) {}
+
+  unsigned int next_idx;
+  unsigned int col_idx;
+  T value;
+};
+
+struct sp_gemm_list_item
+{
+  template<typename T>
+  sp_gemm_list_item(unsigned int next, unsigned int col, T) : next_idx(next), col_idx(col) {}
+  sp_gemm_list_item(unsigned int next, unsigned int col) : next_idx(next), col_idx(col) {}
+
+  unsigned int next_idx;
+  unsigned int col_idx;
+};
+
+template<typename ItemT>
+class sp_gemm_list
+{
+public:
+  sp_gemm_list() : buffer_(NULL), buffer_alloc_size_(0) {}
+
+  ~sp_gemm_list() { free(buffer_); }
+
+  void reserve_and_reset(std::size_t new_size)
+  {
+    if (new_size > buffer_alloc_size_)
+    {
+      free(buffer_);
+      buffer_ = (ItemT*)malloc(sizeof(ItemT)*new_size);
+      buffer_alloc_size_ = static_cast<unsigned int>(new_size);
+    }
+    buffer_head_ = buffer_alloc_size_;
+    buffer_size_ = 0;
+    previous_index_ = buffer_alloc_size_;
+    current_index_  = buffer_head_;
+  }
+
+  unsigned int size() const { return buffer_size_; }
+  unsigned int alloc_size() const { return buffer_alloc_size_; }
+  unsigned int current_index() const { return current_index_; }
+  bool is_valid() const { return current_index_ < buffer_alloc_size_; }
+
+  void rewind()
+  {
+    previous_index_ = buffer_alloc_size_;
+    current_index_  = buffer_head_;
+  }
+
+  void advance()
+  {
+    assert(is_valid() && bool("Incrementing spgemm_list beyond end!"));
+    previous_index_ = current_index_;
+    current_index_ = buffer_[previous_index_].next_idx;
+  }
+
+  /** @brief Insert an element in front of the current location */
+  template<typename T>
+  void insert_before_current(unsigned int new_index, T val)
+  {
+    if (current_index_ == buffer_alloc_size_) // insert at end of list
+    {
+      if (previous_index_ == buffer_alloc_size_) // make it first element in list
+        buffer_head_ = buffer_size_;
+      else
+        buffer_[previous_index_].next_idx = buffer_size_;
+      current_index_ = buffer_size_;
+      buffer_[current_index_] = ItemT(buffer_alloc_size_, new_index, val);
+    }
+    else //insert inside list
+    {
+      if (previous_index_ == buffer_alloc_size_) // insert at beginning
+      {
+        buffer_head_ = buffer_size_;
+        buffer_[buffer_head_] = ItemT(current_index_, new_index, val);
+        current_index_ = buffer_head_;
+      }
+      else
+      {
+        buffer_[previous_index_].next_idx = buffer_size_;
+        buffer_[buffer_size_] = ItemT(current_index_, new_index, val);
+        current_index_ = buffer_size_;
+      }
+    }
+    ++buffer_size_;
+  }
+
+  void insert_before_current(unsigned int new_index) { insert_before_current(new_index, double(0)); }
+
+
+  ItemT const & item() const { return buffer_[current_index_]; }
+  ItemT       & item()       { return buffer_[current_index_]; }
+
+private:
+  ItemT *buffer_;
+  unsigned int buffer_alloc_size_;
+  unsigned int buffer_head_;
+  unsigned int buffer_size_;
+
+  unsigned int previous_index_;
+  unsigned int current_index_;
+};
 
 
 /** @brief Carries out sparse_matrix-sparse_matrix multiplication for CSR matrices
@@ -326,7 +436,6 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   unsigned int const * B_row_buffer = detail::extract_raw_pointer<unsigned int>(B.handle1());
   unsigned int const * B_col_buffer = detail::extract_raw_pointer<unsigned int>(B.handle2());
 
-
   /*
    * Stage 1: Determine sparsity pattern of C
    */
@@ -338,8 +447,6 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   #pragma omp parallel
 #endif
   {
-    unsigned int *row_C_buffer = NULL;
-    std::size_t row_C_buffer_alloc_size = 0;
 
 #ifdef VIENNACL_WITH_OPENMP
     std::size_t thread_work = A.size1() / omp_get_num_threads() + 1;
@@ -349,6 +456,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     std::size_t thread_start = 0;
     std::size_t thread_stop  = A.size1();
 #endif
+
+    sp_gemm_list<sp_gemm_list_item> row_C_list;
 
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
@@ -362,13 +471,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         max_entries_C += B_row_buffer[row_index_B+1] - B_row_buffer[row_index_B];
       }
 
-      if (row_C_buffer_alloc_size < max_entries_C)
-      {
-        free(row_C_buffer);
-        row_C_buffer = (unsigned int*)malloc(sizeof(unsigned int)*max_entries_C);
-        row_C_buffer_alloc_size = max_entries_C;
-      }
-      std::size_t row_C_buffer_size = 0;
+      row_C_list.reserve_and_reset(max_entries_C);
 
       for (std::size_t j=row_start_A; j<row_end_A; ++j)
       {
@@ -376,35 +479,35 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         unsigned int row_start_B = B_row_buffer[row_index_B];
         unsigned int row_end_B   = B_row_buffer[row_index_B+1];
 
-        std::size_t index = 0;
+        row_C_list.rewind();
         for (std::size_t k=row_start_B; k<row_end_B; ++k)
         {
           unsigned int new_index = B_col_buffer[k];
           // search:
           bool found = false;
-          for (; index<row_C_buffer_size; ++index)
+          while (row_C_list.is_valid())
           {
-            if (row_C_buffer[index] == new_index)
+            sp_gemm_list_item const & C_item = row_C_list.item();
+            if (C_item.col_idx == new_index)
+            {
               found = true;
-
-            if (row_C_buffer[index] >= new_index)
               break;
+            }
+
+            if (C_item.col_idx > new_index) // no need to traverse further
+              break;
+
+            // advance in list:
+            row_C_list.advance();
           }
 
-          if (!found) // sorted insert:
-          {
-            unsigned int tmp = new_index;
-            for (std::size_t r = index; r < row_C_buffer_size; ++r)
-              std::swap(tmp, row_C_buffer[r]);
-            row_C_buffer[row_C_buffer_size] = tmp;
-            ++row_C_buffer_size;
-          }
+          if (!found) // insert into list:
+            row_C_list.insert_before_current(new_index);
         }
       }
 
-      C_row_buffer[i] = static_cast<unsigned int>(row_C_buffer_size);
+      C_row_buffer[i] = row_C_list.size();
     }
-    free(row_C_buffer);
   }
 
   // exclusive scan to obtain row start indices:
@@ -439,13 +542,17 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     std::size_t thread_stop  = A.size1();
 #endif
 
+    sp_gemm_list<sp_gemm_list_value_item<NumericT> > row_C_list;
+
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
       std::size_t row_start_A  = std::size_t(A_row_buffer[i]);
       std::size_t row_end_A    = std::size_t(A_row_buffer[i+1]);
 
       unsigned int row_C_buffer_start = C_row_buffer[i];
-      unsigned int row_C_buffer_end   = row_C_buffer_start;
+      unsigned int row_C_buffer_end   = C_row_buffer[i+1];
+
+      row_C_list.reserve_and_reset(row_C_buffer_end - row_C_buffer_start + 1);
 
       for (std::size_t j=row_start_A; j<row_end_A; ++j)
       {
@@ -454,40 +561,45 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         unsigned int row_start_B = B_row_buffer[row_index_B];
         unsigned int row_end_B   = B_row_buffer[row_index_B+1];
 
-        unsigned int index = row_C_buffer_start;
+        row_C_list.rewind();
         for (std::size_t k=row_start_B; k<row_end_B; ++k)
         {
           unsigned int new_index = B_col_buffer[k];
+
           // search:
           bool found = false;
-          for (; index<row_C_buffer_end; ++index)
+          while (row_C_list.is_valid())
           {
-            unsigned int col_index_in_C = C_col_buffer[index];
-            if (col_index_in_C == new_index)
+            sp_gemm_list_value_item<NumericT> & C_item = row_C_list.item();
+            if (C_item.col_idx == new_index)
             {
               found = true;
-              C_elements[index] += val_A * B_elements[k];
-            }
-
-            if (col_index_in_C >= new_index)
+              C_item.value += val_A * B_elements[k];
               break;
+            }
+
+            if (C_item.col_idx > new_index) // no need to traverse further
+              break;
+
+            // advance in list:
+            row_C_list.advance();
           }
 
-          if (!found) // sorted insert:
-          {
-            unsigned int tmp_col = new_index;
-            NumericT     tmp_val = val_A * B_elements[k];
-            for (std::size_t r = index; r < row_C_buffer_end; ++r)
-            {
-              std::swap(tmp_col, C_col_buffer[r]);
-              std::swap(tmp_val, C_elements[r]);
-            }
-            C_col_buffer[row_C_buffer_end] = tmp_col;
-            C_elements[row_C_buffer_end]   = tmp_val;
-            ++row_C_buffer_end;
-          }
+          if (!found) // insert into list:
+            row_C_list.insert_before_current(new_index, val_A * B_elements[k]);
         }
       }
+
+      // copy to output array:
+      row_C_list.rewind();
+      for (unsigned int j = row_C_buffer_start; j<row_C_buffer_end; ++j)
+      {
+        sp_gemm_list_value_item<NumericT> const & C_item = row_C_list.item();
+        C_col_buffer[j] = C_item.col_idx;
+        C_elements[j] = C_item.value;
+        row_C_list.advance();
+      }
+
     }
   }
 
