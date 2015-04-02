@@ -104,6 +104,8 @@ NumericT diff(ublas::compressed_matrix<NumericT> const & ublas_A,
         std::cerr << "Sparsity pattern mismatch detected!" << std::endl;
         std::cerr << " ublas row: " << ublas_A_col_it.index1() << std::endl;
         std::cerr << " ublas col: " << ublas_A_col_it.index2() << std::endl;
+        std::cerr << " ViennaCL row entries: " << vcl_A_row_buffer[row_index] << ", " << vcl_A_row_buffer[row_index + 1] << std::endl;
+        std::cerr << " ViennaCL entry in row: " << vcl_A_current_col_ptr - (vcl_A_col_buffer + vcl_A_row_buffer[row_index]) << std::endl;
         std::cerr << " ViennaCL col: " << *vcl_A_current_col_ptr << std::endl;
         return NumericT(1.0);
       }
