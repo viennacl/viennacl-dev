@@ -663,21 +663,30 @@ public:
   }
 
   /** @brief Allocate memory for the supplied number of nonzeros in the matrix. Old values are preserved. */
-  void reserve(vcl_size_t new_nonzeros)
+  void reserve(vcl_size_t new_nonzeros, bool preserve = true)
   {
     if (new_nonzeros > nonzeros_)
     {
-      handle_type col_buffer_old;
-      handle_type elements_old;
-      viennacl::backend::memory_shallow_copy(col_buffer_, col_buffer_old);
-      viennacl::backend::memory_shallow_copy(elements_,   elements_old);
+      if (preserve)
+      {
+        handle_type col_buffer_old;
+        handle_type elements_old;
+        viennacl::backend::memory_shallow_copy(col_buffer_, col_buffer_old);
+        viennacl::backend::memory_shallow_copy(elements_,   elements_old);
 
-      viennacl::backend::typesafe_host_array<unsigned int> size_deducer(col_buffer_);
-      viennacl::backend::memory_create(col_buffer_, size_deducer.element_size() * new_nonzeros, viennacl::traits::context(col_buffer_));
-      viennacl::backend::memory_create(elements_,   sizeof(NumericT) * new_nonzeros,          viennacl::traits::context(elements_));
+        viennacl::backend::typesafe_host_array<unsigned int> size_deducer(col_buffer_);
+        viennacl::backend::memory_create(col_buffer_, size_deducer.element_size() * new_nonzeros, viennacl::traits::context(col_buffer_));
+        viennacl::backend::memory_create(elements_,   sizeof(NumericT) * new_nonzeros,          viennacl::traits::context(elements_));
 
-      viennacl::backend::memory_copy(col_buffer_old, col_buffer_, 0, 0, size_deducer.element_size() * nonzeros_);
-      viennacl::backend::memory_copy(elements_old,   elements_,   0, 0, sizeof(NumericT)* nonzeros_);
+        viennacl::backend::memory_copy(col_buffer_old, col_buffer_, 0, 0, size_deducer.element_size() * nonzeros_);
+        viennacl::backend::memory_copy(elements_old,   elements_,   0, 0, sizeof(NumericT)* nonzeros_);
+      }
+      else
+      {
+        viennacl::backend::typesafe_host_array<unsigned int> size_deducer(col_buffer_);
+        viennacl::backend::memory_create(col_buffer_, size_deducer.element_size() * new_nonzeros, viennacl::traits::context(col_buffer_));
+        viennacl::backend::memory_create(elements_,   sizeof(NumericT)            * new_nonzeros, viennacl::traits::context(elements_));
+      }
 
       nonzeros_ = new_nonzeros;
     }
@@ -695,42 +704,49 @@ public:
 
     if (new_size1 != rows_ || new_size2 != cols_)
     {
-      std::vector<std::map<unsigned int, NumericT> > stl_sparse_matrix;
-      if (rows_ > 0)
+      if (!preserve)
       {
-        if (preserve)
+        viennacl::backend::typesafe_host_array<unsigned int> host_row_buffer(row_buffer_, new_size1 + 1);
+        viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (new_size1 + 1), viennacl::traits::context(row_buffer_), host_row_buffer.get());
+        // faster version without initializing memory:
+        //viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (new_size1 + 1), viennacl::traits::context(row_buffer_));
+        nonzeros_ = 0;
+      }
+      else
+      {
+        std::vector<std::map<unsigned int, NumericT> > stl_sparse_matrix;
+        if (rows_ > 0)
         {
           stl_sparse_matrix.resize(rows_);
           viennacl::copy(*this, stl_sparse_matrix);
-        } else
-          stl_sparse_matrix[0][0] = 0;
-      } else {
-        stl_sparse_matrix.resize(new_size1);
-        stl_sparse_matrix[0][0] = 0;      //enforces nonzero array sizes if matrix was initially empty
-      }
-
-      stl_sparse_matrix.resize(new_size1);
-
-      //discard entries with column index larger than new_size2
-      if (new_size2 < cols_ && rows_ > 0)
-      {
-        for (vcl_size_t i=0; i<stl_sparse_matrix.size(); ++i)
-        {
-          std::list<unsigned int> to_delete;
-          for (typename std::map<unsigned int, NumericT>::iterator it = stl_sparse_matrix[i].begin();
-               it != stl_sparse_matrix[i].end();
-               ++it)
-          {
-            if (it->first >= new_size2)
-              to_delete.push_back(it->first);
-          }
-
-          for (std::list<unsigned int>::iterator it = to_delete.begin(); it != to_delete.end(); ++it)
-            stl_sparse_matrix[i].erase(*it);
+        } else {
+          stl_sparse_matrix.resize(new_size1);
+          stl_sparse_matrix[0][0] = 0;      //enforces nonzero array sizes if matrix was initially empty
         }
-      }
 
-      viennacl::copy(stl_sparse_matrix, *this);
+        stl_sparse_matrix.resize(new_size1);
+
+        //discard entries with column index larger than new_size2
+        if (new_size2 < cols_ && rows_ > 0)
+        {
+          for (vcl_size_t i=0; i<stl_sparse_matrix.size(); ++i)
+          {
+            std::list<unsigned int> to_delete;
+            for (typename std::map<unsigned int, NumericT>::iterator it = stl_sparse_matrix[i].begin();
+                 it != stl_sparse_matrix[i].end();
+                 ++it)
+            {
+              if (it->first >= new_size2)
+                to_delete.push_back(it->first);
+            }
+
+            for (std::list<unsigned int>::iterator it = to_delete.begin(); it != to_delete.end(); ++it)
+              stl_sparse_matrix[i].erase(*it);
+          }
+        }
+
+        viennacl::copy(stl_sparse_matrix, *this);
+      }
 
       rows_ = new_size1;
       cols_ = new_size2;

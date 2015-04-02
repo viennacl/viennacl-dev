@@ -330,7 +330,9 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   /*
    * Stage 1: Determine sparsity pattern of C
    */
-  std::vector<unsigned int> nnz_per_row_in_C(A.size1() + 1);
+  C.resize(A.size1(), B.size2(), false);
+
+  unsigned int * C_row_buffer = detail::extract_raw_pointer<unsigned int>(C.handle1());
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel
@@ -400,32 +402,29 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         }
       }
 
-      nnz_per_row_in_C[i] = static_cast<unsigned int>(row_C_buffer_size);
+      C_row_buffer[i] = static_cast<unsigned int>(row_C_buffer_size);
     }
     free(row_C_buffer);
   }
 
   // exclusive scan to obtain row start indices:
   unsigned int current_offset = 0;
-  for (std::size_t i=0; i<nnz_per_row_in_C.size(); ++i)
+  for (std::size_t i=0; i<A.size1(); ++i)
   {
-    unsigned int tmp = nnz_per_row_in_C[i];
-    nnz_per_row_in_C[i] = current_offset;
+    unsigned int tmp = C_row_buffer[i];
+    C_row_buffer[i] = current_offset;
     current_offset += tmp;
   }
+  C_row_buffer[C.size1()] = current_offset;
+  C.reserve(current_offset, false);
 
 
   /*
    * Stage 2: Compute product (code similar, maybe pull out into a separate function to avoid code duplication?)
    */
-  C.resize(A.size1(), B.size2(), false);
-  C.reserve(current_offset);
 
   NumericT     * C_elements   = detail::extract_raw_pointer<NumericT>(C.handle());
-  unsigned int * C_row_buffer = detail::extract_raw_pointer<unsigned int>(C.handle1());
   unsigned int * C_col_buffer = detail::extract_raw_pointer<unsigned int>(C.handle2());
-
-  C_row_buffer[C.size1()] = current_offset;
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel
@@ -442,13 +441,11 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
-      unsigned int C_element_index = nnz_per_row_in_C[i];
-      C_row_buffer[i] = C_element_index;
-
       std::size_t row_start_A  = std::size_t(A_row_buffer[i]);
       std::size_t row_end_A    = std::size_t(A_row_buffer[i+1]);
 
-      std::size_t row_C_buffer_end = C_element_index;
+      unsigned int row_C_buffer_start = C_row_buffer[i];
+      unsigned int row_C_buffer_end   = row_C_buffer_start;
 
       for (std::size_t j=row_start_A; j<row_end_A; ++j)
       {
@@ -457,7 +454,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         unsigned int row_start_B = B_row_buffer[row_index_B];
         unsigned int row_end_B   = B_row_buffer[row_index_B+1];
 
-        std::size_t index = nnz_per_row_in_C[i];
+        unsigned int index = row_C_buffer_start;
         for (std::size_t k=row_start_B; k<row_end_B; ++k)
         {
           unsigned int new_index = B_col_buffer[k];
