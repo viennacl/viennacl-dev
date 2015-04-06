@@ -443,7 +443,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, cg_tag const & tag, P
     z = residual;
     precond.apply(z);
 
-    if (&residual==&z)
+    if (static_cast<VectorT*>(&residual)==static_cast<VectorT*>(&z))
       new_ip_rr = std::pow(viennacl::linalg::norm_2(residual),2);
     else
       new_ip_rr = viennacl::linalg::inner_prod(residual, z);
