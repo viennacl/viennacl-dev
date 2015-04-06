@@ -481,6 +481,86 @@ void merge_two_rows(unsigned int j,
 
 }
 
+/** Second stage */
+template<typename RowListT, typename NumericT>
+void merge_two_rows(unsigned int j,
+                    unsigned int const *A_col_buffer,
+                    NumericT const * A_elements,
+                    unsigned int const *B_row_buffer,
+                    unsigned int const *B_col_buffer,
+                    NumericT const * B_elements,
+                    RowListT & row_C_list,
+                    unsigned int C_size2)
+{
+  NumericT     val_A_0       = A_elements[j];
+  unsigned int row_index_B_0 = A_col_buffer[j];
+  unsigned int row_start_B_0 = B_row_buffer[row_index_B_0];
+  unsigned int row_end_B_0   = B_row_buffer[row_index_B_0+1];
+
+  NumericT     val_A_1       = A_elements[j+1];
+  unsigned int row_index_B_1 = A_col_buffer[j+1];
+  unsigned int row_start_B_1 = B_row_buffer[row_index_B_1];
+  unsigned int row_end_B_1   = B_row_buffer[row_index_B_1+1];
+
+  row_C_list.rewind();
+  unsigned int new_index_0 = (row_start_B_0 < row_end_B_0) ? B_col_buffer[row_start_B_0] : C_size2;
+  unsigned int new_index_1 = (row_start_B_1 < row_end_B_1) ? B_col_buffer[row_start_B_1] : C_size2;
+
+  while (1)
+  {
+    // search:
+    unsigned int current_list_index = C_size2;
+    while (row_C_list.is_valid())
+    {
+      current_list_index = row_C_list.item().col_idx;
+      if (current_list_index >= new_index_0 || current_list_index >= new_index_1) // one of the indices needs to be inserted or updated
+        break;
+
+      // advance in list:
+      row_C_list.advance();
+    }
+
+    // insert into list and/or move to next entry in row of B:
+    if (new_index_0 < new_index_1 && new_index_0 != C_size2)
+    {
+      if (current_list_index != new_index_0)
+        row_C_list.insert_before_current(new_index_0, val_A_0 * B_elements[row_start_B_0]);
+      else
+        row_C_list.item().value += val_A_0 * B_elements[row_start_B_0];
+
+      ++row_start_B_0;
+      new_index_0 = (row_start_B_0 < row_end_B_0) ? B_col_buffer[row_start_B_0] : C_size2;
+    }
+    else if (new_index_0 == new_index_1 && new_index_0 != C_size2)
+    {
+      if (current_list_index != new_index_0)
+        row_C_list.insert_before_current(new_index_0, val_A_0 * B_elements[row_start_B_0] + val_A_1 * B_elements[row_start_B_1]);
+      else
+        row_C_list.item().value += val_A_0 * B_elements[row_start_B_0] + val_A_1 * B_elements[row_start_B_1];
+
+      ++row_start_B_0;
+      new_index_0 = (row_start_B_0 < row_end_B_0) ? B_col_buffer[row_start_B_0] : C_size2;
+      ++row_start_B_1;
+      new_index_1 = (row_start_B_1 < row_end_B_1) ? B_col_buffer[row_start_B_1] : C_size2;
+    }
+    else if (new_index_0 > new_index_1 && new_index_1 != C_size2)
+    {
+      if (current_list_index != new_index_1)
+        row_C_list.insert_before_current(new_index_1, val_A_1 * B_elements[row_start_B_1]);
+      else
+        row_C_list.item().value += val_A_1 * B_elements[row_start_B_1];
+
+      ++row_start_B_1;
+      new_index_1 = (row_start_B_1 < row_end_B_1) ? B_col_buffer[row_start_B_1] : C_size2;
+    }
+
+    // all entries processed:
+    if (new_index_0 == C_size2 && new_index_1 == C_size2)
+      break;
+  }
+
+}
+
 
 
 /** @brief Carries out sparse_matrix-sparse_matrix multiplication for CSR matrices
@@ -621,16 +701,22 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
-      std::size_t row_start_A  = std::size_t(A_row_buffer[i]);
-      std::size_t row_end_A    = std::size_t(A_row_buffer[i+1]);
+      unsigned int row_start_A  = A_row_buffer[i];
+      unsigned int row_end_A    = A_row_buffer[i+1];
 
       unsigned int row_C_buffer_start = C_row_buffer[i];
       unsigned int row_C_buffer_end   = C_row_buffer[i+1];
 
       row_C_list.reserve_and_reset(row_C_buffer_end - row_C_buffer_start + 1);
 
-      for (std::size_t j=row_start_A; j<row_end_A; ++j)
+      for (unsigned int j=row_start_A; j<row_end_A; ++j)
       {
+        if (row_end_A - j > 1) // merge two rows of B concurrently
+        {
+          merge_two_rows(j, A_col_buffer, A_elements, B_row_buffer, B_col_buffer, B_elements, row_C_list, static_cast<unsigned int>(B.size2()));
+          ++j;
+          continue;
+        }
         NumericT val_A = A_elements[j];
         unsigned int row_index_B = A_col_buffer[j];
         unsigned int row_start_B = B_row_buffer[row_index_B];
