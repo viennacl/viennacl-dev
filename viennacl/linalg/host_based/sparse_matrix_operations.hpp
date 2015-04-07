@@ -301,6 +301,8 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & sp_mat,
 
 }
 
+/*********************** Start of linked list implementation ******************************/
+
 /** @brief Highly optimized single-linked list implementation for SpGEMM.
  *
  *  Don't try to 'generalize' unless you know what you're doing. Performance is important here.
@@ -562,6 +564,362 @@ void merge_two_rows(unsigned int j,
 }
 
 
+template<typename ListT>
+unsigned int row_C_scan_symbolic_list(unsigned int max_entries_C,
+                                      unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer,
+                                      unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
+                                      ListT & row_C_list)
+{
+  row_C_list.reserve_and_reset(max_entries_C);
+
+  for (unsigned int j=row_start_A; j<row_end_A; ++j)
+  {
+    if (row_end_A - j > 1) // merge two rows of B concurrently
+    {
+      merge_two_rows(j, A_col_buffer, B_row_buffer, B_col_buffer, row_C_list, B_size2);
+      ++j;
+      continue;
+    }
+    unsigned int row_index_B = A_col_buffer[j];
+    unsigned int row_start_B = B_row_buffer[row_index_B];
+    unsigned int row_end_B   = B_row_buffer[row_index_B+1];
+
+    row_C_list.rewind();
+    for (std::size_t k=row_start_B; k<row_end_B; ++k)
+    {
+      unsigned int new_index = B_col_buffer[k];
+      // search:
+      bool found = false;
+      while (row_C_list.is_valid())
+      {
+        sp_gemm_list_item const & C_item = row_C_list.item();
+        if (C_item.col_idx == new_index)
+        {
+          found = true;
+          break;
+        }
+
+        if (C_item.col_idx > new_index) // no need to traverse further
+          break;
+
+        // advance in list:
+        row_C_list.advance();
+      }
+
+      if (!found) // insert into list:
+        row_C_list.insert_before_current(new_index);
+    }
+  }
+
+  return row_C_list.size();
+}
+
+template<typename NumericT, typename ListT>
+void row_C_scan_numeric_list(unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer, NumericT const *A_elements,
+                             unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, NumericT const *B_elements, unsigned int B_size2,
+                             unsigned int row_start_C, unsigned int row_end_C, unsigned int *C_col_buffer, NumericT *C_elements,
+                             ListT & row_C_list)
+{
+  row_C_list.reserve_and_reset(row_end_C - row_start_C + 1);
+
+  for (unsigned int j=row_start_A; j<row_end_A; ++j)
+  {
+    if (row_end_A - j > 1) // merge two rows of B concurrently
+    {
+      merge_two_rows(j, A_col_buffer, A_elements, B_row_buffer, B_col_buffer, B_elements, row_C_list, B_size2);
+      ++j;
+      continue;
+    }
+    NumericT val_A = A_elements[j];
+    unsigned int row_index_B = A_col_buffer[j];
+    unsigned int row_start_B = B_row_buffer[row_index_B];
+    unsigned int row_end_B   = B_row_buffer[row_index_B+1];
+
+    row_C_list.rewind();
+    for (std::size_t k=row_start_B; k<row_end_B; ++k)
+    {
+      unsigned int new_index = B_col_buffer[k];
+
+      // search:
+      bool found = false;
+      while (row_C_list.is_valid())
+      {
+        sp_gemm_list_value_item<NumericT> & C_item = row_C_list.item();
+        if (C_item.col_idx == new_index)
+        {
+          found = true;
+          C_item.value += val_A * B_elements[k];
+          break;
+        }
+
+        if (C_item.col_idx > new_index) // no need to traverse further
+          break;
+
+        // advance in list:
+        row_C_list.advance();
+      }
+
+      if (!found) // insert into list:
+        row_C_list.insert_before_current(new_index, val_A * B_elements[k]);
+    }
+  }
+
+  // copy to output array:
+  row_C_list.rewind();
+  for (unsigned int j = row_start_C; j<row_end_C; ++j)
+  {
+    sp_gemm_list_value_item<NumericT> const & C_item = row_C_list.item();
+    C_col_buffer[j] = C_item.col_idx;
+    C_elements[j]   = C_item.value;
+    row_C_list.advance();
+  }
+
+}
+
+/*********************** End of linked list implementation ******************************/
+
+/*********************** Start of vector implementation ******************************/
+
+inline
+unsigned int row_C_scan_symbolic_vector_1(unsigned int row_index_B,
+                                          unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
+                                          unsigned int const *row_C_vector_input, unsigned int const *row_C_vector_input_end,
+                                          unsigned int *row_C_vector_output)
+{
+  unsigned int *output_ptr = row_C_vector_output;
+  unsigned int current_col_input = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+
+  unsigned int row_B_end = B_row_buffer[row_index_B + 1];
+  for (unsigned int j = B_row_buffer[row_index_B]; j < row_B_end; ++j)
+  {
+    unsigned int col_B = B_col_buffer[j];
+
+    // advance row_C_vector_input as needed:
+    while (current_col_input < col_B)
+    {
+      *output_ptr = current_col_input;
+      ++output_ptr;
+
+      ++row_C_vector_input;
+      current_col_input = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+    }
+
+    // write current entry:
+    *output_ptr = col_B;
+    ++output_ptr;
+
+    // skip input if same as col_B:
+    if (current_col_input == col_B)
+    {
+      ++row_C_vector_input;
+      current_col_input = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+    }
+  }
+
+  // write remaining entries:
+  for (; row_C_vector_input < row_C_vector_input_end; ++row_C_vector_input, ++output_ptr)
+    *output_ptr = *row_C_vector_input;
+
+  return output_ptr - row_C_vector_output;
+}
+
+inline
+unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer,
+                                        unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
+                                        unsigned int *row_C_vector_1, unsigned int *row_C_vector_2)
+{
+  // Trivial case: row length 0:
+  if (row_start_A == row_end_A)
+    return 0;
+
+  // Trivial case: row length 1:
+  if (row_end_A - row_start_A == 1)
+  {
+    unsigned int A_col = A_col_buffer[row_start_A];
+    return B_row_buffer[A_col + 1] - B_row_buffer[A_col];
+  }
+
+  // all other row lengths:
+  unsigned int row_C_len = 0;
+  while (row_end_A > row_start_A)
+  {
+    // process single row:
+    row_C_len = row_C_scan_symbolic_vector_1(A_col_buffer[row_start_A],
+                                             B_row_buffer, B_col_buffer, B_size2,
+                                             row_C_vector_1, row_C_vector_1 + row_C_len,
+                                             row_C_vector_2);
+
+    ++row_start_A;
+    std::swap(row_C_vector_1, row_C_vector_2);
+  }
+
+  return row_C_len;
+}
+
+//////////////////////////////
+
+template<typename NumericT>
+unsigned int row_C_scan_numeric_vector_1(unsigned int row_index_B, NumericT val_A,
+                                         unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, NumericT const *B_elements, unsigned int B_size2,
+                                         unsigned int const *row_C_vector_input, unsigned int const *row_C_vector_input_end, NumericT *row_C_vector_input_values,
+                                         unsigned int *row_C_vector_output, NumericT *row_C_vector_output_values)
+{
+  unsigned int *output_ptr        = row_C_vector_output;
+  NumericT     *output_ptr_values = row_C_vector_output_values;
+
+  unsigned int current_col_input       = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input        : B_size2;
+  NumericT     current_col_input_value = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input_values : NumericT(0);
+
+  unsigned int row_B_end = B_row_buffer[row_index_B + 1];
+  for (unsigned int j = B_row_buffer[row_index_B]; j < row_B_end; ++j)
+  {
+    unsigned int col_B = B_col_buffer[j];
+
+    // advance row_C_vector_input as needed:
+    while (current_col_input < col_B)
+    {
+      *output_ptr = current_col_input;
+      ++output_ptr;
+      *output_ptr_values = current_col_input_value;
+      ++output_ptr_values;
+
+      ++row_C_vector_input;
+      ++row_C_vector_input_values;
+      current_col_input       = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input        : B_size2;
+      current_col_input_value = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input_values : NumericT(0);
+    }
+
+    // write current entry:
+    *output_ptr = col_B;
+    ++output_ptr;
+
+    // skip input if same as col_B:
+    if (current_col_input == col_B)
+    {
+      *output_ptr_values = val_A * B_elements[j] + current_col_input_value;
+
+      ++row_C_vector_input;
+      ++row_C_vector_input_values;
+      current_col_input       = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input        : B_size2;
+      current_col_input_value = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input_values : NumericT(0);
+    }
+    else
+      *output_ptr_values = val_A * B_elements[j];
+
+    ++output_ptr_values;
+  }
+
+  // write remaining entries:
+  for (; row_C_vector_input < row_C_vector_input_end; ++row_C_vector_input, ++row_C_vector_input_values, ++output_ptr, ++output_ptr_values)
+  {
+    *output_ptr        = *row_C_vector_input;
+    *output_ptr_values = *row_C_vector_input_values;
+  }
+
+  return output_ptr - row_C_vector_output;
+}
+
+template<typename NumericT>
+void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer, NumericT const *A_elements,
+                               unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, NumericT const *B_elements, unsigned int B_size2,
+                               unsigned int row_start_C, unsigned int row_end_C, unsigned int *C_col_buffer, NumericT *C_elements,
+                               unsigned int *row_C_vector_1, NumericT *row_C_vector_1_values,
+                               unsigned int *row_C_vector_2, NumericT *row_C_vector_2_values)
+{
+  (void)row_end_C;
+
+  // Trivial case: row length 0:
+  if (row_start_A == row_end_A)
+    return;
+
+  // Trivial case: row length 1:
+  if (row_end_A - row_start_A == 1)
+  {
+    unsigned int A_col = A_col_buffer[row_start_A];
+    unsigned int B_end = B_row_buffer[A_col + 1];
+    for (unsigned int j = B_row_buffer[A_col]; j < B_end; ++j, ++C_col_buffer, ++C_elements)
+    {
+      *C_col_buffer = B_col_buffer[j];
+      *C_elements = A_elements[row_start_A] * B_elements[j];
+    }
+    return;
+  }
+
+  // all other row lengths:
+  unsigned int row_C_len = 0;
+  while (row_end_A > row_start_A)
+  {
+    // process single row:
+    row_C_len = row_C_scan_numeric_vector_1(A_col_buffer[row_start_A], A_elements[row_start_A],
+                                            B_row_buffer, B_col_buffer, B_elements, B_size2,
+                                            row_C_vector_1, row_C_vector_1 + row_C_len, row_C_vector_1_values,
+                                            row_C_vector_2, row_C_vector_2_values);
+
+    ++row_start_A;
+    std::swap(row_C_vector_1,        row_C_vector_2);
+    std::swap(row_C_vector_1_values, row_C_vector_2_values);
+  }
+
+  // copy to output:
+  C_col_buffer += row_start_C;
+  C_elements += row_start_C;
+  for (unsigned int i=0; i<row_C_len; ++i, ++C_col_buffer, ++C_elements)
+  {
+    *C_col_buffer = row_C_vector_1[i];
+    *C_elements   = row_C_vector_1_values[i];
+  }
+}
+
+
+/*********************** End of vector implementation ******************************/
+
+
+template<typename ListT>
+unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
+                                 unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer,
+                                 unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
+                                 ListT & row_C_list,
+                                 unsigned int *row_C_vector_1, unsigned int *row_C_vector_2)
+{
+
+  if (max_entries_C > 100)
+  {
+    return row_C_scan_symbolic_list(max_entries_C,
+                                    row_start_A, row_end_A, A_col_buffer,
+                                    B_row_buffer, B_col_buffer, B_size2,
+                                    row_C_list);
+  }
+
+  return row_C_scan_symbolic_vector(row_start_A, row_end_A, A_col_buffer,
+                                    B_row_buffer, B_col_buffer, B_size2,
+                                    row_C_vector_1, row_C_vector_2);
+}
+
+
+template<typename NumericT, typename ListT>
+void row_C_scan_numeric(unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer, NumericT const *A_elements,
+                        unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, NumericT const *B_elements, unsigned int B_size2,
+                        unsigned int row_start_C, unsigned int row_end_C, unsigned int *C_col_buffer, NumericT *C_elements,
+                        ListT & row_C_list,
+                        unsigned int *row_C_vector_1, NumericT *row_C_vector_1_values,
+                        unsigned int *row_C_vector_2, NumericT *row_C_vector_2_values)
+{
+
+  if (row_end_C - row_start_C > 100)
+  {
+    row_C_scan_numeric_list(row_start_A, row_end_A, A_col_buffer, A_elements,
+                            B_row_buffer, B_col_buffer, B_elements, B_size2,
+                            row_start_C, row_end_C, C_col_buffer, C_elements,
+                            row_C_list);
+  }
+
+  row_C_scan_numeric_vector(row_start_A, row_end_A, A_col_buffer, A_elements,
+                            B_row_buffer, B_col_buffer, B_elements, B_size2,
+                            row_start_C, row_end_C, C_col_buffer, C_elements,
+                            row_C_vector_1, row_C_vector_1_values,
+                            row_C_vector_2, row_C_vector_2_values);
+}
+
 
 /** @brief Carries out sparse_matrix-sparse_matrix multiplication for CSR matrices
 *
@@ -608,6 +966,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
 
     sp_gemm_list<sp_gemm_list_item> row_C_list;
+    unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
+    unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
 
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
@@ -621,49 +981,15 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         max_entries_C += B_row_buffer[row_index_B+1] - B_row_buffer[row_index_B];
       }
 
-      row_C_list.reserve_and_reset(max_entries_C);
-
-      for (unsigned int j=row_start_A; j<row_end_A; ++j)
-      {
-        if (row_end_A - j > 1) // merge two rows of B concurrently
-        {
-          merge_two_rows(j, A_col_buffer, B_row_buffer, B_col_buffer, row_C_list, static_cast<unsigned int>(B.size2()));
-          ++j;
-          continue;
-        }
-        unsigned int row_index_B = A_col_buffer[j];
-        unsigned int row_start_B = B_row_buffer[row_index_B];
-        unsigned int row_end_B   = B_row_buffer[row_index_B+1];
-
-        row_C_list.rewind();
-        for (std::size_t k=row_start_B; k<row_end_B; ++k)
-        {
-          unsigned int new_index = B_col_buffer[k];
-          // search:
-          bool found = false;
-          while (row_C_list.is_valid())
-          {
-            sp_gemm_list_item const & C_item = row_C_list.item();
-            if (C_item.col_idx == new_index)
-            {
-              found = true;
-              break;
-            }
-
-            if (C_item.col_idx > new_index) // no need to traverse further
-              break;
-
-            // advance in list:
-            row_C_list.advance();
-          }
-
-          if (!found) // insert into list:
-            row_C_list.insert_before_current(new_index);
-        }
-      }
-
-      C_row_buffer[i] = row_C_list.size();
+      C_row_buffer[i] = row_C_scan_symbolic(max_entries_C,
+                                            row_start_A, row_end_A, A_col_buffer,
+                                            B_row_buffer, B_col_buffer, static_cast<unsigned int>(B.size2()),
+                                            row_C_list,
+                                            row_C_vector_1, row_C_vector_2);
     }
+
+    free(row_C_vector_1);
+    free(row_C_vector_2);
   }
 
   // exclusive scan to obtain row start indices:
@@ -698,6 +1024,10 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
 
     sp_gemm_list<sp_gemm_list_value_item<NumericT> > row_C_list;
+    unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
+    unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
+    NumericT *row_C_vector_1_values = (NumericT *)malloc(sizeof(NumericT)*B.size2());
+    NumericT *row_C_vector_2_values = (NumericT *)malloc(sizeof(NumericT)*B.size2());
 
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
@@ -707,61 +1037,18 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
       unsigned int row_C_buffer_start = C_row_buffer[i];
       unsigned int row_C_buffer_end   = C_row_buffer[i+1];
 
-      row_C_list.reserve_and_reset(row_C_buffer_end - row_C_buffer_start + 1);
-
-      for (unsigned int j=row_start_A; j<row_end_A; ++j)
-      {
-        if (row_end_A - j > 1) // merge two rows of B concurrently
-        {
-          merge_two_rows(j, A_col_buffer, A_elements, B_row_buffer, B_col_buffer, B_elements, row_C_list, static_cast<unsigned int>(B.size2()));
-          ++j;
-          continue;
-        }
-        NumericT val_A = A_elements[j];
-        unsigned int row_index_B = A_col_buffer[j];
-        unsigned int row_start_B = B_row_buffer[row_index_B];
-        unsigned int row_end_B   = B_row_buffer[row_index_B+1];
-
-        row_C_list.rewind();
-        for (std::size_t k=row_start_B; k<row_end_B; ++k)
-        {
-          unsigned int new_index = B_col_buffer[k];
-
-          // search:
-          bool found = false;
-          while (row_C_list.is_valid())
-          {
-            sp_gemm_list_value_item<NumericT> & C_item = row_C_list.item();
-            if (C_item.col_idx == new_index)
-            {
-              found = true;
-              C_item.value += val_A * B_elements[k];
-              break;
-            }
-
-            if (C_item.col_idx > new_index) // no need to traverse further
-              break;
-
-            // advance in list:
-            row_C_list.advance();
-          }
-
-          if (!found) // insert into list:
-            row_C_list.insert_before_current(new_index, val_A * B_elements[k]);
-        }
-      }
-
-      // copy to output array:
-      row_C_list.rewind();
-      for (unsigned int j = row_C_buffer_start; j<row_C_buffer_end; ++j)
-      {
-        sp_gemm_list_value_item<NumericT> const & C_item = row_C_list.item();
-        C_col_buffer[j] = C_item.col_idx;
-        C_elements[j] = C_item.value;
-        row_C_list.advance();
-      }
-
+      row_C_scan_numeric(row_start_A, row_end_A, A_col_buffer, A_elements,
+                         B_row_buffer, B_col_buffer, B_elements, static_cast<unsigned int>(B.size2()),
+                         row_C_buffer_start, row_C_buffer_end, C_col_buffer, C_elements,
+                         row_C_list,
+                         row_C_vector_1, row_C_vector_1_values,
+                         row_C_vector_2, row_C_vector_2_values);
     }
+
+    free(row_C_vector_1);
+    free(row_C_vector_2);
+    free(row_C_vector_1_values);
+    free(row_C_vector_2_values);
   }
 
 }
