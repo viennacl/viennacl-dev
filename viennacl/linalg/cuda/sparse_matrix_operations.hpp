@@ -29,6 +29,7 @@
 #include "viennacl/linalg/cuda/common.hpp"
 
 #include "viennacl/linalg/cuda/sparse_matrix_operations_solve.hpp"
+#include "viennacl/linalg/cuda/spgemm.hpp"
 
 namespace viennacl
 {

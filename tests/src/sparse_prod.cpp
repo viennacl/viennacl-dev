@@ -113,6 +113,16 @@ NumericT diff(ublas::compressed_matrix<NumericT> const & ublas_A,
       // compute relative error (we know for sure that the uBLAS matrix only carries nonzero entries:
       NumericT current_error = std::fabs(*ublas_A_col_it - *vcl_A_current_val_ptr) / std::max(std::fabs(*ublas_A_col_it), std::fabs(*vcl_A_current_val_ptr));
 
+      if (current_error > 0.1)
+      {
+        std::cerr << "Value mismatch detected!" << std::endl;
+        std::cerr << " ublas row: " << ublas_A_col_it.index1() << std::endl;
+        std::cerr << " ublas col: " << ublas_A_col_it.index2() << std::endl;
+        std::cerr << " ublas value: " << *ublas_A_col_it << std::endl;
+        std::cerr << " ViennaCL value: " << *vcl_A_current_val_ptr << std::endl;
+        return NumericT(1.0);
+      }
+
       if (current_error > error)
         error = current_error;
     }

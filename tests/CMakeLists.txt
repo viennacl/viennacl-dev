@@ -49,7 +49,7 @@ if (ENABLE_CUDA)
                matrix_vector matrix_vector_int
                matrix_row_float matrix_row_double matrix_row_int
                matrix_col_float matrix_col_double matrix_col_int nmf
-               scalar self_assign sparse qr_method qr_method_func scan tql
+               scalar self_assign sparse qr_method qr_method_func scan sparse_prod tql
                vector_float_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)
