@@ -29,6 +29,7 @@
 #include "viennacl/linalg/host_based/common.hpp"
 #include "viennacl/linalg/host_based/vector_operations.hpp"
 
+#include "viennacl/linalg/host_based/spgemm_hash.hpp"
 #include "viennacl/linalg/host_based/spgemm_list.hpp"
 #include "viennacl/linalg/host_based/spgemm_vector.hpp"
 
@@ -305,20 +306,26 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & sp_mat,
 }
 
 
-template<typename ListT>
+template<typename ListT, typename HashT>
 unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
                                  unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer,
                                  unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
                                  ListT & row_C_list,
+                                 HashT & row_C_hash,
                                  unsigned int *row_C_vector_1, unsigned int *row_C_vector_2)
 {
+  (void)row_C_list;
 
   if (max_entries_C > 100)
   {
-    return row_C_scan_symbolic_list(max_entries_C,
-                                    row_start_A, row_end_A, A_col_buffer,
-                                    B_row_buffer, B_col_buffer, B_size2,
-                                    row_C_list);
+    return row_C_scan_hash(max_entries_C,
+                           row_start_A, row_end_A, A_col_buffer,
+                           B_row_buffer, B_col_buffer,
+                           row_C_hash);
+    //return row_C_scan_symbolic_list(max_entries_C,
+    //                                row_start_A, row_end_A, A_col_buffer,
+    //                                B_row_buffer, B_col_buffer, B_size2,
+    //                                row_C_list);
   }
 
   return row_C_scan_symbolic_vector(row_start_A, row_end_A, A_col_buffer,
@@ -327,21 +334,27 @@ unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
 }
 
 
-template<typename NumericT, typename ListT>
+template<typename NumericT, typename ListT, typename HashT>
 void row_C_scan_numeric(unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer, NumericT const *A_elements,
                         unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, NumericT const *B_elements, unsigned int B_size2,
                         unsigned int row_start_C, unsigned int row_end_C, unsigned int *C_col_buffer, NumericT *C_elements,
                         ListT & row_C_list,
+                        HashT & row_C_hash,
                         unsigned int *row_C_vector_1, NumericT *row_C_vector_1_values,
                         unsigned int *row_C_vector_2, NumericT *row_C_vector_2_values)
 {
+  (void)row_C_list;
 
   if (row_end_C - row_start_C > 100)
   {
-    row_C_scan_numeric_list(row_start_A, row_end_A, A_col_buffer, A_elements,
+    row_C_compute_hash(row_start_A, row_end_A, A_col_buffer, A_elements,
+                       B_row_buffer, B_col_buffer, B_elements, B_size2,
+                       row_start_C, row_end_C, C_col_buffer, C_elements,
+                       row_C_hash);
+    /*row_C_scan_numeric_list(row_start_A, row_end_A, A_col_buffer, A_elements,
                             B_row_buffer, B_col_buffer, B_elements, B_size2,
                             row_start_C, row_end_C, C_col_buffer, C_elements,
-                            row_C_list);
+                            row_C_list);*/
   }
 
   row_C_scan_numeric_vector(row_start_A, row_end_A, A_col_buffer, A_elements,
@@ -397,6 +410,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
 
     sp_gemm_list<sp_gemm_list_item> row_C_list;
+    spgemm_hash_map<hash_element_index<unsigned int>, spgemm_unordered_hash<unsigned int> > row_C_hash;
     unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
     unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
 
@@ -416,6 +430,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                                             row_start_A, row_end_A, A_col_buffer,
                                             B_row_buffer, B_col_buffer, static_cast<unsigned int>(B.size2()),
                                             row_C_list,
+                                            row_C_hash,
                                             row_C_vector_1, row_C_vector_2);
     }
 
@@ -455,6 +470,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
 
     sp_gemm_list<sp_gemm_list_value_item<NumericT> > row_C_list;
+    spgemm_hash_map<hash_element_index_value<unsigned int, NumericT>, spgemm_ordered_hash<unsigned int> > row_C_hash;
     unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
     unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
     NumericT *row_C_vector_1_values = (NumericT *)malloc(sizeof(NumericT)*B.size2());
@@ -472,6 +488,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                          B_row_buffer, B_col_buffer, B_elements, static_cast<unsigned int>(B.size2()),
                          row_C_buffer_start, row_C_buffer_end, C_col_buffer, C_elements,
                          row_C_list,
+                         row_C_hash,
                          row_C_vector_1, row_C_vector_1_values,
                          row_C_vector_2, row_C_vector_2_values);
     }
