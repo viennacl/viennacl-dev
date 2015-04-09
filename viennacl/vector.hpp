@@ -211,8 +211,7 @@ public:
   typedef typename base_type::size_type             size_type;
   typedef typename base_type::difference_type           difference_type;
 
-  vector_iterator() : base_type(), elements_() {}
-  vector_iterator(handle_type elements,
+  vector_iterator(handle_type const & elements,
                   size_type index,
                   size_type start = 0,
                   size_type stride = 1)  : base_type(elements, index, start, stride), elements_(elements) {}
