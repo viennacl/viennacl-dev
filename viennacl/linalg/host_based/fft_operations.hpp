@@ -473,7 +473,7 @@ void fft_radix2_local(std::complex<NumericT> * input_complex,
 #ifdef VIENNACL_WITH_OPENMP
       #pragma omp parallel for
 #endif
-      for (long tid2 = 0; tid2 < long(size); tid2++)
+      for (long tid2 = 0; tid2 < long(size)/2; tid2++)
       {
         vcl_size_t tid = vcl_size_t(tid2);
         vcl_size_t group = (tid & (ss - 1));
