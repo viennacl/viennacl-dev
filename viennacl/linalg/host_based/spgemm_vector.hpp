@@ -189,10 +189,13 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
   {
     unsigned int A_col = A_col_buffer[row_start_A];
     unsigned int B_end = B_row_buffer[A_col + 1];
+    NumericT A_value   = A_elements[row_start_A];
+    C_col_buffer += row_start_C;
+    C_elements += row_start_C;
     for (unsigned int j = B_row_buffer[A_col]; j < B_end; ++j, ++C_col_buffer, ++C_elements)
     {
       *C_col_buffer = B_col_buffer[j];
-      *C_elements = A_elements[row_start_A] * B_elements[j];
+      *C_elements = A_value * B_elements[j];
     }
     return;
   }
