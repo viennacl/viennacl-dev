@@ -133,7 +133,7 @@ public:
   typedef HashFunctorT                        hash_type;
   typedef typename HashElementT::IndexType    IndexType;
 
-  spgemm_hash_map() : buffer_(NULL), size_(0), invalid_item_index_(0), alloc_size_(0) {}
+  spgemm_hash_map(unsigned int max_element_index) : buffer_(NULL), size_(0), invalid_item_index_(max_element_index), alloc_size_(0) {}
 
   ~spgemm_hash_map() { free(buffer_); }
 
@@ -149,7 +149,6 @@ public:
       if (alloc_size_ < 100) // we don't want buffers which are too small, because they are likely to reallocated later anyway
         alloc_size_ = 100;
       buffer_ = (HashElementT*)malloc(sizeof(HashElementT)*alloc_size_);
-      invalid_item_index_ = static_cast<IndexType>(alloc_size_);
     }
 
     // set all hash entries to invalid:

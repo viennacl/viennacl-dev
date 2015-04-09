@@ -410,7 +410,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
 
     sp_gemm_list<sp_gemm_list_item> row_C_list;
-    spgemm_hash_map<hash_element_index<unsigned int>, spgemm_unordered_hash<unsigned int> > row_C_hash;
+    spgemm_hash_map<hash_element_index<unsigned int>, spgemm_unordered_hash<unsigned int> > row_C_hash(static_cast<unsigned int>(B.size2()));
     unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
     unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
 
@@ -470,7 +470,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
 
     sp_gemm_list<sp_gemm_list_value_item<NumericT> > row_C_list;
-    spgemm_hash_map<hash_element_index_value<unsigned int, NumericT>, spgemm_ordered_hash<unsigned int> > row_C_hash;
+    spgemm_hash_map<hash_element_index_value<unsigned int, NumericT>, spgemm_ordered_hash<unsigned int> > row_C_hash(static_cast<unsigned int>(B.size2()));
     unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
     unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
     NumericT *row_C_vector_1_values = (NumericT *)malloc(sizeof(NumericT)*B.size2());
