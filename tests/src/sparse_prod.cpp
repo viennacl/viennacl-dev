@@ -22,7 +22,7 @@
 **/
 
 #ifndef NDEBUG
- #define NDEBUG
+ #define BOOST_UBLAS_NDEBUG
 #endif
 
 //
@@ -141,9 +141,9 @@ int test(Epsilon const& epsilon)
 {
   int retval = EXIT_SUCCESS;
 
-  std::size_t N = 400;
+  std::size_t N = 110;
   std::size_t K = 100;
-  std::size_t M = 300;
+  std::size_t M = 120;
   std::size_t nnz_row = 20;
   // --------------------------------------------------------------------------
   ublas::compressed_matrix<NumericT> ublas_A(N, K);
