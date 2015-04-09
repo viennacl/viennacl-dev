@@ -123,7 +123,7 @@ public:
       */
   cl_device_fp_config double_fp_config() const
   {
-    if (!double_fp_config_valid_)
+    if (double_support() && !double_fp_config_valid_)
     {
       cl_int err = clGetDeviceInfo(device_, CL_DEVICE_DOUBLE_FP_CONFIG, sizeof(cl_device_fp_config), static_cast<void *>(&double_fp_config_), NULL);
       VIENNACL_ERR_CHECK(err);
