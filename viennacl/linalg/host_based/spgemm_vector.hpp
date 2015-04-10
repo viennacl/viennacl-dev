@@ -47,15 +47,15 @@ unsigned int row_C_scan_symbolic_vector_AVX2(int const *row_indices_B,
                                              int const *row_C_vector_input, int const *row_C_vector_input_end,
                                              int *row_C_vector_output)
 {
-  __m256i avx_row_indices = _mm256_load_si256((__m256i const *)row_indices_B);
-  __m256i avx_row_start   = _mm256_i32gather_epi32(B_row_buffer,   avx_row_indices, 1);
-  __m256i avx_row_end     = _mm256_i32gather_epi32(B_row_buffer+1, avx_row_indices, 1);
+  __m256i avx_row_indices = _mm256_loadu_si256((__m256i const *)row_indices_B);
+  __m256i avx_row_start   = _mm256_i32gather_epi32(B_row_buffer,   avx_row_indices, 4);
+  __m256i avx_row_end     = _mm256_i32gather_epi32(B_row_buffer+1, avx_row_indices, 4);
 
   __m256i avx_all_ones    = _mm256_set_epi32(1, 1, 1, 1, 1, 1, 1, 1);
   __m256i avx_all_bsize2  = _mm256_set_epi32(B_size2, B_size2, B_size2, B_size2, B_size2, B_size2, B_size2, B_size2);
   __m256i avx_load_mask   = _mm256_cmpgt_epi32(avx_row_end, avx_row_start);
   __m256i avx_index_front = avx_all_bsize2;
-  avx_index_front         = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 1);
+  avx_index_front         = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 4);
 
   int *output_ptr = row_C_vector_output;
 
@@ -91,7 +91,7 @@ unsigned int row_C_scan_symbolic_vector_AVX2(int const *row_indices_B,
     avx_row_start   = _mm256_add_epi32(avx_row_start, avx_temp);
     // third part part: load new data where more entries available:
     avx_load_mask   = _mm256_cmpgt_epi32(avx_row_end, avx_row_start);
-    avx_index_front = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 1);
+    avx_index_front = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 4);
   }
 
   return static_cast<unsigned int>(output_ptr - row_C_vector_output);
