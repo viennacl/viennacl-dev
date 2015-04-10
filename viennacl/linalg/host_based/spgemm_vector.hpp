@@ -25,12 +25,78 @@
 #include "viennacl/forwards.h"
 #include "viennacl/linalg/host_based/common.hpp"
 
+
+#ifdef VIENNACL_WITH_AVX2
+#include "immintrin.h"
+#endif
+
+
 namespace viennacl
 {
 namespace linalg
 {
 namespace host_based
 {
+
+
+
+#ifdef VIENNACL_WITH_AVX2
+inline
+unsigned int row_C_scan_symbolic_vector_AVX2(int const *row_indices_B,
+                                             int const *B_row_buffer, int const *B_col_buffer, int B_size2,
+                                             int const *row_C_vector_input, int const *row_C_vector_input_end,
+                                             int *row_C_vector_output)
+{
+  __m256i avx_row_indices = _mm256_load_si256((__m256i const *)row_indices_B);
+  __m256i avx_row_start   = _mm256_i32gather_epi32(B_row_buffer,   avx_row_indices, 1);
+  __m256i avx_row_end     = _mm256_i32gather_epi32(B_row_buffer+1, avx_row_indices, 1);
+
+  __m256i avx_all_ones    = _mm256_set_epi32(1, 1, 1, 1, 1, 1, 1, 1);
+  __m256i avx_all_bsize2  = _mm256_set_epi32(B_size2, B_size2, B_size2, B_size2, B_size2, B_size2, B_size2, B_size2);
+  __m256i avx_load_mask   = _mm256_cmpgt_epi32(avx_row_end, avx_row_start);
+  __m256i avx_index_front = avx_all_bsize2;
+  avx_index_front         = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 1);
+
+  int *output_ptr = row_C_vector_output;
+
+  while (1)
+  {
+    // get minimum index in current front:
+    __m256i avx_index_min1 = avx_index_front;
+    __m256i avx_temp       = _mm256_permutevar8x32_epi32(avx_index_min1, _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4));
+    avx_index_min1 = _mm256_min_epi32(avx_index_min1, avx_temp); // first four elements compared against last four elements
+
+    avx_temp       = _mm256_shuffle_epi32(avx_index_min1, int(78));    // 0b01001110 = 78, using shuffle instead of permutevar here because of lower latency
+    avx_index_min1 = _mm256_min_epi32(avx_index_min1, avx_temp); // first two elements compared against elements three and four (same for upper half of register)
+
+    avx_temp       = _mm256_shuffle_epi32(avx_index_min1, int(177));    // 0b10110001 = 177, using shuffle instead of permutevar here because of lower latency
+    avx_index_min1 = _mm256_min_epi32(avx_index_min1, avx_temp); // now all entries of avx_index_min1 hold the minimum
+
+    int min_index_in_front = ((int*)&avx_index_min1)[0];
+    // check for end of merge operation:
+    if (min_index_in_front == B_size2)
+      break;
+
+    // write current entry:
+    *output_ptr = min_index_in_front;
+    ++output_ptr;
+
+    // advance index front where equal to minimum index:
+    avx_load_mask   = _mm256_cmpeq_epi32(avx_index_front, avx_index_min1);
+    // first part: set index to B_size2 if equal to minimum index:
+    avx_temp        = _mm256_and_si256(avx_all_bsize2, avx_load_mask);
+    avx_index_front = _mm256_max_epi32(avx_index_front, avx_temp);
+    // second part: increment row_start registers where minimum found:
+    avx_temp        = _mm256_and_si256(avx_all_ones, avx_load_mask); //ones only where the minimum was found
+    avx_row_start   = _mm256_add_epi32(avx_row_start, avx_temp);
+    // third part part: load new data where more entries available:
+    avx_load_mask   = _mm256_cmpgt_epi32(avx_row_end, avx_row_start);
+    avx_index_front = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 1);
+  }
+
+  return static_cast<unsigned int>(output_ptr - row_C_vector_output);
+}
+#endif
 
 /** @brief Merges up to IndexNum rows from B into the result buffer.
 *
@@ -152,6 +218,17 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
   unsigned int row_C_len = 0;
   while (row_end_A > row_start_A)
   {
+#ifdef VIENNACL_WITH_AVX2
+    if (row_end_A - row_start_A >= 8 && row_C_len == 0)
+    {
+      row_C_len = row_C_scan_symbolic_vector_AVX2((const int*)(A_col_buffer + row_start_A),
+                                                  (const int*)B_row_buffer, (const int*)B_col_buffer, int(B_size2),
+                                                  (const int*)row_C_vector_1, (const int*)(row_C_vector_1 + row_C_len),
+                                                  (int*)row_C_vector_2);
+      row_start_A += 8;
+    }
+    else
+#endif
     if (row_end_A - row_start_A > 3)
     {
       row_C_len = row_C_scan_symbolic_vector_N<3>(A_col_buffer + row_start_A,
