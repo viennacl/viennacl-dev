@@ -315,8 +315,9 @@ unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
                                  unsigned int *row_C_vector_1, unsigned int *row_C_vector_2)
 {
   (void)row_C_list;
+  (void)row_C_hash;
 
-  if (max_entries_C > 100)
+  /*if (max_entries_C > 1000000)
   {
     return row_C_scan_hash(max_entries_C,
                            row_start_A, row_end_A, A_col_buffer,
@@ -326,7 +327,7 @@ unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
     //                                row_start_A, row_end_A, A_col_buffer,
     //                                B_row_buffer, B_col_buffer, B_size2,
     //                                row_C_list);
-  }
+  }*/
 
   return row_C_scan_symbolic_vector(row_start_A, row_end_A, A_col_buffer,
                                     B_row_buffer, B_col_buffer, B_size2,
@@ -344,18 +345,19 @@ void row_C_scan_numeric(unsigned int row_start_A, unsigned int row_end_A, unsign
                         unsigned int *row_C_vector_2, NumericT *row_C_vector_2_values)
 {
   (void)row_C_list;
+  (void)row_C_hash;
 
-  if (row_end_C - row_start_C > 100)
+  /*if (row_end_C - row_start_C > 10000)
   {
     row_C_compute_hash(row_start_A, row_end_A, A_col_buffer, A_elements,
                        B_row_buffer, B_col_buffer, B_elements, B_size2,
                        row_start_C, row_end_C, C_col_buffer, C_elements,
                        row_C_hash);
-    /*row_C_scan_numeric_list(row_start_A, row_end_A, A_col_buffer, A_elements,
-                            B_row_buffer, B_col_buffer, B_elements, B_size2,
-                            row_start_C, row_end_C, C_col_buffer, C_elements,
-                            row_C_list);*/
-  }
+    //row_C_scan_numeric_list(row_start_A, row_end_A, A_col_buffer, A_elements,
+    //                        B_row_buffer, B_col_buffer, B_elements, B_size2,
+    //                        row_start_C, row_end_C, C_col_buffer, C_elements,
+    //                        row_C_list);
+  }*/
 
   row_C_scan_numeric_vector(row_start_A, row_end_A, A_col_buffer, A_elements,
                             B_row_buffer, B_col_buffer, B_elements, B_size2,
@@ -419,8 +421,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
       unsigned int row_start_A = A_row_buffer[i];
       unsigned int row_end_A   = A_row_buffer[i+1];
 
-      std::size_t max_entries_C = 0;
-      for (std::size_t j=row_start_A; j<row_end_A; ++j)
+      unsigned int max_entries_C = 0;
+      for (unsigned int j=row_start_A; j<row_end_A; ++j)
       {
         unsigned int row_index_B = A_col_buffer[j];
         max_entries_C += B_row_buffer[row_index_B+1] - B_row_buffer[row_index_B];
