@@ -162,38 +162,34 @@ unsigned int row_C_scan_symbolic_vector_1(unsigned int row_index_B,
                                           unsigned int *row_C_vector_output)
 {
   unsigned int *output_ptr = row_C_vector_output;
-  unsigned int current_col_input = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+  unsigned int col_C = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
 
-  unsigned int row_B_end = B_row_buffer[row_index_B + 1];
-  for (unsigned int j = B_row_buffer[row_index_B]; j < row_B_end; ++j)
+  unsigned int const *row_B_start = B_col_buffer + B_row_buffer[row_index_B];
+  unsigned int const *row_B_end   = B_col_buffer + B_row_buffer[row_index_B + 1];
+  unsigned int col_B = (row_B_start < row_B_end) ? *row_B_start : B_size2;
+  while (1)
   {
-    unsigned int col_B = B_col_buffer[j];
+    unsigned int min_index = std::min(col_B, col_C);
 
-    // advance row_C_vector_input as needed:
-    while (current_col_input < col_B)
+    if (min_index == B_size2)
+      break;
+
+    if (min_index == col_B)
     {
-      *output_ptr = current_col_input;
-      ++output_ptr;
+      ++row_B_start;
+      col_B = (row_B_start < row_B_end) ? *row_B_start : B_size2;
+    }
 
+    if (min_index == col_C)
+    {
       ++row_C_vector_input;
-      current_col_input = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+      col_C = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
     }
 
     // write current entry:
-    *output_ptr = col_B;
+    *output_ptr = min_index;
     ++output_ptr;
-
-    // skip input if same as col_B:
-    if (current_col_input == col_B)
-    {
-      ++row_C_vector_input;
-      current_col_input = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
-    }
   }
-
-  // write remaining entries:
-  for (; row_C_vector_input < row_C_vector_input_end; ++row_C_vector_input, ++output_ptr)
-    *output_ptr = *row_C_vector_input;
 
   return static_cast<unsigned int>(output_ptr - row_C_vector_output);
 }
@@ -229,7 +225,7 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
     }
     else
 #endif
-    if (row_end_A - row_start_A > 3)
+    /*if (row_end_A - row_start_A > 3)
     {
       row_C_len = row_C_scan_symbolic_vector_N<3>(A_col_buffer + row_start_A,
                                                   B_row_buffer, B_col_buffer, B_size2,
@@ -237,7 +233,7 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
                                                   row_C_vector_2);
       row_start_A += 3;
     }
-    else
+    else*/
     {
       // process single row:
       row_C_len = row_C_scan_symbolic_vector_1(A_col_buffer[row_start_A],
@@ -337,53 +333,44 @@ unsigned int row_C_scan_numeric_vector_1(unsigned int row_index_B, NumericT val_
   unsigned int *output_ptr        = row_C_vector_output;
   NumericT     *output_ptr_values = row_C_vector_output_values;
 
-  unsigned int current_col_input       = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input        : B_size2;
-  NumericT     current_col_input_value = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input_values : NumericT(0);
+  unsigned int col_C       = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input        : B_size2;
 
-  unsigned int row_B_end = B_row_buffer[row_index_B + 1];
-  for (unsigned int j = B_row_buffer[row_index_B]; j < row_B_end; ++j)
+  unsigned int row_B_offset       = B_row_buffer[row_index_B];
+  unsigned int const *row_B_start = B_col_buffer + row_B_offset;
+  unsigned int const *row_B_end   = B_col_buffer + B_row_buffer[row_index_B + 1];
+  NumericT const * row_B_values   = B_elements   + row_B_offset;
+  unsigned int col_B = (row_B_start < row_B_end) ? *row_B_start : B_size2;
+  while (1)
   {
-    unsigned int col_B = B_col_buffer[j];
+    unsigned int min_index = std::min(col_B, col_C);
+    NumericT value = 0;
 
-    // advance row_C_vector_input as needed:
-    while (current_col_input < col_B)
+    if (min_index == B_size2)
+      break;
+
+    if (min_index == col_B)
     {
-      *output_ptr = current_col_input;
-      ++output_ptr;
-      *output_ptr_values = current_col_input_value;
-      ++output_ptr_values;
+      ++row_B_start;
+      col_B = (row_B_start < row_B_end) ? *row_B_start : B_size2;
 
+      value += val_A * *row_B_values;
+      ++row_B_values;
+    }
+
+    if (min_index == col_C)
+    {
       ++row_C_vector_input;
+      col_C = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+
+      value += *row_C_vector_input_values;
       ++row_C_vector_input_values;
-      current_col_input       = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input        : B_size2;
-      current_col_input_value = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input_values : NumericT(0);
     }
 
     // write current entry:
-    *output_ptr = col_B;
+    *output_ptr = min_index;
     ++output_ptr;
-
-    // skip input if same as col_B:
-    if (current_col_input == col_B)
-    {
-      *output_ptr_values = val_A * B_elements[j] + current_col_input_value;
-
-      ++row_C_vector_input;
-      ++row_C_vector_input_values;
-      current_col_input       = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input        : B_size2;
-      current_col_input_value = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input_values : NumericT(0);
-    }
-    else
-      *output_ptr_values = val_A * B_elements[j];
-
+    *output_ptr_values = value;
     ++output_ptr_values;
-  }
-
-  // write remaining entries:
-  for (; row_C_vector_input < row_C_vector_input_end; ++row_C_vector_input, ++row_C_vector_input_values, ++output_ptr, ++output_ptr_values)
-  {
-    *output_ptr        = *row_C_vector_input;
-    *output_ptr_values = *row_C_vector_input_values;
   }
 
   return static_cast<unsigned int>(output_ptr - row_C_vector_output);
@@ -422,7 +409,7 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
   unsigned int row_C_len = 0;
   while (row_end_A > row_start_A)
   {
-    if (row_end_A - row_start_A > 3)
+    /*if (row_end_A - row_start_A > 3)
     {
       row_C_len = row_C_scan_numeric_vector_N<3>(A_col_buffer + row_start_A , A_elements + row_start_A,
                                                  B_row_buffer, B_col_buffer, B_elements, B_size2,
@@ -430,7 +417,7 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
                                                  row_C_vector_2, row_C_vector_2_values);
       row_start_A += 3;
     }
-    else // process single row:
+    else */ // process single row:
     {
       row_C_len = row_C_scan_numeric_vector_1(A_col_buffer[row_start_A], A_elements[row_start_A],
                                               B_row_buffer, B_col_buffer, B_elements, B_size2,
