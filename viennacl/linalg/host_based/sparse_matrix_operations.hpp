@@ -33,9 +33,9 @@
 #include "viennacl/linalg/host_based/spgemm_list.hpp"
 #include "viennacl/linalg/host_based/spgemm_vector.hpp"
 
+#include <vector>
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
 #include "viennacl/tools/timer.hpp"
-#include <vector>
 #include <iostream>
 #include <iomanip>
 #endif
@@ -397,13 +397,81 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   unsigned int const * B_row_buffer = detail::extract_raw_pointer<unsigned int>(B.handle1());
   unsigned int const * B_col_buffer = detail::extract_raw_pointer<unsigned int>(B.handle2());
 
+  unsigned int *work_per_row = (unsigned int *)malloc(sizeof(unsigned int)*A.size1()); // not using std::vector<> because of NUMA (initialization via parallel section below)
+
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
   std::vector<double> thread_times_scan(omp_get_max_threads());
   std::vector<double> thread_times_compute(omp_get_max_threads());
 #endif
 
+
   /*
-   * Stage 1: Determine sparsity pattern of C
+   * Stage 1: Analyze expected work for better thread distribution:
+   */
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel
+#endif
+  {
+
+#ifdef VIENNACL_WITH_OPENMP
+    std::size_t thread_work = A.size1() / omp_get_num_threads() + 1;
+    std::size_t thread_start = std::min<std::size_t>( omp_get_thread_num()    * thread_work, A.size1());
+    std::size_t thread_stop  = std::min<std::size_t>((omp_get_thread_num()+1) * thread_work, A.size1());
+#else
+    std::size_t thread_start = 0;
+    std::size_t thread_stop  = A.size1();
+#endif
+
+    for (unsigned int i=thread_start; i<thread_stop; ++i)
+    {
+      unsigned int row_start_A = A_row_buffer[i];
+      unsigned int row_end_A   = A_row_buffer[i+1];
+
+      unsigned int est_work = 0;
+      for (unsigned int j = row_start_A; j<row_end_A; ++j)
+      {
+        unsigned int row_B = A_col_buffer[j];
+
+        est_work += B_row_buffer[row_B+1] - B_row_buffer[row_B];
+      }
+      work_per_row[i] = est_work;
+    }
+  }
+
+  unsigned int max_work = work_per_row[0];
+  double avg_work = static_cast<unsigned int>(work_per_row[0]);
+
+  for (std::size_t i=1; i<A.size1(); ++i)
+  {
+    unsigned int work = work_per_row[i];
+    max_work = std::max(max_work, work);
+    avg_work += work;
+  }
+
+  avg_work /= double(A.size1());
+
+#ifdef VIENNACL_WITH_OPENMP
+  std::vector<unsigned int> thread_entry_points(omp_get_max_threads());
+  double thread_target_load = avg_work * double(A.size1()) / double(omp_get_max_threads());
+
+  // evenly distribute work based on work estimates from above
+  double aggregate_work = 0;
+  unsigned int current_entry_index = 0;
+  for (int i=0; i<omp_get_max_threads(); ++i)
+  {
+    double load_target = double(i) * thread_target_load;
+    while (aggregate_work < load_target)
+    {
+      aggregate_work += work_per_row[current_entry_index];
+      ++current_entry_index;
+    }
+    thread_entry_points[i] = current_entry_index;
+  }
+  thread_entry_points[omp_get_max_threads()] = static_cast<unsigned int>(A.size1());
+#endif
+
+  /*
+   * Stage 2: Determine sparsity pattern of C
    */
   C.resize(A.size1(), B.size2(), false);
 
@@ -415,9 +483,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   {
 
 #ifdef VIENNACL_WITH_OPENMP
-    std::size_t thread_work = A.size1() / omp_get_num_threads() + 1;
-    std::size_t thread_start = std::min<std::size_t>( omp_get_thread_num()    * thread_work, A.size1());
-    std::size_t thread_stop  = std::min<std::size_t>((omp_get_thread_num()+1) * thread_work, A.size1());
+    std::size_t thread_start = thread_entry_points[omp_get_thread_num()];
+    std::size_t thread_stop  = thread_entry_points[omp_get_thread_num() + 1];
 #else
     std::size_t thread_start = 0;
     std::size_t thread_stop  = A.size1();
@@ -472,7 +539,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   C.reserve(current_offset, false);
 
   /*
-   * Stage 2: Compute product (code similar, maybe pull out into a separate function to avoid code duplication?)
+   * Stage 3: Compute product (code similar, maybe pull out into a separate function to avoid code duplication?)
    */
 
   NumericT     * C_elements   = detail::extract_raw_pointer<NumericT>(C.handle());
@@ -483,9 +550,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
   {
 #ifdef VIENNACL_WITH_OPENMP
-    std::size_t thread_work = A.size1() / omp_get_num_threads() + 1;
-    std::size_t thread_start = std::min<std::size_t>( omp_get_thread_num()    * thread_work, A.size1());
-    std::size_t thread_stop  = std::min<std::size_t>((omp_get_thread_num()+1) * thread_work, A.size1());
+    std::size_t thread_start = thread_entry_points[omp_get_thread_num()];
+    std::size_t thread_stop  = thread_entry_points[omp_get_thread_num() + 1];
 #else
     std::size_t thread_start = 0;
     std::size_t thread_stop  = A.size1();
@@ -529,6 +595,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     free(row_C_vector_1_values);
     free(row_C_vector_2_values);
   }
+
+  free(work_per_row);
 
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
   std::cout << " --- Thread times needed for scan --- " << std::endl;
