@@ -397,60 +397,64 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   unsigned int const * B_row_buffer = detail::extract_raw_pointer<unsigned int>(B.handle1());
   unsigned int const * B_col_buffer = detail::extract_raw_pointer<unsigned int>(B.handle2());
 
+  C.resize(A.size1(), B.size2(), false);
+  unsigned int * C_row_buffer = detail::extract_raw_pointer<unsigned int>(C.handle1());
+
+#if defined(VIENNACL_WITH_OPENMP)
   unsigned int *work_per_row = (unsigned int *)malloc(sizeof(unsigned int)*A.size1()); // not using std::vector<> because of NUMA (initialization via parallel section below)
 
-#if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
+  #if defined(VIENNACL_WITH_SPGEMM_TIMINGS)
   std::vector<double> thread_times_scan(omp_get_max_threads());
   std::vector<double> thread_times_compute(omp_get_max_threads());
-#endif
-
+  #endif
 
   /*
-   * Stage 1: Analyze expected work for better thread distribution:
+   * Stage 1: Analyze expected work for better thread distribution (OpenMP only):
    */
-#ifdef VIENNACL_WITH_OPENMP
+  std::vector<double> thread_work_max(omp_get_max_threads());
+  std::vector<double> thread_work_aggregate(omp_get_max_threads());
   #pragma omp parallel
-#endif
   {
-
-#ifdef VIENNACL_WITH_OPENMP
     std::size_t thread_work = A.size1() / omp_get_num_threads() + 1;
     std::size_t thread_start = std::min<std::size_t>( omp_get_thread_num()    * thread_work, A.size1());
     std::size_t thread_stop  = std::min<std::size_t>((omp_get_thread_num()+1) * thread_work, A.size1());
-#else
-    std::size_t thread_start = 0;
-    std::size_t thread_stop  = A.size1();
-#endif
 
-    for (unsigned int i=thread_start; i<thread_stop; ++i)
+    double work_max = 0;
+    double work_agg = 0;
+    for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
       unsigned int row_start_A = A_row_buffer[i];
       unsigned int row_end_A   = A_row_buffer[i+1];
 
-      unsigned int est_work = 0;
+      double est_work = 0;
       for (unsigned int j = row_start_A; j<row_end_A; ++j)
       {
         unsigned int row_B = A_col_buffer[j];
 
-        est_work += B_row_buffer[row_B+1] - B_row_buffer[row_B];
+        double entries_in_row = double(B_row_buffer[row_B+1] - B_row_buffer[row_B]);
+        est_work += 0.5 * entries_in_row + std::min(std::max(0.5 * entries_in_row, est_work), double(A.size1())); //assuming half of the entries are new (only in first row all entries are new)
       }
       work_per_row[i] = est_work;
+      work_max = std::max(work_max, est_work);
+      work_agg += est_work;
     }
+
+    thread_work_max[omp_get_thread_num()] = work_max;
+    thread_work_aggregate[omp_get_thread_num()] = work_agg;
+
   }
 
-  unsigned int max_work = work_per_row[0];
-  double avg_work = static_cast<unsigned int>(work_per_row[0]);
+  double max_work = thread_work_max[0];
+  double avg_work = thread_work_aggregate[0];
 
-  for (std::size_t i=1; i<A.size1(); ++i)
+  for (std::size_t i=1; i<thread_work_max.size(); ++i)
   {
-    unsigned int work = work_per_row[i];
-    max_work = std::max(max_work, work);
-    avg_work += work;
+    max_work = std::max(max_work, thread_work_max[i]);
+    avg_work += thread_work_aggregate[i];
   }
 
   avg_work /= double(A.size1());
 
-#ifdef VIENNACL_WITH_OPENMP
   std::vector<unsigned int> thread_entry_points(omp_get_max_threads());
   double thread_target_load = avg_work * double(A.size1()) / double(omp_get_max_threads());
 
@@ -468,14 +472,13 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     thread_entry_points[i] = current_entry_index;
   }
   thread_entry_points[omp_get_max_threads()] = static_cast<unsigned int>(A.size1());
+
+  free(work_per_row);
 #endif
 
   /*
    * Stage 2: Determine sparsity pattern of C
    */
-  C.resize(A.size1(), B.size2(), false);
-
-  unsigned int * C_row_buffer = detail::extract_raw_pointer<unsigned int>(C.handle1());
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel
@@ -595,8 +598,6 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     free(row_C_vector_1_values);
     free(row_C_vector_2_values);
   }
-
-  free(work_per_row);
 
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
   std::cout << " --- Thread times needed for scan --- " << std::endl;
