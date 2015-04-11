@@ -33,6 +33,13 @@
 #include "viennacl/linalg/host_based/spgemm_list.hpp"
 #include "viennacl/linalg/host_based/spgemm_vector.hpp"
 
+#if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
+#include "viennacl/tools/timer.hpp"
+#include <vector>
+#include <iostream>
+#include <iomanip>
+#endif
+
 #ifdef VIENNACL_WITH_OPENMP
 #include <omp.h>
 #endif
@@ -390,6 +397,11 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   unsigned int const * B_row_buffer = detail::extract_raw_pointer<unsigned int>(B.handle1());
   unsigned int const * B_col_buffer = detail::extract_raw_pointer<unsigned int>(B.handle2());
 
+#if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
+  std::vector<double> thread_times_scan(omp_get_max_threads());
+  std::vector<double> thread_times_compute(omp_get_max_threads());
+#endif
+
   /*
    * Stage 1: Determine sparsity pattern of C
    */
@@ -416,6 +428,11 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
     unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
 
+#if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
+    viennacl::tools::timer timer;
+    timer.start();
+#endif
+
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
       unsigned int row_start_A = A_row_buffer[i];
@@ -436,6 +453,9 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                                             row_C_vector_1, row_C_vector_2);
     }
 
+#if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
+    thread_times_scan[omp_get_thread_num()] = timer.get();
+#endif
     free(row_C_vector_1);
     free(row_C_vector_2);
   }
@@ -478,6 +498,11 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     NumericT *row_C_vector_1_values = (NumericT *)malloc(sizeof(NumericT)*B.size2());
     NumericT *row_C_vector_2_values = (NumericT *)malloc(sizeof(NumericT)*B.size2());
 
+#if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
+    viennacl::tools::timer timer;
+    timer.start();
+#endif
+
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
       unsigned int row_start_A  = A_row_buffer[i];
@@ -495,12 +520,44 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                          row_C_vector_2, row_C_vector_2_values);
     }
 
+#if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
+    thread_times_compute[omp_get_thread_num()] = timer.get();
+#endif
+
     free(row_C_vector_1);
     free(row_C_vector_2);
     free(row_C_vector_1_values);
     free(row_C_vector_2_values);
   }
 
+#if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
+  std::cout << " --- Thread times needed for scan --- " << std::endl;
+  double min_time = 1e8;
+  double max_time = 0;
+  for (std::size_t i=0; i<thread_times_scan.size(); ++i)
+  {
+    min_time = std::min(min_time, thread_times_scan[i]);
+    max_time = std::max(max_time, thread_times_scan[i]);
+    std::cout << std::setprecision(2) << thread_times_scan[i] << " ";
+  }
+  std::cout << std::endl;
+  std::cout << "Minimum thread time: " << min_time << std::endl;
+  std::cout << "Maximum thread time: " << max_time << std::endl;
+
+  std::cout << " --- Thread times needed for compute --- " << std::endl;
+  min_time = 1e8;
+  max_time = 0;
+  for (std::size_t i=0; i<thread_times_compute.size(); ++i)
+  {
+    min_time = std::min(min_time, thread_times_compute[i]);
+    max_time = std::max(max_time, thread_times_compute[i]);
+    std::cout << std::setprecision(2) << thread_times_compute[i] << " ";
+  }
+  std::cout << std::endl;
+  std::cout << "Minimum thread time: " << min_time << std::endl;
+  std::cout << "Maximum thread time: " << max_time << std::endl;
+
+#endif
 }
 
 
