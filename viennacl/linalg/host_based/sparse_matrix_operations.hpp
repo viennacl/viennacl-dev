@@ -402,6 +402,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
 #if defined(VIENNACL_WITH_OPENMP)
   unsigned int *work_per_row = (unsigned int *)malloc(sizeof(unsigned int)*A.size1()); // not using std::vector<> because of NUMA (initialization via parallel section below)
+  std::vector<unsigned int> thread_block_offsets(omp_get_max_threads());
 
   #if defined(VIENNACL_WITH_SPGEMM_TIMINGS)
   std::vector<double> thread_times_scan(omp_get_max_threads());
@@ -455,7 +456,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   avg_work /= double(A.size1());
 
-  std::vector<unsigned int> thread_entry_points(omp_get_max_threads());
+  std::vector<unsigned int> thread_entry_points(omp_get_max_threads()+1);
   double thread_target_load = avg_work * double(A.size1()) / double(omp_get_max_threads());
 
   // evenly distribute work based on work estimates from above
@@ -503,6 +504,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     timer.start();
 #endif
 
+    unsigned int accumulated_nnz = 0; // nnz per thread
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
       unsigned int row_start_A = A_row_buffer[i];
@@ -515,13 +517,17 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         max_entries_C += B_row_buffer[row_index_B+1] - B_row_buffer[row_index_B];
       }
 
-      C_row_buffer[i] = row_C_scan_symbolic(max_entries_C,
-                                            row_start_A, row_end_A, A_col_buffer,
-                                            B_row_buffer, B_col_buffer, static_cast<unsigned int>(B.size2()),
-                                            row_C_list,
-                                            row_C_hash,
-                                            row_C_vector_1, row_C_vector_2);
+      accumulated_nnz += row_C_scan_symbolic(max_entries_C,
+                                             row_start_A, row_end_A, A_col_buffer,
+                                             B_row_buffer, B_col_buffer, static_cast<unsigned int>(B.size2()),
+                                             row_C_list,
+                                             row_C_hash,
+                                             row_C_vector_1, row_C_vector_2);
+      C_row_buffer[i+1] = accumulated_nnz;
     }
+#ifdef VIENNACL_WITH_OPENMP
+    thread_block_offsets[omp_get_thread_num()] = accumulated_nnz;
+#endif
 
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
     thread_times_scan[omp_get_thread_num()] = timer.get();
@@ -530,16 +536,20 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     free(row_C_vector_2);
   }
 
+  C_row_buffer[0] = 0;
+#ifdef VIENNACL_WITH_OPENMP
   // exclusive scan to obtain row start indices:
   unsigned int current_offset = 0;
-  for (std::size_t i=0; i<A.size1(); ++i)
+  for (std::size_t i=0; i<omp_get_max_threads(); ++i)
   {
-    unsigned int tmp = C_row_buffer[i];
-    C_row_buffer[i] = current_offset;
+    unsigned int tmp = thread_block_offsets[i];
+    thread_block_offsets[i] = current_offset;
     current_offset += tmp;
   }
-  C_row_buffer[C.size1()] = current_offset;
   C.reserve(current_offset, false);
+#else
+  C.reserve(C_row_buffer[C.size1()], false);
+#endif
 
   /*
    * Stage 3: Compute product (code similar, maybe pull out into a separate function to avoid code duplication?)
@@ -553,12 +563,20 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
   {
 #ifdef VIENNACL_WITH_OPENMP
+
+    // shift entries in C_row_buffer accordingly:
     std::size_t thread_start = thread_entry_points[omp_get_thread_num()];
     std::size_t thread_stop  = thread_entry_points[omp_get_thread_num() + 1];
+
+    unsigned int thread_index_offset = thread_block_offsets[omp_get_thread_num()];
+    for (std::size_t i=thread_start; i<thread_stop; ++i)
+      C_row_buffer[i+1] += thread_index_offset;
 #else
     std::size_t thread_start = 0;
     std::size_t thread_stop  = A.size1();
 #endif
+
+    #pragma omp barrier
 
     sp_gemm_list<sp_gemm_list_value_item<NumericT> > row_C_list;
     spgemm_hash_map<hash_element_index_value<unsigned int, NumericT>, spgemm_ordered_hash<unsigned int> > row_C_hash(static_cast<unsigned int>(B.size2()));
