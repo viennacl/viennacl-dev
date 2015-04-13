@@ -111,6 +111,7 @@ long read_matrix_market_file_impl(MatrixT & mat,
   bool symmetric = false;
   bool dense_format = false;
   bool is_header = true;
+  bool pattern_matrix = false;
   long cur_row = 0;
   long cur_col = 0;
   long valid_entries = 0;
@@ -170,9 +171,13 @@ long read_matrix_market_file_impl(MatrixT & mat,
         }
 
         line >> token;
-        if (detail::tolower(token) != "real")
+        if (detail::tolower(token) == "pattern")
         {
-          std::cerr << "Error in file " << file << ": The MatrixMarket reader provided with ViennaCL supports only real valued floating point arithmetic." << std::endl;
+          pattern_matrix = true;
+        }
+        else if (detail::tolower(token) != "real")
+        {
+          std::cerr << "Error in file " << file << ": The MatrixMarket reader provided with ViennaCL supports only real valued floating point arithmetic or pattern type matrices." << std::endl;
           return 0;
         }
 
@@ -249,14 +254,14 @@ long read_matrix_market_file_impl(MatrixT & mat,
         {
           long row;
           long col;
-          ScalarT value;
+          ScalarT value = ScalarT(1);
 
           //parse data:
           if (line.good())
             line >> row;
           else
           {
-            std::cerr << "Error in file " << file << ": Parse error for matrix entry in line " << linenum << std::endl;
+            std::cerr << "Error in file " << file << ": Parse error for matrix row entry in line " << linenum << std::endl;
             return 0;
           }
 
@@ -264,7 +269,7 @@ long read_matrix_market_file_impl(MatrixT & mat,
             line >> col;
           else
           {
-            std::cerr << "Error in file " << file << ": Parse error for matrix entry in line " << linenum << std::endl;
+            std::cerr << "Error in file " << file << ": Parse error for matrix col entry in line " << linenum << std::endl;
             return 0;
           }
 
@@ -272,12 +277,17 @@ long read_matrix_market_file_impl(MatrixT & mat,
           row -= index_base;
           col -= index_base;
 
-          if (line.good())
-            line >> value;
-          else
+          if (!pattern_matrix) // value for pattern matrix is implicitly 1, so we only need to read data for 'normal' matrices
           {
-            std::cerr << "Error in file " << file << ": Parse error for matrix entry in line " << linenum << std::endl;
-            return 0;
+            if (line.good())
+            {
+                line >> value;
+            }
+            else
+            {
+              std::cerr << "Error in file " << file << ": Parse error for matrix entry in line " << linenum << std::endl;
+              return 0;
+            }
           }
 
           if (row >= static_cast<long>(viennacl::traits::size1(mat)) || row < 0)
