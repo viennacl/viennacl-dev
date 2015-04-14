@@ -484,7 +484,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   unsigned int max_threads = 1;
 #endif
   std::vector<unsigned int> thread_block_offsets(max_threads);
-  bool dispatch_tasks = false;
+  int dispatch_tasks = 0;
   std::vector<unsigned int *> row_C_temp_index_buffers(max_threads);
   std::vector<NumericT *>     row_C_temp_value_buffers(max_threads);
 
@@ -609,7 +609,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         A_row_end = thread_stop;
 
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp task if (dispatch_tasks == true)
+      #pragma omp task if (dispatch_tasks > 0)
 #endif
       row_C_scan_symbolic_range(A_row_begin, A_row_end,
                                 A_row_buffer, A_col_buffer,
@@ -622,7 +622,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp atomic write
-    dispatch_tasks = true;
+    dispatch_tasks = 1;
 
     #pragma omp taskwait       // process all tasks
 #endif
@@ -642,7 +642,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
   }
 
-  dispatch_tasks = false;
+  dispatch_tasks = 0;
 #ifdef VIENNACL_WITH_OPENMP
   // exclusive scan to obtain row start indices:
   unsigned int current_offset = 0;
@@ -712,7 +712,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
         A_row_end = thread_stop;
 
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp task if (dispatch_tasks == true)
+      #pragma omp task if (dispatch_tasks > 0)
 #endif
       row_C_scan_numeric_range(A_row_begin, A_row_end,
                                A_row_buffer, A_col_buffer, A_elements,
@@ -725,7 +725,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
 #ifdef VIENNACL_WITH_OPENMP
     #pragma omp atomic write
-    dispatch_tasks = true;
+    dispatch_tasks = 1;
 
     #pragma omp taskwait       // process all tasks
 #endif
