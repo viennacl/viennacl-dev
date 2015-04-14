@@ -341,6 +341,46 @@ unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
                                     row_C_vector_1, row_C_vector_2);
 }
 
+template<typename ListT, typename HashT>
+void row_C_scan_symbolic_range(unsigned int A_row_begin, unsigned int A_row_end,
+                               unsigned int const *A_row_buffer, unsigned int const *A_col_buffer,
+                               unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
+                               unsigned int *C_row_buffer,
+                               ListT & row_C_list,
+                               HashT & row_C_hash,
+                               unsigned int **index_buffers)
+{
+  unsigned int thread_id = 0;
+#ifdef VIENNACL_WITH_OPENMP
+  thread_id = omp_get_thread_num();
+#endif
+
+  unsigned int *row_C_vector_1 = index_buffers[thread_id];
+  unsigned int *row_C_vector_2 = row_C_vector_1 + B_size2;
+
+  for (unsigned int i = A_row_begin; i < A_row_end; ++i)
+  {
+    unsigned int row_start_A = A_row_buffer[i];
+    unsigned int row_end_A   = A_row_buffer[i+1];
+
+    unsigned int max_entries_C = 0;
+    for (unsigned int j=row_start_A; j<row_end_A; ++j)
+    {
+      unsigned int row_index_B = A_col_buffer[j];
+      max_entries_C += B_row_buffer[row_index_B+1] - B_row_buffer[row_index_B];
+    }
+
+    C_row_buffer[i] = row_C_scan_symbolic(max_entries_C,
+                                          row_start_A, row_end_A, A_col_buffer,
+                                          B_row_buffer, B_col_buffer, B_size2,
+                                          row_C_list,
+                                          row_C_hash,
+                                          row_C_vector_1, row_C_vector_2);
+  }
+}
+
+
+
 
 template<typename NumericT, typename ListT, typename HashT>
 void row_C_scan_numeric(unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer, NumericT const *A_elements,
@@ -373,6 +413,43 @@ void row_C_scan_numeric(unsigned int row_start_A, unsigned int row_end_A, unsign
                             row_C_vector_2, row_C_vector_2_values);
 }
 
+template<typename NumericT, typename ListT, typename HashT>
+void row_C_scan_numeric_range(unsigned int A_row_begin, unsigned int A_row_end,
+                              unsigned int const *A_row_buffer, unsigned int const *A_col_buffer, NumericT const *A_elements,
+                              unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, NumericT const *B_elements, unsigned int B_size2,
+                              unsigned int const *C_row_buffer, unsigned int       *C_col_buffer, NumericT       *C_elements,
+                              ListT & row_C_list,
+                              HashT & row_C_hash,
+                              unsigned int **index_buffers, NumericT **value_buffers)
+{
+  unsigned int thread_id = 0;
+#ifdef VIENNACL_WITH_OPENMP
+  thread_id = omp_get_thread_num();
+#endif
+
+  unsigned int *row_C_vector_1 = index_buffers[thread_id];
+  unsigned int *row_C_vector_2 = row_C_vector_1 + B_size2;
+
+  NumericT *row_C_vector_1_values = value_buffers[thread_id];
+  NumericT *row_C_vector_2_values = row_C_vector_1_values + B_size2;
+
+  for (unsigned int i = A_row_begin; i < A_row_end; ++i)
+  {
+    unsigned int row_start_A  = A_row_buffer[i];
+    unsigned int row_end_A    = A_row_buffer[i+1];
+
+    unsigned int row_C_buffer_start = C_row_buffer[i];
+    unsigned int row_C_buffer_end   = C_row_buffer[i+1];
+
+    row_C_scan_numeric(row_start_A, row_end_A, A_col_buffer, A_elements,
+                       B_row_buffer, B_col_buffer, B_elements, B_size2,
+                       row_C_buffer_start, row_C_buffer_end, C_col_buffer, C_elements,
+                       row_C_list,
+                       row_C_hash,
+                       row_C_vector_1, row_C_vector_1_values,
+                       row_C_vector_2, row_C_vector_2_values);
+  }
+}
 
 /** @brief Carries out sparse_matrix-sparse_matrix multiplication for CSR matrices
 *
@@ -400,9 +477,20 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   C.resize(A.size1(), B.size2(), false);
   unsigned int * C_row_buffer = detail::extract_raw_pointer<unsigned int>(C.handle1());
 
+  unsigned int block_factor = 10;
+#if defined(VIENNACL_WITH_OPENMP)
+  unsigned int max_threads = omp_get_max_threads();
+#else
+  unsigned int max_threads = 1;
+#endif
+  std::vector<unsigned int> thread_block_offsets(max_threads);
+  bool dispatch_tasks = false;
+  std::vector<unsigned int *> row_C_temp_index_buffers(max_threads);
+  std::vector<NumericT *>     row_C_temp_value_buffers(max_threads);
+
+
 #if defined(VIENNACL_WITH_OPENMP)
   unsigned int *work_per_row = (unsigned int *)malloc(sizeof(unsigned int)*A.size1()); // not using std::vector<> because of NUMA (initialization via parallel section below)
-  std::vector<unsigned int> thread_block_offsets(omp_get_max_threads());
 
   #if defined(VIENNACL_WITH_SPGEMM_TIMINGS)
   std::vector<double> thread_times_scan(omp_get_max_threads());
@@ -487,56 +575,74 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   {
 
 #ifdef VIENNACL_WITH_OPENMP
-    std::size_t thread_start = thread_entry_points[omp_get_thread_num()];
-    std::size_t thread_stop  = thread_entry_points[omp_get_thread_num() + 1];
+    unsigned int thread_id = omp_get_thread_num();
+    unsigned int thread_start = thread_entry_points[thread_id];
+    unsigned int thread_stop  = thread_entry_points[thread_id + 1];
 #else
-    std::size_t thread_start = 0;
-    std::size_t thread_stop  = A.size1();
+    unsigned int thread_id = 0;
+    unsigned int thread_start = 0;
+    unsigned int thread_stop  = A.size1();
 #endif
 
     sp_gemm_list<sp_gemm_list_item> row_C_list;
     spgemm_hash_map<hash_element_index<unsigned int>, spgemm_unordered_hash<unsigned int> > row_C_hash(static_cast<unsigned int>(B.size2()));
-    unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
-    unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
+    row_C_temp_index_buffers[thread_id] = (unsigned int *)malloc(sizeof(unsigned int)*2*B.size2());
+
+    // Note: It's important to have this barrier *after* the allocation of temporary buffers
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp barrier
+#endif
 
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
     viennacl::tools::timer timer;
     timer.start();
 #endif
 
-    unsigned int accumulated_nnz = 0; // nnz per thread
-    for (std::size_t i=thread_start; i<thread_stop; ++i)
+    unsigned int block_size = (thread_stop - thread_start) / block_factor;
+    for (unsigned int i=0; i<block_factor; ++i)
     {
-      unsigned int row_start_A = A_row_buffer[i];
-      unsigned int row_end_A   = A_row_buffer[i+1];
+      unsigned int A_row_begin = thread_start +  i    * block_size;
+      unsigned int A_row_end   = thread_start + (i+1) * block_size;
 
-      unsigned int max_entries_C = 0;
-      for (unsigned int j=row_start_A; j<row_end_A; ++j)
-      {
-        unsigned int row_index_B = A_col_buffer[j];
-        max_entries_C += B_row_buffer[row_index_B+1] - B_row_buffer[row_index_B];
-      }
+      // make sure we don't miss out some indices at the end:
+      if (i == block_factor - 1)
+        A_row_end = thread_stop;
 
-      accumulated_nnz += row_C_scan_symbolic(max_entries_C,
-                                             row_start_A, row_end_A, A_col_buffer,
-                                             B_row_buffer, B_col_buffer, static_cast<unsigned int>(B.size2()),
-                                             row_C_list,
-                                             row_C_hash,
-                                             row_C_vector_1, row_C_vector_2);
-      C_row_buffer[i+1] = accumulated_nnz;
-    }
 #ifdef VIENNACL_WITH_OPENMP
-    thread_block_offsets[omp_get_thread_num()] = accumulated_nnz;
+      #pragma omp task if (dispatch_tasks == true)
 #endif
+      row_C_scan_symbolic_range(A_row_begin, A_row_end,
+                                A_row_buffer, A_col_buffer,
+                                B_row_buffer, B_col_buffer, static_cast<unsigned int>(B.size2()),
+                                C_row_buffer,
+                                row_C_list,
+                                row_C_hash,
+                                &(row_C_temp_index_buffers[0]));
+    }
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp atomic write
+    dispatch_tasks = true;
+
+    #pragma omp taskwait       // process all tasks
+#endif
+
+    // accumulate entries per row:
+    unsigned int accumulated_nnz = 0;
+    for (unsigned int i=thread_start; i<thread_stop; ++i)
+    {
+      unsigned int tmp = C_row_buffer[i];
+      C_row_buffer[i] = accumulated_nnz;
+      accumulated_nnz += tmp;
+    }
+    thread_block_offsets[thread_id] = accumulated_nnz;
 
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
     thread_times_scan[omp_get_thread_num()] = timer.get();
 #endif
-    free(row_C_vector_1);
-    free(row_C_vector_2);
   }
 
-  C_row_buffer[0] = 0;
+  dispatch_tasks = false;
 #ifdef VIENNACL_WITH_OPENMP
   // exclusive scan to obtain row start indices:
   unsigned int current_offset = 0;
@@ -546,8 +652,10 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     thread_block_offsets[i] = current_offset;
     current_offset += tmp;
   }
+  C_row_buffer[C.size1()] = current_offset;
   C.reserve(current_offset, false);
 #else
+  C_row_buffer[C.size1()] = thread_block_offsets[0];
   C.reserve(C_row_buffer[C.size1()], false);
 #endif
 
@@ -565,56 +673,74 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #ifdef VIENNACL_WITH_OPENMP
 
     // shift entries in C_row_buffer accordingly:
-    std::size_t thread_start = thread_entry_points[omp_get_thread_num()];
-    std::size_t thread_stop  = thread_entry_points[omp_get_thread_num() + 1];
+    unsigned int thread_id = omp_get_thread_num();
+    unsigned int thread_start = thread_entry_points[thread_id];
+    unsigned int thread_stop  = thread_entry_points[thread_id + 1];
 
     unsigned int thread_index_offset = thread_block_offsets[omp_get_thread_num()];
     for (std::size_t i=thread_start; i<thread_stop; ++i)
-      C_row_buffer[i+1] += thread_index_offset;
-#else
-    std::size_t thread_start = 0;
-    std::size_t thread_stop  = A.size1();
-#endif
+      C_row_buffer[i] += thread_index_offset;
 
-    #pragma omp barrier
+#else
+    unsigned int thread_id = 0;
+    unsigned int thread_start = 0;
+    unsigned int thread_stop  = A.size1();
+#endif
 
     sp_gemm_list<sp_gemm_list_value_item<NumericT> > row_C_list;
     spgemm_hash_map<hash_element_index_value<unsigned int, NumericT>, spgemm_ordered_hash<unsigned int> > row_C_hash(static_cast<unsigned int>(B.size2()));
-    unsigned int *row_C_vector_1 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
-    unsigned int *row_C_vector_2 = (unsigned int *)malloc(sizeof(unsigned int)*B.size2());
-    NumericT *row_C_vector_1_values = (NumericT *)malloc(sizeof(NumericT)*B.size2());
-    NumericT *row_C_vector_2_values = (NumericT *)malloc(sizeof(NumericT)*B.size2());
+    row_C_temp_value_buffers[thread_id] = (NumericT *)malloc(sizeof(NumericT)*2*B.size2());
+
+    // Note: It's important to have this barrier *after* the allocation of temporary buffers
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp barrier
+#endif
 
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
     viennacl::tools::timer timer;
     timer.start();
 #endif
 
-    for (std::size_t i=thread_start; i<thread_stop; ++i)
+    unsigned int block_size = (thread_stop - thread_start) / block_factor;
+    for (unsigned int i=0; i<block_factor; ++i)
     {
-      unsigned int row_start_A  = A_row_buffer[i];
-      unsigned int row_end_A    = A_row_buffer[i+1];
+      unsigned int A_row_begin = thread_start +  i    * block_size;
+      unsigned int A_row_end   = thread_start + (i+1) * block_size;
 
-      unsigned int row_C_buffer_start = C_row_buffer[i];
-      unsigned int row_C_buffer_end   = C_row_buffer[i+1];
+      // make sure we don't miss out some indices at the end:
+      if (i == block_factor - 1)
+        A_row_end = thread_stop;
 
-      row_C_scan_numeric(row_start_A, row_end_A, A_col_buffer, A_elements,
-                         B_row_buffer, B_col_buffer, B_elements, static_cast<unsigned int>(B.size2()),
-                         row_C_buffer_start, row_C_buffer_end, C_col_buffer, C_elements,
-                         row_C_list,
-                         row_C_hash,
-                         row_C_vector_1, row_C_vector_1_values,
-                         row_C_vector_2, row_C_vector_2_values);
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp task if (dispatch_tasks == true)
+#endif
+      row_C_scan_numeric_range(A_row_begin, A_row_end,
+                               A_row_buffer, A_col_buffer, A_elements,
+                               B_row_buffer, B_col_buffer, B_elements, static_cast<unsigned int>(B.size2()),
+                               C_row_buffer, C_col_buffer, C_elements,
+                               row_C_list,
+                               row_C_hash,
+                               &(row_C_temp_index_buffers[0]), &(row_C_temp_value_buffers[0]));
     }
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp atomic write
+    dispatch_tasks = true;
+
+    #pragma omp taskwait       // process all tasks
+#endif
+
 
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
     thread_times_compute[omp_get_thread_num()] = timer.get();
 #endif
 
-    free(row_C_vector_1);
-    free(row_C_vector_2);
-    free(row_C_vector_1_values);
-    free(row_C_vector_2_values);
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp barrier
+#endif
+
+    free(row_C_temp_index_buffers[thread_id]);
+    free(row_C_temp_value_buffers[thread_id]);
   }
 
 #if defined(VIENNACL_WITH_OPENMP) && defined(VIENNACL_WITH_SPGEMM_TIMINGS)
