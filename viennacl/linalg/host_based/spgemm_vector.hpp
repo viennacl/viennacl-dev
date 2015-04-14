@@ -155,43 +155,44 @@ unsigned int row_C_scan_symbolic_vector_N(unsigned int const *row_indices_B,
   return static_cast<unsigned int>(output_ptr - row_C_vector_output);
 }
 
-inline
-unsigned int row_C_scan_symbolic_vector_1(unsigned int row_index_B,
-                                          unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
-                                          unsigned int const *row_C_vector_input, unsigned int const *row_C_vector_input_end,
-                                          unsigned int *row_C_vector_output)
-{
-  unsigned int *output_ptr = row_C_vector_output;
-  unsigned int col_C = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+struct spgemm_output_write_enabled  { static void apply(unsigned int *ptr, unsigned int value) { *ptr = value; } };
+struct spgemm_output_write_disabled { static void apply(unsigned int *   , unsigned int      ) {               } };
 
-  unsigned int const *row_B_start = B_col_buffer + B_row_buffer[row_index_B];
-  unsigned int const *row_B_end   = B_col_buffer + B_row_buffer[row_index_B + 1];
-  unsigned int col_B = (row_B_start < row_B_end) ? *row_B_start : B_size2;
+template<typename OutputWriterT>
+unsigned int row_C_scan_symbolic_vector_1(unsigned int const *input1_begin, unsigned int const *input1_end,
+                                          unsigned int const *input2_begin, unsigned int const *input2_end,
+                                          unsigned int termination_index,
+                                          unsigned int *output_begin)
+{
+  unsigned int *output_ptr = output_begin;
+
+  unsigned int val_1 = (input1_begin < input1_end) ? *input1_begin : termination_index;
+  unsigned int val_2 = (input2_begin < input2_end) ? *input2_begin : termination_index;
   while (1)
   {
-    unsigned int min_index = std::min(col_B, col_C);
+    unsigned int min_index = std::min(val_1, val_2);
 
-    if (min_index == B_size2)
+    if (min_index == termination_index)
       break;
 
-    if (min_index == col_B)
+    if (min_index == val_1)
     {
-      ++row_B_start;
-      col_B = (row_B_start < row_B_end) ? *row_B_start : B_size2;
+      ++input1_begin;
+      val_1 = (input1_begin < input1_end) ? *input1_begin : termination_index;
     }
 
-    if (min_index == col_C)
+    if (min_index == val_2)
     {
-      ++row_C_vector_input;
-      col_C = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+      ++input2_begin;
+      val_2 = (input2_begin < input2_end) ? *input2_begin : termination_index;
     }
 
     // write current entry:
-    *output_ptr = min_index;
+    OutputWriterT::apply(output_ptr, min_index); // *output_ptr = min_index;    if necessary
     ++output_ptr;
   }
 
-  return static_cast<unsigned int>(output_ptr - row_C_vector_output);
+  return static_cast<unsigned int>(output_ptr - output_begin);
 }
 
 inline
@@ -210,8 +211,29 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
     return B_row_buffer[A_col + 1] - B_row_buffer[A_col];
   }
 
-  // all other row lengths:
+  // Optimizations for row length 2:
   unsigned int row_C_len = 0;
+  if (row_end_A - row_start_A == 2)
+  {
+    unsigned int A_col_1 = A_col_buffer[row_start_A];
+    unsigned int A_col_2 = A_col_buffer[row_start_A + 1];
+    return row_C_scan_symbolic_vector_1<spgemm_output_write_disabled>(B_col_buffer + B_row_buffer[A_col_1], B_col_buffer + B_row_buffer[A_col_1 + 1],
+                                                                      B_col_buffer + B_row_buffer[A_col_2], B_col_buffer + B_row_buffer[A_col_2 + 1],
+                                                                      B_size2,
+                                                                      row_C_vector_1);
+  }
+  else // for more than two rows we can safely merge the first two:
+  {
+    unsigned int A_col_1 = A_col_buffer[row_start_A];
+    unsigned int A_col_2 = A_col_buffer[row_start_A + 1];
+    row_C_len =  row_C_scan_symbolic_vector_1<spgemm_output_write_enabled>(B_col_buffer + B_row_buffer[A_col_1], B_col_buffer + B_row_buffer[A_col_1 + 1],
+                                                                           B_col_buffer + B_row_buffer[A_col_2], B_col_buffer + B_row_buffer[A_col_2 + 1],
+                                                                           B_size2,
+                                                                           row_C_vector_1);
+    row_start_A += 2;
+  }
+
+  // all other row lengths:
   while (row_end_A > row_start_A)
   {
 #ifdef VIENNACL_WITH_AVX2
@@ -234,12 +256,23 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
       row_start_A += 3;
     }
     else*/
+    if (row_start_A == row_end_A - 1) // last merge operation. No need to write output
+    {
+      // process last row
+      unsigned int row_index_B = A_col_buffer[row_start_A];
+      return row_C_scan_symbolic_vector_1<spgemm_output_write_disabled>(B_col_buffer + B_row_buffer[row_index_B], B_col_buffer + B_row_buffer[row_index_B + 1],
+                                                                        row_C_vector_1, row_C_vector_1 + row_C_len,
+                                                                        B_size2,
+                                                                        row_C_vector_2);
+    }
+    else // at least two more rows left
     {
       // process single row:
-      row_C_len = row_C_scan_symbolic_vector_1(A_col_buffer[row_start_A],
-                                               B_row_buffer, B_col_buffer, B_size2,
-                                               row_C_vector_1, row_C_vector_1 + row_C_len,
-                                               row_C_vector_2);
+      unsigned int row_index_B = A_col_buffer[row_start_A];
+      row_C_len = row_C_scan_symbolic_vector_1<spgemm_output_write_enabled>(B_col_buffer + B_row_buffer[row_index_B], B_col_buffer + B_row_buffer[row_index_B + 1],
+                                                                            row_C_vector_1, row_C_vector_1 + row_C_len,
+                                                                            B_size2,
+                                                                            row_C_vector_2);
       ++row_start_A;
     }
 
@@ -325,55 +358,50 @@ unsigned int row_C_scan_numeric_vector_N(unsigned int const *row_indices_B, Nume
 
 
 template<typename NumericT>
-unsigned int row_C_scan_numeric_vector_1(unsigned int row_index_B, NumericT val_A,
-                                         unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, NumericT const *B_elements, unsigned int B_size2,
-                                         unsigned int const *row_C_vector_input, unsigned int const *row_C_vector_input_end, NumericT *row_C_vector_input_values,
-                                         unsigned int *row_C_vector_output, NumericT *row_C_vector_output_values)
+unsigned int row_C_scan_numeric_vector_1(unsigned int const *input1_index_begin, unsigned int const *input1_index_end, NumericT const *input1_values_begin, NumericT factor1,
+                                         unsigned int const *input2_index_begin, unsigned int const *input2_index_end, NumericT const *input2_values_begin, NumericT factor2,
+                                         unsigned int termination_index,
+                                         unsigned int *output_index_begin, NumericT *output_values_begin)
 {
-  unsigned int *output_ptr        = row_C_vector_output;
-  NumericT     *output_ptr_values = row_C_vector_output_values;
+  unsigned int *output_ptr = output_index_begin;
 
-  unsigned int col_C       = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input        : B_size2;
+  unsigned int index1 = (input1_index_begin < input1_index_end) ? *input1_index_begin : termination_index;
+  unsigned int index2 = (input2_index_begin < input2_index_end) ? *input2_index_begin : termination_index;
 
-  unsigned int row_B_offset       = B_row_buffer[row_index_B];
-  unsigned int const *row_B_start = B_col_buffer + row_B_offset;
-  unsigned int const *row_B_end   = B_col_buffer + B_row_buffer[row_index_B + 1];
-  NumericT const * row_B_values   = B_elements   + row_B_offset;
-  unsigned int col_B = (row_B_start < row_B_end) ? *row_B_start : B_size2;
   while (1)
   {
-    unsigned int min_index = std::min(col_B, col_C);
+    unsigned int min_index = std::min(index1, index2);
     NumericT value = 0;
 
-    if (min_index == B_size2)
+    if (min_index == termination_index)
       break;
 
-    if (min_index == col_B)
+    if (min_index == index1)
     {
-      ++row_B_start;
-      col_B = (row_B_start < row_B_end) ? *row_B_start : B_size2;
+      ++input1_index_begin;
+      index1 = (input1_index_begin < input1_index_end) ? *input1_index_begin : termination_index;
 
-      value += val_A * *row_B_values;
-      ++row_B_values;
+      value += factor1 * *input1_values_begin;
+      ++input1_values_begin;
     }
 
-    if (min_index == col_C)
+    if (min_index == index2)
     {
-      ++row_C_vector_input;
-      col_C = (row_C_vector_input < row_C_vector_input_end) ? *row_C_vector_input : B_size2;
+      ++input2_index_begin;
+      index2 = index2 = (input2_index_begin < input2_index_end) ? *input2_index_begin : termination_index;
 
-      value += *row_C_vector_input_values;
-      ++row_C_vector_input_values;
+      value += factor2 * *input2_values_begin;
+      ++input2_values_begin;
     }
 
     // write current entry:
     *output_ptr = min_index;
     ++output_ptr;
-    *output_ptr_values = value;
-    ++output_ptr_values;
+    *output_values_begin = value;
+    ++output_values_begin;
   }
 
-  return static_cast<unsigned int>(output_ptr - row_C_vector_output);
+  return static_cast<unsigned int>(output_ptr - output_index_begin);
 }
 
 template<typename NumericT>
@@ -405,8 +433,37 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
     return;
   }
 
-  // all other row lengths:
   unsigned int row_C_len = 0;
+  if (row_end_A - row_start_A == 2) // directly merge to C:
+  {
+    unsigned int A_col_1 = A_col_buffer[row_start_A];
+    unsigned int A_col_2 = A_col_buffer[row_start_A + 1];
+
+    unsigned int B_offset_1 = B_row_buffer[A_col_1];
+    unsigned int B_offset_2 = B_row_buffer[A_col_2];
+
+    row_C_scan_numeric_vector_1(B_col_buffer + B_offset_1, B_col_buffer + B_row_buffer[A_col_1+1], B_elements + B_offset_1, A_elements[row_start_A],
+                                B_col_buffer + B_offset_2, B_col_buffer + B_row_buffer[A_col_2+1], B_elements + B_offset_2, A_elements[row_start_A + 1],
+                                B_size2,
+                                C_col_buffer + row_start_C, C_elements + row_start_C);
+    return;
+  }
+  else // safely merge two rows into temporary buffer:
+  {
+    unsigned int A_col_1 = A_col_buffer[row_start_A];
+    unsigned int A_col_2 = A_col_buffer[row_start_A + 1];
+
+    unsigned int B_offset_1 = B_row_buffer[A_col_1];
+    unsigned int B_offset_2 = B_row_buffer[A_col_2];
+
+    row_C_len = row_C_scan_numeric_vector_1(B_col_buffer + B_offset_1, B_col_buffer + B_row_buffer[A_col_1+1], B_elements + B_offset_1, A_elements[row_start_A],
+                                            B_col_buffer + B_offset_2, B_col_buffer + B_row_buffer[A_col_2+1], B_elements + B_offset_2, A_elements[row_start_A + 1],
+                                            B_size2,
+                                            row_C_vector_1, row_C_vector_1_values);
+    row_start_A += 2;
+  }
+
+  // process remaining rows:
   while (row_end_A > row_start_A)
   {
     /*if (row_end_A - row_start_A > 3)
@@ -418,25 +475,31 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
       row_start_A += 3;
     }
     else */ // process single row:
+    if (row_start_A + 1 == row_end_A) // last row to merge, write directly to C:
     {
-      row_C_len = row_C_scan_numeric_vector_1(A_col_buffer[row_start_A], A_elements[row_start_A],
-                                              B_row_buffer, B_col_buffer, B_elements, B_size2,
-                                              row_C_vector_1, row_C_vector_1 + row_C_len, row_C_vector_1_values,
+      unsigned int A_col    = A_col_buffer[row_start_A];
+      unsigned int B_offset = B_row_buffer[A_col];
+
+      row_C_len = row_C_scan_numeric_vector_1(B_col_buffer + B_offset, B_col_buffer + B_row_buffer[A_col+1], B_elements + B_offset, A_elements[row_start_A],
+                                              row_C_vector_1, row_C_vector_1 + row_C_len, row_C_vector_1_values, NumericT(1.0),
+                                              B_size2,
+                                              C_col_buffer + row_start_C, C_elements + row_start_C);
+      return;
+    }
+    else
+    {
+      unsigned int A_col    = A_col_buffer[row_start_A];
+      unsigned int B_offset = B_row_buffer[A_col];
+
+      row_C_len = row_C_scan_numeric_vector_1(B_col_buffer + B_offset, B_col_buffer + B_row_buffer[A_col+1], B_elements + B_offset, A_elements[row_start_A],
+                                              row_C_vector_1, row_C_vector_1 + row_C_len, row_C_vector_1_values, NumericT(1.0),
+                                              B_size2,
                                               row_C_vector_2, row_C_vector_2_values);
       ++row_start_A;
     }
 
     std::swap(row_C_vector_1,        row_C_vector_2);
     std::swap(row_C_vector_1_values, row_C_vector_2_values);
-  }
-
-  // copy to output:
-  C_col_buffer += row_start_C;
-  C_elements += row_start_C;
-  for (unsigned int i=0; i<row_C_len; ++i, ++C_col_buffer, ++C_elements)
-  {
-    *C_col_buffer = row_C_vector_1[i];
-    *C_elements   = row_C_vector_1_values[i];
   }
 }
 
