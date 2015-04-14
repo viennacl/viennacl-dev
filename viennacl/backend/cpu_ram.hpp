@@ -71,7 +71,10 @@ inline handle_type  memory_create(vcl_size_t size_in_bytes, const void * host_pt
   // copy data:
   char * raw_ptr = new_handle.get();
   const char * data_ptr = static_cast<const char *>(host_ptr);
-  for (vcl_size_t i=0; i<size_in_bytes; ++i)
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for
+#endif
+  for (long i=0; i<long(size_in_bytes); ++i)
     raw_ptr[i] = data_ptr[i];
 
   return new_handle;
@@ -94,7 +97,10 @@ inline void memory_copy(handle_type const & src_buffer,
   assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
   assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
 
-  for (vcl_size_t i=0; i<bytes_to_copy; ++i)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long i=0; i<long(bytes_to_copy); ++i)
     dst_buffer.get()[i+dst_offset] = src_buffer.get()[i + src_offset];
 }
 
@@ -113,7 +119,10 @@ inline void memory_write(handle_type & dst_buffer,
 {
   assert( (dst_buffer.get() != NULL) && bool("Memory not initialized!"));
 
-  for (vcl_size_t i=0; i<bytes_to_copy; ++i)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long i=0; i<long(bytes_to_copy); ++i)
     dst_buffer.get()[i+dst_offset] = static_cast<const char *>(ptr)[i];
 }
 
@@ -132,7 +141,10 @@ inline void memory_read(handle_type const & src_buffer,
 {
   assert( (src_buffer.get() != NULL) && bool("Memory not initialized!"));
 
-  for (vcl_size_t i=0; i<bytes_to_copy; ++i)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long i=0; i<long(bytes_to_copy); ++i)
     static_cast<char *>(ptr)[i] = src_buffer.get()[i+src_offset];
 }
 
