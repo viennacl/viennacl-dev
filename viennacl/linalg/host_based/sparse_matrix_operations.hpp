@@ -479,12 +479,12 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   unsigned int block_factor = 10;
 #if defined(VIENNACL_WITH_OPENMP)
+  int dispatch_tasks = 0;
   unsigned int max_threads = omp_get_max_threads();
 #else
   unsigned int max_threads = 1;
 #endif
   std::vector<unsigned int> thread_block_offsets(max_threads);
-  int dispatch_tasks = 0;
   std::vector<unsigned int *> row_C_temp_index_buffers(max_threads);
   std::vector<NumericT *>     row_C_temp_value_buffers(max_threads);
 
@@ -642,8 +642,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #endif
   }
 
-  dispatch_tasks = 0;
 #ifdef VIENNACL_WITH_OPENMP
+  dispatch_tasks = 0;
   // exclusive scan to obtain row start indices:
   unsigned int current_offset = 0;
   for (std::size_t i=0; i<omp_get_max_threads(); ++i)
