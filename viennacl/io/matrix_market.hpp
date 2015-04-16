@@ -90,6 +90,8 @@ namespace detail
 
 /** @brief Reads a sparse or dense matrix from a file (MatrixMarket format)
 *
+* Note: If the matrix in the MatrixMarket file is complex, only the real-valued part is loaded!
+*
 * @param mat The matrix that is to be read
 * @param file Filename from which the matrix should be read
 * @param index_base The index base, typically 1
@@ -112,6 +114,7 @@ long read_matrix_market_file_impl(MatrixT & mat,
   bool dense_format = false;
   bool is_header = true;
   bool pattern_matrix = false;
+  bool is_complex = false;
   long cur_row = 0;
   long cur_col = 0;
   long valid_entries = 0;
@@ -174,6 +177,10 @@ long read_matrix_market_file_impl(MatrixT & mat,
         if (detail::tolower(token) == "pattern")
         {
           pattern_matrix = true;
+        }
+        else if (detail::tolower(token) == "complex")
+        {
+          is_complex = true;
         }
         else if (detail::tolower(token) != "real")
         {
