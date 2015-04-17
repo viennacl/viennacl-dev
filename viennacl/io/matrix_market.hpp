@@ -114,7 +114,7 @@ long read_matrix_market_file_impl(MatrixT & mat,
   bool dense_format = false;
   bool is_header = true;
   bool pattern_matrix = false;
-  bool is_complex = false;
+  //bool is_complex = false;
   long cur_row = 0;
   long cur_col = 0;
   long valid_entries = 0;
@@ -180,7 +180,7 @@ long read_matrix_market_file_impl(MatrixT & mat,
         }
         else if (detail::tolower(token) == "complex")
         {
-          is_complex = true;
+          //is_complex = true;
         }
         else if (detail::tolower(token) != "real")
         {
