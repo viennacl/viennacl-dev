@@ -621,7 +621,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     }
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp atomic write
+    #pragma omp critical
     dispatch_tasks = 1;
 
     #pragma omp taskwait       // process all tasks
@@ -724,7 +724,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     }
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp atomic write
+    #pragma omp critical
     dispatch_tasks = 1;
 
     #pragma omp taskwait       // process all tasks
