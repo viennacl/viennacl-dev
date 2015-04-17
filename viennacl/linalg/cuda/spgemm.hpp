@@ -30,6 +30,8 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/cuda/common.hpp"
 
+#include "viennacl/tools/timer.hpp"
+
 #include "viennacl/linalg/cuda/sparse_matrix_operations_solve.hpp"
 
 namespace viennacl
@@ -38,6 +40,18 @@ namespace linalg
 {
 namespace cuda
 {
+
+/** @brief Loads a value from the specified address. With CUDA arch 3.5 and above the value is also stored in global constant memory for later reuse */
+template<typename NumericT>
+static inline __device__ NumericT load_and_cache(const NumericT *address)
+{
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 350
+  return __ldg(address);
+#else
+  return *address;
+#endif
+}
+
 
 //
 // Stage 1: Obtain upper bound for number of elements per row in C:
@@ -132,7 +146,7 @@ __global__ void compressed_matrix_gemm_stage_1(
 //
 __device__ unsigned int merge_subwarp_symbolic(unsigned int row_B_start, unsigned int row_B_end, unsigned int const *B_col_indices, unsigned int B_size2, unsigned int subwarpsize)
 {
-  unsigned int current_front_index = (row_B_start < row_B_end) ? B_col_indices[row_B_start] : B_size2;
+  unsigned int current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
 
   unsigned int num_nnz = 0;
   while (1)
@@ -146,7 +160,7 @@ __device__ unsigned int merge_subwarp_symbolic(unsigned int row_B_start, unsigne
       break;
 
     // update front:
-    current_front_index = (current_front_index == min_index) ? ((++row_B_start < row_B_end) ? B_col_indices[row_B_start] : B_size2)
+    current_front_index = (current_front_index == min_index) ? ((++row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2)
                                                              : current_front_index;
     ++num_nnz;
   }
@@ -157,7 +171,7 @@ __device__ unsigned int merge_subwarp_symbolic(unsigned int row_B_start, unsigne
 __device__ unsigned int merge_subwarp_symbolic_double(unsigned int row_B_start, unsigned int row_B_end, unsigned int const *B_col_indices, unsigned int B_size2,
                                                       unsigned int *output_array, unsigned int id_in_warp, unsigned int subwarpsize)
 {
-  unsigned int current_front_index = (row_B_start < row_B_end) ? B_col_indices[row_B_start] : B_size2;
+  unsigned int current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
 
   unsigned int num_nnz = 0;
   unsigned int index_buffer = 0;
@@ -173,7 +187,7 @@ __device__ unsigned int merge_subwarp_symbolic_double(unsigned int row_B_start, 
       break;
 
     // update front:
-    current_front_index = (current_front_index == min_index) ? ((++row_B_start < row_B_end) ? B_col_indices[row_B_start] : B_size2)
+    current_front_index = (current_front_index == min_index) ? ((++row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2)
                                                              : current_front_index;
 
     // write output
@@ -242,8 +256,8 @@ __global__ void compressed_matrix_gemm_stage_2(
       {
         unsigned int my_row_B = row_A_start + id_in_warp;
         unsigned int row_B_index = (my_row_B < row_A_end) ? A_col_indices[my_row_B] : 0;
-        unsigned int row_B_start = (my_row_B < row_A_end) ? B_row_indices[row_B_index] : 0;
-        unsigned int row_B_end   = (my_row_B < row_A_end) ? B_row_indices[row_B_index + 1] : 0;
+        unsigned int row_B_start = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index) : 0;
+        unsigned int row_B_end   = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index + 1) : 0;
 
         unsigned int nnz_in_merge = merge_subwarp_symbolic_double(row_B_start, row_B_end, B_col_indices, B_size2,
                                                                   subwarp_scratchpad, id_in_warp, subwarpsize);
@@ -267,8 +281,8 @@ __global__ void compressed_matrix_gemm_stage_2(
       // single merge
       unsigned int my_row_B = row_A_start + id_in_warp;
       unsigned int row_B_index = (my_row_B < row_A_end) ? A_col_indices[my_row_B] : 0;
-      unsigned int row_B_start = (my_row_B < row_A_end) ? B_row_indices[row_B_index] : 0;
-      unsigned int row_B_end   = (my_row_B < row_A_end) ? B_row_indices[row_B_index + 1] : 0;
+      unsigned int row_B_start = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index) : 0;
+      unsigned int row_B_end   = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index + 1) : 0;
 
       unsigned int num_nnz = merge_subwarp_symbolic(row_B_start, row_B_end, B_col_indices, B_size2, subwarpsize);
 
@@ -289,8 +303,8 @@ __device__ unsigned int merge_subwarp_numeric(NumericT scaling_factor,
                                               unsigned int *output_indices, NumericT *output_values,
                                               unsigned int id_in_warp, unsigned int subwarpsize)
 {
-  unsigned int current_front_index = (input_start < input_end) ? input_indices[input_start] : invalid_token;
-  NumericT     current_front_value = (input_start < input_end) ? input_values[input_start]  : 0;
+  unsigned int current_front_index = (input_start < input_end) ? load_and_cache(input_indices + input_start) : invalid_token;
+  NumericT     current_front_value = (input_start < input_end) ? load_and_cache(input_values  + input_start) : 0;
 
   unsigned int index_buffer = 0;
   NumericT     value_buffer = 0;
@@ -315,8 +329,8 @@ __device__ unsigned int merge_subwarp_numeric(NumericT scaling_factor,
     if (current_front_index == min_index)
     {
       ++input_start;
-      current_front_index = (input_start < input_end) ? input_indices[input_start] : invalid_token;
-      current_front_value = (input_start < input_end) ? input_values[input_start]  : 0;
+      current_front_index = (input_start < input_end) ? load_and_cache(input_indices + input_start) : invalid_token;
+      current_front_value = (input_start < input_end) ? load_and_cache(input_values  + input_start) : 0;
     }
 
     // write current front to register buffer:
@@ -396,8 +410,8 @@ __global__ void compressed_matrix_gemm_stage_3(
       {
         unsigned int my_row_B = row_A_start + id_in_warp;
         unsigned int row_B_index = (my_row_B < row_A_end) ? A_col_indices[my_row_B] : 0;
-        unsigned int row_B_start = (my_row_B < row_A_end) ? B_row_indices[row_B_index] : 0;
-        unsigned int row_B_end   = (my_row_B < row_A_end) ? B_row_indices[row_B_index + 1] : 0;
+        unsigned int row_B_start = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index)     : 0;
+        unsigned int row_B_end   = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index + 1) : 0;
         NumericT val_A = (my_row_B < row_A_end) ? A_elements[my_row_B] : 0;
 
         unsigned int nnz_written = merge_subwarp_numeric(val_A,
@@ -428,8 +442,8 @@ __global__ void compressed_matrix_gemm_stage_3(
     {
       unsigned int my_row_B = row_A_start + id_in_warp;
       unsigned int row_B_index = (my_row_B < row_A_end) ? A_col_indices[my_row_B] : 0;
-      unsigned int row_B_start = (my_row_B < row_A_end) ? B_row_indices[row_B_index] : 0;
-      unsigned int row_B_end   = (my_row_B < row_A_end) ? B_row_indices[row_B_index + 1] : 0;
+      unsigned int row_B_start = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index)     : 0;
+      unsigned int row_B_end   = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index + 1) : 0;
       NumericT val_A = (my_row_B < row_A_end) ? A_elements[my_row_B] : 0;
 
       unsigned int index_in_C = C_row_indices[row];
@@ -463,22 +477,39 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 {
   C.resize(A.size1(), B.size2(), false);
 
-  viennacl::vector<unsigned int> subwarp_sizes(256, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
-  viennacl::vector<unsigned int> max_nnz_row_A(256, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
-  viennacl::vector<unsigned int> upper_bound_nonzeros_per_row_C(256, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
+  unsigned int blocknum = 256;
+  unsigned int threadnum = 256;
+
+  viennacl::vector<unsigned int> subwarp_sizes(blocknum, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
+  viennacl::vector<unsigned int> max_nnz_row_A(blocknum, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
+  viennacl::vector<unsigned int> upper_bound_nonzeros_per_row_C(blocknum, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
+
+#ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
+  viennacl::tools::timer timer;
+#endif
 
   //
   // Stage 1: Determine upper bound for number of nonzeros
   //
-  compressed_matrix_gemm_stage_1<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                               static_cast<unsigned int>(A.size1()),
-                                               detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(subwarp_sizes),
-                                               detail::cuda_arg<unsigned int>(max_nnz_row_A),
-                                               detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C)
-                                              );
+#ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
+  cudaDeviceSynchronize();
+  timer.start();
+#endif
+
+  compressed_matrix_gemm_stage_1<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                          detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                          static_cast<unsigned int>(A.size1()),
+                                                          detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
+                                                          detail::cuda_arg<unsigned int>(subwarp_sizes),
+                                                          detail::cuda_arg<unsigned int>(max_nnz_row_A),
+                                                          detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C)
+                                                         );
   VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_1");
+#ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
+  cudaDeviceSynchronize();
+  std::cout << "Stage 1 device: " << timer.get() << std::endl;
+  timer.start();
+#endif
 
   upper_bound_nonzeros_per_row_C.switch_memory_context(viennacl::context(MAIN_MEMORY));
   unsigned int * upper_bound_nonzeros_per_row_C_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(upper_bound_nonzeros_per_row_C.handle());
@@ -497,7 +528,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   //std::cout << "Subwarp sizes: " << subwarp_sizes << std::endl;
 
-  viennacl::vector<unsigned int> scratchpad_offsets(256, viennacl::context(MAIN_MEMORY)); // upper bound for the nonzeros per row encountered for each work group
+  viennacl::vector<unsigned int> scratchpad_offsets(blocknum, viennacl::context(MAIN_MEMORY)); // upper bound for the nonzeros per row encountered for each work group
   unsigned int * scratchpad_offsets_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(scratchpad_offsets.handle());
 
   unsigned int max_subwarp_size = 0;
@@ -513,7 +544,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     //                                            << (256 / subwarp_sizes_ptr[i]) << " warps per group " << std::endl;
     scratchpad_offset += (max_nnz_row_A_ptr[i] / subwarp_sizes_ptr[i] + 1) // maximum number of warp reloads in group
                         * upper_bound_nonzeros_per_row_C_ptr[i]            // row length
-                        * (256 / subwarp_sizes_ptr[i]);                    // number of warps in group
+                        * (threadnum / subwarp_sizes_ptr[i]);              // number of warps in group
   }
   //std::cout << "Scratchpad memory for indices: " << scratchpad_offset << " entries (" << scratchpad_offset * sizeof(unsigned int) * 1e-6 << " MB)" << std::endl;
 
@@ -527,24 +558,35 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   viennacl::vector<unsigned int> scratchpad_indices(scratchpad_offset, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
 
+#ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
+  std::cout << "Intermediate host stage: " << timer.get() << std::endl;
+  timer.start();
+#endif
+
   //
   // Stage 2: Determine pattern of C
   //
 
-  compressed_matrix_gemm_stage_2<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                               static_cast<unsigned int>(A.size1()),
-                                               detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
-                                               static_cast<unsigned int>(B.size2()),
-                                               detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C),
-                                               detail::cuda_arg<unsigned int>(subwarp_sizes),
-                                               detail::cuda_arg<unsigned int>(max_nnz_row_A),
-                                               detail::cuda_arg<unsigned int>(scratchpad_offsets),
-                                               detail::cuda_arg<unsigned int>(scratchpad_indices)
-                                              );
+  compressed_matrix_gemm_stage_2<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                         static_cast<unsigned int>(A.size1()),
+                                                         detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
+                                                         static_cast<unsigned int>(B.size2()),
+                                                         detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C),
+                                                         detail::cuda_arg<unsigned int>(subwarp_sizes),
+                                                         detail::cuda_arg<unsigned int>(max_nnz_row_A),
+                                                         detail::cuda_arg<unsigned int>(scratchpad_offsets),
+                                                         detail::cuda_arg<unsigned int>(scratchpad_indices)
+                                                        );
   VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_2");
+#ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
+  cudaDeviceSynchronize();
+  std::cout << "Stage 2: " << timer.get() << std::endl;
+  timer.start();
+#endif
+
 
   // exclusive scan on C.handle1(), ultimately allowing to allocate remaining memory for C
   viennacl::backend::typesafe_host_array<unsigned int> row_buffer(C.handle1(), C.size1() + 1);
@@ -566,25 +608,35 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   viennacl::vector<NumericT> scratchpad_values(scratchpad_offset, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
 
-  compressed_matrix_gemm_stage_3<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                               detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
-                                               static_cast<unsigned int>(A.size1()),
-                                               detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
-                                               detail::cuda_arg<NumericT>(B.handle().cuda_handle()),
-                                               static_cast<unsigned int>(B.size2()),
-                                               detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(C.handle2().cuda_handle()),
-                                               detail::cuda_arg<NumericT>(C.handle().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C),
-                                               detail::cuda_arg<unsigned int>(subwarp_sizes),
-                                               detail::cuda_arg<unsigned int>(max_nnz_row_A),
-                                               detail::cuda_arg<unsigned int>(scratchpad_offsets),
-                                               detail::cuda_arg<unsigned int>(scratchpad_indices),
-                                               detail::cuda_arg<NumericT>(scratchpad_values)
-                                              );
+#ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
+  std::cout << "Intermediate stage 2->3: " << timer.get() << std::endl;
+  timer.start();
+#endif
+
+  compressed_matrix_gemm_stage_3<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                          detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                          detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                                          static_cast<unsigned int>(A.size1()),
+                                                          detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
+                                                          detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
+                                                          detail::cuda_arg<NumericT>(B.handle().cuda_handle()),
+                                                          static_cast<unsigned int>(B.size2()),
+                                                          detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
+                                                          detail::cuda_arg<unsigned int>(C.handle2().cuda_handle()),
+                                                          detail::cuda_arg<NumericT>(C.handle().cuda_handle()),
+                                                          detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C),
+                                                          detail::cuda_arg<unsigned int>(subwarp_sizes),
+                                                          detail::cuda_arg<unsigned int>(max_nnz_row_A),
+                                                          detail::cuda_arg<unsigned int>(scratchpad_offsets),
+                                                          detail::cuda_arg<unsigned int>(scratchpad_indices),
+                                                          detail::cuda_arg<NumericT>(scratchpad_values)
+                                                         );
   VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_3");
+#ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
+  cudaDeviceSynchronize();
+  std::cout << "Stage 3: " << timer.get() << std::endl;
+  std::cout << "----------" << std::endl;
+#endif
 
 }
 
