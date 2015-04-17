@@ -83,18 +83,17 @@ __global__ void compressed_matrix_gemm_stage_1(
           const IndexT * B_row_indices,
           IndexT *subwarpsize_per_group,
           IndexT *max_nnz_row_A_per_group,
-          IndexT *upper_bound_per_group)
+          IndexT *max_nnz_row_B_per_group)
 {
   unsigned int subwarpsize_in_thread = 0;
   unsigned int max_nnz_row_A = 0;
+  unsigned int max_nnz_row_B = 0;
 
   unsigned int rows_per_group = (A_size1 - 1) / gridDim.x + 1;
   unsigned int row_per_group_end = min(A_size1, rows_per_group * (blockIdx.x + 1));
 
-  unsigned current_upper_bound = 0;
   for (unsigned int row = rows_per_group * blockIdx.x + threadIdx.x; row < row_per_group_end; row += blockDim.x)
   {
-    unsigned int upper_bound_for_row = 0;
     unsigned int A_row_start = A_row_indices[row];
     unsigned int A_row_end   = A_row_indices[row+1];
     unsigned int row_num = A_row_end - A_row_start;
@@ -109,19 +108,19 @@ __global__ void compressed_matrix_gemm_stage_1(
     for (unsigned int j = A_row_start; j < A_row_end; ++j)
     {
       unsigned int col = A_col_indices[j];
-      upper_bound_for_row += B_row_indices[col + 1] - B_row_indices[col];
+      unsigned int row_len_B = B_row_indices[col + 1] - B_row_indices[col];
+      max_nnz_row_B = max(row_len_B, max_nnz_row_B);
     }
-    current_upper_bound = max(upper_bound_for_row, current_upper_bound);
   }
 
   // reduction to obtain maximum in thread block
   __shared__ unsigned int shared_subwarpsize[256];
   __shared__ unsigned int shared_max_nnz_row_A[256];
-  __shared__ unsigned int shared_upper_bounds[256];
+  __shared__ unsigned int shared_max_nnz_row_B[256];
 
     shared_subwarpsize[threadIdx.x] = subwarpsize_in_thread;
   shared_max_nnz_row_A[threadIdx.x] = max_nnz_row_A;
-   shared_upper_bounds[threadIdx.x] = current_upper_bound;
+  shared_max_nnz_row_B[threadIdx.x] = max_nnz_row_B;
   for (unsigned int stride = blockDim.x/2; stride > 0; stride /= 2)
   {
     __syncthreads();
@@ -129,7 +128,7 @@ __global__ void compressed_matrix_gemm_stage_1(
     {
         shared_subwarpsize[threadIdx.x] = max(  shared_subwarpsize[threadIdx.x],   shared_subwarpsize[threadIdx.x + stride]);
       shared_max_nnz_row_A[threadIdx.x] = max(shared_max_nnz_row_A[threadIdx.x], shared_max_nnz_row_A[threadIdx.x + stride]);
-       shared_upper_bounds[threadIdx.x] = max( shared_upper_bounds[threadIdx.x],  shared_upper_bounds[threadIdx.x + stride]);
+      shared_max_nnz_row_B[threadIdx.x] = max(shared_max_nnz_row_B[threadIdx.x], shared_max_nnz_row_B[threadIdx.x + stride]);
     }
   }
 
@@ -137,7 +136,7 @@ __global__ void compressed_matrix_gemm_stage_1(
   {
       subwarpsize_per_group[blockIdx.x] = round_to_next_power_of_2(shared_subwarpsize[0]);
     max_nnz_row_A_per_group[blockIdx.x] = shared_max_nnz_row_A[0];
-      upper_bound_per_group[blockIdx.x] = shared_upper_bounds[0];
+    max_nnz_row_B_per_group[blockIdx.x] = shared_max_nnz_row_B[0];
   }
 }
 
@@ -220,9 +219,9 @@ __global__ void compressed_matrix_gemm_stage_2(
           const IndexT * B_col_indices,
           IndexT B_size2,
           IndexT * C_row_indices,
-          unsigned int *upper_bound_row_C_len,
           unsigned int *subwarpsize_array,
-          unsigned int *max_row_size,
+          unsigned int *max_row_size_A,
+          unsigned int *max_row_size_B,
           unsigned int *scratchpad_offsets,
           unsigned int *scratchpad_indices)
 {
@@ -232,8 +231,8 @@ __global__ void compressed_matrix_gemm_stage_2(
   unsigned int warp_id    = threadIdx.x / subwarpsize;
   unsigned int id_in_warp = threadIdx.x % subwarpsize;
 
-  unsigned int scratchpad_rowlength = upper_bound_row_C_len[blockIdx.x];
-  unsigned int scratchpad_rows_per_warp = max_row_size[blockIdx.x] / subwarpsize + 1;
+  unsigned int scratchpad_rowlength     = max_row_size_B[blockIdx.x] * subwarpsize;
+  unsigned int scratchpad_rows_per_warp = max_row_size_A[blockIdx.x] / subwarpsize + 1;
   unsigned int *subwarp_scratchpad_start = scratchpad_indices + scratchpad_offsets[blockIdx.x] + warp_id * scratchpad_rows_per_warp * scratchpad_rowlength;
 
   unsigned int rows_per_group = (A_size1 - 1) / gridDim.x + 1;
@@ -372,9 +371,9 @@ __global__ void compressed_matrix_gemm_stage_3(
           IndexT const * C_row_indices,
           IndexT * C_col_indices,
           NumericT * C_elements,
-          unsigned int *upper_bound_row_C_len,
           unsigned int *subwarpsize_array,
-          unsigned int *max_row_size,
+          unsigned int *max_row_size_A,
+          unsigned int *max_row_size_B,
           unsigned int *scratchpad_offsets,
           unsigned int *scratchpad_indices,
           NumericT *scratchpad_values)
@@ -385,8 +384,8 @@ __global__ void compressed_matrix_gemm_stage_3(
   unsigned int warp_id    = threadIdx.x / subwarpsize;
   unsigned int id_in_warp = threadIdx.x % subwarpsize;
 
-  unsigned int scratchpad_rowlength = upper_bound_row_C_len[blockIdx.x];
-  unsigned int scratchpad_rows_per_warp = max_row_size[blockIdx.x] / subwarpsize + 1;
+  unsigned int scratchpad_rowlength     = max_row_size_B[blockIdx.x] * subwarpsize;
+  unsigned int scratchpad_rows_per_warp = max_row_size_A[blockIdx.x] / subwarpsize + 1;
   unsigned int subwarp_scratchpad_shift = scratchpad_offsets[blockIdx.x] + warp_id * scratchpad_rows_per_warp * scratchpad_rowlength;
 
   unsigned int rows_per_group = (A_size1 - 1) / gridDim.x + 1;
@@ -478,11 +477,11 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   C.resize(A.size1(), B.size2(), false);
 
   unsigned int blocknum = 256;
-  unsigned int threadnum = 256;
+  unsigned int threadnum = 128;
 
   viennacl::vector<unsigned int> subwarp_sizes(blocknum, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
   viennacl::vector<unsigned int> max_nnz_row_A(blocknum, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
-  viennacl::vector<unsigned int> upper_bound_nonzeros_per_row_C(blocknum, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
+  viennacl::vector<unsigned int> max_nnz_row_B(blocknum, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
 
 #ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
   viennacl::tools::timer timer;
@@ -502,7 +501,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                                                           detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
                                                           detail::cuda_arg<unsigned int>(subwarp_sizes),
                                                           detail::cuda_arg<unsigned int>(max_nnz_row_A),
-                                                          detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C)
+                                                          detail::cuda_arg<unsigned int>(max_nnz_row_B)
                                                          );
   VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_1");
 #ifdef VIENNACL_WITH_SPGEMM_CUDA_TIMINGS
@@ -511,20 +510,14 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   timer.start();
 #endif
 
-  upper_bound_nonzeros_per_row_C.switch_memory_context(viennacl::context(MAIN_MEMORY));
-  unsigned int * upper_bound_nonzeros_per_row_C_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(upper_bound_nonzeros_per_row_C.handle());
-
-  unsigned int max_nnz_per_row_C = 0;
-  for (std::size_t i=0; i<upper_bound_nonzeros_per_row_C.size(); ++i)
-    max_nnz_per_row_C = (max_nnz_per_row_C < upper_bound_nonzeros_per_row_C_ptr[i]) ? upper_bound_nonzeros_per_row_C_ptr[i] : max_nnz_per_row_C;
-  max_nnz_per_row_C = std::max(max_nnz_per_row_C, static_cast<unsigned int>(B.size2()));
-
-
   subwarp_sizes.switch_memory_context(viennacl::context(MAIN_MEMORY));
   unsigned int * subwarp_sizes_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(subwarp_sizes.handle());
 
   max_nnz_row_A.switch_memory_context(viennacl::context(MAIN_MEMORY));
   unsigned int const * max_nnz_row_A_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(max_nnz_row_A.handle());
+
+  max_nnz_row_B.switch_memory_context(viennacl::context(MAIN_MEMORY));
+  unsigned int const * max_nnz_row_B_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(max_nnz_row_B.handle());
 
   //std::cout << "Subwarp sizes: " << subwarp_sizes << std::endl;
 
@@ -542,18 +535,21 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     //std::cout << scratchpad_offset << " (with " << (max_nnz_row_A_ptr[i] / subwarp_sizes_ptr[i] + 1) << " warp reloads per group at " << max_nnz_row_A_ptr[i] << " max rows, "
     //                                            << upper_bound_nonzeros_per_row_C_ptr[i] << " row length, "
     //                                            << (256 / subwarp_sizes_ptr[i]) << " warps per group " << std::endl;
-    scratchpad_offset += (max_nnz_row_A_ptr[i] / subwarp_sizes_ptr[i] + 1) // maximum number of warp reloads in group
-                        * upper_bound_nonzeros_per_row_C_ptr[i]            // row length
-                        * (threadnum / subwarp_sizes_ptr[i]);              // number of warps in group
+    unsigned int max_warp_reloads = max_nnz_row_A_ptr[i] / subwarp_sizes_ptr[i] + 1;
+    unsigned int max_row_length_after_warp_merge = subwarp_sizes_ptr[i] * max_nnz_row_B_ptr[i];
+    unsigned int warps_in_group = threadnum / subwarp_sizes_ptr[i];
+    scratchpad_offset +=  max_warp_reloads
+                        * max_row_length_after_warp_merge
+                        * warps_in_group;
   }
   //std::cout << "Scratchpad memory for indices: " << scratchpad_offset << " entries (" << scratchpad_offset * sizeof(unsigned int) * 1e-6 << " MB)" << std::endl;
 
   if (max_subwarp_size > 32)
     throw std::runtime_error("Subwarp size too large!");
 
-  upper_bound_nonzeros_per_row_C.switch_memory_context(viennacl::traits::context(A));
   subwarp_sizes.switch_memory_context(viennacl::traits::context(A));
   max_nnz_row_A.switch_memory_context(viennacl::traits::context(A));
+  max_nnz_row_B.switch_memory_context(viennacl::traits::context(A));
   scratchpad_offsets.switch_memory_context(viennacl::traits::context(A));
 
   viennacl::vector<unsigned int> scratchpad_indices(scratchpad_offset, viennacl::traits::context(A)); // upper bound for the nonzeros per row encountered for each work group
@@ -574,9 +570,9 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                                                          detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
                                                          static_cast<unsigned int>(B.size2()),
                                                          detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
-                                                         detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C),
                                                          detail::cuda_arg<unsigned int>(subwarp_sizes),
                                                          detail::cuda_arg<unsigned int>(max_nnz_row_A),
+                                                         detail::cuda_arg<unsigned int>(max_nnz_row_B),
                                                          detail::cuda_arg<unsigned int>(scratchpad_offsets),
                                                          detail::cuda_arg<unsigned int>(scratchpad_indices)
                                                         );
@@ -601,6 +597,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   row_buffer.set(C.size1(), current_offset);
   viennacl::backend::memory_write(C.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
 
+
   //
   // Stage 3: Compute entries in C
   //
@@ -624,9 +621,9 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                                                           detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
                                                           detail::cuda_arg<unsigned int>(C.handle2().cuda_handle()),
                                                           detail::cuda_arg<NumericT>(C.handle().cuda_handle()),
-                                                          detail::cuda_arg<unsigned int>(upper_bound_nonzeros_per_row_C),
                                                           detail::cuda_arg<unsigned int>(subwarp_sizes),
                                                           detail::cuda_arg<unsigned int>(max_nnz_row_A),
+                                                          detail::cuda_arg<unsigned int>(max_nnz_row_B),
                                                           detail::cuda_arg<unsigned int>(scratchpad_offsets),
                                                           detail::cuda_arg<unsigned int>(scratchpad_indices),
                                                           detail::cuda_arg<NumericT>(scratchpad_values)
