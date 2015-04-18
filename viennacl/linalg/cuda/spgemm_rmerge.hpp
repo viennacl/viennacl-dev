@@ -162,33 +162,39 @@ __global__ void compressed_matrix_gemm_stage_2(
     unsigned int row_A_start = A_row_indices[row];
     unsigned int row_A_end   = A_row_indices[row+1];
 
-    // single merge
     unsigned int my_row_B = row_A_start + id_in_warp;
     unsigned int row_B_index = (my_row_B < row_A_end) ? A_col_indices[my_row_B] : 0;
     unsigned int row_B_start = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index) : 0;
     unsigned int row_B_end   = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index + 1) : 0;
 
-    unsigned int current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
-
     unsigned int num_nnz = 0;
-    while (1)
+    if (row_A_end - row_A_start > 1) // zero or no row can be processed faster
     {
-      // determine current minimum (warp shuffle)
-      unsigned int min_index = current_front_index;
-      for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-        min_index = min(min_index, __shfl_xor(min_index, i));
+      unsigned int current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
 
-      if (min_index == B_size2)
-        break;
-
-      // update front:
-      if (current_front_index == min_index)
+      while (1)
       {
-        ++row_B_start;
-        current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
-      }
+        // determine current minimum (warp shuffle)
+        unsigned int min_index = current_front_index;
+        for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
+          min_index = min(min_index, __shfl_xor(min_index, i));
 
-      ++num_nnz;
+        if (min_index == B_size2)
+          break;
+
+        // update front:
+        if (current_front_index == min_index)
+        {
+          ++row_B_start;
+          current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
+        }
+
+        ++num_nnz;
+      }
+    }
+    else
+    {
+      num_nnz = row_B_end - row_B_start;
     }
 
     if (id_in_warp == 0)
@@ -229,7 +235,7 @@ __global__ void compressed_matrix_gemm_stage_3(
     unsigned int row_A_start = A_row_indices[row];
     unsigned int row_A_end   = A_row_indices[row+1];
 
-    unsigned int my_row_B = row_A_start + id_in_warp;
+    unsigned int my_row_B = row_A_start + ((row_A_end - row_A_start > 1) ? id_in_warp : 0); // special case: single row
     unsigned int row_B_index = (my_row_B < row_A_end) ? A_col_indices[my_row_B] : 0;
     unsigned int row_B_start = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index)     : 0;
     unsigned int row_B_end   = (my_row_B < row_A_end) ? load_and_cache(B_row_indices + row_B_index + 1) : 0;
@@ -237,55 +243,67 @@ __global__ void compressed_matrix_gemm_stage_3(
 
     unsigned int index_in_C = C_row_indices[row];
 
-    unsigned int current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
-    NumericT     current_front_value = (row_B_start < row_B_end) ? load_and_cache(B_elements    + row_B_start) : 0;
-
-    unsigned int index_buffer = 0;
-    NumericT     value_buffer = 0;
-    unsigned int buffer_size = 0;
-    while (1)
+    if (row_A_end - row_A_start > 1)
     {
-      // determine current minimum:
-      unsigned int min_index = current_front_index;
-      for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-        min_index = min(min_index, __shfl_xor(min_index, i));
+      unsigned int current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
+      NumericT     current_front_value = (row_B_start < row_B_end) ? load_and_cache(B_elements    + row_B_start) : 0;
 
-      if (min_index == B_size2) // done
-        break;
-
-      // compute entry in C:
-      NumericT output_value = (current_front_index == min_index) ? val_A * current_front_value : 0;
-      for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-        output_value += __shfl_xor(output_value, i);
-
-      // update front:
-      if (current_front_index == min_index)
+      unsigned int index_buffer = 0;
+      NumericT     value_buffer = 0;
+      unsigned int buffer_size = 0;
+      while (1)
       {
-        ++row_B_start;
-        current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
-        current_front_value = (row_B_start < row_B_end) ? load_and_cache(B_elements    + row_B_start) : 0;
+        // determine current minimum:
+        unsigned int min_index = current_front_index;
+        for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
+          min_index = min(min_index, __shfl_xor(min_index, i));
+
+        if (min_index == B_size2) // done
+          break;
+
+        // compute entry in C:
+        NumericT output_value = (current_front_index == min_index) ? val_A * current_front_value : 0;
+        for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
+          output_value += __shfl_xor(output_value, i);
+
+        // update front:
+        if (current_front_index == min_index)
+        {
+          ++row_B_start;
+          current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
+          current_front_value = (row_B_start < row_B_end) ? load_and_cache(B_elements    + row_B_start) : 0;
+        }
+
+        // write current front to register buffer:
+        index_buffer = (id_in_warp == buffer_size) ? min_index    : index_buffer;
+        value_buffer = (id_in_warp == buffer_size) ? output_value : value_buffer;
+        ++buffer_size;
+
+        // flush register buffer via a coalesced write once full:
+        if (buffer_size == SubWarpSizeV)
+        {
+          C_col_indices[index_in_C + id_in_warp] = index_buffer;
+          C_elements[index_in_C + id_in_warp]    = value_buffer;
+          buffer_size = 0;
+          index_in_C += SubWarpSizeV;
+        }
       }
 
-      // write current front to register buffer:
-      index_buffer = (id_in_warp == buffer_size) ? min_index    : index_buffer;
-      value_buffer = (id_in_warp == buffer_size) ? output_value : value_buffer;
-      ++buffer_size;
-
-      // flush register buffer via a coalesced write once full:
-      if (buffer_size == SubWarpSizeV)
+      // write remaining entries in register buffer to C:
+      if (id_in_warp < buffer_size)
       {
         C_col_indices[index_in_C + id_in_warp] = index_buffer;
-        C_elements[index_in_C + id_in_warp]    = value_buffer;
-        buffer_size = 0;
-        index_in_C += SubWarpSizeV;
+        C_elements[index_in_C + id_in_warp]  = value_buffer;
       }
     }
-
-    // write remaining entries in register buffer to C:
-    if (id_in_warp < buffer_size)
+    else // write respective row using the full subwarp:
     {
-      C_col_indices[index_in_C + id_in_warp] = index_buffer;
-      C_elements[index_in_C + id_in_warp]  = value_buffer;
+      for (unsigned int i = row_B_start + id_in_warp; i < row_B_end; i += SubWarpSizeV)
+      {
+        C_col_indices[index_in_C + id_in_warp] = load_and_cache(B_col_indices + i);
+        C_elements[index_in_C + id_in_warp]    = val_A * load_and_cache(B_elements    + i);
+        index_in_C += SubWarpSizeV;
+      }
     }
 
   }
