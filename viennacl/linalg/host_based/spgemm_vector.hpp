@@ -265,6 +265,21 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
                                                                         B_size2,
                                                                         row_C_vector_2);
     }
+    else if (row_start_A + 2 < row_end_A)// at least three more rows left, so merge two
+    {
+      // process single row:
+      unsigned int A_col_1 = A_col_buffer[row_start_A];
+      unsigned int A_col_2 = A_col_buffer[row_start_A + 1];
+      unsigned int merged_len =  row_C_scan_symbolic_vector_1<spgemm_output_write_enabled>(B_col_buffer + B_row_buffer[A_col_1], B_col_buffer + B_row_buffer[A_col_1 + 1],
+                                                                                           B_col_buffer + B_row_buffer[A_col_2], B_col_buffer + B_row_buffer[A_col_2 + 1],
+                                                                                           B_size2,
+                                                                                           row_C_vector_3);
+      row_C_len = row_C_scan_symbolic_vector_1<spgemm_output_write_enabled>(row_C_vector_3, row_C_vector_3 + merged_len,
+                                                                            row_C_vector_1, row_C_vector_1 + row_C_len,
+                                                                            B_size2,
+                                                                            row_C_vector_2);
+      row_start_A += 2;
+    }
     else // at least two more rows left
     {
       // process single row:
@@ -486,6 +501,25 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
                                               B_size2,
                                               C_col_buffer + row_start_C, C_elements + row_start_C);
       return;
+    }
+    else if (row_start_A + 2 < row_end_A)// at least three more rows left, so merge two
+    {
+      // process single row:
+      unsigned int A_col_1 = A_col_buffer[row_start_A];
+      unsigned int A_col_2 = A_col_buffer[row_start_A + 1];
+
+      unsigned int B_offset_1 = B_row_buffer[A_col_1];
+      unsigned int B_offset_2 = B_row_buffer[A_col_2];
+
+      unsigned int merged_len = row_C_scan_numeric_vector_1(B_col_buffer + B_offset_1, B_col_buffer + B_row_buffer[A_col_1+1], B_elements + B_offset_1, A_elements[row_start_A],
+                                                            B_col_buffer + B_offset_2, B_col_buffer + B_row_buffer[A_col_2+1], B_elements + B_offset_2, A_elements[row_start_A + 1],
+                                                            B_size2,
+                                                            row_C_vector_3, row_C_vector_3_values);
+      row_C_len = row_C_scan_numeric_vector_1(row_C_vector_3, row_C_vector_3 + merged_len, row_C_vector_3_values, NumericT(1.0),
+                                              row_C_vector_1, row_C_vector_1 + row_C_len,  row_C_vector_1_values, NumericT(1.0),
+                                              B_size2,
+                                              row_C_vector_2, row_C_vector_2_values);
+      row_start_A += 2;
     }
     else
     {
