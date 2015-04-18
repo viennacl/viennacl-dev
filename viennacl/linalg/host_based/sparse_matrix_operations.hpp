@@ -319,7 +319,7 @@ unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
                                  unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
                                  ListT & row_C_list,
                                  HashT & row_C_hash,
-                                 unsigned int *row_C_vector_1, unsigned int *row_C_vector_2)
+                                 unsigned int *row_C_vector_1, unsigned int *row_C_vector_2, unsigned int *row_C_vector_3)
 {
   (void)row_C_list;
   (void)row_C_hash;
@@ -338,7 +338,7 @@ unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
 
   return row_C_scan_symbolic_vector(row_start_A, row_end_A, A_col_buffer,
                                     B_row_buffer, B_col_buffer, B_size2,
-                                    row_C_vector_1, row_C_vector_2);
+                                    row_C_vector_1, row_C_vector_2, row_C_vector_3);
 }
 
 template<typename ListT, typename HashT>
@@ -348,7 +348,7 @@ void row_C_scan_symbolic_range(unsigned int A_row_begin, unsigned int A_row_end,
                                unsigned int *C_row_buffer,
                                ListT & row_C_list,
                                HashT & row_C_hash,
-                               unsigned int **index_buffers)
+                               unsigned int **index_buffers, unsigned int buffer_len)
 {
   unsigned int thread_id = 0;
 #ifdef VIENNACL_WITH_OPENMP
@@ -356,7 +356,8 @@ void row_C_scan_symbolic_range(unsigned int A_row_begin, unsigned int A_row_end,
 #endif
 
   unsigned int *row_C_vector_1 = index_buffers[thread_id];
-  unsigned int *row_C_vector_2 = row_C_vector_1 + B_size2;
+  unsigned int *row_C_vector_2 = row_C_vector_1 + buffer_len;
+  unsigned int *row_C_vector_3 = row_C_vector_2 + buffer_len;
 
   for (unsigned int i = A_row_begin; i < A_row_end; ++i)
   {
@@ -364,18 +365,18 @@ void row_C_scan_symbolic_range(unsigned int A_row_begin, unsigned int A_row_end,
     unsigned int row_end_A   = A_row_buffer[i+1];
 
     unsigned int max_entries_C = 0;
-    for (unsigned int j=row_start_A; j<row_end_A; ++j)
+    /*for (unsigned int j=row_start_A; j<row_end_A; ++j)
     {
       unsigned int row_index_B = A_col_buffer[j];
       max_entries_C += B_row_buffer[row_index_B+1] - B_row_buffer[row_index_B];
-    }
+    }*/
 
     C_row_buffer[i] = row_C_scan_symbolic(max_entries_C,
                                           row_start_A, row_end_A, A_col_buffer,
                                           B_row_buffer, B_col_buffer, B_size2,
                                           row_C_list,
                                           row_C_hash,
-                                          row_C_vector_1, row_C_vector_2);
+                                          row_C_vector_1, row_C_vector_2, row_C_vector_3);
   }
 }
 
@@ -389,7 +390,8 @@ void row_C_scan_numeric(unsigned int row_start_A, unsigned int row_end_A, unsign
                         ListT & row_C_list,
                         HashT & row_C_hash,
                         unsigned int *row_C_vector_1, NumericT *row_C_vector_1_values,
-                        unsigned int *row_C_vector_2, NumericT *row_C_vector_2_values)
+                        unsigned int *row_C_vector_2, NumericT *row_C_vector_2_values,
+                        unsigned int *row_C_vector_3, NumericT *row_C_vector_3_values)
 {
   (void)row_C_list;
   (void)row_C_hash;
@@ -410,7 +412,8 @@ void row_C_scan_numeric(unsigned int row_start_A, unsigned int row_end_A, unsign
                             B_row_buffer, B_col_buffer, B_elements, B_size2,
                             row_start_C, row_end_C, C_col_buffer, C_elements,
                             row_C_vector_1, row_C_vector_1_values,
-                            row_C_vector_2, row_C_vector_2_values);
+                            row_C_vector_2, row_C_vector_2_values,
+                            row_C_vector_3, row_C_vector_3_values);
 }
 
 template<typename NumericT, typename ListT, typename HashT>
@@ -420,7 +423,7 @@ void row_C_scan_numeric_range(unsigned int A_row_begin, unsigned int A_row_end,
                               unsigned int const *C_row_buffer, unsigned int       *C_col_buffer, NumericT       *C_elements,
                               ListT & row_C_list,
                               HashT & row_C_hash,
-                              unsigned int **index_buffers, NumericT **value_buffers)
+                              unsigned int **index_buffers, NumericT **value_buffers, unsigned int buffer_len)
 {
   unsigned int thread_id = 0;
 #ifdef VIENNACL_WITH_OPENMP
@@ -428,10 +431,12 @@ void row_C_scan_numeric_range(unsigned int A_row_begin, unsigned int A_row_end,
 #endif
 
   unsigned int *row_C_vector_1 = index_buffers[thread_id];
-  unsigned int *row_C_vector_2 = row_C_vector_1 + B_size2;
+  unsigned int *row_C_vector_2 = row_C_vector_1 + buffer_len;
+  unsigned int *row_C_vector_3 = row_C_vector_2 + buffer_len;
 
   NumericT *row_C_vector_1_values = value_buffers[thread_id];
-  NumericT *row_C_vector_2_values = row_C_vector_1_values + B_size2;
+  NumericT *row_C_vector_2_values = row_C_vector_1_values + buffer_len;
+  NumericT *row_C_vector_3_values = row_C_vector_2_values + buffer_len;
 
   for (unsigned int i = A_row_begin; i < A_row_end; ++i)
   {
@@ -447,7 +452,8 @@ void row_C_scan_numeric_range(unsigned int A_row_begin, unsigned int A_row_end,
                        row_C_list,
                        row_C_hash,
                        row_C_vector_1, row_C_vector_1_values,
-                       row_C_vector_2, row_C_vector_2_values);
+                       row_C_vector_2, row_C_vector_2_values,
+                       row_C_vector_3, row_C_vector_3_values);
   }
 }
 
@@ -484,6 +490,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #else
   unsigned int max_threads = 1;
 #endif
+  std::vector<unsigned int> max_length_row_C(max_threads); max_length_row_C[0] = static_cast<unsigned int>(B.size2());
   std::vector<unsigned int> thread_block_offsets(max_threads);
   std::vector<unsigned int *> row_C_temp_index_buffers(max_threads);
   std::vector<NumericT *>     row_C_temp_value_buffers(max_threads);
@@ -510,28 +517,37 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
     double work_max = 0;
     double work_agg = 0;
+    unsigned int row_C_upper_bound = 0;
     for (std::size_t i=thread_start; i<thread_stop; ++i)
     {
       unsigned int row_start_A = A_row_buffer[i];
       unsigned int row_end_A   = A_row_buffer[i+1];
 
       double est_work = 0;
+      unsigned int row_C_upper_bound_row = 0;
       for (unsigned int j = row_start_A; j<row_end_A; ++j)
       {
         unsigned int row_B = A_col_buffer[j];
 
-        double entries_in_row = double(B_row_buffer[row_B+1] - B_row_buffer[row_B]);
-        est_work += 0.5 * entries_in_row + std::min(std::max(0.5 * entries_in_row, est_work), double(A.size1())); //assuming half of the entries are new (only in first row all entries are new)
+        unsigned int entries_in_row = B_row_buffer[row_B+1] - B_row_buffer[row_B];
+        row_C_upper_bound_row += entries_in_row;
+        est_work += 0.5 * double(entries_in_row) + std::min(std::max(0.5 * (entries_in_row), est_work), double(A.size1())); //assuming half of the entries are new (only in first row all entries are new)
       }
       work_per_row[i] = est_work;
       work_max = std::max(work_max, est_work);
       work_agg += est_work;
+
+      row_C_upper_bound = std::max(row_C_upper_bound, row_C_upper_bound_row);
     }
 
     thread_work_max[omp_get_thread_num()] = work_max;
     thread_work_aggregate[omp_get_thread_num()] = work_agg;
 
+    max_length_row_C[omp_get_thread_num()] = row_C_upper_bound;
   }
+
+  for (std::size_t i=0; i<max_length_row_C.size(); ++i)
+    max_length_row_C[0] = std::max(max_length_row_C[0], max_length_row_C[i]);
 
   double max_work = thread_work_max[0];
   double avg_work = thread_work_aggregate[0];
@@ -586,7 +602,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
     sp_gemm_list<sp_gemm_list_item> row_C_list;
     spgemm_hash_map<hash_element_index<unsigned int>, spgemm_unordered_hash<unsigned int> > row_C_hash(static_cast<unsigned int>(B.size2()));
-    row_C_temp_index_buffers[thread_id] = (unsigned int *)malloc(sizeof(unsigned int)*2*B.size2());
+    row_C_temp_index_buffers[thread_id] = (unsigned int *)malloc(sizeof(unsigned int)*3*max_length_row_C[0]);
 
     // Note: It's important to have this barrier *after* the allocation of temporary buffers
 #ifdef VIENNACL_WITH_OPENMP
@@ -617,7 +633,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                                 C_row_buffer,
                                 row_C_list,
                                 row_C_hash,
-                                &(row_C_temp_index_buffers[0]));
+                                &(row_C_temp_index_buffers[0]), max_length_row_C[0]);
     }
 
 #ifdef VIENNACL_WITH_OPENMP
@@ -629,9 +645,11 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
     // accumulate entries per row:
     unsigned int accumulated_nnz = 0;
+    max_length_row_C[thread_id] = 0;
     for (unsigned int i=thread_start; i<thread_stop; ++i)
     {
       unsigned int tmp = C_row_buffer[i];
+      max_length_row_C[thread_id] = std::max(max_length_row_C[thread_id], tmp);
       C_row_buffer[i] = accumulated_nnz;
       accumulated_nnz += tmp;
     }
@@ -643,6 +661,9 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   }
 
 #ifdef VIENNACL_WITH_OPENMP
+  for (std::size_t i=0; i<max_length_row_C.size(); ++i)
+    max_length_row_C[0] = std::max(max_length_row_C[0], max_length_row_C[i]);
+
   dispatch_tasks = 0;
   // exclusive scan to obtain row start indices:
   unsigned int current_offset = 0;
@@ -689,7 +710,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
     sp_gemm_list<sp_gemm_list_value_item<NumericT> > row_C_list;
     spgemm_hash_map<hash_element_index_value<unsigned int, NumericT>, spgemm_ordered_hash<unsigned int> > row_C_hash(static_cast<unsigned int>(B.size2()));
-    row_C_temp_value_buffers[thread_id] = (NumericT *)malloc(sizeof(NumericT)*2*B.size2());
+    row_C_temp_value_buffers[thread_id] = (NumericT *)malloc(sizeof(NumericT)*3*max_length_row_C[0]);
 
     // Note: It's important to have this barrier *after* the allocation of temporary buffers
 #ifdef VIENNACL_WITH_OPENMP
@@ -720,7 +741,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                                C_row_buffer, C_col_buffer, C_elements,
                                row_C_list,
                                row_C_hash,
-                               &(row_C_temp_index_buffers[0]), &(row_C_temp_value_buffers[0]));
+                               &(row_C_temp_index_buffers[0]), &(row_C_temp_value_buffers[0]), max_length_row_C[0]);
     }
 
 #ifdef VIENNACL_WITH_OPENMP

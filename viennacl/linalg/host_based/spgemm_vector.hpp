@@ -198,7 +198,7 @@ unsigned int row_C_scan_symbolic_vector_1(unsigned int const *input1_begin, unsi
 inline
 unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int row_end_A, unsigned int const *A_col_buffer,
                                         unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, unsigned int B_size2,
-                                        unsigned int *row_C_vector_1, unsigned int *row_C_vector_2)
+                                        unsigned int *row_C_vector_1, unsigned int *row_C_vector_2, unsigned int *row_C_vector_3)
 {
   // Trivial case: row length 0:
   if (row_start_A == row_end_A)
@@ -409,7 +409,8 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
                                unsigned int const *B_row_buffer, unsigned int const *B_col_buffer, NumericT const *B_elements, unsigned int B_size2,
                                unsigned int row_start_C, unsigned int row_end_C, unsigned int *C_col_buffer, NumericT *C_elements,
                                unsigned int *row_C_vector_1, NumericT *row_C_vector_1_values,
-                               unsigned int *row_C_vector_2, NumericT *row_C_vector_2_values)
+                               unsigned int *row_C_vector_2, NumericT *row_C_vector_2_values,
+                               unsigned int *row_C_vector_3, NumericT *row_C_vector_3_values)
 {
   (void)row_end_C;
 
