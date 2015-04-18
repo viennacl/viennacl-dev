@@ -24,6 +24,9 @@
 
 #include <stdexcept>
 
+#include <thrust/scan.h>
+#include <thrust/device_ptr.h>
+
 #include "viennacl/forwards.h"
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
@@ -459,6 +462,88 @@ __global__ void compressed_matrix_gemm_stage_3(
 
 
 
+//
+// Decomposition kernels:
+//
+template<typename IndexT>
+__global__ void compressed_matrix_gemm_decompose_1(
+          const IndexT * A_row_indices,
+          IndexT A_size1,
+          IndexT max_per_row,
+          IndexT *chunks_per_row)
+{
+  for (IndexT i = blockIdx.x * blockDim.x + threadIdx.x; i < A_size1; i += blockDim.x * gridDim.x)
+  {
+    IndexT num_entries = A_row_indices[i+1] - A_row_indices[i];
+    chunks_per_row[i] = (num_entries < max_per_row) ? 1 : ((num_entries - 1)/ max_per_row + 1);
+  }
+}
+
+
+template<typename IndexT, typename NumericT>
+__global__ void compressed_matrix_gemm_A2(
+          IndexT * A2_row_indices,
+          IndexT * A2_col_indices,
+          NumericT * A2_elements,
+          IndexT A2_size1,
+          IndexT *new_row_buffer)
+{
+  for (IndexT i = blockIdx.x * blockDim.x + threadIdx.x; i < A2_size1; i += blockDim.x * gridDim.x)
+  {
+    unsigned int index_start = new_row_buffer[i];
+    unsigned int index_stop  = new_row_buffer[i+1];
+
+    A2_row_indices[i] = index_start;
+
+    for (IndexT j = index_start; j < index_stop; ++j)
+    {
+      A2_col_indices[j] = j;
+      A2_elements[j] = NumericT(1);
+    }
+  }
+
+  // write last entry in row_buffer with global thread 0:
+  if (threadIdx.x == 0 && blockIdx.x == 0)
+    A2_row_indices[A2_size1] = new_row_buffer[A2_size1];
+}
+
+template<typename IndexT, typename NumericT>
+__global__ void compressed_matrix_gemm_G1(
+          IndexT * G1_row_indices,
+          IndexT * G1_col_indices,
+          NumericT * G1_elements,
+          IndexT G1_size1,
+          IndexT const *A_row_indices,
+          IndexT const *A_col_indices,
+          NumericT const *A_elements,
+          IndexT A_size1,
+          IndexT A_nnz,
+          IndexT max_per_row,
+          IndexT *new_row_buffer)
+{
+  // Part 1: Copy column indices and entries:
+  for (IndexT i = blockIdx.x * blockDim.x + threadIdx.x; i < A_nnz; i += blockDim.x * gridDim.x)
+  {
+    G1_col_indices[i] = A_col_indices[i];
+    G1_elements[i]    = A_elements[i];
+  }
+
+  // Part 2: Derive new row indicies:
+  for (IndexT i = blockIdx.x * blockDim.x + threadIdx.x; i < A_size1; i += blockDim.x * gridDim.x)
+  {
+    unsigned int old_start = A_row_indices[i];
+    unsigned int new_start = new_row_buffer[i];
+    unsigned int row_chunks = new_row_buffer[i+1] - new_start;
+
+    for (IndexT j=0; j<row_chunks; ++j)
+      G1_row_indices[new_start + j] = old_start + j * max_per_row;
+  }
+
+  // write last entry in row_buffer with global thread 0:
+  if (threadIdx.x == 0 && blockIdx.x == 0)
+    G1_row_indices[G1_size1] = A_row_indices[A_size1];
+}
+
 
 
 /** @brief Carries out matrix-vector multiplication with a compressed_matrix
@@ -525,11 +610,13 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   unsigned int * scratchpad_offsets_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(scratchpad_offsets.handle());
 
   unsigned int max_subwarp_size = 0;
+  unsigned int A_max_nnz_per_row = 0;
   unsigned int scratchpad_offset = 0;
   //std::cout << "Scratchpad offsets: " << std::endl;
   for (std::size_t i=0; i<subwarp_sizes.size(); ++i)
   {
     max_subwarp_size = std::max(max_subwarp_size, subwarp_sizes_ptr[i]);
+    A_max_nnz_per_row = std::max(A_max_nnz_per_row, max_nnz_row_A_ptr[i]);
 
     scratchpad_offsets_ptr[i] = scratchpad_offset;
     //std::cout << scratchpad_offset << " (with " << (max_nnz_row_A_ptr[i] / subwarp_sizes_ptr[i] + 1) << " warp reloads per group at " << max_nnz_row_A_ptr[i] << " max rows, "
@@ -545,7 +632,67 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   //std::cout << "Scratchpad memory for indices: " << scratchpad_offset << " entries (" << scratchpad_offset * sizeof(unsigned int) * 1e-6 << " MB)" << std::endl;
 
   if (max_subwarp_size > 32)
-    throw std::runtime_error("Subwarp size too large!");
+  {
+    // determine augmented size:
+    unsigned int max_entries_in_G = 1024;
+    if (A_max_nnz_per_row <= 512*512)
+      max_entries_in_G = 512;
+    if (A_max_nnz_per_row <= 256*256)
+      max_entries_in_G = 256;
+    if (A_max_nnz_per_row <= 128*128)
+      max_entries_in_G = 128;
+    if (A_max_nnz_per_row <= 64*64)
+      max_entries_in_G = 64;
+
+    viennacl::vector<unsigned int> exclusive_scan_helper(A.size1() + 1, viennacl::traits::context(A));
+    compressed_matrix_gemm_decompose_1<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                                static_cast<unsigned int>(A.size1()),
+                                                                static_cast<unsigned int>(max_entries_in_G),
+                                                                detail::cuda_arg<unsigned int>(exclusive_scan_helper)
+                                                               );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_decompose_1");
+
+    thrust::exclusive_scan(thrust::device_ptr<unsigned int>(detail::cuda_arg<unsigned int>(exclusive_scan_helper)),
+                           thrust::device_ptr<unsigned int>(detail::cuda_arg<unsigned int>(exclusive_scan_helper) + exclusive_scan_helper.size()),
+                           thrust::device_ptr<unsigned int>(detail::cuda_arg<unsigned int>(exclusive_scan_helper)));
+
+    unsigned int augmented_size = exclusive_scan_helper[A.size1()];
+
+    // split A = A2 * G1
+    viennacl::compressed_matrix<NumericT, AlignmentV> A2(A.size1(), augmented_size, augmented_size, viennacl::traits::context(A));
+    viennacl::compressed_matrix<NumericT, AlignmentV> G1(augmented_size, A.size2(),        A.nnz(), viennacl::traits::context(A));
+
+    // fill A2:
+    compressed_matrix_gemm_A2<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A2.handle1().cuda_handle()),
+                                                       detail::cuda_arg<unsigned int>(A2.handle2().cuda_handle()),
+                                                       detail::cuda_arg<NumericT>(A2.handle().cuda_handle()),
+                                                       static_cast<unsigned int>(A2.size1()),
+                                                       detail::cuda_arg<unsigned int>(exclusive_scan_helper)
+                                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_A2");
+
+    // fill G1:
+    compressed_matrix_gemm_G1<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(G1.handle1().cuda_handle()),
+                                                       detail::cuda_arg<unsigned int>(G1.handle2().cuda_handle()),
+                                                       detail::cuda_arg<NumericT>(G1.handle().cuda_handle()),
+                                                       static_cast<unsigned int>(G1.size1()),
+                                                       detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                       detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                       detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                                       static_cast<unsigned int>(A.size1()),
+                                                       static_cast<unsigned int>(A.nnz()),
+                                                       static_cast<unsigned int>(max_entries_in_G),
+                                                       detail::cuda_arg<unsigned int>(exclusive_scan_helper)
+                                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_G1");
+
+    // compute tmp = G1 * B;
+    // C = A2 * tmp;
+    viennacl::compressed_matrix<NumericT, AlignmentV> tmp(G1.size1(), B.size2(), 0, viennacl::traits::context(A));
+    prod_impl(G1, B, tmp); // this runs a standard RMerge without decomposition of G1
+    prod_impl(A2, tmp, C); // this may split A2 again
+    return;
+  }
 
   subwarp_sizes.switch_memory_context(viennacl::traits::context(A));
   max_nnz_row_A.switch_memory_context(viennacl::traits::context(A));
