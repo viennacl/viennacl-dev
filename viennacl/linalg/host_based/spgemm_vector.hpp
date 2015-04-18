@@ -392,6 +392,130 @@ unsigned int row_C_scan_numeric_vector_N(unsigned int const *row_indices_B, Nume
 
 
 
+#ifdef VIENNACL_WITH_AVX2
+inline
+unsigned int row_C_scan_numeric_vector_AVX2(int const *row_indices_B_begin, int const *row_indices_B_end, double const *values_A,
+                                             int const *B_row_buffer, int const *B_col_buffer, double const *B_elements,
+                                             int B_size2,
+                                             int *row_C_vector_output, double *row_C_vector_output_values)
+{
+  __m256i avx_all_ones    = _mm256_set_epi32(1, 1, 1, 1, 1, 1, 1, 1);
+  __m256i avx_all_bsize2  = _mm256_set_epi32(B_size2, B_size2, B_size2, B_size2, B_size2, B_size2, B_size2, B_size2);
+
+  __m256i avx_row_indices_offsets = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
+  __m256i avx_load_mask = _mm256_sub_epi32(avx_row_indices_offsets, _mm256_set1_epi32(row_indices_B_end - row_indices_B_begin));
+  __m256i avx_load_mask2 = avx_load_mask;
+
+  __m256i avx_row_indices = _mm256_set1_epi32(0);
+          avx_row_indices = _mm256_mask_i32gather_epi32(avx_row_indices, row_indices_B_begin, avx_row_indices_offsets, avx_load_mask, 4);
+
+  // load values from A:
+  avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+  __m256d avx_value_A_low  = _mm256_mask_i32gather_pd(_mm256_set_pd(0, 0, 0, 0), //src
+                                                      values_A,                  //base ptr
+                                                      _mm256_extractf128_si256(avx_row_indices_offsets, 0),                           //indices
+                                                      _mm256_permutevar8x32_epi32(avx_load_mask, _mm256_set_epi32(3, 7, 2, 6, 1, 5, 0, 4)), 8); // mask
+  avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+  __m256d avx_value_A_high  = _mm256_mask_i32gather_pd(_mm256_set_pd(0, 0, 0, 0), //src
+                                                       values_A,                  //base ptr
+                                                       _mm256_extractf128_si256(avx_row_indices_offsets, 1),                           //indices
+                                                       _mm256_permutevar8x32_epi32(avx_load_mask, _mm256_set_epi32(7, 3, 6, 2, 5, 1, 4, 0)), 8); // mask
+
+
+            avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+  __m256i avx_row_start   = _mm256_mask_i32gather_epi32(avx_all_ones, B_row_buffer,   avx_row_indices, avx_load_mask, 4);
+            avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+  __m256i avx_row_end     = _mm256_mask_i32gather_epi32(avx_all_ones, B_row_buffer+1, avx_row_indices, avx_load_mask, 4);
+
+          avx_load_mask   = _mm256_cmpgt_epi32(avx_row_end, avx_row_start);
+          avx_load_mask2  = avx_load_mask;
+  __m256i avx_index_front = avx_all_bsize2;
+  avx_index_front         = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 4);
+
+  // load front values from B:
+  avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+  __m256d avx_value_front_low  = _mm256_mask_i32gather_pd(_mm256_set_pd(0, 0, 0, 0), //src
+                                                          B_elements,                  //base ptr
+                                                          _mm256_extractf128_si256(avx_row_start, 0),                           //indices
+                                                          _mm256_permutevar8x32_epi32(avx_load_mask, _mm256_set_epi32(3, 7, 2, 6, 1, 5, 0, 4)), 8); // mask
+  avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+  __m256d avx_value_front_high  = _mm256_mask_i32gather_pd(_mm256_set_pd(0, 0, 0, 0), //src
+                                                           B_elements,                  //base ptr
+                                                           _mm256_extractf128_si256(avx_row_start, 1),                           //indices
+                                                           _mm256_permutevar8x32_epi32(avx_load_mask, _mm256_set_epi32(7, 3, 6, 2, 5, 1, 4, 0)), 8); // mask
+
+  int *output_ptr = row_C_vector_output;
+
+  while (1)
+  {
+    // get minimum index in current front:
+    __m256i avx_index_min1 = avx_index_front;
+    __m256i avx_temp       = _mm256_permutevar8x32_epi32(avx_index_min1, _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4));
+    avx_index_min1 = _mm256_min_epi32(avx_index_min1, avx_temp); // first four elements compared against last four elements
+
+    avx_temp       = _mm256_shuffle_epi32(avx_index_min1, int(78));    // 0b01001110 = 78, using shuffle instead of permutevar here because of lower latency
+    avx_index_min1 = _mm256_min_epi32(avx_index_min1, avx_temp); // first two elements compared against elements three and four (same for upper half of register)
+
+    avx_temp       = _mm256_shuffle_epi32(avx_index_min1, int(177));    // 0b10110001 = 177, using shuffle instead of permutevar here because of lower latency
+    avx_index_min1 = _mm256_min_epi32(avx_index_min1, avx_temp); // now all entries of avx_index_min1 hold the minimum
+
+    int min_index_in_front = ((int*)&avx_index_min1)[0];
+    // check for end of merge operation:
+    if (min_index_in_front == B_size2)
+      break;
+
+    // accumulate value (can certainly be done more elegantly...)
+    double value = 0;
+    value += (min_index_in_front == ((int*)&avx_index_front)[0]) ? ((double*)&avx_value_front_low)[0] * ((double*)&avx_value_A_low)[0] : 0;
+    value += (min_index_in_front == ((int*)&avx_index_front)[1]) ? ((double*)&avx_value_front_low)[1] * ((double*)&avx_value_A_low)[1] : 0;
+    value += (min_index_in_front == ((int*)&avx_index_front)[2]) ? ((double*)&avx_value_front_low)[2] * ((double*)&avx_value_A_low)[2] : 0;
+    value += (min_index_in_front == ((int*)&avx_index_front)[3]) ? ((double*)&avx_value_front_low)[3] * ((double*)&avx_value_A_low)[3] : 0;
+    value += (min_index_in_front == ((int*)&avx_index_front)[4]) ? ((double*)&avx_value_front_high)[0] * ((double*)&avx_value_A_high)[0] : 0;
+    value += (min_index_in_front == ((int*)&avx_index_front)[5]) ? ((double*)&avx_value_front_high)[1] * ((double*)&avx_value_A_high)[1] : 0;
+    value += (min_index_in_front == ((int*)&avx_index_front)[6]) ? ((double*)&avx_value_front_high)[2] * ((double*)&avx_value_A_high)[2] : 0;
+    value += (min_index_in_front == ((int*)&avx_index_front)[7]) ? ((double*)&avx_value_front_high)[3] * ((double*)&avx_value_A_high)[3] : 0;
+    *row_C_vector_output_values = value;
+    ++row_C_vector_output_values;
+
+    // write current entry:
+    *output_ptr = min_index_in_front;
+    ++output_ptr;
+
+    // advance index front where equal to minimum index:
+    avx_load_mask   = _mm256_cmpeq_epi32(avx_index_front, avx_index_min1);
+    // first part: set index to B_size2 if equal to minimum index:
+    avx_temp        = _mm256_and_si256(avx_all_bsize2, avx_load_mask);
+    avx_index_front = _mm256_max_epi32(avx_index_front, avx_temp);
+    // second part: increment row_start registers where minimum found:
+    avx_temp        = _mm256_and_si256(avx_all_ones, avx_load_mask); //ones only where the minimum was found
+    avx_row_start   = _mm256_add_epi32(avx_row_start, avx_temp);
+    // third part part: load new data where more entries available:
+    avx_load_mask   = _mm256_cmpgt_epi32(avx_row_end, avx_row_start);
+    avx_load_mask2  = avx_load_mask;
+    avx_index_front = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 4);
+
+    // load new values where necessary:
+    avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+    avx_value_front_low = _mm256_mask_i32gather_pd(avx_value_front_low, //src
+                                            B_elements,                  //base ptr
+                                            _mm256_extractf128_si256(avx_row_start, 0),                           //indices
+                                            _mm256_permutevar8x32_epi32(avx_load_mask, _mm256_set_epi32(3, 7, 2, 6, 1, 5, 0, 4)), 8); // mask
+
+    avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+    avx_value_front_high = _mm256_mask_i32gather_pd(avx_value_front_high, //src
+                                    B_elements,                  //base ptr
+                                    _mm256_extractf128_si256(avx_row_start, 1),                           //indices
+                                    _mm256_permutevar8x32_epi32(avx_load_mask, _mm256_set_epi32(7, 3, 6, 2, 5, 1, 4, 0)), 8); // mask
+
+    //multiply new entries:
+
+  }
+
+  return static_cast<unsigned int>(output_ptr - row_C_vector_output);
+}
+#endif
+
+
 template<typename NumericT>
 unsigned int row_C_scan_numeric_vector_1(unsigned int const *input1_index_begin, unsigned int const *input1_index_end, NumericT const *input1_values_begin, NumericT factor1,
                                          unsigned int const *input2_index_begin, unsigned int const *input2_index_end, NumericT const *input2_values_begin, NumericT factor2,
@@ -484,6 +608,15 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
                                 C_col_buffer + row_start_C, C_elements + row_start_C);
     return;
   }
+#ifdef VIENNACL_WITH_AVX2
+  else if (row_end_A - row_start_A > 10) // safely merge eight rows into temporary buffer:
+  {
+    row_C_len = row_C_scan_numeric_vector_AVX2((const int*)(A_col_buffer + row_start_A), (const int*)(A_col_buffer + row_end_A), A_elements + row_start_A,
+                                               (const int*)B_row_buffer, (const int*)B_col_buffer, B_elements, int(B_size2),
+                                               (int*)row_C_vector_1, row_C_vector_1_values);
+    row_start_A += 8;
+  }
+#endif
   else // safely merge two rows into temporary buffer:
   {
     unsigned int A_col_1 = A_col_buffer[row_start_A];
@@ -502,15 +635,20 @@ void row_C_scan_numeric_vector(unsigned int row_start_A, unsigned int row_end_A,
   // process remaining rows:
   while (row_end_A > row_start_A)
   {
-    /*if (row_end_A - row_start_A > 3)
+#ifdef VIENNACL_WITH_AVX2
+    if (row_end_A - row_start_A > 9) // code in other if-conditionals ensures that values get written to C
     {
-      row_C_len = row_C_scan_numeric_vector_N<3>(A_col_buffer + row_start_A , A_elements + row_start_A,
-                                                 B_row_buffer, B_col_buffer, B_elements, B_size2,
-                                                 row_C_vector_1, row_C_vector_1 + row_C_len, row_C_vector_1_values,
-                                                 row_C_vector_2, row_C_vector_2_values);
-      row_start_A += 3;
+      unsigned int merged_len = row_C_scan_numeric_vector_AVX2((const int*)(A_col_buffer + row_start_A), (const int*)(A_col_buffer + row_end_A), A_elements + row_start_A,
+                                                               (const int*)B_row_buffer, (const int*)B_col_buffer, B_elements, int(B_size2),
+                                                               (int*)row_C_vector_3, row_C_vector_3_values);
+      row_C_len = row_C_scan_numeric_vector_1(row_C_vector_3, row_C_vector_3 + merged_len, row_C_vector_3_values, NumericT(1.0),
+                                              row_C_vector_1, row_C_vector_1 + row_C_len, row_C_vector_1_values, NumericT(1.0),
+                                              B_size2,
+                                              row_C_vector_2, row_C_vector_2_values);
+      row_start_A += 8;
     }
-    else */ // process single row:
+    else
+#endif
     if (row_start_A + 1 == row_end_A) // last row to merge, write directly to C:
     {
       unsigned int A_col    = A_col_buffer[row_start_A];

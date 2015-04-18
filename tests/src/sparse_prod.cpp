@@ -190,7 +190,7 @@ int main()
   std::cout << std::endl;
 
   int retval = EXIT_SUCCESS;
-
+/*
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << std::endl;
@@ -209,7 +209,7 @@ int main()
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << std::endl;
-
+*/
 #ifdef VIENNACL_WITH_OPENCL
   if ( viennacl::ocl::current_device().double_support() )
 #endif
