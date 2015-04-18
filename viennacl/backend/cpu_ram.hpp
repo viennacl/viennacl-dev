@@ -24,6 +24,10 @@
 
 #include <cassert>
 #include <vector>
+#ifdef VIENNACL_WITH_AVX2
+#include <stdlib.h>
+#endif
+
 #include "viennacl/tools/shared_ptr.hpp"
 
 namespace viennacl
@@ -50,7 +54,11 @@ namespace detail
   template<class U>
   struct array_deleter
   {
+#ifdef VIENNACL_WITH_AVX2
+    void operator()(U* p) const { free(p); }
+#else
     void operator()(U* p) const { delete[] p; }
+#endif
   };
 
 }
@@ -63,10 +71,18 @@ namespace detail
  */
 inline handle_type  memory_create(vcl_size_t size_in_bytes, const void * host_ptr = NULL)
 {
+#ifdef VIENNACL_WITH_AVX2
+  // Note: aligned_alloc not available on all compilers. Consider platform-specific alternatives such as posix_memalign()
+  if (!host_ptr)
+    return handle_type(reinterpret_cast<char*>(aligned_alloc(32, size_in_bytes)), detail::array_deleter<char>());
+
+  handle_type new_handle(reinterpret_cast<char*>(aligned_alloc(32, size_in_bytes)), detail::array_deleter<char>());
+#else
   if (!host_ptr)
     return handle_type(new char[size_in_bytes], detail::array_deleter<char>());
 
   handle_type new_handle(new char[size_in_bytes], detail::array_deleter<char>());
+#endif
 
   // copy data:
   char * raw_ptr = new_handle.get();
