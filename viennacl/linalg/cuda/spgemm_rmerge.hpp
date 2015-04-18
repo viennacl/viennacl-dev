@@ -304,7 +304,7 @@ __global__ void compressed_matrix_gemm_decompose_1(
           IndexT max_per_row,
           IndexT *chunks_per_row)
 {
-  for (IndexT i=threadIdx.x; i<A_size1; i += blockDim.x * gridDim.x)
+  for (IndexT i = blockIdx.x * blockDim.x + threadIdx.x; i < A_size1; i += blockDim.x * gridDim.x)
   {
     IndexT num_entries = A_row_indices[i+1] - A_row_indices[i];
     chunks_per_row[i] = (num_entries < max_per_row) ? 1 : ((num_entries - 1)/ max_per_row + 1);
