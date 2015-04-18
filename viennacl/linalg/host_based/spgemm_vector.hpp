@@ -42,18 +42,25 @@ namespace host_based
 
 #ifdef VIENNACL_WITH_AVX2
 inline
-unsigned int row_C_scan_symbolic_vector_AVX2(int const *row_indices_B,
+unsigned int row_C_scan_symbolic_vector_AVX2(int const *row_indices_B_begin, int const *row_indices_B_end,
                                              int const *B_row_buffer, int const *B_col_buffer, int B_size2,
-                                             int const *row_C_vector_input, int const *row_C_vector_input_end,
                                              int *row_C_vector_output)
 {
-  __m256i avx_row_indices = _mm256_loadu_si256((__m256i const *)row_indices_B);
-  __m256i avx_row_start   = _mm256_i32gather_epi32(B_row_buffer,   avx_row_indices, 4);
-  __m256i avx_row_end     = _mm256_i32gather_epi32(B_row_buffer+1, avx_row_indices, 4);
-
   __m256i avx_all_ones    = _mm256_set_epi32(1, 1, 1, 1, 1, 1, 1, 1);
   __m256i avx_all_bsize2  = _mm256_set_epi32(B_size2, B_size2, B_size2, B_size2, B_size2, B_size2, B_size2, B_size2);
-  __m256i avx_load_mask   = _mm256_cmpgt_epi32(avx_row_end, avx_row_start);
+
+  __m256i avx_row_indices_offsets = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
+  __m256i avx_load_mask = _mm256_sub_epi32(avx_row_indices_offsets, _mm256_set1_epi32(row_indices_B_end - row_indices_B_begin));
+  __m256i avx_load_mask2 = avx_load_mask;
+
+  __m256i avx_row_indices = _mm256_set1_epi32(0);
+          avx_row_indices = _mm256_mask_i32gather_epi32(avx_row_indices, row_indices_B_begin, avx_row_indices_offsets, avx_load_mask, 4);
+            avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+  __m256i avx_row_start   = _mm256_mask_i32gather_epi32(avx_all_ones, B_row_buffer,   avx_row_indices, avx_load_mask, 4);
+            avx_load_mask = avx_load_mask2; // reload mask (destroyed by gather)
+  __m256i avx_row_end     = _mm256_mask_i32gather_epi32(avx_all_ones, B_row_buffer+1, avx_row_indices, avx_load_mask, 4);
+
+          avx_load_mask   = _mm256_cmpgt_epi32(avx_row_end, avx_row_start);
   __m256i avx_index_front = avx_all_bsize2;
   avx_index_front         = _mm256_mask_i32gather_epi32(avx_index_front, B_col_buffer, avx_row_start, avx_load_mask, 4);
 
@@ -224,6 +231,12 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
   }
   else // for more than two rows we can safely merge the first two:
   {
+#ifdef VIENNACL_WITH_AVX2
+    row_C_len = row_C_scan_symbolic_vector_AVX2((const int*)(A_col_buffer + row_start_A), (const int*)(A_col_buffer + row_end_A),
+                                                (const int*)B_row_buffer, (const int*)B_col_buffer, int(B_size2),
+                                                (int*)row_C_vector_1);
+    row_start_A += 8;
+#else
     unsigned int A_col_1 = A_col_buffer[row_start_A];
     unsigned int A_col_2 = A_col_buffer[row_start_A + 1];
     row_C_len =  row_C_scan_symbolic_vector_1<spgemm_output_write_enabled>(B_col_buffer + B_row_buffer[A_col_1], B_col_buffer + B_row_buffer[A_col_1 + 1],
@@ -231,31 +244,32 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
                                                                            B_size2,
                                                                            row_C_vector_1);
     row_start_A += 2;
+#endif
   }
 
   // all other row lengths:
   while (row_end_A > row_start_A)
   {
 #ifdef VIENNACL_WITH_AVX2
-    if (row_end_A - row_start_A >= 8 && row_C_len == 0)
+    if (row_end_A - row_start_A > 2) // we deal with one or two remaining rows more efficiently below:
     {
-      row_C_len = row_C_scan_symbolic_vector_AVX2((const int*)(A_col_buffer + row_start_A),
-                                                  (const int*)B_row_buffer, (const int*)B_col_buffer, int(B_size2),
-                                                  (const int*)row_C_vector_1, (const int*)(row_C_vector_1 + row_C_len),
-                                                  (int*)row_C_vector_2);
+      unsigned int merged_len = row_C_scan_symbolic_vector_AVX2((const int*)(A_col_buffer + row_start_A), (const int*)(A_col_buffer + row_end_A),
+                                                                (const int*)B_row_buffer, (const int*)B_col_buffer, int(B_size2),
+                                                                (int*)row_C_vector_3);
+      if (row_start_A + 8 >= row_end_A)
+        row_C_len = row_C_scan_symbolic_vector_1<spgemm_output_write_disabled>(row_C_vector_3, row_C_vector_3 + merged_len,
+                                                                              row_C_vector_1, row_C_vector_1 + row_C_len,
+                                                                              B_size2,
+                                                                              row_C_vector_2);
+      else
+        row_C_len = row_C_scan_symbolic_vector_1<spgemm_output_write_enabled>(row_C_vector_3, row_C_vector_3 + merged_len,
+                                                                               row_C_vector_1, row_C_vector_1 + row_C_len,
+                                                                               B_size2,
+                                                                               row_C_vector_2);
       row_start_A += 8;
     }
     else
 #endif
-    /*if (row_end_A - row_start_A > 3)
-    {
-      row_C_len = row_C_scan_symbolic_vector_N<3>(A_col_buffer + row_start_A,
-                                                  B_row_buffer, B_col_buffer, B_size2,
-                                                  row_C_vector_1, row_C_vector_1 + row_C_len,
-                                                  row_C_vector_2);
-      row_start_A += 3;
-    }
-    else*/
     if (row_start_A == row_end_A - 1) // last merge operation. No need to write output
     {
       // process last row
@@ -265,7 +279,7 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
                                                                         B_size2,
                                                                         row_C_vector_2);
     }
-    else if (row_start_A + 2 < row_end_A)// at least three more rows left, so merge two
+    else if (row_start_A + 1 < row_end_A)// at least two more rows left, so merge them
     {
       // process single row:
       unsigned int A_col_1 = A_col_buffer[row_start_A];
@@ -274,10 +288,16 @@ unsigned int row_C_scan_symbolic_vector(unsigned int row_start_A, unsigned int r
                                                                                            B_col_buffer + B_row_buffer[A_col_2], B_col_buffer + B_row_buffer[A_col_2 + 1],
                                                                                            B_size2,
                                                                                            row_C_vector_3);
-      row_C_len = row_C_scan_symbolic_vector_1<spgemm_output_write_enabled>(row_C_vector_3, row_C_vector_3 + merged_len,
-                                                                            row_C_vector_1, row_C_vector_1 + row_C_len,
-                                                                            B_size2,
-                                                                            row_C_vector_2);
+      if (row_start_A + 2 == row_end_A) // last merge does not need a write:
+        return row_C_scan_symbolic_vector_1<spgemm_output_write_disabled>(row_C_vector_3, row_C_vector_3 + merged_len,
+                                                                          row_C_vector_1, row_C_vector_1 + row_C_len,
+                                                                          B_size2,
+                                                                          row_C_vector_2);
+      else
+        row_C_len = row_C_scan_symbolic_vector_1<spgemm_output_write_enabled>(row_C_vector_3, row_C_vector_3 + merged_len,
+                                                                              row_C_vector_1, row_C_vector_1 + row_C_len,
+                                                                              B_size2,
+                                                                              row_C_vector_2);
       row_start_A += 2;
     }
     else // at least two more rows left
