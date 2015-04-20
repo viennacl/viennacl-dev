@@ -126,7 +126,7 @@ void precondition(viennacl::compressed_matrix<NumericT> & A, ilu0_tag const & /*
         {
           if (col_buffer[buf_index_akj] == j)
           {
-            a_kk = elements[buf_index_akj];
+            a_kj = elements[buf_index_akj];
             break;
           }
         }
