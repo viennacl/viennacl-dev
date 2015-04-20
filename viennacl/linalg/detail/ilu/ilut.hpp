@@ -123,6 +123,22 @@ NumericT setup_w(std::vector< std::map<SizeT, NumericT> > const & A,
   return std::sqrt(row_norm);
 }
 
+template<typename SizeT, typename NumericT>
+void insert_with_value_sort(std::vector<std::pair<SizeT, NumericT> > & map, SizeT index, NumericT value)
+{
+  NumericT abs_value = std::fabs(value);
+  if (abs_value > 0)
+  {
+    // find first element with smaller absolute value:
+    std::size_t first_smaller_index = 0;
+    while (first_smaller_index < map.size() && std::fabs(map[first_smaller_index].second) > abs_value)
+      ++first_smaller_index;
+
+    std::pair<SizeT, NumericT> tmp(index, value);
+    for (std::size_t j=first_smaller_index; j<map.size(); ++j)
+      std::swap(map[j], tmp);
+  }
+}
 
 /** @brief Implementation of a ILU-preconditioner with threshold. Optimized implementation for compressed_matrix.
 *
@@ -146,11 +162,15 @@ void precondition(SparseMatrixTypeT const & A,
 
   SparseVector w;
   TemporarySortMap temp_map;
+  std::vector<std::pair<SizeT, NumericT> > sorted_entries_L(tag.get_entries_per_row());
+  NumericT entry_diagonal = 0;
+  std::vector<std::pair<SizeT, NumericT> > sorted_entries_U(tag.get_entries_per_row());
 
   for (SizeT i=0; i<viennacl::traits::size1(A); ++i)  // Line 1
   {
-/*    if (i%10 == 0)
-  std::cout << i << std::endl;*/
+    std::fill(sorted_entries_L.begin(), sorted_entries_L.end(), std::pair<SizeT, NumericT>(0, NumericT(0)));
+    entry_diagonal = NumericT(1);
+    std::fill(sorted_entries_U.begin(), sorted_entries_U.end(), std::pair<SizeT, NumericT>(0, NumericT(0)));
 
     //line 2: set up w
     NumericT row_norm = setup_w(A, i, w);
@@ -195,50 +215,28 @@ void precondition(SparseMatrixTypeT const & A,
     temp_map.clear();
     for (SparseVectorIterator w_k = w.begin(); w_k != w.end(); ++w_k)
     {
-      SizeT k = w_k->first;
-      NumericT w_k_entry = w_k->second;
-
-      NumericT abs_w_k = std::fabs(w_k_entry);
-      if ( (abs_w_k > tau_i) || (k == i) )//do not drop diagonal element!
+      if (w_k->first == i) //do not drop diagonal element!
+        entry_diagonal = w_k->second;
+      else
       {
-
-        if (abs_w_k <= 0) // this can only happen for diagonal entry
-          throw "Triangular factor in ILUT singular!";
-
-        temp_map.insert(std::make_pair(abs_w_k, std::make_pair(k, w_k_entry)));
+        if (w_k->first < i) // entry for L:
+          insert_with_value_sort(sorted_entries_L, w_k->first, w_k->second);
+        else // entry for U:
+          insert_with_value_sort(sorted_entries_U, w_k->first, w_k->second);
       }
     }
 
     //Lines 10-12: write the largest p values to L and U
-    SizeT written_L = 0;
-    SizeT written_U = 0;
-    for (typename TemporarySortMap::reverse_iterator iter = temp_map.rbegin(); iter != temp_map.rend(); ++iter)
-    {
-      std::map<SizeT, NumericT> & row_i = output[i];
-      SizeT j = (iter->second).first;
-      NumericT w_j_entry = (iter->second).second;
+    std::map<SizeT, NumericT> & row_i = output[i];
+    for (std::size_t j=0; j<tag.get_entries_per_row(); ++j)
+      if (std::fabs(sorted_entries_L[j].second) > 0)
+        row_i[sorted_entries_L[j].first] = sorted_entries_L[j].second;
 
-      if (j < i) // Line 11: entry for L
-      {
-        if (written_L < tag.get_entries_per_row())
-        {
-          row_i[j] = w_j_entry;
-          ++written_L;
-        }
-      }
-      else if (j == i)  // Diagonal entry is always kept
-      {
-        row_i[j] = w_j_entry;
-      }
-      else //Line 12: entry for U
-      {
-        if (written_U < tag.get_entries_per_row())
-        {
-          row_i[j] = w_j_entry;
-          ++written_U;
-        }
-      }
-    }
+    row_i[i] = entry_diagonal;
+
+    for (std::size_t j=0; j<tag.get_entries_per_row(); ++j)
+      if (std::fabs(sorted_entries_U[j].second) > 0)
+        row_i[sorted_entries_U[j].first] = sorted_entries_U[j].second;
 
     w.clear(); //Line 13
 
