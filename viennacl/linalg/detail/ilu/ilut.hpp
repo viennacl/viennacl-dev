@@ -291,7 +291,7 @@ private:
     viennacl::copy(LU_temp, LU_);
   }
 
-  ilut_tag const & tag_;
+  ilut_tag tag_;
   viennacl::compressed_matrix<NumericType> LU_;
 };
 
@@ -462,7 +462,7 @@ private:
 
   }
 
-  ilut_tag const & tag_;
+  ilut_tag tag_;
   viennacl::compressed_matrix<NumericT> LU_;
 
   std::list<viennacl::backend::mem_handle> multifrontal_L_row_index_arrays_;

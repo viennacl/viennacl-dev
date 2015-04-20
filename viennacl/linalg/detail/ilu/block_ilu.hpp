@@ -235,7 +235,7 @@ private:
     viennacl::copy(temp, LU);
   }
 
-  ILUTag const & tag_;
+  ILUTag tag_;
   index_vector_type block_indices_;
   std::vector< viennacl::compressed_matrix<ScalarType> > LU_blocks;
 };
@@ -435,7 +435,7 @@ private:
   }
 
 
-  ILUTagT const &                       tag_;
+  ILUTagT                               tag_;
   index_vector_type                     block_indices_;
   viennacl::backend::mem_handle         gpu_block_indices_;
   viennacl::compressed_matrix<NumericT> gpu_L_trans_;
