@@ -135,9 +135,9 @@ int main()
   * For more details on the three lines, see tutorial 'custom-kernels'
   **/
   std::cout << "Using existing kernel within ViennaCL:" << std::endl;
-  elementwise_multiplication<<<128, 128>>>(vcl_vec1.handle().cuda_handle().get(),
-                                           vcl_vec2.handle().cuda_handle().get(),
-                                           vcl_result.handle().cuda_handle().get(),
+  elementwise_multiplication<<<128, 128>>>(viennacl::linalg::cuda::detail::cuda_arg<NumericType>(vcl_vec1),
+                                           viennacl::linalg::cuda::detail::cuda_arg<NumericType>(vcl_vec2),
+                                           viennacl::linalg::cuda::detail::cuda_arg<NumericType>(vcl_result),
                                            N);
 
   std::cout << "vec1  : " << vcl_vec1 << std::endl;
