@@ -547,7 +547,7 @@ unsigned int row_C_scan_numeric_vector_1(unsigned int const *input1_index_begin,
     if (min_index == index2)
     {
       ++input2_index_begin;
-      index2 = index2 = (input2_index_begin < input2_index_end) ? *input2_index_begin : termination_index;
+      index2 = (input2_index_begin < input2_index_end) ? *input2_index_begin : termination_index;
 
       value += factor2 * *input2_values_begin;
       ++input2_values_begin;

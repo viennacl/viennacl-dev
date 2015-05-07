@@ -217,6 +217,10 @@ namespace viennacl
               const viennacl::compressed_matrix<NumericT> & B,
                     viennacl::compressed_matrix<NumericT> & C)
     {
+      assert( (A.size2() == B.size1())                    && bool("Size check failed for sparse matrix-matrix product: size2(A) != size1(B)"));
+      assert( (C.size1() == 0 || C.size1() == A.size1())  && bool("Size check failed for sparse matrix-matrix product: size1(A) != size1(C)"));
+      assert( (C.size2() == 0 || C.size2() == B.size2())  && bool("Size check failed for sparse matrix-matrix product: size2(B) != size2(B)"));
+
       switch (viennacl::traits::handle(A).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:

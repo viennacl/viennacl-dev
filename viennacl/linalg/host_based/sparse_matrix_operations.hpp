@@ -321,6 +321,7 @@ unsigned int row_C_scan_symbolic(unsigned int max_entries_C,
                                  HashT & row_C_hash,
                                  unsigned int *row_C_vector_1, unsigned int *row_C_vector_2, unsigned int *row_C_vector_3)
 {
+  (void)max_entries_C;
   (void)row_C_list;
   (void)row_C_hash;
 
