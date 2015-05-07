@@ -329,7 +329,9 @@ template<typename NumericT, unsigned int AlignmentV>
 void copy(const compressed_matrix<NumericT, AlignmentV> & gpu_matrix,
           std::vector< std::map<unsigned int, NumericT> > & cpu_matrix)
 {
-  tools::sparse_matrix_adapter<NumericT> temp(cpu_matrix, cpu_matrix.size(), cpu_matrix.size());
+  assert( (cpu_matrix.size() == gpu_matrix.size1()) && bool("Size mismatch") );
+
+  tools::sparse_matrix_adapter<NumericT> temp(cpu_matrix, gpu_matrix.size1(), gpu_matrix.size2());
   copy(gpu_matrix, temp);
 }
 
