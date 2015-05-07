@@ -133,10 +133,10 @@ int test(Epsilon const& epsilon)
 {
   int retval = EXIT_SUCCESS;
 
-  std::size_t N = 110;
-  std::size_t K = 100;
-  std::size_t M = 120;
-  std::size_t nnz_row = 20;
+  std::size_t N = 210;
+  std::size_t K = 300;
+  std::size_t M = 420;
+  std::size_t nnz_row = 40;
   // --------------------------------------------------------------------------
   std::vector<std::map<unsigned int, NumericT> > stl_A(N);
   std::vector<std::map<unsigned int, NumericT> > stl_B(K);
@@ -159,7 +159,7 @@ int test(Epsilon const& epsilon)
   viennacl::copy(stl_B, vcl_B);
 
   // --------------------------------------------------------------------------
-  std::cout << "Testing products: ublas" << std::endl;
+  std::cout << "Testing products: STL" << std::endl;
   prod(stl_A, stl_B, stl_C);
 
   std::cout << "Testing products: compressed_matrix" << std::endl;
@@ -190,7 +190,7 @@ int main()
   std::cout << std::endl;
 
   int retval = EXIT_SUCCESS;
-/*
+
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << std::endl;
@@ -209,7 +209,7 @@ int main()
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
   std::cout << std::endl;
-*/
+
 #ifdef VIENNACL_WITH_OPENCL
   if ( viennacl::ocl::current_device().double_support() )
 #endif
