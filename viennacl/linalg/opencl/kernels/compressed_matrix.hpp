@@ -1256,7 +1256,7 @@ void generate_compressed_matrix_compressed_matrix_prod_2(StringT & source)
   source.append("  unsigned int B_size2, \n");
   source.append("  __global unsigned int * C_row_indices) \n");
   source.append("{ \n");
-  source.append("  unsigned int work_per_group = max((uint) (A_size1 / get_num_groups(0)), (uint) 1); \n");
+  source.append("  unsigned int work_per_group = max((uint) ((A_size1 - 1) / get_num_groups(0) + 1), (uint) 1); \n");
   source.append("  unsigned int row_C_start = get_group_id(0) * work_per_group; \n");
   source.append("  unsigned int row_C_stop  = min( (uint) ((get_group_id(0) + 1) * work_per_group), (uint) A_size1); \n");
   source.append("  __local unsigned int shared_front[32]; \n");
