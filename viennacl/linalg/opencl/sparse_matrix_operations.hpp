@@ -29,6 +29,7 @@
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
 #include "viennacl/tools/tools.hpp"
+#include "viennacl/linalg/host_based/common.hpp"
 #include "viennacl/linalg/opencl/kernels/compressed_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/coordinate_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/ell_matrix.hpp"
@@ -191,7 +192,141 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & sp_A,
                            cl_uint(viennacl::traits::internal_size1(y)), cl_uint(viennacl::traits::internal_size2(y)) ) );
 }
 
+/** @brief Carries out sparse_matrix-sparse_matrix multiplication for CSR matrices
+*
+* Implementation of the convenience expression C = prod(A, B);
+* Based on computing C(i, :) = A(i, :) * B via merging the respective rows of B
+*
+* @param A     Left factor
+* @param B     Right factor
+* @param C     Result matrix
+*/
+template<typename NumericT, unsigned int AlignmentV>
+void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
+               viennacl::compressed_matrix<NumericT, AlignmentV> const & B,
+               viennacl::compressed_matrix<NumericT, AlignmentV> & C)
+{
 
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+
+  /*
+   * Stage 1: Analyze sparsity pattern in order to properly allocate temporary arrays
+   *
+   * - Upper bound for the row lengths in C
+   */
+  viennacl::vector<unsigned int> upper_bound_nonzeros_per_row_A(256, ctx); // upper bound for the nonzeros per row encountered for each work group
+
+  viennacl::ocl::kernel & k1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_stage1");
+  viennacl::ocl::enqueue(k1(A.handle1().opencl_handle(), A.handle2().opencl_handle(), cl_uint(A.size1()),
+                            viennacl::traits::opencl_handle(upper_bound_nonzeros_per_row_A)
+                        )  );
+
+  upper_bound_nonzeros_per_row_A.switch_memory_context(viennacl::context(MAIN_MEMORY));
+  unsigned int * upper_bound_nonzeros_per_row_A_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(upper_bound_nonzeros_per_row_A.handle());
+
+  unsigned int max_nnz_per_row_A = 0;
+  for (std::size_t i=0; i<upper_bound_nonzeros_per_row_A.size(); ++i)
+    max_nnz_per_row_A = std::max(max_nnz_per_row_A, upper_bound_nonzeros_per_row_A_ptr[i]);
+
+  if (max_nnz_per_row_A > 32)
+  {
+    // determine augmented size:
+    unsigned int max_entries_in_G = 32;
+    if (max_nnz_per_row_A <= 256)
+      max_entries_in_G = 16;
+    if (max_nnz_per_row_A <= 64)
+      max_entries_in_G = 8;
+
+    viennacl::vector<unsigned int> exclusive_scan_helper(A.size1() + 1, viennacl::traits::context(A));
+    viennacl::ocl::kernel & k_decompose_1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_decompose_1");
+    viennacl::ocl::enqueue(k_decompose_1(A.handle1().opencl_handle(), cl_uint(A.size1()),
+                                         cl_uint(max_entries_in_G),
+                                         viennacl::traits::opencl_handle(exclusive_scan_helper)
+                          )             );
+
+    // exclusive scan of helper array to find new size:
+    // TODO: Run exclusive scan on device
+    exclusive_scan_helper.switch_memory_context(viennacl::context(MAIN_MEMORY));
+    unsigned int *exclusive_scan_helper_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(exclusive_scan_helper.handle());
+    unsigned int augmented_size = 0;
+    for (std::size_t i=0; i<exclusive_scan_helper.size(); ++i)
+    {
+      unsigned int tmp = exclusive_scan_helper_ptr[i];
+      exclusive_scan_helper_ptr[i] = augmented_size;
+      augmented_size += tmp;
+    }
+    exclusive_scan_helper.switch_memory_context(viennacl::traits::context(A));
+
+    // split A = A2 * G1
+    viennacl::compressed_matrix<NumericT, AlignmentV> A2(A.size1(), augmented_size, augmented_size, viennacl::traits::context(A));
+    viennacl::compressed_matrix<NumericT, AlignmentV> G1(augmented_size, A.size2(),        A.nnz(), viennacl::traits::context(A));
+
+    // fill A2:
+    viennacl::ocl::kernel & k_fill_A2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_A2");
+    viennacl::ocl::enqueue(k_fill_A2(A2.handle1().opencl_handle(), A2.handle2().opencl_handle(), A2.handle().opencl_handle(), cl_uint(A2.size1()),
+                                     viennacl::traits::opencl_handle(exclusive_scan_helper)
+                          )         );
+
+    // fill G1:
+    viennacl::ocl::kernel & k_fill_G1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_G1");
+    viennacl::ocl::enqueue(k_fill_G1(G1.handle1().opencl_handle(), G1.handle2().opencl_handle(), G1.handle().opencl_handle(), cl_uint(G1.size1()),
+                                     A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.size1()), cl_uint(A.nnz()),
+                                     cl_uint(max_entries_in_G),
+                                     viennacl::traits::opencl_handle(exclusive_scan_helper)
+                          )         );
+
+    // compute tmp = G1 * B;
+    // C = A2 * tmp;
+    viennacl::compressed_matrix<NumericT, AlignmentV> tmp(G1.size1(), B.size2(), 0, viennacl::traits::context(A));
+    prod_impl(G1, B, tmp); // this runs a standard RMerge without decomposition of G1
+    prod_impl(A2, tmp, C); // this may split A2 again
+    return;
+  }
+
+
+  /*
+   * Stage 2: Determine sparsity pattern of C
+   */
+  C.resize(A.size1(), B.size2(), false);
+
+  viennacl::ocl::kernel & k2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_stage2");
+  k2.local_work_size(0, 32); // run with one warp/wavefront
+  k2.global_work_size(0, 256*256*32); // make sure enough warps/wavefronts are in flight
+  viennacl::ocl::enqueue(k2(A.handle1().opencl_handle(), A.handle2().opencl_handle(), cl_uint(A.size1()),
+                            B.handle1().opencl_handle(), B.handle2().opencl_handle(), cl_uint(B.size2()),
+                            C.handle1().opencl_handle()
+                        )  );
+
+  // exclusive scan on host to obtain row start indices:
+  viennacl::backend::typesafe_host_array<unsigned int> row_buffer(C.handle1(), C.size1() + 1);
+  viennacl::backend::memory_read(C.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+  unsigned int current_offset = 0;
+  for (std::size_t i=0; i<C.size1(); ++i)
+  {
+    unsigned int tmp = row_buffer[i];
+    row_buffer.set(i, current_offset);
+    current_offset += tmp;
+  }
+  row_buffer.set(C.size1(), current_offset);
+  viennacl::backend::memory_write(C.handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+
+
+  /*
+   * Stage 3: Compute entries in C
+   */
+
+  C.reserve(current_offset, false);
+
+  viennacl::ocl::kernel & k3 = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "spgemm_stage3");
+  k3.local_work_size(0, 32); // run with one warp/wavefront
+  k3.global_work_size(0, 256*256*32); // make sure enough warps/wavefronts are in flight
+  viennacl::ocl::enqueue(k3(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.size1()),
+                            B.handle1().opencl_handle(), B.handle2().opencl_handle(), B.handle().opencl_handle(), cl_uint(B.size2()),
+                            C.handle1().opencl_handle(), C.handle2().opencl_handle(), C.handle().opencl_handle()
+                        )  );
+
+}
 
 // triangular solvers
 

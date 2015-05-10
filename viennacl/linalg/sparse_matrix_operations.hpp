@@ -201,6 +201,49 @@ namespace viennacl
       }
     }
 
+    // A * B with both A and B sparse
+
+    /** @brief Carries out matrix-vector multiplication involving a sparse matrix type
+    *
+    * Implementation of the convenience expression result = prod(mat, vec);
+    *
+    * @param mat    The matrix
+    * @param vec    The vector
+    * @param result The result vector
+    */
+    template<typename NumericT>
+    void
+    prod_impl(const viennacl::compressed_matrix<NumericT> & A,
+              const viennacl::compressed_matrix<NumericT> & B,
+                    viennacl::compressed_matrix<NumericT> & C)
+    {
+      assert( (A.size2() == B.size1())                    && bool("Size check failed for sparse matrix-matrix product: size2(A) != size1(B)"));
+      assert( (C.size1() == 0 || C.size1() == A.size1())  && bool("Size check failed for sparse matrix-matrix product: size1(A) != size1(C)"));
+      assert( (C.size2() == 0 || C.size2() == B.size2())  && bool("Size check failed for sparse matrix-matrix product: size2(B) != size2(B)"));
+
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::prod_impl(A, B, C);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::prod_impl(A, B, C);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::prod_impl(A, B, C);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+
     /** @brief Carries out triangular inplace solves
     *
     * @param mat    The matrix

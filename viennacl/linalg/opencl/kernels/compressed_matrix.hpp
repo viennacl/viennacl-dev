@@ -1102,6 +1102,354 @@ void generate_compressed_matrix_vec_mul_cpu(StringT & source, std::string const 
 }
 
 
+
+/** @brief OpenCL kernel for the first stage of sparse matrix-matrix multiplication.
+  *
+  * Each work group derives the maximum of nonzero entries encountered by row in A.
+  **/
+template<typename StringT>
+void generate_compressed_matrix_compressed_matrix_prod_1(StringT & source)
+{
+  source.append("__kernel void spgemm_stage1( \n");
+  source.append("  __global const unsigned int * A_row_indices, \n");
+  source.append("  __global const unsigned int * A_column_indices, \n");
+  source.append("  unsigned int A_size1, \n");
+  source.append("  __global unsigned int * group_nnz_array) \n");
+  source.append("{ \n");
+  source.append("  unsigned int work_per_item = max((uint) (A_size1 / get_global_size(0)), (uint) 1); \n");
+  source.append("  unsigned int row_start = get_global_id(0) * work_per_item; \n");
+  source.append("  unsigned int row_stop  = min( (uint) ((get_global_id(0) + 1) * work_per_item), (uint) A_size1); \n");
+  source.append("  unsigned int max_A_nnz = 0; \n");
+  source.append("  for (unsigned int row = row_start; row < row_stop; ++row) \n");
+  source.append("    max_A_nnz = max(max_A_nnz, A_row_indices[row + 1] - A_row_indices[row]); \n");
+
+    // load and sum to shared buffer:
+  source.append("  __local unsigned int shared_nnz[256]; \n");
+  source.append("  shared_nnz[get_local_id(0)] = max_A_nnz; \n");
+
+    // reduction to obtain final result
+  source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride) \n");
+  source.append("      shared_nnz[get_local_id(0)] = max(shared_nnz[get_local_id(0)], shared_nnz[get_local_id(0) + stride]); \n");
+  source.append("  } \n");
+
+  source.append("  if (get_local_id(0) == 0) \n");
+  source.append("    group_nnz_array[get_group_id(0)] = shared_nnz[0]; \n");
+  source.append("} \n");
+
+}
+
+
+/** @brief OpenCL kernel for decomposing A in C = A * B, such that A = A_2 * G_1 with G_1 containing at most 32 nonzeros per row
+  *
+  * Needed for the RMerge split stage.
+  **/
+template<typename StringT>
+void generate_compressed_matrix_compressed_matrix_prod_decompose_1(StringT & source)
+{
+  source.append("__kernel void spgemm_decompose_1( \n");
+  source.append("  __global const unsigned int * A_row_indices, \n");
+  source.append("  unsigned int A_size1, \n");
+  source.append("  unsigned int max_per_row, \n");
+  source.append("  __global unsigned int * chunks_per_row) \n");
+  source.append("{ \n");
+  source.append("  for (unsigned int row = get_global_id(0); row < A_size1; row += get_global_size(0)) {\n");
+  source.append("    unsigned int num_entries = A_row_indices[row+1] - A_row_indices[row]; \n");
+  source.append("    chunks_per_row[row] = (num_entries < max_per_row) ? 1 : ((num_entries - 1) / max_per_row + 1); \n");
+  source.append("  } \n");
+  source.append("} \n");
+}
+
+
+/** @brief OpenCL kernel for filling A_2 in the decomposition A = A_2 * G_1, with G_1 containing at most 32 nonzeros per row
+  *
+  * Needed for the RMerge split stage.
+  **/
+template<typename StringT>
+void generate_compressed_matrix_compressed_matrix_prod_A2(StringT & source, std::string const & numeric_string)
+{
+  source.append("__kernel void spgemm_A2( \n");
+  source.append("  __global unsigned int *A2_row_indices, \n");
+  source.append("  __global unsigned int *A2_col_indices, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" *A2_elements, \n");
+  source.append("  unsigned int A2_size1, \n");
+  source.append("  __global const unsigned int *new_row_buffer) \n");
+  source.append("{ \n");
+  source.append("  for (unsigned int i = get_global_id(0); i < A2_size1; i += get_global_size(0)) {\n");
+  source.append("    unsigned int index_start = new_row_buffer[i]; \n");
+  source.append("    unsigned int index_stop  = new_row_buffer[i+1]; \n");
+
+  source.append("    A2_row_indices[i] = index_start; \n");
+
+  source.append("    for (unsigned int j = index_start; j < index_stop; ++j) { \n");
+  source.append("      A2_col_indices[j] = j; \n");
+  source.append("      A2_elements[j] = 1; \n");
+  source.append("    } \n");
+
+  source.append("    if (get_global_id(0) == 0) \n");
+  source.append("      A2_row_indices[A2_size1] = new_row_buffer[A2_size1]; \n");
+  source.append("  } \n");
+  source.append("} \n");
+}
+
+/** @brief OpenCL kernel for filling G_1 in the decomposition A = A_2 * G_1, with G_1 containing at most 32 nonzeros per row
+  *
+  * Needed for the RMerge split stage.
+  **/
+template<typename StringT>
+void generate_compressed_matrix_compressed_matrix_prod_G1(StringT & source, std::string const & numeric_string)
+{
+  source.append("__kernel void spgemm_G1( \n");
+  source.append("  __global unsigned int *G1_row_indices, \n");
+  source.append("  __global unsigned int *G1_col_indices, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" *G1_elements, \n");
+  source.append("  unsigned int G1_size1, \n");
+  source.append("  __global const unsigned int *A_row_indices, \n");
+  source.append("  __global const unsigned int *A_col_indices, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" *A_elements, \n");
+  source.append("  unsigned int A_size1, \n");
+  source.append("  unsigned int A_nnz, \n");
+  source.append("  unsigned int max_per_row, \n");
+  source.append("  __global const unsigned int *new_row_buffer) \n");
+  source.append("{ \n");
+
+  // Part 1: Copy column indices and entries:
+  source.append("  for (unsigned int i = get_global_id(0); i < A_nnz; i += get_global_size(0)) {\n");
+  source.append("    G1_col_indices[i] = A_col_indices[i]; \n");
+  source.append("    G1_elements[i]    = A_elements[i]; \n");
+  source.append("  } \n");
+
+  // Part 2: Derive new row indices:
+  source.append("  for (unsigned int i = get_global_id(0); i < A_size1; i += get_global_size(0)) {\n");
+  source.append("    unsigned int old_start = A_row_indices[i]; \n");
+  source.append("    unsigned int new_start = new_row_buffer[i]; \n");
+  source.append("    unsigned int row_chunks = new_row_buffer[i+1] - new_start; \n");
+
+  source.append("    for (unsigned int j=0; j<row_chunks; ++j) \n");
+  source.append("      G1_row_indices[new_start + j] = old_start + j * max_per_row; \n");
+  source.append("  } \n");
+
+  // write last entry in row_buffer with thread 0:
+  source.append("  if (get_global_id(0) == 0) \n");
+  source.append("    G1_row_indices[G1_size1] = A_row_indices[A_size1]; \n");
+  source.append("} \n");
+}
+
+
+
+/** @brief OpenCL kernel for the second stage of sparse matrix-matrix multiplication.
+  *
+  * Computes the exact sparsity pattern of A*B.
+  * Result array C_row_indices contains number of nonzeros in each row.
+  **/
+template<typename StringT>
+void generate_compressed_matrix_compressed_matrix_prod_2(StringT & source)
+{
+  source.append("__attribute__((reqd_work_group_size(32, 1, 1))) \n");
+  source.append("__kernel void spgemm_stage2( \n");
+  source.append("  __global const unsigned int * A_row_indices, \n");
+  source.append("  __global const unsigned int * A_col_indices, \n");
+  source.append("  unsigned int A_size1, \n");
+  source.append("  __global const unsigned int * B_row_indices, \n");
+  source.append("  __global const unsigned int * B_col_indices, \n");
+  source.append("  unsigned int B_size2, \n");
+  source.append("  __global unsigned int * C_row_indices) \n");
+  source.append("{ \n");
+  source.append("  unsigned int work_per_group = max((uint) ((A_size1 - 1) / get_num_groups(0) + 1), (uint) 1); \n");
+  source.append("  unsigned int row_C_start = get_group_id(0) * work_per_group; \n");
+  source.append("  unsigned int row_C_stop  = min( (uint) ((get_group_id(0) + 1) * work_per_group), (uint) A_size1); \n");
+  source.append("  __local unsigned int shared_front[32]; \n");
+
+  source.append("  for (unsigned int row_C = row_C_start; row_C < row_C_stop; ++row_C) \n");
+  source.append("  { \n");
+  source.append("    unsigned int row_A_start = A_row_indices[row_C]; \n");
+  source.append("    unsigned int row_A_end   = A_row_indices[row_C+1]; \n");
+
+  source.append("    unsigned int my_row_B = row_A_start + get_local_id(0); \n");
+  source.append("    unsigned int row_B_index = (my_row_B < row_A_end) ? A_col_indices[my_row_B] : 0; \n");
+  source.append("    unsigned int row_B_start = (my_row_B < row_A_end) ? B_row_indices[row_B_index] : 0; \n");
+  source.append("    unsigned int row_B_end   = (my_row_B < row_A_end) ? B_row_indices[row_B_index + 1] : 0; \n");
+
+  source.append("    unsigned int num_nnz = 0; \n");
+  source.append("    if (row_A_end - row_A_start > 1) { \n"); // zero or no row can be processed faster
+
+  source.append("      unsigned int current_front_index = (row_B_start < row_B_end) ? B_col_indices[row_B_start] : B_size2; \n");
+  source.append("      while (1) { \n");
+
+  // determine minimum index via reduction:
+  source.append("        shared_front[get_local_id(0)] = current_front_index; \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 16) shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 16]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 8)  shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 8]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 4)  shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 4]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 2)  shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 2]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 1)  shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 1]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  source.append("        if (shared_front[0] == B_size2) break; \n");
+
+  // update front:
+  source.append("        if (current_front_index == shared_front[0]) { \n");
+  source.append("          ++row_B_start; \n");
+  source.append("          current_front_index = (row_B_start < row_B_end) ? B_col_indices[row_B_start] : B_size2; \n");
+  source.append("        } \n");
+
+  source.append("        ++num_nnz;  \n");
+  source.append("      }  \n");
+  source.append("    } else { num_nnz = row_B_end - row_B_start; }\n");
+
+  // write number of entries found:
+  source.append("    if (get_local_id(0) == 0) \n");
+  source.append("      C_row_indices[row_C] = num_nnz; \n");
+
+  source.append("  } \n");
+
+  source.append("} \n");
+
+}
+
+
+/** @brief OpenCL kernel for the third stage of sparse matrix-matrix multiplication.
+  *
+  * Computes A*B into C with known sparsity pattern (obtained from stages 1 and 2).
+  **/
+template<typename StringT>
+void generate_compressed_matrix_compressed_matrix_prod_3(StringT & source, std::string const & numeric_string)
+{
+  source.append("__attribute__((reqd_work_group_size(32, 1, 1))) \n");
+  source.append("__kernel void spgemm_stage3( \n");
+  source.append("  __global const unsigned int * A_row_indices, \n");
+  source.append("  __global const unsigned int * A_col_indices, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * A_elements, \n");
+  source.append("  unsigned int A_size1, \n");
+  source.append("  __global const unsigned int * B_row_indices, \n");
+  source.append("  __global const unsigned int * B_col_indices, \n");
+  source.append("  __global const "); source.append(numeric_string); source.append(" * B_elements, \n");
+  source.append("  unsigned int B_size2, \n");
+  source.append("  __global unsigned int * C_row_indices, \n");
+  source.append("  __global unsigned int * C_col_indices, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * C_elements) \n");
+  source.append("{ \n");
+  source.append("  unsigned int work_per_group = max((uint) ((A_size1 - 1) / get_num_groups(0) + 1), (uint) 1); \n");
+  source.append("  unsigned int row_C_start = get_group_id(0) * work_per_group; \n");
+  source.append("  unsigned int row_C_stop  = min( (uint) ((get_group_id(0) + 1) * work_per_group), (uint) A_size1); \n");
+  source.append("  __local unsigned int shared_front[32]; \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" shared_front_values[32]; \n");
+
+  source.append("  for (unsigned int row_C = row_C_start; row_C < row_C_stop; ++row_C) \n");
+  source.append("  { \n");
+  source.append("    unsigned int row_A_start = A_row_indices[row_C]; \n");
+  source.append("    unsigned int row_A_end   = A_row_indices[row_C+1]; \n");
+
+  source.append("    unsigned int my_row_B = row_A_start + ((row_A_end - row_A_start > 1) ? get_local_id(0) : 0); \n"); // single row is a special case
+  source.append("    unsigned int row_B_index = (my_row_B < row_A_end) ? A_col_indices[my_row_B]        : 0; \n");
+  source.append("    unsigned int row_B_start = (my_row_B < row_A_end) ? B_row_indices[row_B_index]     : 0; \n");
+  source.append("    unsigned int row_B_end   = (my_row_B < row_A_end) ? B_row_indices[row_B_index + 1] : 0; \n");
+
+  source.append("    "); source.append(numeric_string); source.append(" val_A = (my_row_B < row_A_end) ? A_elements[my_row_B] : 0; \n");
+  source.append("    unsigned int index_in_C = C_row_indices[row_C]; \n");
+
+  source.append("    if (row_A_end - row_A_start > 1) { \n"); // zero or no row can be processed faster
+
+  source.append("      unsigned int current_front_index = (row_B_start < row_B_end) ? B_col_indices[row_B_start] : B_size2; \n");
+  source.append("      "); source.append(numeric_string); source.append(" current_front_value = (row_B_start < row_B_end) ? B_elements[row_B_start]    : 0; \n");
+
+  source.append("      unsigned int index_buffer = 0; \n");
+  source.append("      "); source.append(numeric_string); source.append(" value_buffer = 0; \n");
+  source.append("      unsigned int buffer_size = 0; \n");
+
+  source.append("      while (1) { \n");
+
+  // determine minimum index via reduction:
+  source.append("        shared_front[get_local_id(0)] = current_front_index; \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 16) shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 16]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 8)  shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 8]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 4)  shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 4]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 2)  shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 2]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 1)  shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 1]); \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  source.append("        if (shared_front[0] == B_size2) break; \n");
+
+  // compute output value via reduction:
+  source.append("        shared_front_values[get_local_id(0)] = (current_front_index == shared_front[0]) ? val_A * current_front_value : 0; \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 16) shared_front_values[get_local_id(0)] += shared_front_values[get_local_id(0) + 16]; \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 8)  shared_front_values[get_local_id(0)] += shared_front_values[get_local_id(0) + 8]; \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 4)  shared_front_values[get_local_id(0)] += shared_front_values[get_local_id(0) + 4]; \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 2)  shared_front_values[get_local_id(0)] += shared_front_values[get_local_id(0) + 2]; \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("        if (get_local_id(0) < 1)  shared_front_values[get_local_id(0)] += shared_front_values[get_local_id(0) + 1]; \n");
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  // update front:
+  source.append("        if (current_front_index == shared_front[0]) { \n");
+  source.append("          ++row_B_start; \n");
+  source.append("          current_front_index = (row_B_start < row_B_end) ? B_col_indices[row_B_start] : B_size2; \n");
+  source.append("          current_front_value = (row_B_start < row_B_end) ? B_elements[row_B_start]    : 0; \n");
+  source.append("        } \n");
+
+  // write current front to register buffer:
+  source.append("        index_buffer = (get_local_id(0) == buffer_size) ? shared_front[0]        : index_buffer;  \n");
+  source.append("        value_buffer = (get_local_id(0) == buffer_size) ? shared_front_values[0] : value_buffer;  \n");
+  source.append("        ++buffer_size;  \n");
+
+  // flush register buffer via a coalesced write once full:
+  source.append("        if (buffer_size == get_local_size(0)) {  \n");
+  source.append("          C_col_indices[index_in_C + get_local_id(0)] = index_buffer; \n");
+  source.append("          C_elements[index_in_C + get_local_id(0)]    = value_buffer; \n");
+  source.append("          buffer_size = 0; \n");
+  source.append("          index_in_C += get_local_size(0); \n");
+  source.append("        } \n");
+
+  source.append("      }  \n");
+
+  // write remaining entries in register buffer:
+  source.append("      if (get_local_id(0) < buffer_size) {  \n");
+  source.append("        C_col_indices[index_in_C + get_local_id(0)] = index_buffer; \n");
+  source.append("        C_elements[index_in_C + get_local_id(0)]    = value_buffer; \n");
+  source.append("      } \n");
+
+  // copy to C in coalesced manner:
+  source.append("    } else { \n");
+  source.append("      for (unsigned int i = row_B_start + get_local_id(0); i < row_B_end; i += get_local_size(0)) { \n");
+  source.append("        C_col_indices[index_in_C + get_local_id(0)] = B_col_indices[i]; \n");
+  source.append("        C_elements[index_in_C + get_local_id(0)]    = val_A * B_elements[i]; \n");
+  source.append("        index_in_C += get_local_size(0); \n");
+  source.append("      } \n");
+  source.append("    } \n");
+
+  source.append("  } \n");
+
+  source.append("} \n");
+
+}
+
+
+template<typename StringT>
+void generate_compressed_matrix_compressed_matrix_prod(StringT & source, std::string const & numeric_string)
+{
+  generate_compressed_matrix_compressed_matrix_prod_1(source);
+  generate_compressed_matrix_compressed_matrix_prod_decompose_1(source);
+  generate_compressed_matrix_compressed_matrix_prod_A2(source, numeric_string);
+  generate_compressed_matrix_compressed_matrix_prod_G1(source, numeric_string);
+  generate_compressed_matrix_compressed_matrix_prod_2(source);
+  generate_compressed_matrix_compressed_matrix_prod_3(source, numeric_string);
+}
+
 //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
 // main kernel class
@@ -1148,6 +1496,7 @@ struct compressed_matrix
       generate_compressed_matrix_vec_mul4(source, numeric_string);
       generate_compressed_matrix_vec_mul8(source, numeric_string);
       generate_compressed_matrix_vec_mul_cpu(source, numeric_string);
+      generate_compressed_matrix_compressed_matrix_prod(source, numeric_string);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO
