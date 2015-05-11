@@ -60,30 +60,30 @@ void generate_fdm_laplace(MatrixType & A, vcl_size_t points_x, vcl_size_t points
     {
       vcl_size_t row = i + j * points_x;
 
-      A(row, row) = 4.0;
+      A(row, row) = ScalarType(4.0);
 
       if (i > 0)
       {
         vcl_size_t col = (i-1) + j * points_x;
-        A(row, col) = -1.0;
+        A(row, col) = ScalarType(-1.0);
       }
 
       if (j > 0)
       {
         vcl_size_t col = i + (j-1) * points_x;
-        A(row, col) = -1.0;
+        A(row, col) = ScalarType(-1.0);
       }
 
       if (i < points_x-1)
       {
         vcl_size_t col = (i+1) + j * points_x;
-        A(row, col) = -1.0;
+        A(row, col) = ScalarType(-1.0);
       }
 
       if (j < points_y-1)
       {
         vcl_size_t col = i + (j+1) * points_x;
-        A(row, col) = -1.0;
+        A(row, col) = ScalarType(-1.0);
       }
     }
   }
