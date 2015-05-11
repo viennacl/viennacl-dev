@@ -431,15 +431,9 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   unsigned int * C_col_buffer = detail::extract_raw_pointer<unsigned int>(C.handle2());
 
 #ifdef VIENNACL_WITH_OPENMP
-<<<<<<< HEAD
   #pragma omp parallel for schedule(dynamic, A.size1() / (block_factor * max_threads) + 1)
 #endif
   for (long i = 0; i < long(A.size1()); ++i)
-=======
-  #pragma omp parallel for
-#endif
-  for (std::size_t i=0; i<A.size1(); ++i)
->>>>>>> compressed_matrix: Added OpenMP pragmas to SpMM
   {
     unsigned int row_start_A  = A_row_buffer[i];
     unsigned int row_end_A    = A_row_buffer[i+1];
