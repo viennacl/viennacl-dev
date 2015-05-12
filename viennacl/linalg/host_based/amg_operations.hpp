@@ -257,7 +257,7 @@ struct amg_id_influence
   unsigned int  influences;
 };
 
-bool operator>(amg_id_influence const & a, amg_id_influence const & b)
+inline bool operator>(amg_id_influence const & a, amg_id_influence const & b)
 {
   if (a.influences > b.influences)
     return true;
