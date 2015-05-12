@@ -44,6 +44,7 @@
 #define VIENNACL_AMG_COARSE_RS0     3
 #define VIENNACL_AMG_COARSE_RS3     4
 #define VIENNACL_AMG_COARSE_AG      5
+#define VIENNACL_AMG_COARSE_AG_MIS2 6
 
 #define VIENNACL_AMG_INTERPOL_DIRECT  1
 #define VIENNACL_AMG_INTERPOL_CLASSIC 2
@@ -78,7 +79,7 @@ public:
   */
   amg_tag(unsigned int coarse = 1,
           unsigned int interpol = 1,
-          double threshold = 0.25,
+          double threshold = 0.1,
           double interpolweight = 0.2,
           double jacobiweight = 1,
           unsigned int presmooth = 1,
@@ -170,104 +171,25 @@ private:
 
 
 
-class amg_pointlist
+struct amg_level_context
 {
-public:
-  typedef const unsigned int * influence_const_iterator;
-
-  amg_pointlist(std::size_t num_points = 0, std::size_t max_influences = 0)
-    : influences_(num_points * max_influences, static_cast<unsigned int>(num_points)),
-      influence_count_(num_points),
-      influence_extra_(num_points),
-      max_influences_(max_influences),
-      point_types_(num_points),
-      coarse_id_(num_points),
-      num_coarse_(0) {}
-
-  void resize(std::size_t num_points, std::size_t max_influences)
+  void resize(vcl_size_t num_points, vcl_size_t max_nnz)
   {
-    influences_.resize(num_points * max_influences, static_cast<unsigned int>(num_points));
-    influence_count_.resize(num_points);
-    influence_extra_.resize(num_points);
-    max_influences_ = max_influences;
-    point_types_.resize(num_points);
-    coarse_id_.resize(num_points);
+    influence_jumper_.resize(num_points + 1, false);
+    influence_ids_.resize(max_nnz, false);
+    influence_values_.resize(num_points, false);
+    point_types_.resize(num_points, false);
+    coarse_id_.resize(num_points, false);
   }
 
-  void add_influence(unsigned int point, unsigned int influenced_point)
+  void switch_context(viennacl::context ctx)
   {
-    if (influence_count_.at(point) < max_influences_) // found empty slot in list of influences, so add influence
-    {
-      influences_.at(point * max_influences_ + influence_count_.at(point)) = influenced_point;
-      ++influence_count_.at(point);
-      //std::cout << "New influence count for point " << point << ": " << influence_count_.at(point) << std::endl;
-    }
-    else
-    {
-      // this is only reached if the array of influences is too short
-      std::stringstream ss;
-      ss << "Fatal: Influence array not large enough for point " << point << " when inserting influence from " << influenced_point << std::endl;
-      throw std::runtime_error(ss.str());
-    }
+    influence_jumper_.switch_memory_context(ctx);
+    influence_ids_.switch_memory_context(ctx);
+    influence_values_.switch_memory_context(ctx);
+    point_types_.switch_memory_context(ctx);
+    coarse_id_.switch_memory_context(ctx);
   }
-
-  influence_const_iterator influence_cbegin(unsigned int point) const { return &(influences_.at(point * max_influences_     )); }
-  influence_const_iterator influence_cend  (unsigned int point) const { return &(influences_.at(point * max_influences_  + influence_count_.at(point))); }
-
-  void augment_influence(unsigned int point) { influence_extra_.at(point) += 1; }
-  std::size_t influence_count(unsigned int point) const { return influence_count_.at(point) + influence_extra_.at(point); }
-
-  /** @brief Returns the number of points managed by the pointlist */
-  std::size_t size() const { return influence_count_.size(); }
-
-  bool is_undecided(unsigned int point) const { return point_types_.at(point) == POINT_TYPE_UNDECIDED; }
-  bool is_coarse   (unsigned int point) const { return point_types_.at(point) == POINT_TYPE_COARSE; }
-  bool is_fine     (unsigned int point) const { return point_types_.at(point) == POINT_TYPE_FINE; }
-
-  void set_coarse(unsigned int point) { point_types_.at(point) = POINT_TYPE_COARSE; }
-  void set_fine  (unsigned int point) { point_types_.at(point) = POINT_TYPE_FINE; }
-
-  std::vector<char> const & point_types() const { return point_types_; }
-
-  void enumerate_coarse_points()
-  {
-    num_coarse_ = 0;
-    //std::cout << "Assigning coarse indices to array starting at " << &(coarse_id_.at(0)) << std::endl;
-    for (std::size_t i=0; i<point_types_.size(); ++i)
-    {
-      if (is_coarse(i))
-      {
-        //std::cout << "Assigning coarse grid ID " << num_coarse_ << " to point " << i << std::endl;
-        coarse_id_.at(i) = num_coarse_++;
-      }
-    }
-  }
-
-  std::size_t num_coarse_points() const { return num_coarse_; }
-  unsigned int get_coarse_index(unsigned int point) const { return coarse_id_.at(point); }
-
-  unsigned int get_coarse_aggregate(unsigned int point) const { return coarse_id_.at(point); }
-  void set_coarse_aggregate(unsigned int point, unsigned int coarse_id) { coarse_id_.at(point) = coarse_id; }
-
-  // Slow. Use for debugging only
-  std::size_t num_fine_points() const
-  {
-    std::size_t num_fine = 0;
-    for (std::size_t i=0; i<point_types_.size(); ++i)
-    {
-      if (is_fine(i))
-        num_fine++;
-    }
-
-    return num_fine;
-  }
-
-private:
-
-  std::vector<unsigned int> influences_;
-  std::vector<std::size_t> influence_count_; // number of influences for each point
-  std::vector<std::size_t> influence_extra_; // extra influence weight during coarsening procedure
-  std::size_t max_influences_;
 
   enum
   {
@@ -275,53 +197,15 @@ private:
     POINT_TYPE_COARSE,
     POINT_TYPE_FINE
   } amg_point_types;
-  std::vector<char> point_types_;  // Note: Using char here because type for enum might be a larger type
 
-  std::vector<unsigned int> coarse_id_;
+  viennacl::vector<unsigned int> influence_jumper_; // similar to row_buffer for CSR matrices
+  viennacl::vector<unsigned int> influence_ids_;    // IDs of influencing points
+  viennacl::vector<unsigned int> influence_values_; // Influence measure for each point
+  viennacl::vector<char> point_types_;              // 0: undecided, 1: coarse point, 2: fine point. Using char here because type for enum might be a larger type
+  viennacl::vector<unsigned int> coarse_id_;        // coarse ID used on the next level. Only valid for coarse points. Fine points may (ab)use their entry for something else.
   unsigned int num_coarse_;
 };
 
-
-
-
-
-/** @brief Sparse matrix product. Calculates RES = A*B.
-  * @param A    Left Matrix
-  * @param B    Right Matrix
-  * @param RES    Result Matrix
-  */
-template<typename SparseMatrixT>
-void amg_mat_prod (SparseMatrixT & A, SparseMatrixT & B, SparseMatrixT & RES)
-{
-  typedef typename SparseMatrixT::value_type ScalarType;
-  typedef typename SparseMatrixT::iterator1 InternalRowIterator;
-  typedef typename SparseMatrixT::iterator2 InternalColIterator;
-
-  RES = SparseMatrixT(static_cast<unsigned int>(A.size1()), static_cast<unsigned int>(B.size2()));
-  RES.clear();
-
-#ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for
-#endif
-  for (long x=0; x<static_cast<long>(A.size1()); ++x)
-  {
-    InternalRowIterator row_iter = A.begin1();
-    row_iter += vcl_size_t(x);
-    for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
-    {
-      unsigned int y = static_cast<unsigned int>(col_iter.index2());
-      InternalRowIterator row_iter2 = B.begin1();
-      row_iter2 += vcl_size_t(y);
-
-      for (InternalColIterator col_iter2 = row_iter2.begin(); col_iter2 != row_iter2.end(); ++col_iter2)
-      {
-        unsigned int z = static_cast<unsigned int>(col_iter2.index2());
-        ScalarType prod = *col_iter * *col_iter2;
-        RES.add(static_cast<unsigned int>(x),static_cast<unsigned int>(z),prod);
-      }
-    }
-  }
-}
 
 
 /** @brief Sparse Galerkin product: Calculates A_coarse = trans(P)*A_fine*P
