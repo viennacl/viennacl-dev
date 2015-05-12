@@ -549,7 +549,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
       {
         if (i == max_index) // make this a MIS node
           point_types_ptr[i] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE;
-        else if (max_state == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
+        else if (max_state == 2) // mind the mapping of viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE above!
           point_types_ptr[i] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE;
         else
 #ifdef VIENNACL_WITH_OPENMP
@@ -563,7 +563,17 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
     num_undecided = 0;
     for (std::size_t i=0; i<thread_buffer.size(); ++i)
       num_undecided += thread_buffer[i];
-  }
+  } // while
+
+  // consistency with sequential MIS: reset state for non-coarse points, so that coarse indices are correctly picked up later
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for
+#endif
+    for (unsigned int i = 0; i<static_cast<unsigned int>(A.size1()); ++i)
+    {
+      if (point_types_ptr[i] != viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
+        point_types_ptr[i] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED;
+    }
 }
 
 
@@ -611,6 +621,9 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
       {
         unsigned int influenced_point_id = influences_id_ptr[j];
         coarse_id_ptr[influenced_point_id] = coarse_index; // Set aggregate index for fine point
+
+        if (influenced_point_id != i) // Note: Any write races between threads are harmless here
+          point_types_ptr[influenced_point_id] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE;
       }
     }
   }
@@ -650,8 +663,6 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
   for (unsigned int i = 0; i<static_cast<unsigned int>(A.size1()); ++i)
     if (point_types_ptr[i] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
       point_types_ptr[i] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE;
-
-
 
 }
 

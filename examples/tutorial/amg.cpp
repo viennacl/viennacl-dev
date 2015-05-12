@@ -253,7 +253,7 @@ int main(int argc, char **argv)
   /**
   * Generate the setup for an AMG preconditioner which as aggregation-based (AG)
   **/
-  viennacl::linalg::amg_tag amg_tag_host(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
+  viennacl::linalg::amg_tag amg_tag_host(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
 #ifdef VIENNACL_WITH_OPENCL
   amg_tag_host.set_setup_context(host_ctx);
   amg_tag_host.set_target_context(target_ctx);
