@@ -861,6 +861,99 @@ namespace detail
 }
 
 
+////////////// AMG-related:
+
+template<typename NumericT, unsigned int AlignmentV>
+void assign_to_dense(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
+                     viennacl::matrix_base<NumericT> & B)
+{
+  throw std::runtime_error("assign_to_dense() not implemented!");
+}
+
+template<typename NumericT>
+__global__ void compressed_matrix_smooth_jacobi_kernel(
+          const unsigned int * row_indices,
+          const unsigned int * column_indices,
+          const NumericT * elements,
+          NumericT weight,
+          const NumericT * x_old,
+          NumericT * x_new,
+          const NumericT * rhs,
+          unsigned int size)
+{
+  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                    row  < size;
+                    row += gridDim.x * blockDim.x)
+  {
+    NumericT sum = NumericT(0);
+    NumericT diag = NumericT(1);
+    unsigned int row_end = row_indices[row+1];
+    for (unsigned int j = row_indices[row]; j < row_end; ++j)
+    {
+      unsigned int col = column_indices[j];
+      if (col == row)
+        diag = elements[j];
+      else
+        sum += elements[j] * x_old[col];
+    }
+    x_new[row] = weight * (rhs[row] - sum) / diag + (NumericT(1) - weight) * x_old[row];
+  }
+}
+
+
+
+
+/** @brief Jacobi Smoother (OpenCL version)
+* @param level       Coarse level to which smoother is applied to
+* @param iterations  Number of smoother iterations
+* @param x           The vector smoothing is applied to
+* @param x_backup    Vector holding the same values as x (but diffferent from x)
+* @param rhs_smooth  The right hand side of the equation for the smoother
+*/
+template<typename NumericT>
+void smooth_jacobi(unsigned int iterations,
+                   compressed_matrix<NumericT> const & A,
+                   vector<NumericT> & x,
+                   vector<NumericT> & x_backup,
+                   vector<NumericT> const & rhs_smooth,
+                   NumericT weight)
+{
+  for (unsigned int i=0; i<iterations; ++i)
+  {
+    x_backup = x;
+
+    compressed_matrix_smooth_jacobi_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                         detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                         detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                                         static_cast<NumericT>(weight),
+                                                         detail::cuda_arg<NumericT>(x_backup),
+                                                         detail::cuda_arg<NumericT>(x),
+                                                         detail::cuda_arg<NumericT>(rhs_smooth),
+                                                         static_cast<unsigned int>(rhs_smooth.size())
+                                                        );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_smooth_jacobi_kernel");
+  }
+}
+
+
+template<typename NumericT>
+std::size_t amg_agg(compressed_matrix<NumericT> const & A,
+                    viennacl::vector<unsigned int> & coarse_agg_ids,
+                    viennacl::vector<char> & point_type)
+{
+  throw std::runtime_error("amg_agg() not implemented!");
+}
+
+template<typename NumericT>
+void amg_agg_interpol(compressed_matrix<NumericT> const & A,
+                      compressed_matrix<NumericT> & P,
+                      std::size_t num_coarse,
+                      viennacl::vector<unsigned int> const & coarse_agg_ids)
+{
+  throw std::runtime_error("amg_agg_interpol() not implemented for CUDA!");
+}
+
+
 //
 // Compressed Compressed Matrix
 //

@@ -138,7 +138,7 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
   //
   if (tag.get_coarse() == VIENNACL_AMG_COARSE_AG_MIS2) amg_coarse_ag_stage1_mis2(A, amg_context, tag);
 
-  viennacl::linalg::opencl::amg::enumerate_coarse_points(amg_context);
+  viennacl::linalg::cuda::amg::enumerate_coarse_points(amg_context);
 
   //
   // Stage 2: Propagate coarse aggregate indices to neighbors:

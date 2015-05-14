@@ -405,7 +405,12 @@ namespace viennacl
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::amg_transpose(A, B);
+          A.switch_memory_context(cpu_ctx);
+          B.switch_memory_context(cpu_ctx);
+          viennacl::linalg::host_based::amg_transpose(A, B);
+          A.switch_memory_context(orig_ctx);
+          B.switch_memory_context(orig_ctx);
+          //viennacl::linalg::cuda::amg_transpose(A, B);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:

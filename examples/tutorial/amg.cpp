@@ -256,41 +256,22 @@ int main(int argc, char **argv)
   //run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS3 COARSENING, DIRECT INTERPOLATION", amg_tag);
 
   /**
-  * Generate the setup for an AMG preconditioner which as aggregation-based (AG)
+  * Generate the setup for an AMG preconditioner which is aggregation-based (AG)
   **/
-  viennacl::linalg::amg_tag amg_tag_host(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
-#ifdef VIENNACL_WITH_OPENCL
-  amg_tag_host.set_setup_context(host_ctx);
-  amg_tag_host.set_target_context(target_ctx);
-  amg_tag_host.save_coarse_information(true);
-#endif
-  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION (host)", amg_tag_host);
+  viennacl::linalg::amg_tag amg_tag_agg(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION", amg_tag_agg);
 
-#ifdef VIENNACL_WITH_OPENCL
-  amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
-  amg_tag.set_setup_context(target_ctx);
-  amg_tag.set_target_context(target_ctx);
-  for (std::size_t i=0; i < amg_tag_host.get_coarselevels(); ++i)
-  {
-    if (amg_tag_host.get_coarse_information(i).size() > 0)
-    {
-      std::vector<char> tmp(amg_tag_host.get_coarse_information(i).size());
-      viennacl::copy(amg_tag_host.get_coarse_information(i), tmp);
-      viennacl::copy(tmp, amg_tag.get_coarse_information(i));
-    }
-    //amg_tag.set_coarse_information(i, amg_tag_host.get_coarse_information(i));
-  }
-  amg_tag.set_coarselevels(amg_tag_host.get_coarselevels());
-  amg_tag.use_coarse_information(true);
-  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION (device)", amg_tag);
-#endif
+  viennacl::linalg::amg_tag amg_tag_agg_pmis(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), AG INTERPOLATION", amg_tag_agg_pmis);
 
   /**
   * Generate the setup for an AMG preconditioner with smoothed aggregation (SA)
   **/
-  //amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 3, 3, 0);
-  //run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, SA INTERPOLATION",amg_tag);
+  viennacl::linalg::amg_tag amg_tag_sa(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 3, 3, 0);
+  run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, SA INTERPOLATION", amg_tag_sa);
 
+  viennacl::linalg::amg_tag amg_tag_sa_pmis(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 3, 3, 0);
+  run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
 
   /**
   *  That's it.
