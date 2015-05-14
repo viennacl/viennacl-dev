@@ -441,8 +441,11 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
 
 
   unsigned int num_undecided = static_cast<unsigned int>(A.size1());
+  unsigned int pmis_iters = 0;
   while (num_undecided > 0)
   {
+    ++pmis_iters;
+
     //
     // init temporary work data:
     //
@@ -564,6 +567,8 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
     for (std::size_t i=0; i<thread_buffer.size(); ++i)
       num_undecided += thread_buffer[i];
   } // while
+
+  std::cout << " Number of PMIS iterations: " << pmis_iters << std::endl;
 
   // consistency with sequential MIS: reset state for non-coarse points, so that coarse indices are correctly picked up later
 #ifdef VIENNACL_WITH_OPENMP

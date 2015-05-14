@@ -63,6 +63,7 @@ void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType co
   viennacl::tools::timer timer;
   timer.start();
   result = viennacl::linalg::solve(matrix, rhs, solver, precond);
+  viennacl::backend::finish();
   std::cout << "  > Solver time: " << timer.get() << std::endl;
   residual -= viennacl::linalg::prod(matrix, result);
   std::cout << "  > Relative residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(rhs) << std::endl;
@@ -93,7 +94,11 @@ void run_amg(viennacl::linalg::cg_tag & cg_solver,
   viennacl::linalg::amg_precond<viennacl::compressed_matrix<ScalarType> > vcl_amg = viennacl::linalg::amg_precond<viennacl::compressed_matrix<ScalarType> > (vcl_compressed_matrix, amg_tag);
   std::cout << " * Setup phase (ViennaCL types)..." << std::endl;
   vcl_amg.tag().set_coarselevels(coarselevels);
+  viennacl::tools::timer timer;
+  timer.start();
   vcl_amg.setup();
+  viennacl::backend::finish();
+  std::cout << "  > Setup time: " << timer.get() << std::endl;
 
   std::cout << " * CG solver (ViennaCL types)..." << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, vcl_amg);
