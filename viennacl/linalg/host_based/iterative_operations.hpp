@@ -78,6 +78,10 @@ namespace detail
     value_type inner_prod_ApAp = 0;
     value_type inner_prod_pAp = 0;
     value_type inner_prod_Ap_r0star = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+:inner_prod_ApAp,inner_prod_pAp,inner_prod_Ap_r0star)
+#endif
     for (long row = 0; row < static_cast<long>(A.size1()); ++row)
     {
       value_type dot_prod = 0;
@@ -384,6 +388,9 @@ void pipelined_cg_vector_update(vector_base<NumericT> & result,
   vcl_size_t size  = viennacl::traits::size(result);
 
   value_type inner_prod_r = 0;
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+:inner_prod_r)
+#endif
   for (long i = 0; i < static_cast<long>(size); ++i)
   {
     value_type value_p = data_p[static_cast<vcl_size_t>(i)];
