@@ -59,11 +59,15 @@ void amg_influence_trivial(compressed_matrix<NumericT> const & A,
   unsigned int *influences_id_ptr  = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
   unsigned int *influences_values_ptr  = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_values_.handle());
 
-  for (std::size_t i=0; i<=A.size1(); ++i)
-    influences_row_ptr[i] = A_row_buffer[i];
-
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
   for (std::size_t i=0; i<A.size1(); ++i)
-    influences_values_ptr[i] = influences_row_ptr[i+1] - influences_row_ptr[i];
+  {
+    influences_row_ptr[i] = A_row_buffer[i];
+    influences_values_ptr[i] = A_row_buffer[i+1] - A_row_buffer[i];
+  }
+  influences_row_ptr[A.size1()] = A_row_buffer[A.size1()];
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
