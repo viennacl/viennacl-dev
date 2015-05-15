@@ -273,6 +273,19 @@ int main(int argc, char **argv)
   viennacl::linalg::amg_tag amg_tag_sa_pmis(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 2, 2, 0);
   run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
 
+  std::cout << std::endl;
+  std::cout << " -------------- Benchmark runs -------------- " << std::endl;
+  std::cout << std::endl;
+
+  amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_ONEPASS, VIENNACL_AMG_INTERPOL_DIRECT,0.25, 0.2, 0.67, 1, 1, 0);
+  amg_tag.set_setup_context(host_ctx);
+  amg_tag.set_target_context(target_ctx);
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag);
+
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), AG INTERPOLATION", amg_tag_agg_pmis);
+
+  run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
+
   /**
   *  That's it.
   **/
