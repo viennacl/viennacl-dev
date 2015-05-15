@@ -9,5 +9,5 @@ g++ ../examples/tutorial/amg.cpp -I.. -DVIENNACL_WITH_OPENMP -fopenmp -O3 -DNDEB
 ./amg_opencl matrices/poisson2d_65025.mtx  > log/opencl-65025.txt
 ./amg_opencl matrices/poisson2d_261121.mtx > log/opencl-261121.txt
 ./amg_opencl matrices/poisson2d_1046529.mtx > log/opencl-1046529.txt
-
+./amg_opencl matrices/poisson2d_4190209.mtx > log/opencl-4190209.txt
 
