@@ -258,8 +258,8 @@ int main(int argc, char **argv)
   /**
   * Generate the setup for an AMG preconditioner which is aggregation-based (AG)
   **/
-  viennacl::linalg::amg_tag amg_tag_agg(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
-  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION", amg_tag_agg);
+  //viennacl::linalg::amg_tag amg_tag_agg(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
+  //run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, AG INTERPOLATION", amg_tag_agg);
 
   viennacl::linalg::amg_tag amg_tag_agg_pmis(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
   run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), AG INTERPOLATION", amg_tag_agg_pmis);

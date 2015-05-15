@@ -863,12 +863,46 @@ namespace detail
 
 ////////////// AMG-related:
 
+template<typename NumericT>
+__global__ void compressed_matrix_assign_to_dense(
+          const unsigned int * row_indices,
+          const unsigned int * column_indices,
+          const NumericT * elements,
+          NumericT *B,
+          unsigned int B_row_start,     unsigned int B_col_start,
+          unsigned int B_row_inc,       unsigned int B_col_inc,
+          unsigned int B_row_size,      unsigned int B_col_size,
+          unsigned int B_internal_rows, unsigned int B_internal_cols)
+{
+  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                    row  < B_row_size;
+                    row += gridDim.x * blockDim.x)
+  {
+    unsigned int row_end = row_indices[row+1];
+    for (unsigned int j = row_indices[row]; j<row_end; j++)
+      B[(B_row_start + row * B_row_inc) * B_internal_cols + B_col_start + column_indices[j] * B_col_inc] = elements[j];
+  }
+}
+
+
 template<typename NumericT, unsigned int AlignmentV>
 void assign_to_dense(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                      viennacl::matrix_base<NumericT> & B)
 {
-  throw std::runtime_error("assign_to_dense() not implemented!");
+  compressed_matrix_assign_to_dense<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                                  detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                                  detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                                  detail::cuda_arg<NumericT>(B),
+                                                  static_cast<unsigned int>(viennacl::traits::start1(B)),           static_cast<unsigned int>(viennacl::traits::start2(B)),
+                                                  static_cast<unsigned int>(viennacl::traits::stride1(B)),          static_cast<unsigned int>(viennacl::traits::stride2(B)),
+                                                  static_cast<unsigned int>(viennacl::traits::size1(B)),            static_cast<unsigned int>(viennacl::traits::size2(B)),
+                                                  static_cast<unsigned int>(viennacl::traits::internal_size1(B)),   static_cast<unsigned int>(viennacl::traits::internal_size2(B))
+                                                 );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_assign_to_dense");
 }
+
+
+
 
 template<typename NumericT>
 __global__ void compressed_matrix_smooth_jacobi_kernel(
@@ -935,23 +969,6 @@ void smooth_jacobi(unsigned int iterations,
   }
 }
 
-
-template<typename NumericT>
-std::size_t amg_agg(compressed_matrix<NumericT> const & A,
-                    viennacl::vector<unsigned int> & coarse_agg_ids,
-                    viennacl::vector<char> & point_type)
-{
-  throw std::runtime_error("amg_agg() not implemented!");
-}
-
-template<typename NumericT>
-void amg_agg_interpol(compressed_matrix<NumericT> const & A,
-                      compressed_matrix<NumericT> & P,
-                      std::size_t num_coarse,
-                      viennacl::vector<unsigned int> const & coarse_agg_ids)
-{
-  throw std::runtime_error("amg_agg_interpol() not implemented for CUDA!");
-}
 
 
 //
