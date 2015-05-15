@@ -817,7 +817,7 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
 }
 
 
-/** @brief AG (aggregation based) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)
+/** @brief AG (aggregation based) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_AG)
  *
  * @param A            Operator matrix
  * @param P            Prolongation matrix
@@ -855,6 +855,76 @@ void amg_interpol_ag(compressed_matrix<NumericT> const & A,
 }
 
 
+/** @brief Smoothed aggregation interpolation. Multi-Threaded! (VIENNACL_INTERPOL_SA)
+ *
+ * @param A            Operator matrix
+ * @param P            Prolongation matrix
+ * @param amg_context  AMG hierarchy datastructures
+ * @param tag          AMG configuration tag
+*/
+template<typename NumericT>
+void amg_interpol_sa(compressed_matrix<NumericT> const & A,
+                     compressed_matrix<NumericT> & P,
+                     viennacl::linalg::detail::amg::amg_level_context & amg_context,
+                     viennacl::linalg::detail::amg::amg_tag & tag)
+{
+  (void)tag;
+  viennacl::compressed_matrix<NumericT> P_tentative(A.size1(), amg_context.num_coarse_, A.size1(), viennacl::traits::context(A));
+
+  // form tentative operator:
+  amg_interpol_ag(A, P_tentative, amg_context, tag);
+
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
+  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+
+  viennacl::compressed_matrix<NumericT> Jacobi(A.size1(), A.size1(), A.nnz(), viennacl::traits::context(A));
+  unsigned int * Jacobi_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(Jacobi.handle1());
+  unsigned int * Jacobi_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(Jacobi.handle2());
+  NumericT     * Jacobi_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(Jacobi.handle());
+
+
+  // Build Jacobi matrix:
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (unsigned int row = 0; row<A.size1(); ++row)
+  {
+    unsigned int row_begin = A_row_buffer[row];
+    unsigned int row_end   = A_row_buffer[row+1];
+
+    Jacobi_row_buffer[row] = row_begin;
+
+    // Step 1: Extract diagonal:
+    NumericT diag = 0;
+    for (unsigned int j = row_begin; j < row_end; ++j)
+    {
+      if (A_col_buffer[j] == row)
+      {
+        diag = A_elements[j];
+        break;
+      }
+    }
+
+    // Step 2: Write entries:
+    for (unsigned int j = row_begin; j < row_end; ++j)
+    {
+      unsigned int col_index = A_col_buffer[j];
+      Jacobi_col_buffer[j] = col_index;
+
+      if (col_index == row)
+        Jacobi_elements[j] = NumericT(1) - NumericT(tag.get_interpolweight());
+      else
+        Jacobi_elements[j] = - NumericT(tag.get_interpolweight()) * A_elements[j] / diag;
+    }
+  }
+  Jacobi_row_buffer[A.size1()] = Jacobi.nnz(); // don't forget finalizer
+
+  P = viennacl::linalg::prod(Jacobi, P_tentative);
+
+  P.generate_row_block_information();
+}
+
 
 /** @brief Dispatcher for building the interpolation matrix
  *
@@ -874,7 +944,7 @@ void amg_interpol(MatrixT const & A,
   case VIENNACL_AMG_INTERPOL_DIRECT:  amg_interpol_direct (A, P, amg_context, tag); break;
   //case VIENNACL_AMG_INTERPOL_CLASSIC: amg_interpol_classic(level, A, P, pointvector, tag); break;
   case VIENNACL_AMG_INTERPOL_AG:      amg_interpol_ag     (A, P, amg_context, tag); break;
-  //case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (level, A, P, pointvector, tag); break;
+  case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (A, P, amg_context, tag); break;
   default: throw std::runtime_error("Not implemented yet!");
   }
 }

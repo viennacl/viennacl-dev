@@ -331,7 +331,47 @@ void amg_interpol_ag(compressed_matrix<NumericT> const & A,
   P.generate_row_block_information();
 }
 
+/** @brief Smoothed aggregation interpolation. (VIENNACL_INTERPOL_SA)
+ *
+ * @param A            Operator matrix
+ * @param P            Prolongation matrix
+ * @param amg_context  AMG hierarchy datastructures
+ * @param tag          AMG configuration tag
+*/
+template<typename NumericT>
+void amg_interpol_sa(compressed_matrix<NumericT> const & A,
+                     compressed_matrix<NumericT> & P,
+                     viennacl::linalg::detail::amg::amg_level_context & amg_context,
+                     viennacl::linalg::detail::amg::amg_tag & tag)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::amg<NumericT>::init(ctx);
 
+  (void)tag;
+  viennacl::compressed_matrix<NumericT> P_tentative(A.size1(), amg_context.num_coarse_, A.size1(), viennacl::traits::context(A));
+
+  // form tentative operator:
+  amg_interpol_ag(A, P_tentative, amg_context, tag);
+
+  viennacl::compressed_matrix<NumericT> Jacobi(A.size1(), A.size1(), A.nnz(), viennacl::traits::context(A));
+
+  viennacl::ocl::kernel & interpol_sa = ctx.get_kernel(viennacl::linalg::opencl::kernels::amg<NumericT>::program_name(), "amg_interpol_sa");
+  viennacl::ocl::enqueue(interpol_sa(A.handle1().opencl_handle(),
+                                     A.handle2().opencl_handle(),
+                                     A.handle().opencl_handle(),
+                                     cl_uint(A.size1()),
+                                     cl_uint(A.nnz()),
+                                     Jacobi.handle1().opencl_handle(),
+                                     Jacobi.handle2().opencl_handle(),
+                                     Jacobi.handle().opencl_handle(),
+                                     NumericT(tag.get_interpolweight())
+                                    )
+                         );
+
+  P = viennacl::linalg::prod(Jacobi, P_tentative);
+
+  P.generate_row_block_information();
+}
 
 /** @brief Dispatcher for building the interpolation matrix
  *
@@ -349,7 +389,7 @@ void amg_interpol(MatrixT const & A,
   switch (tag.get_interpol())
   {
   case VIENNACL_AMG_INTERPOL_AG:      amg_interpol_ag     (A, P, amg_context, tag); break;
-  //case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (level, A, P, pointvector, tag); break;
+  case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (A, P, amg_context, tag); break;
   default: throw std::runtime_error("Not implemented yet!");
   }
 }

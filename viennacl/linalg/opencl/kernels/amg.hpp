@@ -295,6 +295,49 @@ void generate_amg_interpol_ag(StringT & source, std::string const & numeric_stri
 
 }
 
+template<typename StringT>
+void generate_amg_interpol_sa(StringT & source, std::string const & numeric_string)
+{
+
+ source.append("__kernel void amg_interpol_sa( \n");
+ source.append(" __global unsigned int const *A_row_indices, \n");
+ source.append(" __global unsigned int const *A_col_indices, \n");
+ source.append(" __global "); source.append(numeric_string); source.append(" const *A_elements, \n");
+ source.append(" unsigned int A_size1, \n");
+ source.append(" unsigned int A_nnz, \n");
+ source.append(" __global unsigned int *Jacobi_row_indices, \n");
+ source.append(" __global unsigned int *Jacobi_col_indices, \n");
+ source.append(" __global "); source.append(numeric_string); source.append(" *Jacobi_elements, \n");
+ source.append(" "); source.append(numeric_string); source.append(" omega) { \n");
+
+ source.append("  for (unsigned int row = get_global_id(0); row < A_size1; row += get_global_size(0)) \n");
+ source.append("  { \n");
+ source.append("    unsigned int row_begin = A_row_indices[row]; \n");
+ source.append("    unsigned int row_end   = A_row_indices[row+1]; \n");
+
+ source.append("    Jacobi_row_indices[row] = row_begin; \n");
+
+ // Step 1: Extract diagonal:
+ source.append("    "); source.append(numeric_string); source.append(" diag = 0; \n");
+ source.append("    for (unsigned int j = row_begin; j < row_end; ++j) { \n");
+ source.append("      if (A_col_indices[j] == row) { \n");
+ source.append("        diag = A_elements[j]; \n");
+ source.append("        break; \n");
+ source.append("      } \n");
+ source.append("    } \n");
+
+ // Step 2: Write entries:
+ source.append("    for (unsigned int j = row_begin; j < row_end; ++j) { \n");
+ source.append("      unsigned int col_index = A_col_indices[j]; \n");
+ source.append("      Jacobi_col_indices[j] = col_index; \n");
+ source.append("      Jacobi_elements[j] = (col_index == row) ? (1 - omega) : (-omega * A_elements[j] / diag); \n");
+ source.append("    } \n");
+
+ source.append("  } \n");
+ source.append("  if (get_global_id(0) == 0) Jacobi_row_indices[A_size1] = A_nnz; \n");
+ source.append("} \n");
+
+}
 //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
 // main kernel class
@@ -330,6 +373,7 @@ struct amg
       generate_amg_agg_merge_undecided_2(source);
 
       generate_amg_interpol_ag(source, numeric_string);
+      generate_amg_interpol_sa(source, numeric_string);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO

@@ -267,10 +267,10 @@ int main(int argc, char **argv)
   /**
   * Generate the setup for an AMG preconditioner with smoothed aggregation (SA)
   **/
-  viennacl::linalg::amg_tag amg_tag_sa(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 3, 3, 0);
-  run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, SA INTERPOLATION", amg_tag_sa);
+  //viennacl::linalg::amg_tag amg_tag_sa(VIENNACL_AMG_COARSE_AG, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 2, 2, 0);
+  //run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING, SA INTERPOLATION", amg_tag_sa);
 
-  viennacl::linalg::amg_tag amg_tag_sa_pmis(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 3, 3, 0);
+  viennacl::linalg::amg_tag amg_tag_sa_pmis(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 2, 2, 0);
   run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
 
   /**
