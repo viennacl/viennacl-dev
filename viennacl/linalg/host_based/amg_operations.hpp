@@ -226,7 +226,7 @@ void amg_influence(compressed_matrix<NumericT> const & A,
 /** @brief Assign IDs to coarse points */
 inline void enumerate_coarse_points(viennacl::linalg::detail::amg::amg_level_context & amg_context)
 {
-  char         *point_types_ptr  = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(amg_context.point_types_.handle());
+  unsigned int *point_types_ptr  = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *coarse_id_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.coarse_id_.handle());
 
   unsigned int coarse_id = 0;
@@ -277,7 +277,7 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A,
                                 viennacl::linalg::detail::amg::amg_level_context & amg_context,
                                 viennacl::linalg::detail::amg::amg_tag & tag)
 {
-  char         *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(amg_context.point_types_.handle());
+  unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
   unsigned int *influences_values_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_values_.handle());
@@ -360,7 +360,7 @@ void amg_coarse_ag_stage1_sequential(compressed_matrix<NumericT> const & A,
                                      viennacl::linalg::detail::amg::amg_level_context & amg_context,
                                      viennacl::linalg::detail::amg::amg_tag & tag)
 {
-  char         *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(amg_context.point_types_.handle());
+  unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
 
@@ -410,7 +410,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
                                viennacl::linalg::detail::amg::amg_level_context & amg_context,
                                viennacl::linalg::detail::amg::amg_tag & tag)
 {
-  char         *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(amg_context.point_types_.handle());
+  unsigned int  *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
 
@@ -423,19 +423,19 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
   num_threads = omp_get_max_threads();
 #endif
 
-  viennacl::vector<char>         work_state(A.size1(), viennacl::traits::context(A));
+  viennacl::vector<unsigned int> work_state(A.size1(), viennacl::traits::context(A));
   viennacl::vector<unsigned int> work_random(A.size1(), viennacl::traits::context(A));
   viennacl::vector<unsigned int> work_index(A.size1(), viennacl::traits::context(A));
 
-  char         *work_state_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(work_state.handle());
+  unsigned int *work_state_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(work_state.handle());
   unsigned int *work_random_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(work_random.handle());
   unsigned int *work_index_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(work_index.handle());
 
-  viennacl::vector<char>         work_state2(A.size1(), viennacl::traits::context(A));
+  viennacl::vector<unsigned int> work_state2(A.size1(), viennacl::traits::context(A));
   viennacl::vector<unsigned int> work_random2(A.size1(), viennacl::traits::context(A));
   viennacl::vector<unsigned int> work_index2(A.size1(), viennacl::traits::context(A));
 
-  char         *work_state2_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(work_state2.handle());
+  unsigned int *work_state2_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(work_state2.handle());
   unsigned int *work_random2_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(work_random2.handle());
   unsigned int *work_index2_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(work_index2.handle());
 
@@ -480,7 +480,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
       for (unsigned int i = 0; i<static_cast<unsigned int>(A.size1()); ++i)
       {
         // load
-        char         state  = work_state_ptr[i];
+        unsigned int state  = work_state_ptr[i];
         unsigned int random = work_random_ptr[i];
         unsigned int index  = work_index_ptr[i];
 
@@ -545,7 +545,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
 #endif
     for (unsigned int i = 0; i<static_cast<unsigned int>(A.size1()); ++i)
     {
-      char         max_state  = work_state_ptr[i];
+      unsigned int max_state  = work_state_ptr[i];
       unsigned int max_index  = work_index_ptr[i];
 
       if (point_types_ptr[i] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
@@ -594,7 +594,7 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
                    viennacl::linalg::detail::amg::amg_level_context & amg_context,
                    viennacl::linalg::detail::amg::amg_tag & tag)
 {
-  char         *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(amg_context.point_types_.handle());
+  unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
   unsigned int *coarse_id_ptr         = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.coarse_id_.handle());
@@ -718,7 +718,7 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
   unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
   unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
 
-  char         *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<char>(amg_context.point_types_.handle());
+  unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
   unsigned int *coarse_id_ptr         = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.coarse_id_.handle());

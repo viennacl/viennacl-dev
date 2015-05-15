@@ -201,7 +201,7 @@ struct amg_level_context
   viennacl::vector<unsigned int> influence_jumper_; // similar to row_buffer for CSR matrices
   viennacl::vector<unsigned int> influence_ids_;    // IDs of influencing points
   viennacl::vector<unsigned int> influence_values_; // Influence measure for each point
-  viennacl::vector<char> point_types_;              // 0: undecided, 1: coarse point, 2: fine point. Using char here because type for enum might be a larger type
+  viennacl::vector<unsigned int> point_types_;      // 0: undecided, 1: coarse point, 2: fine point. Using char here because type for enum might be a larger type
   viennacl::vector<unsigned int> coarse_id_;        // coarse ID used on the next level. Only valid for coarse points. Fine points may (ab)use their entry for something else.
   unsigned int num_coarse_;
 };

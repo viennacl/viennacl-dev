@@ -114,7 +114,7 @@ void amg_influence(compressed_matrix<NumericT> const & A,
 */
 inline void enumerate_coarse_points(viennacl::linalg::detail::amg::amg_level_context & amg_context)
 {
-  viennacl::backend::typesafe_host_array<char> point_types(amg_context.point_types_.handle(), amg_context.point_types_.size());
+  viennacl::backend::typesafe_host_array<unsigned int> point_types(amg_context.point_types_.handle(), amg_context.point_types_.size());
   viennacl::backend::typesafe_host_array<unsigned int> coarse_ids(amg_context.coarse_id_.handle(),    amg_context.coarse_id_.size());
   viennacl::backend::memory_read(amg_context.point_types_.handle(), 0, point_types.raw_size(), point_types.get());
   viennacl::backend::memory_read(amg_context.coarse_id_.handle(),   0, coarse_ids.raw_size(),  coarse_ids.get());
@@ -136,10 +136,10 @@ inline void enumerate_coarse_points(viennacl::linalg::detail::amg::amg_level_con
 
 /** @brief CUDA kernel initializing the work vectors at each PMIS iteration */
 template<typename IndexT>
-__global__ void amg_pmis2_init_workdata(char *work_state,
+__global__ void amg_pmis2_init_workdata(IndexT *work_state,
                                         IndexT *work_random,
                                         IndexT *work_index,
-                                        char   const *point_types,
+                                        IndexT const *point_types,
                                         IndexT const *random_weights,
                                         unsigned int size)
 {
@@ -164,10 +164,10 @@ __global__ void amg_pmis2_init_workdata(char *work_state,
 
 /** @brief CUDA kernel propagating the state triple (status, weight, nodeID) to neighbors using a max()-operation */
 template<typename IndexT>
-__global__ void amg_pmis2_max_neighborhood(char   const *work_state,
+__global__ void amg_pmis2_max_neighborhood(IndexT const *work_state,
                                            IndexT const *work_random,
                                            IndexT const *work_index,
-                                           char         *work_state2,
+                                           IndexT       *work_state2,
                                            IndexT       *work_random2,
                                            IndexT       *work_index2,
                                            IndexT const *influences_row,
@@ -180,7 +180,7 @@ __global__ void amg_pmis2_max_neighborhood(char   const *work_state,
   for (unsigned int i = global_id; i < size; i += global_size)
   {
     // load
-    char         state  = work_state[i];
+    unsigned int state  = work_state[i];
     unsigned int random = work_random[i];
     unsigned int index  = work_index[i];
 
@@ -226,9 +226,9 @@ __global__ void amg_pmis2_max_neighborhood(char   const *work_state,
 
 /** @brief CUDA kernel for marking MIS and non-MIS nodes */
 template<typename IndexT>
-__global__ void amg_pmis2_mark_mis_nodes(char   const *work_state,
+__global__ void amg_pmis2_mark_mis_nodes(IndexT const *work_state,
                                          IndexT const *work_index,
-                                         char   *point_types,
+                                         IndexT *point_types,
                                          IndexT *undecided_buffer,
                                          unsigned int size)
 {
@@ -238,7 +238,7 @@ __global__ void amg_pmis2_mark_mis_nodes(char   const *work_state,
   unsigned int num_undecided = 0;
   for (unsigned int i = global_id; i < size; i += global_size)
   {
-    char         max_state  = work_state[i];
+    unsigned int max_state  = work_state[i];
     unsigned int max_index  = work_index[i];
 
     if (point_types[i] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
@@ -268,7 +268,7 @@ __global__ void amg_pmis2_mark_mis_nodes(char   const *work_state,
 }
 
 /** @brief CUDA kernel for resetting non-MIS (i.e. coarse) points to undecided so that subsequent kernels work */
-__global__ void amg_pmis2_reset_state(char *point_types, unsigned int size)
+__global__ void amg_pmis2_reset_state(unsigned int *point_types, unsigned int size)
 {
   unsigned int global_id   = blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int global_size = gridDim.x * blockDim.x;
@@ -298,11 +298,11 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
   random_weights.switch_memory_context(viennacl::traits::context(A));
 
   // work vectors:
-  viennacl::vector<char>         work_state(A.size1(),  viennacl::traits::context(A));
+  viennacl::vector<unsigned int> work_state(A.size1(),  viennacl::traits::context(A));
   viennacl::vector<unsigned int> work_random(A.size1(), viennacl::traits::context(A));
   viennacl::vector<unsigned int> work_index(A.size1(),  viennacl::traits::context(A));
 
-  viennacl::vector<char>         work_state2(A.size1(),  viennacl::traits::context(A));
+  viennacl::vector<unsigned int> work_state2(A.size1(),  viennacl::traits::context(A));
   viennacl::vector<unsigned int> work_random2(A.size1(), viennacl::traits::context(A));
   viennacl::vector<unsigned int> work_index2(A.size1(),  viennacl::traits::context(A));
 
@@ -318,10 +318,10 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
     //
     // init temporary work data:
     //
-    amg_pmis2_init_workdata<<<128, 128>>>(detail::cuda_arg<char>(work_state.handle().cuda_handle()),
+    amg_pmis2_init_workdata<<<128, 128>>>(detail::cuda_arg<unsigned int>(work_state.handle().cuda_handle()),
                                           detail::cuda_arg<unsigned int>(work_random.handle().cuda_handle()),
                                           detail::cuda_arg<unsigned int>(work_index.handle().cuda_handle()),
-                                          detail::cuda_arg<char>(amg_context.point_types_.handle().cuda_handle()),
+                                          detail::cuda_arg<unsigned int>(amg_context.point_types_.handle().cuda_handle()),
                                           detail::cuda_arg<unsigned int>(random_weights.handle().cuda_handle()),
                                           static_cast<unsigned int>(A.size1())
                                          );
@@ -334,10 +334,10 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
     for (unsigned int r = 0; r < 2; ++r)
     {
       // max operation over neighborhood
-      amg_pmis2_max_neighborhood<<<128, 128>>>(detail::cuda_arg<char>(work_state.handle().cuda_handle()),
+      amg_pmis2_max_neighborhood<<<128, 128>>>(detail::cuda_arg<unsigned int>(work_state.handle().cuda_handle()),
                                                detail::cuda_arg<unsigned int>(work_random.handle().cuda_handle()),
                                                detail::cuda_arg<unsigned int>(work_index.handle().cuda_handle()),
-                                               detail::cuda_arg<char>(work_state2.handle().cuda_handle()),
+                                               detail::cuda_arg<unsigned int>(work_state2.handle().cuda_handle()),
                                                detail::cuda_arg<unsigned int>(work_random2.handle().cuda_handle()),
                                                detail::cuda_arg<unsigned int>(work_index2.handle().cuda_handle()),
                                                detail::cuda_arg<unsigned int>(amg_context.influence_jumper_.handle().cuda_handle()),
@@ -355,9 +355,9 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
     //
     // mark MIS and non-MIS nodes:
     //
-    amg_pmis2_mark_mis_nodes<<<128, 128>>>(detail::cuda_arg<char>(work_state.handle().cuda_handle()),
+    amg_pmis2_mark_mis_nodes<<<128, 128>>>(detail::cuda_arg<unsigned int>(work_state.handle().cuda_handle()),
                                            detail::cuda_arg<unsigned int>(work_index.handle().cuda_handle()),
-                                           detail::cuda_arg<char>(amg_context.point_types_.handle().cuda_handle()),
+                                           detail::cuda_arg<unsigned int>(amg_context.point_types_.handle().cuda_handle()),
                                            detail::cuda_arg<unsigned int>(undecided_buffer.handle().cuda_handle()),
                                            static_cast<unsigned int>(A.size1())
                                           );
@@ -373,7 +373,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
   std::cout << " Number of PMIS iterations: " << pmis_iters << std::endl;
 
   // consistency with sequential MIS: reset state for non-coarse points, so that coarse indices are correctly picked up later
-  amg_pmis2_reset_state<<<128, 128>>>(detail::cuda_arg<char>(amg_context.point_types_.handle().cuda_handle()),
+  amg_pmis2_reset_state<<<128, 128>>>(detail::cuda_arg<unsigned int>(amg_context.point_types_.handle().cuda_handle()),
                                       static_cast<unsigned int>(amg_context.point_types_.size())
                                      );
   VIENNACL_CUDA_LAST_ERROR_CHECK("amg_pmis2_reset_state");
@@ -384,7 +384,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
 
 
 template<typename IndexT>
-__global__ void amg_agg_propagate_coarse_indices(char         *point_types,
+__global__ void amg_agg_propagate_coarse_indices(IndexT       *point_types,
                                                  IndexT       *coarse_ids,
                                                  IndexT const *influences_row,
                                                  IndexT const *influences_id,
@@ -414,7 +414,7 @@ __global__ void amg_agg_propagate_coarse_indices(char         *point_types,
 
 
 template<typename IndexT>
-__global__ void amg_agg_merge_undecided(char         *point_types,
+__global__ void amg_agg_merge_undecided(IndexT       *point_types,
                                         IndexT       *coarse_ids,
                                         IndexT const *influences_row,
                                         IndexT const *influences_id,
@@ -443,7 +443,7 @@ __global__ void amg_agg_merge_undecided(char         *point_types,
 }
 
 
-__global__ void amg_agg_merge_undecided_2(char         *point_types,
+__global__ void amg_agg_merge_undecided_2(unsigned int *point_types,
                                           unsigned int size)
 {
   unsigned int global_id   = blockDim.x * blockIdx.x + threadIdx.x;
@@ -484,7 +484,7 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
   //
   // Stage 2: Propagate coarse aggregate indices to neighbors:
   //
-  amg_agg_propagate_coarse_indices<<<128, 128>>>(detail::cuda_arg<char        >(amg_context.point_types_.handle().cuda_handle()),
+  amg_agg_propagate_coarse_indices<<<128, 128>>>(detail::cuda_arg<unsigned int>(amg_context.point_types_.handle().cuda_handle()),
                                                  detail::cuda_arg<unsigned int>(amg_context.coarse_id_.handle().cuda_handle()),
                                                  detail::cuda_arg<unsigned int>(amg_context.influence_jumper_.handle().cuda_handle()),
                                                  detail::cuda_arg<unsigned int>(amg_context.influence_ids_.handle().cuda_handle()),
@@ -496,7 +496,7 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
   //
   // Stage 3: Merge remaining undecided points (merging to first aggregate found when cycling over the hierarchy
   //
-  amg_agg_merge_undecided<<<128, 128>>>(detail::cuda_arg<char        >(amg_context.point_types_.handle().cuda_handle()),
+  amg_agg_merge_undecided<<<128, 128>>>(detail::cuda_arg<unsigned int>(amg_context.point_types_.handle().cuda_handle()),
                                         detail::cuda_arg<unsigned int>(amg_context.coarse_id_.handle().cuda_handle()),
                                         detail::cuda_arg<unsigned int>(amg_context.influence_jumper_.handle().cuda_handle()),
                                         detail::cuda_arg<unsigned int>(amg_context.influence_ids_.handle().cuda_handle()),
@@ -508,7 +508,7 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
   // Stage 4: Set undecided points to fine points (coarse ID already set in Stage 3)
   //          Note: Stage 3 and Stage 4 were initially fused, but are now split in order to avoid race conditions (or a fallback to sequential execution).
   //
-  amg_agg_merge_undecided_2<<<128, 128>>>(detail::cuda_arg<char>(amg_context.point_types_.handle().cuda_handle()),
+  amg_agg_merge_undecided_2<<<128, 128>>>(detail::cuda_arg<unsigned int>(amg_context.point_types_.handle().cuda_handle()),
                                          static_cast<unsigned int>(A.size1())
                                         );
   VIENNACL_CUDA_LAST_ERROR_CHECK("amg_agg_merge_undecided_2");
