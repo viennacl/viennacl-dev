@@ -1116,7 +1116,7 @@ void generate_compressed_matrix_compressed_matrix_prod_1(StringT & source)
   source.append("  unsigned int A_size1, \n");
   source.append("  __global unsigned int * group_nnz_array) \n");
   source.append("{ \n");
-  source.append("  unsigned int work_per_item = max((uint) (A_size1 / get_global_size(0)), (uint) 1); \n");
+  source.append("  unsigned int work_per_item = max((uint) ((A_size1 - 1) / get_global_size(0) + 1), (uint) 1); \n");
   source.append("  unsigned int row_start = get_global_id(0) * work_per_item; \n");
   source.append("  unsigned int row_stop  = min( (uint) ((get_global_id(0) + 1) * work_per_item), (uint) A_size1); \n");
   source.append("  unsigned int max_A_nnz = 0; \n");
@@ -1137,7 +1137,6 @@ void generate_compressed_matrix_compressed_matrix_prod_1(StringT & source)
   source.append("  if (get_local_id(0) == 0) \n");
   source.append("    group_nnz_array[get_group_id(0)] = shared_nnz[0]; \n");
   source.append("} \n");
-
 }
 
 
@@ -1186,10 +1185,10 @@ void generate_compressed_matrix_compressed_matrix_prod_A2(StringT & source, std:
   source.append("      A2_col_indices[j] = j; \n");
   source.append("      A2_elements[j] = 1; \n");
   source.append("    } \n");
-
-  source.append("    if (get_global_id(0) == 0) \n");
-  source.append("      A2_row_indices[A2_size1] = new_row_buffer[A2_size1]; \n");
   source.append("  } \n");
+
+  source.append("  if (get_global_id(0) == 0) \n");
+  source.append("    A2_row_indices[A2_size1] = new_row_buffer[A2_size1]; \n");
   source.append("} \n");
 }
 
