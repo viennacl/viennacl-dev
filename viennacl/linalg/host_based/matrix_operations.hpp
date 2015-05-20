@@ -1835,57 +1835,6 @@ template <typename NumericT, typename S1>
       }
    }
 
-   /** @brief This function implements an inclusive scan.
-   *
-   *
-   * @param vec1       Input vector: Gets overwritten by the routine.
-   * @param vec2       The output vector.
-   */
-   template<typename NumericT>
-   void inclusive_scan(vector_base<NumericT>& vec1,
-                       vector_base<NumericT>& vec2)
-   {
-     vcl_size_t start1 = viennacl::traits::start(vec1);
-     vcl_size_t inc1   = viennacl::traits::stride(vec1);
-     vcl_size_t size1  = viennacl::traits::size(vec1);
-
-     vcl_size_t start2 = viennacl::traits::start(vec2);
-     vcl_size_t inc2   = viennacl::traits::stride(vec2);
-
-     vec2[start2] = vec1[start1];
-     for(vcl_size_t i = 1; i < size1; i++)
-     {
-       vec2[i * inc2 + start2] = vec2[(i - 1) * inc2 + start2] + vec1[i * inc1 + start1];
-
-     }
-   }
-
-   /** @brief This function implements an exclusive scan.
-   *
-   *
-   * @param vec1       Input vector: Gets overwritten by the routine.
-   * @param vec2       The output vector.
-   */
-   template<typename NumericT>
-   void exclusive_scan(vector_base<NumericT>& vec1,
-                       vector_base<NumericT>& vec2)
-   {
-     vcl_size_t start1 = viennacl::traits::start(vec1);
-     vcl_size_t inc1   = viennacl::traits::stride(vec1);
-     vcl_size_t size1  = viennacl::traits::size(vec1);
-
-     vcl_size_t start2 = viennacl::traits::start(vec2);
-     vcl_size_t inc2   = viennacl::traits::stride(vec2);
-
-
-     vec2[start2] = 0;
-     for(vcl_size_t i = 1; i < size1; i++)
-     {
-       vec2[i * inc2 + start2] = vec2[(i - 1) * inc2 + start2] + vec1[(i - 1) * inc1 + start1];
-
-     }
-   }
-
 } // namespace host_based
 } //namespace linalg
 } //namespace viennacl

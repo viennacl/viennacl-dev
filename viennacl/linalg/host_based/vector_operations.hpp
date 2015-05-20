@@ -36,6 +36,9 @@
 #include "viennacl/linalg/detail/op_applier.hpp"
 #include "viennacl/traits/stride.hpp"
 
+#ifdef VIENNACL_WITH_OPENMP
+#include <omp.h>
+#endif
 
 // Minimum vector size for using OpenMP on vector operations:
 #ifndef VIENNACL_OPENMP_VECTOR_MIN_SIZE
@@ -908,6 +911,122 @@ void plane_rotation(vector_base<NumericT> & vec1,
     data_vec2[static_cast<vcl_size_t>(i)*inc2+start2] = data_alpha * temp2 - data_beta * temp1;
   }
 }
+
+namespace detail
+{
+  /** @brief Implementation of inclusive_scan and exclusive_scan for the host (OpenMP) backend. */
+  template<typename NumericT>
+  void vector_scan_impl(vector_base<NumericT> const & vec1,
+                        vector_base<NumericT>       & vec2,
+                        bool is_inclusive)
+  {
+    NumericT const * data_vec1 = detail::extract_raw_pointer<NumericT>(vec1);
+    NumericT       * data_vec2 = detail::extract_raw_pointer<NumericT>(vec2);
+
+    vcl_size_t start1 = viennacl::traits::start(vec1);
+    vcl_size_t inc1   = viennacl::traits::stride(vec1);
+    vcl_size_t size1  = viennacl::traits::size(vec1);
+    if (size1 < 1)
+      return;
+
+    vcl_size_t start2 = viennacl::traits::start(vec2);
+    vcl_size_t inc2   = viennacl::traits::stride(vec2);
+
+    if (is_inclusive)
+      data_vec2[start2] = data_vec1[start1];
+    else // exclusive scan is same as inclusive scan with shifted output
+    {
+      data_vec2[start2] = NumericT(0);
+      data_vec2 += inc2;
+      size1 -= 1;
+    }
+
+#ifdef VIENNACL_WITH_OPENMP
+    if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+    {
+      std::vector<NumericT> thread_results(omp_get_max_threads());
+
+      // scan each thread segment:
+      #pragma omp parallel
+      {
+        vcl_size_t work_per_thread = (size1 - 1) / thread_results.size() + 1;
+        vcl_size_t thread_start = work_per_thread * omp_get_thread_num();
+        vcl_size_t thread_stop  = std::min<vcl_size_t>(thread_start + work_per_thread, size1);
+
+        NumericT thread_sum = 0;
+        for(vcl_size_t i = thread_start; i < thread_stop; i++)
+          thread_sum += data_vec1[i * inc1 + start1];
+
+        thread_results[omp_get_thread_num()] = thread_sum;
+      }
+
+      // exclusive-scan of thread results:
+      NumericT current_offset = 0;
+      for (vcl_size_t i=0; i<thread_results.size(); ++i)
+      {
+        NumericT tmp = thread_results[i];
+        thread_results[i] = current_offset;
+        current_offset += tmp;
+      }
+
+      // inclusive scan of each segment with correct offset:
+      #pragma omp parallel
+      {
+        vcl_size_t work_per_thread = (size1 - 1) / thread_results.size() + 1;
+        vcl_size_t thread_start = work_per_thread * omp_get_thread_num();
+        vcl_size_t thread_stop  = std::min<vcl_size_t>(thread_start + work_per_thread, size1);
+
+        NumericT thread_sum = thread_results[omp_get_thread_num()];
+        for(vcl_size_t i = thread_start; i < thread_stop; i++)
+        {
+          thread_sum += data_vec1[i * inc1 + start1];
+          data_vec2[i * inc2 + start2] = thread_sum;
+        }
+      }
+    } else
+#endif
+    {
+      NumericT sum = 0;
+      for(vcl_size_t i = 0; i < size1; i++)
+      {
+        sum += data_vec1[i * inc1 + start1];
+        data_vec2[i * inc2 + start2] = sum;
+      }
+    }
+
+  }
+}
+
+/** @brief This function implements an inclusive scan on the host using OpenMP.
+*
+* Given an element vector (x_0, x_1, ..., x_{n-1}),
+* this routine computes (x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-1})
+*
+* @param vec1       Input vector: Gets overwritten by the routine.
+* @param vec2       The output vector.
+*/
+template<typename NumericT>
+void inclusive_scan(vector_base<NumericT> const & vec1,
+                    vector_base<NumericT>       & vec2)
+{
+  detail::vector_scan_impl(vec1, vec2, true);
+}
+
+/** @brief This function implements an exclusive scan on the host using OpenMP.
+*
+* Given an element vector (x_0, x_1, ..., x_{n-1}),
+* this routine computes (0, x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-2})
+*
+* @param vec1       Input vector: Gets overwritten by the routine.
+* @param vec2       The output vector.
+*/
+template<typename NumericT>
+void exclusive_scan(vector_base<NumericT> const & vec1,
+                    vector_base<NumericT>       & vec2)
+{
+  detail::vector_scan_impl(vec1, vec2, false);
+}
+
 
 } //namespace host_based
 } //namespace linalg

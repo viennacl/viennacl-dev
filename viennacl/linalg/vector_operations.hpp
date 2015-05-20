@@ -1056,6 +1056,78 @@ namespace viennacl
       }
     }
 
+    /** @brief This function implements an inclusive scan.
+    *
+    * Given an element vector (x_0, x_1, ..., x_{n-1}),
+    * this routine computes (x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-1})
+    *
+    * @param vec1       Input vector.
+    * @param vec2       The output vector.
+    */
+    template<typename NumericT>
+    void inclusive_scan(vector_base<NumericT> & vec1,
+                        vector_base<NumericT> & vec2)
+    {
+      switch (viennacl::traits::handle(vec1).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::inclusive_scan(vec1, vec2);
+          break;
+  #ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::inclusive_scan(vec1, vec2);
+          break;
+  #endif
+
+  #ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::inclusive_scan(vec1, vec2);
+          break;
+  #endif
+
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief This function implements an exclusive scan.
+    *
+    * Given an element vector (x_0, x_1, ..., x_{n-1}),
+    * this routine computes (0, x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-2})
+    *
+    * @param vec1       Input vector.
+    * @param vec2       The output vector.
+    */
+    template<typename NumericT>
+    void exclusive_scan(vector_base<NumericT> & vec1,
+                        vector_base<NumericT> & vec2)
+    {
+      switch (viennacl::traits::handle(vec1).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::exclusive_scan(vec1, vec2);
+          break;
+  #ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::exclusive_scan(vec1, vec2);
+          break;
+  #endif
+
+  #ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::exclusive_scan(vec1, vec2);
+          break;
+  #endif
+
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
   } //namespace linalg
 
   template<typename T, typename LHS, typename RHS, typename OP>
