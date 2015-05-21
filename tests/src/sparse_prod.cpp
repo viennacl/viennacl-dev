@@ -155,8 +155,10 @@ int test(Epsilon const& epsilon)
   viennacl::compressed_matrix<NumericT>  vcl_B(K, M);
   viennacl::compressed_matrix<NumericT>  vcl_C;
 
-  viennacl::copy(stl_A, vcl_A);
-  viennacl::copy(stl_B, vcl_B);
+  viennacl::tools::sparse_matrix_adapter<NumericT> adapted_stl_A(stl_A, N, K);
+  viennacl::tools::sparse_matrix_adapter<NumericT> adapted_stl_B(stl_B, K, M);
+  viennacl::copy(adapted_stl_A, vcl_A);
+  viennacl::copy(adapted_stl_B, vcl_B);
 
   // --------------------------------------------------------------------------
   std::cout << "Testing products: STL" << std::endl;

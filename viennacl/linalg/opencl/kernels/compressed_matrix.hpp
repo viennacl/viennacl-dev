@@ -1277,6 +1277,7 @@ void generate_compressed_matrix_compressed_matrix_prod_2(StringT & source)
   source.append("      while (1) { \n");
 
   // determine minimum index via reduction:
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
   source.append("        shared_front[get_local_id(0)] = current_front_index; \n");
   source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
   source.append("        if (get_local_id(0) < 16) shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 16]); \n");
@@ -1365,6 +1366,7 @@ void generate_compressed_matrix_compressed_matrix_prod_3(StringT & source, std::
   source.append("      while (1) { \n");
 
   // determine minimum index via reduction:
+  source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
   source.append("        shared_front[get_local_id(0)] = current_front_index; \n");
   source.append("        barrier(CLK_LOCAL_MEM_FENCE); \n");
   source.append("        if (get_local_id(0) < 16) shared_front[get_local_id(0)] = min(shared_front[get_local_id(0)], shared_front[get_local_id(0) + 16]); \n");
