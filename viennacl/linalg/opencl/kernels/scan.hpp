@@ -19,225 +19,115 @@ namespace kernels
 
 
 template <typename StringType>
-void generate_svd_inclusive_scan_kernel_1(StringType & source, std::string const & numeric_string)
+void generate_scan_kernel_1(StringType & source, std::string const & numeric_string)
 {
-  source.append("#define SECTION_SIZE 256\n");
-  source.append("__kernel void inclusive_scan_1(__global "); source.append(numeric_string); source.append("* X, \n");
-  source.append("                               uint startX, \n");
-  source.append("                               uint incX, \n");
-  source.append("                               uint InputSize, \n");
+  source.append("__kernel void scan_1(__global "); source.append(numeric_string); source.append("* X, \n");
+  source.append("                     unsigned int startX, \n");
+  source.append("                     unsigned int incX, \n");
+  source.append("                     unsigned int sizeX, \n");
 
-  source.append("                               __global "); source.append(numeric_string); source.append("* Y, \n");
-  source.append("                               uint startY, \n");
-  source.append("                               uint incY, \n");
+  source.append("                     __global "); source.append(numeric_string); source.append("* Y, \n");
+  source.append("                     unsigned int startY, \n");
+  source.append("                     unsigned int incY, \n");
 
-  source.append("                               __global "); source.append(numeric_string); source.append("* S, \n");
-  source.append("                               uint startS, \n");
-  source.append("                               uint incS) \n");
+  source.append("                     unsigned int scan_offset, \n"); // 0 for inclusive scan, 1 for exclusive scan
+  source.append("                     __global "); source.append(numeric_string); source.append("* carries) { \n");
 
-  source.append("{ \n");
-  source.append("    uint glb_id = get_global_id(0); \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" shared_buffer[256]; \n");
+  source.append("  "); source.append(numeric_string); source.append(" my_value; \n");
 
-  source.append("    uint grp_id = get_group_id(0); \n");
-  source.append("    uint grp_nm = get_num_groups(0); \n");
+  source.append("  unsigned int work_per_thread = (sizeX - 1) / get_global_size(0) + 1; \n");
+  source.append("  unsigned int block_start = work_per_thread * get_local_size(0) *  get_group_id(0); \n");
+  source.append("  unsigned int block_stop  = work_per_thread * get_local_size(0) * (get_group_id(0) + 1); \n");
+  source.append("  unsigned int block_offset = 0; \n");
 
-  source.append("    uint lcl_id = get_local_id(0); \n");
-  source.append("    uint lcl_sz = get_local_size(0); \n");
-  source.append("    __local "); source.append(numeric_string); source.append(" XY[SECTION_SIZE]; \n");  //section size
+  // run scan on each section:
+  source.append("  for (unsigned int i = block_start + get_local_id(0); i < block_stop; i += get_local_size(0)) { \n");
 
-  source.append("    if(glb_id < InputSize) \n");
-  source.append("       XY[lcl_id] = X[glb_id * incX + startX]; \n");
-  source.append(" \n");
+  // load data
+  source.append("    my_value = block_offset + ((i < sizeX) ? X[i * incX + startX] : 0); \n");
 
-  source.append("    for(uint stride = 1; stride < lcl_sz; stride *= 2) \n");
-  source.append("    { \n");
-  source.append("         barrier(CLK_LOCAL_MEM_FENCE);   \n");
-  source.append("         int index = (lcl_id + 1) * 2 * stride - 1;  \n");
-  source.append("         if(index < lcl_sz)      \n");
-  source.append("             XY[index] += XY[index - stride];     \n");
+  // inclusive scan in shared buffer:
+  source.append("    for(unsigned int stride = 1; stride < get_local_size(0); stride *= 2) { \n");
+  source.append("       barrier(CLK_LOCAL_MEM_FENCE);   \n");
+  source.append("       shared_buffer[get_local_id(0)] = my_value;   \n");
+  source.append("       barrier(CLK_LOCAL_MEM_FENCE);   \n");
+  source.append("       if (get_local_id(0) >= stride)   \n");
+  source.append("         my_value += shared_buffer[get_local_id(0) - stride];   \n");
   source.append("    } \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE);   \n");
+  source.append("    shared_buffer[get_local_id(0)] = my_value;   \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE);   \n");
 
-  source.append("     for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2) \n");             //Section size = 512
-  source.append("     { \n");
-  source.append("         barrier(CLK_LOCAL_MEM_FENCE); \n");
-  source.append("         int index = (lcl_id + 1) * 2 * stride - 1; \n");
-  source.append("         if(index + stride < lcl_sz)  \n");
-  source.append("             XY[index + stride] += XY[index];  \n");
-  source.append("     } \n");
+  // write to output array:
+  source.append("    if (scan_offset + i < min(block_stop, sizeX)) \n");
+  source.append("      Y[(i + scan_offset) * incY + startY] = my_value; \n");
 
-  source.append("     barrier(CLK_LOCAL_MEM_FENCE);       \n");
-  source.append("     if(glb_id < InputSize) \n");
-  source.append("       Y[glb_id * incY + startY] = XY[lcl_id];  \n");
-  source.append("     barrier(CLK_LOCAL_MEM_FENCE);       \n");
-  source.append("     if(lcl_id == 0)     \n");
-  source.append("     { \n");
-  source.append("         S[grp_id * incS + startS] = XY[SECTION_SIZE - 1]; \n");                    //Section size = 512
-  source.append("     } \n");
+  source.append("    block_offset = (get_local_id(0) == 0) ? shared_buffer[get_local_size(0)-1] : 0; \n");
+  source.append("  } \n");
+
+  // write carry:
+  source.append("  if (get_local_id(0) == 0) carries[get_group_id(0)] = block_offset; \n");
+
+  // exclusive scan requires us to write a zero value at the beginning of each block
+  source.append("  if (get_local_id(0) == 0 && scan_offset == 1 && block_start < sizeX)  \n");
+  source.append("    Y[block_start * incY + startY] = 0;  \n");
+
   source.append("} \n");
 }
 
 template <typename StringType>
-void generate_svd_exclusive_scan_kernel_1(StringType & source, std::string const & numeric_string)
+void generate_scan_kernel_2(StringType & source, std::string const & numeric_string)
 {
-  source.append("__kernel void exclusive_scan_1(__global "); source.append(numeric_string); source.append("* X, \n");
-  source.append("                               uint startX, \n");
-  source.append("                               uint incX, \n");
-  source.append("                               uint InputSize, \n");
+  source.append("__kernel void scan_2(__global "); source.append(numeric_string); source.append("* carries) { \n");
 
-  source.append("                               __global "); source.append(numeric_string); source.append("* Y, \n");
-  source.append("                               uint startY, \n");
-  source.append("                               uint incY, \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" shared_buffer[256]; \n");       //section size
 
-  source.append("                               __global "); source.append(numeric_string); source.append("* S, \n");
-  source.append("                               uint startS, \n");
-  source.append("                               uint incS) \n");
+  // load data
+  source.append("  "); source.append(numeric_string); source.append(" my_carry = carries[get_local_id(0)]; \n");
 
-  source.append("{ \n");
-  source.append("    uint glb_id = get_global_id(0); \n");
+  // scan in shared buffer:
+  source.append("  for(unsigned int stride = 1; stride < get_local_size(0); stride *= 2) { \n");
+  source.append("     barrier(CLK_LOCAL_MEM_FENCE);   \n");
+  source.append("     shared_buffer[get_local_id(0)] = my_carry;   \n");
+  source.append("     barrier(CLK_LOCAL_MEM_FENCE);   \n");
+  source.append("     if (get_local_id(0) >= stride)   \n");
+  source.append("       my_carry += shared_buffer[get_local_id(0) - stride];   \n");
+  source.append("  } \n");
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE);   \n");
+  source.append("  shared_buffer[get_local_id(0)] = my_carry;   \n");
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE);   \n");
 
-  source.append("    uint grp_id = get_group_id(0); \n");
-  source.append("    uint grp_nm = get_num_groups(0); \n");
+  // write to output array:
+  source.append("  carries[get_local_id(0)] = (get_local_id(0) > 0) ? shared_buffer[get_local_id(0) - 1] : 0;  \n");
 
-  source.append("    uint lcl_id = get_local_id(0); \n");
-  source.append("    uint lcl_sz = get_local_size(0); \n");
-  source.append("    __local "); source.append(numeric_string); source.append(" XY[SECTION_SIZE]; \n");           //section size
-
-  source.append("    if(glb_id < InputSize + 1 && glb_id != 0) \n");
-  source.append("       XY[lcl_id] = X[(glb_id - 1) * incX + startX]; \n");
-  source.append("     if(glb_id == 0)     \n");
-  source.append("         XY[0] = 0;      \n");
-  source.append(" \n");
-
-  source.append("    for(uint stride = 1; stride < lcl_sz; stride *= 2) \n");
-  source.append("    { \n");
-  source.append("         barrier(CLK_LOCAL_MEM_FENCE);   \n");
-  source.append("         int index = (lcl_id + 1) * 2 * stride - 1;  \n");
-  source.append("         if(index < lcl_sz)      \n");
-  source.append("             XY[index] += XY[index - stride];     \n");
-  source.append("    } \n");
-
-  source.append("     for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2) \n");             //Section size = 512
-  source.append("     { \n");
-  source.append("         barrier(CLK_LOCAL_MEM_FENCE); \n");
-  source.append("         int index = (lcl_id + 1) * 2 * stride - 1; \n");
-  source.append("         if(index + stride < lcl_sz)  \n");
-  source.append("             XY[index + stride] += XY[index];  \n");
-  source.append("     } \n");
-  source.append("     barrier(CLK_LOCAL_MEM_FENCE);       \n");
-
-  source.append("     if(glb_id < InputSize) \n");
-  source.append("       Y[glb_id * incY + startY] = XY[lcl_id];  \n");
-  source.append("     barrier(CLK_LOCAL_MEM_FENCE);       \n");
-  source.append("     if(lcl_id == 0)     \n");
-  source.append("     { \n");
-  source.append("         S[grp_id * incS + startS] = XY[SECTION_SIZE - 1]; \n");                    //Section size = 512
-  source.append("     } \n");
   source.append("} \n");
 }
 
 template <typename StringType>
-void generate_svd_scan_kernel_2(StringType & source, std::string const & numeric_string)
+void generate_scan_kernel_3(StringType & source, std::string const & numeric_string)
 {
-  source.append("__kernel void scan_kernel_2(__global "); source.append(numeric_string); source.append("* S_ref, \n");
-  source.append("                            uint startS_ref, \n");
-  source.append("                            uint incS_ref, \n");
+  source.append("__kernel void scan_3(__global "); source.append(numeric_string); source.append(" * Y, \n");
+  source.append("                     unsigned int startY, \n");
+  source.append("                     unsigned int incY, \n");
+  source.append("                     unsigned int sizeY, \n");
 
-  source.append("                            __global "); source.append(numeric_string); source.append("* S, \n");
-  source.append("                            uint startS, \n");
-  source.append("                            uint incS, \n");
-  source.append("                            uint InputSize) \n");
+  source.append("                     __global "); source.append(numeric_string); source.append("* carries) { \n");
 
-  source.append(" { \n");
-  source.append("    uint glb_id = get_global_id(0); \n");
+  source.append("  unsigned int work_per_thread = (sizeY - 1) / get_global_size(0) + 1; \n");
+  source.append("  unsigned int block_start = work_per_thread * get_local_size(0) *  get_group_id(0); \n");
+  source.append("  unsigned int block_stop  = work_per_thread * get_local_size(0) * (get_group_id(0) + 1); \n");
 
-  source.append("    uint grp_id = get_group_id(0); \n");
-  source.append("    uint grp_nm = get_num_groups(0); \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" shared_offset; \n");
 
-  source.append("    uint lcl_id = get_local_id(0); \n");
-  source.append("    uint lcl_sz = get_local_size(0); \n");
-  source.append("    __local "); source.append(numeric_string); source.append(" XY[SECTION_SIZE]; \n");       //section size
+  source.append("  if (get_local_id(0) == 0) shared_offset = carries[get_group_id(0)]; \n");
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE);   \n");
 
-  source.append("     if(glb_id < InputSize)           \n");
-  source.append("         XY[lcl_id] = S[glb_id * incS + startS];     \n");
+  source.append("  for (unsigned int i = block_start + get_local_id(0); i < block_stop; i += get_local_size(0)) \n");
+  source.append("    if (i < sizeY) \n");
+  source.append("      Y[i * incY + startY] += shared_offset; \n");
 
-  source.append("     for(uint stride = 1; stride < lcl_sz; stride *= 2)  \n");
-  source.append("     {   \n");
-  source.append("         barrier(CLK_LOCAL_MEM_FENCE);       \n");
-  source.append("         int index = (lcl_id + 1) * 2 * stride - 1;   \n");
-  source.append("         if(index < lcl_sz)  \n");
-  source.append("             XY[index] += XY[index - stride]; \n");
-  source.append("     }   \n");
-
-  source.append("     for(int stride = SECTION_SIZE / 4; stride > 0; stride /= 2)  \n");
-  source.append("     {   \n");
-  source.append("         barrier(CLK_LOCAL_MEM_FENCE);                   \n");
-  source.append("         int index = (lcl_id + 1) * 2 * stride - 1;      \n");
-  source.append("         if(index + stride < lcl_sz)                     \n");
-  source.append("             XY[index + stride] += XY[index];            \n");
-  source.append("     }   \n");
-
-  source.append("     barrier(CLK_LOCAL_MEM_FENCE);                       \n");
-  source.append("     if(glb_id < InputSize)           \n");
-  source.append("     {           \n");
-  source.append("         S[glb_id * incS + startS] = XY[lcl_id];              \n");
-  source.append("         S_ref[glb_id * incS_ref + startS_ref] = XY[lcl_id];  \n");
-  source.append("     }           \n");
-  source.append(" } \n");
-}
-
-template <typename StringType>
-void generate_svd_scan_kernel_3(StringType & source, std::string const & numeric_string)
-{
-  source.append("__kernel void scan_kernel_3(__global "); source.append(numeric_string); source.append("* S_ref, \n");
-  source.append("                            uint startS_ref, \n");
-  source.append("                            uint incS_ref, \n");
-
-  source.append("                            __global "); source.append(numeric_string); source.append("* S, \n");
-  source.append("                            uint startS, \n");
-  source.append("                            uint incS) \n");
-
-  source.append(" { \n");
-  source.append("    uint glb_id = get_global_id(0); \n");
-
-  source.append("    uint grp_id = get_group_id(0); \n");
-  source.append("    uint grp_nm = get_num_groups(0); \n");
-
-  source.append("    uint lcl_id = get_local_id(0); \n");
-  source.append("    uint lcl_sz = get_local_size(0); \n");
-
-
-  source.append("     for(int j = 1; j <= grp_id; j++)  \n");
-  source.append("         S[glb_id * incS + startS] += S_ref[(j * lcl_sz - 1) * incS_ref + startS_ref];    \n");
-  source.append(" } \n");
-}
-
-template <typename StringType>
-void generate_svd_scan_kernel_4(StringType & source, std::string const & numeric_string)
-{
-  source.append("__kernel void scan_kernel_4(__global "); source.append(numeric_string); source.append("* S, \n");
-  source.append("                            uint startS, \n");
-  source.append("                            uint incS, \n");
-
-  source.append("                            __global "); source.append(numeric_string); source.append("* Y, \n");
-  source.append("                            uint startY, \n");
-  source.append("                            uint incY, \n");
-  source.append("                            uint OutputSize) \n");
-
-  source.append(" { \n");
-  source.append("    barrier(CLK_LOCAL_MEM_FENCE);                   \n");
-  source.append("    uint glb_id = get_global_id(0); \n");
-
-  source.append("    uint grp_id = get_group_id(0); \n");
-  source.append("    uint grp_nm = get_num_groups(0); \n");
-
-  source.append("    uint lcl_id = get_local_id(0); \n");
-  source.append("    uint lcl_sz = get_local_size(0); \n");
-
-
-  source.append("    uint var = (grp_id + 1) * lcl_sz + lcl_id;          \n");
-  source.append("    if(var < OutputSize)         \n");
-  source.append("         Y[var * incY + startY] += S[grp_id * incS + startS]; \n");
-  source.append(" } \n");
+  source.append("} \n");
 }
 
 
@@ -266,11 +156,9 @@ struct scan
 
       viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
-      generate_svd_inclusive_scan_kernel_1(source, numeric_string);
-      generate_svd_exclusive_scan_kernel_1(source, numeric_string);
-      generate_svd_scan_kernel_2(source, numeric_string);
-      generate_svd_scan_kernel_3(source, numeric_string);
-      generate_svd_scan_kernel_4(source, numeric_string);
+      generate_scan_kernel_1(source, numeric_string);
+      generate_scan_kernel_2(source, numeric_string);
+      generate_scan_kernel_3(source, numeric_string);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO

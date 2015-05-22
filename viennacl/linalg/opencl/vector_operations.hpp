@@ -476,152 +476,101 @@ void plane_rotation(vector_base<NumericT> & x,
   kernels::vector<NumericT>::execution_handler(viennacl::traits::opencl_context(x)).execute("plane_rotation", statement);
 }
 
-#define VIENNACL_SECTION_SIZE 256
-template<typename NumericT>
-void inclusive_scan(vector_base<NumericT>& vec1,
-                    vector_base<NumericT>& vec2)
+//////////////////////////
+
+
+namespace detail
 {
-  vcl_size_t N = static_cast<vcl_size_t>(std::ceil(static_cast<double>(vec1.size()) / static_cast<double>(VIENNACL_SECTION_SIZE)));
-  viennacl::vector<NumericT> S    (N);
-  viennacl::vector<NumericT> S_ref(N);
+  /** @brief Worker routine for scan routines using OpenCL
+   *
+   * Note on performance: For non-in-place scans one could optimize away the temporary 'opencl_carries'-array.
+   * This, however, only provides small savings in the latency-dominated regime, yet would effectively double the amount of code to maintain.
+   */
+  template<typename NumericT>
+  void scan_impl(vector_base<NumericT> const & input,
+                 vector_base<NumericT>       & output,
+                 bool is_inclusive)
+  {
+    vcl_size_t local_worksize = 128;
+    vcl_size_t workgroups = 128;
 
-  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
-  viennacl::linalg::opencl::kernels::scan<NumericT>::init(ctx);
-  viennacl::ocl::kernel& kernel1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "inclusive_scan_1");
-  viennacl::ocl::kernel& kernel2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_kernel_2");
-  viennacl::ocl::kernel& kernel3 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_kernel_3");
-  viennacl::ocl::kernel& kernel4 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_kernel_4");
+    viennacl::backend::mem_handle opencl_carries;
+    viennacl::backend::memory_create(opencl_carries, sizeof(NumericT)*workgroups, viennacl::traits::context(input));
 
-  kernel1.global_work_size(0, VIENNACL_SECTION_SIZE * S.size());
-  kernel1.local_work_size(0, VIENNACL_SECTION_SIZE);
-  viennacl::ocl::enqueue(kernel1(
-                                    viennacl::traits::opencl_handle(vec1),
-                                    static_cast<unsigned int>(viennacl::traits::start(vec1)),
-                                    static_cast<unsigned int>(viennacl::traits::stride(vec1)),
-                                    static_cast<unsigned int>(viennacl::traits::size(vec1)),
-
-                                    viennacl::traits::opencl_handle(vec2),
-                                    static_cast<unsigned int>(viennacl::traits::start(vec2)),
-                                    static_cast<unsigned int>(viennacl::traits::stride(vec2)),
-
-                                    viennacl::traits::opencl_handle(S),
-                                    static_cast<unsigned int>(viennacl::traits::start(S)),
-                                    static_cast<unsigned int>(viennacl::traits::stride(S))));
-
-
-  kernel2.global_work_size(0, viennacl::tools::align_to_multiple<cl_uint>(cl_uint(viennacl::traits::size(S)), 256));
-  kernel2.local_work_size(0, VIENNACL_SECTION_SIZE);
-  viennacl::ocl::enqueue(kernel2(
-                                     viennacl::traits::opencl_handle(S_ref),
-                                     static_cast<unsigned int>(viennacl::traits::start(S_ref)),
-                                     static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
-
-                                     viennacl::traits::opencl_handle(S),
-                                     static_cast<unsigned int>(viennacl::traits::start(S)),
-                                     static_cast<unsigned int>(viennacl::traits::stride(S)),
-                                     static_cast<unsigned int>(viennacl::traits::size(S))
-                             ));
-
-  kernel3.global_work_size(0,  viennacl::tools::align_to_multiple<cl_uint>(cl_uint(viennacl::traits::size(S)), 256));
-  kernel3.local_work_size(0, VIENNACL_SECTION_SIZE);
-  viennacl::ocl::enqueue(kernel3(
-                                     viennacl::traits::opencl_handle(S_ref),
-                                     static_cast<unsigned int>(viennacl::traits::start(S_ref)),
-                                     static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
-
-                                     viennacl::traits::opencl_handle(S),
-                                     static_cast<unsigned int>(viennacl::traits::start(S)),
-                                     static_cast<unsigned int>(viennacl::traits::stride(S))
-                             ));
-
-
-  kernel4.global_work_size(0, VIENNACL_SECTION_SIZE * S.size());
-  kernel4.local_work_size(0, VIENNACL_SECTION_SIZE);
-  viennacl::ocl::enqueue(kernel4(
-                                    viennacl::traits::opencl_handle(S),
-                                    static_cast<unsigned int>(viennacl::traits::start(S)),
-                                    static_cast<unsigned int>(viennacl::traits::stride(S)),
-
-                                    viennacl::traits::opencl_handle(vec2),
-                                    static_cast<unsigned int>(viennacl::traits::start(vec2)),
-                                    static_cast<unsigned int>(viennacl::traits::stride(vec2)),
-                                    static_cast<unsigned int>(viennacl::traits::size(vec2))
-                             ));
-
-
-}
-
-template<typename NumericT>
-void exclusive_scan(vector_base<NumericT>& vec1,
-                    vector_base<NumericT>& vec2)
-{
-    vcl_size_t N = static_cast<vcl_size_t>(std::ceil(static_cast<double>(vec1.size()) / static_cast<double>(VIENNACL_SECTION_SIZE)));
-    viennacl::vector<NumericT> S    (N);
-    viennacl::vector<NumericT> S_ref(N);
-
-    viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+    viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(input).context());
     viennacl::linalg::opencl::kernels::scan<NumericT>::init(ctx);
-    viennacl::ocl::kernel& kernel1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "exclusive_scan_1");
-    viennacl::ocl::kernel& kernel2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_kernel_2");
-    viennacl::ocl::kernel& kernel3 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_kernel_3");
-    viennacl::ocl::kernel& kernel4 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_kernel_4");
+    viennacl::ocl::kernel& k1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_1");
+    viennacl::ocl::kernel& k2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_2");
+    viennacl::ocl::kernel& k3 = ctx.get_kernel(viennacl::linalg::opencl::kernels::scan<NumericT>::program_name(), "scan_3");
 
-    kernel1.global_work_size(0, VIENNACL_SECTION_SIZE * S.size());
-    kernel1.local_work_size(0, VIENNACL_SECTION_SIZE);
-    viennacl::ocl::enqueue(kernel1(
-                                      viennacl::traits::opencl_handle(vec1),
-                                      static_cast<unsigned int>(viennacl::traits::start(vec1)),
-                                      static_cast<unsigned int>(viennacl::traits::stride(vec1)),
-                                      static_cast<unsigned int>(viennacl::traits::size(vec1)),
+    // First step: Scan within each thread group and write carries
+    k1.local_work_size(0, local_worksize);
+    k1.global_work_size(0, workgroups * local_worksize);
+    viennacl::ocl::enqueue(k1( input, cl_uint( input.start()), cl_uint( input.stride()), cl_uint(input.size()),
+                              output, cl_uint(output.start()), cl_uint(output.stride()),
+                              cl_uint(is_inclusive ? 0 : 1), opencl_carries.opencl_handle())
+                          );
 
-                                      viennacl::traits::opencl_handle(vec2),
-                                      static_cast<unsigned int>(viennacl::traits::start(vec2)),
-                                      static_cast<unsigned int>(viennacl::traits::stride(vec2)),
+    // Second step: Compute offset for each thread group (exclusive scan for each thread group)
+    k2.local_work_size(0, workgroups);
+    k2.global_work_size(0, workgroups);
+    viennacl::ocl::enqueue(k2(opencl_carries.opencl_handle()));
 
-                                      viennacl::traits::opencl_handle(S),
-                                      static_cast<unsigned int>(viennacl::traits::start(S)),
-                                      static_cast<unsigned int>(viennacl::traits::stride(S))));
-
-    kernel2.global_work_size(0, viennacl::tools::align_to_multiple<cl_uint>(cl_uint(viennacl::traits::size(S)), 256));
-    kernel2.local_work_size(0, VIENNACL_SECTION_SIZE);
-    viennacl::ocl::enqueue(kernel2(
-                                       viennacl::traits::opencl_handle(S_ref),
-                                       static_cast<unsigned int>(viennacl::traits::start(S_ref)),
-                                       static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
-
-                                       viennacl::traits::opencl_handle(S),
-                                       static_cast<unsigned int>(viennacl::traits::start(S)),
-                                       static_cast<unsigned int>(viennacl::traits::stride(S)),
-                                       static_cast<unsigned int>(viennacl::traits::size(S))
-                               ));
-
-    kernel3.global_work_size(0,  viennacl::tools::align_to_multiple<cl_uint>(cl_uint(viennacl::traits::size(S)), 256));
-    kernel3.local_work_size(0, VIENNACL_SECTION_SIZE);
-    viennacl::ocl::enqueue(kernel3(
-                                       viennacl::traits::opencl_handle(S_ref),
-                                       static_cast<unsigned int>(viennacl::traits::start(S_ref)),
-                                       static_cast<unsigned int>(viennacl::traits::stride(S_ref)),
-
-                                       viennacl::traits::opencl_handle(S),
-                                       static_cast<unsigned int>(viennacl::traits::start(S)),
-                                       static_cast<unsigned int>(viennacl::traits::stride(S))
-                               ));
-
-
-    kernel4.global_work_size(0, VIENNACL_SECTION_SIZE * S.size());
-    kernel4.local_work_size(0, VIENNACL_SECTION_SIZE);
-    viennacl::ocl::enqueue(kernel4(
-                                      viennacl::traits::opencl_handle(S),
-                                      static_cast<unsigned int>(viennacl::traits::start(S)),
-                                      static_cast<unsigned int>(viennacl::traits::stride(S)),
-
-                                      viennacl::traits::opencl_handle(vec2),
-                                      static_cast<unsigned int>(viennacl::traits::start(vec2)),
-                                      static_cast<unsigned int>(viennacl::traits::stride(vec2)),
-                                      static_cast<unsigned int>(viennacl::traits::size(vec2))
-                               ));
+    // Third step: Offset each thread group accordingly
+    k3.local_work_size(0, local_worksize);
+    k3.global_work_size(0, workgroups * local_worksize);
+    viennacl::ocl::enqueue(k3(output, cl_uint(output.start()), cl_uint(output.stride()), cl_uint(output.size()),
+                              opencl_carries.opencl_handle())
+                          );
+  }
 }
-#undef VIENNACL_SECTION_SIZE
+
+
+/** @brief This function implements an inclusive scan using CUDA.
+*
+* @param input       Input vector.
+* @param output      The output vector. Must be non-overlapping with input.
+*/
+template<typename NumericT>
+void inclusive_scan(vector_base<NumericT> const & input,
+                    vector_base<NumericT>       & output)
+{
+  detail::scan_impl(input, output, true);
+}
+
+
+/** @brief This function implements an in-place inclusive scan using CUDA.
+*
+* @param x       The vector to inclusive-scan
+*/
+template<typename NumericT>
+void inclusive_scan(vector_base<NumericT> & x)
+{
+  detail::scan_impl(x, x, true);
+}
+
+/** @brief This function implements an exclusive scan using CUDA.
+*
+* @param input       Input vector
+* @param output      The output vector. Must be non-overlapping with input
+*/
+template<typename NumericT>
+void exclusive_scan(vector_base<NumericT> const & input,
+                    vector_base<NumericT>       & output)
+{
+  detail::scan_impl(input, output, false);
+}
+
+/** @brief This function implements an in-place exclusive scan using CUDA.
+*
+* @param input       Input vector
+* @param output      The output vector.
+*/
+template<typename NumericT>
+void exclusive_scan(vector_base<NumericT> & x)
+{
+  detail::scan_impl(x, x, false);
+}
 
 
 } //namespace opencl
