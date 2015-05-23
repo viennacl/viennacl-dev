@@ -666,11 +666,6 @@ struct svd
         generate_svd_inverse_signs(source, numeric_string);
         generate_svd_transpose_inplace(source, numeric_string);
         generate_svd_update_qr_column(source, numeric_string);
-        generate_svd_inclusive_scan_kernel_1(source, numeric_string);
-        generate_svd_exclusive_scan_kernel_1(source, numeric_string);
-        generate_svd_scan_kernel_2(source, numeric_string);
-        generate_svd_scan_kernel_3(source, numeric_string);
-        generate_svd_scan_kernel_4(source, numeric_string);
       }
 
       std::string prog_name = program_name();
