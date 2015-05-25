@@ -121,6 +121,14 @@ template<typename NumericT>
 void ilu_transpose(compressed_matrix<NumericT> const & A,
                    compressed_matrix<NumericT>       & B)
 {
+  viennacl::context orig_ctx = viennacl::traits::context(A);
+  viennacl::context cpu_ctx(viennacl::MAIN_MEMORY);
+  (void)orig_ctx;
+  (void)cpu_ctx;
+
+  viennacl::compressed_matrix<NumericT> A_host(0, 0, 0, cpu_ctx);
+  (void)A_host;
+
   switch (viennacl::traits::handle(A).get_active_handle_id())
   {
   case viennacl::MAIN_MEMORY:
@@ -128,12 +136,19 @@ void ilu_transpose(compressed_matrix<NumericT> const & A,
     break;
 #ifdef VIENNACL_WITH_OPENCL
   case viennacl::OPENCL_MEMORY:
-    viennacl::linalg::opencl::ilu_transpose(A, B);
+    A.switch_memory_context(cpu_ctx);
+    B.switch_memory_context(cpu_ctx);
+    viennacl::linalg::host_based::ilu_transpose(A, B);
+    A.switch_memory_context(orig_ctx);
+    B.switch_memory_context(orig_ctx);
     break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
   case viennacl::CUDA_MEMORY:
-    viennacl::linalg::cuda::ilu_transpose(A, B);
+    A_host = A;
+    B.switch_memory_context(cpu_ctx);
+    viennacl::linalg::host_based::ilu_transpose(A, B);
+    B.switch_memory_context(orig_ctx);
     break;
 #endif
   case viennacl::MEMORY_NOT_INITIALIZED:

@@ -78,9 +78,9 @@ void extract_LU(compressed_matrix<NumericT> const & A,
     {
       unsigned int col = A_col_buffer[j];
       if (col <= row)
-        ++L_row_buffer[row];
+        ++L_row_buffer[col];
       if (col >= row)
-        ++U_row_buffer[row];
+        ++U_row_buffer[col];
     }
   }
 
@@ -108,10 +108,6 @@ void extract_LU(compressed_matrix<NumericT> const & A,
   }
   U_row_buffer[U.size1()] = offset;
   U.reserve(offset, false);
-
-  std::cout << "NNZ in L: " << L.nnz() << std::endl;
-  std::cout << "NNZ in U: " << U.nnz() << std::endl;
-  std::cout << "NNZ in A: " << A.nnz() << std::endl;
 
   unsigned int       *L_col_buffer = detail::extract_raw_pointer<unsigned int>(L.handle2());
   NumericT           *L_elements   = detail::extract_raw_pointer<NumericT>(L.handle());
