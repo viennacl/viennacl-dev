@@ -863,7 +863,6 @@ private:
   }
 
 public:
-
   /** @brief Builds the row block information needed for fast sparse matrix-vector multiplications.
    *
    *  Required when manually populating the memory buffers with values. Not necessary when using viennacl::copy() or .set()
@@ -906,6 +905,7 @@ public:
 
   }
 
+private:
   // /** @brief Copy constructor is by now not available. */
   //compressed_matrix(compressed_matrix const &);
 
