@@ -136,10 +136,9 @@ void ilu_transpose(compressed_matrix<NumericT> const & A,
     break;
 #ifdef VIENNACL_WITH_OPENCL
   case viennacl::OPENCL_MEMORY:
-    A.switch_memory_context(cpu_ctx);
+    A_host = A;
     B.switch_memory_context(cpu_ctx);
-    viennacl::linalg::host_based::ilu_transpose(A, B);
-    A.switch_memory_context(orig_ctx);
+    viennacl::linalg::host_based::ilu_transpose(A_host, B);
     B.switch_memory_context(orig_ctx);
     break;
 #endif
@@ -147,7 +146,7 @@ void ilu_transpose(compressed_matrix<NumericT> const & A,
   case viennacl::CUDA_MEMORY:
     A_host = A;
     B.switch_memory_context(cpu_ctx);
-    viennacl::linalg::host_based::ilu_transpose(A, B);
+    viennacl::linalg::host_based::ilu_transpose(A_host, B);
     B.switch_memory_context(orig_ctx);
     break;
 #endif

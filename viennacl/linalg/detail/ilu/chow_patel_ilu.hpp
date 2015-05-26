@@ -136,7 +136,9 @@ class chow_patel_ilu_precond< viennacl::compressed_matrix<NumericT, AlignmentV> 
 public:
   chow_patel_ilu_precond(viennacl::compressed_matrix<NumericT, AlignmentV> const & A, chow_patel_ilu_tag const & tag)
     : tag_(tag),
+      L_(0, 0, 0, viennacl::traits::context(A)),
       diag_L_(A.size1(), viennacl::traits::context(A)),
+      U_(0, 0, 0, viennacl::traits::context(A)),
       diag_U_(A.size1(), viennacl::traits::context(A)),
       x_k_(A.size1(), viennacl::traits::context(A)),
       b_(A.size1(), viennacl::traits::context(A))
