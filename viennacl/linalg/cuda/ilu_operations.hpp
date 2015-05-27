@@ -107,7 +107,7 @@ __global__ void extract_LU_kernel_2(
       if (col <= row)
       {
         L_col_indices[index_L] = col;
-        L_elements[index_L]    = (col == row) ? NumericT(1) : value;
+        L_elements[index_L]    = value;
         ++index_L;
       }
 
@@ -142,9 +142,11 @@ void extract_LU(compressed_matrix<NumericT> const & A,
   //
   viennacl::vector<unsigned int> wrapped_L_row_buffer(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()), viennacl::CUDA_MEMORY, A.size1() + 1);
   viennacl::linalg::exclusive_scan(wrapped_L_row_buffer, wrapped_L_row_buffer);
+  L.reserve(wrapped_L_row_buffer[L.size1()], false);
 
   viennacl::vector<unsigned int> wrapped_U_row_buffer(detail::cuda_arg<unsigned int>(U.handle1().cuda_handle()), viennacl::CUDA_MEMORY, A.size1() + 1);
   viennacl::linalg::exclusive_scan(wrapped_U_row_buffer, wrapped_U_row_buffer);
+  U.reserve(wrapped_U_row_buffer[U.size1()], false);
 
   //
   // Step 3: Write entries
@@ -161,6 +163,9 @@ void extract_LU(compressed_matrix<NumericT> const & A,
                                     detail::cuda_arg<NumericT>(U.handle().cuda_handle())
                                    );
   VIENNACL_CUDA_LAST_ERROR_CHECK("extract_LU_kernel_2");
+
+  L.generate_row_block_information();
+  // Note: block information for U will be generated after transposition
 
 } // extract_LU
 

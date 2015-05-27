@@ -99,9 +99,6 @@ namespace detail
     viennacl::backend::memory_copy(      L.handle(), aij_L.handle(),       0, 0, sizeof(NumericT) * L.nnz());
     viennacl::backend::memory_copy(U_trans.handle(), aij_U_trans.handle(), 0, 0, sizeof(NumericT) * U_trans.nnz());
 
-    //std::cout << "aij_L: " << aij_L << std::endl;
-    //std::cout << "aij_U_trans: " << aij_U_trans << std::endl;
-
     // run sweeps:
     for (vcl_size_t i=0; i<tag.sweeps(); ++i)
       viennacl::linalg::ilu_chow_patel_sweep(L, aij_L, U_trans, aij_U_trans);
@@ -180,7 +177,7 @@ public:
   }
 
 private:
-  chow_patel_ilu_tag const &              tag_;
+  chow_patel_ilu_tag                      tag_;
   viennacl::compressed_matrix<NumericT>   L_;
   viennacl::vector<NumericT>              diag_L_;
   viennacl::compressed_matrix<NumericT>   U_;

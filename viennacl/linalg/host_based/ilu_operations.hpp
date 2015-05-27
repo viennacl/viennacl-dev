@@ -78,36 +78,22 @@ void extract_LU(compressed_matrix<NumericT> const & A,
     {
       unsigned int col = A_col_buffer[j];
       if (col <= row)
-        ++L_row_buffer[col];
+        ++L_row_buffer[row];
       if (col >= row)
-        ++U_row_buffer[col];
+        ++U_row_buffer[row];
     }
   }
 
   //
   // Step 2: Exclusive scan on row_buffer arrays to get correct starting indices
   //
-  unsigned int offset = L_row_buffer[0];
-  L_row_buffer[0] = 0;
-  for (std::size_t row = 1; row < L.size1(); ++row)
-  {
-    unsigned int tmp = L_row_buffer[row];
-    L_row_buffer[row] = offset;
-    offset += tmp;
-  }
-  L_row_buffer[L.size1()] = offset;
-  L.reserve(offset, false);
+  viennacl::vector_base<unsigned int> wrapped_L_row_buffer(L.handle1(), L.size1() + 1, 0, 1);
+  viennacl::linalg::exclusive_scan(wrapped_L_row_buffer);
+  L.reserve(wrapped_L_row_buffer[L.size1()], false);
 
-  offset = U_row_buffer[0];
-  U_row_buffer[0] = 0;
-  for (std::size_t row = 1; row < U.size1(); ++row)
-  {
-    unsigned int tmp = U_row_buffer[row];
-    U_row_buffer[row] = offset;
-    offset += tmp;
-  }
-  U_row_buffer[U.size1()] = offset;
-  U.reserve(offset, false);
+  viennacl::vector_base<unsigned int> wrapped_U_row_buffer(U.handle1(), U.size1() + 1, 0, 1);
+  viennacl::linalg::exclusive_scan(wrapped_U_row_buffer);
+  U.reserve(wrapped_U_row_buffer[U.size1()], false);
 
   unsigned int       *L_col_buffer = detail::extract_raw_pointer<unsigned int>(L.handle2());
   NumericT           *L_elements   = detail::extract_raw_pointer<NumericT>(L.handle());
@@ -136,7 +122,7 @@ void extract_LU(compressed_matrix<NumericT> const & A,
       if (col <= row)
       {
         L_col_buffer[index_L] = col;
-        L_elements[index_L]   = (col == row) ? NumericT(1) : value;
+        L_elements[index_L]   = value;
         ++index_L;
       }
 
@@ -230,6 +216,9 @@ void ilu_scale(compressed_matrix<NumericT> const & A,
     for (unsigned int j = col_begin; j < col_end; ++j)
       U_elements[j] *= D_row * D_elements[U_col_buffer[j]];
   }
+
+  L.generate_row_block_information();
+  // Note: block information for U will be generated after transposition
 
 }
 

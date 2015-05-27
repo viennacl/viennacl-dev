@@ -69,9 +69,11 @@ void extract_LU(compressed_matrix<NumericT> const & A,
   //
   viennacl::vector_base<unsigned int> wrapped_L_row_buffer(L.handle1(), A.size1() + 1, 0, 1);
   viennacl::linalg::exclusive_scan(wrapped_L_row_buffer, wrapped_L_row_buffer);
+  L.reserve(wrapped_L_row_buffer[L.size1()], false);
 
   viennacl::vector_base<unsigned int> wrapped_U_row_buffer(U.handle1(), A.size1() + 1, 0, 1);
   viennacl::linalg::exclusive_scan(wrapped_U_row_buffer, wrapped_U_row_buffer);
+  U.reserve(wrapped_U_row_buffer[U.size1()], false);
 
   //
   // Step 3: Write entries
@@ -82,6 +84,9 @@ void extract_LU(compressed_matrix<NumericT> const & A,
                             L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(),
                             U.handle1().opencl_handle(), U.handle2().opencl_handle(), U.handle().opencl_handle())
                         );
+
+  L.generate_row_block_information();
+  // Note: block information for U will be generated after transposition
 
 } // extract_LU
 

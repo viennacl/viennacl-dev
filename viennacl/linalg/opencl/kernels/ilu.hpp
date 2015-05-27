@@ -104,7 +104,7 @@ void generate_ilu_extract_LU_2(StringT & source, std::string const & numeric_str
 
   source.append("      if (col <= row) { \n");
   source.append("        L_col_indices[index_L] = col; \n");
-  source.append("        L_elements[index_L]    = (col == row) ? 1 : value; \n");
+  source.append("        L_elements[index_L]    = value; \n");
   source.append("        ++index_L; \n");
   source.append("      } \n");
   source.append("      if (col >= row) { \n");
