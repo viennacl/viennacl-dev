@@ -921,7 +921,25 @@ private:
   handle_type elements_;
 };
 
+/** @brief Output stream support for compressed_matrix. Output format is same as MATLAB, Octave, or SciPy
+  *
+  * @param os   STL output stream
+  * @param val  The vector that should be printed
+*/
+template<typename NumericT, unsigned int AlignmentV>
+std::ostream & operator<<(std::ostream & os, compressed_matrix<NumericT, AlignmentV> const & A)
+{
+  std::vector<std::map<unsigned int, NumericT> > tmp(A.size1());
+  viennacl::copy(A, tmp);
+  os << "compressed_matrix of size (" << A.size1() << ", " << A.size2() << ") with " << A.nnz() << " nonzeros:" << std::endl;
 
+  for (vcl_size_t i=0; i<A.size1(); ++i)
+  {
+    for (typename std::map<unsigned int, NumericT>::const_iterator it = tmp[i].begin(); it != tmp[i].end(); ++it)
+      os << "  (" << i << ", " << it->first << ")\t" << it->second << std::endl;
+  }
+  return os;
+}
 
 //
 // Specify available operations:
