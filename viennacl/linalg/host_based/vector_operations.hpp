@@ -990,10 +990,22 @@ namespace detail
 #endif
     {
       NumericT sum = 0;
-      for(vcl_size_t i = 0; i < size1; i++)
+      if (is_inclusive)
       {
-        sum += data_vec1[i * inc1 + start1];
-        data_vec2[i * inc2 + start2] = sum;
+        for(vcl_size_t i = 0; i < size1; i++)
+        {
+          sum += data_vec1[i * inc1 + start1];
+          data_vec2[i * inc2 + start2] = sum;
+        }
+      }
+      else
+      {
+        for(vcl_size_t i = 0; i < size1; i++)
+        {
+          NumericT tmp = data_vec1[i * inc1 + start1];
+          data_vec2[i * inc2 + start2] = sum;
+          sum += tmp;
+        }
       }
     }
 

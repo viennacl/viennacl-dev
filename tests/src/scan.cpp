@@ -98,11 +98,9 @@ static void test_scan_values(viennacl::vector<ScalarType> const & input,
 }
 
 
-static void test_scans()
+static void test_scans(unsigned int sz)
 {
-  unsigned int sz = 12345;
   viennacl::vector<ScalarType> vec1(sz), vec2(sz);
-
 
   std::cout << "Initialize vector..." << std::endl;
   init_vector(vec1);
@@ -143,7 +141,12 @@ int main()
 {
 
   std::cout << std::endl << "----TEST INCLUSIVE and EXCLUSIVE SCAN----" << std::endl << std::endl;
-  test_scans();
+  std::cout << " //// Tiny vectors ////" << std::endl;
+  test_scans(27);
+  std::cout << " //// Small vectors ////" << std::endl;
+  test_scans(298);
+  std::cout << " //// Large vectors ////" << std::endl;
+  test_scans(12345);
 
   std::cout << std::endl <<"--------TEST SUCCESSFULLY COMPLETED----------" << std::endl;
 }
