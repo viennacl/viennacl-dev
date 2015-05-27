@@ -109,11 +109,14 @@ static void test_scans()
 
 
   // INCLUSIVE SCAN
-  std::cout << "Inclusive scan started!" << std::endl;
+  std::cout << " --- Inclusive scan ---" << std::endl;
+  std::cout << "Separate vectors: ";
   viennacl::linalg::inclusive_scan(vec1, vec2);
-  std::cout << "Inclusive scan finished!" << std::endl;
-  //vector_print(vec2);
-  std::cout << "Testing inclusive scan results..." << std::endl;
+  test_scan_values(vec1, vec2, true);
+
+  std::cout << "In-place: ";
+  vec2 = vec1;
+  viennacl::linalg::inclusive_scan(vec2);
   test_scan_values(vec1, vec2, true);
   std::cout << "Inclusive scan tested successfully!" << std::endl << std::endl;
 
@@ -123,10 +126,14 @@ static void test_scans()
   init_vector(vec1);
 
   // EXCLUSIVE SCAN
-  std::cout << "Exlusive scan started!" << std::endl;
+  std::cout << " --- Exclusive scan ---" << std::endl;
+  std::cout << "Separate vectors: ";
   viennacl::linalg::exclusive_scan(vec1, vec2);
-  std::cout << "Exclusive scan finished!" << std::endl;
-  std::cout << "Testing exclusive scan results..."  << std::endl;
+  test_scan_values(vec1, vec2, false);
+
+  std::cout << "In-place: ";
+  vec2 = vec1;
+  viennacl::linalg::exclusive_scan(vec2);
   test_scan_values(vec1, vec2, false);
   std::cout << "Exclusive scan tested successfully!" << std::endl << std::endl;
 

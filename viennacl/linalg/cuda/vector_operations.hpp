@@ -793,7 +793,7 @@ void vector_assign(vector_base<NumericT> & vec1, ScalarT1 const & alpha, bool up
                                      static_cast<unsigned int>(vec1.internal_size()),  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
 
                                      detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)) );
-  VIENNACL_CUDA_LAST_ERROR_CHECK("avbv_v_kernel");
+  VIENNACL_CUDA_LAST_ERROR_CHECK("vector_assign_kernel");
 }
 
 //////////////////////////
@@ -3204,7 +3204,7 @@ namespace detail
 /** @brief This function implements an inclusive scan using CUDA.
 *
 * @param input       Input vector.
-* @param output      The output vector. Must be non-overlapping with input.
+* @param output      The output vector. Either idential to input or non-overlapping.
 */
 template<typename NumericT>
 void inclusive_scan(vector_base<NumericT> const & input,
@@ -3214,37 +3214,16 @@ void inclusive_scan(vector_base<NumericT> const & input,
 }
 
 
-/** @brief This function implements an in-place inclusive scan using CUDA.
-*
-* @param x       The vector to inclusive-scan
-*/
-template<typename NumericT>
-void inclusive_scan(vector_base<NumericT> & x)
-{
-  detail::scan_impl(x, x, true);
-}
-
 /** @brief This function implements an exclusive scan using CUDA.
 *
 * @param input       Input vector
-* @param output      The output vector. Must be non-overlapping with input
+* @param output      The output vector. Either idential to input or non-overlapping.
 */
 template<typename NumericT>
 void exclusive_scan(vector_base<NumericT> const & input,
                     vector_base<NumericT>       & output)
 {
   detail::scan_impl(input, output, false);
-}
-
-/** @brief This function implements an in-place exclusive scan using CUDA.
-*
-* @param input       Input vector
-* @param output      The output vector.
-*/
-template<typename NumericT>
-void exclusive_scan(vector_base<NumericT> & x)
-{
-  detail::scan_impl(x, x, false);
 }
 
 

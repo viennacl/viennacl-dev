@@ -1061,6 +1061,9 @@ namespace viennacl
     * Given an element vector (x_0, x_1, ..., x_{n-1}),
     * this routine computes (x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-1})
     *
+    * The two vectors either need to be the same (in-place), or reside in distinct memory regions.
+    * Partial overlaps of vec1 and vec2 are not allowed.
+    *
     * @param vec1       Input vector.
     * @param vec2       The output vector.
     */
@@ -1092,10 +1095,24 @@ namespace viennacl
       }
     }
 
+    /** @brief Implements an in-place inclusive scan of a vector.
+    *
+    * Given an input element vector (x_0, x_1, ..., x_{n-1}),
+    * this routine overwrites the vector with (x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-1})
+    */
+    template<typename NumericT>
+    void inclusive_scan(vector_base<NumericT> & vec)
+    {
+      inclusive_scan(vec, vec);
+    }
+
     /** @brief This function implements an exclusive scan.
     *
     * Given an element vector (x_0, x_1, ..., x_{n-1}),
     * this routine computes (0, x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-2})
+    *
+    * The two vectors either need to be the same (in-place), or reside in distinct memory regions.
+    * Partial overlaps of vec1 and vec2 are not allowed.
     *
     * @param vec1       Input vector.
     * @param vec2       The output vector.
@@ -1128,6 +1145,16 @@ namespace viennacl
       }
     }
 
+    /** @brief Inplace exclusive scan of a vector
+    *
+    * Given an element vector (x_0, x_1, ..., x_{n-1}),
+    * this routine overwrites the input vector with (0, x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-2})
+    */
+    template<typename NumericT>
+    void exclusive_scan(vector_base<NumericT> & vec)
+    {
+      exclusive_scan(vec, vec);
+    }
   } //namespace linalg
 
   template<typename T, typename LHS, typename RHS, typename OP>

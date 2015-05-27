@@ -529,7 +529,7 @@ namespace detail
 /** @brief This function implements an inclusive scan using CUDA.
 *
 * @param input       Input vector.
-* @param output      The output vector. Must be non-overlapping with input.
+* @param output      The output vector. Either idential to input or non-overlapping.
 */
 template<typename NumericT>
 void inclusive_scan(vector_base<NumericT> const & input,
@@ -539,37 +539,16 @@ void inclusive_scan(vector_base<NumericT> const & input,
 }
 
 
-/** @brief This function implements an in-place inclusive scan using CUDA.
-*
-* @param x       The vector to inclusive-scan
-*/
-template<typename NumericT>
-void inclusive_scan(vector_base<NumericT> & x)
-{
-  detail::scan_impl(x, x, true);
-}
-
 /** @brief This function implements an exclusive scan using CUDA.
 *
 * @param input       Input vector
-* @param output      The output vector. Must be non-overlapping with input
+* @param output      The output vector. Either idential to input or non-overlapping.
 */
 template<typename NumericT>
 void exclusive_scan(vector_base<NumericT> const & input,
                     vector_base<NumericT>       & output)
 {
   detail::scan_impl(input, output, false);
-}
-
-/** @brief This function implements an in-place exclusive scan using CUDA.
-*
-* @param input       Input vector
-* @param output      The output vector.
-*/
-template<typename NumericT>
-void exclusive_scan(vector_base<NumericT> & x)
-{
-  detail::scan_impl(x, x, false);
 }
 
 
