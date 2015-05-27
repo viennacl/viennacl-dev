@@ -145,8 +145,10 @@ int main()
   test_scans(27);
   std::cout << " //// Small vectors ////" << std::endl;
   test_scans(298);
-  std::cout << " //// Large vectors ////" << std::endl;
+  std::cout << " //// Medium vectors ////" << std::endl;
   test_scans(12345);
+  std::cout << " //// Large vectors ////" << std::endl;
+  test_scans(123456);
 
   std::cout << std::endl <<"--------TEST SUCCESSFULLY COMPLETED----------" << std::endl;
 }

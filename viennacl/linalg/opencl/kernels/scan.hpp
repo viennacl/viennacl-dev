@@ -45,7 +45,7 @@ void generate_scan_kernel_1(StringType & source, std::string const & numeric_str
   source.append("  for (unsigned int i = block_start + get_local_id(0); i < block_stop; i += get_local_size(0)) { \n");
 
   // load data
-  source.append("    my_value = block_offset + ((i < sizeX) ? X[i * incX + startX] : 0); \n");
+  source.append("    my_value = (i < sizeX) ? X[i * incX + startX] : 0; \n");
 
   // inclusive scan in shared buffer:
   source.append("    for(unsigned int stride = 1; stride < get_local_size(0); stride *= 2) { \n");
@@ -60,18 +60,17 @@ void generate_scan_kernel_1(StringType & source, std::string const & numeric_str
   source.append("    barrier(CLK_LOCAL_MEM_FENCE);   \n");
 
   // write to output array:
-  source.append("    if (scan_offset + i < min(block_stop, sizeX)) \n");
-  source.append("      Y[(i + scan_offset) * incY + startY] = my_value; \n");
+  source.append("    if (scan_offset > 0) \n");
+  source.append("      my_value = (get_local_id(0) > 0) ? shared_buffer[get_local_id(0) - 1] : 0; \n");
 
-  source.append("    block_offset = (get_local_id(0) == 0) ? shared_buffer[get_local_size(0)-1] : 0; \n");
+  source.append("    if (i < sizeX) \n");
+  source.append("      Y[i * incY + startY] = block_offset + my_value; \n");
+
+  source.append("    block_offset += shared_buffer[get_local_size(0)-1]; \n");
   source.append("  } \n");
 
   // write carry:
   source.append("  if (get_local_id(0) == 0) carries[get_group_id(0)] = block_offset; \n");
-
-  // exclusive scan requires us to write a zero value at the beginning of each block
-  source.append("  if (get_local_id(0) == 0 && scan_offset == 1 && block_start < sizeX)  \n");
-  source.append("    Y[block_start * incY + startY] = 0;  \n");
 
   source.append("} \n");
 }

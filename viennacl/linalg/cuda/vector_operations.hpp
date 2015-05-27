@@ -3069,7 +3069,7 @@ __global__ void scan_kernel_1(NumericT const *X,
   for (unsigned int i = block_start + threadIdx.x; i < block_stop; i += blockDim.x)
   {
     // load data:
-    my_value = block_offset + ((i < sizeX) ? X[i * incX + startX] : 0);
+    my_value = (i < sizeX) ? X[i * incX + startX] : 0;
 
     // inclusive scan in shared buffer:
     for(unsigned int stride = 1; stride < blockDim.x; stride *= 2)
@@ -3084,20 +3084,21 @@ __global__ void scan_kernel_1(NumericT const *X,
     shared_buffer[threadIdx.x] = my_value;
     __syncthreads();
 
-    // write to output array
-    if (scan_offset + i < min(block_stop, sizeX))
-      Y[(i + scan_offset) * incY + startY] = my_value;
+    // exclusive scan requires us to write a zero value at the beginning of each block
+    if (scan_offset > 0)
+      my_value = (threadIdx.x > 0) ? shared_buffer[threadIdx.x - 1] : 0;
 
-    block_offset = (threadIdx.x == 0) ? shared_buffer[blockDim.x-1] : 0;
+    // write to output array
+    if (i < sizeX)
+      Y[i * incY + startY] = block_offset + my_value;
+
+    block_offset += shared_buffer[blockDim.x-1];
   }
 
   // write carry:
   if (threadIdx.x == 0)
     carries[blockIdx.x] = block_offset;
 
-  // exclusive scan requires us to write a zero value at the beginning of each block
-  if (threadIdx.x == 0 && scan_offset == 1 && block_start < sizeX)
-    Y[block_start * incY + startY] = 0;
 }
 
 // exclusive-scan of carries
