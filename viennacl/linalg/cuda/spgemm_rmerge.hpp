@@ -177,7 +177,7 @@ __global__ void compressed_matrix_gemm_stage_2(
         // determine current minimum (warp shuffle)
         unsigned int min_index = current_front_index;
         for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-          min_index = min(min_index, __shfl_xor(min_index, i));
+          min_index = min(min_index, __shfl_xor((int)min_index, (int)i));
 
         if (min_index == B_size2)
           break;
@@ -256,7 +256,7 @@ __global__ void compressed_matrix_gemm_stage_3(
         // determine current minimum:
         unsigned int min_index = current_front_index;
         for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-          min_index = min(min_index, __shfl_xor(min_index, i));
+          min_index = min(min_index, __shfl_xor((int)min_index, (int)i));
 
         if (min_index == B_size2) // done
           break;
@@ -264,7 +264,7 @@ __global__ void compressed_matrix_gemm_stage_3(
         // compute entry in C:
         NumericT output_value = (current_front_index == min_index) ? val_A * current_front_value : 0;
         for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-          output_value += __shfl_xor(output_value, i);
+          output_value += __shfl_xor((int)output_value, (int)i);
 
         // update front:
         if (current_front_index == min_index)

@@ -146,7 +146,7 @@ __global__ void compressed_matrix_gemm_stage_1(
 //
 // Stage 2: Determine sparsity pattern of C
 //
-__device__ unsigned int merge_subwarp_symbolic(unsigned int row_B_start, unsigned int row_B_end, unsigned int const *B_col_indices, unsigned int B_size2, unsigned int subwarpsize)
+inline __device__ unsigned int merge_subwarp_symbolic(unsigned int row_B_start, unsigned int row_B_end, unsigned int const *B_col_indices, unsigned int B_size2, unsigned int subwarpsize)
 {
   unsigned int current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
 
@@ -156,7 +156,7 @@ __device__ unsigned int merge_subwarp_symbolic(unsigned int row_B_start, unsigne
     // determine current minimum (warp shuffle)
     unsigned int min_index = current_front_index;
     for (unsigned int i = subwarpsize/2; i >= 1; i /= 2)
-      min_index = min(min_index, __shfl_xor(min_index, i));
+      min_index = min(min_index, __shfl_xor((int)min_index, (int)i));
 
     if (min_index == B_size2)
       break;
@@ -170,8 +170,8 @@ __device__ unsigned int merge_subwarp_symbolic(unsigned int row_B_start, unsigne
   return num_nnz;
 }
 
-__device__ unsigned int merge_subwarp_symbolic_double(unsigned int row_B_start, unsigned int row_B_end, unsigned int const *B_col_indices, unsigned int B_size2,
-                                                      unsigned int *output_array, unsigned int id_in_warp, unsigned int subwarpsize)
+inline __device__ unsigned int merge_subwarp_symbolic_double(unsigned int row_B_start, unsigned int row_B_end, unsigned int const *B_col_indices, unsigned int B_size2,
+                                                             unsigned int *output_array, unsigned int id_in_warp, unsigned int subwarpsize)
 {
   unsigned int current_front_index = (row_B_start < row_B_end) ? load_and_cache(B_col_indices + row_B_start) : B_size2;
 
@@ -183,7 +183,7 @@ __device__ unsigned int merge_subwarp_symbolic_double(unsigned int row_B_start, 
     // determine current minimum (warp shuffle)
     unsigned int min_index = current_front_index;
     for (unsigned int i = subwarpsize/2; i >= 1; i /= 2)
-      min_index = min(min_index, __shfl_xor(min_index, i));
+      min_index = min(min_index, __shfl_xor((int)min_index, (int)i));
 
     if (min_index == B_size2)
       break;
@@ -317,7 +317,7 @@ __device__ unsigned int merge_subwarp_numeric(NumericT scaling_factor,
     // determine current minimum:
     unsigned int min_index = current_front_index;
     for (unsigned int i = subwarpsize/2; i >= 1; i /= 2)
-      min_index = min(min_index, __shfl_xor(min_index, i));
+      min_index = min(min_index, __shfl_xor((int)min_index, (int)i));
 
     if (min_index == invalid_token) // done
       break;
@@ -325,7 +325,7 @@ __device__ unsigned int merge_subwarp_numeric(NumericT scaling_factor,
     // compute entry in C:
     NumericT output_value = (current_front_index == min_index) ? scaling_factor * current_front_value : 0;
     for (unsigned int i = subwarpsize/2; i >= 1; i /= 2)
-      output_value += __shfl_xor(output_value, i);
+      output_value += __shfl_xor((int)output_value, (int)i);
 
     // update front:
     if (current_front_index == min_index)
