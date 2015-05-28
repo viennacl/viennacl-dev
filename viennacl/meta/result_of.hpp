@@ -33,6 +33,10 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #endif
 
+#ifdef VIENNACL_WITH_ARMADILLO
+#include <armadillo>
+#endif
+
 #ifdef VIENNACL_WITH_EIGEN
 #include <Eigen/Core>
 #include <Eigen/Sparse>
@@ -154,6 +158,17 @@ struct difference_type
   typedef typename T::difference_type   type;
 };
 
+#ifdef VIENNACL_WITH_ARMADILLO
+template<typename NumericT>
+struct size_type<arma::Col<NumericT> > { typedef vcl_size_t  type; };
+
+template<typename NumericT>
+struct size_type<arma::Mat<NumericT> > { typedef vcl_size_t  type; };
+
+template<typename NumericT>
+struct size_type<arma::SpMat<NumericT> > { typedef vcl_size_t  type; };
+
+#endif
 
 #ifdef VIENNACL_WITH_EIGEN
 template<class T, int a, int b, int c, int d, int e>
@@ -193,6 +208,18 @@ struct value_type
 };
 
 /** \cond */
+#ifdef VIENNACL_WITH_ARMADILLO
+template<typename NumericT>
+struct value_type<arma::Col<NumericT> > { typedef NumericT  type; };
+
+template<typename NumericT>
+struct value_type<arma::Mat<NumericT> > { typedef NumericT  type; };
+
+template<typename NumericT>
+struct value_type<arma::SpMat<NumericT> > { typedef NumericT  type; };
+
+#endif
+
 #ifdef VIENNACL_WITH_EIGEN
 template<>
 struct value_type<Eigen::MatrixXf>

@@ -34,6 +34,10 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #endif
 
+#ifdef VIENNACL_WITH_ARMADILLO
+#include <armadillo>
+#endif
+
 #ifdef VIENNACL_WITH_EIGEN
 #include <Eigen/Core>
 #include <Eigen/Sparse>
@@ -95,6 +99,24 @@ void resize(mtl::dense_vector<ScalarType> & vec,
             vcl_size_t new_size)
 {
   vec.change_dim(new_size);
+}
+#endif
+
+#ifdef VIENNACL_WITH_ARMADILLO
+template<typename NumericT>
+inline void resize(arma::Mat<NumericT> & A,
+                   vcl_size_t new_rows,
+                   vcl_size_t new_cols)
+{
+  A.resize(new_rows, new_cols);
+}
+
+template<typename NumericT>
+inline void resize(arma::SpMat<NumericT> & A,
+                   vcl_size_t new_rows,
+                   vcl_size_t new_cols)
+{
+  A.set_size(new_rows, new_cols);
 }
 #endif
 
@@ -187,6 +209,11 @@ template<typename ScalarType>
 vcl_size_t size(mtl::dense_vector<ScalarType> const & vec) { return vec.used_memory(); }
 #endif
 
+#ifdef VIENNACL_WITH_ARMADILLO
+template<typename NumericT>
+inline vcl_size_t size(arma::Mat<NumericT> const & A) { return A.n_elem; }
+#endif
+
 #ifdef VIENNACL_WITH_EIGEN
 inline vcl_size_t size(Eigen::VectorXf const & v) { return v.rows(); }
 inline vcl_size_t size(Eigen::VectorXd const & v) { return v.rows(); }
@@ -220,6 +247,13 @@ template<typename RowType>
 vcl_size_t
 size1(std::vector< RowType > const & mat) { return mat.size(); }
 
+#ifdef VIENNACL_WITH_ARMADILLO
+template<typename NumericT>
+inline vcl_size_t size1(arma::Mat<NumericT> const & A) { return A.n_rows; }
+template<typename NumericT>
+inline vcl_size_t size1(arma::SpMat<NumericT> const & A) { return A.n_rows; }
+#endif
+
 #ifdef VIENNACL_WITH_EIGEN
 inline vcl_size_t size1(Eigen::MatrixXf const & m) { return static_cast<vcl_size_t>(m.rows()); }
 inline vcl_size_t size1(Eigen::MatrixXd const & m) { return static_cast<vcl_size_t>(m.rows()); }
@@ -243,6 +277,13 @@ vcl_size_t size1(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl
 template<typename MatrixType>
 typename result_of::size_type<MatrixType>::type
 size2(MatrixType const & mat) { return mat.size2(); }
+
+#ifdef VIENNACL_WITH_ARMADILLO
+template<typename NumericT>
+inline vcl_size_t size2(arma::Mat<NumericT> const & A) { return A.n_cols; }
+template<typename NumericT>
+inline vcl_size_t size2(arma::SpMat<NumericT> const & A) { return A.n_cols; }
+#endif
 
 /** \cond */
 #ifdef VIENNACL_WITH_EIGEN

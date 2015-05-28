@@ -34,6 +34,10 @@
 #include <boost/numeric/ublas/vector.hpp>
 #endif
 
+#ifdef VIENNACL_WITH_ARMADILLO
+#include <armadillo>
+#endif
+
 #ifdef VIENNACL_WITH_EIGEN
 #include <Eigen/Core>
 #include <Eigen/Sparse>

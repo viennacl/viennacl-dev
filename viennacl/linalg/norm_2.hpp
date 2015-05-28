@@ -50,6 +50,16 @@ namespace viennacl
     }
     #endif
 
+    #ifdef VIENNACL_WITH_ARMADILLO
+    // ----------------------------------------------------
+    // Armadillo
+    //
+    template<typename NumericT>
+    NumericT norm_2(arma::Col<NumericT> const& v)
+    {
+      return norm(v);
+    }
+    #endif
 
     #ifdef VIENNACL_WITH_EIGEN
     // ----------------------------------------------------

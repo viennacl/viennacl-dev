@@ -963,6 +963,42 @@ void fast_copy(NumericT * cpu_matrix_begin,
   }
 }
 
+#ifdef VIENNACL_WITH_ARMADILLO
+/** @brief Copies a dense Armadillo matrix from the host (CPU) to a ViennaCL vector
+*
+* @param arma_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
+* @param gpu_matrix   A dense ViennaCL matrix
+*/
+template<typename NumericT, typename F, unsigned int AlignmentV>
+void copy(arma::Mat<NumericT>                       const & arma_matrix,
+          viennacl::matrix<NumericT, F, AlignmentV>       & vcl_matrix)
+{
+  typedef typename viennacl::matrix<NumericT, F, AlignmentV>::size_type      size_type;
+
+  if (vcl_matrix.size1() == 0 || vcl_matrix.size2() == 0)
+  {
+    vcl_matrix.resize(arma_matrix.n_rows,
+                      arma_matrix.n_cols,
+                      false);
+  }
+  else
+  {
+    assert(    (vcl_matrix.size1() == static_cast<vcl_size_t>(arma_matrix.n_rows))
+            && (vcl_matrix.size2() == static_cast<vcl_size_t>(arma_matrix.n_cols))
+            && bool("matrix size mismatch")
+            );
+  }
+
+  // prepare buffer:
+  viennacl::backend::typesafe_host_array<NumericT> data(vcl_matrix.handle(), vcl_matrix.internal_size());
+  for (size_type j = 0; j < vcl_matrix.size2(); ++j) // iterate along columns is certainly fast for arma_matrix
+    for (size_type i = 0; i < vcl_matrix.size1(); ++i)
+      data.set(F::mem_index(i, j, vcl_matrix.internal_size1(), vcl_matrix.internal_size2()), arma_matrix(i,j));
+
+  // copy over:
+  viennacl::backend::memory_write(vcl_matrix.handle(), 0, data.raw_size(), data.get());
+}
+#endif
 
 #ifdef VIENNACL_WITH_EIGEN
 /** @brief Copies a dense Eigen matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU)

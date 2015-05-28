@@ -53,6 +53,17 @@ namespace viennacl
     }
     #endif
 
+    #ifdef VIENNACL_WITH_ARMADILLO
+    // ----------------------------------------------------
+    // Armadillo
+    //
+    template<typename NumericT, typename VectorT>
+    VectorT prod(arma::SpMat<NumericT> const& A, VectorT const& vector)
+    {
+      return A * vector;
+    }
+    #endif
+
     #ifdef VIENNACL_WITH_EIGEN
     // ----------------------------------------------------
     // Eigen

@@ -36,6 +36,7 @@ option(BUILD_DOXYGEN_DOCS "Build the doxygen docs" TRUE)
 option(BUILD_EXAMPLES "Build the example applications" TRUE)
 option(BUILD_MANUAL "Build the manual" TRUE)
 option(BUILD_TESTING "Build the tests" FALSE)
+option(ENABLE_ARMADILLO "Build examples that use Armadillo" FALSE)
 option(ENABLE_EIGEN "Build examples that use Eigen" FALSE)
 option(ENABLE_MTL4 "Build examples that use MTL4" FALSE)
 # Boost is required anyways...

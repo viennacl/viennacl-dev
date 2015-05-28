@@ -38,6 +38,17 @@ namespace viennacl
 namespace linalg
 {
 
+#ifdef VIENNACL_WITH_ARMADILLO
+// ----------------------------------------------------
+// Armadillo
+//
+template<typename NumericT>
+NumericT inner_prod(arma::Col<NumericT> const& v1, arma::Col<NumericT> const& v2)
+{
+  return dot(v1, v2);
+}
+#endif
+
 #ifdef VIENNACL_WITH_EIGEN
 // ----------------------------------------------------
 // EIGEN
