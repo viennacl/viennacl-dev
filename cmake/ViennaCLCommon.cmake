@@ -1,6 +1,8 @@
 
 include(CTest)
 include(CMakeDependentOption)
+include(AddCCompilerFlagIfSupported)
+include(AddCLinkerFlagIfSupported)
 
 # Installation directories
 ##########################
@@ -36,6 +38,8 @@ option(BUILD_EXAMPLES "Build example programs" ON)
 option(ENABLE_OPENCL "Use the OpenCL backend" ON)
 
 option(ENABLE_OPENMP "Use OpenMP acceleration" OFF)
+
+option(ENABLE_ASAN "Build with address sanitizer if available" OFF)
 
 # If you are interested in the impact of different kernel parameters on
 # performance, you may want to give ViennaProfiler a try (see
@@ -105,6 +109,11 @@ if (ENABLE_OPENMP)
    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_SHARED_LINKER_FLAGS}")
    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${OpenMP_STATIC_LINKER_FLAGS}")
 endif(ENABLE_OPENMP)
+
+if (ENABLE_ASAN)
+  add_c_compiler_flag_if_supported("-fsanitize=address")
+  add_c_linker_flag_if_supported("-fsanitize=address")
+endif(ENABLE_ASAN)
 
 if(ENABLE_VIENNAPROFILER)
    find_package(ViennaProfiler REQUIRED)
