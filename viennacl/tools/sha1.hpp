@@ -26,7 +26,6 @@
 #include <cstring>
 #include <iomanip>
 #include <sstream>
-#include <stdint.h>
 
 namespace viennacl
 {
