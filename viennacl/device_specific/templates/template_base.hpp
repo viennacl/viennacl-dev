@@ -184,9 +184,9 @@ private:
       if ( (leaf==LHS_NODE_TYPE && root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
            ||(leaf==RHS_NODE_TYPE && root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY) )
       {
-        mapped_object * obj = mapping_.at(std::make_pair(root_idx,leaf)).get();
+        mapped_object * obj = at(mapping_, std::make_pair(root_idx,leaf)).get();
         if(widths_.find(obj->name())!=widths_.end())
-          obj->append_kernel_arguments(already_generated_, str_, widths_.at(obj->name()));
+          obj->append_kernel_arguments(already_generated_, str_, at(widths_, obj->name()));
         else
           obj->append_kernel_arguments(already_generated_, str_, 1);
       }

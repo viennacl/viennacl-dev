@@ -233,7 +233,7 @@ private:
       parse(*sit, idx, is_trans, A);
       row_major = utils::call_on_matrix(A, utils::row_major_fun());
       for (unsigned int j = 0; j < idx.size(); ++j)
-        exprs.push_back((mapped_row_wise_reduction*)(mit->at(mapping_key(idx[j], PARENT_NODE_TYPE)).get()));
+        exprs.push_back((mapped_row_wise_reduction*)(at(*mit, mapping_key(idx[j], PARENT_NODE_TYPE)).get()));
     }
     is_trans = is_trans ^ row_major;
 

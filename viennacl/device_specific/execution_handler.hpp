@@ -70,7 +70,7 @@ public:
   {
     if (kernels_.insert(container_type::value_type(key, T.clone())).second)
     {
-      std::vector<std::string> sources = kernels_.at(key)->generate(append_prefix(key), statements, device_);
+      std::vector<std::string> sources = at(kernels_, key)->generate(append_prefix(key), statements, device_);
       assert(sources.size()<=2);
       for (unsigned int i = 0; i < sources.size(); ++i)
         lazy_programs_[i].add(sources[i]);
@@ -79,12 +79,12 @@ public:
 
   template_base * template_of(std::string const & key)
   {
-    return kernels_.at(key).get();
+    return at(kernels_, key).get();
   }
 
   void execute(container_type::key_type const & key, statements_container const & statements)
   {
-    tools::shared_ptr<template_base> & template_pointer = kernels_.at(key);
+    tools::shared_ptr<template_base> & template_pointer = at(kernels_, key);
     template_pointer->enqueue(append_prefix(key), lazy_programs_, statements);
   }
 

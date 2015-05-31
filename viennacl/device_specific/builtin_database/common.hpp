@@ -89,7 +89,15 @@ public:
 
   ParamT const & at(vendor_id_type p0, device_type p1, ocl::device_architecture_family p2, device_name_type p3, scheduler::statement_node_numeric_type p4) const
   {
-    return map.d.at(p0).d.at(p1).d.at(p2).d.at(p3).d.at(p4);
+    return viennacl::device_specific::at(
+           viennacl::device_specific::at(
+           viennacl::device_specific::at(
+           viennacl::device_specific::at(
+             viennacl::device_specific::at(map.d, p0).d,
+           p1).d,
+           p2).d,
+         p3).d,
+         p4);
   }
 
 

@@ -106,7 +106,7 @@ public:
       namespace ds = viennacl::device_specific;
       viennacl::ocl::device const & device = ctx.current_device();
       handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<NumericT>::apply() + "_vector", ctx, device)));
-      ds::execution_handler & handler = handlers_map.at(h);
+      ds::execution_handler & handler = at(handlers_map, h);
 
       viennacl::vector<NumericT> x;
       viennacl::vector<NumericT> y;
@@ -139,7 +139,7 @@ public:
       handler.add("max", ds::reduction_template(reduction_params), scheduler::preset::max(&da, &x));
       handler.add("min", ds::reduction_template(reduction_params), scheduler::preset::min(&da, &x));
     }
-    return handlers_map.at(h);
+    return at(handlers_map, h);
   }
 };
 
@@ -161,7 +161,7 @@ public:
 
       viennacl::ocl::device const & device = ctx.current_device();
       handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<NumericT>::apply() + "_vector_multi_inner_prod", ctx, device)));
-      ds::execution_handler & handler = handlers_map.at(h);
+      ds::execution_handler & handler = viennacl::device_specific::at(handlers_map, h);
 
       ds::reduction_template::parameters_type reduction_params = ds::builtin_database::reduction_params<NumericT>(device);
 
@@ -177,7 +177,7 @@ public:
       generate_inner_prod_impl(handler, "inner_prod_4", reduction_params, 4, &x, &y, &da);
       generate_inner_prod_impl(handler, "inner_prod_8", reduction_params, 8, &x, &y, &da);
     }
-    return handlers_map.at(h);
+    return viennacl::device_specific::at(handlers_map, h);
   }
 };
 
@@ -203,7 +203,7 @@ public:
       std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
       viennacl::ocl::device const & device = ctx.current_device();
       handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<NumericT>::apply() + "_vector_element", ctx, device)));
-      ds::execution_handler & handler = handlers_map.at(h);
+      ds::execution_handler & handler = viennacl::device_specific::at(handlers_map, h);
       ds::vector_axpy_template::parameters_type vector_axpy_params = ds::builtin_database::vector_axpy_params<NumericT>(device);
 
       viennacl::vector<NumericT> x;
@@ -248,7 +248,7 @@ public:
 #undef VIENNACL_ADD_BINARY
 
     }
-    return handlers_map.at(h);
+    return viennacl::device_specific::at(handlers_map, h);
   }
 };
 

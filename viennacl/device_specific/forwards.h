@@ -137,11 +137,22 @@ static std::string generate_pointer_kernel_argument(std::string const & address_
   return address_space +  " " + scalartype + "* " + name + ",";
 }
 
-/** @brief Emulation of C++11's .at() member for std::map<> */
+/** @brief Emulation of C++11's .at() member for std::map<>, const-version */
 template<typename KeyT, typename ValueT>
 ValueT const & at(std::map<KeyT, ValueT> const & map, KeyT const & key)
 {
   typename std::map<KeyT, ValueT>::const_iterator it = map.find(key);
+  if (it != map.end())
+    return it->second;
+
+  throw std::out_of_range("Generator: Key not found in map");
+}
+
+/** @brief Emulation of C++11's .at() member for std::map<>, non-const version */
+template<typename KeyT, typename ValueT>
+ValueT & at(std::map<KeyT, ValueT> & map, KeyT const & key)
+{
+  typename std::map<KeyT, ValueT>::iterator it = map.find(key);
   if (it != map.end())
     return it->second;
 
@@ -215,7 +226,7 @@ class bind_to_handle : public symbolic_binder
 public:
   bind_to_handle() : current_arg_(0){ }
   bool bind(viennacl::backend::mem_handle const * ph) {return (ph==NULL)?true:memory.insert(std::make_pair((void*)ph, current_arg_)).second; }
-  unsigned int get(viennacl::backend::mem_handle const * ph){ return bind(ph)?current_arg_++:memory.at((void*)ph); }
+  unsigned int get(viennacl::backend::mem_handle const * ph){ return bind(ph) ? current_arg_++ : at(memory, (void*)ph); }
 private:
   unsigned int current_arg_;
   std::map<void*,unsigned int> memory;

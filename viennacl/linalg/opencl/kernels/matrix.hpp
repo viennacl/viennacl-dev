@@ -534,7 +534,7 @@ public:
       viennacl::ocl::device const & device = ctx.current_device();
       std::string program_name = viennacl::ocl::type_to_string<NumericT>::apply() + (is_row_major?"matrix_row":"matrix_col");
       handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
-      ds::execution_handler & handler = handlers_map.at(key);
+      ds::execution_handler & handler = viennacl::device_specific::at(handlers_map, key);
 
       ds::matrix_axpy_template::parameters_type matrix_axpy_params = ds::builtin_database::matrix_axpy_params<NumericT>(device);
       ds::vector_axpy_template::parameters_type vector_axpy_params = ds::builtin_database::vector_axpy_params<NumericT>(device);
@@ -578,7 +578,7 @@ public:
       handler.add("matrix_diag_to_vector", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::matrix_diag_to_vector(&x, &A, hi));
       handler.add("diagonal_assign_cpu", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::diagonal_assign_cpu(&A, &sx));
     }
-    return handlers_map.at(key);
+    return viennacl::device_specific::at(handlers_map, key);
   }
 };
 
@@ -606,7 +606,7 @@ public:
       viennacl::ocl::device const & device = ctx.current_device();
       std::string program_name = viennacl::ocl::type_to_string<NumericT>::apply() + (is_row_major?"matrix_element_row":"matrix_element_col");
       handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
-      ds::execution_handler & handler = handlers_map.at(key);
+      ds::execution_handler & handler = viennacl::device_specific::at(handlers_map, key);
       ds::matrix_axpy_template::parameters_type matrix_axpy_params = ds::builtin_database::matrix_axpy_params<NumericT>(device);
 
       tools::shared_ptr<viennacl::matrix_base<NumericT> > pA, pB, pC;
@@ -666,7 +666,7 @@ public:
 #undef VIENNACL_ADD_BINARY
 
     }
-    return handlers_map.at(key);
+    return viennacl::device_specific::at(handlers_map, key);
   }
 };
 
@@ -688,7 +688,7 @@ public:
       viennacl::ocl::device const & device = ctx.current_device();
       std::string program_name = viennacl::ocl::type_to_string<NumericT>::apply() + "_matrix_row_wise";
       handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
-      ds::execution_handler & handler = handlers_map.at(key);
+      ds::execution_handler & handler = viennacl::device_specific::at(handlers_map, key);
 
       viennacl::matrix<NumericT, viennacl::column_major> A;
       viennacl::vector<NumericT> x;
@@ -697,7 +697,7 @@ public:
       handler.add("mat_vec_N", ds::row_wise_reduction_template(ds::builtin_database::row_wise_reduction_params<NumericT>(device, 'N'), 'N'), scheduler::preset::mat_vec_prod(&A, false, &x, &y));
 
     }
-    return handlers_map.at(key);
+    return viennacl::device_specific::at(handlers_map, key);
   }
 };
 
@@ -719,7 +719,7 @@ public:
       viennacl::ocl::device const & device = ctx.current_device();
       std::string program_name = viennacl::ocl::type_to_string<NumericT>::apply() + (is_row_major?"_matrix_prod_row":"_matrix_prod_col");
       handlers_map.insert(std::make_pair(key, ds::execution_handler(program_name, ctx, device)));
-      ds::execution_handler & handler = handlers_map.at(key);
+      ds::execution_handler & handler = viennacl::device_specific::at(handlers_map, key);
 
       ds::matrix_product_template::parameters_type matrix_product_params_NN = ds::builtin_database::matrix_product_params<NumericT>(device, 'N', 'N');
       ds::matrix_product_template::parameters_type matrix_product_params_TN = ds::builtin_database::matrix_product_params<NumericT>(device, 'T', 'N');
@@ -745,7 +745,7 @@ public:
       handler.add("prod_TT", ds::matrix_product_template(matrix_product_params_TT, 'T', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C));
 
     }
-    return handlers_map.at(key);
+	return viennacl::device_specific::at(handlers_map, key);
   }
 };
 

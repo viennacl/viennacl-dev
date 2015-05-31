@@ -73,7 +73,7 @@ inline void process_all_at(std::string const & type_key, std::string const & str
 {
   for (std::vector<mapping_type>::const_iterator mit = mappings.begin(); mit != mappings.end(); ++mit)
   {
-    mapped_object * obj = mit->at(mapping_key(root_idx, leaf)).get();
+    mapped_object * obj = at(*mit, mapping_key(root_idx, leaf)).get();
     if (obj->type_key()==type_key)
       stream << obj->process(str) << std::endl;
   }

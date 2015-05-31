@@ -101,7 +101,7 @@ ScalarType diff(dense_matrix<ScalarType> const & m1, dense_matrix<ScalarType> co
         d2 += m2(i,j) * m2(i,j);
       }
 
-    if ( !bool(d1) && !bool(d2) )
+    if ( d1 + d2 <= 0 )
       return 0;
 
     return std::sqrt(df / std::max<ScalarType>(d1, d2));

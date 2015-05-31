@@ -266,7 +266,7 @@ public:
     if (leaf==PARENT_NODE_TYPE)
     {
       if (utils::node_leaf(root_node.op))
-        str_ += mapping_.at(key)->evaluate(accessors_);
+        str_ += at(mapping_, key)->evaluate(accessors_);
       else if (utils::elementwise_operator(root_node.op))
         str_ += tree_parsing::evaluate(root_node.op.type);
       else if (root_node.op.type_family!=scheduler::OPERATION_UNARY_TYPE_FAMILY && utils::elementwise_function(root_node.op))
@@ -277,13 +277,13 @@ public:
       if (leaf==LHS_NODE_TYPE)
       {
         if (root_node.lhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-          str_ += mapping_.at(key)->evaluate(accessors_);
+          str_ += at(mapping_, key)->evaluate(accessors_);
       }
 
       if (leaf==RHS_NODE_TYPE)
       {
         if (root_node.rhs.type_family!=scheduler::COMPOSITE_OPERATION_FAMILY)
-          str_ += mapping_.at(key)->evaluate(accessors_);
+          str_ += at(mapping_, key)->evaluate(accessors_);
       }
     }
   }
@@ -493,7 +493,7 @@ private:
 inline std::string statements_representation(statements_container const & statements, binding_policy_t binding_policy)
 {
   std::vector<char> program_name_vector(256);
-  char* program_name = program_name_vector.data();
+  char* program_name = &(program_name_vector[0]);
   if (statements.order()==statements_container::INDEPENDENT)
     *program_name++='i';
   else
@@ -502,7 +502,7 @@ inline std::string statements_representation(statements_container const & statem
   for (statements_container::data_type::const_iterator it = statements.data().begin(); it != statements.data().end(); ++it)
     tree_parsing::traverse(*it, it->root(), tree_parsing::statement_representation_functor(*binder, program_name),true);
   *program_name='\0';
-  return std::string(program_name_vector.data());
+  return std::string(&(program_name_vector[0]));
 }
 
 }

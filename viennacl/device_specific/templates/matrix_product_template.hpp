@@ -228,11 +228,11 @@ private:
     leaf_t C_leaf=LHS_NODE_TYPE, alpha_leaf=LHS_NODE_TYPE, A_leaf=LHS_NODE_TYPE, B_leaf=LHS_NODE_TYPE, beta_leaf=LHS_NODE_TYPE;
     parse(st, C_idx, C_leaf, alpha_idx, alpha_leaf, A_idx, A_leaf, A_trans, B_idx, B_leaf, B_trans, beta_idx, beta_leaf);
 
-    mapped_matrix * C = (mapped_matrix*)mapping.at(mapping_key(C_idx, C_leaf)).get();
-    mapped_host_scalar * alpha = (mapped_host_scalar*)mapping.at(mapping_key(alpha_idx, alpha_leaf)).get();
-    mapped_matrix * A = (mapped_matrix*)mapping.at(mapping_key(A_idx, A_leaf)).get();
-    mapped_matrix * B = (mapped_matrix*)mapping.at(mapping_key(B_idx, B_leaf)).get();
-    mapped_host_scalar * beta = (mapped_host_scalar*)mapping.at(mapping_key(beta_idx, beta_leaf)).get();
+    mapped_matrix      * C     = (mapped_matrix*     )at(mapping, mapping_key(    C_idx,     C_leaf)).get();
+    mapped_host_scalar * alpha = (mapped_host_scalar*)at(mapping, mapping_key(alpha_idx, alpha_leaf)).get();
+    mapped_matrix      * A     = (mapped_matrix*     )at(mapping, mapping_key(    A_idx,     A_leaf)).get();
+    mapped_matrix      * B     = (mapped_matrix*     )at(mapping, mapping_key(    B_idx,     B_leaf)).get();
+    mapped_host_scalar * beta  = (mapped_host_scalar*)at(mapping, mapping_key( beta_idx,  beta_leaf)).get();
 
     //////////////////
     /// DECLARATIONS

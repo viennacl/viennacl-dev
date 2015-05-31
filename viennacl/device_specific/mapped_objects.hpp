@@ -121,7 +121,7 @@ public:
   {
     if (accessors.find(type_key_)==accessors.end())
       return name_;
-    return process(accessors.at(type_key_));
+    return process(at(accessors, type_key_));
   }
 
 

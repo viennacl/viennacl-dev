@@ -412,11 +412,11 @@ public:
 
         cached.read((char*)&len, sizeof(vcl_size_t));
         buffer.resize(len);
-        cached.read((char*)buffer.data(), std::streamsize(len));
+        cached.read((char*)(&buffer[0]), std::streamsize(len));
 
         cl_int status;
         cl_device_id devid = devices_[0].id();
-        const unsigned char * bufdata = buffer.data();
+        const unsigned char * bufdata = &buffer[0];
         temp = clCreateProgramWithBinary(h_.get(),1,&devid,&len, &bufdata,&status,&err);
         VIENNACL_ERR_CHECK(err);
       }
@@ -460,14 +460,14 @@ public:
 
       std::vector<vcl_size_t> sizes(devices_.size());
       clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,0,NULL,&len);
-      clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,len,(void*)sizes.data(),NULL);
+      clGetProgramInfo(temp,CL_PROGRAM_BINARY_SIZES,len,(void*)&sizes[0],NULL);
 
       std::vector<unsigned char*> binaries;
       for (vcl_size_t i = 0; i < devices_.size(); ++i)
         binaries.push_back(new unsigned char[sizes[i]]);
 
       clGetProgramInfo(temp,CL_PROGRAM_BINARIES,0,NULL,&len);
-      clGetProgramInfo(temp,CL_PROGRAM_BINARIES,len,binaries.data(),NULL);
+      clGetProgramInfo(temp,CL_PROGRAM_BINARIES,len,&binaries[0],NULL);
 
       std::string prefix;
       for(std::vector< viennacl::ocl::device >::const_iterator it = devices_.begin(); it != devices_.end(); ++it)
