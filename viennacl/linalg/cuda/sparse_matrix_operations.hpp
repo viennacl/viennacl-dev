@@ -30,11 +30,11 @@
 
 #include "viennacl/linalg/cuda/sparse_matrix_operations_solve.hpp"
 
-#ifdef VIENNACL_WITH_SPGEMM_RMERGE
+//#ifdef VIENNACL_WITH_SPGEMM_RMERGE
  #include "viennacl/linalg/cuda/spgemm_rmerge.hpp"
-#else
- #include "viennacl/linalg/cuda/spgemm.hpp"
-#endif
+//#else
+// #include "viennacl/linalg/cuda/spgemm.hpp"
+//#endif
 
 namespace viennacl
 {

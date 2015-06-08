@@ -24,9 +24,6 @@
 
 #include <stdexcept>
 
-#include <thrust/scan.h>
-#include <thrust/device_ptr.h>
-
 #include "viennacl/forwards.h"
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
@@ -140,6 +137,27 @@ __global__ void compressed_matrix_gemm_stage_1(
 //
 // Stage 2: Determine sparsity pattern of C
 //
+
+// Using warp shuffle routines (CUDA arch 3.5)
+template<unsigned int SubWarpSizeV, typename IndexT>
+__device__ IndexT subwarp_minimum_shuffle(IndexT min_index)
+{
+  for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
+    min_index = min(min_index, __shfl_xor((int)min_index, (int)i));
+  return min_index;
+}
+
+// Using shared memory
+template<unsigned int SubWarpSizeV, typename IndexT>
+__device__ IndexT subwarp_minimum_shared(IndexT min_index, IndexT id_in_warp, IndexT *shared_buffer)
+{
+  shared_buffer[threadIdx.x] = min_index;
+  for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
+    shared_buffer[threadIdx.x] = min(shared_buffer[threadIdx.x], shared_buffer[(threadIdx.x + i) % 512]);
+  return shared_buffer[threadIdx.x - id_in_warp];
+}
+
+
 template<unsigned int SubWarpSizeV, typename IndexT>
 __global__ void compressed_matrix_gemm_stage_2(
           const IndexT * A_row_indices,
@@ -150,6 +168,8 @@ __global__ void compressed_matrix_gemm_stage_2(
           IndexT B_size2,
           IndexT * C_row_indices)
 {
+  __shared__ unsigned int shared_buffer[512];
+
   unsigned int num_warps  =  blockDim.x / SubWarpSizeV;
   unsigned int warp_id    = threadIdx.x / SubWarpSizeV;
   unsigned int id_in_warp = threadIdx.x % SubWarpSizeV;
@@ -176,8 +196,7 @@ __global__ void compressed_matrix_gemm_stage_2(
       {
         // determine current minimum (warp shuffle)
         unsigned int min_index = current_front_index;
-        for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-          min_index = min(min_index, __shfl_xor((int)min_index, (int)i));
+        min_index = subwarp_minimum_shared<SubWarpSizeV>(min_index, id_in_warp, shared_buffer);
 
         if (min_index == B_size2)
           break;
@@ -208,6 +227,25 @@ __global__ void compressed_matrix_gemm_stage_2(
 // Stage 3: Fill C with values
 //
 
+// Using warp shuffle routines (CUDA arch 3.5)
+template<unsigned int SubWarpSizeV, typename NumericT>
+__device__ NumericT subwarp_accumulate_shuffle(NumericT output_value)
+{
+  for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
+    output_value += __shfl_xor((int)output_value, (int)i);
+  return output_value;
+}
+
+// Using shared memory
+template<unsigned int SubWarpSizeV, typename NumericT>
+__device__ NumericT subwarp_accumulate_shared(NumericT output_value, unsigned int id_in_warp, NumericT *shared_buffer)
+{
+  shared_buffer[threadIdx.x] = output_value;
+  for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
+    shared_buffer[threadIdx.x] += shared_buffer[(threadIdx.x + i) % 512];
+  return shared_buffer[threadIdx.x - id_in_warp];
+}
+
 
 template<unsigned int SubWarpSizeV, typename IndexT, typename NumericT>
 __global__ void compressed_matrix_gemm_stage_3(
@@ -223,6 +261,9 @@ __global__ void compressed_matrix_gemm_stage_3(
           IndexT * C_col_indices,
           NumericT * C_elements)
 {
+  __shared__ unsigned int shared_indices[512];
+  __shared__ NumericT     shared_values[512];
+
   unsigned int num_warps  =  blockDim.x / SubWarpSizeV;
   unsigned int warp_id    = threadIdx.x / SubWarpSizeV;
   unsigned int id_in_warp = threadIdx.x % SubWarpSizeV;
@@ -254,17 +295,14 @@ __global__ void compressed_matrix_gemm_stage_3(
       while (1)
       {
         // determine current minimum:
-        unsigned int min_index = current_front_index;
-        for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-          min_index = min(min_index, __shfl_xor((int)min_index, (int)i));
+        unsigned int min_index = subwarp_minimum_shared<SubWarpSizeV>(current_front_index, id_in_warp, shared_indices);
 
         if (min_index == B_size2) // done
           break;
 
         // compute entry in C:
         NumericT output_value = (current_front_index == min_index) ? val_A * current_front_value : 0;
-        for (unsigned int i = SubWarpSizeV/2; i >= 1; i /= 2)
-          output_value += __shfl_xor((int)output_value, (int)i);
+        output_value = subwarp_accumulate_shared<SubWarpSizeV>(output_value, id_in_warp, shared_values);
 
         // update front:
         if (current_front_index == min_index)
@@ -465,10 +503,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                                                                );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_decompose_1");
 
-    thrust::exclusive_scan(thrust::device_ptr<unsigned int>(detail::cuda_arg<unsigned int>(exclusive_scan_helper)),
-                           thrust::device_ptr<unsigned int>(detail::cuda_arg<unsigned int>(exclusive_scan_helper) + exclusive_scan_helper.size()),
-                           thrust::device_ptr<unsigned int>(detail::cuda_arg<unsigned int>(exclusive_scan_helper)));
-
+    viennacl::linalg::exclusive_scan(exclusive_scan_helper);
     unsigned int augmented_size = exclusive_scan_helper[A.size1()];
 
     // split A = A2 * G1

@@ -246,17 +246,8 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
                           )             );
 
     // exclusive scan of helper array to find new size:
-    // TODO: Run exclusive scan on device
-    exclusive_scan_helper.switch_memory_context(viennacl::context(MAIN_MEMORY));
-    unsigned int *exclusive_scan_helper_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(exclusive_scan_helper.handle());
-    unsigned int augmented_size = 0;
-    for (std::size_t i=0; i<exclusive_scan_helper.size(); ++i)
-    {
-      unsigned int tmp = exclusive_scan_helper_ptr[i];
-      exclusive_scan_helper_ptr[i] = augmented_size;
-      augmented_size += tmp;
-    }
-    exclusive_scan_helper.switch_memory_context(viennacl::traits::context(A));
+    viennacl::linalg::exclusive_scan(exclusive_scan_helper);
+    unsigned int augmented_size = exclusive_scan_helper[A.size1()];
 
     // split A = A2 * G1
     viennacl::compressed_matrix<NumericT, AlignmentV> A2(A.size1(), augmented_size, augmented_size, viennacl::traits::context(A));
