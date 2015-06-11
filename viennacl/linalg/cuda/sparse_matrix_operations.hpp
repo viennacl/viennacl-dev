@@ -120,7 +120,8 @@ namespace detail
 } //namespace detail
 
 
-template<typename NumericT>
+
+template<unsigned int SubWarpSizeV, typename NumericT>
 __global__ void compressed_matrix_vec_mul_kernel(
           const unsigned int * row_indices,
           const unsigned int * column_indices,
@@ -133,19 +134,31 @@ __global__ void compressed_matrix_vec_mul_kernel(
           unsigned int inc_result,
           unsigned int size_result)
 {
-  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
-                    row  < size_result;
-                    row += gridDim.x * blockDim.x)
+  __shared__ NumericT shared_elements[512];
+
+  const unsigned int id_in_row = threadIdx.x % SubWarpSizeV;
+  const unsigned int block_increment = blockDim.x * ((size_result - 1) / (gridDim.x * blockDim.x) + 1);
+  const unsigned int block_start = blockIdx.x * block_increment;
+  const unsigned int block_stop  = min(block_start + block_increment, size_result);
+
+  for (unsigned int row  = block_start + threadIdx.x / SubWarpSizeV;
+                    row  < block_stop;
+                    row += blockDim.x / SubWarpSizeV)
   {
     NumericT dot_prod = NumericT(0);
     unsigned int row_end = row_indices[row+1];
-    for (unsigned int i = row_indices[row]; i < row_end; ++i)
+    for (unsigned int i = row_indices[row] + id_in_row; i < row_end; i += SubWarpSizeV)
       dot_prod += elements[i] * x[column_indices[i] * inc_x + start_x];
-    result[row * inc_result + start_result] = dot_prod;
+
+    shared_elements[threadIdx.x] = dot_prod;
+    #pragma unroll
+    for (unsigned int k = 1; k < SubWarpSizeV; k *= 2)
+      shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^ k];
+
+    if (id_in_row == 0)
+      result[row * inc_result + start_result] = shared_elements[threadIdx.x];
   }
 }
-
-
 
 
 template<typename NumericT>
@@ -232,20 +245,45 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & mat,
                const viennacl::vector_base<NumericT> & vec,
                      viennacl::vector_base<NumericT> & result)
 {
-  compressed_matrix_vec_mul_adaptive_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
-                                                 detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
-                                                 detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
-                                                 detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
-                                                 static_cast<unsigned int>(mat.blocks1()),
-                                                 detail::cuda_arg<NumericT>(vec),
-                                                 static_cast<unsigned int>(vec.start()),
-                                                 static_cast<unsigned int>(vec.stride()),
-                                                 detail::cuda_arg<NumericT>(result),
-                                                 static_cast<unsigned int>(result.start()),
-                                                 static_cast<unsigned int>(result.stride()),
-                                                 static_cast<unsigned int>(result.size())
-                                                );
-  VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_adaptive_kernel");
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 500
+  if (double(mat.nnz()) / double(mat.size1()) > 6.4) // less than 10% of threads expected to idle
+  {
+    compressed_matrix_vec_mul_kernel<8,  NumericT><<<512, 256>>>(   // experience on a GTX 750 Ti suggests that 8 is a substantially better choice here
+#else
+  if (double(mat.nnz()) / double(mat.size1()) > 12.0) // less than 25% of threads expected to idle
+  {
+    compressed_matrix_vec_mul_kernel<16, NumericT><<<512, 256>>>(   // Fermi and Kepler prefer 16 threads per row (half-warp)
+#endif
+                                                                 detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                                 detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                                 detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+                                                                 detail::cuda_arg<NumericT>(vec),
+                                                                 static_cast<unsigned int>(vec.start()),
+                                                                 static_cast<unsigned int>(vec.stride()),
+                                                                 detail::cuda_arg<NumericT>(result),
+                                                                 static_cast<unsigned int>(result.start()),
+                                                                 static_cast<unsigned int>(result.stride()),
+                                                                 static_cast<unsigned int>(result.size())
+                                                                );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_kernel");
+  }
+  else
+  {
+    compressed_matrix_vec_mul_adaptive_kernel<<<512, 256>>>(detail::cuda_arg<unsigned int>(mat.handle1().cuda_handle()),
+                                                            detail::cuda_arg<unsigned int>(mat.handle2().cuda_handle()),
+                                                            detail::cuda_arg<unsigned int>(mat.handle3().cuda_handle()),
+                                                            detail::cuda_arg<NumericT>(mat.handle().cuda_handle()),
+                                                            static_cast<unsigned int>(mat.blocks1()),
+                                                            detail::cuda_arg<NumericT>(vec),
+                                                            static_cast<unsigned int>(vec.start()),
+                                                            static_cast<unsigned int>(vec.stride()),
+                                                            detail::cuda_arg<NumericT>(result),
+                                                            static_cast<unsigned int>(result.start()),
+                                                            static_cast<unsigned int>(result.stride()),
+                                                            static_cast<unsigned int>(result.size())
+                                                           );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_adaptive_kernel");
+  }
 }
 
 /** @brief Helper struct for accessing an element of a row- or column-major matrix.
