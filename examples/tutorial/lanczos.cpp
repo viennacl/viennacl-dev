@@ -31,6 +31,8 @@
 //include basic scalar and vector types of ViennaCL
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
+#include "viennacl/matrix.hpp"
+#include "viennacl/matrix_proxy.hpp"
 #include "viennacl/compressed_matrix.hpp"
 
 #include "viennacl/linalg/lanczos.hpp"
