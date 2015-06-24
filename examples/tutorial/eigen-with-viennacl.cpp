@@ -121,6 +121,7 @@ void run_tutorial()
   eigen_densemat(2,1) = -1.0;  eigen_densemat(2,2) = -1.0;  eigen_densemat(2,3) = -1.0;
   eigen_densemat(3,2) = -1.0;  eigen_densemat(3,3) =  2.0;  eigen_densemat(3,4) = -1.0;
                                eigen_densemat(5,4) = -1.0;  eigen_densemat(4,4) = -1.0;
+  Eigen::Map<EigenMatrix> eigen_densemat_map(eigen_densemat.data(), 6, 5); // same as eigen_densemat, but emulating user-provided buffer
 
   /**
   * Create and fill sparse matrices from the Eigen library:
@@ -165,6 +166,7 @@ void run_tutorial()
   viennacl::copy(eigen_rhs, vcl_rhs);  //method 2: via built-in wrappers (convenience layer)
 
   viennacl::copy(eigen_densemat, vcl_densemat);
+  viennacl::copy(eigen_densemat_map, vcl_densemat); //same as above, using mapped matrix
   viennacl::copy(eigen_sparsemat, vcl_sparsemat);
   std::cout << "VCL sparsematrix dimensions: " << vcl_sparsemat.size1() << ", " << vcl_sparsemat.size2() << std::endl;
 

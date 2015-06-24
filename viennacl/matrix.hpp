@@ -1001,76 +1001,62 @@ void copy(arma::Mat<NumericT>                       const & arma_matrix,
 #endif
 
 #ifdef VIENNACL_WITH_EIGEN
-/** @brief Copies a dense Eigen matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU)
-*
-* @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
-* @param gpu_matrix   A dense ViennaCL matrix
-*/
-template<typename F, unsigned int AlignmentV>
-void copy(const Eigen::MatrixXf & cpu_matrix,
-          matrix<float, F, AlignmentV> & gpu_matrix)
+namespace detail
 {
-  typedef typename matrix<float, F, AlignmentV>::size_type      size_type;
-
-  if (gpu_matrix.size1() == 0 || gpu_matrix.size2() == 0)
+  template<typename EigenMatrixTypeT, typename NumericT, typename F, unsigned int AlignmentV>
+  void copy_from_eigen_matrix(EigenMatrixTypeT const & cpu_matrix,
+                              viennacl::matrix<NumericT, F, AlignmentV> & gpu_matrix)
   {
-    gpu_matrix.resize(cpu_matrix.rows(),
-                      cpu_matrix.cols(),
-                      false);
-  }
-  else
-  {
-    assert( (gpu_matrix.size1() == static_cast<vcl_size_t>(cpu_matrix.rows()))
-            && (gpu_matrix.size2() == static_cast<vcl_size_t>(cpu_matrix.cols()))
-            && bool("matrix size mismatch")
-            );
+    typedef typename viennacl::matrix<NumericT, F, AlignmentV>::size_type      size_type;
+
+    if (gpu_matrix.size1() == 0 || gpu_matrix.size2() == 0)
+    {
+      gpu_matrix.resize(cpu_matrix.rows(),
+                        cpu_matrix.cols(),
+                        false);
+    }
+    else
+    {
+      assert(    (gpu_matrix.size1() == static_cast<vcl_size_t>(cpu_matrix.rows()))
+              && (gpu_matrix.size2() == static_cast<vcl_size_t>(cpu_matrix.cols()))
+              && bool("matrix size mismatch")
+              );
+    }
+
+    std::vector<NumericT> data(gpu_matrix.internal_size());
+    for (size_type i = 0; i < gpu_matrix.size1(); ++i)
+    {
+      for (size_type j = 0; j < gpu_matrix.size2(); ++j)
+        data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
+    }
+
+    viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(NumericT) * data.size(), &(data[0]));
   }
 
-  std::vector<float> data(gpu_matrix.internal_size());
-  for (size_type i = 0; i < gpu_matrix.size1(); ++i)
-  {
-    for (size_type j = 0; j < gpu_matrix.size2(); ++j)
-      data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
-  }
-
-  viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(float) * data.size(), &(data[0]));
-  //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
 }
 
-/** @brief Copies a dense Eigen matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU)
+/** @brief Copies a dense Eigen matrix from the host (CPU) to a ViennaCL matrix (host, CUDA, or OpenCL)
 *
 * @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
-* @param gpu_matrix   A dense ViennaCL matrix
+* @param vcl_matrix   A dense ViennaCL matrix
 */
-template<typename F, unsigned int AlignmentV>
-void copy(const Eigen::MatrixXd & cpu_matrix,
-          matrix<double, F, AlignmentV> & gpu_matrix)
+template<typename NumericT, typename F, unsigned int AlignmentV>
+void copy(Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic> const & cpu_matrix,
+          viennacl::matrix<NumericT, F, AlignmentV> & vcl_matrix)
 {
-  typedef typename matrix<double, F, AlignmentV>::size_type      size_type;
+  detail::copy_from_eigen_matrix(cpu_matrix, vcl_matrix);
+}
 
-  if (gpu_matrix.size1() == 0 || gpu_matrix.size2() == 0)
-  {
-    gpu_matrix.resize(cpu_matrix.rows(),
-                      cpu_matrix.cols(),
-                      false);
-  }
-  else
-  {
-    assert( (gpu_matrix.size1() == static_cast<vcl_size_t>(cpu_matrix.rows()))
-            && (gpu_matrix.size2() == static_cast<vcl_size_t>(cpu_matrix.cols()))
-            && bool("matrix size mismatch")
-            );
-  }
-
-  std::vector<double> data(gpu_matrix.internal_size());
-  for (size_type i = 0; i < gpu_matrix.size1(); ++i)
-  {
-    for (size_type j = 0; j < gpu_matrix.size2(); ++j)
-      data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix(i,j);
-  }
-
-  viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(double) * data.size(), &(data[0]));
-  //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
+/** @brief Copies a dense Eigen matrix from the host (CPU) to a ViennaCL matrix (host, CUDA, or OpenCL)
+*
+* @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
+* @param vcl_matrix   A dense ViennaCL matrix
+*/
+template<typename NumericT, int EigenMatTypeV, typename EigenStrideT, typename F, unsigned int AlignmentV>
+void copy(Eigen::Map<Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic>, EigenMatTypeV, EigenStrideT> const & cpu_matrix,
+          viennacl::matrix<NumericT, F, AlignmentV> & vcl_matrix)
+{
+  detail::copy_from_eigen_matrix(cpu_matrix, vcl_matrix);
 }
 #endif
 
