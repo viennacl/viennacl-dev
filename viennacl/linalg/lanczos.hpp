@@ -35,14 +35,6 @@
 #include "viennacl/linalg/bisect.hpp"
 #include <boost/random.hpp>
 #include <boost/random/mersenne_twister.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/matrix_expression.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/operation.hpp>
-#include <boost/numeric/ublas/vector_expression.hpp>
-#include <boost/numeric/ublas/io.hpp>
 
 namespace viennacl
 {
@@ -149,14 +141,14 @@ namespace detail
     std::vector< std::vector<CPU_ScalarType> > w(2, std::vector<CPU_ScalarType>(size));
     CPU_ScalarType cpu_beta;
 
-    boost::numeric::ublas::vector<CPU_ScalarType> s(n);
+    std::vector<CPU_ScalarType> s(n);
 
     VectorT t(n);
     CPU_ScalarType inner_rt;
     ScalarType vcl_beta;
     ScalarType vcl_alpha;
     std::vector<CPU_ScalarType> alphas, betas;
-    boost::numeric::ublas::matrix<CPU_ScalarType> Q(n, size);
+    std::vector<std::vector<CPU_ScalarType> > Q_vectors(size, std::vector<CPU_ScalarType>(n)); //column-major
 
     second_step = false;
     eps = std::numeric_limits<CPU_ScalarType>::epsilon();
@@ -170,8 +162,8 @@ namespace detail
 
     r /= vcl_beta;
 
-    detail::copy_vec_to_vec(r,s);
-    boost::numeric::ublas::column(Q, 0) = s;
+    detail::copy_vec_to_vec(r, s);
+    Q_vectors.at(0) = s;
 
     VectorT u = viennacl::linalg::prod(A, r);
     vcl_alpha = viennacl::linalg::inner_prod(u, r);
@@ -208,7 +200,7 @@ namespace detail
 
           for (k = l_bound[j];k < u_bound[j];k++)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
+            detail::copy_vec_to_vec(Q_vectors.at(vcl_size_t(k)), t);
             inner_rt = viennacl::linalg::inner_prod(r,t);
             r = r - inner_rt * t;
             w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
@@ -226,7 +218,7 @@ namespace detail
       {
         if (std::fabs(w[index][j]) >= squ_eps)
         {
-          detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, j), t);
+          detail::copy_vec_to_vec(Q_vectors.at(j), t);
           inner_rt = viennacl::linalg::inner_prod(r,t);
           r = r - inner_rt * t;
           w[index][j] = 1.5 * eps * get_N();
@@ -234,7 +226,7 @@ namespace detail
           reorths++;
           while (k >= 0 && std::fabs(w[index][vcl_size_t(k)]) > eta)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
+            detail::copy_vec_to_vec(Q_vectors.at(vcl_size_t(k)), t);
             inner_rt = viennacl::linalg::inner_prod(r,t);
             r = r - inner_rt * t;
             w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
@@ -246,7 +238,7 @@ namespace detail
 
           while (k < i && std::fabs(w[index][vcl_size_t(k)]) > eta)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
+            detail::copy_vec_to_vec(Q_vectors.at(vcl_size_t(k)), t);
             inner_rt = viennacl::linalg::inner_prod(r,t);
             r = r - inner_rt * t;
             w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
@@ -270,7 +262,7 @@ namespace detail
         {
           for (vcl_size_t j = 0; j < vcl_size_t(i); j++)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
+            detail::copy_vec_to_vec(Q_vectors.at(vcl_size_t(k)), t);
             inner_rt = viennacl::linalg::inner_prod(r,t);
             r = r - inner_rt * t;
             reorths++;
@@ -283,10 +275,11 @@ namespace detail
       }
 
       detail::copy_vec_to_vec(r,s);
-      boost::numeric::ublas::column(Q, vcl_size_t(i)) = s;
+      Q_vectors.at(vcl_size_t(i)) = s;
 
       cpu_beta = vcl_beta;
-      s = - cpu_beta * boost::numeric::ublas::column(Q, vcl_size_t(i - 1));
+      for (std::size_t k=0; k<s.size(); ++k)
+        s[k] = - cpu_beta * Q_vectors.at(vcl_size_t(i - 1))[k];
       detail::copy_vec_to_vec(s, u);
       u += viennacl::linalg::prod(A, r);
       vcl_alpha = viennacl::linalg::inner_prod(u, r);
