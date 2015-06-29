@@ -84,13 +84,20 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+  bool use_nvidia_specific = AlignmentV == 1 && ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id && (double(A.nnz()) / double(A.size1()) > 12.0);
+
   std::stringstream ss;
   ss << "vec_mul";
   unsigned int alignment = AlignmentV; //prevent unreachable code warnings below
-  if (alignment == 4)
-    ss << "4";
-  if (alignment == 8)
-    ss << "8";
+  if (use_nvidia_specific)
+    ss << "_nvidia";
+  else
+  {
+    if (alignment == 4)
+      ss << "4";
+    if (alignment == 8)
+      ss << "8";
+  }
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), ss.str());
 
@@ -117,12 +124,25 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
   {
     if (ctx.current_device().max_work_group_size() >= 256)
       k.local_work_size(0, 256);
-    k.global_work_size(0, A.blocks1() * k.local_work_size(0));
 
-    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
-                             x, layout_x,
-                             y, layout_y
-                            ));
+    if (use_nvidia_specific)
+    {
+      k.global_work_size(0, 512 * k.local_work_size(0));
+
+      viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                               x, layout_x,
+                               y, layout_y
+                              ));
+    }
+    else // use CSR adaptive:
+    {
+      k.global_work_size(0, A.blocks1() * k.local_work_size(0));
+
+      viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                               x, layout_x,
+                               y, layout_y
+                              ));
+    }
   }
 }
 

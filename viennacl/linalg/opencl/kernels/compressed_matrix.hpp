@@ -893,6 +893,51 @@ void generate_compressed_matrix_unit_lu_forward(StringT & source, std::string co
 }
 
 template<typename StringT>
+void generate_compressed_matrix_vec_mul_nvidia(StringT & source, std::string const & numeric_string, unsigned int subwarp_size)
+{
+  std::stringstream ss;
+  ss << subwarp_size;
+
+  source.append("__kernel void vec_mul_nvidia( \n");
+  source.append("    __global const unsigned int * row_indices, \n");
+  source.append("    __global const unsigned int * column_indices, \n");
+  source.append("  __global const unsigned int * row_blocks, \n");
+  source.append("    __global const "); source.append(numeric_string); source.append(" * elements, \n");
+  source.append("  unsigned int num_blocks, \n");
+  source.append("    __global const "); source.append(numeric_string); source.append(" * x, \n");
+  source.append("    uint4 layout_x, \n");
+  source.append("    __global "); source.append(numeric_string); source.append(" * result, \n");
+  source.append("    uint4 layout_result) \n");
+  source.append("{ \n");
+  source.append("  __local "); source.append(numeric_string); source.append(" shared_elements[256]; \n");
+
+  source.append("  const unsigned int id_in_row = get_local_id(0) % " + ss.str() + "; \n");
+  source.append("  const unsigned int block_increment = get_local_size(0) * ((layout_result.z - 1) / (get_global_size(0)) + 1); \n");
+  source.append("  const unsigned int block_start = get_group_id(0) * block_increment; \n");
+  source.append("  const unsigned int block_stop  = min(block_start + block_increment, layout_result.z); \n");
+
+  source.append("  for (unsigned int row  = block_start + get_local_id(0) / " + ss.str() + "; \n");
+  source.append("                    row  < block_stop; \n");
+  source.append("                    row += get_local_size(0) / " + ss.str() + ") \n");
+  source.append("  { \n");
+  source.append("    "); source.append(numeric_string); source.append(" dot_prod = 0; \n");
+  source.append("    unsigned int row_end = row_indices[row+1]; \n");
+  source.append("    for (unsigned int i = row_indices[row] + id_in_row; i < row_end; i += " + ss.str() + ") \n");
+  source.append("      dot_prod += elements[i] * x[column_indices[i] * layout_x.y + layout_x.x]; \n");
+
+  source.append("    shared_elements[get_local_id(0)] = dot_prod; \n");
+  source.append("    #pragma unroll \n");
+  source.append("    for (unsigned int k = 1; k < " + ss.str() + "; k *= 2) \n");
+  source.append("      shared_elements[get_local_id(0)] += shared_elements[get_local_id(0) ^ k]; \n");
+
+  source.append("    if (id_in_row == 0) \n");
+  source.append("      result[row * layout_result.y + layout_result.x] = shared_elements[get_local_id(0)]; \n");
+  source.append("  } \n");
+  source.append("} \n");
+
+}
+
+template<typename StringT>
 void generate_compressed_matrix_vec_mul(StringT & source, std::string const & numeric_string)
 {
   source.append("__kernel void vec_mul( \n");
@@ -1496,6 +1541,8 @@ struct compressed_matrix
       }
       generate_compressed_matrix_dense_matrix_multiplication(source, numeric_string);
       generate_compressed_matrix_row_info_extractor(source, numeric_string);
+      if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+        generate_compressed_matrix_vec_mul_nvidia(source, numeric_string, 16);
       generate_compressed_matrix_vec_mul(source, numeric_string);
       generate_compressed_matrix_vec_mul4(source, numeric_string);
       generate_compressed_matrix_vec_mul8(source, numeric_string);
