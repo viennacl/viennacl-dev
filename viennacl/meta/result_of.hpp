@@ -177,6 +177,12 @@ struct size_type< Eigen::Matrix<T, a, b, c, d, e> >
   typedef vcl_size_t   type;
 };
 
+template<class T, int a, int b, int c, int d, int e>
+struct size_type< Eigen::Map<Eigen::Matrix<T, a, b, c, d, e> > >
+{
+  typedef vcl_size_t   type;
+};
+
 template<>
 struct size_type<Eigen::VectorXf>
 {
