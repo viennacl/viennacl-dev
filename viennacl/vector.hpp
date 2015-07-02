@@ -1350,16 +1350,16 @@ void copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
 
 
 #ifdef VIENNACL_WITH_EIGEN
-template<unsigned int AlignmentV>
-void copy(vector<float, AlignmentV> const & gpu_vec,
-          Eigen::VectorXf & eigen_vec)
+template<typename NumericT, unsigned int AlignmentV>
+void copy(vector<NumericT, AlignmentV> const & gpu_vec,
+          Eigen::Matrix<NumericT, Eigen::Dynamic, 1> & eigen_vec)
 {
   viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), &(eigen_vec[0]));
 }
 
-template<unsigned int AlignmentV>
-void copy(vector<double, AlignmentV> & gpu_vec,
-          Eigen::VectorXd & eigen_vec)
+template<typename NumericT, unsigned int AlignmentV, int EigenMapTypeV, typename EigenStrideT>
+void copy(vector<NumericT, AlignmentV> const & gpu_vec,
+          Eigen::Map<Eigen::Matrix<NumericT, Eigen::Dynamic, 1>, EigenMapTypeV, EigenStrideT> & eigen_vec)
 {
   viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), &(eigen_vec[0]));
 }
@@ -1512,24 +1512,18 @@ void copy(HostVectorT const & cpu_vec, vector<T, AlignmentV> & gpu_vec)
 
 
 #ifdef VIENNACL_WITH_EIGEN
-template<unsigned int AlignmentV>
-void copy(Eigen::VectorXf const & eigen_vec,
-          vector<float, AlignmentV> & gpu_vec)
+template<typename NumericT, unsigned int AlignmentV>
+void copy(Eigen::Matrix<NumericT, Eigen::Dynamic, 1> const & eigen_vec,
+          vector<NumericT, AlignmentV> & gpu_vec)
 {
-  std::vector<float> entries(eigen_vec.size());
-  for (vcl_size_t i = 0; i<entries.size(); ++i)
-    entries[i] = eigen_vec(i);
-  viennacl::fast_copy(entries.begin(), entries.end(), gpu_vec.begin());
+  viennacl::fast_copy(eigen_vec.data(), eigen_vec.data() + eigen_vec.size(), gpu_vec.begin());
 }
 
-template<unsigned int AlignmentV>
-void copy(Eigen::VectorXd const & eigen_vec,
-          vector<double, AlignmentV> & gpu_vec)
+template<typename NumericT, int EigenMapTypeV, typename EigenStrideT, unsigned int AlignmentV>
+void copy(Eigen::Map<Eigen::Matrix<NumericT, Eigen::Dynamic, 1>, EigenMapTypeV, EigenStrideT> const & eigen_vec,
+          vector<NumericT, AlignmentV> & gpu_vec)
 {
-  std::vector<double> entries(eigen_vec.size());
-  for (vcl_size_t i = 0; i<entries.size(); ++i)
-    entries[i] = eigen_vec(i);
-  viennacl::fast_copy(entries.begin(), entries.end(), gpu_vec.begin());
+  viennacl::fast_copy(eigen_vec.data(), eigen_vec.data() + eigen_vec.size(), gpu_vec.begin());
 }
 #endif
 
