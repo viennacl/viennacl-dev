@@ -135,7 +135,7 @@ storeInterval(unsigned int addr,
     NumericT t0 = abs(right - left);
     NumericT t1 = max(abs(left), abs(right)) * precision;
 
-    if (t0 <= max(static_cast<NumericT>(VIENNACL_BISECT_MIN_ABS_INTERVAL), t1))
+    if (t0 <= max(static_cast<NumericT>(MIN_ABS_INTERVAL), t1))
     {
         // compute mid point
         NumericT lambda = computeMidpoint(left, right);
@@ -284,25 +284,31 @@ computeNumSmallerEigenvalsLarge(const NumericT *g_d, const NumericT *g_s, const 
     return count;
 }
 
-/** @brief Store all non-empty intervals resulting from the subdivision of the interval currently processed by the thread.
-*
-* @param  addr                   base address for storing intervals
-* @param  num_threads_active     number of threads / intervals in current sweep
-* @param  s_left                 shared memory storage for left interval limits
-* @param  s_right                shared memory storage for right interval limits
-* @param  s_left_count           shared memory storage for number of eigenvalues less than left interval limits
-* @param  s_right_count          shared memory storage for number of eigenvalues less than right interval limits
-* @param  left                   lower limit of interval
-* @param  mid                    midpoint of interval
-* @param  right                  upper limit of interval
-* @param  left_count             eigenvalues less than \a left
-* @param  mid_count              eigenvalues less than \a mid
-* @param  right_count            eigenvalues less than \a right
-* @param  precision              desired precision for eigenvalues
-* @param  compact_second_chunk   shared mem flag if second chunk is used and ergo requires compaction
-* @param  s_compaction_list_exc  helper array for stream compaction, s_compaction_list_exc[tid] = 1 when the thread generated two child intervals
-* @param  is_active_second       mark is thread has a second non-empty child interval
-*/
+////////////////////////////////////////////////////////////////////////////////
+//! Store all non-empty intervals resulting from the subdivision of the interval
+//! currently processed by the thread
+//! @param  addr  base address for storing intervals
+//! @param  num_threads_active  number of threads / intervals in current sweep
+//! @param  s_left  shared memory storage for left interval limits
+//! @param  s_right  shared memory storage for right interval limits
+//! @param  s_left_count  shared memory storage for number of eigenvalues less
+//!                       than left interval limits
+//! @param  s_right_count  shared memory storage for number of eigenvalues less
+//!                       than right interval limits
+//! @param  left   lower limit of interval
+//! @param  mid    midpoint of interval
+//! @param  right  upper limit of interval
+//! @param  left_count  eigenvalues less than \a left
+//! @param  mid_count  eigenvalues less than \a mid
+//! @param  right_count  eigenvalues less than \a right
+//! @param  precision  desired precision for eigenvalues
+//! @param  compact_second_chunk  shared mem flag if second chunk is used and
+//!                               ergo requires compaction
+//! @param  s_compaction_list_exc  helper array for stream compaction,
+//!                                s_compaction_list_exc[tid] = 1 when the
+//!                                thread generated two child intervals
+//! @is_active_interval  mark is thread has a second non-empty child interval
+////////////////////////////////////////////////////////////////////////////////
 template<class S, class T, class NumericT>
 __device__
 void
@@ -420,20 +426,23 @@ createIndicesCompaction(T *s_compaction_list_exc,
 
 }
 
-/** @brief Perform stream compaction for second child intervals
-*
-* @param  s_left              shared memory storage for left interval limits
-* @param  s_right             shared memory storage for right interval limits
-* @param  s_left_count        shared memory storage for number of eigenvalues less than left interval limits
-* @param  s_right_count       shared memory storage for number of eigenvalues less than right interval limits
-* @param  mid                 midpoint of current interval (left of new interval)
-* @param  right               upper limit of interval
-* @param  mid_count           eigenvalues less than mid
-* @param  right_count         eigenvalues less than right
-* @param  s_compaction_list   list containing the indices where the data has to be stored
-* @param  num_threads_active  number of active threads / intervals
-* @param  is_active_second    mark is thread has a second non-empty child interval
-*/
+///////////////////////////////////////////////////////////////////////////////
+//! Perform stream compaction for second child intervals
+//! @param  s_left  shared
+//! @param  s_left  shared memory storage for left interval limits
+//! @param  s_right  shared memory storage for right interval limits
+//! @param  s_left_count  shared memory storage for number of eigenvalues less
+//!                       than left interval limits
+//! @param  s_right_count  shared memory storage for number of eigenvalues less
+//!                       than right interval limits
+//! @param  mid    midpoint of current interval (left of new interval)
+//! @param  right  upper limit of interval
+//! @param  mid_count  eigenvalues less than \a mid
+//! @param  s_compaction_list  list containing the indices where the data has
+//!         to be stored
+//! @param  num_threads_active  number of active threads / intervals
+//! @is_active_interval  mark is thread has a second non-empty child interval
+///////////////////////////////////////////////////////////////////////////////
 template<class T, class NumericT>
 __device__
 void
@@ -508,25 +517,59 @@ storeIntervalConverged(NumericT *s_left, NumericT *s_right,
     }
 }
 
-/** @brief Subdivide interval if active and not already converged.
-*
-* @param  tid                    id of thread
-* @param  s_left                 shared memory storage for left interval limits
-* @param  s_right                shared memory storage for right interval limits
-* @param  s_left_count           shared memory storage for number of eigenvalues less than left interval limits
-* @param  s_right_count          shared memory storage for number of eigenvalues less than right interval limits
-* @param  num_threads_active     number of active threads in warp
-* @param  left                   lower limit of interval
-* @param  right                  upper limit of interval
-* @param  left_count             eigenvalues less than \a left
-* @param  right_count            eigenvalues less than \a right
-* @param  mid                    median of interval
-* @param  all_threads_converged  shared memory flag if all threads are
-*/
+///////////////////////////////////////////////////////////////////////////////
+//! Subdivide interval if active and not already converged
+//! @param tid  id of thread
+//! @param  s_left  shared memory storage for left interval limits
+//! @param  s_right  shared memory storage for right interval limits
+//! @param  s_left_count  shared memory storage for number of eigenvalues less
+//!                       than left interval limits
+//! @param  s_right_count  shared memory storage for number of eigenvalues less
+//!                       than right interval limits
+//! @param  num_threads_active  number of active threads in warp
+//! @param  left   lower limit of interval
+//! @param  right  upper limit of interval
+//! @param  left_count  eigenvalues less than \a left
+//! @param  right_count  eigenvalues less than \a right
+//! @param  all_threads_converged  shared memory flag if all threads are
+//!                                 converged
+///////////////////////////////////////////////////////////////////////////////
 template<class T, class NumericT>
 __device__
 void
 subdivideActiveInterval(const unsigned int tid,
+                        NumericT *s_left, NumericT *s_right,
+                        T *s_left_count, T *s_right_count,
+                        const unsigned int num_threads_active,
+                        NumericT &left, NumericT &right,
+                        unsigned int &left_count, unsigned int &right_count,
+                        NumericT &mid, unsigned int &all_threads_converged)
+{
+    // for all active threads
+    if (tid < num_threads_active)
+    {
+
+        left = s_left[tid];
+        right = s_right[tid];
+        left_count = s_left_count[tid];
+        right_count = s_right_count[tid];
+
+        // check if thread already converged
+        if (left != right)
+        {
+
+            mid = computeMidpoint(left, right);
+            all_threads_converged = 0;
+        }
+
+
+    }  // end for all active threads
+}
+
+template<class T, class NumericT>
+__device__
+void
+subdivideActiveIntervalMulti(const unsigned int tid,
                         NumericT *s_left, NumericT *s_right,
                         T *s_left_count, T *s_right_count,
                         const unsigned int num_threads_active,
@@ -558,7 +601,9 @@ subdivideActiveInterval(const unsigned int tid,
         }
 
     }  // end for all active threads
-  }
+}
+
+
 }
 }
 }

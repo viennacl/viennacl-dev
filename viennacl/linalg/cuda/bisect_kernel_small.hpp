@@ -40,21 +40,18 @@ namespace linalg
 namespace cuda
 {
 
-/** @brief Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
-*
-* @param  g_d  diagonal elements in global memory
-* @param  g_s  superdiagonal elements in global elements (stored so that the element *(g_s - 1) can be accessed an equals 0
-* @param  n    size of matrix
-* @param  g_left         helper array
-* @param  g_right        helper array
-* @param  g_left_count   helper array
-* @param  g_right_count  helper array
-* @param  lg             lower bound of input interval (e.g. Gerschgorin interval)
-* @param  ug             upper bound of input interval (e.g. Gerschgorin interval)
-* @param  lg_eig_count   number of eigenvalues that are smaller than lg
-* @param  ug_eig_count   number of eigenvalues that are smaller than lu
-* @param  epsilon        desired accuracy of eigenvalues to compute
-*/
+////////////////////////////////////////////////////////////////////////////////
+//! Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
+//! @param  g_d  diagonal elements in global memory
+//! @param  g_s  superdiagonal elements in global elements (stored so that the
+//!              element *(g_s - 1) can be accessed an equals 0
+//! @param  n   size of matrix
+//! @param  lg  lower bound of input interval (e.g. Gerschgorin interval)
+//! @param  ug  upper bound of input interval (e.g. Gerschgorin interval)
+//! @param  lg_eig_count  number of eigenvalues that are smaller than \a lg
+//! @param  lu_eig_count  number of eigenvalues that are smaller than \a lu
+//! @param  epsilon  desired accuracy of eigenvalues to compute
+////////////////////////////////////////////////////////////////////////////////
 template<typename NumericT>
 __global__
 void
@@ -68,17 +65,17 @@ bisectKernelSmall(const NumericT *g_d, const NumericT *g_s, const unsigned int n
 {
     // intervals (store left and right because the subdivision tree is in general
     // not dense
-    __shared__  NumericT  s_left[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];
-    __shared__  NumericT  s_right[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];
+    __shared__  NumericT  s_left[MAX_THREADS_BLOCK_SMALL_MATRIX];
+    __shared__  NumericT  s_right[MAX_THREADS_BLOCK_SMALL_MATRIX];
 
     // number of eigenvalues that are smaller than s_left / s_right
     // (correspondence is realized via indices)
-    __shared__  unsigned int  s_left_count[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];
-    __shared__  unsigned int  s_right_count[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];
+    __shared__  unsigned int  s_left_count[MAX_THREADS_BLOCK_SMALL_MATRIX];
+    __shared__  unsigned int  s_right_count[MAX_THREADS_BLOCK_SMALL_MATRIX];
 
     // helper for stream compaction
     __shared__  unsigned int
-    s_compaction_list[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX + 1];
+    s_compaction_list[MAX_THREADS_BLOCK_SMALL_MATRIX + 1];
 
     // state variables for whole block
     // if 0 then compaction of second chunk of child intervals is not necessary

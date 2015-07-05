@@ -233,7 +233,7 @@ compactStreamsFinal(const unsigned int tid, const unsigned int tid_2,
 ////////////////////////////////////////////////////////////////////////////////
 //! Compute addresses to obtain compact list of block start addresses
 ////////////////////////////////////////////////////////////////////////////////
-inline __device__
+__device__
 void
 scanCompactBlocksStartAddress(const unsigned int tid, const unsigned int tid_2,
                               const unsigned int num_threads_compaction,
@@ -298,7 +298,7 @@ scanCompactBlocksStartAddress(const unsigned int tid, const unsigned int tid_2,
 ////////////////////////////////////////////////////////////////////////////////
 //! Perform scan to obtain number of eigenvalues before a specific block
 ////////////////////////////////////////////////////////////////////////////////
-inline __device__
+__device__
 void
 scanSumBlocks(const unsigned int tid, const unsigned int tid_2,
               const unsigned int num_threads_active,
@@ -364,9 +364,9 @@ scanSumBlocks(const unsigned int tid, const unsigned int tid_2,
 //! Perform initial scan for compaction of intervals containing one and
 //! multiple eigenvalues; also do initial scan to build blocks
 ////////////////////////////////////////////////////////////////////////////////
-inline __device__
+__device__
 void
-scanInitial(const unsigned int tid, const unsigned int tid_2,
+scanInitial(const unsigned int tid, const unsigned int tid_2, const unsigned int n,
             const unsigned int num_threads_active,
             const unsigned int num_threads_compaction,
             unsigned short *s_cl_one, unsigned short *s_cl_mult,
@@ -421,7 +421,7 @@ scanInitial(const unsigned int tid, const unsigned int tid_2,
 
                     unsigned int temp = s_cl_blocking[bi] + s_cl_blocking[ai - 1];
 
-                    if (temp > VIENNACL_BISECT_MAX_THREADS_BLOCK)
+                    if (temp > (n > 512 ? MAX_THREADS_BLOCK : MAX_THREADS_BLOCK / 2))
                     {
 
                         // the two child trees have to form separate blocks, terminate trees
@@ -520,16 +520,18 @@ storeNonEmptyIntervalsLarge(unsigned int addr,
     }
 }
 
-/** @brief Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
-*  g_d  diagonal elements in global memory
-*  g_s  superdiagonal elements in global elements (stored so that the element *(g_s - 1) can be accessed and equals 0
-*  n   size of matrix
-*  lg  lower bound of input interval (e.g. Gerschgorin interval)
-*  ug  upper bound of input interval (e.g. Gerschgorin interval)
-*  lg_eig_count  number of eigenvalues that are smaller than lg
-*  lu_eig_count  number of eigenvalues that are smaller than lu
-*  epsilon  desired accuracy of eigenvalues to compute
-*/
+////////////////////////////////////////////////////////////////////////////////
+//! Bisection to find eigenvalues of a real, symmetric, and tridiagonal matrix
+//! @param  g_d  diagonal elements in global memory
+//! @param  g_s  superdiagonal elements in global elements (stored so that the
+//!              element *(g_s - 1) can be accessed and equals 0
+//! @param  n   size of matrix
+//! @param  lg  lower bound of input interval (e.g. Gerschgorin interval)
+//! @param  ug  upper bound of input interval (e.g. Gerschgorin interval)
+//! @param  lg_eig_count  number of eigenvalues that are smaller than \a lg
+//! @param  lu_eig_count  number of eigenvalues that are smaller than \a lu
+//! @param  epsilon  desired accuracy of eigenvalues to compute
+////////////////////////////////////////////////////////////////////////////////
 template<typename NumericT>
 __global__
 void
@@ -553,16 +555,16 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
 
     // intervals (store left and right because the subdivision tree is in general
     // not dense
-    __shared__  NumericT  s_left[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
-    __shared__  NumericT  s_right[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
+    __shared__  NumericT  s_left[2 * MAX_THREADS_BLOCK + 1];
+    __shared__  NumericT  s_right[2 * MAX_THREADS_BLOCK + 1];
 
     // number of eigenvalues that are smaller than s_left / s_right
     // (correspondence is realized via indices)
-    __shared__  unsigned short  s_left_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
-    __shared__  unsigned short  s_right_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
+    __shared__  unsigned short  s_left_count[2 * MAX_THREADS_BLOCK + 1];
+    __shared__  unsigned short  s_right_count[2 * MAX_THREADS_BLOCK + 1];
 
     // helper for stream compaction
-    __shared__  unsigned short  s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
+    __shared__  unsigned short  s_compaction_list[2 * MAX_THREADS_BLOCK + 1];
 
     // state variables for whole block
     // if 0 then compaction of second chunk of child intervals is not necessary
@@ -629,8 +631,8 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
     for( unsigned int i = 0; i < 15; ++i )
     {
         s_compaction_list[tid] = 0;
-        s_compaction_list[tid + VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
-        s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
+        s_compaction_list[tid + MAX_THREADS_BLOCK] = 0;
+        s_compaction_list[2 * MAX_THREADS_BLOCK] = 0;
         subdivideActiveInterval(tid, s_left, s_right, s_left_count, s_right_count,
                                 num_threads_active,
                                 left, right, left_count, right_count,
@@ -777,7 +779,7 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
     // eigenvalues
     unsigned short  *s_cl_blocking = s_compaction_list_exc;
     // helper compaction list for generating blocks of intervals
-    __shared__ unsigned short  s_cl_helper[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];
+    __shared__ unsigned short  s_cl_helper[2 * MAX_THREADS_BLOCK + 1];
 
     if (0 == tid)
     {
@@ -817,7 +819,7 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
         s_cl_blocking[tid_2] = (1 == is_one_lambda_2) ? 0 : multiplicity;
         s_cl_helper[tid_2] = 0;
     }
-    else if (tid_2 < (2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1))
+    else if (tid_2 < (2 * (n > 512 ? MAX_THREADS_BLOCK : MAX_THREADS_BLOCK / 2) + 1))
     {
 
         // clear
@@ -826,7 +828,7 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
     }
 
 
-    scanInitial(tid, tid_2, num_threads_active, num_threads_compaction,
+    scanInitial(tid, tid_2, n, num_threads_active, num_threads_compaction,
                 s_cl_one, s_cl_mult, s_cl_blocking, s_cl_helper);
 
     __syncthreads();
