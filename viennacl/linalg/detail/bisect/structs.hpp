@@ -180,16 +180,21 @@ struct ResultDataLarge
     //! processing step
     viennacl::vector<unsigned int> g_pos_mult;
 
-
-
-    /** @brief Initialize variables and memory for result
-     *
-     * @param  mat_size  size of the matrix
-     */
+    ////////////////////////////////////////////////////////////////////////////////
+    //! Initialize variables and memory for result
+    //! @param  result handles to memory
+    //! @param  matrix_size  size of the matrix
+    ////////////////////////////////////////////////////////////////////////////////
     ResultDataLarge(const unsigned int mat_size) :
-      std_eigenvalues(mat_size), g_num_one(0), g_num_blocks_mult(0), g_left_one(mat_size), g_right_one(mat_size), g_pos_one(mat_size),
+      std_eigenvalues(mat_size), g_left_one(mat_size), g_right_one(mat_size), g_pos_one(mat_size),
       g_left_mult(mat_size), g_right_mult(mat_size),g_left_count_mult(mat_size), g_right_count_mult(mat_size),
-      g_blocks_mult(mat_size), g_blocks_mult_sum(mat_size), g_lambda_mult(mat_size), g_pos_mult(mat_size) {}
+      g_lambda_mult(mat_size), g_blocks_mult(mat_size), g_blocks_mult_sum(mat_size), g_pos_mult(mat_size),
+      g_num_one(0), g_num_blocks_mult(0)
+    {
+    }
+
+
+
 };
 } // namespace detail
 } // namespace linalg
