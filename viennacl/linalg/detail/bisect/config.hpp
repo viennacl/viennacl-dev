@@ -30,15 +30,21 @@
 
 // should be power of two
 #define  MAX_THREADS_BLOCK                256
+#define  VIENNACL_BISECT_MAX_THREADS_BLOCK                256
 
 #ifdef VIENNACL_WITH_OPENCL
 #  define MAX_SMALL_MATRIX                 256
 #  define MAX_THREADS_BLOCK_SMALL_MATRIX   256
+#  define VIENNACL_BISECT_MAX_SMALL_MATRIX                 256
+#  define VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX   256
 #else                                          // if CUDA is used
 #  define MAX_THREADS_BLOCK_SMALL_MATRIX   512 // change to 256 if errors occur
 #  define MAX_SMALL_MATRIX                 512 // change to 256 if errors occur
+#  define VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX   512 // change to 256 if errors occur
+#  define VIENNACL_BISECT_MAX_SMALL_MATRIX                 512 // change to 256 if errors occur
 #endif
 
  #define  MIN_ABS_INTERVAL                 5.0e-37
+ #define  VIENNACL_BISECT_MIN_ABS_INTERVAL                 5.0e-37
 
 #endif 
