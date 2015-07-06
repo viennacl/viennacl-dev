@@ -109,19 +109,6 @@ NumericT setup_w(viennacl::compressed_matrix<NumericT> const & A,
   return std::sqrt(row_norm);
 }
 
-/** @brief Dispatcher overload for extracting the row of nonzeros of a STL-grown sparse matrix */
-template<typename NumericT, typename SizeT, typename SparseVectorT>
-NumericT setup_w(std::vector< std::map<SizeT, NumericT> > const & A,
-                 SizeT row,
-                 SparseVectorT & w)
-{
-  NumericT row_norm = 0;
-  w = A[row];
-  for (typename std::map<SizeT, NumericT>::const_iterator iter_w  = w.begin(); iter_w != w.end(); ++iter_w)
-    row_norm += iter_w->second * iter_w->second;
-
-  return std::sqrt(row_norm);
-}
 
 template<typename SizeT, typename NumericT>
 void insert_with_value_sort(std::vector<std::pair<SizeT, NumericT> > & map, SizeT index, NumericT value)
@@ -148,20 +135,18 @@ void insert_with_value_sort(std::vector<std::pair<SizeT, NumericT> > & map, Size
 *  @param output  The output matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns and write access via operator()
 *  @param tag     An ilut_tag in order to dispatch among several other preconditioners.
 */
-template<typename SparseMatrixTypeT, typename NumericT, typename SizeT>
-void precondition(SparseMatrixTypeT const & A,
+template<typename NumericT, typename SizeT>
+void precondition(viennacl::compressed_matrix<NumericT> const & A,
                   std::vector< std::map<SizeT, NumericT> > & output,
                   ilut_tag const & tag)
 {
   typedef std::map<SizeT, NumericT>                             SparseVector;
   typedef typename SparseVector::iterator                       SparseVectorIterator;
   typedef typename std::map<SizeT, NumericT>::const_iterator    OutputRowConstIterator;
-  typedef std::multimap<NumericT, std::pair<SizeT, NumericT> >  TemporarySortMap;
 
   assert(viennacl::traits::size1(A) == output.size() && bool("Output matrix size mismatch") );
 
   SparseVector w;
-  TemporarySortMap temp_map;
   std::vector<std::pair<SizeT, NumericT> > sorted_entries_L(tag.get_entries_per_row());
   NumericT entry_diagonal = 0;
   std::vector<std::pair<SizeT, NumericT> > sorted_entries_U(tag.get_entries_per_row());
@@ -212,7 +197,6 @@ void precondition(SparseMatrixTypeT const & A,
 
     //Line 10: Apply a dropping rule to w
     //Sort entries which are kept
-    temp_map.clear();
     for (SparseVectorIterator w_k = w.begin(); w_k != w.end(); ++w_k)
     {
       if (w_k->first == i) //do not drop diagonal element!
