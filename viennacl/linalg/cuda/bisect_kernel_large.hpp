@@ -189,13 +189,14 @@ compactStreamsFinal(const unsigned int tid, const unsigned int tid_2,
 
 
     __syncthreads();
-
-    // store compactly in shared mem
-      s_left[ptr_w] = left;
-      s_right[ptr_w] = right;
-      s_left_count[ptr_w] = left_count;
-      s_right_count[ptr_w] = right_count;
-
+      if(tid < num_threads_active)
+      {
+        // store compactly in shared mem
+        s_left[ptr_w] = left;
+        s_right[ptr_w] = right;
+        s_left_count[ptr_w] = left_count;
+        s_right_count[ptr_w] = right_count;
+      }
 
 
     __syncthreads();
@@ -254,7 +255,7 @@ scanCompactBlocksStartAddress(const unsigned int tid, const unsigned int tid_2,
 
     // additional scan to compact s_cl_blocking that permits to generate a
     // compact list of eigenvalue blocks each one containing about
-    // MAX_THREADS_BLOCK eigenvalues (so that each of these blocks may be
+    // VIENNACL_BISECT_MAX_THREADS_BLOCK eigenvalues (so that each of these blocks may be
     // processed by one thread block in a subsequent processing step
 
     unsigned int offset = 1;
@@ -366,7 +367,7 @@ scanSumBlocks(const unsigned int tid, const unsigned int tid_2,
 ////////////////////////////////////////////////////////////////////////////////
 inline __device__
 void
-scanInitial(const unsigned int tid, const unsigned int tid_2,
+scanInitial(const unsigned int tid, const unsigned int tid_2, const unsigned int mat_size,
             const unsigned int num_threads_active,
             const unsigned int num_threads_compaction,
             unsigned short *s_cl_one, unsigned short *s_cl_mult,
@@ -421,7 +422,7 @@ scanInitial(const unsigned int tid, const unsigned int tid_2,
 
                     unsigned int temp = s_cl_blocking[bi] + s_cl_blocking[ai - 1];
 
-                    if (temp > VIENNACL_BISECT_MAX_THREADS_BLOCK)
+                    if (temp > (mat_size > 512 ? VIENNACL_BISECT_MAX_THREADS_BLOCK : VIENNACL_BISECT_MAX_THREADS_BLOCK / 2))
                     {
 
                         // the two child trees have to form separate blocks, terminate trees
@@ -626,7 +627,7 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
     // the number of (worst case) active threads per level l is 2^l
     // determine coarse intervals. On these intervals the kernel for one or for multiple eigenvalues
     // will be executed in the second step
-    for( unsigned int i = 0; i < 15; ++i )
+    while(true)
     {
         s_compaction_list[tid] = 0;
         s_compaction_list[tid + VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
@@ -817,7 +818,7 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
         s_cl_blocking[tid_2] = (1 == is_one_lambda_2) ? 0 : multiplicity;
         s_cl_helper[tid_2] = 0;
     }
-    else if (tid_2 < (2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1))
+    else if (tid_2 < (2 * (n > 512 ? VIENNACL_BISECT_MAX_THREADS_BLOCK : VIENNACL_BISECT_MAX_THREADS_BLOCK / 2) + 1))
     {
 
         // clear
@@ -826,7 +827,7 @@ bisectKernelLarge(const NumericT *g_d, const NumericT *g_s, const unsigned int n
     }
 
 
-    scanInitial(tid, tid_2, num_threads_active, num_threads_compaction,
+    scanInitial(tid, tid_2, n, num_threads_active, num_threads_compaction,
                 s_cl_one, s_cl_mult, s_cl_blocking, s_cl_helper);
 
     __syncthreads();

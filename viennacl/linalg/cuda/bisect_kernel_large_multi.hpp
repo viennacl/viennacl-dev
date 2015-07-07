@@ -164,7 +164,7 @@ bisectKernelLarge_MultIntervals(const NumericT *g_d, const NumericT *g_s, const 
         s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;
 
         // subdivide interval if currently active and not already converged
-        subdivideActiveInterval(tid, s_left, s_right,
+        subdivideActiveIntervalMulti(tid, s_left, s_right,
                                 s_left_count, s_right_count,
                                 num_threads_active,
                                 left, right, left_count, right_count,
