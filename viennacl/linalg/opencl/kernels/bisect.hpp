@@ -43,10 +43,10 @@ namespace kernels
   void generate_bisect_kernel_config(StringType & source)
   {
     /* Global configuration parameter */
-    source.append("     #define  MAX_THREADS_BLOCK                256\n");
-    source.append("     #define  MAX_SMALL_MATRIX                 256\n");
-    source.append("     #define  MAX_THREADS_BLOCK_SMALL_MATRIX   256\n");
-    source.append("     #define  MIN_ABS_INTERVAL                 5.0e-37\n");
+    source.append("     #define  VIENNACL_BISECT_MAX_THREADS_BLOCK                256\n");
+    source.append("     #define  VIENNACL_BISECT_MAX_SMALL_MATRIX                 256\n");
+    source.append("     #define  VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX   256\n");
+    source.append("     #define  VIENNACL_BISECT_MIN_ABS_INTERVAL                 5.0e-37\n");
 
   }
 
@@ -197,7 +197,7 @@ namespace kernels
   source.append("          "); source.append(numeric_string); source.append(" t0 = fabs(right - left);  \n");
   source.append("          "); source.append(numeric_string); source.append(" t1 = max(fabs(left), fabs(right)) * precision;  \n");
 
-  source.append("         if (t0 <= max(( "); source.append(numeric_string); source.append(" )MIN_ABS_INTERVAL, t1))  \n");
+  source.append("         if (t0 <= max(( "); source.append(numeric_string); source.append(" )VIENNACL_BISECT_MIN_ABS_INTERVAL, t1))  \n");
   source.append("         {  \n");
           // compute mid point
   source.append("              "); source.append(numeric_string); source.append(" lambda = computeMidpoint(left, right);  \n");
@@ -247,7 +247,7 @@ namespace kernels
   source.append("          "); source.append(numeric_string); source.append(" t0 = fabs(right - left);  \n");
   source.append("          "); source.append(numeric_string); source.append(" t1 = max(fabs(left), fabs(right)) * precision;  \n");
 
-  source.append("         if (t0 <= max(( "); source.append(numeric_string); source.append(" )MIN_ABS_INTERVAL, t1))  \n");
+  source.append("         if (t0 <= max(( "); source.append(numeric_string); source.append(" )VIENNACL_BISECT_MIN_ABS_INTERVAL, t1))  \n");
   source.append("         {  \n");
           // compute mid point
   source.append("              "); source.append(numeric_string); source.append(" lambda = computeMidpoint(left, right);  \n");
@@ -1119,17 +1119,17 @@ namespace kernels
 
           // intervals (store left and right because the subdivision tree is in general
           // not dense
-      source.append("         __local "); source.append(numeric_string); source.append(" s_left[MAX_THREADS_BLOCK_SMALL_MATRIX];  \n");
-      source.append("         __local "); source.append(numeric_string); source.append(" s_right[MAX_THREADS_BLOCK_SMALL_MATRIX];  \n");
+      source.append("         __local "); source.append(numeric_string); source.append(" s_left[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];  \n");
+      source.append("         __local "); source.append(numeric_string); source.append(" s_right[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];  \n");
 
           // number of eigenvalues that are smaller than s_left / s_right
           // (correspondence is realized via indices)
-      source.append("         __local  unsigned int  s_left_count[MAX_THREADS_BLOCK_SMALL_MATRIX];  \n");
-      source.append("         __local  unsigned int  s_right_count[MAX_THREADS_BLOCK_SMALL_MATRIX];  \n");
+      source.append("         __local  unsigned int  s_left_count[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];  \n");
+      source.append("         __local  unsigned int  s_right_count[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX];  \n");
 
           // helper for stream compaction
       source.append("         __local  unsigned int  \n");
-      source.append("           s_compaction_list[MAX_THREADS_BLOCK_SMALL_MATRIX + 1];  \n");
+      source.append("           s_compaction_list[VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX + 1];  \n");
 
           // state variables for whole block
           // if 0 then compaction of second chunk of child intervals is not necessary
@@ -1357,15 +1357,15 @@ namespace kernels
       source.append("       const unsigned int tid = lcl_id;  \n");
 
           // left and right limits of interval
-      source.append("         __local "); source.append(numeric_string); source.append(" s_left[2 * MAX_THREADS_BLOCK];  \n");
-      source.append("         __local "); source.append(numeric_string); source.append(" s_right[2 * MAX_THREADS_BLOCK];  \n");
+      source.append("         __local "); source.append(numeric_string); source.append(" s_left[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK];  \n");
+      source.append("         __local "); source.append(numeric_string); source.append(" s_right[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK];  \n");
 
           // number of eigenvalues smaller than interval limits
-      source.append("         __local  unsigned int  s_left_count[2 * MAX_THREADS_BLOCK];  \n");
-      source.append("         __local  unsigned int  s_right_count[2 * MAX_THREADS_BLOCK];  \n");
+      source.append("         __local  unsigned int  s_left_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK];  \n");
+      source.append("         __local  unsigned int  s_right_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK];  \n");
 
           // helper array for chunk compaction of second chunk
-      source.append("         __local  unsigned int  s_compaction_list[2 * MAX_THREADS_BLOCK + 1];  \n");
+      source.append("         __local  unsigned int  s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];  \n");
           // compaction list helper for exclusive scan
       source.append("         __local unsigned int *s_compaction_list_exc = s_compaction_list + 1;  \n");
 
@@ -1415,8 +1415,8 @@ namespace kernels
       source.append("         }  \n");
       source.append("          s_left_count [tid] = 42;  \n");
       source.append("          s_right_count[tid] = 42;  \n");
-      source.append("          s_left_count [tid + MAX_THREADS_BLOCK] = 0;  \n");
-      source.append("          s_right_count[tid + MAX_THREADS_BLOCK] = 0;  \n");
+      source.append("          s_left_count [tid + VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;  \n");
+      source.append("          s_right_count[tid + VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;  \n");
       source.append("           \n");
       source.append("         barrier(CLK_LOCAL_MEM_FENCE)  ;  \n");
       source.append("           \n");
@@ -1441,7 +1441,7 @@ namespace kernels
               //for (int iter=0; iter < 0; iter++) {
       source.append("             s_compaction_list[lcl_id] = 0;  \n");
       source.append("             s_compaction_list[lcl_id + lcl_sz] = 0;  \n");
-      source.append("             s_compaction_list[2 * MAX_THREADS_BLOCK] = 0;  \n");
+      source.append("             s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;  \n");
 
               // subdivide interval if currently active and not already converged
       source.append("             subdivideActiveIntervalMulti(tid, s_left, s_right,  \n");
@@ -1589,8 +1589,8 @@ namespace kernels
       source.append("         uint lcl_id = get_local_id(0); \n");
       source.append("         uint lcl_sz = get_local_size(0); \n");
       source.append("         const unsigned int gtid = (lcl_sz * grp_id) + lcl_id;  \n");
-      source.append("         __local "); source.append(numeric_string); source.append(" s_left_scratch[MAX_THREADS_BLOCK];  \n");
-      source.append("         __local "); source.append(numeric_string); source.append(" s_right_scratch[MAX_THREADS_BLOCK];  \n");
+      source.append("         __local "); source.append(numeric_string); source.append(" s_left_scratch[VIENNACL_BISECT_MAX_THREADS_BLOCK];  \n");
+      source.append("         __local "); source.append(numeric_string); source.append(" s_right_scratch[VIENNACL_BISECT_MAX_THREADS_BLOCK];  \n");
           // active interval of thread
           // left and right limit of current interval
       source.append("          "); source.append(numeric_string); source.append(" left, right;  \n");
@@ -1930,7 +1930,7 @@ namespace kernels
 
           // additional scan to compact s_cl_blocking that permits to generate a
           // compact list of eigenvalue blocks each one containing about
-          // MAX_THREADS_BLOCK eigenvalues (so that each of these blocks may be
+          // VIENNACL_BISECT_MAX_THREADS_BLOCK eigenvalues (so that each of these blocks may be
           // processed by one thread block in a subsequent processing step
 
       source.append("         unsigned int offset = 1;  \n");
@@ -2121,7 +2121,7 @@ namespace kernels
 
       source.append("                         unsigned int temp = s_cl_blocking[bi] + s_cl_blocking[ai - 1];  \n");
 
-      source.append("                         if (temp > (n > 512 ? MAX_THREADS_BLOCK : MAX_THREADS_BLOCK / 2))  \n");
+      source.append("                         if (temp > (n > 512 ? VIENNACL_BISECT_MAX_THREADS_BLOCK : VIENNACL_BISECT_MAX_THREADS_BLOCK / 2))  \n");
       source.append("                         {  \n");
 
                               // the two child trees have to form separate blocks, terminate trees
@@ -2209,16 +2209,16 @@ namespace kernels
 
           // intervals (store left and right because the subdivision tree is in general
           // not dense
-      source.append("         __local "); source.append(numeric_string); source.append("  s_left[2 * MAX_THREADS_BLOCK + 1];  \n");
-      source.append("         __local "); source.append(numeric_string); source.append("  s_right[2 * MAX_THREADS_BLOCK + 1];  \n");
+      source.append("         __local "); source.append(numeric_string); source.append("  s_left[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];  \n");
+      source.append("         __local "); source.append(numeric_string); source.append("  s_right[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];  \n");
 
           // number of eigenvalues that are smaller than s_left / s_right
           // (correspondence is realized via indices)
-      source.append("         __local  unsigned short  s_left_count[2 * MAX_THREADS_BLOCK + 1];  \n");
-      source.append("         __local  unsigned short  s_right_count[2 * MAX_THREADS_BLOCK + 1];  \n");
+      source.append("         __local  unsigned short  s_left_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];  \n");
+      source.append("         __local  unsigned short  s_right_count[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];  \n");
 
           // helper for stream compaction
-      source.append("         __local  unsigned short  s_compaction_list[2 * MAX_THREADS_BLOCK + 1];  \n");
+      source.append("         __local  unsigned short  s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];  \n");
 
           // state variables for whole block
           // if 0 then compaction of second chunk of child intervals is not necessary
@@ -2284,8 +2284,8 @@ namespace kernels
       source.append("    while( true )    \n");
       source.append("         {  \n");
       source.append("             s_compaction_list[tid] = 0;  \n");
-      source.append("             s_compaction_list[tid + MAX_THREADS_BLOCK] = 0;  \n");
-      source.append("             s_compaction_list[2 * MAX_THREADS_BLOCK] = 0;  \n");
+      source.append("             s_compaction_list[tid + VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;  \n");
+      source.append("             s_compaction_list[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK] = 0;  \n");
       source.append("             subdivideActiveIntervalShort(tid, s_left, s_right, s_left_count, s_right_count,  \n");
       source.append("                                     num_threads_active,  \n");
       source.append("                                     &left, &right, &left_count, &right_count,  \n");
@@ -2428,7 +2428,7 @@ namespace kernels
           // eigenvalues
       source.append("         __local unsigned short  *s_cl_blocking = s_compaction_list_exc;  \n");
           // helper compaction list for generating blocks of intervals
-      source.append("         __local unsigned short  s_cl_helper[2 * MAX_THREADS_BLOCK + 1];  \n");
+      source.append("         __local unsigned short  s_cl_helper[2 * VIENNACL_BISECT_MAX_THREADS_BLOCK + 1];  \n");
 
       source.append("         if (0 == tid)  \n");
       source.append("         {  \n");
@@ -2468,7 +2468,7 @@ namespace kernels
       source.append("             s_cl_blocking[tid_2] = (1 == is_one_lambda_2) ? 0 : multiplicity;  \n");
       source.append("             s_cl_helper[tid_2] = 0;  \n");
       source.append("         }  \n");
-      source.append("         else if (tid_2 < (2 * (n > 512 ? MAX_THREADS_BLOCK : MAX_THREADS_BLOCK / 2) + 1))  \n");
+      source.append("         else if (tid_2 < (2 * (n > 512 ? VIENNACL_BISECT_MAX_THREADS_BLOCK : VIENNACL_BISECT_MAX_THREADS_BLOCK / 2) + 1))  \n");
       source.append("         {  \n");
 
               // clear
