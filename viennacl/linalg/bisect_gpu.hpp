@@ -1,5 +1,5 @@
-#ifndef VIENNACL_LINAL_BISECT_GPU
-#define VIENNACL_LINAL_BISECT_GPU
+#ifndef VIENNACL_LINALG_BISECT_GPU
+#define VIENNACL_LINALG_BISECT_GPU
 
 /* =========================================================================
    Copyright (c) 2010-2014, Institute for Microelectronics,
