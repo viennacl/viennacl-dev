@@ -15,9 +15,9 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-/* Computation of eigenvalues of a symmetric, tridiagonal matrix using
- * bisection.
- */
+/** \file  tests/src/bisect.cpp  Computation of eigenvalues of a symmetric, tridiagonal matrix using bisection.
+*   \test  Tests the bisection implementation for symmetric tridiagonal matrices.
+**/
 
 #ifndef NDEBUG
   #define NDEBUG
@@ -46,7 +46,7 @@
 typedef float NumericT;
 ////////////////////////////////////////////////////////////////////////////////
 // declaration, forward
-bool runTest(const unsigned int mat_size);
+bool runTest(std::size_t mat_size);
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief initInputData   Initialize the diagonal and superdiagonal elements of
@@ -55,8 +55,8 @@ bool runTest(const unsigned int mat_size);
 /// \param superdiagonal   superdiagonal elements of the matrix
 /// \param mat_size        Dimension of the matrix
 ///
-void
-initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, const unsigned int mat_size)
+template<typename NumericT>
+void initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, std::size_t mat_size)
 {
  
   srand(278217421);
@@ -66,7 +66,7 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
   if (RANDOM_VALUES == true)
   {
     // Initialize diagonal and superdiagonal elements with random values
-    for (unsigned int i = 0; i < mat_size; ++i)
+    for (std::size_t i = 0; i < mat_size; ++i)
     {
         diagonal[i] =      static_cast<NumericT>(2.0 * (((double)rand()
                                      / (double) RAND_MAX) - 0.5));
@@ -78,7 +78,7 @@ initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiago
   { 
     // Initialize diagonal and superdiagonal elements with modulo values
     // This will cause in many multiple eigenvalues.
-    for (unsigned int i = 0; i < mat_size; ++i)
+    for (std::size_t i = 0; i < mat_size; ++i)
     {
        diagonal[i] = ((NumericT)(i % 3)) - 4.5f;
        superdiagonal[i] = ((NumericT)(i % 3)) - 5.5f;
@@ -128,8 +128,7 @@ int main()
 ////////////////////////////////////////////////////////////////////////////////
 //! Run a simple test
 ////////////////////////////////////////////////////////////////////////////////
-bool
-runTest(const unsigned int mat_size)
+bool runTest(std::size_t mat_size)
 {
     bool bResult = false;
 

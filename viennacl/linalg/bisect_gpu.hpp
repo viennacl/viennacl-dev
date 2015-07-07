@@ -66,7 +66,7 @@ bisect(const std::vector<NumericT> & diagonal, const std::vector<NumericT> & sup
   // flag if the matrix size is due to explicit user request
   // desired precision of eigenvalues
   NumericT  precision = static_cast<NumericT>(0.00001);
-  const unsigned int mat_size = diagonal.size();
+  const unsigned int mat_size = static_cast<unsigned int>(diagonal.size());
 
   // set up input
   viennacl::linalg::detail::InputData<NumericT> input(diagonal, superdiagonal, mat_size);
@@ -130,7 +130,7 @@ bisect(const viennacl::vector<NumericT> & diagonal, const viennacl::vector<Numer
   // flag if the matrix size is due to explicit user request
   // desired precision of eigenvalues
   NumericT  precision = static_cast<NumericT>(0.00001);
-  const unsigned int mat_size = diagonal.size();
+  const unsigned int mat_size = static_cast<unsigned int>(diagonal.size());
 
   // set up input
   viennacl::linalg::detail::InputData<NumericT> input(diagonal, superdiagonal, mat_size);

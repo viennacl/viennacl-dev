@@ -6,7 +6,6 @@
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
-IENNACL_BISECT_
                             -----------------
                   ViennaCL - The Vienna Computing Library
                             -----------------
@@ -105,7 +104,8 @@ void bisectLarge_OneIntervals(const viennacl::linalg::detail::InputData<NumericT
  {
 
   unsigned int num_one_intervals = result.g_num_one;
-  unsigned int num_blocks = viennacl::linalg::detail::getNumBlocksLinear(num_one_intervals, mat_size > 512 ? VIENNACL_BISECT_MAX_THREADS_BLOCK : VIENNACL_BISECT_MAX_THREADS_BLOCK / 2);
+  unsigned int num_blocks = viennacl::linalg::detail::getNumBlocksLinear(num_one_intervals,
+                                                                         mat_size > 512 ? VIENNACL_BISECT_MAX_THREADS_BLOCK : VIENNACL_BISECT_MAX_THREADS_BLOCK / 2);
   dim3 grid_onei;
   grid_onei.x = num_blocks;
   grid_onei.y = 1, grid_onei.z = 1;
