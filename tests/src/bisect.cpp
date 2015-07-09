@@ -19,10 +19,6 @@
 *   \test  Tests the bisection implementation for symmetric tridiagonal matrices.
 **/
 
-#ifndef NDEBUG
-  #define NDEBUG
-#endif
-
 // includes, system
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,13 +29,11 @@
 
 #include "viennacl/scalar.hpp"
 #include "viennacl/vector.hpp"
-#include "viennacl/matrix.hpp"
+
 
 #include "viennacl/linalg/bisect.hpp"
 #include "viennacl/linalg/bisect_gpu.hpp"
 #include "viennacl/linalg/tql2.hpp"
-
-#include <examples/benchmarks/benchmark-utils.hpp>
 
 #define EPS 10.0e-4
 
@@ -135,8 +129,6 @@ bool runTest(unsigned int mat_size)
     std::vector<NumericT> diagonal(mat_size);
     std::vector<NumericT> superdiagonal(mat_size);
     std::vector<NumericT> eigenvalues_bisect(mat_size);
-    std::vector<NumericT> eigenvalues_bisect_cpu(mat_size);
-    std::vector<double> times(5);
 
     // -------------Initialize data-------------------
     // Fill the diagonal and superdiagonal elements of the vector
@@ -145,11 +137,8 @@ bool runTest(unsigned int mat_size)
     // -------Start the bisection algorithm------------
     std::cout << "Start the bisection algorithm" << std::endl;
     std::cout << "Matrix size: " << mat_size << std::endl;
-    Timer timer;
-    timer.start();
     bResult = viennacl::linalg::bisect(diagonal, superdiagonal, eigenvalues_bisect);
     // Exit if an error occured during the execution of the algorithm
-    std::cout << "time = \t" << timer.get() * 1000. << std::endl;
     if (bResult == false)
      return false;
 
@@ -164,21 +153,14 @@ bool runTest(unsigned int mat_size)
     // Start the tql algorithm
     std::cout << "Start the tql algorithm..." << std::endl;
     viennacl::linalg::tql1<NumericT>(mat_size, diagonal_tql, superdiagonal_tql);
-    
-    // Run the bisect algorithm for CPU only
-    //eigenvalues_bisect_cpu = viennacl::linalg::bisect(diagonal, superdiagonal);
 
-    // Ensure that eigenvalues from tql2 algorithm are sorted in ascending order
+    // Ensure that eigenvalues from tql1 algorithm are sorted in ascending order
     std::sort(diagonal_tql.begin(), diagonal_tql.end());
-
-   // Ensure that eigenvalues from bisect algorithm are sorted in ascending order
-    std::sort(eigenvalues_bisect_cpu.begin(), eigenvalues_bisect_cpu.end());
-
 
     // Compare the results from the bisection algorithm with the results
     // from the tql algorithm.
     std::cout << "Start comparison..." << std::endl;
-    for (uint i = 0; i < mat_size; i++)
+    for (unsigned int i = 0; i < mat_size; i++)
     {
        if (std::abs(diagonal_tql[i] - eigenvalues_bisect[i]) > EPS)
        {
@@ -194,8 +176,6 @@ bool runTest(unsigned int mat_size)
       std::cout << "Eigenvalue " << i << ":  \tbisect: " << std::setprecision(14) << eigenvalues_bisect[i] << "\ttql: " << diagonal_tql[i] << std::endl;
     }
 */
-
-
   return bResult;
     
 }
