@@ -83,8 +83,7 @@ bisect(const std::vector<NumericT> & diagonal, const std::vector<NumericT> & sup
     viennacl::linalg::detail::ResultDataSmall<NumericT> result(mat_size);
 
     // run the kernel
-    viennacl::linalg::detail::computeEigenvaluesSmallMatrix(input, result, mat_size, lg, ug,
-                                  precision);
+    viennacl::linalg::detail::computeEigenvaluesSmallMatrix(input, result, mat_size, lg, ug, precision);
 
     // get the result from the device and do some sanity checks,
     viennacl::linalg::detail::processResultSmallMatrix(result, mat_size);
@@ -98,8 +97,7 @@ bisect(const std::vector<NumericT> & diagonal, const std::vector<NumericT> & sup
     viennacl::linalg::detail::ResultDataLarge<NumericT> result(mat_size);
 
     // run the kernel
-    viennacl::linalg::detail::computeEigenvaluesLargeMatrix(input, result, mat_size,
-                                  lg, ug, precision);
+    viennacl::linalg::detail::computeEigenvaluesLargeMatrix(input, result, mat_size, lg, ug, precision);
 
     // get the result from the device and do some sanity checks
     bResult = viennacl::linalg::detail::processResultDataLargeMatrix(result, mat_size);
@@ -147,8 +145,7 @@ bisect(const viennacl::vector<NumericT> & diagonal, const viennacl::vector<Numer
     viennacl::linalg::detail::ResultDataSmall<NumericT> result(mat_size);
 
     // run the kernel
-    viennacl::linalg::detail::computeEigenvaluesSmallMatrix(input, result, mat_size, lg, ug,
-                                  precision);
+    viennacl::linalg::detail::computeEigenvaluesSmallMatrix(input, result, mat_size, lg, ug, precision);
 
     // get the result from the device and do some sanity checks,
     viennacl::linalg::detail::processResultSmallMatrix(result, mat_size);
@@ -162,8 +159,7 @@ bisect(const viennacl::vector<NumericT> & diagonal, const viennacl::vector<Numer
     viennacl::linalg::detail::ResultDataLarge<NumericT> result(mat_size);
 
     // run the kernel
-    viennacl::linalg::detail::computeEigenvaluesLargeMatrix(input, result, mat_size,
-                                  lg, ug, precision);
+    viennacl::linalg::detail::computeEigenvaluesLargeMatrix(input, result, mat_size, lg, ug, precision);
 
     // get the result from the device and do some sanity checks
     bResult = viennacl::linalg::detail::processResultDataLargeMatrix(result, mat_size);

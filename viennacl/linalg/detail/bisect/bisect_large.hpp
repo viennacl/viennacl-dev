@@ -123,9 +123,7 @@ processResultDataLargeMatrix(ResultDataLarge<NumericT> &result,
 
       else
       {
-
-        printf("error: linalg/detail/bisect_large.hpp: pos_mult[%u] = %u\n", i, pos_mult[i]);
-        bCompareResult = false;
+        throw memory_exception("Invalid array index! Are there more than 256 equal eigenvalues?");
       }
     }
 

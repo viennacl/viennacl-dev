@@ -46,7 +46,7 @@
 typedef float NumericT;
 ////////////////////////////////////////////////////////////////////////////////
 // declaration, forward
-bool runTest(std::size_t mat_size);
+bool runTest(unsigned int mat_size);
 
 ////////////////////////////////////////////////////////////////////////////////
 /// \brief initInputData   Initialize the diagonal and superdiagonal elements of
@@ -56,7 +56,7 @@ bool runTest(std::size_t mat_size);
 /// \param mat_size        Dimension of the matrix
 ///
 template<typename NumericT>
-void initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, std::size_t mat_size)
+void initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &superdiagonal, unsigned int mat_size)
 {
  
   srand(278217421);
@@ -66,7 +66,7 @@ void initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &super
   if (RANDOM_VALUES == true)
   {
     // Initialize diagonal and superdiagonal elements with random values
-    for (std::size_t i = 0; i < mat_size; ++i)
+    for (unsigned int i = 0; i < mat_size; ++i)
     {
         diagonal[i] =      static_cast<NumericT>(2.0 * (((double)rand()
                                      / (double) RAND_MAX) - 0.5));
@@ -78,7 +78,7 @@ void initInputData(std::vector<NumericT> &diagonal, std::vector<NumericT> &super
   { 
     // Initialize diagonal and superdiagonal elements with modulo values
     // This will cause in many multiple eigenvalues.
-    for (std::size_t i = 0; i < mat_size; ++i)
+    for (unsigned int i = 0; i < mat_size; ++i)
     {
        diagonal[i] = ((NumericT)(i % 3)) - 4.5f;
        superdiagonal[i] = ((NumericT)(i % 3)) - 5.5f;
@@ -128,7 +128,7 @@ int main()
 ////////////////////////////////////////////////////////////////////////////////
 //! Run a simple test
 ////////////////////////////////////////////////////////////////////////////////
-bool runTest(std::size_t mat_size)
+bool runTest(unsigned int mat_size)
 {
     bool bResult = false;
 
