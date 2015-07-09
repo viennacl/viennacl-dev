@@ -195,6 +195,39 @@ int test_prod_rank1(Epsilon const & epsilon,
       retval = EXIT_FAILURE;
    }
    // --------------------------------------------------------------------------
+   std::cout << "Matrix-Vector product with matrix expression" << std::endl;
+   ublas_v1 = ublas::prod(ublas_m1 + ublas_m1, ublas_v2);
+   vcl_v1   = viennacl::linalg::prod(vcl_m1 + vcl_m1, vcl_v2);
+
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product" << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   // --------------------------------------------------------------------------
+   std::cout << "Matrix-Vector product with vector expression" << std::endl;
+   ublas_v1 = ublas::prod(ublas_m1, NumericT(3) * ublas_v2);
+   vcl_v1   = viennacl::linalg::prod(vcl_m1, NumericT(3) * vcl_v2);
+
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product" << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   // --------------------------------------------------------------------------
+   std::cout << "Matrix-Vector product with matrix and vector expression" << std::endl;
+   ublas_v1 = ublas::prod(ublas_m1 + ublas_m1, ublas_v2 + ublas_v2);
+   vcl_v1   = viennacl::linalg::prod(vcl_m1 + vcl_m1, vcl_v2 + vcl_v2);
+
+   if ( std::fabs(diff(ublas_v1, vcl_v1)) > epsilon )
+   {
+      std::cout << "# Error at operation: matrix-vector product" << std::endl;
+      std::cout << "  diff: " << std::fabs(diff(ublas_v1, vcl_v1)) << std::endl;
+      retval = EXIT_FAILURE;
+   }
+   // --------------------------------------------------------------------------
 
    viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());
    viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());

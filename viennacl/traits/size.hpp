@@ -195,6 +195,12 @@ vcl_size_t size(vector_expression<const matrix_base<NumericT>, const vector_base
   return proxy.lhs().size1();
 }
 
+template<typename NumericT, typename LhsT, typename RhsT, typename OpT>
+vcl_size_t size(vector_expression<const matrix_base<NumericT>, const vector_expression<LhsT, RhsT, OpT>, op_prod> const & proxy)  //matrix-vector product
+{
+  return proxy.lhs().size1();
+}
+
 template<typename NumericT>
 vcl_size_t size(vector_expression<const matrix_expression<const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>,
                 const vector_base<NumericT>,
@@ -269,6 +275,15 @@ vcl_size_t size1(mtl::dense2D<NumericT, T> const & m) { return static_cast<vcl_s
 template<typename NumericT>
 vcl_size_t size1(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
 #endif
+
+// delayed overload for size() using matrix-vector products
+template<typename LhsT, typename RhsT, typename OpT, typename VectorT>
+vcl_size_t size(vector_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
+                                  VectorT,
+                                  op_prod> const & proxy)
+{
+  return size1(proxy.lhs());
+}
 
 /** \endcond */
 

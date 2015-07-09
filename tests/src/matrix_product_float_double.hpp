@@ -105,7 +105,7 @@ struct matrix_maker< boost::numeric::ublas::matrix_slice<MatrixT>, F>
 
 template<typename T, typename CType, typename AType, typename BType>
 int test_layout(CType & C, AType const & A, AType const & AT, BType const & B, BType const & BT,
-                boost::numeric::ublas::matrix<T> const & ground, T epsilon)
+                boost::numeric::ublas::matrix<T> const & ground, T epsilon, bool with_composite)
 {
   using viennacl::linalg::prod;
   using viennacl::trans;
@@ -129,6 +129,27 @@ int test_layout(CType & C, AType const & A, AType const & AT, BType const & B, B
   C = prod(trans(AT), trans(BT));
   if (diff(ground, C)>epsilon)
     return EXIT_FAILURE;
+
+  // composite operations:
+  if (with_composite)
+  {
+    boost::numeric::ublas::matrix<T> ground2 = T(2) * ground;
+
+    std::cout << "C = (A + A).B" << std::endl;
+    C = prod(A + A, B);
+    if (diff(ground2, C)>epsilon)
+      return EXIT_FAILURE;
+
+    std::cout << "C = A.(B + B)" << std::endl;
+    C = prod(A, T(2) * B);
+    if (diff(ground2, C)>epsilon)
+      return EXIT_FAILURE;
+
+    std::cout << "C = (A + A).(B + B)" << std::endl;
+    C = T(0.25) * prod(A + A, B + B);
+    if (diff(ground, C)>epsilon)
+      return EXIT_FAILURE;
+  }
 
   return EXIT_SUCCESS;
 }
@@ -167,19 +188,19 @@ int test_all_layouts(std::size_t CM, std::size_t CN, RefCType & cC,
 
   boost::numeric::ublas::matrix<T> ground = boost::numeric::ublas::prod(cA, cB);
 
-#define TEST_LAYOUT(Clayout, Alayout, Blayout) \
+#define TEST_LAYOUT(Clayout, Alayout, Blayout, composite) \
   std::cout << "> "  #Clayout " = " #Alayout "." #Blayout << std::endl;  \
-  if (test_layout(C ## Clayout, A ## Alayout, AT ## Alayout, B ## Blayout, BT ## Blayout, ground, epsilon) != EXIT_SUCCESS) \
+  if (test_layout(C ## Clayout, A ## Alayout, AT ## Alayout, B ## Blayout, BT ## Blayout, ground, epsilon, composite) != EXIT_SUCCESS) \
     return EXIT_FAILURE; \
 
-  TEST_LAYOUT(row, row, row);
-  TEST_LAYOUT(row, row, col);
-  TEST_LAYOUT(row, col, row);
-  TEST_LAYOUT(row, col, col);
-  TEST_LAYOUT(col, row, row);
-  TEST_LAYOUT(col, row, col);
-  TEST_LAYOUT(col, col, row);
-  TEST_LAYOUT(col, col, col);
+  TEST_LAYOUT(row, row, row, true);
+  TEST_LAYOUT(row, row, col, false);
+  TEST_LAYOUT(row, col, row, false);
+  TEST_LAYOUT(row, col, col, false);
+  TEST_LAYOUT(col, row, row, false);
+  TEST_LAYOUT(col, row, col, false);
+  TEST_LAYOUT(col, col, row, false);
+  TEST_LAYOUT(col, col, col, true);
 
 #undef TEST_LAYOUT
 
