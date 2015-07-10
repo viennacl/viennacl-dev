@@ -430,7 +430,11 @@ private:
         unsigned int col_end   = L_row_buffer[row+1];
 
         for (unsigned int j = col_start; j < col_end; ++j)
-          L_trans_row_buffer[L_col_buffer[j] + block_start] += 1;
+        {
+          unsigned int col = L_col_buffer[j];
+          if (col < static_cast<unsigned int>(row))
+            L_trans_row_buffer[col + block_start] += 1;
+        }
       }
 
       ////// same for U
@@ -452,7 +456,7 @@ private:
         for (unsigned int j = col_start; j < col_end; ++j)
         {
           unsigned int col = U_col_buffer[j];
-          if (col != row)
+          if (col > row)
             U_trans_row_buffer[col + block_start] += 1;
         }
       }
@@ -516,13 +520,16 @@ private:
 
         for (unsigned int j = col_start; j < col_end; ++j)
         {
-          unsigned int row_trans = L_col_buffer[j] + block_start;
-          unsigned int k = L_trans_row_buffer[row_trans] + offset_L[row_trans];
+          unsigned int col = L_col_buffer[j];
+          if (col < row)
+          {
+            unsigned int row_trans = col + block_start;
+            unsigned int k = L_trans_row_buffer[row_trans] + offset_L[row_trans];
+            offset_L[row_trans] += 1;
 
-          offset_L[row_trans] += 1;
-
-          L_trans_col_buffer[k] = static_cast<unsigned int>(row) + block_start;
-          L_trans_elements[k]   = L_elements[j];
+            L_trans_col_buffer[k] = static_cast<unsigned int>(row) + block_start;
+            L_trans_elements[k]   = L_elements[j];
+          }
         }
       }
 
@@ -545,7 +552,7 @@ private:
           {
             D_elements[row_trans] = U_elements[j];
           }
-          else //entry for U
+          else if (row_trans > row + block_start) //entry for U
           {
             offset_U[row_trans] += 1;
 
