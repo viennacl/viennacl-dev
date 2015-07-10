@@ -83,164 +83,264 @@ class ilut_tag
 };
 
 
-/** @brief Dispatcher overload for extracting the row of nonzeros of a compressed matrix */
-template<typename NumericT, typename SizeT, typename SparseVectorT>
-NumericT setup_w(viennacl::compressed_matrix<NumericT> const & A,
-                 SizeT row,
-                 SparseVectorT & w)
+namespace detail
 {
-  assert( (A.handle1().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILUT") );
-  assert( (A.handle2().get_active_handle_id() == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILUT") );
-  assert( (A.handle().get_active_handle_id()  == viennacl::MAIN_MEMORY) && bool("System matrix must reside in main memory for ILUT") );
-
-  NumericT     const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
-  unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
-  unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
-
-  SizeT row_i_begin = static_cast<SizeT>(row_buffer[row]);
-  SizeT row_i_end   = static_cast<SizeT>(row_buffer[row+1]);
-  NumericT row_norm = 0;
-  for (SizeT buf_index_i = row_i_begin; buf_index_i < row_i_end; ++buf_index_i) //Note: We do not assume that the column indices within a row are sorted
+  /** @brief Helper struct for holding a sparse vector in linear memory. For internal use only.
+    *
+    * Unfortunately, the 'naive' implementation using a std::map<> is almost always too slow.
+    *
+    */
+  template<typename NumericT>
+  struct ilut_sparse_vector
   {
-    NumericT entry = elements[buf_index_i];
-    w[col_buffer[buf_index_i]] = entry;
-    row_norm += entry * entry;
+    ilut_sparse_vector(vcl_size_t alloc_size = 0) : size_(0), col_indices_(alloc_size), elements_(alloc_size) {}
+
+    void resize_if_bigger(vcl_size_t s)
+    {
+      if (s > elements_.size())
+      {
+        col_indices_.resize(s);
+        elements_.resize(s);
+      }
+      size_ = s;
+    }
+
+    vcl_size_t size_;
+    std::vector<unsigned int> col_indices_;
+    std::vector<NumericT>     elements_;
+  };
+
+  /** @brief Subtracts a scaled sparse vector u from a sparse vector w and writes the output to z: z = w - alpha * u
+    *
+    * Sparsity pattern of u and w are usually different.
+    *
+    * @return Length of new vector
+    */
+  template<typename IndexT, typename NumericT>
+  IndexT merge_subtract_sparse_rows(IndexT const * w_coords, NumericT const * w_elements, IndexT w_size,
+                                    IndexT const * u_coords, NumericT const * u_elements, IndexT u_size, NumericT alpha,
+                                    IndexT       * z_coords, NumericT       * z_elements)
+  {
+    IndexT index_w = 0;
+    IndexT index_u = 0;
+    IndexT index_z = 0;
+
+    while (1)
+    {
+      if (index_w < w_size && index_u < u_size)
+      {
+        if (w_coords[index_w] < u_coords[index_u])
+        {
+          z_coords[index_z]     = w_coords[index_w];
+          z_elements[index_z++] = w_elements[index_w++];
+        }
+        else if (w_coords[index_w] == u_coords[index_u])
+        {
+          z_coords[index_z]     = w_coords[index_w];
+          z_elements[index_z++] = w_elements[index_w++] - alpha * u_elements[index_u++];
+        }
+        else
+        {
+          z_coords[index_z]     = u_coords[index_u];
+          z_elements[index_z++] = - alpha * u_elements[index_u++];
+        }
+      }
+      else if (index_w == w_size && index_u < u_size)
+      {
+        z_coords[index_z]     = u_coords[index_u];
+        z_elements[index_z++] = - alpha * u_elements[index_u++];
+      }
+      else if (index_w < w_size && index_u == u_size)
+      {
+        z_coords[index_z]     = w_coords[index_w];
+        z_elements[index_z++] = w_elements[index_w++];
+      }
+      else
+        return index_z;
+    }
   }
-  return std::sqrt(row_norm);
+
+  template<typename SizeT, typename NumericT>
+  void insert_with_value_sort(std::vector<std::pair<SizeT, NumericT> > & map,
+                              SizeT index, NumericT value)
+  {
+    NumericT abs_value = std::fabs(value);
+    if (abs_value > 0)
+    {
+      // find first element with smaller absolute value:
+      std::size_t first_smaller_index = 0;
+      while (first_smaller_index < map.size() && std::fabs(map[first_smaller_index].second) > abs_value)
+        ++first_smaller_index;
+
+      std::pair<SizeT, NumericT> tmp(index, value);
+      for (std::size_t j=first_smaller_index; j<map.size(); ++j)
+        std::swap(map[j], tmp);
+    }
+  }
+
 }
-
-/** @brief Dispatcher overload for extracting the row of nonzeros of a STL-grown sparse matrix */
-template<typename NumericT, typename SizeT, typename SparseVectorT>
-NumericT setup_w(std::vector< std::map<SizeT, NumericT> > const & A,
-                 SizeT row,
-                 SparseVectorT & w)
-{
-  NumericT row_norm = 0;
-  w = A[row];
-  for (typename std::map<SizeT, NumericT>::const_iterator iter_w  = w.begin(); iter_w != w.end(); ++iter_w)
-    row_norm += iter_w->second * iter_w->second;
-
-  return std::sqrt(row_norm);
-}
-
 
 /** @brief Implementation of a ILU-preconditioner with threshold. Optimized implementation for compressed_matrix.
 *
 * refer to Algorithm 10.6 by Saad's book (1996 edition)
 *
 *  @param A       The input matrix. Either a compressed_matrix or of type std::vector< std::map<T, U> >
-*  @param output  The output matrix. Type requirements: const_iterator1 for iteration along rows, const_iterator2 for iteration along columns and write access via operator()
+*  @param L       The output matrix for L.
+*  @param U       The output matrix for U.
 *  @param tag     An ilut_tag in order to dispatch among several other preconditioners.
 */
-template<typename SparseMatrixTypeT, typename NumericT, typename SizeT>
-void precondition(SparseMatrixTypeT const & A,
-                  std::vector< std::map<SizeT, NumericT> > & output,
+template<typename NumericT>
+void precondition(viennacl::compressed_matrix<NumericT> const & A,
+                  viennacl::compressed_matrix<NumericT>       & L,
+                  viennacl::compressed_matrix<NumericT>       & U,
                   ilut_tag const & tag)
 {
-  typedef std::map<SizeT, NumericT>                             SparseVector;
-  typedef typename SparseVector::iterator                       SparseVectorIterator;
-  typedef typename std::map<SizeT, NumericT>::const_iterator    OutputRowConstIterator;
-  typedef std::multimap<NumericT, std::pair<SizeT, NumericT> >  TemporarySortMap;
+  assert(A.size1() == L.size1() && bool("Output matrix size mismatch") );
+  assert(A.size1() == U.size1() && bool("Output matrix size mismatch") );
 
-  assert(viennacl::traits::size1(A) == output.size() && bool("Output matrix size mismatch") );
+  L.reserve( tag.get_entries_per_row()      * A.size1());
+  U.reserve((tag.get_entries_per_row() + 1) * A.size1());
 
-  SparseVector w;
-  TemporarySortMap temp_map;
+  vcl_size_t avg_nnz_per_row = static_cast<vcl_size_t>(A.nnz() / A.size1());
+  detail::ilut_sparse_vector<NumericT> w1(tag.get_entries_per_row() * (avg_nnz_per_row + 10));
+  detail::ilut_sparse_vector<NumericT> w2(tag.get_entries_per_row() * (avg_nnz_per_row + 10));
+  detail::ilut_sparse_vector<NumericT> * w_in  = &w1;
+  detail::ilut_sparse_vector<NumericT> * w_out = &w2;
+  std::vector<NumericT> diagonal_U(A.size1());
 
-  for (SizeT i=0; i<viennacl::traits::size1(A); ++i)  // Line 1
+  NumericT     const * elements_A   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * row_buffer_A = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * col_buffer_A = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  NumericT           * elements_L   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(L.handle());
+  unsigned int       * row_buffer_L = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(L.handle1()); row_buffer_L[0] = 0;
+  unsigned int       * col_buffer_L = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(L.handle2());
+
+  NumericT           * elements_U   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(U.handle());
+  unsigned int       * row_buffer_U = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(U.handle1()); row_buffer_U[0] = 0;
+  unsigned int       * col_buffer_U = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(U.handle2());
+
+  std::vector<std::pair<unsigned int, NumericT> > sorted_entries_L(tag.get_entries_per_row());
+  std::vector<std::pair<unsigned int, NumericT> > sorted_entries_U(tag.get_entries_per_row());
+
+  for (vcl_size_t i=0; i<viennacl::traits::size1(A); ++i)  // Line 1
   {
-/*    if (i%10 == 0)
-  std::cout << i << std::endl;*/
+    std::fill(sorted_entries_L.begin(), sorted_entries_L.end(), std::pair<unsigned int, NumericT>(0, NumericT(0)));
+    std::fill(sorted_entries_U.begin(), sorted_entries_U.end(), std::pair<unsigned int, NumericT>(0, NumericT(0)));
 
     //line 2: set up w
-    NumericT row_norm = setup_w(A, i, w);
+    w_in->resize_if_bigger(row_buffer_A[i+1] - row_buffer_A[i]);
+    NumericT row_norm = 0;
+    unsigned int k = 0;
+    for (unsigned int j = row_buffer_A[i]; j < row_buffer_A[i+1]; ++j, ++k)
+    {
+      w_in->col_indices_[k] = col_buffer_A[j];
+      NumericT entry = elements_A[j];
+      w_in->elements_[k] = entry;
+      row_norm += entry * entry;
+    }
+    row_norm = std::sqrt(row_norm);
     NumericT tau_i = static_cast<NumericT>(tag.get_drop_tolerance()) * row_norm;
 
-    //line 3:
-    for (SparseVectorIterator w_k = w.begin(); w_k != w.end(); ++w_k)
+    //line 3: Iterate over lower diagonal parts of A:
+    k = 0;
+    unsigned int current_col = (row_buffer_A[i+1] > row_buffer_A[i]) ? w_in->col_indices_[k] : static_cast<unsigned int>(i); // mind empty rows here!
+    while (current_col < i)
     {
-      SizeT k = w_k->first;
-      if (k >= i)
-        break;
-
       //line 4:
-      NumericT a_kk = output[k][k];
-      if (a_kk <= 0 && a_kk >= 0) // a_kk == 0
-      {
-        std::cerr << "ViennaCL: FATAL ERROR in ILUT(): Diagonal entry is zero in row " << k
-                  << " while processing line " << i << "!" << std::endl;
-        throw "ILUT zero diagonal!";
-      }
+      NumericT a_kk = diagonal_U[current_col];
 
-      NumericT w_k_entry = w_k->second / a_kk;
-      w_k->second = w_k_entry;
+      NumericT w_k_entry = w_in->elements_[k] / a_kk;
+      w_in->elements_[k] = w_k_entry;
 
-      //line 5: (dropping rule to w_k)
+      //lines 5,6: (dropping rule to w_k)
       if ( std::fabs(w_k_entry) > tau_i)
       {
         //line 7:
-        for (OutputRowConstIterator u_k = output[k].begin(); u_k != output[k].end(); ++u_k)
+        unsigned int row_U_begin = row_buffer_U[current_col];
+        unsigned int row_U_end   = row_buffer_U[current_col + 1];
+
+        if (row_U_end > row_U_begin)
         {
-          if (u_k->first > k)
-            w[u_k->first] -= w_k_entry * u_k->second;
+          w_out->resize_if_bigger(w_in->size_ + (row_U_end - row_U_begin) - 1);
+          w_out->size_ = detail::merge_subtract_sparse_rows(&(w_in->col_indices_[0]), &(w_in->elements_[0]), static_cast<unsigned int>(w_in->size_),
+                                                            col_buffer_U + row_U_begin + 1, elements_U + row_U_begin + 1, (row_U_end - row_U_begin) - 1, w_k_entry,
+                                                            &(w_out->col_indices_[0]), &(w_out->elements_[0])
+                                                           );
+          ++k;
         }
       }
-      //else
-      //  w.erase(k);
-
-    } //for w_k
-
-    //Line 10: Apply a dropping rule to w
-    //Sort entries which are kept
-    temp_map.clear();
-    for (SparseVectorIterator w_k = w.begin(); w_k != w.end(); ++w_k)
-    {
-      SizeT k = w_k->first;
-      NumericT w_k_entry = w_k->second;
-
-      NumericT abs_w_k = std::fabs(w_k_entry);
-      if ( (abs_w_k > tau_i) || (k == i) )//do not drop diagonal element!
+      else // drop element
       {
+        w_out->resize_if_bigger(w_in->size_ - 1);
+        for (unsigned int r = 0; r < k; ++r)
+        {
+          w_out->col_indices_[r] = w_in->col_indices_[r];
+          w_out->elements_[r]    = w_in->elements_[r];
+        }
+        for (unsigned int r = k+1; r < w_in->size_; ++r)
+        {
+          w_out->col_indices_[r-1] = w_in->col_indices_[r];
+          w_out->elements_[r-1]    = w_in->elements_[r];
+        }
 
-        if (abs_w_k <= 0) // this can only happen for diagonal entry
-          throw "Triangular factor in ILUT singular!";
-
-        temp_map.insert(std::make_pair(abs_w_k, std::make_pair(k, w_k_entry)));
+        // Note: No increment to k here, element was dropped!
       }
+
+      // swap pointers to w1 and w2
+      std::swap(w_in, w_out);
+
+      // process next entry:
+      current_col = (k < w_in->size_) ? w_in->col_indices_[k] : static_cast<unsigned int>(i);
+    } // while()
+
+    // Line 10: Apply a dropping rule to w
+    // To do so, we write values to a temporary array
+    for (unsigned int r = 0; r < w_in->size_; ++r)
+    {
+      unsigned int col   = w_in->col_indices_[r];
+      NumericT     value = w_in->elements_[r];
+
+      if (col < i) // entry for L:
+        detail::insert_with_value_sort(sorted_entries_L, col, value);
+      else if (col == i) // do not drop diagonal element
+      {
+        diagonal_U[i] = value;
+        if (value <= 0 && value >= 0)
+        {
+          std::cerr << "ViennaCL: FATAL ERROR in ILUT(): Diagonal entry computed to zero (" << value << ") in row " << i << "!" << std::endl;
+          throw "ILUT zero diagonal!";
+        }
+      }
+      else // entry for U:
+        detail::insert_with_value_sort(sorted_entries_U, col, value);
     }
 
-    //Lines 10-12: write the largest p values to L and U
-    SizeT written_L = 0;
-    SizeT written_U = 0;
-    for (typename TemporarySortMap::reverse_iterator iter = temp_map.rbegin(); iter != temp_map.rend(); ++iter)
-    {
-      std::map<SizeT, NumericT> & row_i = output[i];
-      SizeT j = (iter->second).first;
-      NumericT w_j_entry = (iter->second).second;
+    //Lines 10-12: Apply a dropping rule to w, write the largest p values to L and U
+    unsigned int offset_L = row_buffer_L[i];
+    std::sort(sorted_entries_L.begin(), sorted_entries_L.end());
+    for (unsigned int j=0; j<tag.get_entries_per_row(); ++j)
+      if (std::fabs(sorted_entries_L[j].second) > 0)
+      {
+        col_buffer_L[offset_L] = sorted_entries_L[j].first;
+        elements_L[offset_L]   = sorted_entries_L[j].second;
+        ++offset_L;
+      }
+    row_buffer_L[i+1] = offset_L;
 
-      if (j < i) // Line 11: entry for L
+    unsigned int offset_U = row_buffer_U[i];
+    col_buffer_U[offset_U] = static_cast<unsigned int>(i);
+    elements_U[offset_U]   = diagonal_U[i];
+    ++offset_U;
+    std::sort(sorted_entries_U.begin(), sorted_entries_U.end());
+    for (unsigned int j=0; j<tag.get_entries_per_row(); ++j)
+      if (std::fabs(sorted_entries_U[j].second) > 0)
       {
-        if (written_L < tag.get_entries_per_row())
-        {
-          row_i[j] = w_j_entry;
-          ++written_L;
-        }
+        col_buffer_U[offset_U] = sorted_entries_U[j].first;
+        elements_U[offset_U]   = sorted_entries_U[j].second;
+        ++offset_U;
       }
-      else if (j == i)  // Diagonal entry is always kept
-      {
-        row_i[j] = w_j_entry;
-      }
-      else //Line 12: entry for U
-      {
-        if (written_U < tag.get_entries_per_row())
-        {
-          row_i[j] = w_j_entry;
-          ++written_U;
-        }
-      }
-    }
-
-    w.clear(); //Line 13
+    row_buffer_U[i+1] = offset_U;
 
   } //for i
 }
@@ -254,7 +354,7 @@ class ilut_precond
   typedef typename MatrixT::value_type      NumericType;
 
 public:
-  ilut_precond(MatrixT const & mat, ilut_tag const & tag) : tag_(tag), LU_(mat.size1(), mat.size2())
+  ilut_precond(MatrixT const & mat, ilut_tag const & tag) : tag_(tag), L_(mat.size1(), mat.size2()), U_(mat.size1(), mat.size2())
   {
     //initialize preconditioner:
     //std::cout << "Start CPU precond" << std::endl;
@@ -266,12 +366,20 @@ public:
   void apply(VectorT & vec) const
   {
     //Note: Since vec can be a rather arbitrary vector type, we call the more generic version in the backend manually:
-    unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU_.handle1());
-    unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(LU_.handle2());
-    NumericType  const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericType>(LU_.handle());
+    {
+      unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(L_.handle1());
+      unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(L_.handle2());
+      NumericType  const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericType>(L_.handle());
 
-    viennacl::linalg::host_based::detail::csr_inplace_solve<NumericType>(row_buffer, col_buffer, elements, vec, LU_.size2(), unit_lower_tag());
-    viennacl::linalg::host_based::detail::csr_inplace_solve<NumericType>(row_buffer, col_buffer, elements, vec, LU_.size2(), upper_tag());
+      viennacl::linalg::host_based::detail::csr_inplace_solve<NumericType>(row_buffer, col_buffer, elements, vec, L_.size2(), unit_lower_tag());
+    }
+    {
+      unsigned int const * row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(U_.handle1());
+      unsigned int const * col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(U_.handle2());
+      NumericType  const * elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericType>(U_.handle());
+
+      viennacl::linalg::host_based::detail::csr_inplace_solve<NumericType>(row_buffer, col_buffer, elements, vec, U_.size2(), upper_tag());
+    }
   }
 
 private:
@@ -280,19 +388,17 @@ private:
     viennacl::context host_context(viennacl::MAIN_MEMORY);
     viennacl::compressed_matrix<NumericType> temp;
     viennacl::switch_memory_context(temp, host_context);
+    viennacl::switch_memory_context(L_, host_context);
+    viennacl::switch_memory_context(U_, host_context);
 
     viennacl::copy(mat, temp);
 
-    std::vector< std::map<unsigned int, NumericType> > LU_temp(mat.size1());
-
-    viennacl::linalg::precondition(temp, LU_temp, tag_);
-
-    viennacl::switch_memory_context(LU_, host_context);
-    viennacl::copy(LU_temp, LU_);
+    viennacl::linalg::precondition(temp, L_, U_, tag_);
   }
 
-  ilut_tag const & tag_;
-  viennacl::compressed_matrix<NumericType> LU_;
+  ilut_tag tag_;
+  viennacl::compressed_matrix<NumericType> L_;
+  viennacl::compressed_matrix<NumericType> U_;
 };
 
 
@@ -308,7 +414,8 @@ typedef viennacl::compressed_matrix<NumericT, AlignmentV>   MatrixType;
 public:
   ilut_precond(MatrixType const & mat, ilut_tag const & tag)
     : tag_(tag),
-      LU_(mat.size1(), mat.size2(), viennacl::traits::context(mat))
+      L_(mat.size1(), mat.size2(), viennacl::traits::context(mat)),
+      U_(mat.size1(), mat.size2(), viennacl::traits::context(mat))
   {
     //initialize preconditioner:
     //std::cout << "Start GPU precond" << std::endl;
@@ -338,21 +445,22 @@ public:
                                             multifrontal_U_col_buffers_,
                                             multifrontal_U_element_buffers_,
                                             multifrontal_U_row_elimination_num_list_);
+
       }
       else
       {
         viennacl::context host_context(viennacl::MAIN_MEMORY);
         viennacl::context old_context = viennacl::traits::context(vec);
         viennacl::switch_memory_context(vec, host_context);
-        viennacl::linalg::inplace_solve(LU_, vec, unit_lower_tag());
-        viennacl::linalg::inplace_solve(LU_, vec, upper_tag());
+        viennacl::linalg::inplace_solve(L_, vec, unit_lower_tag());
+        viennacl::linalg::inplace_solve(U_, vec, upper_tag());
         viennacl::switch_memory_context(vec, old_context);
       }
     }
     else //apply ILUT directly:
     {
-      viennacl::linalg::inplace_solve(LU_, vec, unit_lower_tag());
-      viennacl::linalg::inplace_solve(LU_, vec, upper_tag());
+      viennacl::linalg::inplace_solve(L_, vec, unit_lower_tag());
+      viennacl::linalg::inplace_solve(U_, vec, upper_tag());
     }
   }
 
@@ -360,13 +468,12 @@ private:
   void init(MatrixType const & mat)
   {
     viennacl::context host_context(viennacl::MAIN_MEMORY);
-    viennacl::switch_memory_context(LU_, host_context);
-
-    std::vector< std::map<unsigned int, NumericT> > LU_temp(mat.size1());
+    viennacl::switch_memory_context(L_, host_context);
+    viennacl::switch_memory_context(U_, host_context);
 
     if (viennacl::traits::context(mat).memory_type() == viennacl::MAIN_MEMORY)
     {
-      viennacl::linalg::precondition(mat, LU_temp, tag_);
+      viennacl::linalg::precondition(mat, L_, U_, tag_);
     }
     else //we need to copy to CPU
     {
@@ -375,10 +482,8 @@ private:
 
       cpu_mat = mat;
 
-      viennacl::linalg::precondition(cpu_mat, LU_temp, tag_);
+      viennacl::linalg::precondition(cpu_mat, L_, U_, tag_);
     }
-
-    viennacl::copy(LU_temp, LU_);
 
     if (!tag_.use_level_scheduling())
       return;
@@ -388,10 +493,10 @@ private:
     //
 
     viennacl::switch_memory_context(multifrontal_U_diagonal_, host_context);
-    multifrontal_U_diagonal_.resize(LU_.size1(), false);
-    host_based::detail::row_info(LU_, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
+    multifrontal_U_diagonal_.resize(U_.size1(), false);
+    host_based::detail::row_info(U_, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
 
-    detail::level_scheduling_setup_L(LU_,
+    detail::level_scheduling_setup_L(L_,
                                      multifrontal_U_diagonal_, //dummy
                                      multifrontal_L_row_index_arrays_,
                                      multifrontal_L_row_buffers_,
@@ -400,7 +505,7 @@ private:
                                      multifrontal_L_row_elimination_num_list_);
 
 
-    detail::level_scheduling_setup_U(LU_,
+    detail::level_scheduling_setup_U(U_,
                                      multifrontal_U_diagonal_,
                                      multifrontal_U_row_index_arrays_,
                                      multifrontal_U_row_buffers_,
@@ -462,8 +567,9 @@ private:
 
   }
 
-  ilut_tag const & tag_;
-  viennacl::compressed_matrix<NumericT> LU_;
+  ilut_tag tag_;
+  viennacl::compressed_matrix<NumericT> L_;
+  viennacl::compressed_matrix<NumericT> U_;
 
   std::list<viennacl::backend::mem_handle> multifrontal_L_row_index_arrays_;
   std::list<viennacl::backend::mem_handle> multifrontal_L_row_buffers_;
