@@ -140,7 +140,7 @@ bisectKernelSmall(const NumericT *g_d, const NumericT *g_s, const unsigned int n
         __syncthreads();
 
         is_active_second = 0;
-        subdivideActiveInterval(threadIdx.x,
+        subdivideActiveIntervalMulti(threadIdx.x,
                                 s_left, s_right, s_left_count, s_right_count,
                                 num_threads_active,
                                 left, right, left_count, right_count,

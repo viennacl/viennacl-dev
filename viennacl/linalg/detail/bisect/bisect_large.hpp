@@ -61,17 +61,19 @@ computeEigenvaluesLargeMatrix(InputData<NumericT> &input, ResultDataLarge<Numeri
                               const unsigned int mat_size,
                               const NumericT lg, const NumericT ug,  const NumericT precision)
 {
-   // First kernel call: decide on which intervals bisect_Large_OneIntervals/
-   // bisect_Large_MultIntervals is executed
-    viennacl::linalg::detail::bisectLarge(input, result, mat_size, lg, ug, precision);
 
-    // compute eigenvalues for intervals that contained only one eigenvalue
-    // after the first processing step
-    viennacl::linalg::detail::bisectLarge_OneIntervals(input, result, mat_size, precision);
 
-    // process intervals that contained more than one eigenvalue after
-    // the first processing step
-    viennacl::linalg::detail::bisectLarge_MultIntervals(input, result, mat_size, precision);
+  // First kernel call: decide on which intervals bisect_Large_OneIntervals/
+  // bisect_Large_MultIntervals is executed
+  viennacl::linalg::detail::bisectLarge(input, result, mat_size, lg, ug, precision);
+
+  // compute eigenvalues for intervals that contained only one eigenvalue
+  // after the first processing step
+  viennacl::linalg::detail::bisectLarge_OneIntervals(input, result, mat_size, precision);
+
+  // process intervals that contained more than one eigenvalue after
+  // the first processing step
+  viennacl::linalg::detail::bisectLarge_MultIntervals(input, result, mat_size, precision);
 
 }
 
@@ -87,7 +89,6 @@ processResultDataLargeMatrix(ResultDataLarge<NumericT> &result,
                              const unsigned int mat_size)
 {
     bool bCompareResult = true;
-
     // copy data from intervals that contained more than one eigenvalue after
     // the first processing step
     std::vector<NumericT> lambda_mult(mat_size);
@@ -122,8 +123,7 @@ processResultDataLargeMatrix(ResultDataLarge<NumericT> &result,
 
       else
       {
-       // printf("pos_mult[%u] = %u\n", i, pos_mult[i]);
-        bCompareResult = false;
+        throw memory_exception("Invalid array index! Are there more than 256 equal eigenvalues?");
       }
     }
 
@@ -134,7 +134,6 @@ processResultDataLargeMatrix(ResultDataLarge<NumericT> &result,
     {
         result.std_eigenvalues[pos_one[i] - 1] = left_one[i];
     }
-
     return bCompareResult;
 }
 } // namespace detail

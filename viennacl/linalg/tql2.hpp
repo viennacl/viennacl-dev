@@ -34,6 +34,95 @@ namespace viennacl
 {
 namespace linalg
 {
+  // Symmetric tridiagonal QL algorithm.
+  // This is derived from the Algol procedures tql1, by Bowdler, Martin, Reinsch, and Wilkinson,
+  // Handbook for Auto. Comp., Vol.ii-Linear Algebra, and the corresponding Fortran subroutine in EISPACK.
+  template <typename SCALARTYPE, typename VectorType>
+  void tql1(int n,
+            VectorType & d,
+            VectorType & e)
+  {
+      for (int i = 1; i < n; i++)
+          e[i - 1] = e[i];
+
+
+      e[n - 1] = 0;
+
+      SCALARTYPE f = 0.;
+      SCALARTYPE tst1 = 0.;
+      SCALARTYPE eps = static_cast<SCALARTYPE>(1e-6);
+
+
+      for (int l = 0; l < n; l++)
+      {
+          // Find small subdiagonal element.
+          tst1 = std::max<SCALARTYPE>(tst1, std::fabs(d[l]) + std::fabs(e[l]));
+          int m = l;
+          while (m < n)
+          {
+              if (std::fabs(e[m]) <= eps * tst1)
+                  break;
+              m++;
+          }
+
+          // If m == l, d[l) is an eigenvalue, otherwise, iterate.
+          if (m > l)
+          {
+              int iter = 0;
+              do
+              {
+                  iter = iter + 1;  // (Could check iteration count here.)
+
+                  // Compute implicit shift
+                  SCALARTYPE g = d[l];
+                  SCALARTYPE p = (d[l + 1] - g) / (2 * e[l]);
+                  SCALARTYPE r = viennacl::linalg::detail::pythag<SCALARTYPE>(p, 1);
+                  if (p < 0)
+                  {
+                      r = -r;
+                  }
+
+                  d[l] = e[l] / (p + r);
+                  d[l + 1] = e[l] * (p + r);
+                  SCALARTYPE h = g - d[l];
+                  for (int i = l + 2; i < n; i++)
+                  {
+                      d[i] -= h;
+                  }
+
+                  f = f + h;
+
+                  // Implicit QL transformation.
+                  p = d[m];
+                  SCALARTYPE c = 1;
+                  SCALARTYPE s = 0;
+                  for (int i = m - 1; i >= l; i--)
+                  {
+                      g = c * e[i];
+                      h = c * p;
+                      r = viennacl::linalg::detail::pythag<SCALARTYPE>(p, e[i]);
+                      e[i + 1] = s * r;
+                      s = e[i] / r;
+                      c = p / r;
+                      p = c * d[i] - s * g;
+                      d[i + 1] = h + s * (c * g + s * d[i]);
+                  }
+                  e[l] = s * p;
+                  d[l] = c * p;
+              // Check for convergence.
+              }
+              while (std::fabs(e[l]) > eps * tst1);
+          }
+          d[l] = d[l] + f;
+          e[l] = 0;
+      }
+  }
+
+
+
+
+
+
 
 // Symmetric tridiagonal QL algorithm.
 // This is derived from the Algol procedures tql2, by Bowdler, Martin, Reinsch, and Wilkinson,
@@ -43,13 +132,13 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
           VectorType & d,
           VectorType & e)
 {
-    vcl_size_t n = viennacl::traits::size1(Q);
+    int n = static_cast<int>(viennacl::traits::size1(Q));
 
     //boost::numeric::ublas::vector<SCALARTYPE> cs(n), ss(n);
     std::vector<SCALARTYPE> cs(n), ss(n);
     viennacl::vector<SCALARTYPE> tmp1(n), tmp2(n);
 
-    for (vcl_size_t i = 1; i < n; i++)
+    for (int i = 1; i < n; i++)
         e[i - 1] = e[i];
 
     e[n - 1] = 0;
@@ -58,11 +147,11 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
     SCALARTYPE tst1 = 0;
     SCALARTYPE eps = static_cast<SCALARTYPE>(viennacl::linalg::detail::EPS);
 
-    for (vcl_size_t l = 0; l < n; l++)
+    for (int l = 0; l < n; l++)
     {
         // Find small subdiagonal element.
         tst1 = std::max<SCALARTYPE>(tst1, std::fabs(d[l]) + std::fabs(e[l]));
-        vcl_size_t m = l;
+        int m = l;
         while (m < n)
         {
             if (std::fabs(e[m]) <= eps * tst1)
@@ -91,7 +180,7 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 d[l + 1] = e[l] * (p + r);
                 SCALARTYPE dl1 = d[l + 1];
                 SCALARTYPE h = g - d[l];
-                for (vcl_size_t i = l + 2; i < n; i++)
+                for (int i = l + 2; i < n; i++)
                 {
                     d[i] -= h;
                 }
@@ -106,9 +195,8 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 SCALARTYPE el1 = e[l + 1];
                 SCALARTYPE s = 0;
                 SCALARTYPE s2 = 0;
-                for (int i2 = int(m) - 1; i2 >= int(l); i2--)
+                for (int i = m - 1; i >= l; i--)
                 {
-                    vcl_size_t i = vcl_size_t(i2);
                     c3 = c2;
                     c2 = c;
                     s2 = s;
@@ -134,7 +222,7 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 viennacl::copy(cs, tmp1);
                 viennacl::copy(ss, tmp2);
 
-                viennacl::linalg::givens_next(Q, tmp1, tmp2, int(l), int(m));
+                viennacl::linalg::givens_next(Q, tmp1, tmp2, l, m);
 
                 // Check for convergence.
             }

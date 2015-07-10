@@ -83,8 +83,8 @@ namespace detail
       NumericT psi_0 = 11 * FLT_EPSILON * bnorm;
       NumericT psi_n = 11 * FLT_EPSILON * bnorm;
 
-      lg = lg - bnorm * 2 * NumericT(n) * FLT_EPSILON - psi_0;
-      ug = ug + bnorm * 2 * NumericT(n) * FLT_EPSILON + psi_n;
+      lg = lg - bnorm * 2 * static_cast<NumericT>(n) * FLT_EPSILON - psi_0;
+      ug = ug + bnorm * 2 * static_cast<NumericT>(n) * FLT_EPSILON + psi_n;
 
       ug = max(lg, ug);
   }

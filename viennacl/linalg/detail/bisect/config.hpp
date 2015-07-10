@@ -19,20 +19,26 @@
 ============================================================================= */
 
 
-/** @file viennacl/linalg/detail//bisect/config.hpp
-    @brief Global configuration parameters
 
-    Implementation based on the sample provided with the CUDA 6.0 SDK, for which
-    the creation of derivative works is allowed by including the following statement:
-    "This software contains source code provided by NVIDIA Corporation."
-*/
+/** @file viennacl/linalg/detail//bisect/config.hpp
+ *     @brief Global configuration parameters
+ *
+ *         Implementation based on the sample provided with the CUDA 6.0 SDK, for which
+ *             the creation of derivative works is allowed by including the following statement:
+ *                 "This software contains source code provided by NVIDIA Corporation."
+ *                 */
 
 // should be power of two
-#define  VIENNACL_BISECT_MAX_THREADS_BLOCK                128
+#define  VIENNACL_BISECT_MAX_THREADS_BLOCK                256
 
-#define  VIENNACL_BISECT_MAX_SMALL_MATRIX                 512
-#define  VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX   256
+#ifdef VIENNACL_WITH_OPENCL
+#  define VIENNACL_BISECT_MAX_SMALL_MATRIX                 256
+#  define VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX   256
+#else                                                          // if CUDA is used
+#  define VIENNACL_BISECT_MAX_THREADS_BLOCK_SMALL_MATRIX   512 // change to 256 if errors occur
+#  define VIENNACL_BISECT_MAX_SMALL_MATRIX                 512 // change to 256 if errors occur
+#endif
 
-#define  VIENNACL_BISECT_MIN_ABS_INTERVAL                 5.0e-37
+ #define  VIENNACL_BISECT_MIN_ABS_INTERVAL                 5.0e-37
 
- #endif // #ifndef VIENNACL_LINALG_DETAIL_CONFIG_HPP_
+#endif 
