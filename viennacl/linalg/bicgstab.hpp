@@ -54,10 +54,16 @@ public:
   * @param max_iters_before_restart   The maximum number of iterations before BiCGStab is reinitialized (to avoid accumulation of round-off errors)
   */
   bicgstab_tag(double tol = 1e-8, vcl_size_t max_iters = 400, vcl_size_t max_iters_before_restart = 200)
-    : tol_(tol), iterations_(max_iters), iterations_before_restart_(max_iters_before_restart) {}
+    : tol_(tol), abs_tol_(0), iterations_(max_iters), iterations_before_restart_(max_iters_before_restart) {}
 
   /** @brief Returns the relative tolerance */
   double tolerance() const { return tol_; }
+
+  /** @brief Returns the absolute tolerance */
+  double abs_tolerance() const { return abs_tol_; }
+  /** @brief Sets the absolute tolerance */
+  void abs_tolerance(double new_tol) { if (new_tol >= 0) abs_tol_ = new_tol; }
+
   /** @brief Returns the maximum number of iterations */
   vcl_size_t max_iterations() const { return iterations_; }
   /** @brief Returns the maximum number of iterations before a restart*/
@@ -74,6 +80,7 @@ public:
 
 private:
   double tol_;
+  double abs_tol_;
   vcl_size_t iterations_;
   vcl_size_t iterations_before_restart_;
 
@@ -128,7 +135,7 @@ namespace detail
     NumericT As_dot_r0 = 0;
     NumericT  s_dot_s  = 0;
 
-    if (norm_rhs_host <= 0) //solution is zero if RHS norm is zero
+    if (norm_rhs_host <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
       return result;
 
     for (vcl_size_t i = 0; i < tag.max_iterations(); ++i)
@@ -182,7 +189,7 @@ namespace detail
       omega =   As_dot_s  / As_dot_As;
 
       residual_norm = std::sqrt(s_dot_s - NumericT(2.0) * omega * As_dot_s + omega * omega *  As_dot_As);
-      if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance())
+      if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance() || residual_norm < tag.abs_tolerance())
         break;
 
       // x_{j+1} = x_j + alpha * p_j + omega * s_j
@@ -451,7 +458,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
   CPU_NumericType new_ip_rr0star = 0;
   CPU_NumericType residual_norm = norm_rhs_host;
 
-  if (norm_rhs_host <= 0) //solution is zero if RHS norm is zero
+  if (norm_rhs_host <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
     return result;
 
   bool restart_flag = true;
@@ -485,7 +492,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
 
     new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
     residual_norm = viennacl::linalg::norm_2(residual);
-    if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance())
+    if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance() || residual_norm < tag.abs_tolerance())
       break;
 
     beta = new_ip_rr0star / ip_rr0star * alpha/omega;
@@ -550,7 +557,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
   CPU_NumericType new_ip_rr0star = 0;
   CPU_NumericType residual_norm = norm_rhs_host;
 
-  if (!norm_rhs_host) //solution is zero if RHS norm is zero
+  if (norm_rhs_host <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
     return result;
 
   bool restart_flag = true;
@@ -586,7 +593,7 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
     residual = s - omega * tmp1;
 
     residual_norm = viennacl::linalg::norm_2(residual);
-    if (residual_norm / norm_rhs_host < tag.tolerance())
+    if (residual_norm / norm_rhs_host < tag.tolerance() || residual_norm < tag.abs_tolerance())
       break;
 
     new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
