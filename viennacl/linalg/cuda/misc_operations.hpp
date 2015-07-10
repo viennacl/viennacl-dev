@@ -73,11 +73,11 @@ void level_scheduling_substitute(vector<NumericT> & vec,
                              vcl_size_t num_rows
                             )
 {
-  level_scheduling_substitute_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(row_index_array.cuda_handle()),
-                                                   detail::cuda_arg<unsigned int>(row_buffer.cuda_handle()),
-                                                   detail::cuda_arg<unsigned int>(col_buffer.cuda_handle()),
-                                                   detail::cuda_arg<NumericT>(element_buffer.cuda_handle()),
-                                                   detail::cuda_arg<NumericT>(vec),
+  level_scheduling_substitute_kernel<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(row_index_array),
+                                                   viennacl::cuda_arg<unsigned int>(row_buffer),
+                                                   viennacl::cuda_arg<unsigned int>(col_buffer),
+                                                   viennacl::cuda_arg<NumericT>(element_buffer),
+                                                   viennacl::cuda_arg(vec),
                                                    static_cast<unsigned int>(num_rows)
                                                   );
 }

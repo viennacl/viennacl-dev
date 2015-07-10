@@ -206,17 +206,17 @@ int main()
   std::cout << std::endl << "CUDA: ";
   ViennaCLCUDASgemv(my_backend,
                     ViennaCLRowMajor, ViennaCLNoTrans,
-                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_A), 2, 1, 2, 3, size2,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_y), 1, 3,
+                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415f, viennacl::cuda_arg(cuda_float_A), 2, 1, 2, 3, size2,
+                    viennacl::cuda_arg(cuda_float_y), 1, 3,
                     0.1234f,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_float_x), 1, 2);
+                    viennacl::cuda_arg(cuda_float_x), 1, 2);
   check(ref_float_x, cuda_float_x, eps_float);
   ViennaCLCUDADgemv(my_backend,
                     ViennaCLRowMajor, ViennaCLNoTrans,
-                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_A), 2, 1, 2, 3, size2,
-                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_y), 1, 3,
+                    ViennaCLInt(size1/3), ViennaCLInt(size2/4), 3.1415, viennacl::cuda_arg(cuda_double_A), 2, 1, 2, 3, size2,
+                    viennacl::cuda_arg(cuda_double_y), 1, 3,
                     0.1234,
-                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_double_x), 1, 2);
+                    viennacl::cuda_arg(cuda_double_x), 1, 2);
   check(ref_double_x, cuda_double_x, eps_double);
 #endif
 

@@ -459,13 +459,13 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   //
   // Stage 1: Determine upper bound for number of nonzeros
   //
-  compressed_matrix_gemm_stage_1<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                          detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  compressed_matrix_gemm_stage_1<<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                          viennacl::cuda_arg<unsigned int>(A.handle2()),
                                                           static_cast<unsigned int>(A.size1()),
-                                                          detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                                          detail::cuda_arg<unsigned int>(subwarp_sizes),
-                                                          detail::cuda_arg<unsigned int>(max_nnz_row_A),
-                                                          detail::cuda_arg<unsigned int>(max_nnz_row_B)
+                                                          viennacl::cuda_arg<unsigned int>(B.handle1()),
+                                                          viennacl::cuda_arg(subwarp_sizes),
+                                                          viennacl::cuda_arg(max_nnz_row_A),
+                                                          viennacl::cuda_arg(max_nnz_row_B)
                                                          );
   VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_1");
 
@@ -496,10 +496,10 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
       max_entries_in_G = 8;
 
     viennacl::vector<unsigned int> exclusive_scan_helper(A.size1() + 1, viennacl::traits::context(A));
-    compressed_matrix_gemm_decompose_1<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+    compressed_matrix_gemm_decompose_1<<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
                                                                 static_cast<unsigned int>(A.size1()),
                                                                 static_cast<unsigned int>(max_entries_in_G),
-                                                                detail::cuda_arg<unsigned int>(exclusive_scan_helper)
+                                                                viennacl::cuda_arg(exclusive_scan_helper)
                                                                );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_decompose_1");
 
@@ -511,26 +511,26 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
     viennacl::compressed_matrix<NumericT, AlignmentV> G1(augmented_size, A.size2(),        A.nnz(), viennacl::traits::context(A));
 
     // fill A2:
-    compressed_matrix_gemm_A2<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A2.handle1().cuda_handle()),
-                                                       detail::cuda_arg<unsigned int>(A2.handle2().cuda_handle()),
-                                                       detail::cuda_arg<NumericT>(A2.handle().cuda_handle()),
+    compressed_matrix_gemm_A2<<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A2.handle1()),
+                                                       viennacl::cuda_arg<unsigned int>(A2.handle2()),
+                                                       viennacl::cuda_arg<NumericT>(A2.handle()),
                                                        static_cast<unsigned int>(A2.size1()),
-                                                       detail::cuda_arg<unsigned int>(exclusive_scan_helper)
+                                                       viennacl::cuda_arg(exclusive_scan_helper)
                                                       );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_A2");
 
     // fill G1:
-    compressed_matrix_gemm_G1<<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(G1.handle1().cuda_handle()),
-                                                       detail::cuda_arg<unsigned int>(G1.handle2().cuda_handle()),
-                                                       detail::cuda_arg<NumericT>(G1.handle().cuda_handle()),
+    compressed_matrix_gemm_G1<<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(G1.handle1()),
+                                                       viennacl::cuda_arg<unsigned int>(G1.handle2()),
+                                                       viennacl::cuda_arg<NumericT>(G1.handle()),
                                                        static_cast<unsigned int>(G1.size1()),
-                                                       detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                       detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                       detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                                       viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                       viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                       viennacl::cuda_arg<NumericT>(A.handle()),
                                                        static_cast<unsigned int>(A.size1()),
                                                        static_cast<unsigned int>(A.nnz()),
                                                        static_cast<unsigned int>(max_entries_in_G),
-                                                       detail::cuda_arg<unsigned int>(exclusive_scan_helper)
+                                                       viennacl::cuda_arg(exclusive_scan_helper)
                                                       );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_G1");
 
@@ -554,37 +554,37 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   if (max_subwarp_size == 32)
   {
-    compressed_matrix_gemm_stage_2<32><<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                           detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+    compressed_matrix_gemm_stage_2<32><<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                           viennacl::cuda_arg<unsigned int>(A.handle2()),
                                                            static_cast<unsigned int>(A.size1()),
-                                                           detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                                           detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
+                                                           viennacl::cuda_arg<unsigned int>(B.handle1()),
+                                                           viennacl::cuda_arg<unsigned int>(B.handle2()),
                                                            static_cast<unsigned int>(B.size2()),
-                                                           detail::cuda_arg<unsigned int>(C.handle1().cuda_handle())
+                                                           viennacl::cuda_arg<unsigned int>(C.handle1())
                                                           );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_2");
   }
   else if (max_subwarp_size == 16)
   {
-    compressed_matrix_gemm_stage_2<16><<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                           detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+    compressed_matrix_gemm_stage_2<16><<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                           viennacl::cuda_arg<unsigned int>(A.handle2()),
                                                            static_cast<unsigned int>(A.size1()),
-                                                           detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                                           detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
+                                                           viennacl::cuda_arg<unsigned int>(B.handle1()),
+                                                           viennacl::cuda_arg<unsigned int>(B.handle2()),
                                                            static_cast<unsigned int>(B.size2()),
-                                                           detail::cuda_arg<unsigned int>(C.handle1().cuda_handle())
+                                                           viennacl::cuda_arg<unsigned int>(C.handle1())
                                                           );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_2");
   }
   else
   {
-    compressed_matrix_gemm_stage_2<8><<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                           detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+    compressed_matrix_gemm_stage_2<8><<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                           viennacl::cuda_arg<unsigned int>(A.handle2()),
                                                            static_cast<unsigned int>(A.size1()),
-                                                           detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                                           detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
+                                                           viennacl::cuda_arg<unsigned int>(B.handle1()),
+                                                           viennacl::cuda_arg<unsigned int>(B.handle2()),
                                                            static_cast<unsigned int>(B.size2()),
-                                                           detail::cuda_arg<unsigned int>(C.handle1().cuda_handle())
+                                                           viennacl::cuda_arg<unsigned int>(C.handle1())
                                                           );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_2");
   }
@@ -610,49 +610,49 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 
   if (max_subwarp_size == 32)
   {
-    compressed_matrix_gemm_stage_3<32><<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+    compressed_matrix_gemm_stage_3<32><<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(A.handle()),
                                                             static_cast<unsigned int>(A.size1()),
-                                                            detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(B.handle().cuda_handle()),
+                                                            viennacl::cuda_arg<unsigned int>(B.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(B.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(B.handle()),
                                                             static_cast<unsigned int>(B.size2()),
-                                                            detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(C.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(C.handle().cuda_handle())
+                                                            viennacl::cuda_arg<unsigned int>(C.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(C.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(C.handle())
                                                            );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_3");
   }
   else if (max_subwarp_size == 16)
   {
-    compressed_matrix_gemm_stage_3<16><<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+    compressed_matrix_gemm_stage_3<16><<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(A.handle()),
                                                             static_cast<unsigned int>(A.size1()),
-                                                            detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(B.handle().cuda_handle()),
+                                                            viennacl::cuda_arg<unsigned int>(B.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(B.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(B.handle()),
                                                             static_cast<unsigned int>(B.size2()),
-                                                            detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(C.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(C.handle().cuda_handle())
+                                                            viennacl::cuda_arg<unsigned int>(C.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(C.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(C.handle())
                                                            );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_3");
   }
   else
   {
-    compressed_matrix_gemm_stage_3<8><<<blocknum, threadnum>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+    compressed_matrix_gemm_stage_3<8><<<blocknum, threadnum>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(A.handle()),
                                                             static_cast<unsigned int>(A.size1()),
-                                                            detail::cuda_arg<unsigned int>(B.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(B.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(B.handle().cuda_handle()),
+                                                            viennacl::cuda_arg<unsigned int>(B.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(B.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(B.handle()),
                                                             static_cast<unsigned int>(B.size2()),
-                                                            detail::cuda_arg<unsigned int>(C.handle1().cuda_handle()),
-                                                            detail::cuda_arg<unsigned int>(C.handle2().cuda_handle()),
-                                                            detail::cuda_arg<NumericT>(C.handle().cuda_handle())
+                                                            viennacl::cuda_arg<unsigned int>(C.handle1()),
+                                                            viennacl::cuda_arg<unsigned int>(C.handle2()),
+                                                            viennacl::cuda_arg<NumericT>(C.handle())
                                                            );
     VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_gemm_stage_3");
   }

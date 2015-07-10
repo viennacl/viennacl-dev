@@ -225,20 +225,20 @@ void test_blas(ViennaCLBackend my_backend,
                     order_A, trans_A, order_B, trans_B, order_C,
                     C_size1, C_size2, size_k,
                     1.0f,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_A_float), A_start1, A_start2, A_stride1, A_stride2, (order_A == ViennaCLRowMajor) ? A_columns : A_rows,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_B_float), B_start1, B_start2, B_stride1, B_stride2, (order_B == ViennaCLRowMajor) ? B_columns : B_rows,
+                    viennacl::cuda_arg(cuda_A_float), A_start1, A_start2, A_stride1, A_stride2, (order_A == ViennaCLRowMajor) ? A_columns : A_rows,
+                    viennacl::cuda_arg(cuda_B_float), B_start1, B_start2, B_stride1, B_stride2, (order_B == ViennaCLRowMajor) ? B_columns : B_rows,
                     0.0f,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_C_float), C_start1, C_start2, C_stride1, C_stride2, (order_C == ViennaCLRowMajor) ? C_columns : C_rows);
+                    viennacl::cuda_arg(cuda_C_float), C_start1, C_start2, C_stride1, C_stride2, (order_C == ViennaCLRowMajor) ? C_columns : C_rows);
   check(C_float, cuda_C_float, eps_float);
 
   ViennaCLCUDADgemm(my_backend,
                     order_A, trans_A, order_B, trans_B, order_C,
                     C_size1, C_size2, size_k,
                     1.0,
-                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_A_double), A_start1, A_start2, A_stride1, A_stride2, (order_A == ViennaCLRowMajor) ? A_columns : A_rows,
-                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_B_double), B_start1, B_start2, B_stride1, B_stride2, (order_B == ViennaCLRowMajor) ? B_columns : B_rows,
+                    viennacl::cuda_arg(cuda_A_double), A_start1, A_start2, A_stride1, A_stride2, (order_A == ViennaCLRowMajor) ? A_columns : A_rows,
+                    viennacl::cuda_arg(cuda_B_double), B_start1, B_start2, B_stride1, B_stride2, (order_B == ViennaCLRowMajor) ? B_columns : B_rows,
                     0.0,
-                    viennacl::linalg::cuda::detail::cuda_arg<double>(cuda_C_double), C_start1, C_start2, C_stride1, C_stride2, (order_C == ViennaCLRowMajor) ? C_columns : C_rows);
+                    viennacl::cuda_arg(cuda_C_double), C_start1, C_start2, C_stride1, C_stride2, (order_C == ViennaCLRowMajor) ? C_columns : C_rows);
   check(C_double, cuda_C_double, eps_double);
 #endif
 

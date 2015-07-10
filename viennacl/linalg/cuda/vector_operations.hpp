@@ -134,14 +134,14 @@ void av(vector_base<NumericT> & vec1,
   if (viennacl::is_cpu_scalar<ScalarType1>::value)
     temporary_alpha = alpha;
 
-  av_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  av_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                           static_cast<unsigned int>(viennacl::traits::start(vec1)),
                           static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                           static_cast<unsigned int>(viennacl::traits::size(vec1)),
 
-                          detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
+                          viennacl::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
                           options_alpha,
-                          detail::cuda_arg<value_type>(vec2),
+                          viennacl::cuda_arg(vec2),
                           static_cast<unsigned int>(viennacl::traits::start(vec2)),
                           static_cast<unsigned int>(viennacl::traits::stride(vec2)) );
   VIENNACL_CUDA_LAST_ERROR_CHECK("av_kernel");
@@ -431,20 +431,20 @@ void avbv(vector_base<NumericT> & vec1,
     temporary_beta = beta;
 
 
-  avbv_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  avbv_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                             static_cast<unsigned int>(viennacl::traits::start(vec1)),
                             static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                             static_cast<unsigned int>(viennacl::traits::size(vec1)),
 
-                            detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
+                            viennacl::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
                             options_alpha,
-                            detail::cuda_arg<value_type>(vec2),
+                            viennacl::cuda_arg(vec2),
                             static_cast<unsigned int>(viennacl::traits::start(vec2)),
                             static_cast<unsigned int>(viennacl::traits::stride(vec2)),
 
-                            detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)),
+                            viennacl::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)),
                             options_beta,
-                            detail::cuda_arg<value_type>(vec3),
+                            viennacl::cuda_arg(vec3),
                             static_cast<unsigned int>(viennacl::traits::start(vec3)),
                             static_cast<unsigned int>(viennacl::traits::stride(vec3)) );
   VIENNACL_CUDA_LAST_ERROR_CHECK("avbv_kernel");
@@ -733,20 +733,20 @@ void avbv_v(vector_base<NumericT> & vec1,
     temporary_beta = beta;
 
 
-  avbv_v_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  avbv_v_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                               static_cast<unsigned int>(viennacl::traits::start(vec1)),
                               static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                               static_cast<unsigned int>(viennacl::traits::size(vec1)),
 
-                              detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
+                              viennacl::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
                               options_alpha,
-                              detail::cuda_arg<value_type>(vec2),
+                              viennacl::cuda_arg(vec2),
                               static_cast<unsigned int>(viennacl::traits::start(vec2)),
                               static_cast<unsigned int>(viennacl::traits::stride(vec2)),
 
-                              detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)),
+                              viennacl::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)),
                               options_beta,
-                              detail::cuda_arg<value_type>(vec3),
+                              viennacl::cuda_arg(vec3),
                               static_cast<unsigned int>(viennacl::traits::start(vec3)),
                               static_cast<unsigned int>(viennacl::traits::stride(vec3)) );
 }
@@ -786,13 +786,13 @@ void vector_assign(vector_base<NumericT> & vec1, ScalarT1 const & alpha, bool up
 
   unsigned int size = up_to_internal_size ? static_cast<unsigned int>(vec1.internal_size()) : static_cast<unsigned int>(viennacl::traits::size(vec1));
 
-  vector_assign_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vector_assign_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                      static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                      static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                      size,
                                      static_cast<unsigned int>(vec1.internal_size()),  //Note: Do NOT use traits::internal_size() here, because vector proxies don't require padding.
 
-                                     detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)) );
+                                     viennacl::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)) );
   VIENNACL_CUDA_LAST_ERROR_CHECK("vector_assign_kernel");
 }
 
@@ -828,14 +828,12 @@ __global__ void vector_swap_kernel(NumericT * vec1,
 template<typename NumericT>
 void vector_swap(vector_base<NumericT> & vec1, vector_base<NumericT> & vec2)
 {
-  typedef NumericT      value_type;
-
-  vector_swap_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vector_swap_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                    static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                    static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                    static_cast<unsigned int>(viennacl::traits::size(vec1)),
 
-                                   detail::cuda_arg<value_type>(vec2),
+                                   viennacl::cuda_arg(vec2),
                                    static_cast<unsigned int>(viennacl::traits::start(vec2)),
                                    static_cast<unsigned int>(viennacl::traits::stride(vec2)) );
   VIENNACL_CUDA_LAST_ERROR_CHECK("vector_swap_kernel");
@@ -935,24 +933,22 @@ template<typename NumericT, typename OpT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_binary<OpT> > const & proxy)
 {
-  typedef NumericT        value_type;
-
   unsigned int op_type = 2; //0: product, 1: division, 2: power
   if (viennacl::is_division<OpT>::value)
     op_type = 1;
   else if (viennacl::is_product<OpT>::value)
     op_type = 0;
 
-  element_op_int_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  element_op_int_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
 
-                                  detail::cuda_arg<value_type>(proxy.lhs()),
+                                  viennacl::cuda_arg(proxy.lhs()),
                                   static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                   static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
 
-                                  detail::cuda_arg<value_type>(proxy.rhs()),
+                                  viennacl::cuda_arg(proxy.rhs()),
                                   static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
                                   static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
 
@@ -965,24 +961,22 @@ template<typename OpT>
 void element_op(vector_base<float> & vec1,
                 vector_expression<const vector_base<float>, const vector_base<float>, op_element_binary<OpT> > const & proxy)
 {
-  typedef float        value_type;
-
   unsigned int op_type = 2; //0: product, 1: division, 2: power
   if (viennacl::is_division<OpT>::value)
     op_type = 1;
   else if (viennacl::is_product<OpT>::value)
     op_type = 0;
 
-  element_op_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  element_op_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
 
-                                  detail::cuda_arg<value_type>(proxy.lhs()),
+                                  viennacl::cuda_arg(proxy.lhs()),
                                   static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                   static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
 
-                                  detail::cuda_arg<value_type>(proxy.rhs()),
+                                  viennacl::cuda_arg(proxy.rhs()),
                                   static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
                                   static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
 
@@ -995,24 +989,22 @@ template<typename OpT>
 void element_op(vector_base<double> & vec1,
                 vector_expression<const vector_base<double>, const vector_base<double>, op_element_binary<OpT> > const & proxy)
 {
-  typedef double        value_type;
-
   unsigned int op_type = 2; //0: product, 1: division, 2: power
   if (viennacl::is_division<OpT>::value)
     op_type = 1;
   else if (viennacl::is_product<OpT>::value)
     op_type = 0;
 
-  element_op_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  element_op_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
 
-                                  detail::cuda_arg<value_type>(proxy.lhs()),
+                                  viennacl::cuda_arg(proxy.lhs()),
                                   static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                   static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
 
-                                  detail::cuda_arg<value_type>(proxy.rhs()),
+                                  viennacl::cuda_arg(proxy.rhs()),
                                   static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
                                   static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
 
@@ -1042,11 +1034,11 @@ void element_op(vector_base<NumericT> & vec1,
 {
   typedef NumericT        value_type;
 
-  vec_element_acos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_acos_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1067,13 +1059,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_asin> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_asin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_asin_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1095,13 +1085,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_atan> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_atan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_atan_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1123,13 +1111,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_ceil> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_ceil_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_ceil_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1151,13 +1137,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_cos> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_cos_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_cos_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1179,13 +1163,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_cosh> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_cosh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_cosh_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1207,13 +1189,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_exp> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_exp_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_exp_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1235,13 +1215,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_fabs> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_fabs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_fabs_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1262,13 +1240,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_abs> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_abs_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_abs_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                       detail::cuda_arg<value_type>(proxy.lhs()),
+                                       viennacl::cuda_arg(proxy.lhs()),
                                        static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                        static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                       );
@@ -1291,13 +1267,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_floor> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_floor_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_floor_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1319,13 +1293,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_log> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_log_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_log_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1347,13 +1319,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_log10> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_log10_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_log10_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1375,13 +1345,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_sin> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_sin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_sin_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1403,13 +1371,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_sinh> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_sinh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_sinh_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1431,13 +1397,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_sqrt> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_sqrt_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_sqrt_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1459,13 +1423,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_tan> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_tan_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_tan_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1487,13 +1449,11 @@ template<typename NumericT>
 void element_op(vector_base<NumericT> & vec1,
                 vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<op_tanh> > const & proxy)
 {
-  typedef NumericT        value_type;
-
-  vec_element_tanh_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vec_element_tanh_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                         static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                         static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                        detail::cuda_arg<value_type>(proxy.lhs()),
+                                        viennacl::cuda_arg(proxy.lhs()),
                                         static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                         static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs()))
                                        );
@@ -1672,12 +1632,12 @@ namespace detail
                       ScalarT & result)
     {
       typedef NumericT        value_type;
-      vector_sum_kernel_integers<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+      vector_sum_kernel_integers<<<1, 128>>>(viennacl::cuda_arg(temp),
                                             static_cast<unsigned int>(viennacl::traits::start(temp)),
                                             static_cast<unsigned int>(viennacl::traits::stride(temp)),
                                             static_cast<unsigned int>(viennacl::traits::size(temp)),
                                             static_cast<unsigned int>(option),
-                                            detail::cuda_arg<value_type>(result) );
+                                            viennacl::cuda_arg(result) );
       VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
     }
   };
@@ -1690,12 +1650,12 @@ namespace detail
                       ScalarT & result)
     {
       typedef NumericT        value_type;
-      vector_sum_kernel_unsigned_integers<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+      vector_sum_kernel_unsigned_integers<<<1, 128>>>(viennacl::cuda_arg(temp),
                                                       static_cast<unsigned int>(viennacl::traits::start(temp)),
                                                       static_cast<unsigned int>(viennacl::traits::stride(temp)),
                                                       static_cast<unsigned int>(viennacl::traits::size(temp)),
                                                       static_cast<unsigned int>(option),
-                                                      detail::cuda_arg<value_type>(result) );
+                                                      viennacl::cuda_arg(result) );
       VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
     }
   };
@@ -1708,12 +1668,12 @@ namespace detail
                       ScalarT & result)
     {
       typedef NumericT        value_type;
-      vector_sum_kernel_floats<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
+      vector_sum_kernel_floats<<<1, 128>>>(viennacl::cuda_arg(temp),
                                             static_cast<unsigned int>(viennacl::traits::start(temp)),
                                             static_cast<unsigned int>(viennacl::traits::stride(temp)),
                                             static_cast<unsigned int>(viennacl::traits::size(temp)),
                                             static_cast<unsigned int>(option),
-                                            detail::cuda_arg<value_type>(result) );
+                                            viennacl::cuda_arg(result) );
       VIENNACL_CUDA_LAST_ERROR_CHECK("vector_sum_kernel");
     }
   };
@@ -1761,15 +1721,15 @@ void inner_prod_impl(vector_base<NumericT> const & vec1,
   static const unsigned int work_groups = 128;
   static viennacl::vector<value_type> temp(work_groups);
 
-  inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  inner_prod_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                  detail::cuda_arg<value_type>(vec2),
+                                  viennacl::cuda_arg(vec2),
                                   static_cast<unsigned int>(viennacl::traits::start(vec2)),
                                   static_cast<unsigned int>(viennacl::traits::stride(vec2)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec2)),
-                                  detail::cuda_arg<value_type>(temp)
+                                  viennacl::cuda_arg(temp)
                                  );
   VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_kernel");
 
@@ -1793,15 +1753,15 @@ void inner_prod_cpu(vector_base<NumericT> const & vec1,
   const unsigned int work_groups = 128;
   viennacl::vector<value_type> temp(work_groups);
 
-  inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  inner_prod_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                   static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                  detail::cuda_arg<value_type>(vec2),
+                                  viennacl::cuda_arg(vec2),
                                   static_cast<unsigned int>(viennacl::traits::start(vec2)),
                                   static_cast<unsigned int>(viennacl::traits::stride(vec2)),
                                   static_cast<unsigned int>(viennacl::traits::size(vec2)),
-                                  detail::cuda_arg<value_type>(temp)
+                                  viennacl::cuda_arg(temp)
                                  );
   VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_kernel");
 
@@ -2076,27 +2036,27 @@ void inner_prod_impl(vector_base<NumericT> const & x,
         vector_base<NumericT> const & y3 = vec_tuple.const_at(current_index + 3);
 
         inner_prod_4_kernel<<<VIENNACL_MDOT_WORKGROUP_NUM,
-                              VIENNACL_MDOT_WORKGROUP_SIZE>>>( detail::cuda_arg<value_type>(x),
+                              VIENNACL_MDOT_WORKGROUP_SIZE>>>( viennacl::cuda_arg(x),
                                                                static_cast<unsigned int>(viennacl::traits::start(x)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(x)),
                                                                static_cast<unsigned int>(viennacl::traits::size(x)),
-                                                               detail::cuda_arg<value_type>(y0),
+                                                               viennacl::cuda_arg(y0),
                                                                static_cast<unsigned int>(viennacl::traits::start(y0)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y0)),
-                                                               detail::cuda_arg<value_type>(y1),
+                                                               viennacl::cuda_arg(y1),
                                                                static_cast<unsigned int>(viennacl::traits::start(y1)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y1)),
-                                                               detail::cuda_arg<value_type>(y2),
+                                                               viennacl::cuda_arg(y2),
                                                                static_cast<unsigned int>(viennacl::traits::start(y2)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y2)),
-                                                               detail::cuda_arg<value_type>(y3),
+                                                               viennacl::cuda_arg(y3),
                                                                static_cast<unsigned int>(viennacl::traits::start(y3)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y3)),
-                                                               detail::cuda_arg<value_type>(temp)
+                                                               viennacl::cuda_arg(temp)
                                                               );
         VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_4_kernel");
-        vector_multi_sum_kernel<<<4, VIENNACL_MDOT_WORKGROUP_NUM>>>(detail::cuda_arg<value_type>(temp),
-                                                                    detail::cuda_arg<value_type>(result),
+        vector_multi_sum_kernel<<<4, VIENNACL_MDOT_WORKGROUP_NUM>>>(viennacl::cuda_arg(temp),
+                                                                    viennacl::cuda_arg(result),
                                                                     static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
                                                                     static_cast<unsigned int>(viennacl::traits::stride(result))
                                                                    );
@@ -2111,24 +2071,24 @@ void inner_prod_impl(vector_base<NumericT> const & x,
         vector_base<NumericT> const & y2 = vec_tuple.const_at(current_index + 2);
 
         inner_prod_3_kernel<<<VIENNACL_MDOT_WORKGROUP_NUM,
-                              VIENNACL_MDOT_WORKGROUP_SIZE>>>( detail::cuda_arg<value_type>(x),
+                              VIENNACL_MDOT_WORKGROUP_SIZE>>>( viennacl::cuda_arg(x),
                                                                static_cast<unsigned int>(viennacl::traits::start(x)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(x)),
                                                                static_cast<unsigned int>(viennacl::traits::size(x)),
-                                                               detail::cuda_arg<value_type>(y0),
+                                                               viennacl::cuda_arg(y0),
                                                                static_cast<unsigned int>(viennacl::traits::start(y0)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y0)),
-                                                               detail::cuda_arg<value_type>(y1),
+                                                               viennacl::cuda_arg(y1),
                                                                static_cast<unsigned int>(viennacl::traits::start(y1)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y1)),
-                                                               detail::cuda_arg<value_type>(y2),
+                                                               viennacl::cuda_arg(y2),
                                                                static_cast<unsigned int>(viennacl::traits::start(y2)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y2)),
-                                                               detail::cuda_arg<value_type>(temp)
+                                                               viennacl::cuda_arg(temp)
                                                               );
         VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_3_kernel");
-        vector_multi_sum_kernel<<<3, VIENNACL_MDOT_WORKGROUP_NUM>>>(detail::cuda_arg<value_type>(temp),
-                                                                    detail::cuda_arg<value_type>(result),
+        vector_multi_sum_kernel<<<3, VIENNACL_MDOT_WORKGROUP_NUM>>>(viennacl::cuda_arg(temp),
+                                                                    viennacl::cuda_arg(result),
                                                                     static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
                                                                     static_cast<unsigned int>(viennacl::traits::stride(result))
                                                                    );
@@ -2142,21 +2102,21 @@ void inner_prod_impl(vector_base<NumericT> const & x,
         vector_base<NumericT> const & y1 = vec_tuple.const_at(current_index + 1);
 
         inner_prod_2_kernel<<<VIENNACL_MDOT_WORKGROUP_NUM,
-                              VIENNACL_MDOT_WORKGROUP_SIZE>>>( detail::cuda_arg<value_type>(x),
+                              VIENNACL_MDOT_WORKGROUP_SIZE>>>( viennacl::cuda_arg(x),
                                                                static_cast<unsigned int>(viennacl::traits::start(x)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(x)),
                                                                static_cast<unsigned int>(viennacl::traits::size(x)),
-                                                               detail::cuda_arg<value_type>(y0),
+                                                               viennacl::cuda_arg(y0),
                                                                static_cast<unsigned int>(viennacl::traits::start(y0)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y0)),
-                                                               detail::cuda_arg<value_type>(y1),
+                                                               viennacl::cuda_arg(y1),
                                                                static_cast<unsigned int>(viennacl::traits::start(y1)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y1)),
-                                                               detail::cuda_arg<value_type>(temp)
+                                                               viennacl::cuda_arg(temp)
                                                               );
         VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_2_kernel");
-        vector_multi_sum_kernel<<<2, VIENNACL_MDOT_WORKGROUP_NUM>>>(detail::cuda_arg<value_type>(temp),
-                                                                    detail::cuda_arg<value_type>(result),
+        vector_multi_sum_kernel<<<2, VIENNACL_MDOT_WORKGROUP_NUM>>>(viennacl::cuda_arg(temp),
+                                                                    viennacl::cuda_arg(result),
                                                                     static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
                                                                     static_cast<unsigned int>(viennacl::traits::stride(result))
                                                                    );
@@ -2167,20 +2127,20 @@ void inner_prod_impl(vector_base<NumericT> const & x,
       case 1:
       {
         vector_base<NumericT> const & y0 = vec_tuple.const_at(current_index);
-        inner_prod_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(x),
+        inner_prod_kernel<<<128, 128>>>(viennacl::cuda_arg(x),
                                         static_cast<unsigned int>(viennacl::traits::start(x)),
                                         static_cast<unsigned int>(viennacl::traits::stride(x)),
                                         static_cast<unsigned int>(viennacl::traits::size(x)),
-                                        detail::cuda_arg<value_type>(y0),
+                                        viennacl::cuda_arg(y0),
                                         static_cast<unsigned int>(viennacl::traits::start(y0)),
                                         static_cast<unsigned int>(viennacl::traits::stride(y0)),
                                         static_cast<unsigned int>(viennacl::traits::size(y0)),
-                                        detail::cuda_arg<value_type>(temp)
+                                        viennacl::cuda_arg(temp)
                                        );
         VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_kernel");
 
-        vector_multi_sum_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(temp),
-                                            detail::cuda_arg<value_type>(result),
+        vector_multi_sum_kernel<<<1, 128>>>(viennacl::cuda_arg(temp),
+                                            viennacl::cuda_arg(result),
                                             static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
                                             static_cast<unsigned int>(viennacl::traits::stride(result))
                                            );
@@ -2201,39 +2161,39 @@ void inner_prod_impl(vector_base<NumericT> const & x,
         vector_base<NumericT> const & y7 = vec_tuple.const_at(current_index + 7);
 
         inner_prod_8_kernel<<<VIENNACL_MDOT_WORKGROUP_NUM,
-                              VIENNACL_MDOT_WORKGROUP_SIZE>>>( detail::cuda_arg<value_type>(x),
+                              VIENNACL_MDOT_WORKGROUP_SIZE>>>( viennacl::cuda_arg(x),
                                                                static_cast<unsigned int>(viennacl::traits::start(x)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(x)),
                                                                static_cast<unsigned int>(viennacl::traits::size(x)),
-                                                               detail::cuda_arg<value_type>(y0),
+                                                               viennacl::cuda_arg(y0),
                                                                static_cast<unsigned int>(viennacl::traits::start(y0)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y0)),
-                                                               detail::cuda_arg<value_type>(y1),
+                                                               viennacl::cuda_arg(y1),
                                                                static_cast<unsigned int>(viennacl::traits::start(y1)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y1)),
-                                                               detail::cuda_arg<value_type>(y2),
+                                                               viennacl::cuda_arg(y2),
                                                                static_cast<unsigned int>(viennacl::traits::start(y2)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y2)),
-                                                               detail::cuda_arg<value_type>(y3),
+                                                               viennacl::cuda_arg(y3),
                                                                static_cast<unsigned int>(viennacl::traits::start(y3)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y3)),
-                                                               detail::cuda_arg<value_type>(y4),
+                                                               viennacl::cuda_arg(y4),
                                                                static_cast<unsigned int>(viennacl::traits::start(y4)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y4)),
-                                                               detail::cuda_arg<value_type>(y5),
+                                                               viennacl::cuda_arg(y5),
                                                                static_cast<unsigned int>(viennacl::traits::start(y5)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y5)),
-                                                               detail::cuda_arg<value_type>(y6),
+                                                               viennacl::cuda_arg(y6),
                                                                static_cast<unsigned int>(viennacl::traits::start(y6)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y6)),
-                                                               detail::cuda_arg<value_type>(y7),
+                                                               viennacl::cuda_arg(y7),
                                                                static_cast<unsigned int>(viennacl::traits::start(y7)),
                                                                static_cast<unsigned int>(viennacl::traits::stride(y7)),
-                                                               detail::cuda_arg<value_type>(temp)
+                                                               viennacl::cuda_arg(temp)
                                                               );
         VIENNACL_CUDA_LAST_ERROR_CHECK("inner_prod_8_kernel");
-        vector_multi_sum_kernel<<<8, VIENNACL_MDOT_WORKGROUP_NUM>>>(detail::cuda_arg<value_type>(temp),
-                                                                    detail::cuda_arg<value_type>(result),
+        vector_multi_sum_kernel<<<8, VIENNACL_MDOT_WORKGROUP_NUM>>>(viennacl::cuda_arg(temp),
+                                                                    viennacl::cuda_arg(result),
                                                                     static_cast<unsigned int>(viennacl::traits::start(result) + viennacl::traits::stride(result) * current_index),
                                                                     static_cast<unsigned int>(viennacl::traits::stride(result))
                                                                    );
@@ -2521,13 +2481,12 @@ namespace detail
                       vector_base<NumericT> & temp,
                       unsigned int option)
     {
-      typedef NumericT        value_type;
-      norm_kernel_integers<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+      norm_kernel_integers<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                          static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                          static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                          static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                          static_cast<unsigned int>(option),
-                                         detail::cuda_arg<value_type>(temp)
+                                         viennacl::cuda_arg(temp)
                                         );
       VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
     }
@@ -2540,13 +2499,12 @@ namespace detail
                       vector_base<NumericT> & temp,
                       unsigned int option)
     {
-      typedef NumericT        value_type;
-      norm_kernel_unsigned_integers<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+      norm_kernel_unsigned_integers<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                                  static_cast<unsigned int>(option),
-                                                 detail::cuda_arg<value_type>(temp)
+                                                 viennacl::cuda_arg(temp)
                                                 );
       VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
     }
@@ -2560,13 +2518,12 @@ namespace detail
                       vector_base<NumericT> & temp,
                       unsigned int option)
     {
-      typedef NumericT        value_type;
-      norm_kernel_floats<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+      norm_kernel_floats<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                        static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                        static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                        static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                        static_cast<unsigned int>(option),
-                                       detail::cuda_arg<value_type>(temp)
+                                       viennacl::cuda_arg(temp)
                                       );
       VIENNACL_CUDA_LAST_ERROR_CHECK("norm_kernel");
     }
@@ -2791,12 +2748,12 @@ void max_impl(vector_base<NumericT> const & vec1,
 
   detail::norm_kernel_launcher<NumericT>::apply(vec1, temp, 4);
 
-  vector_maxmin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vector_maxmin_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                    static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                    static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                    static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                    static_cast<unsigned int>(0),
-                                   detail::cuda_arg<value_type>(result)
+                                   viennacl::cuda_arg(result)
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("vector_maxmin_kernel");
 }
@@ -2845,12 +2802,12 @@ void min_impl(vector_base<NumericT> const & vec1,
 
   detail::norm_kernel_launcher<NumericT>::apply(vec1, temp, 3);
 
-  vector_maxmin_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  vector_maxmin_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                    static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                    static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                    static_cast<unsigned int>(viennacl::traits::size(vec1)),
                                    static_cast<unsigned int>(1),
-                                   detail::cuda_arg<value_type>(result)
+                                   viennacl::cuda_arg(result)
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("vector_maxmin_kernel");
 }
@@ -2961,12 +2918,12 @@ vcl_size_t index_norm_inf(vector_base<NumericT> const & vec1)
   viennacl::backend::mem_handle h;
   viennacl::backend::memory_create(h, sizeof(unsigned int), viennacl::traits::context(vec1));
 
-  index_norm_inf_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(vec1),
+  index_norm_inf_kernel<<<1, 128>>>(viennacl::cuda_arg(vec1),
                                     static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                     static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                     static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                    //detail::cuda_arg<unsigned int>(h.cuda_handle())
-                                    reinterpret_cast<unsigned int *>(h.cuda_handle().get())
+                                    viennacl::cuda_arg<unsigned int>(h)
+                                    //reinterpret_cast<unsigned int *>(h.cuda_handle().get())
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("index_norm_inf_kernel");
 
@@ -3028,16 +2985,16 @@ void plane_rotation(vector_base<NumericT> & vec1,
   if (viennacl::is_cpu_scalar<value_type>::value)
     temporary_beta = beta;
 
-  plane_rotation_kernel<<<128, 128>>>(detail::cuda_arg<value_type>(vec1),
+  plane_rotation_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
                                       static_cast<unsigned int>(viennacl::traits::start(vec1)),
                                       static_cast<unsigned int>(viennacl::traits::stride(vec1)),
                                       static_cast<unsigned int>(viennacl::traits::size(vec1)),
-                                      detail::cuda_arg<value_type>(vec2),
+                                      viennacl::cuda_arg(vec2),
                                       static_cast<unsigned int>(viennacl::traits::start(vec2)),
                                       static_cast<unsigned int>(viennacl::traits::stride(vec2)),
                                       static_cast<unsigned int>(viennacl::traits::size(vec2)),
-                                      detail::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
-                                      detail::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)) );
+                                      viennacl::cuda_arg<value_type>(detail::arg_reference(alpha, temporary_alpha)),
+                                      viennacl::cuda_arg<value_type>(detail::arg_reference(beta, temporary_beta)) );
   VIENNACL_CUDA_LAST_ERROR_CHECK("plane_rotation_kernel");
 }
 
@@ -3174,29 +3131,29 @@ namespace detail
     viennacl::backend::memory_create(cuda_carries, sizeof(NumericT)*block_num, viennacl::traits::context(input));
 
     // First step: Scan within each thread group and write carries
-    scan_kernel_1<<<block_num, threads_per_block>>>(detail::cuda_arg<NumericT>(input),
+    scan_kernel_1<<<block_num, threads_per_block>>>(viennacl::cuda_arg(input),
                                                     static_cast<unsigned int>(viennacl::traits::start(input)),
                                                     static_cast<unsigned int>(viennacl::traits::stride(input)),
                                                     static_cast<unsigned int>(viennacl::traits::size(input)),
 
-                                                    detail::cuda_arg<NumericT>(output),
+                                                    viennacl::cuda_arg(output),
                                                     static_cast<unsigned int>(viennacl::traits::start(output)),
                                                     static_cast<unsigned int>(viennacl::traits::stride(output)),
 
                                                     static_cast<unsigned int>(is_inclusive ? 0 : 1),
-                                                    detail::cuda_arg<NumericT>(cuda_carries.cuda_handle())
+                                                    viennacl::cuda_arg<NumericT>(cuda_carries)
                                                    );
 
     // Second step: Compute offset for each thread group (exclusive scan for each thread group)
-    scan_kernel_2<<<1, block_num>>>(detail::cuda_arg<NumericT>(cuda_carries.cuda_handle()));
+    scan_kernel_2<<<1, block_num>>>(viennacl::cuda_arg<NumericT>(cuda_carries));
 
     // Third step: Offset each thread group accordingly
-    scan_kernel_3<<<block_num, threads_per_block>>>(detail::cuda_arg<NumericT>(output),
+    scan_kernel_3<<<block_num, threads_per_block>>>(viennacl::cuda_arg(output),
                                                     static_cast<unsigned int>(viennacl::traits::start(output)),
                                                     static_cast<unsigned int>(viennacl::traits::stride(output)),
                                                     static_cast<unsigned int>(viennacl::traits::size(output)),
 
-                                                    detail::cuda_arg<NumericT>(cuda_carries.cuda_handle())
+                                                    viennacl::cuda_arg<NumericT>(cuda_carries)
                                                    );
   }
 }

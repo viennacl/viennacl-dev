@@ -91,13 +91,13 @@ void pipelined_cg_vector_update(vector_base<NumericT> & result,
                                 vector_base<NumericT> & inner_prod_buffer)
 {
   unsigned int size = result.size();
-  pipelined_cg_vector_kernel<<<128, 128>>>(detail::cuda_arg<NumericT>(result),
+  pipelined_cg_vector_kernel<<<128, 128>>>(viennacl::cuda_arg(result),
                                            alpha,
-                                           detail::cuda_arg<NumericT>(p),
-                                           detail::cuda_arg<NumericT>(r),
-                                           detail::cuda_arg<NumericT>(Ap),
+                                           viennacl::cuda_arg(p),
+                                           viennacl::cuda_arg(r),
+                                           viennacl::cuda_arg(Ap),
                                            beta,
-                                           detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                           viennacl::cuda_arg(inner_prod_buffer),
                                            size);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_vector_kernel");
 }
@@ -218,15 +218,15 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_csr_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+  pipelined_cg_csr_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                viennacl::cuda_arg<NumericT>(A.handle()),
                                                 static_cast<unsigned int>(A.blocks1()),
-                                                detail::cuda_arg<NumericT>(p),
-                                                detail::cuda_arg<NumericT>(Ap),
+                                                viennacl::cuda_arg(p),
+                                                viennacl::cuda_arg(Ap),
                                                 size,
-                                                detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                viennacl::cuda_arg(inner_prod_buffer),
                                                 buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_kernel");
 }
@@ -352,13 +352,13 @@ void pipelined_cg_prod(coordinate_matrix<NumericT> const & A,
 
   Ap.clear();
 
-  pipelined_cg_coo_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(A.handle12().cuda_handle()),
-                                                detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                detail::cuda_arg<NumericT>(p),
-                                                detail::cuda_arg<NumericT>(Ap),
+  pipelined_cg_coo_vec_mul_kernel<<<64, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle12()),
+                                                viennacl::cuda_arg<NumericT>(A.handle()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                viennacl::cuda_arg(p),
+                                                viennacl::cuda_arg(Ap),
                                                 size,
-                                                detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                viennacl::cuda_arg(inner_prod_buffer),
                                                 buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_coo_vec_mul_kernel");
 }
@@ -433,14 +433,14 @@ void pipelined_cg_prod(ell_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_ell_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+  pipelined_cg_ell_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                viennacl::cuda_arg<NumericT>(A.handle()),
                                                 static_cast<unsigned int>(A.internal_size1()),
                                                 static_cast<unsigned int>(A.maxnnz()),
-                                                detail::cuda_arg<NumericT>(p),
-                                                detail::cuda_arg<NumericT>(Ap),
+                                                viennacl::cuda_arg(p),
+                                                viennacl::cuda_arg(Ap),
                                                 size,
-                                                detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                viennacl::cuda_arg(inner_prod_buffer),
                                                 buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_ell_vec_mul_kernel");
 }
@@ -520,14 +520,14 @@ void pipelined_cg_prod(sliced_ell_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_sliced_ell_vec_mul_kernel<<<256, A.rows_per_block()>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                                      detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                                      detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                                      detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
-                                                                      detail::cuda_arg<NumericT>(p),
-                                                                      detail::cuda_arg<NumericT>(Ap),
+  pipelined_cg_sliced_ell_vec_mul_kernel<<<256, A.rows_per_block()>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                                      viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                                      viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                                      viennacl::cuda_arg<NumericT>(A.handle()),
+                                                                      viennacl::cuda_arg(p),
+                                                                      viennacl::cuda_arg(Ap),
                                                                       size,
-                                                                      detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                                      viennacl::cuda_arg(inner_prod_buffer),
                                                                       buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_sliced_ell_vec_mul_kernel");
 }
@@ -615,17 +615,17 @@ void pipelined_cg_prod(hyb_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_hyb_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle4().cuda_handle()),
-                                                detail::cuda_arg<NumericT>(A.handle5().cuda_handle()),
+  pipelined_cg_hyb_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                viennacl::cuda_arg<NumericT>(A.handle()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle4()),
+                                                viennacl::cuda_arg<NumericT>(A.handle5()),
                                                 static_cast<unsigned int>(A.internal_size1()),
                                                 static_cast<unsigned int>(A.ell_nnz()),
-                                                detail::cuda_arg<NumericT>(p),
-                                                detail::cuda_arg<NumericT>(Ap),
+                                                viennacl::cuda_arg(p),
+                                                viennacl::cuda_arg(Ap),
                                                 size,
-                                                detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                viennacl::cuda_arg(inner_prod_buffer),
                                                 buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_hyb_vec_mul_kernel");
 }
@@ -703,11 +703,11 @@ void pipelined_bicgstab_update_s(vector_base<NumericT> & s,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_update_s_kernel<<<256, 256>>>(detail::cuda_arg<NumericT>(s),
-                                                   detail::cuda_arg<NumericT>(r),
-                                                   detail::cuda_arg<NumericT>(Ap),
+  pipelined_bicgstab_update_s_kernel<<<256, 256>>>(viennacl::cuda_arg(s),
+                                                   viennacl::cuda_arg(r),
+                                                   viennacl::cuda_arg(Ap),
                                                    size,
-                                                   detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                   viennacl::cuda_arg(inner_prod_buffer),
                                                    chunk_size,
                                                    chunk_offset);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_update_s_kernel");
@@ -774,17 +774,17 @@ void pipelined_bicgstab_vector_update(vector_base<NumericT> & result, NumericT a
   (void)buffer_chunk_size;
   unsigned int size = static_cast<unsigned int>(result.size());
 
-  pipelined_bicgstab_vector_kernel<<<256, 256>>>(detail::cuda_arg<NumericT>(result),
+  pipelined_bicgstab_vector_kernel<<<256, 256>>>(viennacl::cuda_arg(result),
                                                  alpha,
-                                                 detail::cuda_arg<NumericT>(p),
+                                                 viennacl::cuda_arg(p),
                                                  omega,
-                                                 detail::cuda_arg<NumericT>(s),
-                                                 detail::cuda_arg<NumericT>(residual),
-                                                 detail::cuda_arg<NumericT>(As),
+                                                 viennacl::cuda_arg(s),
+                                                 viennacl::cuda_arg(residual),
+                                                 viennacl::cuda_arg(As),
                                                  beta,
-                                                 detail::cuda_arg<NumericT>(Ap),
-                                                 detail::cuda_arg<NumericT>(r0star),
-                                                 detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                 viennacl::cuda_arg(Ap),
+                                                 viennacl::cuda_arg(r0star),
+                                                 viennacl::cuda_arg(inner_prod_buffer),
                                                  size);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_vector_kernel");
 }
@@ -917,16 +917,16 @@ void pipelined_bicgstab_prod(compressed_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_csr_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                      detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                      detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                      detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+  pipelined_bicgstab_csr_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                      viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                      viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                      viennacl::cuda_arg<NumericT>(A.handle()),
                                                       static_cast<unsigned int>(A.blocks1()),
-                                                      detail::cuda_arg<NumericT>(p),
-                                                      detail::cuda_arg<NumericT>(Ap),
-                                                      detail::cuda_arg<NumericT>(r0star),
+                                                      viennacl::cuda_arg(p),
+                                                      viennacl::cuda_arg(Ap),
+                                                      viennacl::cuda_arg(r0star),
                                                       vec_size,
-                                                      detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                      viennacl::cuda_arg(inner_prod_buffer),
                                                       chunk_size,
                                                       chunk_offset);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_csr_vec_mul_kernel");
@@ -1067,14 +1067,14 @@ void pipelined_bicgstab_prod(coordinate_matrix<NumericT> const & A,
 
   Ap.clear();
 
-  pipelined_bicgstab_coo_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(A.handle12().cuda_handle()),
-                                                      detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
-                                                      detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                      detail::cuda_arg<NumericT>(p),
-                                                      detail::cuda_arg<NumericT>(Ap),
-                                                      detail::cuda_arg<NumericT>(r0star),
+  pipelined_bicgstab_coo_vec_mul_kernel<<<64, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle12()),
+                                                      viennacl::cuda_arg<NumericT>(A.handle()),
+                                                      viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                      viennacl::cuda_arg(p),
+                                                      viennacl::cuda_arg(Ap),
+                                                      viennacl::cuda_arg(r0star),
                                                       vec_size,
-                                                      detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                      viennacl::cuda_arg(inner_prod_buffer),
                                                       chunk_size,
                                                       chunk_offset);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_coo_vec_mul_kernel");
@@ -1162,15 +1162,15 @@ void pipelined_bicgstab_prod(ell_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_ell_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                      detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+  pipelined_bicgstab_ell_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                      viennacl::cuda_arg<NumericT>(A.handle()),
                                                       static_cast<unsigned int>(A.internal_size1()),
                                                       static_cast<unsigned int>(A.maxnnz()),
-                                                      detail::cuda_arg<NumericT>(p),
-                                                      detail::cuda_arg<NumericT>(Ap),
-                                                      detail::cuda_arg<NumericT>(r0star),
+                                                      viennacl::cuda_arg(p),
+                                                      viennacl::cuda_arg(Ap),
+                                                      viennacl::cuda_arg(r0star),
                                                       vec_size,
-                                                      detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                      viennacl::cuda_arg(inner_prod_buffer),
                                                       chunk_size,
                                                       chunk_offset);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_ell_vec_mul_kernel");
@@ -1263,15 +1263,15 @@ void pipelined_bicgstab_prod(sliced_ell_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_sliced_ell_vec_mul_kernel<<<256, A.rows_per_block()>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                                            detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                                            detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                                            detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
-                                                                            detail::cuda_arg<NumericT>(p),
-                                                                            detail::cuda_arg<NumericT>(Ap),
-                                                                            detail::cuda_arg<NumericT>(r0star),
+  pipelined_bicgstab_sliced_ell_vec_mul_kernel<<<256, A.rows_per_block()>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                                            viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                                            viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                                            viennacl::cuda_arg<NumericT>(A.handle()),
+                                                                            viennacl::cuda_arg(p),
+                                                                            viennacl::cuda_arg(Ap),
+                                                                            viennacl::cuda_arg(r0star),
                                                                             vec_size,
-                                                                            detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                                            viennacl::cuda_arg(inner_prod_buffer),
                                                                             chunk_size,
                                                                             chunk_offset);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_sliced_ell_vec_mul_kernel");
@@ -1372,18 +1372,18 @@ void pipelined_bicgstab_prod(hyb_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_hyb_vec_mul_kernel<<<256, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                      detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
-                                                      detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                      detail::cuda_arg<unsigned int>(A.handle4().cuda_handle()),
-                                                      detail::cuda_arg<NumericT>(A.handle5().cuda_handle()),
+  pipelined_bicgstab_hyb_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                      viennacl::cuda_arg<NumericT>(A.handle()),
+                                                      viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                      viennacl::cuda_arg<unsigned int>(A.handle4()),
+                                                      viennacl::cuda_arg<NumericT>(A.handle5()),
                                                       static_cast<unsigned int>(A.internal_size1()),
                                                       static_cast<unsigned int>(A.ell_nnz()),
-                                                      detail::cuda_arg<NumericT>(p),
-                                                      detail::cuda_arg<NumericT>(Ap),
-                                                      detail::cuda_arg<NumericT>(r0star),
+                                                      viennacl::cuda_arg(p),
+                                                      viennacl::cuda_arg(Ap),
+                                                      viennacl::cuda_arg(r0star),
                                                       vec_size,
-                                                      detail::cuda_arg<NumericT>(inner_prod_buffer),
+                                                      viennacl::cuda_arg(inner_prod_buffer),
                                                       chunk_size,
                                                       chunk_offset);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_hyb_vec_mul_kernel");
@@ -1469,14 +1469,14 @@ void pipelined_gmres_normalize_vk(vector_base<T> & v_k,
   unsigned int chunk_offset = buffer_chunk_offset;
   unsigned int size = v_k.size();
 
-  pipelined_gmres_normalize_vk_kernel<<<128, 128>>>(detail::cuda_arg<T>(v_k),
+  pipelined_gmres_normalize_vk_kernel<<<128, 128>>>(viennacl::cuda_arg(v_k),
                                                     vk_offset,
-                                                    detail::cuda_arg<T>(residual),
-                                                    detail::cuda_arg<T>(R_buffer),
+                                                    viennacl::cuda_arg(residual),
+                                                    viennacl::cuda_arg(R_buffer),
                                                     R_offset,
-                                                    detail::cuda_arg<T>(inner_prod_buffer),
+                                                    viennacl::cuda_arg(inner_prod_buffer),
                                                     chunk_size,
-                                                    detail::cuda_arg<T>(r_dot_vk_buffer),
+                                                    viennacl::cuda_arg(r_dot_vk_buffer),
                                                     chunk_offset,
                                                     size);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_gmres_normalize_vk_kernel");
@@ -1544,11 +1544,11 @@ void pipelined_gmres_gram_schmidt_stage1(vector_base<T> const & device_krylov_ba
   unsigned int internal_size = v_k_internal_size;
   unsigned int k = param_k;
 
-  pipelined_gmres_gram_schmidt_stage1_kernel<<<128, 128>>>(detail::cuda_arg<T>(device_krylov_basis),
+  pipelined_gmres_gram_schmidt_stage1_kernel<<<128, 128>>>(viennacl::cuda_arg(device_krylov_basis),
                                                            size,
                                                            internal_size,
                                                            k,
-                                                           detail::cuda_arg<T>(vi_in_vk_buffer),
+                                                           viennacl::cuda_arg(vi_in_vk_buffer),
                                                            chunk_size);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_gmres_gram_schmidt_stage1_kernel");
 }
@@ -1640,15 +1640,15 @@ void pipelined_gmres_gram_schmidt_stage2(vector_base<T> & device_krylov_basis,
   unsigned int k = param_k;
   unsigned int krylov = krylov_dim;
 
-  pipelined_gmres_gram_schmidt_stage2_kernel<<<128, 128>>>(detail::cuda_arg<T>(device_krylov_basis),
+  pipelined_gmres_gram_schmidt_stage2_kernel<<<128, 128>>>(viennacl::cuda_arg(device_krylov_basis),
                                                            size,
                                                            internal_size,
                                                            k,
-                                                           detail::cuda_arg<T>(vi_in_vk_buffer),
+                                                           viennacl::cuda_arg(vi_in_vk_buffer),
                                                            chunk_size,
-                                                           detail::cuda_arg<T>(R_buffer),
+                                                           viennacl::cuda_arg(R_buffer),
                                                            krylov,
-                                                           detail::cuda_arg<T>(inner_prod_buffer));
+                                                           viennacl::cuda_arg(inner_prod_buffer));
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_gmres_gram_schmidt_stage2_kernel");
 }
 
@@ -1688,12 +1688,12 @@ void pipelined_gmres_update_result(vector_base<T> & result,
   unsigned int internal_size = v_k_internal_size;
   unsigned int k = param_k;
 
-  pipelined_gmres_update_result_kernel<<<128, 128>>>(detail::cuda_arg<T>(result),
-                                                     detail::cuda_arg<T>(residual),
-                                                     detail::cuda_arg<T>(krylov_basis),
+  pipelined_gmres_update_result_kernel<<<128, 128>>>(viennacl::cuda_arg(result),
+                                                     viennacl::cuda_arg(residual),
+                                                     viennacl::cuda_arg(krylov_basis),
                                                      size,
                                                      internal_size,
-                                                     detail::cuda_arg<T>(coefficients),
+                                                     viennacl::cuda_arg(coefficients),
                                                      k);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_gmres_update_result_kernel");
 }
@@ -1709,15 +1709,15 @@ void pipelined_gmres_prod(compressed_matrix<T> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_csr_vec_mul_kernel<<<128, 256>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                detail::cuda_arg<T>(A.handle().cuda_handle()),
+  pipelined_cg_csr_vec_mul_kernel<<<128, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                viennacl::cuda_arg<T>(A.handle()),
                                                 static_cast<unsigned int>(A.blocks1()),
-                                                detail::cuda_arg<T>(p) + viennacl::traits::start(p),
-                                                detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+                                                viennacl::cuda_arg(p) + viennacl::traits::start(p),
+                                                viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
                                                 size,
-                                                detail::cuda_arg<T>(inner_prod_buffer),
+                                                viennacl::cuda_arg(inner_prod_buffer),
                                                 buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_kernel");
 }
@@ -1733,13 +1733,13 @@ void pipelined_gmres_prod(coordinate_matrix<T> const & A,
 
   Ap.clear();
 
-  pipelined_cg_coo_vec_mul_kernel<<<64, 128>>>(detail::cuda_arg<unsigned int>(A.handle12().cuda_handle()),
-                                                detail::cuda_arg<T>(A.handle().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                detail::cuda_arg<T>(p) + viennacl::traits::start(p),
-                                                detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+  pipelined_cg_coo_vec_mul_kernel<<<64, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle12()),
+                                                viennacl::cuda_arg<T>(A.handle()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                viennacl::cuda_arg(p) + viennacl::traits::start(p),
+                                                viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
                                                 size,
-                                                detail::cuda_arg<T>(inner_prod_buffer),
+                                                viennacl::cuda_arg(inner_prod_buffer),
                                                 buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_coo_vec_mul_kernel");
 }
@@ -1753,14 +1753,14 @@ void pipelined_gmres_prod(ell_matrix<T> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_ell_vec_mul_kernel<<<128, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                detail::cuda_arg<T>(A.handle().cuda_handle()),
+  pipelined_cg_ell_vec_mul_kernel<<<128, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                viennacl::cuda_arg<T>(A.handle()),
                                                 static_cast<unsigned int>(A.internal_size1()),
                                                 static_cast<unsigned int>(A.maxnnz()),
-                                                detail::cuda_arg<T>(p) + viennacl::traits::start(p),
-                                                detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+                                                viennacl::cuda_arg(p) + viennacl::traits::start(p),
+                                                viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
                                                 size,
-                                                detail::cuda_arg<T>(inner_prod_buffer),
+                                                viennacl::cuda_arg(inner_prod_buffer),
                                                 buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_ell_vec_mul_kernel");
 }
@@ -1774,14 +1774,14 @@ void pipelined_gmres_prod(sliced_ell_matrix<T> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_sliced_ell_vec_mul_kernel<<<128, A.rows_per_block()>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                                                      detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                                      detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                                      detail::cuda_arg<T>(A.handle().cuda_handle()),
-                                                                      detail::cuda_arg<T>(p) + viennacl::traits::start(p),
-                                                                      detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+  pipelined_cg_sliced_ell_vec_mul_kernel<<<128, A.rows_per_block()>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                                      viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                                      viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                                      viennacl::cuda_arg<T>(A.handle()),
+                                                                      viennacl::cuda_arg(p) + viennacl::traits::start(p),
+                                                                      viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
                                                                       size,
-                                                                      detail::cuda_arg<T>(inner_prod_buffer),
+                                                                      viennacl::cuda_arg(inner_prod_buffer),
                                                                       buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_sliced_ell_vec_mul_kernel");
 }
@@ -1796,17 +1796,17 @@ void pipelined_gmres_prod(hyb_matrix<T> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_hyb_vec_mul_kernel<<<128, 256>>>(detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                                detail::cuda_arg<T>(A.handle().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle3().cuda_handle()),
-                                                detail::cuda_arg<unsigned int>(A.handle4().cuda_handle()),
-                                                detail::cuda_arg<T>(A.handle5().cuda_handle()),
+  pipelined_cg_hyb_vec_mul_kernel<<<128, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                viennacl::cuda_arg<T>(A.handle()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                viennacl::cuda_arg<unsigned int>(A.handle4()),
+                                                viennacl::cuda_arg<T>(A.handle5()),
                                                 static_cast<unsigned int>(A.internal_size1()),
                                                 static_cast<unsigned int>(A.ell_nnz()),
-                                                detail::cuda_arg<T>(p) + viennacl::traits::start(p),
-                                                detail::cuda_arg<T>(Ap) + viennacl::traits::start(Ap),
+                                                viennacl::cuda_arg(p) + viennacl::traits::start(p),
+                                                viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
                                                 size,
-                                                detail::cuda_arg<T>(inner_prod_buffer),
+                                                viennacl::cuda_arg(inner_prod_buffer),
                                                 buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_hyb_vec_mul_kernel");
 }

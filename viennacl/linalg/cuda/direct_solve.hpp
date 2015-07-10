@@ -197,14 +197,14 @@ namespace detail
 
     if (is_upper_solve(tag))
     {
-      matrix_matrix_upper_solve_kernel<<<grid,threads>>>(detail::cuda_arg<value_type>(A),
+      matrix_matrix_upper_solve_kernel<<<grid,threads>>>(viennacl::cuda_arg(A),
                                                          static_cast<unsigned int>(viennacl::traits::start1(A)),         static_cast<unsigned int>(viennacl::traits::start2(A)),
                                                          static_cast<unsigned int>(viennacl::traits::stride1(A)),        static_cast<unsigned int>(viennacl::traits::stride2(A)),
                                                          static_cast<unsigned int>(viennacl::traits::size1(A)),          static_cast<unsigned int>(viennacl::traits::size2(A)),
                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(A)), static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
                                                          bool(A.row_major()),
 
-                                                         detail::cuda_arg<value_type>(B),
+                                                         viennacl::cuda_arg(B),
                                                          static_cast<unsigned int>(viennacl::traits::start1(B)),         static_cast<unsigned int>(viennacl::traits::start2(B)),
                                                          static_cast<unsigned int>(viennacl::traits::stride1(B)),        static_cast<unsigned int>(viennacl::traits::stride2(B)),
                                                          static_cast<unsigned int>(viennacl::traits::size1(B)),          static_cast<unsigned int>(viennacl::traits::size2(B)),
@@ -216,14 +216,14 @@ namespace detail
     }
     else
     {
-      matrix_matrix_lower_solve_kernel<<<grid,threads>>>(detail::cuda_arg<value_type>(A),
+      matrix_matrix_lower_solve_kernel<<<grid,threads>>>(viennacl::cuda_arg(A),
                                                          static_cast<unsigned int>(viennacl::traits::start1(A)),         static_cast<unsigned int>(viennacl::traits::start2(A)),
                                                          static_cast<unsigned int>(viennacl::traits::stride1(A)),        static_cast<unsigned int>(viennacl::traits::stride2(A)),
                                                          static_cast<unsigned int>(viennacl::traits::size1(A)),          static_cast<unsigned int>(viennacl::traits::size2(A)),
                                                          static_cast<unsigned int>(viennacl::traits::internal_size1(A)), static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
                                                          bool(A.row_major()),
 
-                                                         detail::cuda_arg<value_type>(B),
+                                                         viennacl::cuda_arg(B),
                                                          static_cast<unsigned int>(viennacl::traits::start1(B)),         static_cast<unsigned int>(viennacl::traits::start2(B)),
                                                          static_cast<unsigned int>(viennacl::traits::stride1(B)),        static_cast<unsigned int>(viennacl::traits::stride2(B)),
                                                          static_cast<unsigned int>(viennacl::traits::size1(B)),          static_cast<unsigned int>(viennacl::traits::size2(B)),
@@ -359,12 +359,12 @@ namespace detail
 
     if (mat.row_major())
     {
-      triangular_substitute_inplace_row_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(mat),
+      triangular_substitute_inplace_row_kernel<<<1, 128>>>(viennacl::cuda_arg(mat),
                                                            static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
                                                            static_cast<unsigned int>(viennacl::traits::stride1(mat)),        static_cast<unsigned int>(viennacl::traits::stride2(mat)),
                                                            static_cast<unsigned int>(viennacl::traits::size1(mat)),          static_cast<unsigned int>(viennacl::traits::size2(mat)),
                                                            static_cast<unsigned int>(viennacl::traits::internal_size1(mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
-                                                           detail::cuda_arg<value_type>(vec),
+                                                           viennacl::cuda_arg(vec),
                                                            static_cast<unsigned int>(viennacl::traits::start(vec)),
                                                            static_cast<unsigned int>(viennacl::traits::stride(vec)),
                                                            static_cast<unsigned int>(viennacl::traits::size(vec)),
@@ -373,12 +373,12 @@ namespace detail
     }
     else
     {
-      triangular_substitute_inplace_col_kernel<<<1, 128>>>(detail::cuda_arg<value_type>(mat),
+      triangular_substitute_inplace_col_kernel<<<1, 128>>>(viennacl::cuda_arg(mat),
                                                            static_cast<unsigned int>(viennacl::traits::start1(mat)),         static_cast<unsigned int>(viennacl::traits::start2(mat)),
                                                            static_cast<unsigned int>(viennacl::traits::stride1(mat)),        static_cast<unsigned int>(viennacl::traits::stride2(mat)),
                                                            static_cast<unsigned int>(viennacl::traits::size1(mat)),          static_cast<unsigned int>(viennacl::traits::size2(mat)),
                                                            static_cast<unsigned int>(viennacl::traits::internal_size1(mat)), static_cast<unsigned int>(viennacl::traits::internal_size2(mat)),
-                                                           detail::cuda_arg<value_type>(vec),
+                                                           viennacl::cuda_arg(vec),
                                                            static_cast<unsigned int>(viennacl::traits::start(vec)),
                                                            static_cast<unsigned int>(viennacl::traits::stride(vec)),
                                                            static_cast<unsigned int>(viennacl::traits::size(vec)),

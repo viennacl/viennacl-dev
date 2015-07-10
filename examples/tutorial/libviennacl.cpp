@@ -80,8 +80,8 @@ int main()
   viennacl::vector<float> cuda_y = viennacl::scalar_vector<float>(size, 2.0, viennacl::context(viennacl::CUDA_MEMORY));
 
   ViennaCLCUDASswap(my_backend, half_size,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_x), 0, 2,
-                    viennacl::linalg::cuda::detail::cuda_arg<float>(cuda_y), 1, 2);
+                    viennacl::cuda_arg(cuda_x), 0, 2,
+                    viennacl::cuda_arg(cuda_y), 1, 2);
 
   std::cout << " --- CUDA ---" << std::endl;
   std::cout << "cuda_x: " << cuda_x << std::endl;
