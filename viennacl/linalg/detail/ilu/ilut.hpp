@@ -244,7 +244,7 @@ void precondition(viennacl::compressed_matrix<NumericT> const & A,
 
     //line 3: Iterate over lower diagonal parts of A:
     k = 0;
-    unsigned int current_col = (row_buffer_A[i+1] > row_buffer_A[i]) ? w_in->col_indices_[k] : i; // mind empty rows here!
+    unsigned int current_col = (row_buffer_A[i+1] > row_buffer_A[i]) ? w_in->col_indices_[k] : static_cast<unsigned int>(i); // mind empty rows here!
     while (current_col < i)
     {
       //line 4:
@@ -291,7 +291,7 @@ void precondition(viennacl::compressed_matrix<NumericT> const & A,
       std::swap(w_in, w_out);
 
       // process next entry:
-      current_col = (k < w_in->size_) ? w_in->col_indices_[k] : i;
+      current_col = (k < w_in->size_) ? w_in->col_indices_[k] : static_cast<unsigned int>(i);
     } // while()
 
     // Line 10: Apply a dropping rule to w
@@ -329,7 +329,7 @@ void precondition(viennacl::compressed_matrix<NumericT> const & A,
     row_buffer_L[i+1] = offset_L;
 
     unsigned int offset_U = row_buffer_U[i];
-    col_buffer_U[offset_U] = i;
+    col_buffer_U[offset_U] = static_cast<unsigned int>(i);
     elements_U[offset_U]   = diagonal_U[i];
     ++offset_U;
     std::sort(sorted_entries_U.begin(), sorted_entries_U.end());
