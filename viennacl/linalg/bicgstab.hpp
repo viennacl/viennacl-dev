@@ -467,8 +467,8 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
   {
     if (restart_flag)
     {
-      residual = rhs;
-      residual -= viennacl::linalg::prod(matrix, result);
+      residual = viennacl::linalg::prod(matrix, result);
+      residual = rhs - residual;
       p = residual;
       r0star = residual;
       ip_rr0star = viennacl::linalg::norm_2(residual);
@@ -566,8 +566,8 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
   {
     if (restart_flag)
     {
-      residual = rhs;
-      residual -= viennacl::linalg::prod(matrix, result);
+      residual = viennacl::linalg::prod(matrix, result);
+      residual = rhs - residual;
       precond.apply(residual);
       p = residual;
       r0star = residual;

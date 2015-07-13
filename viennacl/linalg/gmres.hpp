@@ -622,8 +622,8 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag
     //
     // (Re-)Initialize residual: r = b - A*x (without temporary for the result of A*x)
     //
-    res = rhs;
-    res -= viennacl::linalg::prod(matrix, result);  //initial guess zero
+    res = viennacl::linalg::prod(matrix, result);  //initial guess zero
+    res = rhs - res;
     precond.apply(res);
 
     CPU_NumericType rho_0 = viennacl::linalg::norm_2(res);
