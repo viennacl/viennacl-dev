@@ -170,11 +170,9 @@ vcl_size_t size(VectorType const & vec)
 
 /** \cond */
 template<typename SparseMatrixType, typename VectorType>
-typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
-vcl_size_t >::type
-size(vector_expression<const SparseMatrixType, const VectorType, op_prod> const & proxy)
+vcl_size_t size(vector_expression<const SparseMatrixType, const VectorType, op_prod> const & proxy)
 {
-  return proxy.lhs().size1();
+  return size1(proxy.lhs());
 }
 
 template<typename T, unsigned int A, typename VectorType>
@@ -280,6 +278,23 @@ vcl_size_t size1(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl
 template<typename LhsT, typename RhsT, typename OpT, typename VectorT>
 vcl_size_t size(vector_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
                                   VectorT,
+                                  op_prod> const & proxy)
+{
+  return size1(proxy.lhs());
+}
+
+template<typename LhsT, typename RhsT, typename OpT, typename NumericT>
+vcl_size_t size(vector_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
+                                  const vector_base<NumericT>,
+                                  op_prod> const & proxy)
+{
+  return size1(proxy.lhs());
+}
+
+template<typename LhsT1, typename RhsT1, typename OpT1,
+         typename LhsT2, typename RhsT2, typename OpT2>
+vcl_size_t size(vector_expression<const matrix_expression<const LhsT1, const RhsT1, OpT1>,
+                                  const vector_expression<const LhsT2, const RhsT2, OpT2>,
                                   op_prod> const & proxy)
 {
   return size1(proxy.lhs());

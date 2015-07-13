@@ -50,12 +50,14 @@ It is also possible to solve for multiple right hand sides:
 
 
 \section manual-algorithms-iterative-solvers Iterative Solvers
-ViennaCL provides different iterative solvers for various classes of matrices:
-
+Iterative solvers approximately solve a (usually sparse) system \f$ Ax = b \f$ through iterated application of the matrix \f$ A \f$ to vectors.
+ViennaCL provides iterative solvers which can be used both with assembled matrices as well as in a so-called matrix-free setting, where to user provides the operator \f$ A \f$.
 Unlike direct solvers, the convergence of iterative solvers relies on certain properties of the system matrix.
 Keep in mind that an iterative solver may fail to converge, especially if the matrix is ill conditioned or a wrong solver is chosen.
 
 \note The iterative solvers can also be used for Boost.uBLAS, Eigen and MTL4 objects! Have a look at \ref manual-interfacing  "Interfacing Other Libraries" and the respective tutorials in the `examples/tutorials/` folder.
+
+\note An example of a matrix-free use of the iterative solvers can be found in examples/tutorial/matrix-free.cpp, where additional informations on the interface requirements are given.
 
 \code
 viennacl::compressed_matrix<float>  vcl_matrix;

@@ -214,6 +214,45 @@ namespace viennacl
                                           viennacl::op_prod >(A, x);
     }
 
+    // matrix-vector product (resolve ambiguity)
+    template<typename NumericT, typename F>
+    viennacl::vector_expression< const viennacl::matrix_base<NumericT>,
+                                 const viennacl::vector_base<NumericT>,
+                                 viennacl::op_prod >
+    prod(viennacl::matrix<NumericT, F> const & A,
+         viennacl::vector_base<NumericT> const & x)
+    {
+      return viennacl::vector_expression< const viennacl::matrix_base<NumericT>,
+                                          const viennacl::vector_base<NumericT>,
+                                          viennacl::op_prod >(A, x);
+    }
+
+    // matrix-vector product (resolve ambiguity)
+    template<typename MatrixT, typename NumericT>
+    viennacl::vector_expression< const viennacl::matrix_base<NumericT>,
+                                 const viennacl::vector_base<NumericT>,
+                                 viennacl::op_prod >
+    prod(viennacl::matrix_range<MatrixT> const & A,
+         viennacl::vector_base<NumericT> const & x)
+    {
+      return viennacl::vector_expression< const viennacl::matrix_base<NumericT>,
+                                          const viennacl::vector_base<NumericT>,
+                                          viennacl::op_prod >(A, x);
+    }
+
+    // matrix-vector product (resolve ambiguity)
+    template<typename MatrixT, typename NumericT>
+    viennacl::vector_expression< const viennacl::matrix_base<NumericT>,
+                                 const viennacl::vector_base<NumericT>,
+                                 viennacl::op_prod >
+    prod(viennacl::matrix_slice<MatrixT> const & A,
+         viennacl::vector_base<NumericT> const & x)
+    {
+      return viennacl::vector_expression< const viennacl::matrix_base<NumericT>,
+                                          const viennacl::vector_base<NumericT>,
+                                          viennacl::op_prod >(A, x);
+    }
+
     // matrix-vector product with matrix expression (including transpose)
     template< typename NumericT, typename LhsT, typename RhsT, typename OpT>
     viennacl::vector_expression< const viennacl::matrix_expression<const LhsT, const RhsT, OpT>,
@@ -259,20 +298,6 @@ namespace viennacl
 
 
 
-    template<typename SparseMatrixType, class SCALARTYPE>
-    typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
-                                  vector_expression<const SparseMatrixType,
-                                                    const vector_base<SCALARTYPE>,
-                                                    op_prod >
-                                 >::type
-    prod(const SparseMatrixType & mat,
-         const vector_base<SCALARTYPE> & vec)
-    {
-      return vector_expression<const SparseMatrixType,
-                               const vector_base<SCALARTYPE>,
-                               op_prod >(mat, vec);
-    }
-
     template< typename SparseMatrixType, typename SCALARTYPE>
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value,
                                   viennacl::matrix_expression<const SparseMatrixType,
@@ -308,19 +333,6 @@ namespace viennacl
                                           viennacl::op_prod >(A, B);
     }
 
-    template<typename StructuredMatrixType, class SCALARTYPE>
-    typename viennacl::enable_if< viennacl::is_any_dense_structured_matrix<StructuredMatrixType>::value,
-                                  vector_expression<const StructuredMatrixType,
-                                                    const vector_base<SCALARTYPE>,
-                                                    op_prod >
-                                 >::type
-    prod(const StructuredMatrixType & mat,
-         const vector_base<SCALARTYPE> & vec)
-    {
-      return vector_expression<const StructuredMatrixType,
-                               const vector_base<SCALARTYPE>,
-                               op_prod >(mat, vec);
-    }
 
     /** @brief Sparse matrix-matrix product with compressed_matrix objects */
     template<typename NumericT>
@@ -333,6 +345,19 @@ namespace viennacl
       return viennacl::matrix_expression<const compressed_matrix<NumericT>,
                                          const compressed_matrix<NumericT>,
                                          op_prod >(A, B);
+    }
+
+    /** @brief Generic matrix-vector product with user-provided sparse matrix type */
+    template<typename SparseMatrixType, typename NumericT>
+    vector_expression<const SparseMatrixType,
+                      const vector_base<NumericT>,
+                      op_prod >
+    prod(const SparseMatrixType & A,
+         const vector_base<NumericT> & x)
+    {
+      return vector_expression<const SparseMatrixType,
+                               const vector_base<NumericT>,
+                               op_prod >(A, x);
     }
 
   } // end namespace linalg

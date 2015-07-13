@@ -4,7 +4,7 @@
 #
 # Part 1: Tutorials which work without OpenCL as well:
 #
-foreach(tut bandwidth-reduction blas1 scheduler fft wrap-host-buffer nmf)
+foreach(tut bandwidth-reduction blas1 fft matrix-free nmf scheduler wrap-host-buffer)
    add_executable(${tut} ${tut}.cpp)
    if (ENABLE_OPENCL)
      target_link_libraries(${tut} ${OPENCL_LIBRARIES})
@@ -85,7 +85,7 @@ endif (ENABLE_OPENCL)
 #
 
 if (ENABLE_CUDA)
-  foreach(tut blas1 fft nmf wrap-cuda-buffer)
+  foreach(tut blas1 fft matrix-free nmf wrap-cuda-buffer)
     cuda_add_executable(${tut}-cuda ${tut}.cu)
   endforeach()
   cuda_add_executable(custom-cuda  custom-cuda.cu)  # would otherwise result in custom-cuda-cuda

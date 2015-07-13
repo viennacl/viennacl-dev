@@ -3196,6 +3196,20 @@ namespace detail
     }
   };
 
+
+
+  //////////// Generic user-provided routines //////////////
+
+  template<typename T, typename UserMatrixT>
+  struct op_executor<vector_base<T>, op_assign, vector_expression<const UserMatrixT, const vector_base<T>, op_prod> >
+  {
+    static void apply(vector_base<T> & lhs, vector_expression<const UserMatrixT, const vector_base<T>, op_prod> const & rhs)
+    {
+      rhs.lhs().apply(rhs.rhs(), lhs);
+    }
+  };
+
+
 } // namespace detail
 } // namespace linalg
 

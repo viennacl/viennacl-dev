@@ -189,12 +189,18 @@ inline float     opencl_handle(float           val) { return val; }  //for unifi
 inline double    opencl_handle(double          val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 
 
+// for user-provided matrix-vector routines:
+template<typename LHS, typename NumericT>
+viennacl::ocl::handle<cl_mem> const & opencl_handle(viennacl::vector_expression<LHS, const vector_base<NumericT>, op_prod> const & obj)
+{
+  return viennacl::traits::handle(obj.rhs()).opencl_handle();
+}
+
 template<typename T>
 viennacl::ocl::context & opencl_context(T const & obj)
 {
   return const_cast<viennacl::ocl::context &>(opencl_handle(obj).context());
 }
-
 #endif
 
 //
@@ -247,6 +253,14 @@ viennacl::memory_types active_handle_id(viennacl::matrix_expression<LHS, RHS, OP
 {
   return active_handle_id(obj.lhs());
 }
+
+// for user-provided matrix-vector routines:
+template<typename LHS, typename NumericT>
+viennacl::memory_types active_handle_id(viennacl::vector_expression<LHS, const vector_base<NumericT>, op_prod> const & obj)
+{
+  return active_handle_id(obj.rhs());
+}
+
 /** \endcond */
 
 } //namespace traits
