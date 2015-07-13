@@ -20,7 +20,7 @@
 *   This tutorial shows how to calculate the largest eigenvalues of a matrix using Lanczos' method.
 *
 *   The Lanczos method is particularly attractive for use with large, sparse matrices, since the only requirement on the matrix is to provide a matrix-vector product.
-*   Although less common, the method is sometimes also with dense matrices.
+*   Although less common, the method is sometimes also used with dense matrices.
 *
 *   We start with including the necessary headers:
 **/
@@ -44,7 +44,7 @@
 #include <iomanip>
 
 /**
-*  We read a sparse matrix (from Boost.uBLAS) from a matrix-market file, then run the Lanczos method.
+*  We read a sparse matrix from a matrix-market file, then run the Lanczos method.
 *  Finally, the computed eigenvalues are printed.
 **/
 int main()
@@ -53,7 +53,7 @@ int main()
   typedef double     ScalarType;
 
   /**
-  *  Create the uBLAS-matrix and read the sparse matrix:
+  *  Create the sparse matrix and read data from a Matrix-Market file:
   **/
   std::vector< std::map<unsigned int, ScalarType> > host_A;
   if (!viennacl::io::read_matrix_market_file(host_A, "../examples/testdata/mat65k.mtx"))
@@ -70,27 +70,34 @@ int main()
   **/
   viennacl::linalg::lanczos_tag ltag(0.75,    // Select a power of 0.75 as the tolerance for the machine precision.
                                      10,      // Compute (approximations to) the 10 largest eigenvalues
-                                     viennacl::linalg::lanczos_tag::full_reorthogonalization, // use partial reorthogonalization
+                                     viennacl::linalg::lanczos_tag::partial_reorthogonalization, // use partial reorthogonalization
                                      30);   // Maximum size of the Krylov space
 
   /**
-  *  Run the Lanczos method by passing the tag to the routine viennacl::linalg::eig()
+  *  Run the Lanczos method for computing eigenvalues by passing the tag to the routine viennacl::linalg::eig().
   **/
-  std::cout << "Running Lanczos algorithm (this might take a while)..." << std::endl;
-  viennacl::matrix<ScalarType, viennacl::column_major> approx_eigenvectors_A(A.size1(), ltag.num_eigenvalues());
-  std::vector<ScalarType> lanczos_eigenvalues = viennacl::linalg::eig(A, approx_eigenvectors_A, ltag);
+  std::cout << "Running Lanczos algorithm (eigenvalues only). This might take a while..." << std::endl;
+  std::vector<ScalarType> lanczos_eigenvalues = viennacl::linalg::eig(A, ltag);
+
+  /**
+  *  Re-run the Lanczos method, this time also computing eigenvectors.
+  *  To do so, we pass a dense matrix for which each column will ultimately hold the computed eigenvectors.
+  **/
+  std::cout << "Running Lanczos algorithm (with eigenvectors). This might take a while..." << std::endl;
+  viennacl::matrix<ScalarType> approx_eigenvectors_A(A.size1(), ltag.num_eigenvalues());
+  lanczos_eigenvalues = viennacl::linalg::eig(A, approx_eigenvectors_A, ltag);
 
   /**
   *  Print the computed eigenvalues and exit:
   **/
   for (std::size_t i = 0; i< lanczos_eigenvalues.size(); i++)
   {
-    std::cout << "* Eigenvalue " << i+1 << ": " << std::setprecision(10) << lanczos_eigenvalues[i] << std::endl;
+    std::cout << "Approx. eigenvalue " << std::setprecision(7) << lanczos_eigenvalues[i];
 
-    // test eigenvector of full matrix A:
-    viennacl::vector_base<ScalarType> approx_eigenvector(approx_eigenvectors_A.handle(), approx_eigenvectors_A.size1(), i * approx_eigenvectors_A.internal_size1(), 1);
+    // test approximated eigenvector by computing A*v:
+    viennacl::vector<ScalarType> approx_eigenvector = viennacl::column(approx_eigenvectors_A, i);
     viennacl::vector<ScalarType> Aq = viennacl::linalg::prod(A, approx_eigenvector);
-    std::cout << "  Approximated eigenvalue of A via eigenvector: " << viennacl::linalg::inner_prod(Aq, approx_eigenvector) << std::endl;
+    std::cout << " (" << viennacl::linalg::inner_prod(Aq, approx_eigenvector) << " for <Av,v> with approx. eigenvector v)" << std::endl;
   }
 
   return EXIT_SUCCESS;
