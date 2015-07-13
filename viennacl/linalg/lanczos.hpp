@@ -33,8 +33,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/linalg/bisect.hpp"
-#include <boost/random.hpp>
-#include <boost/random/mersenne_twister.hpp>
+#include "viennacl/tools/random.hpp"
 
 namespace viennacl
 {
@@ -123,15 +122,7 @@ namespace detail
 
 
     // generation of some random numbers, used for lanczos PRO algorithm
-    boost::mt11213b mt;
-    boost::normal_distribution<CPU_ScalarType> N(0, 1);
-    boost::bernoulli_distribution<CPU_ScalarType> B(0.5);
-    boost::triangle_distribution<CPU_ScalarType> T(-1, 0, 1);
-
-    boost::variate_generator<boost::mt11213b&, boost::normal_distribution<CPU_ScalarType> >     get_N(mt, N);
-    boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<CPU_ScalarType> >  get_B(mt, B);
-    boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<CPU_ScalarType> >   get_T(mt, T);
-
+    viennacl::tools::normal_random_numbers<CPU_ScalarType> get_N;
 
     long i, k, retry, reorths;
     std::vector<long> l_bound(size/2), u_bound(size/2);
@@ -473,14 +464,7 @@ eig(MatrixT const & matrix, DenseMatrixT & eigenvalues_A, lanczos_tag const & ta
   typedef typename viennacl::result_of::cpu_value_type<NumericType>::type   CPU_NumericType;
   typedef typename viennacl::result_of::vector_for_matrix<MatrixT>::type    VectorT;
 
-  boost::mt11213b mt;
-  boost::normal_distribution<CPU_NumericType>    N(0, 1);
-  boost::bernoulli_distribution<CPU_NumericType> B(0.5);
-  boost::triangle_distribution<CPU_NumericType>  T(-1, 0, 1);
-
-  boost::variate_generator<boost::mt11213b&, boost::normal_distribution<CPU_NumericType> >     get_N(mt, N);
-  boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<CPU_NumericType> >  get_B(mt, B);
-  boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<CPU_NumericType> >   get_T(mt, T);
+  viennacl::tools::uniform_random_numbers<CPU_NumericType> random_gen;
 
   std::vector<CPU_NumericType> eigenvalues;
   vcl_size_t matrix_size = matrix.size1();
@@ -488,7 +472,7 @@ eig(MatrixT const & matrix, DenseMatrixT & eigenvalues_A, lanczos_tag const & ta
   std::vector<CPU_NumericType> s(matrix_size);
 
   for (vcl_size_t i=0; i<s.size(); ++i)
-    s[i] = 3.0 * get_B() + get_T() - 1.5;
+    s[i] = CPU_NumericType(0.5) + random_gen();
 
   detail::copy_vec_to_vec(s,r);
 
