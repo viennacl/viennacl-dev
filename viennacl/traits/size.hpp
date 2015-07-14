@@ -158,6 +158,81 @@ inline void resize(Eigen::VectorXd & v,
 /** \endcond */
 
 
+
+
+//
+// size1: No. of rows for matrices
+//
+/** @brief Generic routine for obtaining the number of rows of a matrix (ViennaCL, uBLAS, etc.) */
+template<typename MatrixType>
+vcl_size_t
+size1(MatrixType const & mat) { return mat.size1(); }
+
+/** \cond */
+template<typename RowType>
+vcl_size_t
+size1(std::vector< RowType > const & mat) { return mat.size(); }
+
+#ifdef VIENNACL_WITH_ARMADILLO
+template<typename NumericT>
+inline vcl_size_t size1(arma::Mat<NumericT> const & A) { return A.n_rows; }
+template<typename NumericT>
+inline vcl_size_t size1(arma::SpMat<NumericT> const & A) { return A.n_rows; }
+#endif
+
+#ifdef VIENNACL_WITH_EIGEN
+inline vcl_size_t size1(Eigen::MatrixXf const & m) { return static_cast<vcl_size_t>(m.rows()); }
+inline vcl_size_t size1(Eigen::MatrixXd const & m) { return static_cast<vcl_size_t>(m.rows()); }
+inline vcl_size_t size1(Eigen::Map<Eigen::MatrixXf> const & m) { return static_cast<vcl_size_t>(m.rows()); }
+inline vcl_size_t size1(Eigen::Map<Eigen::MatrixXd> const & m) { return static_cast<vcl_size_t>(m.rows()); }
+template<typename T, int options>
+inline vcl_size_t size1(Eigen::SparseMatrix<T, options> & m) { return static_cast<vcl_size_t>(m.rows()); }
+#endif
+
+#ifdef VIENNACL_WITH_MTL4
+template<typename NumericT, typename T>
+vcl_size_t size1(mtl::dense2D<NumericT, T> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
+template<typename NumericT>
+vcl_size_t size1(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
+#endif
+
+
+
+//
+// size2: No. of columns for matrices
+//
+/** @brief Generic routine for obtaining the number of columns of a matrix (ViennaCL, uBLAS, etc.) */
+template<typename MatrixType>
+typename result_of::size_type<MatrixType>::type
+size2(MatrixType const & mat) { return mat.size2(); }
+
+#ifdef VIENNACL_WITH_ARMADILLO
+template<typename NumericT>
+inline vcl_size_t size2(arma::Mat<NumericT> const & A) { return A.n_cols; }
+template<typename NumericT>
+inline vcl_size_t size2(arma::SpMat<NumericT> const & A) { return A.n_cols; }
+#endif
+
+/** \cond */
+#ifdef VIENNACL_WITH_EIGEN
+inline vcl_size_t size2(Eigen::MatrixXf const & m) { return m.cols(); }
+inline vcl_size_t size2(Eigen::MatrixXd const & m) { return m.cols(); }
+inline vcl_size_t size2(Eigen::Map<Eigen::MatrixXf> const & m) { return m.cols(); }
+inline vcl_size_t size2(Eigen::Map<Eigen::MatrixXd> const & m) { return m.cols(); }
+template<typename T, int options>
+inline vcl_size_t size2(Eigen::SparseMatrix<T, options> & m) { return m.cols(); }
+#endif
+
+#ifdef VIENNACL_WITH_MTL4
+template<typename NumericT, typename T>
+vcl_size_t size2(mtl::dense2D<NumericT, T> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
+template<typename NumericT>
+vcl_size_t size2(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
+#endif
+/** \endcond */
+
+
+
 //
 // size: Returns the length of vectors
 //
@@ -237,44 +312,6 @@ vcl_size_t size(vector_expression<LHS, const vector_tuple<RHS>, op_inner_prod> c
 
 /** \endcond */
 
-
-//
-// size1: No. of rows for matrices
-//
-/** @brief Generic routine for obtaining the number of rows of a matrix (ViennaCL, uBLAS, etc.) */
-template<typename MatrixType>
-vcl_size_t
-size1(MatrixType const & mat) { return mat.size1(); }
-
-/** \cond */
-template<typename RowType>
-vcl_size_t
-size1(std::vector< RowType > const & mat) { return mat.size(); }
-
-#ifdef VIENNACL_WITH_ARMADILLO
-template<typename NumericT>
-inline vcl_size_t size1(arma::Mat<NumericT> const & A) { return A.n_rows; }
-template<typename NumericT>
-inline vcl_size_t size1(arma::SpMat<NumericT> const & A) { return A.n_rows; }
-#endif
-
-#ifdef VIENNACL_WITH_EIGEN
-inline vcl_size_t size1(Eigen::MatrixXf const & m) { return static_cast<vcl_size_t>(m.rows()); }
-inline vcl_size_t size1(Eigen::MatrixXd const & m) { return static_cast<vcl_size_t>(m.rows()); }
-inline vcl_size_t size1(Eigen::Map<Eigen::MatrixXf> const & m) { return static_cast<vcl_size_t>(m.rows()); }
-inline vcl_size_t size1(Eigen::Map<Eigen::MatrixXd> const & m) { return static_cast<vcl_size_t>(m.rows()); }
-template<typename T, int options>
-inline vcl_size_t size1(Eigen::SparseMatrix<T, options> & m) { return static_cast<vcl_size_t>(m.rows()); }
-#endif
-
-#ifdef VIENNACL_WITH_MTL4
-template<typename NumericT, typename T>
-vcl_size_t size1(mtl::dense2D<NumericT, T> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
-template<typename NumericT>
-vcl_size_t size1(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
-#endif
-
-// delayed overload for size() using matrix-vector products
 template<typename LhsT, typename RhsT, typename OpT, typename VectorT>
 vcl_size_t size(vector_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
                                   VectorT,
@@ -300,39 +337,6 @@ vcl_size_t size(vector_expression<const matrix_expression<const LhsT1, const Rhs
   return size1(proxy.lhs());
 }
 
-/** \endcond */
-
-//
-// size2: No. of columns for matrices
-//
-/** @brief Generic routine for obtaining the number of columns of a matrix (ViennaCL, uBLAS, etc.) */
-template<typename MatrixType>
-typename result_of::size_type<MatrixType>::type
-size2(MatrixType const & mat) { return mat.size2(); }
-
-#ifdef VIENNACL_WITH_ARMADILLO
-template<typename NumericT>
-inline vcl_size_t size2(arma::Mat<NumericT> const & A) { return A.n_cols; }
-template<typename NumericT>
-inline vcl_size_t size2(arma::SpMat<NumericT> const & A) { return A.n_cols; }
-#endif
-
-/** \cond */
-#ifdef VIENNACL_WITH_EIGEN
-inline vcl_size_t size2(Eigen::MatrixXf const & m) { return m.cols(); }
-inline vcl_size_t size2(Eigen::MatrixXd const & m) { return m.cols(); }
-inline vcl_size_t size2(Eigen::Map<Eigen::MatrixXf> const & m) { return m.cols(); }
-inline vcl_size_t size2(Eigen::Map<Eigen::MatrixXd> const & m) { return m.cols(); }
-template<typename T, int options>
-inline vcl_size_t size2(Eigen::SparseMatrix<T, options> & m) { return m.cols(); }
-#endif
-
-#ifdef VIENNACL_WITH_MTL4
-template<typename NumericT, typename T>
-vcl_size_t size2(mtl::dense2D<NumericT, T> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
-template<typename NumericT>
-vcl_size_t size2(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl_size_t>(m.num_cols()); }
-#endif
 /** \endcond */
 
 //
