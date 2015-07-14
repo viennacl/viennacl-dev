@@ -761,6 +761,27 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag
   return result;
 }
 
+/** @brief Convenience overload for calling the preconditioned BiCGStab solver using types from the C++ STL.
+  *
+  * A std::vector<std::map<T, U> > matrix is convenient for e.g. finite element assembly.
+  * It is not the fastest option for setting up a system, but often it is fast enough - particularly for just trying things out.
+  */
+template<typename IndexT, typename NumericT, typename PreconditionerT>
+std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A, std::vector<NumericT> const & rhs, gmres_tag const & tag, PreconditionerT const & precond)
+{
+  viennacl::compressed_matrix<NumericT> vcl_A;
+  viennacl::copy(A, vcl_A);
+
+  viennacl::vector<NumericT> vcl_rhs(rhs.size());
+  viennacl::copy(rhs, vcl_rhs);
+
+  viennacl::vector<NumericT> vcl_result = solve(vcl_A, vcl_rhs, tag, precond);
+
+  std::vector<NumericT> result(vcl_result.size());
+  viennacl::copy(vcl_result, result);
+  return result;
+}
+
 /** @brief Convenience overload of the solve() function using GMRES. Per default, no preconditioner is used
 */
 template<typename MatrixT, typename VectorT>

@@ -151,6 +151,8 @@ int main()
          ++iter2)
          stl_matrix[iter2.index1()][static_cast<unsigned int>(iter2.index2())] = *iter2;
   }
+  std::vector<ScalarType> stl_rhs(rhs.size()), stl_result(result.size());
+  std::copy(rhs.begin(), rhs.end(), stl_rhs.begin());
   viennacl::copy(stl_matrix, vcl_coordinate_matrix);
   viennacl::copy(vcl_coordinate_matrix, stl_matrix);
 
@@ -199,6 +201,15 @@ int main()
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::cg_tag(1e-6, 20), vcl_jacobi);
 
   /**
+  * Convenience option: Run the CG method by passing STL types. This will use appropriate ViennaCL objects internally.
+  * You need to include viennacl/compressed_matrix.hpp and viennacl/vector.hpp before viennacl/linalg/cg.hpp for this to work!
+  **/
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::cg_tag());
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::cg_tag(1e-6, 20), vcl_ilut);
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::cg_tag(1e-6, 20), vcl_jacobi);
+
+
+  /**
   * <h2>Stabilized BiConjugate Gradient Solver</h2>
   **/
   std::cout << "----- BiCGStab Method -----" << std::endl;
@@ -210,7 +221,6 @@ int main()
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), ublas_ilut); //with preconditioner
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), ublas_jacobi); //with preconditioner
 
-
   /**
   * Run the BiCGStab method for ViennaCL objects.
   * The results here should be the same as with uBLAS objects (at least up to round-off error).
@@ -218,6 +228,15 @@ int main()
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::bicgstab_tag());   //without preconditioner
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), vcl_ilut); //with preconditioner
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), vcl_jacobi); //with preconditioner
+
+  /**
+  * Convenience option: Run the BiCGStab method by passing STL types. This will use appropriate ViennaCL objects internally.
+  * You need to include viennacl/compressed_matrix.hpp and viennacl/vector.hpp before viennacl/linalg/bicgstab.hpp for this to work!
+  **/
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::bicgstab_tag());
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), vcl_ilut);
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::bicgstab_tag(1e-6, 20), vcl_jacobi);
+
 
   /**
   * <h2>GMRES Solver</h2>
@@ -232,12 +251,21 @@ int main()
   result = viennacl::linalg::solve(ublas_matrix, rhs, viennacl::linalg::gmres_tag(1e-6, 20), ublas_jacobi);//with preconditioner
 
   /**
-  * Run the BiCGStab method for ViennaCL objects.
+  * Run the GMRES method for ViennaCL objects.
   * The results here should be the same as with uBLAS objects (at least up to round-off error).
   **/
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::gmres_tag());   //without preconditioner
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::gmres_tag(1e-6, 20), vcl_ilut);//with preconditioner
   vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_rhs, viennacl::linalg::gmres_tag(1e-6, 20), vcl_jacobi);//with preconditioner
+
+  /**
+  * Convenience option: Run the GMRES method by passing STL types. This will use appropriate ViennaCL objects internally.
+  * You need to include viennacl/compressed_matrix.hpp and viennacl/vector.hpp before viennacl/linalg/gmres.hpp for this to work!
+  **/
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::gmres_tag());
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::gmres_tag(1e-6, 20), vcl_ilut);
+  stl_result = viennacl::linalg::solve(stl_matrix, stl_rhs, viennacl::linalg::gmres_tag(1e-6, 20), vcl_jacobi);
+
 
   /**
   *  That's it, the tutorial is completed.
