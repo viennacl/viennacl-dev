@@ -59,7 +59,6 @@
 #include "viennacl/linalg/detail/ilu/common.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/tools/random.hpp"
-#include "examples/tutorial/vector-io.hpp"
 
 #include "viennacl/scheduler/execute.hpp"
 #include "viennacl/scheduler/io.hpp"

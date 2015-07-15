@@ -34,10 +34,10 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/compressed_matrix.hpp"
+#include "viennacl/tools/timer.hpp"
 
 #include <iostream>
 #include <vector>
-#include "benchmark-utils.hpp"
 
 using std::cout;
 using std::cin;
@@ -51,8 +51,8 @@ template<typename ScalarType>
 int run_benchmark()
 {
 
-   Timer timer;
-   double exec_time;
+  viennacl::tools::timer timer;
+  double exec_time;
 
   std::vector<ScalarType> std_vec1(BENCHMARK_VECTOR_SIZE);
 

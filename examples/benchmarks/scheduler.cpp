@@ -33,10 +33,10 @@
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/scheduler/execute.hpp"
+#include "viennacl/tools/timer.hpp"
 
 #include <iostream>
 #include <vector>
-#include "benchmark-utils.hpp"
 
 using std::cout;
 using std::cin;
@@ -51,7 +51,7 @@ template<typename ScalarType>
 int run_benchmark()
 {
 
-  Timer timer;
+  viennacl::tools::timer timer;
   double exec_time;
 
   std::vector<ScalarType> std_vec1(BENCHMARK_VECTOR_SIZE);

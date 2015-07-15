@@ -31,10 +31,16 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
 #include "viennacl/tools/random.hpp"
-
-#include "benchmark-utils.hpp"
+#include "viennacl/tools/timer.hpp"
 
 #define BENCHMARK_RUNS 10
+
+
+inline void printOps(double num_ops, double exec_time)
+{
+  std::cout << "GFLOPs: " << num_ops / (1000000 * exec_time * 1000) << std::endl;
+}
+
 
 template<typename NumericT>
 void fill_matrix(viennacl::matrix<NumericT> & mat)
@@ -64,7 +70,7 @@ void run_solver_matrix(MatrixT1 const & matrix1, MatrixT2 const & matrix2,Matrix
   std::cout << "------- Solver tag: " <<SolverTag::name()<<" ----------" << std::endl;
   result = viennacl::linalg::solve(matrix1, matrix2, SolverTag());
 
-  Timer timer;
+  viennacl::tools::timer timer;
   viennacl::backend::finish();
 
   timer.start();
@@ -85,7 +91,7 @@ void run_solver_vector(MatrixT const & matrix, VectorT2 const & vector2,VectorT 
   std::cout << "------- Solver tag: " <<SolverTag::name()<<" ----------" << std::endl;
   result = viennacl::linalg::solve(matrix, vector2, SolverTag());
 
-  Timer timer;
+  viennacl::tools::timer timer;
   viennacl::backend::finish();
 
   timer.start();

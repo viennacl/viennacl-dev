@@ -47,23 +47,27 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/linalg/ilu.hpp"
+#include "viennacl/tools/timer.hpp"
 
 
 #include <iostream>
 #include <vector>
-#include "benchmark-utils.hpp"
 
 
 #define BENCHMARK_RUNS          10
 
 
+inline void printOps(double num_ops, double exec_time)
+{
+  std::cout << "GFLOPs: " << num_ops / (1000000 * exec_time * 1000) << std::endl;
+}
+
+
 template<typename ScalarType>
 int run_benchmark()
 {
-   Timer timer;
-   double exec_time;
-
-   //ScalarType std_result = 0;
+  viennacl::tools::timer timer;
+  double exec_time;
 
   ScalarType std_factor1 = ScalarType(3.1415);
   ScalarType std_factor2 = ScalarType(42.0);

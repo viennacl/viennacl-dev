@@ -25,9 +25,9 @@
 #include <string>
 #include <cmath>
 #include <algorithm>
-#include <stdio.h>
-#include <time.h>
-//#include "../benchmarks/benchmark-utils.hpp"
+#include <cstdio>
+#include <ctime>
+
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
@@ -39,6 +39,7 @@
 #include "viennacl/io/matrix_market.hpp"*/
 #include "viennacl/matrix_proxy.hpp"
 #include "viennacl/vector_proxy.hpp"
+
 #include "boost/numeric/ublas/vector.hpp"
 #include "boost/numeric/ublas/matrix.hpp"
 #include "boost/numeric/ublas/matrix_proxy.hpp"

@@ -55,16 +55,22 @@
 #endif
 
 #include "viennacl/io/matrix_market.hpp"
+#include "viennacl/tools/timer.hpp"
 
 
 #include <iostream>
 #include <vector>
-#include "benchmark-utils.hpp"
 
 
 using namespace boost::numeric;
 
 #define BENCHMARK_RUNS          1
+
+
+inline void printOps(double num_ops, double exec_time)
+{
+  std::cout << "GFLOPs: " << num_ops / (1000000 * exec_time * 1000) << std::endl;
+}
 
 
 template<typename ScalarType>
@@ -97,7 +103,7 @@ ScalarType diff_2(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> &
 template<typename MatrixType, typename VectorType, typename SolverTag, typename PrecondTag>
 void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType const & ref_result, SolverTag const & solver, PrecondTag const & precond, long ops)
 {
-  Timer timer;
+  viennacl::tools::timer timer;
   VectorType result(rhs);
   VectorType residual(rhs);
   viennacl::backend::finish();
@@ -123,7 +129,7 @@ void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType co
 template<typename ScalarType>
 int run_benchmark(viennacl::context ctx)
 {
-  Timer timer;
+  viennacl::tools::timer timer;
   double exec_time;
 
   ScalarType std_factor1 = static_cast<ScalarType>(3.1415);

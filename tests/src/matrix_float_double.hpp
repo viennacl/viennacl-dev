@@ -28,9 +28,9 @@
 #include <string>
 #include <cmath>
 #include <algorithm>
-#include <stdio.h>
-#include <time.h>
-//#include "../benchmarks/benchmark-utils.hpp"
+#include <cstdio>
+#include <ctime>
+
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"

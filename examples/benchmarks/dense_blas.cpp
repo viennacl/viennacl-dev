@@ -15,8 +15,6 @@
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
-#include "benchmark-utils.hpp"
-
 #include "viennacl/matrix.hpp"
 #include "viennacl/matrix_proxy.hpp"
 #include "viennacl/vector.hpp"
@@ -25,6 +23,7 @@
 #include "viennacl/linalg/inner_prod.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/lu.hpp"
+#include "viennacl/tools/timer.hpp"
 
 #include <iomanip>
 #include <stdlib.h>
@@ -56,7 +55,7 @@ void bench(size_t BLAS1_N, size_t BLAS2_M, size_t BLAS2_N, size_t BLAS3_M, size_
   using viennacl::linalg::lu_factorize;
   using viennacl::trans;
 
-  Timer timer;
+  viennacl::tools::timer timer;
   double time_previous, time_spent;
   size_t Nruns;
   double time_per_benchmark = 1;

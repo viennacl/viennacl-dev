@@ -39,7 +39,7 @@ M=fscanfMat('nsm1.example');e=spec(M);e=gsort(e);rr=real(e);ii=imag(e);e=cat(1, 
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/qr-method.hpp"
 
-#include <examples/benchmarks/benchmark-utils.hpp>
+#include "viennacl/tools/timer.hpp"
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -220,7 +220,7 @@ void test_eigen(const std::string& fn, bool is_symm)
 
     std::cout << "Calculation..." << "\n";
 
-    Timer timer;
+    viennacl::tools::timer timer;
     timer.start();
     // Start the calculation
     if(is_symm)

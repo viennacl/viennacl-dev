@@ -56,8 +56,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/matrix_proxy.hpp"
 #include "viennacl/tools/random.hpp"
-
-#include "../benchmarks/benchmark-utils.hpp"
+#include "viennacl/tools/timer.hpp"
 
 #define BLAS3_MATRIX_SIZE   1500
 
@@ -67,7 +66,7 @@ int main()
 {
   typedef float     ScalarType;
 
-  Timer timer;
+  viennacl::tools::timer timer;
   double exec_time;
 
   viennacl::tools::uniform_random_numbers<ScalarType> randomNumber;
