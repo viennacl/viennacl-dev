@@ -62,7 +62,7 @@
 #include "viennacl/linalg/ilu.hpp"
 #include "viennacl/linalg/detail/ilu/common.hpp"
 #include "viennacl/io/matrix_market.hpp"
-#include "examples/tutorial/Random.hpp"
+#include "viennacl/tools/random.hpp"
 #include "examples/tutorial/vector-io.hpp"
 
 //
@@ -393,6 +393,8 @@ int resize_test(Epsilon const& epsilon)
 template< typename NumericT, typename Epsilon >
 int test(Epsilon const& epsilon)
 {
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   std::cout << "Testing resizing of compressed_matrix..." << std::endl;
   int retval = resize_test<NumericT, viennacl::compressed_matrix<NumericT> >(epsilon);
   if (retval != EXIT_SUCCESS)
@@ -422,7 +424,7 @@ int test(Epsilon const& epsilon)
   for (std::size_t i=0; i<rhs.size(); ++i)
   {
     ublas_matrix(i,i) = NumericT(0.5);   // Get rid of round-off errors by making row-sums unequal to zero:
-    rhs[i] = NumericT(1) + random<NumericT>();
+    rhs[i] = NumericT(1) + randomNumber();
   }
 
   // add some random numbers to the double-compressed matrix:

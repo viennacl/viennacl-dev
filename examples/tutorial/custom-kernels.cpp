@@ -37,10 +37,6 @@
 #include "viennacl/linalg/norm_2.hpp"
 
 
-// Some helper functions for this tutorial:
-#include "Random.hpp"
-
-
 /**
 * The next step is to define the custom compute kernels in a string.
 * It is assumed that you are familiar with writing basic OpenCL kernels.

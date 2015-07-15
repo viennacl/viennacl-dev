@@ -40,7 +40,7 @@
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/linalg/maxmin.hpp"
 
-#include "Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 
 template<typename NumericT>
@@ -168,8 +168,10 @@ int test(Epsilon const& epsilon,
 {
   int retval = EXIT_SUCCESS;
 
-  NumericT                    cpu_result = 42.0;
-  viennacl::scalar<NumericT>  gpu_result = 43.0;
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
+  NumericT                    cpu_result = NumericT(42.0);
+  viennacl::scalar<NumericT>  gpu_result = NumericT(43.0);
 
   //
   // Initializer:
@@ -205,8 +207,8 @@ int test(Epsilon const& epsilon,
 
   for (std::size_t i=0; i<host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
-    host_v2[i] = NumericT(1.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
+    host_v2[i] = NumericT(1.0) + randomNumber();
   }
 
   proxy_copy(host_v1, vcl_v1);  //resync
@@ -497,7 +499,7 @@ int test(Epsilon const& epsilon,
   //
   for (std::size_t i=0; i < host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
     host_v2[i] = NumericT(3.1415) * host_v1[i];
   }
   proxy_copy(host_v1, vcl_v1);  //resync
@@ -589,7 +591,7 @@ int test(Epsilon const& epsilon,
   //
   for (size_t i=0; i < host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
     host_v2[i] = NumericT(3.1415) * host_v1[i];
   }
   proxy_copy(host_v1, vcl_v1);  //resync
@@ -667,7 +669,7 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing multiply-add on vector with CPU scalar (right)..." << std::endl;
   for (size_t i=0; i < host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
     host_v2[i] = NumericT(3.1415) * host_v1[i];
   }
   proxy_copy(host_v1, vcl_v1);
@@ -860,7 +862,7 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing division-add on vector with CPU scalar (right)..." << std::endl;
   for (size_t i=0; i < host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
     host_v2[i] = NumericT(3.1415) * host_v1[i];
   }
   proxy_copy(host_v1, vcl_v1);
@@ -1087,7 +1089,7 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing multiply-subtract on vector with CPU scalar (right)..." << std::endl;
   for (size_t i=0; i < host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
     host_v2[i] = NumericT(3.1415) * host_v1[i];
   }
   proxy_copy(host_v1, vcl_v1);
@@ -1229,7 +1231,7 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing division-subtract on vector with CPU scalar (right)..." << std::endl;
   for (size_t i=0; i < host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
     host_v2[i] = NumericT(3.1415) * host_v1[i];
   }
   proxy_copy(host_v1, vcl_v1);
@@ -1461,7 +1463,7 @@ int test(Epsilon const& epsilon,
   //
   for (std::size_t i=0; i < host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
     host_v2[i] = NumericT(3.1415) * host_v1[i];
   }
   proxy_copy(host_v1, vcl_v1);
@@ -1518,8 +1520,8 @@ int test(Epsilon const& epsilon,
   // --------------------------------------------------------------------------
   for (std::size_t i=0; i<host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
-    host_v2[i] = NumericT(5.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
+    host_v2[i] = NumericT(5.0) + randomNumber();
   }
 
   proxy_copy(host_v1, vcl_v1);
@@ -1638,8 +1640,8 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing elementwise division..." << std::endl;
   for (std::size_t i=0; i<host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.0) + random<NumericT>();
-    host_v2[i] = NumericT(5.0) + random<NumericT>();
+    host_v1[i] = NumericT(1.0) + randomNumber();
+    host_v2[i] = NumericT(5.0) + randomNumber();
   }
 
   proxy_copy(host_v1, vcl_v1);
@@ -1736,8 +1738,8 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing elementwise power function..." << std::endl;
   for (std::size_t i=0; i<host_v1.size(); ++i)
   {
-    host_v1[i] = NumericT(1.1) + NumericT(0.5) * random<NumericT>();
-    host_v2[i] = NumericT(1.1) + NumericT(0.5) * random<NumericT>();
+    host_v1[i] = NumericT(1.1) + NumericT(0.5) * randomNumber();
+    host_v2[i] = NumericT(1.1) + NumericT(0.5) * randomNumber();
   }
   std::vector<NumericT> std_v3(host_v1.size());
   vector_proxy<NumericT> host_v3(&std_v3[0], 0, 1, host_v1.size());
@@ -1903,7 +1905,7 @@ int test(Epsilon const& epsilon,
 
   std::cout << "Testing unary elementwise operations..." << std::endl;
   for (size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] = random<NumericT>() / NumericT(4);
+    host_v1[i] = randomNumber() / NumericT(4);
 
 #define GENERATE_UNARY_OP_TEST(FUNCNAME) \
   for (std::size_t i=0; i<host_v1.size(); ++i) \
@@ -1974,7 +1976,7 @@ int test(Epsilon const& epsilon,
   GENERATE_UNARY_OP_TEST(cos);
   GENERATE_UNARY_OP_TEST(cosh);
   for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] = random<NumericT>() / NumericT(4);
+    host_v1[i] = randomNumber() / NumericT(4);
   GENERATE_UNARY_OP_TEST(exp);
   GENERATE_UNARY_OP_TEST(floor);
   GENERATE_UNARY_OP_TEST(fabs);
@@ -2040,6 +2042,8 @@ int test(Epsilon const& epsilon)
   int retval = EXIT_SUCCESS;
   std::size_t size = 24656;
 
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   std::cout << "Running tests for vector of size " << size << std::endl;
 
   //
@@ -2050,8 +2054,8 @@ int test(Epsilon const& epsilon)
 
   for (std::size_t i=0; i<std_full_vec.size(); ++i)
   {
-    std_full_vec[i]  = NumericT(1.0) + random<NumericT>();
-    std_full_vec2[i] = NumericT(1.0) + random<NumericT>();
+    std_full_vec[i]  = NumericT(1.0) + randomNumber();
+    std_full_vec2[i] = NumericT(1.0) + randomNumber();
   }
 
   std::size_t r1_start = std_full_vec.size() / 4;

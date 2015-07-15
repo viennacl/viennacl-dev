@@ -49,7 +49,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
 #include "viennacl/linalg/lu.hpp"
-#include "examples/tutorial/Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 //
 // -------------------------------------------------------------
@@ -445,13 +445,15 @@ int test(Epsilon const& epsilon)
 {
    int retval = EXIT_SUCCESS;
 
+   viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
    std::size_t num_rows = 141; //note: use num_rows > num_cols + 3 for diag() tests to work
    std::size_t num_cols = 103;
 
    // --------------------------------------------------------------------------
    ublas::vector<NumericT> ublas_v1(num_rows);
    for (std::size_t i = 0; i < ublas_v1.size(); ++i)
-     ublas_v1(i) = random<NumericT>();
+     ublas_v1(i) = randomNumber();
    ublas::vector<NumericT> ublas_v2 = ublas::scalar_vector<NumericT>(num_cols, NumericT(3.1415));
 
 
@@ -459,7 +461,7 @@ int test(Epsilon const& epsilon)
 
    for (std::size_t i = 0; i < ublas_m1.size1(); ++i)
       for (std::size_t j = 0; j < ublas_m1.size2(); ++j)
-         ublas_m1(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
+         ublas_m1(i,j) = static_cast<NumericT>(0.1) * randomNumber();
 
 
    ublas::matrix<NumericT> ublas_m2(ublas_v1.size(), ublas_v1.size());
@@ -467,8 +469,8 @@ int test(Epsilon const& epsilon)
    for (std::size_t i = 0; i < ublas_m2.size1(); ++i)
    {
       for (std::size_t j = 0; j < ublas_m2.size2(); ++j)
-         ublas_m2(i,j) = static_cast<NumericT>(-0.1) * random<NumericT>();
-      ublas_m2(i, i) = static_cast<NumericT>(2) + random<NumericT>();
+         ublas_m2(i,j) = static_cast<NumericT>(-0.1) * randomNumber();
+      ublas_m2(i, i) = static_cast<NumericT>(2) + randomNumber();
    }
 
 
@@ -1051,13 +1053,13 @@ int test(Epsilon const& epsilon)
 
    for (std::size_t i=0; i<lu_dim; ++i)
      for (std::size_t j=0; j<lu_dim; ++j)
-       square_matrix(i,j) = -static_cast<NumericT>(0.5) * random<NumericT>();
+       square_matrix(i,j) = -static_cast<NumericT>(0.5) * randomNumber();
 
    //put some more weight on diagonal elements:
    for (std::size_t j=0; j<lu_dim; ++j)
    {
-     square_matrix(j,j) = static_cast<NumericT>(20.0) + random<NumericT>();
-     lu_rhs(j) = random<NumericT>();
+     square_matrix(j,j) = static_cast<NumericT>(20.0) + randomNumber();
+     lu_rhs(j) = randomNumber();
    }
 
    viennacl::copy(square_matrix, vcl_square_matrix);

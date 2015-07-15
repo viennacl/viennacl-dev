@@ -40,7 +40,6 @@
 #include "viennacl/linalg/qr-method.hpp"
 #include "viennacl/linalg/qr-method-common.hpp"
 #include "viennacl/linalg/host_based/matrix_operations.hpp"
-#include "Random.hpp"
 
 // Use the shortcut 'ublas::' instead of 'boost::numeric::ublas::'
 namespace ublas = boost::numeric::ublas;

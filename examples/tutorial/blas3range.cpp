@@ -9,16 +9,16 @@
                             -----------------
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
-               
+
    (A list of authors and contributors can be found in the PDF manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
 
 /*
-* 
+*
 *   Tutorial: BLAS level 3 functionality on sub-matrices (blas3range.cpp and blas3range.cu are identical, the latter being required for compilation using CUDA nvcc)
-*   
+*
 */
 
 //disable debug mechanisms to have a fair comparison with ublas:
@@ -55,10 +55,7 @@
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/matrix_proxy.hpp"
-
-// Some helper functions for this tutorial:
-#include "Random.hpp"
-#include "vector-io.hpp"
+#include "viennacl/tools/random.hpp"
 
 #include "../benchmarks/benchmark-utils.hpp"
 
@@ -72,6 +69,8 @@ int main()
 
   Timer timer;
   double exec_time;
+
+  viennacl::tools::uniform_random_numbers<ScalarType> randomNumber;
 
   //
   // Set up some ublas objects
@@ -95,17 +94,17 @@ int main()
   for (unsigned int i = 0; i < ublas_A.size1(); ++i)
     for (unsigned int j = 0; j < ublas_A.size2(); ++j)
     {
-      ublas_A(i,j) = random<ScalarType>();
+      ublas_A(i,j) = randomNumber();
       stl_A[i*ublas_A.size2() + j] = ublas_A(i,j);
     }
 
   for (unsigned int i = 0; i < ublas_B.size1(); ++i)
     for (unsigned int j = 0; j < ublas_B.size2(); ++j)
     {
-      ublas_B(i,j) = random<ScalarType>();
+      ublas_B(i,j) = randomNumber();
       stl_B[i + j*ublas_B.size1()] = ublas_B(i,j);
     }
-    
+
   ublas::range ublas_r1(1, BLAS3_MATRIX_SIZE-1);
   ublas::range ublas_r2(2, BLAS3_MATRIX_SIZE-2);
   ublas::matrix_range< ublas::matrix<ScalarType> >  ublas_A_sub(ublas_A, ublas_r1, ublas_r2);
@@ -125,14 +124,14 @@ int main()
   viennacl::matrix_range< viennacl::matrix<ScalarType> >  vcl_A_sub(vcl_A, vcl_r1, vcl_r2);
   viennacl::matrix_range< viennacl::matrix<ScalarType, viennacl::column_major> >  vcl_B_sub(vcl_B, vcl_r2, vcl_r1);
   viennacl::matrix_range< viennacl::matrix<ScalarType> >  vcl_C_sub(vcl_C, vcl_r1, vcl_r1);
-  
+
   ublas_C.clear();
   viennacl::copy(ublas_C, vcl_C);
-  
+
   /////////////////////////////////////////////////
   //////////// Matrix-matrix products /////////////
   /////////////////////////////////////////////////
-  
+
   //
   // Compute reference product using ublas:
   //
@@ -141,9 +140,9 @@ int main()
   ublas_C_sub = ublas::prod(ublas_A_sub, ublas_B_sub);
   exec_time = timer.get();
   std::cout << " - Execution time: " << exec_time << std::endl;
-  
+
   //std::cout << ublas_C << std::endl;
-  
+
   //
   // Now iterate over all OpenCL devices in the context and compute the matrix-matrix product
   //
@@ -172,7 +171,7 @@ int main()
     std::cout << " - GFLOPs: " << (vcl_A.size1() / 1000.0) * (vcl_A.size2() / 1000.0) * (vcl_B.size2() / 1000.0) / exec_time << std::endl;
 
     //std::cout << vcl_C << std::endl;
-    
+
     //
     // Verify the result
     //
@@ -201,11 +200,11 @@ int main()
       std::cout << "[OK]" << std::endl << std::endl;
     else
       std::cout << "[FAILED]" << std::endl << std::endl;
-      
+
   }
 
   //
-  //  That's it. 
+  //  That's it.
   //
   std::cout << "!!!! TUTORIAL COMPLETED SUCCESSFULLY !!!!" << std::endl;
   return EXIT_SUCCESS;

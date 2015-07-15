@@ -44,7 +44,7 @@
 #include "viennacl/linalg/qr-method.hpp"
 #include "viennacl/linalg/qr-method-common.hpp"
 #include "viennacl/linalg/matrix_operations.hpp"
-#include "Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 #define EPS 10.0e-3
 
@@ -166,9 +166,10 @@ void fill_vector(std::vector<ScalarType>& v);
 
 void fill_vector(std::vector<ScalarType>& v)
 {
-    for (unsigned int i = 0; i < v.size(); ++i)
-      v[i] =  random<ScalarType>();
-      //v[i] =  i % 10 + 1;
+  viennacl::tools::uniform_random_numbers<ScalarType> randomNumber;
+
+  for (unsigned int i = 0; i < v.size(); ++i)
+    v[i] =  randomNumber();
 }
 
 /*

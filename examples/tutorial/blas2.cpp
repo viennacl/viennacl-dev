@@ -47,11 +47,7 @@
 #include "viennacl/linalg/prod.hpp"       //generic matrix-vector product
 #include "viennacl/linalg/norm_2.hpp"     //generic l2-norm for vectors
 #include "viennacl/linalg/lu.hpp"         //LU substitution routines
-
-
-// Some helper functions for this tutorial:
-#include "Random.hpp"
-#include "vector-io.hpp"
+#include "viennacl/tools/random.hpp"
 
 // Make `boost::numeric::ublas` available under the shortcut `ublas`:
 using namespace boost::numeric;
@@ -63,13 +59,15 @@ int main()
 {
   typedef float       ScalarType;
 
+  viennacl::tools::uniform_random_numbers<ScalarType> randomNumber;
+
   /**
   * Set up some uBLAS vectors and a matrix.
   * They will be later used for filling the ViennaCL objects with data.
   **/
   ublas::vector<ScalarType> rhs(12);
   for (unsigned int i = 0; i < rhs.size(); ++i)
-    rhs(i) = random<ScalarType>();
+    rhs(i) = randomNumber();
   ublas::vector<ScalarType> rhs2 = rhs;
   ublas::vector<ScalarType> result = ublas::zero_vector<ScalarType>(10);
   ublas::vector<ScalarType> result2 = result;
@@ -84,7 +82,7 @@ int main()
   **/
   for (unsigned int i = 0; i < matrix.size1(); ++i)
     for (unsigned int j = 0; j < matrix.size2(); ++j)
-      matrix(i,j) = random<ScalarType>();
+      matrix(i,j) = randomNumber();
 
   /**
   * Use some plain STL types:
@@ -219,13 +217,13 @@ int main()
 
   for (std::size_t i=0; i<lu_dim; ++i)
     for (std::size_t j=0; j<lu_dim; ++j)
-      square_matrix(i,j) = random<ScalarType>();
+      square_matrix(i,j) = randomNumber();
 
   //put some more weight on diagonal elements:
   for (std::size_t j=0; j<lu_dim; ++j)
   {
     square_matrix(j,j) += ScalarType(10.0);
-    lu_rhs(j) = random<ScalarType>();
+    lu_rhs(j) = randomNumber();
   }
 
   viennacl::copy(square_matrix, vcl_square_matrix);

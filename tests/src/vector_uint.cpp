@@ -47,8 +47,6 @@
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/linalg/maxmin.hpp"
 
-#include "Random.hpp"
-
 using namespace boost::numeric;
 
 

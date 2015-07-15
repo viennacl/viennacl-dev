@@ -30,7 +30,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
-#include "examples/tutorial/Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 #include "benchmark-utils.hpp"
 
@@ -39,19 +39,23 @@
 template<typename NumericT>
 void fill_matrix(viennacl::matrix<NumericT> & mat)
 {
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   for (std::size_t i = 0; i < mat.size1(); ++i)
   {
     for (std::size_t j = 0; j < mat.size2(); ++j)
-      mat(i, j) = static_cast<NumericT>(-0.5) * random<NumericT>();
-    mat(i, i) = NumericT(1.0) + NumericT(2.0) * random<NumericT>(); //some extra weight on diagonal for stability
+      mat(i, j) = static_cast<NumericT>(-0.5) * randomNumber();
+    mat(i, i) = NumericT(1.0) + NumericT(2.0) * randomNumber(); //some extra weight on diagonal for stability
   }
 }
 
 template<typename NumericT>
 void fill_vector(viennacl::vector<NumericT> & vec)
 {
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   for (std::size_t i = 0; i < vec.size(); ++i)
-    vec(i) = NumericT(1.0) + NumericT(2.0) * random<NumericT>(); //some extra weight on diagonal for stability
+    vec(i) = NumericT(1.0) + NumericT(2.0) * randomNumber(); //some extra weight on diagonal for stability
 }
 
 template<typename NumericT,typename MatrixT1, typename MatrixT2,typename MatrixT3, typename SolverTag>

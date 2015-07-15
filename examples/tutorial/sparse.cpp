@@ -44,7 +44,6 @@
 
 
 // Additional helper functions for this tutorial:
-#include "Random.hpp"
 #include "vector-io.hpp"
 
 // Shortcut for writing 'ublas::' instead of 'boost::numeric::ublas::'

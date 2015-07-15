@@ -50,11 +50,7 @@
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
-
-
-// Some helper functions for this tutorial:
-#include "Random.hpp"
-#include "vector-io.hpp"
+#include "viennacl/tools/random.hpp"
 
 #include "../benchmarks/benchmark-utils.hpp"
 
@@ -84,6 +80,8 @@ int main()
   Timer timer;
   double exec_time;
 
+  viennacl::tools::uniform_random_numbers<ScalarType> randomNumber;
+
   /**
   * Set up some ublas objects and initialize with data:
   **/
@@ -94,11 +92,11 @@ int main()
 
   for (unsigned int i = 0; i < ublas_A.size1(); ++i)
     for (unsigned int j = 0; j < ublas_A.size2(); ++j)
-      ublas_A(i,j) = random<ScalarType>();
+      ublas_A(i,j) = randomNumber();
 
   for (unsigned int i = 0; i < ublas_B.size1(); ++i)
     for (unsigned int j = 0; j < ublas_B.size2(); ++j)
-      ublas_B(i,j) = random<ScalarType>();
+      ublas_B(i,j) = randomNumber();
 
   /**
   * Set up some ViennaCL objects. Data initialization will happen later.

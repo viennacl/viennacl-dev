@@ -60,10 +60,7 @@
 #include "viennacl/linalg/prod.hpp"       //generic matrix-vector product
 #include "viennacl/linalg/norm_2.hpp"     //generic l2-norm for vectors
 #include "viennacl/io/matrix_market.hpp"
-
-
-// Some helper functions for this tutorial:
-#include "Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 
 using namespace boost::numeric;
@@ -95,6 +92,8 @@ template<typename NumericT, typename ResultLayoutT, typename FactorLayoutT>
 int test(NumericT epsilon)
 {
   int retVal = EXIT_SUCCESS;
+
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
 
   ublas::compressed_matrix<NumericT>    ublas_lhs;
 
@@ -133,7 +132,7 @@ int test(NumericT epsilon)
 
   for (unsigned int i = 0; i < ublas_rhs1.size1(); i++)
     for (unsigned int j = 0; j < ublas_rhs1.size2(); j++)
-      ublas_rhs1(i,j) = NumericT(0.5) + NumericT(0.1) * random<NumericT>();
+      ublas_rhs1(i,j) = NumericT(0.5) + NumericT(0.1) * randomNumber();
   viennacl::copy( ublas_rhs1, rhs1);
 
   ublas_rhs2 = ublas::trans( ublas_rhs1);

@@ -61,7 +61,6 @@
 #include "viennacl/linalg/cg.hpp"
 
 // Some helper functions for this tutorial:
-#include "Random.hpp"
 #include "vector-io.hpp"
 
 using namespace boost::numeric;

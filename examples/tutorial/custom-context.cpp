@@ -40,11 +40,6 @@
 #include "viennacl/linalg/prod.hpp"
 
 
-// Some helper functions for this tutorial:
-#include "Random.hpp"
-
-
-
 
 /** <h2>Defining a Compute Kernel</h2>
 *

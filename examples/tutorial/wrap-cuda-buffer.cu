@@ -41,9 +41,6 @@
 #include "viennacl/linalg/prod.hpp"
 
 
-// Some helper functions for this tutorial:
-#include "Random.hpp"
-
 //
 //  A simple CUDA kernel for the vector operation x += y
 //

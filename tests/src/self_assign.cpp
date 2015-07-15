@@ -49,7 +49,7 @@
 #include "viennacl/linalg/ilu.hpp"
 #include "viennacl/linalg/detail/ilu/common.hpp"
 #include "viennacl/io/matrix_market.hpp"
-#include "examples/tutorial/Random.hpp"
+#include "viennacl/tools/random.hpp"
 #include "examples/tutorial/vector-io.hpp"
 
 //
@@ -165,11 +165,13 @@ void test_gemm(NumericT epsilon,
                DeviceMatrixT & device_C, bool copy_from_A,
                bool trans_first, bool trans_second)
 {
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   for (std::size_t i = 0; i<host_A.size(); ++i)
     for (std::size_t j = 0; j<host_A[i].size(); ++j)
     {
-      host_A[i][j] = random<NumericT>();
-      host_B[i][j] = random<NumericT>();
+      host_A[i][j] = randomNumber();
+      host_B[i][j] = randomNumber();
     }
 
   viennacl::copy(host_A, device_A);
@@ -233,6 +235,8 @@ template<typename NumericT>
 int test(NumericT epsilon)
 {
   std::size_t N = 142; // should be larger than 128 in order to avoid false negatives due to blocking
+
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
 
   //
   // Vector setup and test:
@@ -308,10 +312,10 @@ int test(NumericT epsilon)
   for (std::size_t i=0; i<std_Asparse.size(); ++i)
   {
     if (i > 0)
-      std_Asparse[i][KeyType(i-1)] = random<NumericT>();
-    std_Asparse[i][KeyType(i)] = NumericT(1) + random<NumericT>();
+      std_Asparse[i][KeyType(i-1)] = randomNumber();
+    std_Asparse[i][KeyType(i)] = NumericT(1) + randomNumber();
     if (i < std_Asparse.size() - 1)
-      std_Asparse[i][KeyType(i+1)] = random<NumericT>();
+      std_Asparse[i][KeyType(i+1)] = randomNumber();
   }
 
   // Sparse

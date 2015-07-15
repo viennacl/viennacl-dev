@@ -58,7 +58,7 @@
 #include "viennacl/linalg/ilu.hpp"
 #include "viennacl/linalg/detail/ilu/common.hpp"
 #include "viennacl/io/matrix_market.hpp"
-#include "examples/tutorial/Random.hpp"
+#include "viennacl/tools/random.hpp"
 #include "examples/tutorial/vector-io.hpp"
 
 #include "viennacl/scheduler/execute.hpp"
@@ -181,6 +181,8 @@ int test(Epsilon const& epsilon)
 {
   int retval = EXIT_SUCCESS;
 
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   // --------------------------------------------------------------------------
   NumericT alpha = static_cast<NumericT>(2.786);
   NumericT beta = static_cast<NumericT>(1.432);
@@ -202,7 +204,7 @@ int test(Epsilon const& epsilon)
   for (std::size_t i=0; i<rhs.size(); ++i)
   {
     ublas_matrix(i,i) = NumericT(0.5);   // Get rid of round-off errors by making row-sums unequal to zero:
-    rhs[i] = NumericT(1) + random<NumericT>();
+    rhs[i] = NumericT(1) + randomNumber();
   }
 
   result = rhs;

@@ -31,7 +31,7 @@
 #include "boost/numeric/ublas/matrix_proxy.hpp"
 #include "boost/numeric/ublas/io.hpp"
 
-#include "Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 template<typename ScalarType, typename VCLMatrixType>
 ScalarType diff(boost::numeric::ublas::matrix<ScalarType> const & mat1, VCLMatrixType  const & mat2)
@@ -211,9 +211,12 @@ template<class MatrixType>
 void init_rand(MatrixType & A)
 {
   typedef typename MatrixType::value_type T;
+
+  viennacl::tools::uniform_random_numbers<T> randomNumber;
+
   for (unsigned int i = 0; i < A.size1(); ++i)
     for (unsigned int j = 0; j < A.size2(); ++j)
-      A(i, j) = static_cast<T>(0.1) * random<T>();
+      A(i, j) = static_cast<T>(0.1) * randomNumber();
 }
 
 template<typename T>

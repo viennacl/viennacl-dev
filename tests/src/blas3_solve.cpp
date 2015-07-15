@@ -57,7 +57,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
-#include "examples/tutorial/Random.hpp"
+#include "viennacl/tools/random.hpp"
 //
 // -------------------------------------------------------------
 //
@@ -308,6 +308,8 @@ int test_solve(Epsilon const& epsilon,
 template< typename NumericT, typename F_A, typename F_B, typename Epsilon >
 int test_solve(Epsilon const& epsilon)
 {
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   int ret = EXIT_SUCCESS;
   std::size_t matrix_size = 135;  //some odd number, not too large
   std::size_t rhs_num = 67;
@@ -322,17 +324,17 @@ int test_solve(Epsilon const& epsilon)
   for (std::size_t i = 0; i < A.size1(); ++i)
   {
     for (std::size_t j = 0; j < A.size2(); ++j)
-        A(i,j) = static_cast<NumericT>(-0.5) * random<NumericT>();
-    A(i,i) = NumericT(1.0) + NumericT(2.0) * random<NumericT>(); //some extra weight on diagonal for stability
+        A(i,j) = static_cast<NumericT>(-0.5) * randomNumber();
+    A(i,i) = NumericT(1.0) + NumericT(2.0) * randomNumber(); //some extra weight on diagonal for stability
   }
 
   for (std::size_t i = 0; i < B_start.size1(); ++i)
     for (std::size_t j = 0; j < B_start.size2(); ++j)
-        B_start(i,j) = random<NumericT>();
+        B_start(i,j) = randomNumber();
 
   for (std::size_t i = 0; i < C_start.size1(); ++i)
     for (std::size_t j = 0; j < C_start.size2(); ++j)
-        C_start(i,j) = random<NumericT>();
+        C_start(i,j) = randomNumber();
 
 
   // A

@@ -44,8 +44,6 @@
 //include the generic inner product functions of ViennaCL
 #include "viennacl/linalg/norm_2.hpp"
 
-// Some helper functions for this tutorial:
-#include "Random.hpp"
 
 #include <boost/thread.hpp>
 

@@ -60,7 +60,6 @@
 #include "viennacl/io/matrix_market.hpp"
 
 // Some helper functions for this tutorial:
-#include "Random.hpp"
 #include "vector-io.hpp"
 
 /**

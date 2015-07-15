@@ -47,9 +47,7 @@
 
 
 // Some helper functions for this tutorial:
-#include "Random.hpp"
 #include "vector-io.hpp"
-#include "../benchmarks/benchmark-utils.hpp"
 
 /**
 *  In the following we run the CG method, the BiCGStab method, and the GMRES method with Armadillo types directly.

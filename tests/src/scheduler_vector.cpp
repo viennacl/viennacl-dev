@@ -50,7 +50,7 @@
 #include "viennacl/scheduler/execute.hpp"
 #include "viennacl/scheduler/io.hpp"
 
-#include "Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 using namespace boost::numeric;
 
@@ -137,6 +137,8 @@ int test(Epsilon const& epsilon,
 {
   int retval = EXIT_SUCCESS;
 
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   NumericT                    cpu_result = 42.0;
   viennacl::scalar<NumericT>  gpu_result = 43.0;
   NumericT                    alpha      = NumericT(3.1415);
@@ -171,8 +173,8 @@ int test(Epsilon const& epsilon,
 
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(1.0) + random<NumericT>();
-    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v1[i] = NumericT(1.0) + randomNumber();
+    ublas_v2[i] = NumericT(1.0) + randomNumber();
   }
 
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());  //resync
@@ -426,8 +428,8 @@ int test(Epsilon const& epsilon,
   {
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(2.0) + random<NumericT>();
-    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v1[i] = NumericT(2.0) + randomNumber();
+    ublas_v2[i] = NumericT(1.0) + randomNumber();
   }
   viennacl::copy(ublas_v1, vcl_v1);
   viennacl::copy(ublas_v2, vcl_v2);
@@ -445,8 +447,8 @@ int test(Epsilon const& epsilon,
   {
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(2.0) + random<NumericT>();
-    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v1[i] = NumericT(2.0) + randomNumber();
+    ublas_v2[i] = NumericT(1.0) + randomNumber();
   }
   viennacl::copy(ublas_v1, vcl_v1);
   viennacl::copy(ublas_v2, vcl_v2);
@@ -464,8 +466,8 @@ int test(Epsilon const& epsilon,
   {
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(2.0) + random<NumericT>();
-    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v1[i] = NumericT(2.0) + randomNumber();
+    ublas_v2[i] = NumericT(1.0) + randomNumber();
   }
   viennacl::copy(ublas_v1, vcl_v1);
   viennacl::copy(ublas_v2, vcl_v2);
@@ -483,8 +485,8 @@ int test(Epsilon const& epsilon,
   {
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(2.0) + random<NumericT>();
-    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v1[i] = NumericT(2.0) + randomNumber();
+    ublas_v2[i] = NumericT(1.0) + randomNumber();
   }
   viennacl::copy(ublas_v1, vcl_v1);
   viennacl::copy(ublas_v2, vcl_v2);
@@ -571,6 +573,8 @@ int test(Epsilon const& epsilon)
   int retval = EXIT_SUCCESS;
   std::size_t size = 24656;
 
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   std::cout << "Running tests for vector of size " << size << std::endl;
 
   //
@@ -581,8 +585,8 @@ int test(Epsilon const& epsilon)
 
   for (std::size_t i=0; i<ublas_full_vec.size(); ++i)
   {
-    ublas_full_vec[i]  = NumericT(1.0) + random<NumericT>();
-    ublas_full_vec2[i] = NumericT(1.0) + random<NumericT>();
+    ublas_full_vec[i]  = NumericT(1.0) + randomNumber();
+    ublas_full_vec2[i] = NumericT(1.0) + randomNumber();
   }
 
   ublas::range r1(    ublas_full_vec.size() / 4, 2 * ublas_full_vec.size() / 4);

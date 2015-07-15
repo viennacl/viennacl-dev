@@ -38,9 +38,7 @@
 #include "viennacl/linalg/norm_1.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
-
-// Some helper functions for this tutorial:
-#include "Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 
 /**
@@ -50,6 +48,8 @@ int main()
 {
   //Change this type definition to double if your gpu supports that
   typedef float       ScalarType;
+
+  viennacl::tools::uniform_random_numbers<ScalarType> randomNumber;
 
   /**
   * <h2> Scalar Operations </h2>
@@ -137,14 +137,13 @@ int main()
 
   /**
   * Let us fill the CPU vectors with random values:
-  * (random<> is a helper function from Random.hpp)
   **/
 
   for (unsigned int i = 0; i < 10; ++i)
   {
-    std_vec1[i] = random<ScalarType>();
-    vcl_vec2(i) = random<ScalarType>();  //also works for GPU vectors, but is MUCH slower (approx. factor 10.000) than the CPU analogue
-    plain_vec3[i] = random<ScalarType>();
+    std_vec1[i] = randomNumber();
+    vcl_vec2(i) = randomNumber();  //also works for GPU vectors, but is MUCH slower (approx. factor 10.000) than the CPU analogue
+    plain_vec3[i] = randomNumber();
   }
 
   /**

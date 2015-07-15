@@ -49,7 +49,7 @@
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
-#include "examples/tutorial/Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 #include "viennacl/scheduler/execute.hpp"
 #include "viennacl/scheduler/io.hpp"
@@ -364,6 +364,8 @@ int test_prod(Epsilon const& epsilon)
 {
   int ret;
 
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   std::size_t matrix_size1 = 29;  //some odd number, not too large
   std::size_t matrix_size2 = 47;  //some odd number, not too large
   std::size_t matrix_size3 = 33;  //some odd number, not too large
@@ -388,10 +390,10 @@ int test_prod(Epsilon const& epsilon)
   //fill A and B:
   for (unsigned int i = 0; i < A.size1(); ++i)
     for (unsigned int j = 0; j < A.size2(); ++j)
-        A(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
+        A(i,j) = static_cast<NumericT>(0.1) * randomNumber();
   for (unsigned int i = 0; i < B.size1(); ++i)
     for (unsigned int j = 0; j < B.size2(); ++j)
-        B(i,j) = static_cast<NumericT>(0.1) * random<NumericT>();
+        B(i,j) = static_cast<NumericT>(0.1) * randomNumber();
 
   ublas::matrix<NumericT>     A_trans = trans(A);
   ublas::matrix<NumericT> big_A_trans = trans(big_A);

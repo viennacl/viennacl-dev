@@ -27,7 +27,7 @@
 // Some helper functions for this tutorial:
 #include "viennacl.hpp"
 
-#include "examples/tutorial/Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 
 #include "viennacl/vector.hpp"
@@ -535,6 +535,9 @@ void test_blas(ViennaCLBackend my_backend,
 
 int main()
 {
+  viennacl::tools::uniform_random_numbers<float>  randomFloat;
+  viennacl::tools::uniform_random_numbers<double> randomDouble;
+
   std::size_t size  = 500*500;
   float  eps_float  = 1e-5f;
   double eps_double = 1e-12;
@@ -551,13 +554,13 @@ int main()
 
   for (std::size_t i = 0; i < size; ++i)
   {
-    C_float[i] = 0.5f + 0.1f * random<float>();
-    A_float[i] = 0.5f + 0.1f * random<float>();
-    B_float[i] = 0.5f + 0.1f * random<float>();
+    C_float[i] = 0.5f + 0.1f * randomFloat();
+    A_float[i] = 0.5f + 0.1f * randomFloat();
+    B_float[i] = 0.5f + 0.1f * randomFloat();
 
-    C_double[i] = 0.5 + 0.2 * random<double>();
-    A_double[i] = 0.5 + 0.2 * random<double>();
-    B_double[i] = 0.5 + 0.2 * random<double>();
+    C_double[i] = 0.5 + 0.2 * randomDouble();
+    A_double[i] = 0.5 + 0.2 * randomDouble();
+    B_double[i] = 0.5 + 0.2 * randomDouble();
   }
 
 

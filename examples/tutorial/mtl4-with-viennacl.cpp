@@ -48,9 +48,7 @@
 
 
 // Some helper functions for this tutorial:
-#include "Random.hpp"
 #include "vector-io.hpp"
-#include "../benchmarks/benchmark-utils.hpp"
 
 /**
 *    The following function contains the main code for this tutorial.

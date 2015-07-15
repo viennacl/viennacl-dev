@@ -45,8 +45,7 @@
 #include "viennacl/linalg/norm_1.hpp"
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
-
-#include "Random.hpp"
+#include "viennacl/tools/random.hpp"
 
 using namespace boost::numeric;
 
@@ -151,12 +150,14 @@ int test(Epsilon const& epsilon,
 {
   int retval = EXIT_SUCCESS;
 
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   for (std::size_t i=0; i<ublas_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(1.0) + random<NumericT>();
-    ublas_v2[i] = NumericT(1.0) + random<NumericT>();
-    ublas_v3[i] = NumericT(1.0) + random<NumericT>();
-    ublas_v4[i] = NumericT(1.0) + random<NumericT>();
+    ublas_v1[i] = NumericT(1.0) + randomNumber();
+    ublas_v2[i] = NumericT(1.0) + randomNumber();
+    ublas_v3[i] = NumericT(1.0) + randomNumber();
+    ublas_v4[i] = NumericT(1.0) + randomNumber();
   }
 
   viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());  //resync
@@ -337,6 +338,8 @@ int test(Epsilon const& epsilon,
 template< typename NumericT, typename Epsilon >
 int test(Epsilon const& epsilon)
 {
+  viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
+
   int retval = EXIT_SUCCESS;
   std::size_t size = 8 * 1337;
 
@@ -350,8 +353,8 @@ int test(Epsilon const& epsilon)
 
   for (std::size_t i=0; i<ublas_full_vec1.size(); ++i)
   {
-    ublas_full_vec1[i]  = NumericT(1.0) + random<NumericT>();
-    ublas_full_vec2[i] = NumericT(1.0) + random<NumericT>();
+    ublas_full_vec1[i] = NumericT(1.0) + randomNumber();
+    ublas_full_vec2[i] = NumericT(1.0) + randomNumber();
   }
 
   ublas::slice s1(    ublas_full_vec1.size() / 8, 3, ublas_full_vec1.size() / 8);
