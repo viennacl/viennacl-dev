@@ -33,16 +33,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/linalg/bisect.hpp"
-#include <boost/random.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/matrix_expression.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/operation.hpp>
-#include <boost/numeric/ublas/vector_expression.hpp>
-#include <boost/numeric/ublas/io.hpp>
+#include "viennacl/tools/random.hpp"
 
 namespace viennacl
 {
@@ -81,13 +72,13 @@ public:
     /** @brief Returns the number of eigenvalues */
   vcl_size_t num_eigenvalues() const { return num_eigenvalues_; }
 
-    /** @brief Sets the exponent of epsilon */
+    /** @brief Sets the exponent of epsilon. Values between 0.6 and 0.9 usually give best results. */
   void factor(double fct) { factor_ = fct; }
 
   /** @brief Returns the exponent */
   double factor() const { return factor_; }
 
-  /** @brief Sets the size of the kylov space */
+  /** @brief Sets the size of the kylov space. Must be larger than number of eigenvalues to compute. */
   void krylov_size(vcl_size_t max) { krylov_size_ = max; }
 
   /** @brief Returns the size of the kylov space */
@@ -110,6 +101,46 @@ private:
 
 namespace detail
 {
+  /** @brief Inverse iteration for finding an eigenvector for an eigenvalue.
+   *
+   *  beta[0] to be ignored for consistency.
+   */
+  template<typename NumericT>
+  void inverse_iteration(std::vector<NumericT> const & alphas, std::vector<NumericT> const & betas,
+                         NumericT & eigenvalue, std::vector<NumericT> & eigenvector)
+  {
+    std::vector<NumericT> alpha_sweeped = alphas;
+    for (vcl_size_t i=0; i<alpha_sweeped.size(); ++i)
+      alpha_sweeped[i] -= eigenvalue;
+    for (vcl_size_t row=1; row < alpha_sweeped.size(); ++row)
+      alpha_sweeped[row] -= betas[row] * betas[row] / alpha_sweeped[row-1];
+
+    // starting guess: ignore last equation
+    eigenvector[alphas.size() - 1] = 1.0;
+
+    for (vcl_size_t iter=0; iter<1; ++iter)
+    {
+      // solve first n-1 equations (A - \lambda I) y = -beta[n]
+      eigenvector[alphas.size() - 1] /= alpha_sweeped[alphas.size() - 1];
+      for (vcl_size_t row2=1; row2 < alphas.size(); ++row2)
+      {
+        vcl_size_t row = alphas.size() - row2 - 1;
+        eigenvector[row] -= eigenvector[row+1] * betas[row+1];
+        eigenvector[row] /= alpha_sweeped[row];
+      }
+
+      // normalize eigenvector:
+      NumericT norm_vector = 0;
+      for (vcl_size_t i=0; i<eigenvector.size(); ++i)
+        norm_vector += eigenvector[i] * eigenvector[i];
+      norm_vector = std::sqrt(norm_vector);
+      for (vcl_size_t i=0; i<eigenvector.size(); ++i)
+        eigenvector[i] /= norm_vector;
+    }
+
+    //eigenvalue = (alphas[0] * eigenvector[0] + betas[1] * eigenvector[1]) / eigenvector[0];
+  }
+
   /**
   *   @brief Implementation of the Lanczos PRO algorithm
   *
@@ -120,327 +151,305 @@ namespace detail
   *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
   */
 
-  template< typename MatrixT, typename VectorT >
-  std::vector<
-          typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
-          >
-  lanczosPRO (MatrixT const& A, VectorT & r, vcl_size_t size, lanczos_tag const & tag)
+  template<typename MatrixT, typename DenseMatrixT, typename NumericT>
+  std::vector<NumericT>
+  lanczosPRO (MatrixT const& A, vector_base<NumericT> & r, DenseMatrixT & eigenvectors_A, vcl_size_t size, lanczos_tag const & tag, bool compute_eigenvectors)
   {
-    typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
-    typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-
-
     // generation of some random numbers, used for lanczos PRO algorithm
-    boost::mt11213b mt;
-    boost::normal_distribution<CPU_ScalarType> N(0, 1);
-    boost::bernoulli_distribution<CPU_ScalarType> B(0.5);
-    boost::triangle_distribution<CPU_ScalarType> T(-1, 0, 1);
+    viennacl::tools::normal_random_numbers<NumericT> get_N;
 
-    boost::variate_generator<boost::mt11213b&, boost::normal_distribution<CPU_ScalarType> >     get_N(mt, N);
-    boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<CPU_ScalarType> >  get_B(mt, B);
-    boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<CPU_ScalarType> >   get_T(mt, T);
-
-
-    long i, k, retry, reorths;
-    std::vector<long> l_bound(size/2), u_bound(size/2);
-    bool second_step;
-    CPU_ScalarType squ_eps, eta, temp, eps, retry_th;
+    std::vector<vcl_size_t> l_bound(size/2), u_bound(size/2);
     vcl_size_t n = r.size();
-    std::vector< std::vector<CPU_ScalarType> > w(2, std::vector<CPU_ScalarType>(size));
-    CPU_ScalarType cpu_beta;
+    std::vector<NumericT> w(size), w_old(size); //w_k, w_{k-1}
 
-    boost::numeric::ublas::vector<CPU_ScalarType> s(n);
+    NumericT inner_rt;
+    std::vector<NumericT> alphas, betas;
+    viennacl::matrix<NumericT, viennacl::column_major> Q(n, size); //column-major matrix holding the Krylov basis vectors
 
-    VectorT t(n);
-    CPU_ScalarType inner_rt;
-    ScalarType vcl_beta;
-    ScalarType vcl_alpha;
-    std::vector<CPU_ScalarType> alphas, betas;
-    boost::numeric::ublas::matrix<CPU_ScalarType> Q(n, size);
+    bool second_step = false;
+    NumericT eps = std::numeric_limits<NumericT>::epsilon();
+    NumericT squ_eps = std::sqrt(eps);
+    NumericT eta = std::exp(std::log(eps) * tag.factor());
 
-    second_step = false;
-    eps = std::numeric_limits<CPU_ScalarType>::epsilon();
-    squ_eps = std::sqrt(eps);
-    retry_th = 1e-2;
-    eta = std::exp(std::log(eps) * tag.factor());
-    reorths = 0;
-    retry = 0;
+    NumericT beta = viennacl::linalg::norm_2(r);
 
-    vcl_beta = viennacl::linalg::norm_2(r);
+    r /= beta;
 
-    r /= vcl_beta;
+    viennacl::vector_base<NumericT> q_0(Q.handle(), Q.size1(), 0, 1);
+    q_0 = r;
 
-    detail::copy_vec_to_vec(r,s);
-    boost::numeric::ublas::column(Q, 0) = s;
+    viennacl::vector<NumericT> u = viennacl::linalg::prod(A, r);
+    NumericT alpha = viennacl::linalg::inner_prod(u, r);
+    alphas.push_back(alpha);
+    w[0] = 1;
+    betas.push_back(beta);
 
-    VectorT u = viennacl::linalg::prod(A, r);
-    vcl_alpha = viennacl::linalg::inner_prod(u, r);
-    alphas.push_back(vcl_alpha);
-    w[0][0] = 1;
-    betas.push_back(vcl_beta);
-
-    long batches = 0;
-    for (i = 1;i < static_cast<long>(size); i++)
+    vcl_size_t batches = 0;
+    for (vcl_size_t i = 1; i < size; i++) // Main loop for setting up the Krylov space
     {
-      r = u - vcl_alpha * r;
-      vcl_beta = viennacl::linalg::norm_2(r);
+      viennacl::vector_base<NumericT> q_iminus1(Q.handle(), Q.size1(), (i-1) * Q.internal_size1(), 1);
+      r = u - alpha * q_iminus1;
+      beta = viennacl::linalg::norm_2(r);
 
-      betas.push_back(vcl_beta);
-      r = r / vcl_beta;
+      betas.push_back(beta);
+      r = r / beta;
 
-      vcl_size_t index = vcl_size_t(i % 2);
-      w[index][vcl_size_t(i)] = 1;
-      k = (i + 1) % 2;
-      w[index][0] = (betas[1] * w[vcl_size_t(k)][1] + (alphas[0] - vcl_alpha) * w[vcl_size_t(k)][0] - betas[vcl_size_t(i) - 1] * w[index][0]) / vcl_beta + eps * 0.3 * get_N() * (betas[1] + vcl_beta);
+      //
+      // Update recurrence relation for estimating orthogonality loss
+      //
+      w_old = w;
+      w[0] = (betas[1] * w_old[1] + (alphas[0] - alpha) * w_old[0] - betas[i - 1] * w_old[0]) / beta + eps * 0.3 * get_N() * (betas[1] + beta);
+      for (vcl_size_t j = 1; j < i - 1; j++)
+        w[j] = (betas[j + 1] * w_old[j + 1] + (alphas[j] - alpha) * w_old[j] + betas[j] * w_old[j - 1] - betas[i - 1] * w_old[j]) / beta + eps * 0.3 * get_N() * (betas[j + 1] + beta);
+      w[i-1] = 0.6 * eps * NumericT(n) * get_N() * betas[1] / beta;
 
-      for (vcl_size_t j = 1; j < vcl_size_t(i - 1); j++)
-      {
-              w[index][j] = (betas[j + 1] * w[vcl_size_t(k)][j + 1] + (alphas[j] - vcl_alpha) * w[vcl_size_t(k)][j] + betas[j] * w[vcl_size_t(k)][j - 1] - betas[vcl_size_t(i) - 1] * w[index][j]) / vcl_beta + eps * 0.3 * get_N() * (betas[j + 1] + vcl_beta);
-      }
-      w[index][vcl_size_t(i) - 1] = 0.6 * eps * CPU_ScalarType(n) * get_N() * betas[1] / vcl_beta;
-
+      //
+      // Check whether there has been a need for reorthogonalization detected in the previous iteration.
+      // If so, run the reorthogonalization for each batch
+      //
       if (second_step)
       {
-        for (vcl_size_t j = 0; j < vcl_size_t(batches); j++)
+        for (vcl_size_t j = 0; j < batches; j++)
         {
-          l_bound[vcl_size_t(j)]++;
-          u_bound[vcl_size_t(j)]--;
-
-          for (k = l_bound[j];k < u_bound[j];k++)
+          for (vcl_size_t k = l_bound[j] + 1; k < u_bound[j] - 1; k++)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
-            inner_rt = viennacl::linalg::inner_prod(r,t);
-            r = r - inner_rt * t;
-            w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
-            reorths++;
+            viennacl::vector_base<NumericT> q_k(Q.handle(), Q.size1(), k * Q.internal_size1(), 1);
+            inner_rt = viennacl::linalg::inner_prod(r, q_k);
+            r = r - inner_rt * q_k;
+            w[k] = 1.5 * eps * get_N();
           }
         }
-        temp = viennacl::linalg::norm_2(r);
+        NumericT temp = viennacl::linalg::norm_2(r);
         r = r / temp;
-        vcl_beta = vcl_beta * temp;
+        beta = beta * temp;
         second_step = false;
       }
       batches = 0;
 
-      for (vcl_size_t j = 0; j < vcl_size_t(i); j++)
+      //
+      // Check for semiorthogonality
+      //
+      for (vcl_size_t j = 0; j < i; j++)
       {
-        if (std::fabs(w[index][j]) >= squ_eps)
+        if (std::fabs(w[j]) >= squ_eps) // tentative loss of orthonormality, hence reorthonomalize
         {
-          detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, j), t);
-          inner_rt = viennacl::linalg::inner_prod(r,t);
-          r = r - inner_rt * t;
-          w[index][j] = 1.5 * eps * get_N();
-          k = long(j) - 1;
-          reorths++;
-          while (k >= 0 && std::fabs(w[index][vcl_size_t(k)]) > eta)
-          {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
-            inner_rt = viennacl::linalg::inner_prod(r,t);
-            r = r - inner_rt * t;
-            w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
-            k--;
-            reorths++;
-          }
-          l_bound[vcl_size_t(batches)] = k + 1;
-          k = long(j) + 1;
+          viennacl::vector_base<NumericT> q_j(Q.handle(), Q.size1(), j * Q.internal_size1(), 1);
+          inner_rt = viennacl::linalg::inner_prod(r, q_j);
+          r = r - inner_rt * q_j;
+          w[j] = 1.5 * eps * get_N();
+          vcl_size_t k = j - 1;
 
-          while (k < i && std::fabs(w[index][vcl_size_t(k)]) > eta)
+          // orthogonalization with respect to earlier basis vectors
+          while (std::fabs(w[k]) > eta)
           {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
-            inner_rt = viennacl::linalg::inner_prod(r,t);
-            r = r - inner_rt * t;
-            w[index][vcl_size_t(k)] = 1.5 * eps * get_N();
-            k++;
-            reorths++;
+            viennacl::vector_base<NumericT> q_k(Q.handle(), Q.size1(), k * Q.internal_size1(), 1);
+            inner_rt = viennacl::linalg::inner_prod(r, q_k);
+            r = r - inner_rt * q_k;
+            w[k] = 1.5 * eps * get_N();
+            if (k == 0) break;
+            k--;
           }
-          u_bound[vcl_size_t(batches)] = k - 1;
+          l_bound[batches] = k;
+
+          // orthogonalization with respect to later basis vectors
+          k = j + 1;
+          while (k < i && std::fabs(w[k]) > eta)
+          {
+            viennacl::vector_base<NumericT> q_k(Q.handle(), Q.size1(), k * Q.internal_size1(), 1);
+            inner_rt = viennacl::linalg::inner_prod(r, q_k);
+            r = r - inner_rt * q_k;
+            w[k] = 1.5 * eps * get_N();
+            k++;
+          }
+          u_bound[batches] = k - 1;
           batches++;
-          j = vcl_size_t(k);
+
+          j = k-1; // go to end of current batch
         }
       }
 
+      //
+      // Normalize basis vector and reorthogonalize as needed
+      //
       if (batches > 0)
       {
-        temp = viennacl::linalg::norm_2(r);
+        NumericT temp = viennacl::linalg::norm_2(r);
         r = r / temp;
-        vcl_beta = vcl_beta * temp;
+        beta = beta * temp;
         second_step = true;
-
-        while (temp < retry_th)
-        {
-          for (vcl_size_t j = 0; j < vcl_size_t(i); j++)
-          {
-            detail::copy_vec_to_vec(boost::numeric::ublas::column(Q, vcl_size_t(k)), t);
-            inner_rt = viennacl::linalg::inner_prod(r,t);
-            r = r - inner_rt * t;
-            reorths++;
-          }
-          retry++;
-          temp = viennacl::linalg::norm_2(r);
-          r = r / temp;
-          vcl_beta = vcl_beta * temp;
-        }
       }
 
-      detail::copy_vec_to_vec(r,s);
-      boost::numeric::ublas::column(Q, vcl_size_t(i)) = s;
+      // store Krylov vector in Q:
+      viennacl::vector_base<NumericT> q_i(Q.handle(), Q.size1(), i * Q.internal_size1(), 1);
+      q_i = r;
 
-      cpu_beta = vcl_beta;
-      s = - cpu_beta * boost::numeric::ublas::column(Q, vcl_size_t(i - 1));
-      detail::copy_vec_to_vec(s, u);
-      u += viennacl::linalg::prod(A, r);
-      vcl_alpha = viennacl::linalg::inner_prod(u, r);
-      alphas.push_back(vcl_alpha);
+      //
+      // determine and store alpha = <r, u> with u = A q_i - beta q_{i-1}
+      //
+      u = viennacl::linalg::prod(A, r);
+      u += (-beta) * q_iminus1;
+      alpha = viennacl::linalg::inner_prod(u, r);
+      alphas.push_back(alpha);
     }
 
-    return bisect(alphas, betas);
-  }
+    //
+    // Step 2: Compute eigenvalues of tridiagonal matrix obtained during Lanczos iterations:
+    //
+    std::vector<NumericT> eigenvalues = bisect(alphas, betas);
 
-
-  /**
-  *   @brief Implementation of the lanczos algorithm without reorthogonalization
-  *
-  *   @param A            The system matrix
-  *   @param r            Random start vector
-  *   @param size         Size of krylov-space
-  *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
-  */
-  template<typename MatrixT, typename VectorT>
-  std::vector<
-          typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
-          >
-  lanczos (MatrixT const& A, VectorT & r, vcl_size_t size, lanczos_tag)
-  {
-    typedef typename viennacl::result_of::value_type<MatrixT>::type        ScalarType;
-    typedef typename viennacl::result_of::cpu_value_type<ScalarType>::type    CPU_ScalarType;
-
-    ScalarType vcl_beta;
-    ScalarType vcl_alpha;
-    std::vector<CPU_ScalarType> alphas, betas;
-    CPU_ScalarType norm;
-    vcl_size_t n = r.size();
-    VectorT u(n), t(n);
-    boost::numeric::ublas::vector<CPU_ScalarType> s(r.size()), u_zero(n), q(n);
-    boost::numeric::ublas::matrix<CPU_ScalarType> Q(n, size);
-
-    u_zero = boost::numeric::ublas::zero_vector<CPU_ScalarType>(n);
-    detail::copy_vec_to_vec(u_zero, u);
-    norm = norm_2(r);
-
-    for (vcl_size_t i = 0;i < size; i++)
+    //
+    // Step 3: Compute eigenvectors via inverse iteration. Does not update eigenvalues, so only approximate by nature.
+    //
+    if (compute_eigenvectors)
     {
-      r /= norm;
-      vcl_beta = norm;
+      std::vector<NumericT> eigenvector_tridiag(alphas.size());
+      for (std::size_t i=0; i < tag.num_eigenvalues(); ++i)
+      {
+        // compute eigenvector of tridiagonal matrix via inverse:
+        inverse_iteration(alphas, betas, eigenvalues[eigenvalues.size() - i - 1], eigenvector_tridiag);
 
-      detail::copy_vec_to_vec(r,s);
-      boost::numeric::ublas::column(Q, i) = s;
+        // eigenvector w of full matrix A. Given as w = Q * u, where u is the eigenvector of the tridiagonal matrix
+        viennacl::vector<NumericT> eigenvector_u(eigenvector_tridiag.size());
+        viennacl::copy(eigenvector_tridiag, eigenvector_u);
 
-      u += prod(A, r);
-      vcl_alpha = inner_prod(u, r);
-      r = u - vcl_alpha * r;
-      norm = norm_2(r);
-
-      q = boost::numeric::ublas::column(Q, i);
-      detail::copy_vec_to_vec(q, t);
-
-      u = - norm * t;
-      alphas.push_back(vcl_alpha);
-      betas.push_back(vcl_beta);
-      s.clear();
+        viennacl::vector_base<NumericT> eigenvector_A(eigenvectors_A.handle(),
+                                                      eigenvectors_A.size1(),
+                                                      eigenvectors_A.row_major() ? i : i * eigenvectors_A.internal_size1(),
+                                                      eigenvectors_A.row_major() ? eigenvectors_A.internal_size2() : 1);
+        eigenvector_A = viennacl::linalg::prod(project(Q,
+                                                       range(0, Q.size1()),
+                                                       range(0, eigenvector_u.size())),
+                                               eigenvector_u);
+      }
     }
 
-    return bisect(alphas, betas);
+    return eigenvalues;
   }
+
 
   /**
   *   @brief Implementation of the Lanczos FRO algorithm
   *
   *   @param A            The system matrix
   *   @param r            Random start vector
-  *   @param size         Size of krylov-space
+  *   @param eigenvectors_A  A dense matrix in which the eigenvectors of A will be stored. Both row- and column-major matrices are supported.
+  *   @param krylov_dim   Size of krylov-space
   *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
   */
-  template< typename MatrixT, typename VectorT >
-  std::vector<
-          typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type
-          >
-  lanczosFRO (MatrixT const& A, VectorT & r, vcl_size_t size, lanczos_tag)
+  template< typename MatrixT, typename DenseMatrixT, typename NumericT>
+  std::vector<NumericT>
+  lanczos(MatrixT const& A, vector_base<NumericT> & r, DenseMatrixT & eigenvectors_A, vcl_size_t krylov_dim, lanczos_tag const & tag, bool compute_eigenvectors)
   {
-    typedef typename viennacl::result_of::value_type<MatrixT>::type            NumericType;
-    typedef typename viennacl::result_of::cpu_value_type<NumericType>::type    CPU_NumericType;
+    std::vector<NumericT> alphas, betas;
+    viennacl::vector<NumericT> Aq(r.size());
+    viennacl::matrix<NumericT, viennacl::column_major> Q(r.size(), krylov_dim + 1);  // Krylov basis (each Krylov vector is one column)
 
-    CPU_NumericType temp;
-    CPU_NumericType norm;
-    NumericType vcl_beta;
-    NumericType vcl_alpha;
-    std::vector<CPU_NumericType> alphas, betas;
-    vcl_size_t n = r.size();
-    VectorT u(n), t(n);
-    NumericType inner_rt;
-    boost::numeric::ublas::vector<CPU_NumericType> u_zero(n), s(r.size()), q(n);
-    boost::numeric::ublas::matrix<CPU_NumericType> Q(n, size);
+    NumericT norm_r = norm_2(r);
+    NumericT beta = norm_r;
+    r /= norm_r;
 
-    long reorths = 0;
-    norm = norm_2(r);
+    // first Krylov vector:
+    viennacl::vector_base<NumericT> q0(Q.handle(), Q.size1(), 0, 1);
+    q0 = r;
 
-
-    for (vcl_size_t i = 0; i < size; i++)
+    //
+    // Step 1: Run Lanczos' method to obtain tridiagonal matrix
+    //
+    for (vcl_size_t i = 0; i < krylov_dim; i++)
     {
-      r /= norm;
+      betas.push_back(beta);
+      // last available vector from Krylov basis:
+      viennacl::vector_base<NumericT> q_i(Q.handle(), Q.size1(), i * Q.internal_size1(), 1);
 
-      for (vcl_size_t j = 0; j < i; j++)
+      // Lanczos algorithm:
+      // - Compute A * q:
+      Aq = viennacl::linalg::prod(A, q_i);
+
+      // - Form Aq <- Aq - <Aq, q_i> * q_i - beta * q_{i-1}, where beta is ||q_i|| before normalization in previous iteration
+      NumericT alpha = viennacl::linalg::inner_prod(Aq, q_i);
+      Aq -= alpha * q_i;
+
+      if (i > 0)
       {
-        q = boost::numeric::ublas::column(Q, j);
-        detail::copy_vec_to_vec(q, t);
-        inner_rt = viennacl::linalg::inner_prod(r,t);
-        r = r - inner_rt * t;
-        reorths++;
-      }
-      temp = viennacl::linalg::norm_2(r);
-      r = r / temp;
-      vcl_beta = temp * norm;
-      detail::copy_vec_to_vec(r,s);
-      boost::numeric::ublas::column(Q, i) = s;
+        viennacl::vector_base<NumericT> q_iminus1(Q.handle(), Q.size1(), (i-1) * Q.internal_size1(), 1);
+        Aq -= beta * q_iminus1;
 
-      u += viennacl::linalg::prod(A, r);
-      vcl_alpha = viennacl::linalg::inner_prod(u, r);
-      r = u - vcl_alpha * r;
-      norm = viennacl::linalg::norm_2(r);
-      q = boost::numeric::ublas::column(Q, i);
-      detail::copy_vec_to_vec(q, t);
-      u = - norm * t;
-      alphas.push_back(vcl_alpha);
-      betas.push_back(vcl_beta);
+        // Extra measures for improved numerical stability?
+        if (tag.method() == lanczos_tag::full_reorthogonalization)
+        {
+          // Gram-Schmidt (re-)orthogonalization:
+          // TODO: Reuse fast (pipelined) routines from GMRES or GEMV
+          for (vcl_size_t j = 0; j < i; j++)
+          {
+            viennacl::vector_base<NumericT> q_j(Q.handle(), Q.size1(), j * Q.internal_size1(), 1);
+            NumericT inner_rq = viennacl::linalg::inner_prod(Aq, q_j);
+            Aq -= inner_rq * q_j;
+          }
+        }
+      }
+
+      // normalize Aq and add to Krylov basis at column i+1 in Q:
+      beta = viennacl::linalg::norm_2(Aq);
+      viennacl::vector_base<NumericT> q_iplus1(Q.handle(), Q.size1(), (i+1) * Q.internal_size1(), 1);
+      q_iplus1 = Aq / beta;
+
+      alphas.push_back(alpha);
     }
 
-    return bisect(alphas, betas);
+    //
+    // Step 2: Compute eigenvalues of tridiagonal matrix obtained during Lanczos iterations:
+    //
+    std::vector<NumericT> eigenvalues = bisect(alphas, betas);
+
+    //
+    // Step 3: Compute eigenvectors via inverse iteration. Does not update eigenvalues, so only approximate by nature.
+    //
+    if (compute_eigenvectors)
+    {
+      std::vector<NumericT> eigenvector_tridiag(alphas.size());
+      for (std::size_t i=0; i < tag.num_eigenvalues(); ++i)
+      {
+        // compute eigenvector of tridiagonal matrix via inverse:
+        inverse_iteration(alphas, betas, eigenvalues[eigenvalues.size() - i - 1], eigenvector_tridiag);
+
+        // eigenvector w of full matrix A. Given as w = Q * u, where u is the eigenvector of the tridiagonal matrix
+        viennacl::vector<NumericT> eigenvector_u(eigenvector_tridiag.size());
+        viennacl::copy(eigenvector_tridiag, eigenvector_u);
+
+        viennacl::vector_base<NumericT> eigenvector_A(eigenvectors_A.handle(),
+                                                      eigenvectors_A.size1(),
+                                                      eigenvectors_A.row_major() ? i : i * eigenvectors_A.internal_size1(),
+                                                      eigenvectors_A.row_major() ? eigenvectors_A.internal_size2() : 1);
+        eigenvector_A = viennacl::linalg::prod(project(Q,
+                                                       range(0, Q.size1()),
+                                                       range(0, eigenvector_u.size())),
+                                               eigenvector_u);
+      }
+    }
+
+    return eigenvalues;
   }
 
 } // end namespace detail
 
 /**
-*   @brief Implementation of the calculation of eigenvalues using lanczos
+*   @brief Implementation of the calculation of eigenvalues using lanczos (with and without reorthogonalization).
+*
+*   Implementation of Lanczos with partial reorthogonalization is implemented separately.
 *
 *   @param matrix        The system matrix
 *   @param tag           Tag with several options for the lanczos algorithm
 *   @return              Returns the n largest eigenvalues (n defined in the lanczos_tag)
 */
-template<typename MatrixT>
+template<typename MatrixT, typename DenseMatrixT>
 std::vector< typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type >
-eig(MatrixT const & matrix, lanczos_tag const & tag)
+eig(MatrixT const & matrix, DenseMatrixT & eigenvalues_A, lanczos_tag const & tag, bool compute_eigenvalues = true)
 {
   typedef typename viennacl::result_of::value_type<MatrixT>::type           NumericType;
   typedef typename viennacl::result_of::cpu_value_type<NumericType>::type   CPU_NumericType;
   typedef typename viennacl::result_of::vector_for_matrix<MatrixT>::type    VectorT;
 
-  boost::mt11213b mt;
-  boost::normal_distribution<CPU_NumericType>    N(0, 1);
-  boost::bernoulli_distribution<CPU_NumericType> B(0.5);
-  boost::triangle_distribution<CPU_NumericType>  T(-1, 0, 1);
-
-  boost::variate_generator<boost::mt11213b&, boost::normal_distribution<CPU_NumericType> >     get_N(mt, N);
-  boost::variate_generator<boost::mt11213b&, boost::bernoulli_distribution<CPU_NumericType> >  get_B(mt, B);
-  boost::variate_generator<boost::mt11213b&, boost::triangle_distribution<CPU_NumericType> >   get_T(mt, T);
+  viennacl::tools::uniform_random_numbers<CPU_NumericType> random_gen;
 
   std::vector<CPU_NumericType> eigenvalues;
   vcl_size_t matrix_size = matrix.size1();
@@ -448,7 +457,7 @@ eig(MatrixT const & matrix, lanczos_tag const & tag)
   std::vector<CPU_NumericType> s(matrix_size);
 
   for (vcl_size_t i=0; i<s.size(); ++i)
-    s[i] = 3.0 * get_B() + get_T() - 1.5;
+    s[i] = CPU_NumericType(0.5) + random_gen();
 
   detail::copy_vec_to_vec(s,r);
 
@@ -457,15 +466,13 @@ eig(MatrixT const & matrix, lanczos_tag const & tag)
 
   switch (tag.method())
   {
-    case lanczos_tag::partial_reorthogonalization:
-      eigenvalues = detail::lanczosPRO(matrix, r, size_krylov, tag);
-      break;
-    case lanczos_tag::full_reorthogonalization:
-      eigenvalues = detail::lanczosFRO(matrix, r, size_krylov, tag);
-      break;
-    case lanczos_tag::no_reorthogonalization:
-      eigenvalues = detail::lanczos(matrix, r, size_krylov, tag);
-      break;
+  case lanczos_tag::partial_reorthogonalization:
+    eigenvalues = detail::lanczosPRO(matrix, r, eigenvalues_A, size_krylov, tag, compute_eigenvalues);
+    break;
+  case lanczos_tag::full_reorthogonalization:
+  case lanczos_tag::no_reorthogonalization:
+    eigenvalues = detail::lanczos(matrix, r, eigenvalues_A, size_krylov, tag, compute_eigenvalues);
+    break;
   }
 
   std::vector<CPU_NumericType> largest_eigenvalues;
@@ -478,7 +485,24 @@ eig(MatrixT const & matrix, lanczos_tag const & tag)
 }
 
 
+/**
+*   @brief Implementation of the calculation of eigenvalues using lanczos (with and without reorthogonalization).
+*
+*   Implementation of Lanczos with partial reorthogonalization is implemented separately.
+*
+*   @param matrix        The system matrix
+*   @param tag           Tag with several options for the lanczos algorithm
+*   @return              Returns the n largest eigenvalues (n defined in the lanczos_tag)
+*/
+template<typename MatrixT>
+std::vector< typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type >
+eig(MatrixT const & matrix, lanczos_tag const & tag)
+{
+  typedef typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type  NumericType;
 
+  viennacl::matrix<NumericType> eigenvectors(matrix.size1(), tag.num_eigenvalues());
+  return eig(matrix, eigenvectors, tag, false);
+}
 
 } // end namespace linalg
 } // end namespace viennacl
