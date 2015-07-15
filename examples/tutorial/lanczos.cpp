@@ -66,7 +66,7 @@ int main()
   viennacl::copy(host_A, A);
 
   /**
-  *  Create the configuration for the Lanczos method.
+  *  Create the configuration for the Lanczos method. All constructor arguments are optional, so feel free to use default settings.
   **/
   viennacl::linalg::lanczos_tag ltag(0.75,    // Select a power of 0.75 as the tolerance for the machine precision.
                                      10,      // Compute (approximations to) the 10 largest eigenvalues
