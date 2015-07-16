@@ -26,11 +26,10 @@
 #include "viennacl/linalg/detail/amg/amg_base.hpp"
 
 #include <map>
+#include <set>
 #ifdef VIENNACL_WITH_OPENMP
 #include <omp.h>
 #endif
-
-#include "viennacl/linalg/detail/amg/amg_debug.hpp"
 
 namespace viennacl
 {
@@ -48,100 +47,98 @@ namespace amg
 * @param slicing      Partitioning of the system matrix to different processors (only used in RS0 and RS3)
 * @param tag          AMG preconditioner tag
 */
-template<typename InternalT1, typename InternalT2, typename InternalT3>
-void amg_coarse(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
+template<typename InternalT1, typename InternalT2>
+void amg_coarse(InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
 {
   switch (tag.get_coarse())
   {
-  case VIENNACL_AMG_COARSE_RS:      amg_coarse_classic(level, A, pointvector, tag); break;
+  case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass(A, pointvector, tag); break;
+  /*case VIENNACL_AMG_COARSE_RS:      amg_coarse_classic(A, pointvector, tag); break;
   case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass(level, A, pointvector, tag); break;
   case VIENNACL_AMG_COARSE_RS0:     amg_coarse_rs0(level, A, pointvector, slicing, tag); break;
   case VIENNACL_AMG_COARSE_RS3:     amg_coarse_rs3(level, A, pointvector, slicing, tag); break;
-  case VIENNACL_AMG_COARSE_AG:      amg_coarse_ag(level, A, pointvector, tag); break;
+  */
+  case VIENNACL_AMG_COARSE_AG:      amg_coarse_ag(A, pointvector, tag); break;
+  default: throw std::runtime_error("not implemented yet");
   }
 }
 
-/** @brief Determines strong influences in system matrix, classical approach (RS). Multithreaded!
-* @param level        Coarse level identifier
-* @param A            Operator matrix on all levels
-* @param pointvector  Vector of points on all levels
-* @param tag          AMG preconditioner tag
-*/
-template<typename InternalT1, typename InternalT2>
-void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointvector, amg_tag & tag)
-{
-  typedef typename InternalT1::value_type             SparseMatrixType;
-  typedef typename InternalT2::value_type             PointVectorType;
-  typedef typename SparseMatrixType::value_type       ScalarType;
-  typedef typename SparseMatrixType::const_iterator1  ConstRowIterator;
-  typedef typename SparseMatrixType::const_iterator2  ConstColIterator;
 
+template<typename NumericT, typename PointListT>
+void amg_influence(compressed_matrix<NumericT> const & A, PointListT & pointvector, amg_tag & tag)
+{
+  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  //std::cout << "Calculating influences..." << std::endl;
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (long i=0; i<static_cast<long>(A[level].size1()); ++i)
+  for (std::size_t i=0; i<A.size1(); ++i)
   {
-    int diag_sign = 1;
-    if (A[level](static_cast<unsigned int>(i),static_cast<unsigned int>(i)) < 0)
-      diag_sign = -1;
+    unsigned int row_start = A_row_buffer[i];
+    unsigned int row_stop  = A_row_buffer[i+1];
+    NumericT diag = 0;
+    NumericT largest_positive = 0;
+    NumericT largest_negative = 0;
 
-    ConstRowIterator row_iter = A[level].begin1();
-    row_iter += static_cast<unsigned int>(i);
-    // Find greatest non-diagonal negative value (positive if diagonal is negative) in row
-    ScalarType max = 0;
-    for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+    // obtain diagonal element as well as maximum positive and negative off-diagonal entries
+    for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
     {
-        if (i == (unsigned int) col_iter.index2()) continue;
-        if (diag_sign == 1)
-          if (max > *col_iter)  max = *col_iter;
-        if (diag_sign == -1)
-          if (max < *col_iter)  max = *col_iter;
+      unsigned int col = A_col_buffer[nnz_index];
+      NumericT value   = A_elements[nnz_index];
+
+      if (col == i)
+        diag = value;
+      else if (value > largest_positive)
+        largest_positive = value;
+      else if (value < largest_negative)
+        largest_negative = value;
     }
 
-    // If maximum is 0 then the row is independent of the others
-    if (std::fabs(max) <= 0)
+    if (largest_positive <= 0 && largest_negative >= 0) // no offdiagonal entries
       continue;
 
     // Find all points that strongly influence current point (Yang, p.5)
-    for (ConstColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+    //std::cout << "Looking for strongly influencing points for point " << i << std::endl;
+    for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
     {
-      unsigned int j = static_cast<unsigned int>(col_iter.index2());
+      unsigned int col = A_col_buffer[nnz_index];
 
-      if (i == j)
+      if (i == col)
         continue;
 
-      if (ScalarType(diag_sign) * (-*col_iter) >= tag.get_threshold() * (ScalarType(diag_sign) * (-max)))
+      NumericT value   = A_elements[nnz_index];
+
+      if (   (diag > 0 && diag * value <= tag.get_threshold() * diag * largest_negative)
+          || (diag < 0 && diag * value <= tag.get_threshold() * diag * largest_positive))
       {
-        // Strong influence from j to i found, save information
-        pointvector[level][static_cast<unsigned int>(i)]->add_influencing_point(pointvector[level][static_cast<unsigned int>(j)]);
+        //std::cout << " - Adding influence from point " << col << std::endl;
+        pointvector.add_influence(i, col);
       }
     }
   }
-
-  #ifdef VIENNACL_AMG_DEBUG
-  std::cout << "Influence Matrix: " << std::endl;
-  boost::numeric::ublas::matrix<bool> mat;
-  Pointvector[level].get_influence_matrix(mat);
-  printmatrix (mat);
-  #endif
-
-  // Save influenced points
-  for (typename PointVectorType::iterator iter = pointvector[level].begin(); iter != pointvector[level].end(); ++iter)
-    for (typename amg_point::iterator iter2 = (*iter)->begin_influencing(); iter2 != (*iter)->end_influencing(); ++iter2)
-      (*iter2)->add_influenced_point(*iter);
-
-  #ifdef VIENNACL_AMG_DEBUG
-  std::cout << "Influence Measures: " << std::endl;
-  boost::numeric::ublas::vector<unsigned int> temp;
-  pointvector[level].get_influence(temp);
-  printvector(temp);
-  std::cout << "Point Sorting: " << std::endl;
-  Pointvector[level].get_sorting(temp);
-  printvector (temp);
-  #endif
-
 }
 
+
+
+struct amg_id_influence
+{
+  amg_id_influence(std::size_t id2, std::size_t influences2) : id(id2), influences(influences2) {}
+
+  unsigned int  id;
+  unsigned int  influences;
+};
+
+bool operator>(amg_id_influence const & a, amg_id_influence const & b)
+{
+  if (a.influences > b.influences)
+    return true;
+  if (a.influences == b.influences)
+    return a.id > b.id;
+  return false;
+}
 
 /** @brief Classical (RS) one-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC_ONEPASS)
 * @param level         Course level identifier
@@ -149,507 +146,171 @@ void amg_influence(unsigned int level, InternalT1 const & A, InternalT2 & pointv
 * @param pointvector   Vector of points on all levels
 * @param tag           AMG preconditioner tag
 */
-template<typename InternalT1, typename InternalT2>
-void amg_coarse_classic_onepass(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
+template<typename NumericT, typename PointListT>
+void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A, PointListT & pointvector, amg_tag & tag)
 {
-  amg_point* c_point, *point1, *point2;
+  typedef typename PointListT::influence_const_iterator  InfluenceIteratorType;
 
-  // Check and save all strong influences
-  amg_influence(level, A, pointvector, tag);
+  //get influences:
+  amg_influence(A, pointvector, tag);
 
-  // Traverse through points and calculate initial influence measure
-  #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for
-  #endif
-  for (long i=0; i<static_cast<long>(pointvector[level].size()); ++i)
-    pointvector[level][static_cast<unsigned int>(i)]->calc_influence();
+  std::set<amg_id_influence, std::greater<amg_id_influence> > points_by_influences;
 
-  // Do initial sorting
-  pointvector[level].sort();
+  for (std::size_t i=0; i<pointvector.size(); ++i)
+    points_by_influences.insert(amg_id_influence(i, pointvector.influence_count(i)));
 
-  // Get undecided point with highest influence measure
-  while ((c_point = pointvector[level].get_nextpoint()) != NULL)
+  //std::cout << "Starting coarsening process..." << std::endl;
+
+  while (!points_by_influences.empty())
   {
-    // Make this point C point
-    pointvector[level].make_cpoint(c_point);
+    amg_id_influence point = *(points_by_influences.begin());
 
-    // All strongly influenced points become F points
-    for (typename amg_point::iterator iter = c_point->begin_influenced(); iter != c_point->end_influenced(); ++iter)
+    // remove point from queue:
+    points_by_influences.erase(points_by_influences.begin());
+
+    //std::cout << "Working on point " << point.id << std::endl;
+
+    // point is already coarse or fine point, continue;
+    if (!pointvector.is_undecided(point.id))
+      continue;
+
+    //std::cout << " Setting point " << point.id << " to a coarse point." << std::endl;
+    // make this a coarse point:
+    pointvector.set_coarse(point.id);
+
+    // Set strongly influenced points to fine points:
+    InfluenceIteratorType influence_end = pointvector.influence_cend(point.id);
+    for (InfluenceIteratorType influence_iter = pointvector.influence_cbegin(point.id); influence_iter != influence_end; ++influence_iter)
     {
-      point1 = *iter;
-      // Found strong influence from C point (c_point influences point1), check whether point is still undecided, otherwise skip
-      if (!point1->is_undecided()) continue;
-      // Make this point F point if it is still undecided point
-      pointvector[level].make_fpoint(point1);
+      unsigned int influenced_point_id = *influence_iter;
 
-      // Add +1 to influence measure for all undecided points that strongly influence new F point
-      for (typename amg_point::iterator iter2 = point1->begin_influencing(); iter2 != point1->end_influencing(); ++iter2)
+      //std::cout << "Checking point " << influenced_point_id << std::endl;
+      if (!pointvector.is_undecided(influenced_point_id))
+        continue;
+
+      //std::cout << " Setting point " << influenced_point_id << " to a fine point." << std::endl;
+      pointvector.set_fine(influenced_point_id);
+
+      // add one to influence measure for all undecided points strongly influencing this fine point.
+      InfluenceIteratorType influence2_end = pointvector.influence_cend(influenced_point_id);
+      for (InfluenceIteratorType influence2_iter = pointvector.influence_cbegin(influenced_point_id); influence2_iter != influence2_end; ++influence2_iter)
       {
-        point2 = *iter2;
-        // Found strong influence to F point (point2 influences point1)
-        if (point2->is_undecided())
-          pointvector[level].add_influence(point2,1);
-      }
-    }
-  }
-
-  // If a point is neither C nor F point but is nevertheless influenced by other points make it F point
-  // (this situation can happen when this point does not influence other points and the points that influence this point became F points already)
-  /*#pragma omp parallel for private (i,point1)
-  for (long i=0; i<static_cast<long>(Pointvector[level].size()); ++i)
-  {
-  point1 = pointvector[level][i];
-  if (point1->is_undecided())
-  {
-    // Undecided point found. Check whether it is influenced by other point and if so: Make it F point.
-    if (point1->number_influencing() > 0)
-    {
-      #pragma omp critical
-      pointvector[level].make_fpoint(point1);
-    }
-  }
-  }*/
-
-  #if defined (VIENNACL_AMG_DEBUG)//  or defined (VIENNACL_AMG_DEBUGBENCH)
-  unsigned int c_points = pointvector[level].get_cpoints();
-  unsigned int f_points = pointvector[level].get_fpoints();
-  std::cout << "1st pass: Level " << level << ": ";
-  std::cout << "No of C points = " << c_points << ", ";
-  std::cout << "No of F points = " << f_points << std::endl;
-  #endif
-
-  #ifdef VIENNACL_AMG_DEBUG
-  std::cout << "Coarse Points:" << std::endl;
-  boost::numeric::ublas::vector<bool> C;
-  pointvector[level].get_C(C);
-  printvector(C);
-  std::cout << "Fine Points:" << std::endl;
-  boost::numeric::ublas::vector<bool> F;
-  pointvector[level].get_F(F);
-  printvector(F);
-  #endif
-}
-
-/** @brief Classical (RS) two-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC)
-* @param level        Coarse level identifier
-* @param A            Operator matrix on all levels
-* @param pointvector  Vector of points on all levels
-* @param tag          AMG preconditioner tag
-*/
-template<typename InternalT1, typename InternalT2>
-void amg_coarse_classic(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
-{
-  typedef typename InternalT2::value_type PointVectorType;
-
-  bool add_C;
-  amg_point *c_point, *point1, *point2;
-
-  // Use one-pass-coarsening as first pass.
-  amg_coarse_classic_onepass(level, A, pointvector, tag);
-
-  // 2nd pass: Add more C points if F-F connection does not have a common C point.
-  for (typename PointVectorType::iterator iter = pointvector[level].begin(); iter != pointvector[level].end(); ++iter)
-  {
-    point1 = *iter;
-    // If point is F point, check for strong connections.
-    if (point1->is_fpoint())
-    {
-      // Check for strong connections from influencing and influenced points.
-      amg_point::iterator iter2 = point1->begin_influencing();
-      amg_point::iterator iter3 = point1->begin_influenced();
-
-      // Iterate over both lists at once. This makes sure that points are no checked twice when influence relation is symmetric (which is often the case).
-      // Note: Only works because influencing and influenced lists are sorted by point-index.
-      while (iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
-      {
-        if (iter2 == point1->end_influencing())
+        if (pointvector.is_undecided(*influence2_iter))
         {
-          point2 = *iter3;
-          ++iter3;
-        }
-        else if (iter3 == point1->end_influenced())
-        {
-          point2 = *iter2;
-          ++iter2;
-        }
-        else
-        {
-          if ((*iter2)->get_index() == (*iter3)->get_index())
-          {
-            point2 = *iter2;
-            ++iter2;
-            ++iter3;
-          }
-          else if ((*iter2)->get_index() < (*iter3)->get_index())
-          {
-            point2 = *iter2;
-            ++iter2;
-          }
-          else
-          {
-            point2 = *iter3;
-            ++iter3;
-          }
-        }
-        // Only check points with higher index as points with lower index have been checked already.
-        if (point2->get_index() < point1->get_index())
-          continue;
+          // grab and remove from set, increase influence counter, store back:
+          amg_id_influence point_to_find(*influence2_iter, pointvector.influence_count(*influence2_iter));
+          points_by_influences.erase(point_to_find);
 
-        // If there is a strong connection then it has to either be a C point or a F point with common C point.
-        // C point? Then skip as everything is ok.
-        if (point2->is_cpoint())
-          continue;
-        // F point? Then check whether F points point1 and point2 have a common C point.
-        if (point2->is_fpoint())
-        {
-          add_C = true;
-          // C point is common for two F points if they are both strongly influenced by that C point.
-          // Compare strong influences for point1 and point2.
-          for (amg_point::iterator iter4 = point1->begin_influencing(); iter4 != point1 -> end_influencing(); ++iter4)
-          {
-            c_point = *iter4;
-            // Stop search when strong common influence is found via c_point.
-            if (c_point->is_cpoint())
-            {
-              if (point2->is_influencing(c_point))
-              {
-                add_C = false;
-                break;
-              }
-            }
-          }
-          // No common C point found? Then make second F point to C point.
-          if (add_C == true)
-            pointvector[level].switch_ftoc(point2);
+          ++point_to_find.influences;
+          pointvector.augment_influence(point_to_find.id); // for consistency
+
+          points_by_influences.insert(point_to_find);
         }
       }
     }
+
   }
 
-  #ifdef VIENNACL_AMG_DEBUG
-  std::cout << "After 2nd pass:" << std::endl;
-  std::cout << "Coarse Points:" << std::endl;
-  boost::numeric::ublas::vector<bool> C;
-  pointvector[level].get_C(C);
-  printvector(C);
-  std::cout << "Fine Points:" << std::endl;
-  boost::numeric::ublas::vector<bool> F;
-  pointvector[level].get_F(F);
-  printvector(F);
-  #endif
+  pointvector.enumerate_coarse_points();
 
-  #ifdef VIENNACL_AMG_DEBUG
-  #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp critical
-  #endif
-  {
-  std::cout << "No C and no F point: ";
-  for (typename PointVectorType::iterator iter = pointvector[level].begin(); iter != pointvector[level].end(); ++iter)
-  if ((*iter)->is_undecided())
-    std::cout << (*iter)->get_index() << " ";
-  std::cout << std::endl;
-  }
-  #endif
 }
 
-/** @brief Parallel classical RS0 coarsening. Multi-Threaded! (VIENNACL_AMG_COARSE_RS0 || VIENNACL_AMG_COARSE_RS3)
-* @param level         Coarse level identifier
-* @param A             Operator matrix on all level
+
+
+/** @brief AG (aggregation based) coarsening. Single-Threaded for now (VIENNACL_AMG_COARSE_CLASSIC_ONEPASS)
+* @param level         Course level identifier
+* @param A             Operator matrix on all levels
 * @param pointvector   Vector of points on all levels
-* @param slicing       Partitioning of the system matrix and the other data structures to different processors
 * @param tag           AMG preconditioner tag
 */
-template<typename InternalT1, typename InternalT2, typename InternalT3>
-void amg_coarse_rs0(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
+template<typename NumericT, typename PointListT>
+void amg_coarse_ag(compressed_matrix<NumericT> const & A, PointListT & pointvector, amg_tag & tag)
 {
-  unsigned int total_points;
+  typedef typename PointListT::influence_const_iterator  InfluenceIteratorType;
 
-  // Slice matrix into parts such that points are distributed among threads
-  slicing.slice(level, A, pointvector);
+  //get influences:
+  amg_influence(A, pointvector, tag);
 
-  // Run classical coarsening in parallel
-  total_points = 0;
-  #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for
-  #endif
-  for (long i2=0; i2<static_cast<long>(slicing.threads_); ++i2)
+  // Stage 1: Build aggregates:
+  for (std::size_t i=0; i<A.size1(); ++i)
   {
-    std::size_t i = static_cast<std::size_t>(i2);
-    amg_coarse_classic(level, slicing.A_slice_[i], slicing.pointvector_slice_[i],tag);
-
-    // Save C points (using Slicing.Offset on the next level as temporary memory)
-    // Note: Number of C points for point i is saved in i+1!! (makes it easier later to compute offset)
-    slicing.offset_[i+1][level+1] = slicing.pointvector_slice_[i][level].get_cpoints();
-    #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp critical
-    #endif
-    total_points += slicing.pointvector_slice_[i][level].get_cpoints();
-  }
-
-  // If no coarser level can be found on any level then resume and coarsening will stop in amg_coarse()
-  if (total_points != 0)
-  {
-    #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
-    #endif
-    for (long i2=0; i2<static_cast<long>(slicing.threads_); ++i2)
+    // check if node has no aggregates next to it (MIS-2)
+    bool is_new_coarse_node = true;
+    // Set strongly influenced points to fine points:
+    InfluenceIteratorType influence_end = pointvector.influence_cend(i);
+    for (InfluenceIteratorType influence_iter = pointvector.influence_cbegin(i); influence_iter != influence_end; ++influence_iter)
     {
-      std::size_t i = static_cast<std::size_t>(i2);
-
-      // If no higher coarse level can be found on slice i (saved in Slicing.Offset[i+1][level+1]) then pull C point(s) to the next level
-      if (slicing.offset_[i+1][level+1] == 0)
+      if (!pointvector.is_undecided(*influence_iter)) // either coarse or fine point
       {
-        // All points become C points
-        for (unsigned int j=0; j<slicing.A_slice_[i][level].size1(); ++j)
-          slicing.pointvector_slice_[i][level].make_cpoint(slicing.pointvector_slice_[i][level][j]);
-        slicing.offset_[i+1][level+1] = static_cast<unsigned int>(slicing.A_slice_[i][level].size1());
+        is_new_coarse_node = false;
+        break;
       }
     }
 
-    // Build slicing offset from number of C points (offset = total sum of C points on threads with lower number)
-    for (unsigned int i2=2; i2<=slicing.threads_; ++i2)
+    if (is_new_coarse_node)
     {
-      std::size_t i = static_cast<std::size_t>(i2);
-      slicing.offset_[i][level+1] += slicing.offset_[i-1][level+1];
-    }
+      //std::cout << "Setting new coarse node: " << i << std::endl;
+      pointvector.set_coarse(i);
 
-    // Join C and F points
-    slicing.join(level, pointvector);
-  }
-
-  // Calculate global influence measures for interpolation and/or RS3.
-  amg_influence(level, A, pointvector, tag);
-
-  #if defined(VIENNACL_AMG_DEBUG)// or defined (VIENNACL_AMG_DEBUGBENCH)
-  for (unsigned int i=0; i<slicing._threads; ++i)
-  {
-    unsigned int c_points = slicing.pointvector_slice_[i][level].get_cpoints();
-    unsigned int f_points = slicing.pointvector_slice_[i][level].get_fpoints();
-    std::cout << "Thread " << i << ": ";
-    std::cout << "No of C points = " << c_points << ", ";
-    std::cout << "No of F points = " << f_points << std::endl;
-  }
-  #endif
-}
-
-/** @brief RS3 coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_RS3)
-* @param level        Coarse level identifier
-* @param A            Operator matrix on all levels
-* @param pointvector  Vector of points on all levels
-* @param slicing      Partitioning of the system matrix and the other data structures to different processors
-* @param tag          AMG preconditioner tag
-*/
-template<typename InternalT1, typename InternalT2, typename InternalT3>
-void amg_coarse_rs3(unsigned int level, InternalT1 & A, InternalT2 & pointvector, InternalT3 & slicing, amg_tag & tag)
-{
-  amg_point *c_point, *point1, *point2;
-  bool add_C;
-  unsigned int i, j;
-
-  // Run RS0 first (parallel).
-  amg_coarse_rs0(level, A, pointvector, slicing, tag);
-
-  // Save slicing offset
-  boost::numeric::ublas::vector<unsigned int> offset = boost::numeric::ublas::vector<unsigned int> (slicing.offset_.size());
-  for (i=0; i<slicing.offset_.size(); ++i)
-    offset[i] = slicing.offset_[i][level];
-
-  // Correct the coarsening with a third pass: Don't allow strong F-F connections without common C point
-  for (i=0; i<slicing.threads_; ++i)
-  {
-    //for (j=Slicing.Offset[i][level]; j<Slicing.Offset[i+1][level]; ++j)
-    for (j=offset[i]; j<offset[i+1]; ++j)
-    {
-      point1 = pointvector[level][j];
-      // If point is F point, check for strong connections.
-      if (point1->is_fpoint())
+      // make all strongly influenced neighbors fine points:
+      for (InfluenceIteratorType influence_iter = pointvector.influence_cbegin(i); influence_iter != influence_end; ++influence_iter)
       {
-        // Check for strong connections from influencing and influenced points.
-        amg_point::iterator iter2 = point1->begin_influencing();
-        amg_point::iterator iter3 = point1->begin_influenced();
-
-        // Iterate over both lists at once. This makes sure that points are no checked twice when influence relation is symmetric (which is often the case).
-        // Note: Only works because influencing and influenced lists are sorted by point-index.
-        while (iter2 != point1->end_influencing() || iter3 != point1->end_influenced())
-        {
-          if (iter2 == point1->end_influencing())
-          {
-            point2 = *iter3;
-            ++iter3;
-          }
-          else if (iter3 == point1->end_influenced())
-          {
-            point2 = *iter2;
-            ++iter2;
-          }
-          else
-          {
-            if ((*iter2)->get_index() == (*iter3)->get_index())
-            {
-              point2 = *iter2;
-              ++iter2;
-              ++iter3;
-            }
-            else if ((*iter2)->get_index() < (*iter3)->get_index())
-            {
-              point2 = *iter2;
-              ++iter2;
-            }
-            else
-            {
-              point2 = *iter3;
-              ++iter3;
-            }
-          }
-
-          // Only check points with higher index as points with lower index have been checked already.
-          if (point2->get_index() < point1->get_index())
-            continue;
-
-          // Only check points that are outside the slicing boundaries (interior F-F connections have already been checked in second pass)
-          //if (point2->get_index() >= Slicing.Offset[i][level] || point2->get_index() < Slicing.Offset[i+1][level])
-          if (point2->get_index() >= offset[i] && point2->get_index() < offset[i+1])
-            continue;
-
-          // If there is a strong connection then it has to either be a C point or a F point with common C point.
-          // C point? Then skip as everything is ok.
-          if (point2->is_cpoint())
-            continue;
-          // F point? Then check whether F points point1 and point2 have a common C point.
-          if (point2->is_fpoint())
-          {
-            add_C = true;
-            // C point is common for two F points if they are both strongly influenced by that C point.
-            // Compare strong influences for point1 and point2.
-            for (amg_point::iterator iter4 = point1->begin_influencing(); iter4 != point1 -> end_influencing(); ++iter4)
-            {
-              c_point = *iter4;
-              // Stop search when strong common influence is found via c_point.
-              if (c_point->is_cpoint())
-              {
-                if (point2->is_influencing(c_point))
-                {
-                  add_C = false;
-                  break;
-                }
-              }
-            }
-            // No common C point found? Then make second F point to C point.
-            if (add_C == true)
-            {
-              pointvector[level].switch_ftoc(point2);
-              // Add +1 to offsets as one C point has been added.
-              for (unsigned int k=i+1; k<=slicing.threads_; ++k)
-                slicing.offset_[k][level+1]++;
-            }
-          }
-        }
+        //std::cout << "Setting new fine node: " << *influence_iter << std::endl;
+        pointvector.set_fine(*influence_iter);
       }
     }
   }
 
-  #ifdef VIENNACL_AMG_DEBUG
-  std::cout << "After 3rd pass:" << std::endl;
-  std::cout << "Coarse Points:" << std::endl;
-  boost::numeric::ublas::vector<bool> C;
-  pointvector[level].get_C(C);
-  printvector (C);
-  std::cout << "Fine Points:" << std::endl;
-  boost::numeric::ublas::vector<bool> F;
-  pointvector[level].get_F(F);
-  printvector (F);
-  #endif
-}
+  pointvector.enumerate_coarse_points();
 
-/** @brief AG (aggregation based) coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_SA)
-*
-* @param level        Coarse level identifier
-* @param A            Operator matrix on all levels
-* @param pointvector  Vector of points on all levels
-* @param tag          AMG preconditioner tag
-*/
-template<typename InternalT1, typename InternalT2>
-void amg_coarse_ag(unsigned int level, InternalT1 & A, InternalT2 & pointvector, amg_tag & tag)
-{
-  typedef typename InternalT1::value_type         SparseMatrixType;
-  typedef typename InternalT2::value_type         PointVectorType;
-  typedef typename SparseMatrixType::value_type   ScalarType;
-
-  typedef typename SparseMatrixType::iterator1    InternalRowIterator;
-  typedef typename SparseMatrixType::iterator2    InternalColIterator;
-
-  amg_point *pointx, *pointy;
-
-  // Cannot determine aggregates if size == 1 as then a new aggregate would always consist of this point (infinite loop)
-  if (A[level].size1() == 1)
-    return;
-
-  // SA algorithm (Vanek et al. p.6)
-  // Build neighborhoods
+  //
+  // Stage 2: Propagate coarse aggregate indices to neighbors:
+  //
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (long x=0; x<static_cast<long>(A[level].size1()); ++x)
+  for (unsigned int row = 0; row<A.size1(); ++row)
   {
-    InternalRowIterator row_iter = A[level].begin1();
-    row_iter += std::size_t(x);
-    ScalarType diag = A[level](static_cast<unsigned int>(x),static_cast<unsigned int>(x));
-    for (InternalColIterator col_iter = row_iter.begin(); col_iter != row_iter.end(); ++col_iter)
+    if (pointvector.is_coarse(row))
     {
-      long y = static_cast<long>(col_iter.index2());
-      if (y == x || (std::fabs(*col_iter) >= tag.get_threshold()*pow(0.5, static_cast<double>(level-1)) * std::sqrt(std::fabs(diag*A[level](static_cast<unsigned int>(y),static_cast<unsigned int>(y))))))
+      unsigned int coarse_index = pointvector.get_coarse_index(row);
+
+      InfluenceIteratorType influence_end = pointvector.influence_cend(row);
+      for (InfluenceIteratorType influence_iter = pointvector.influence_cbegin(row); influence_iter != influence_end; ++influence_iter)
       {
-        // Neighborhood x includes point y
-        pointvector[level][static_cast<unsigned int>(x)]->add_influencing_point(pointvector[level][static_cast<unsigned int>(y)]);
+        //std::cout << "Setting fine node " << *influence_iter << " to be aggregated with node " << row << "/" << coarse_index << std::endl;
+        pointvector.set_coarse_aggregate(*influence_iter, coarse_index); // Set aggregate index for fine point
       }
     }
   }
 
-  #ifdef VIENNACL_AMG_DEBUG
-  std::cout << "Neighborhoods:" << std::endl;
-  boost::numeric::ublas::matrix<bool> mat;
-  pointvector[level].get_influence_matrix(mat);
-  printmatrix(mat);
-  #endif
 
-  // Build aggregates from neighborhoods
-  for (typename PointVectorType::iterator iter = pointvector[level].begin(); iter != pointvector[level].end(); ++iter)
+  //
+  // Stage 3: Merge remaining undecided points (merging to first aggregate found when cycling over the hierarchy
+  //
+  for (std::size_t i=0; i<A.size1(); ++i)
   {
-    pointx = (*iter);
-
-    if (pointx->is_undecided())
+    if (pointvector.is_undecided(i))
     {
-      // Make center of aggregate to C point and include it to aggregate x.
-      pointvector[level].make_cpoint(pointx);
-      pointx->set_aggregate (pointx->get_index());
-      for (amg_point::iterator iter2 = pointx->begin_influencing(); iter2 != pointx->end_influencing(); ++iter2)
+      InfluenceIteratorType influence_end = pointvector.influence_cend(i);
+      for (InfluenceIteratorType influence_iter = pointvector.influence_cbegin(i); influence_iter != influence_end; ++influence_iter)
       {
-      pointy = (*iter2);
-
-        if (pointy->is_undecided())
+        if (!pointvector.is_undecided(*influence_iter)) // either coarse or fine point
         {
-          // Make neighbor y to F point and include it to aggregate x.
-          pointvector[level].make_fpoint(pointy);
-          pointy->set_aggregate(pointx->get_index());
+          //std::cout << "Setting fine node " << i << " to be aggregated with node " << *influence_iter << "/" << pointvector.get_coarse_index(*influence_iter) << std::endl;
+          pointvector.set_coarse_aggregate(i, pointvector.get_coarse_index(*influence_iter)); // Set aggregate index for fine point
+          break;
         }
       }
+      //std::cout << "Setting new fine node (merging): " << i << std::endl;
+      pointvector.set_fine(i);
     }
   }
 
-  #ifdef VIENNACL_AMG_DEBUG
-  std::cout << "After aggregation:" << std::endl;
-  std::cout << "Coarse Points:" << std::endl;
-  boost::numeric::ublas::vector<bool> C;
-  pointvector[level].get_C(C);
-  printvector(C);
-  std::cout << "Fine Points:" << std::endl;
-  boost::numeric::ublas::vector<bool> F;
-  pointvector[level].get_F(F);
-  printvector(F);
-  std::cout << "Aggregates:" << std::endl;
-  printvector(Aggregates[level]);
-  #endif
+
 }
+
+
 
 } //namespace amg
 } //namespace detail
