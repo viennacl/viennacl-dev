@@ -813,6 +813,20 @@ void qr_method_sym(viennacl::matrix<SCALARTYPE>& A,
     detail::qr_method(A, Q, D, E, true);
 }
 
+template <typename SCALARTYPE>
+void qr_method_sym(viennacl::matrix<SCALARTYPE>& A,
+                   viennacl::matrix<SCALARTYPE>& Q,
+                   viennacl::vector_base<SCALARTYPE>& D
+                  )
+{
+    std::vector<SCALARTYPE> std_D(D.size());
+    std::vector<SCALARTYPE> E(A.size1());
+
+    viennacl::copy(D, std_D);
+    detail::qr_method(A, Q, std_D, E, true);
+    viennacl::copy(std_D, D);
+}
+
 }
 }
 

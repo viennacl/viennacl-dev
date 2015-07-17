@@ -89,10 +89,14 @@ int main()
   std::vector<ScalarType> eigenvalues_ref(9);
   std::vector<ScalarType> eigenvalues(9);
 
+  viennacl::vector<ScalarType> vcl_eigenvalues(9);
+
   initialize(A_input, eigenvalues_ref);
 
   std::cout << std::endl <<"Input matrix: " << std::endl;
   std::cout << A_input << std::endl;
+
+  viennacl::matrix<ScalarType> A_input2(A_input); // duplicate to demonstrate the use with both std::vector and viennacl::vector
 
 
   /**
@@ -107,10 +111,16 @@ int main()
   viennacl::linalg::qr_method_sym(A_input, Q, eigenvalues);
 
   /**
+   *  Same as before, but writing the eigenvalues to a ViennaCL-vector:
+   **/
+  viennacl::linalg::qr_method_sym(A_input2, Q, vcl_eigenvalues);
+
+  /**
   *   Print the computed eigenvalues and eigenvectors:
   **/
-  std::cout << std::endl << "Eigenvalues:" << std::endl;
+  std::cout << std::endl << "Eigenvalues with std::vector<T>:" << std::endl;
   vector_print(eigenvalues);
+  std::cout << "Eigenvalues with viennacl::vector<T>: " << std::endl << vcl_eigenvalues << std::endl;
   std::cout << std::endl << "Reference eigenvalues:" << std::endl;
   vector_print(eigenvalues_ref);
   std::cout << std::endl;
