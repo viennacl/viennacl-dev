@@ -89,6 +89,9 @@ int main()
   std::vector<ScalarType> eigenvalues_ref(9);
   std::vector<ScalarType> eigenvalues(9);
 
+  viennacl::vector<ScalarType> vcl_eigenvalues(9);
+  //copy(eigenvalues, vcl_eigenvalues);
+
   initialize(A_input, eigenvalues_ref);
 
   std::cout << std::endl <<"Input matrix: " << std::endl;
@@ -104,7 +107,10 @@ int main()
   **/
 
   std::cout << "Calculation..." << std::endl;
-  viennacl::linalg::qr_method_sym(A_input, Q, eigenvalues);
+  //viennacl::linalg::qr_method_sym(A_input, Q, eigenvalues);
+  viennacl::linalg::qr_method_sym(A_input, Q, vcl_eigenvalues);
+
+  copy(vcl_eigenvalues, eigenvalues);
 
   /**
   *   Print the computed eigenvalues and eigenvectors:
