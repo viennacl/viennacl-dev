@@ -29,6 +29,7 @@
 #include <vector>
 
 // ViennaCL headers:
+#include "viennacl/matrix.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/qr-method.hpp"
 

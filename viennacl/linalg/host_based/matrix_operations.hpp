@@ -36,6 +36,7 @@
 #include "viennacl/traits/stride.hpp"
 #include "viennacl/linalg/detail/op_applier.hpp"
 #include "viennacl/linalg/host_based/common.hpp"
+#include "viennacl/linalg/prod.hpp"
 
 namespace viennacl
 {
@@ -1665,7 +1666,7 @@ template <typename NumericT, typename S1>
 
 
    viennacl::linalg::host_based::scaled_rank_1_update(vcl_P, beta, 1, 0, 1, vcl_D, vcl_D);
-   Q = prod(Q_temp, vcl_P);
+   Q = viennacl::linalg::prod(Q_temp, vcl_P);
 
  }
 
