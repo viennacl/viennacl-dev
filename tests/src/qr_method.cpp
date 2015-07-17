@@ -26,9 +26,6 @@ Solutions for testdata were generated with Scilab line:
 M=fscanfMat('nsm1.example');e=spec(M);e=gsort(e);rr=real(e);ii=imag(e);e=cat(1, rr, ii); s=strcat(string(e), ' ');write('tmp', s);
 */
 
-#ifndef NDEBUG
-  #define NDEBUG
-#endif
 
 //#define VIENNACL_DEBUG_ALL
 #include <iostream>
@@ -46,10 +43,6 @@ M=fscanfMat('nsm1.example');e=spec(M);e=gsort(e);rr=real(e);ii=imag(e);e=cat(1, 
 
 namespace ublas = boost::numeric::ublas;
 
-typedef float ScalarType;
-
-const ScalarType EPS = 0.0001f;
-
 void read_matrix_size(std::fstream& f, std::size_t& sz);
 
 void read_matrix_size(std::fstream& f, std::size_t& sz)
@@ -62,19 +55,19 @@ void read_matrix_size(std::fstream& f, std::size_t& sz)
     f >> sz;
 }
 
-template <typename MatrixLayout>
-void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType, MatrixLayout>& A)
+template <typename NumericT, typename MatrixLayout>
+void read_matrix_body(std::fstream& f, viennacl::matrix<NumericT, MatrixLayout>& A)
 {
     if(!f.is_open())
     {
         throw std::invalid_argument("File is not opened");
     }
 
-    boost::numeric::ublas::matrix<ScalarType> h_A(A.size1(), A.size2());
+    boost::numeric::ublas::matrix<NumericT> h_A(A.size1(), A.size2());
 
     for(std::size_t i = 0; i < h_A.size1(); i++) {
         for(std::size_t j = 0; j < h_A.size2(); j++) {
-            ScalarType val = 0.0;
+            NumericT val = 0.0;
             f >> val;
             h_A(i, j) = val;
         }
@@ -83,24 +76,23 @@ void read_matrix_body(std::fstream& f, viennacl::matrix<ScalarType, MatrixLayout
     viennacl::copy(h_A, A);
 }
 
-void read_vector_body(std::fstream& f, std::vector<ScalarType>& v);
-
-void read_vector_body(std::fstream& f, std::vector<ScalarType>& v) {
+template<typename NumericT>
+void read_vector_body(std::fstream& f, std::vector<NumericT>& v) {
     if(!f.is_open())
         throw std::invalid_argument("File is not opened");
 
     for(std::size_t i = 0; i < v.size(); i++)
     {
-            ScalarType val = 0.0;
+            NumericT val = 0.0;
             f >> val;
             v[i] = val;
     }
 }
 
-template <typename MatrixLayout>
-bool check_tridiag(viennacl::matrix<ScalarType, MatrixLayout>& A_orig)
+template<typename NumericT, typename MatrixLayout>
+bool check_tridiag(viennacl::matrix<NumericT, MatrixLayout>& A_orig, NumericT EPS)
 {
-    ublas::matrix<ScalarType> A(A_orig.size1(), A_orig.size2());
+    ublas::matrix<NumericT> A(A_orig.size1(), A_orig.size2());
     viennacl::copy(A_orig, A);
 
     for (unsigned int i = 0; i < A.size1(); i++) {
@@ -115,10 +107,10 @@ bool check_tridiag(viennacl::matrix<ScalarType, MatrixLayout>& A_orig)
     return true;
 }
 
-template <typename MatrixLayout>
-bool check_hessenberg(viennacl::matrix<ScalarType, MatrixLayout>& A_orig)
+template <typename NumericT, typename MatrixLayout>
+bool check_hessenberg(viennacl::matrix<NumericT, MatrixLayout>& A_orig, NumericT EPS)
 {
-    ublas::matrix<ScalarType> A(A_orig.size1(), A_orig.size2());
+    ublas::matrix<NumericT> A(A_orig.size1(), A_orig.size2());
     viennacl::copy(A_orig, A);
 
     for (std::size_t i = 0; i < A.size1(); i++) {
@@ -133,14 +125,12 @@ bool check_hessenberg(viennacl::matrix<ScalarType, MatrixLayout>& A_orig)
     return true;
 }
 
-ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
-                            ublas::matrix<ScalarType>& ref);
-
-ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
-                            ublas::matrix<ScalarType>& ref)
+template<typename NumericT>
+NumericT matrix_compare(ublas::matrix<NumericT>& res,
+                        ublas::matrix<NumericT>& ref)
 {
-    ScalarType diff = 0.0;
-    ScalarType mx = 0.0;
+    NumericT diff = 0.0;
+    NumericT mx = 0.0;
 
     for(std::size_t i = 0; i < res.size1(); i++)
     {
@@ -154,17 +144,15 @@ ScalarType matrix_compare(ublas::matrix<ScalarType>& res,
     return diff / mx;
 }
 
-ScalarType vector_compare(std::vector<ScalarType> & res,
-                          std::vector<ScalarType> & ref);
-
-ScalarType vector_compare(std::vector<ScalarType> & res,
-                          std::vector<ScalarType> & ref)
+template<typename NumericT>
+NumericT vector_compare(std::vector<NumericT> & res,
+                        std::vector<NumericT> & ref)
 {
     std::sort(ref.begin(), ref.end());
     std::sort(res.begin(), res.end());
 
-    ScalarType diff = 0.0;
-    ScalarType mx = 0.0;
+    NumericT diff = 0.0;
+    NumericT mx = 0.0;
     for(size_t i = 0; i < res.size(); i++)
     {
         diff = std::max(diff, std::abs(res[i] - ref[i]));
@@ -174,8 +162,8 @@ ScalarType vector_compare(std::vector<ScalarType> & res,
     return diff / mx;
 }
 
-template <typename MatrixLayout>
-void matrix_print(viennacl::matrix<ScalarType, MatrixLayout>& A)
+template <typename NumericT, typename MatrixLayout>
+void matrix_print(viennacl::matrix<NumericT, MatrixLayout>& A)
 {
     for (unsigned int i = 0; i < A.size1(); i++) {
         for (unsigned int j = 0; j < A.size2(); j++)
@@ -184,8 +172,8 @@ void matrix_print(viennacl::matrix<ScalarType, MatrixLayout>& A)
     }
 }
 
-template <typename MatrixLayout>
-void test_eigen(const std::string& fn, bool is_symm)
+template <typename NumericT, typename MatrixLayout>
+void test_eigen(const std::string& fn, bool is_symm, NumericT EPS)
 {
     std::cout << "Reading..." << "\n";
     std::size_t sz;
@@ -200,13 +188,13 @@ void test_eigen(const std::string& fn, bool is_symm)
     else
       std::cout << "Testing column-major matrix of size " << sz << "-by-" << sz << std::endl;
 
-    viennacl::matrix<ScalarType> A_input(sz, sz), A_ref(sz, sz), Q(sz, sz);
+    viennacl::matrix<NumericT> A_input(sz, sz), A_ref(sz, sz), Q(sz, sz);
     // reference vector with reference values from file
-    std::vector<ScalarType> eigen_ref_re(sz);
+    std::vector<NumericT> eigen_ref_re(sz);
     // calculated real eigenvalues
-    std::vector<ScalarType> eigen_re(sz);
+    std::vector<NumericT> eigen_re(sz);
     // calculated im. eigenvalues
-    std::vector<ScalarType> eigen_im(sz);
+    std::vector<NumericT> eigen_im(sz);
 
     // read input matrix from file
     read_matrix_body(f, A_input);
@@ -242,10 +230,10 @@ void test_eigen(const std::string& fn, bool is_symm)
 
     std::cout << "Verification..." << "\n";
 
-    bool is_hessenberg = check_hessenberg(A_input);
-    bool is_tridiag = check_tridiag(A_input);
+    bool is_hessenberg = check_hessenberg(A_input, EPS);
+    bool is_tridiag = check_tridiag(A_input, EPS);
 
-    ublas::matrix<ScalarType> A_ref_ublas(sz, sz), A_input_ublas(sz, sz), Q_ublas(sz, sz), result1(sz, sz), result2(sz, sz);
+    ublas::matrix<NumericT> A_ref_ublas(sz, sz), A_input_ublas(sz, sz), Q_ublas(sz, sz), result1(sz, sz), result2(sz, sz);
     viennacl::copy(A_ref, A_ref_ublas);
     viennacl::copy(A_input, A_input_ublas);
     viennacl::copy(Q, Q_ublas);
@@ -254,7 +242,7 @@ void test_eigen(const std::string& fn, bool is_symm)
     for (std::size_t i=0; i<result1.size1(); ++i)
       for (std::size_t j=0; j<result1.size2(); ++j)
       {
-        ScalarType value = 0;
+        NumericT value = 0;
         for (std::size_t k=0; k<Q_ublas.size2(); ++k)
           value += Q_ublas(i, k) * A_input_ublas(k, j);
         result1(i,j) = value;
@@ -263,15 +251,15 @@ void test_eigen(const std::string& fn, bool is_symm)
     for (std::size_t i=0; i<result2.size1(); ++i)
       for (std::size_t j=0; j<result2.size2(); ++j)
       {
-        ScalarType value = 0;
+        NumericT value = 0;
         for (std::size_t k=0; k<A_ref_ublas.size2(); ++k)
           value += A_ref_ublas(i, k) * Q_ublas(k, j);
         result2(i,j) = value;
       }
 
 
-    ScalarType prods_diff = matrix_compare(result1, result2);
-    ScalarType eigen_diff = vector_compare(eigen_re, eigen_ref_re);
+    NumericT prods_diff = matrix_compare(result1, result2);
+    NumericT eigen_diff = vector_compare(eigen_re, eigen_ref_re);
 
 
     bool is_ok = is_hessenberg;
@@ -307,11 +295,14 @@ void test_eigen(const std::string& fn, bool is_symm)
 int main()
 {
 
-  test_eigen<viennacl::row_major>("../examples/testdata/eigen/symm5.example", true);
- // test_eigen<viennacl::row_major>("../../examples/testdata/eigen/symm3.example", true);  // Computation of this matrix takes very long
+  test_eigen<float, viennacl::row_major   >("../examples/testdata/eigen/symm5.example", true, 0.0001f);
+  test_eigen<float, viennacl::column_major>("../examples/testdata/eigen/symm5.example", true, 0.0001f);
 
-  test_eigen<viennacl::column_major>("../examples/testdata/eigen/symm5.example", true);
-//  test_eigen<viennacl::column_major>("../../examples/testdata/eigen/symm3.example", true);
+  test_eigen<double, viennacl::row_major   >("../examples/testdata/eigen/symm5.example", true, 1e-5);
+  test_eigen<double, viennacl::column_major>("../examples/testdata/eigen/symm5.example", true, 1e-5);
+
+  //test_eigen<viennacl::row_major>("../../examples/testdata/eigen/symm3.example", true);  // Computation of this matrix takes very long
+  //test_eigen<viennacl::column_major>("../../examples/testdata/eigen/symm3.example", true);
 
   //test_eigen<viennacl::row_major>("../examples/testdata/eigen/nsm2.example", false);
   //test_eigen<viennacl::row_major>("../../examples/testdata/eigen/nsm2.example", false);

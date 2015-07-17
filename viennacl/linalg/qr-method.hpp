@@ -244,7 +244,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
 
         FastMatrix<SCALARTYPE> H(vcl_size_t(nn), vcl_H.internal_size2());//, V(nn);
 
-        std::vector<float>  buf(5 * vcl_size_t(nn));
+        std::vector<SCALARTYPE>  buf(5 * vcl_size_t(nn));
         //boost::numeric::ublas::vector<float>  buf(5 * nn);
         viennacl::vector<SCALARTYPE> buf_vcl(5 * vcl_size_t(nn));
 
