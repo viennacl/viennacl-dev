@@ -27,6 +27,7 @@
 #include "viennacl/ocl/kernel.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
+#include "viennacl/linalg/host_based/fft_operations.hpp"
 #include "viennacl/linalg/opencl/kernels/fft.hpp"
 #include "viennacl/linalg/opencl/kernels/matrix.hpp"
 

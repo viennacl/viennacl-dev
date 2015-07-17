@@ -36,6 +36,7 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
+#include "viennacl/traits/handle.hpp"
 
 namespace viennacl
 {

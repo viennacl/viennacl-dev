@@ -3,8 +3,6 @@
 
 #include "viennacl/tools/tools.hpp"
 
-#include "viennacl/vector_proxy.hpp"
-
 #include "viennacl/scheduler/forwards.h"
 #include "viennacl/scheduler/io.hpp"
 #include "viennacl/scheduler/preset.hpp"
@@ -166,10 +164,10 @@ public:
       ds::reduction_template::parameters_type reduction_params = ds::builtin_database::reduction_params<NumericT>(device);
 
       //Dummy holders for the statements
-      viennacl::vector<NumericT> x;
-      viennacl::vector<NumericT> y;
-      viennacl::vector<NumericT> res;
-      viennacl::vector_range< viennacl::vector_base<NumericT> > da(res, viennacl::range(0,1));
+      viennacl::vector<NumericT> *x;
+      viennacl::vector<NumericT> *y;
+      viennacl::vector<NumericT> *res;
+      viennacl::vector_range< viennacl::vector_base<NumericT> > *da;
 
       generate_inner_prod_impl(handler, "inner_prod_1", reduction_params, 1, &x, &y, &da);
       generate_inner_prod_impl(handler, "inner_prod_2", reduction_params, 2, &x, &y, &da);

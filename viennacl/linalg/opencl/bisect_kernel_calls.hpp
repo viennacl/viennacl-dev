@@ -30,6 +30,9 @@
 
 // includes, project
 #include "viennacl/linalg/opencl/kernels/bisect.hpp"
+#include "viennacl/linalg/detail/bisect/structs.hpp"
+#include "viennacl/linalg/detail/bisect/config.hpp"
+#include "viennacl/linalg/detail/bisect/util.hpp"
 
 namespace viennacl
 {

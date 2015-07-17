@@ -29,8 +29,9 @@
 
 #include "viennacl/scheduler/forwards.h"
 
-#include "viennacl/device_specific/utils.hpp"
 #include "viennacl/device_specific/forwards.h"
+#include "viennacl/device_specific/utils.hpp"
+#include "viennacl/device_specific/mapped_objects.hpp"
 
 namespace viennacl
 {

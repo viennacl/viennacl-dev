@@ -37,6 +37,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/prod.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
+#include "viennacl/compressed_matrix.hpp"
 
 #include "viennacl/linalg/detail/amg/amg_base.hpp"
 #include "viennacl/linalg/detail/amg/amg_coarse.hpp"

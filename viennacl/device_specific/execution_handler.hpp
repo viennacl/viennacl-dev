@@ -29,6 +29,7 @@
 
 #include "viennacl/device_specific/lazy_program_compiler.hpp"
 #include "viennacl/device_specific/templates/template_base.hpp"
+#include "viennacl/device_specific/utils.hpp"
 
 namespace viennacl
 {

@@ -1,3 +1,6 @@
+#ifndef VIENNACL_LINALG_OPENCL_KERNELS_BISECT_HPP_
+#define VIENNACL_LINALG_OPENCL_KERNELS_BISECT_HPP_
+
 /* =========================================================================
    Copyright (c) 2010-2014, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
@@ -25,9 +28,13 @@
 */
 
 
-#ifndef VIENNACL_LINALG_OPENCL_KERNELS_BISECT_HPP_
-#define VIENNACL_LINALG_OPENCL_KERNELS_BISECT_HPP_
 
+#include "viennacl/tools/tools.hpp"
+#include "viennacl/ocl/kernel.hpp"
+#include "viennacl/ocl/platform.hpp"
+#include "viennacl/ocl/utils.hpp"
+
+#include "viennacl/linalg/opencl/common.hpp"
 
 // declaration, forward
 

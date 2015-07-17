@@ -24,6 +24,7 @@
     Note: File created semi-automatically from OpenCL kernels.
 */
 
+#include "viennacl/forwards.h"
 
 namespace viennacl
 {

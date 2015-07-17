@@ -28,6 +28,7 @@
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/handle.hpp"
 #include "viennacl/linalg/opencl/kernels/matrix_solve.hpp"
+#include "viennacl/linalg/opencl/kernels/matrix.hpp"
 
 namespace viennacl
 {

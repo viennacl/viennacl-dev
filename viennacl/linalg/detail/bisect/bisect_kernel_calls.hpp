@@ -40,7 +40,7 @@
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
 
-
+#include "viennacl/linalg/detail/bisect/structs.hpp"
 #ifdef VIENNACL_WITH_OPENCL
    #include "viennacl/linalg/opencl/bisect_kernel_calls.hpp"
 #endif

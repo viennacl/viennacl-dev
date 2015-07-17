@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #endif
 
+#include "viennacl/forwards.h"
 #include "viennacl/tools/shared_ptr.hpp"
 
 namespace viennacl

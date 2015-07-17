@@ -32,6 +32,7 @@
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
+#include "viennacl/linalg/detail/op_executor.hpp"
 #include "viennacl/linalg/host_based/vector_operations.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL

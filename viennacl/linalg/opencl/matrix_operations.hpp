@@ -54,6 +54,31 @@ namespace linalg
 namespace opencl
 {
 
+namespace detail
+{
+
+  template<typename NumericT>
+  viennacl::ocl::kernel & legacy_kernel_for_matrix(matrix_base<NumericT> const & M, std::string const & kernel_name)
+  {
+    viennacl::ocl::context & ctx = traits::opencl_context(M);
+    viennacl::ocl::program * program;
+    if (M.row_major())
+    {
+      typedef viennacl::linalg::opencl::kernels::matrix_legacy<NumericT, row_major>  KernelClass;
+      KernelClass::init(ctx);
+      program = &ctx.get_program(KernelClass::program_name());
+    }
+    else
+    {
+      typedef viennacl::linalg::opencl::kernels::matrix_legacy<NumericT, column_major>  KernelClass;
+      KernelClass::init(ctx);
+      program = &ctx.get_program(KernelClass::program_name());
+    }
+    return program->get_kernel(kernel_name);
+  }
+
+}
+
 //
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //

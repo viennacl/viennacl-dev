@@ -27,6 +27,8 @@
 #include <iomanip>
 #include <sstream>
 
+#include "viennacl/forwards.h"
+
 namespace viennacl
 {
 namespace tools

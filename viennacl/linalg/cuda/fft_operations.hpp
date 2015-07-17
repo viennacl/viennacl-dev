@@ -30,6 +30,7 @@
 #include "viennacl/tools/tools.hpp"
 #include "viennacl/linalg/cuda/common.hpp"
 #include "viennacl/linalg/host_based/vector_operations.hpp"
+#include "viennacl/linalg/host_based/fft_operations.hpp"
 
 namespace viennacl
 {

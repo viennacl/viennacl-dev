@@ -66,6 +66,7 @@ exclude_files_vanilla=[
  "mixed_precision_cg.hpp",
  "nmf.hpp",
  "opencl.hpp",
+ "preset.hpp",
  "qr-method.hpp",
  "qr-method-common.hpp",
  "spai.hpp",
@@ -76,7 +77,23 @@ exclude_dirs_vanilla=[
  "../viennacl/linalg/cuda",
  "../viennacl/linalg/opencl",
  "../viennacl/linalg/opencl/kernels",
- "../viennacl/generator",
+ "../viennacl/device_specific",
+ "../viennacl/device_specific/builtin_database",
+ "../viennacl/device_specific/builtin_database/devices",
+ "../viennacl/device_specific/builtin_database/devices/accelerator",
+ "../viennacl/device_specific/builtin_database/devices/cpu",
+ "../viennacl/device_specific/builtin_database/devices/gpu",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd/northern_islands",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd/southern_islands",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd/volcanic_islands",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia/kepler",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia/maxwell",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia/tesla",
+ "../viennacl/device_specific/templates",
  "../viennacl/linalg/detail/amg",
  "../viennacl/linalg/detail/spai",
  "../viennacl/rand"]
@@ -92,9 +109,8 @@ exclude_files_opencl=["cuda.hpp",
  "vector_operations.hpp"]
 
 exclude_dirs_opencl=[
- "../viennacl/linalg/cuda",
- "../viennacl/generator",
- "../viennacl/rand"]
+ "../viennacl/linalg/cuda"
+]
   
 run_check(rootPath, exclude_dirs_opencl, exclude_files_opencl, "-I.. -DVIENNACL_WITH_OPENCL -lOpenCL")
 
@@ -117,16 +133,34 @@ exclude_files_cuda=[
  "mixed_precision_cg.hpp",
  "nmf.hpp",
  "opencl.hpp",
+ "preset.hpp",
  "qr-method.hpp",
  "qr-method-common.hpp",
  "spai.hpp",
+ "spgemm.hpp",
  "svd.hpp"]
 
 exclude_dirs_cuda=[
  "../viennacl/ocl",
  "../viennacl/linalg/opencl",
  "../viennacl/linalg/opencl/kernels",
- "../viennacl/generator",
+ "../viennacl/device_specific",
+ "../viennacl/device_specific/builtin_database",
+ "../viennacl/device_specific/builtin_database/devices",
+ "../viennacl/device_specific/builtin_database/devices/accelerator",
+ "../viennacl/device_specific/builtin_database/devices/cpu",
+ "../viennacl/device_specific/builtin_database/devices/gpu",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd/evergreen",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd/northern_islands",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd/southern_islands",
+ "../viennacl/device_specific/builtin_database/devices/gpu/amd/volcanic_islands",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia/fermi",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia/kepler",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia/maxwell",
+ "../viennacl/device_specific/builtin_database/devices/gpu/nvidia/tesla",
+ "../viennacl/device_specific/templates",
  "../viennacl/linalg/detail/amg",
  "../viennacl/linalg/detail/spai",
  "../viennacl/rand"]
