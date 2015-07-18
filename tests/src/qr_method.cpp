@@ -294,12 +294,28 @@ void test_eigen(const std::string& fn, bool is_symm, NumericT EPS)
 
 int main()
 {
+  float epsilon1 = 0.0001f;
 
-  test_eigen<float, viennacl::row_major   >("../examples/testdata/eigen/symm5.example", true, 0.0001f);
-  test_eigen<float, viennacl::column_major>("../examples/testdata/eigen/symm5.example", true, 0.0001f);
+  std::cout << "# Testing setup:" << std::endl;
+  std::cout << "  eps:     " << epsilon1 << std::endl;
+  std::cout << "  numeric: double" << std::endl;
+  std::cout << std::endl;
+  test_eigen<float, viennacl::row_major   >("../examples/testdata/eigen/symm5.example", true, epsilon1);
+  test_eigen<float, viennacl::column_major>("../examples/testdata/eigen/symm5.example", true, epsilon1);
 
-  test_eigen<double, viennacl::row_major   >("../examples/testdata/eigen/symm5.example", true, 1e-5);
-  test_eigen<double, viennacl::column_major>("../examples/testdata/eigen/symm5.example", true, 1e-5);
+  #ifdef VIENNACL_WITH_OPENCL
+  if ( viennacl::ocl::current_device().double_support() )
+  #endif
+  {
+    double epsilon2 = 1e-5;
+
+    std::cout << "# Testing setup:" << std::endl;
+    std::cout << "  eps:     " << epsilon2 << std::endl;
+    std::cout << "  numeric: double" << std::endl;
+    std::cout << std::endl;
+    test_eigen<double, viennacl::row_major   >("../examples/testdata/eigen/symm5.example", true, epsilon2);
+    test_eigen<double, viennacl::column_major>("../examples/testdata/eigen/symm5.example", true, epsilon2);
+  }
 
   //test_eigen<viennacl::row_major>("../../examples/testdata/eigen/symm3.example", true);  // Computation of this matrix takes very long
   //test_eigen<viennacl::column_major>("../../examples/testdata/eigen/symm3.example", true);
