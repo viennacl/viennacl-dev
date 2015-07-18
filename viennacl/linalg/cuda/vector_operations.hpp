@@ -44,6 +44,30 @@ namespace cuda
 //
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //
+template<typename DestNumericT, typename SrcNumericT>
+__global__ void convert_kernel(DestNumericT      * dest, unsigned int start_dest, unsigned int inc_dest, unsigned int size_dest,
+                               SrcNumericT const * src,  unsigned int start_src,  unsigned int inc_src)
+{
+  for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                    i < size_dest;
+                    i += gridDim.x * blockDim.x)
+    dest[i*inc_dest+start_dest] = src[i*inc_src+start_src];
+}
+
+
+template<typename DestNumericT, typename SrcNumericT>
+void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & src)
+{
+  convert_kernel<<<128, 128>>>(viennacl::cuda_arg(dest),
+                              static_cast<unsigned int>(viennacl::traits::start(dest)),
+                              static_cast<unsigned int>(viennacl::traits::stride(dest)),
+                              static_cast<unsigned int>(viennacl::traits::size(dest)),
+
+                              viennacl::cuda_arg(src),
+                              static_cast<unsigned int>(viennacl::traits::start(src)),
+                              static_cast<unsigned int>(viennacl::traits::stride(src)) );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("convert_kernel");
+}
 
 
 //////////////////////// av /////////////////////////////

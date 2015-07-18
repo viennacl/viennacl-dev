@@ -64,6 +64,25 @@ namespace detail
 //
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //
+template<typename DestNumericT, typename SrcNumericT>
+void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & src)
+{
+  DestNumericT      * data_dest = detail::extract_raw_pointer<DestNumericT>(dest);
+  SrcNumericT const * data_src  = detail::extract_raw_pointer<SrcNumericT>(src);
+
+  vcl_size_t start_dest = viennacl::traits::start(dest);
+  vcl_size_t inc_dest   = viennacl::traits::stride(dest);
+  vcl_size_t size_dest  = viennacl::traits::size(dest);
+
+  vcl_size_t start_src = viennacl::traits::start(src);
+  vcl_size_t inc_src   = viennacl::traits::stride(src);
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for if (size_dest > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+  for (long i = 0; i < static_cast<long>(size_dest); ++i)
+    data_dest[static_cast<vcl_size_t>(i)*inc_dest+start_dest] = static_cast<DestNumericT>(data_src[static_cast<vcl_size_t>(i)*inc_src+start_src]);
+}
 
 template<typename NumericT, typename ScalarT1>
 void av(vector_base<NumericT> & vec1,

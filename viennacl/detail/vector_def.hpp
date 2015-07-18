@@ -167,6 +167,10 @@ public:
   // Copy CTOR:
   vector_base(const self_type & other);
 
+  // Conversion CTOR:
+  template<typename OtherNumericT>
+  vector_base(const vector_base<OtherNumericT> & v1);
+
   /** @brief Assignment operator. Other vector needs to be of the same size, or this vector is not yet initialized.
     */
   self_type & operator=(const self_type & vec);
@@ -175,9 +179,9 @@ public:
     */
   template<typename LHS, typename RHS, typename OP>
   self_type & operator=(const vector_expression<const LHS, const RHS, OP> & proxy);
-  // assign vector range or vector slice
-  template<typename T>
-  self_type &  operator = (const vector_base<T> & v1);
+  /** @brief Converts a vector of a different numeric type to the current numeric type */
+  template<typename OtherNumericT>
+  self_type &  operator = (const vector_base<OtherNumericT> & v1);
   /** @brief Creates the vector from the supplied unit vector. */
   self_type & operator = (unit_vector<NumericT> const & v);
   /** @brief Creates the vector from the supplied zero vector. */

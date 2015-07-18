@@ -50,6 +50,33 @@ namespace viennacl
   namespace linalg
   {
 
+    template<typename DestNumericT, typename SrcNumericT>
+    void convert(matrix_base<DestNumericT> & dest, matrix_base<SrcNumericT> const & src)
+    {
+      assert(viennacl::traits::size1(dest) == viennacl::traits::size1(src) && bool("Incompatible matrix sizes in m1 = m2 (convert): size1(m1) != size1(m2)"));
+      assert(viennacl::traits::size2(dest) == viennacl::traits::size2(src) && bool("Incompatible matrix sizes in m1 = m2 (convert): size2(m1) != size2(m2)"));
+
+      switch (viennacl::traits::handle(dest).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::convert(dest, src);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::convert(dest, src);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::convert(dest, src);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
 
     template<typename NumericT,
               typename SizeT, typename DistanceT>

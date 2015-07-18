@@ -47,6 +47,33 @@ namespace viennacl
 {
   namespace linalg
   {
+    template<typename DestNumericT, typename SrcNumericT>
+    void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & src)
+    {
+      assert(viennacl::traits::size(dest) == viennacl::traits::size(src) && bool("Incompatible vector sizes in v1 = v2 (convert): size(v1) != size(v2)"));
+
+      switch (viennacl::traits::handle(dest).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::convert(dest, src);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::convert(dest, src);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::convert(dest, src);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
     template<typename T, typename ScalarType1>
     void av(vector_base<T> & vec1,
             vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)

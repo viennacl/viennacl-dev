@@ -48,9 +48,29 @@ namespace linalg
 {
 namespace opencl
 {
+
 //
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //
+template<typename DestNumericT, typename SrcNumericT>
+void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & src)
+{
+  assert(viennacl::traits::opencl_handle(dest).context() == viennacl::traits::opencl_handle(src).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  std::string kernel_name("convert_");
+  kernel_name += viennacl::ocl::type_to_string<DestNumericT>::apply();
+  kernel_name += "_";
+  kernel_name += viennacl::ocl::type_to_string<SrcNumericT>::apply();
+
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(dest).context());
+  viennacl::linalg::opencl::kernels::vector_convert::init(ctx);
+  viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_convert::program_name(), kernel_name);
+
+  viennacl::ocl::enqueue(k( dest, cl_uint(dest.start()), cl_uint(dest.stride()), cl_uint(dest.size()),
+                            src,  cl_uint( src.start()), cl_uint( src.stride())
+                        ) );
+
+}
 
 template<typename NumericT, typename ScalarT1>
 void av(vector_base<NumericT> & x,

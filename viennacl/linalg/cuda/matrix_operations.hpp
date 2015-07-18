@@ -53,6 +53,43 @@ namespace cuda
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //
 
+template<typename DestNumericT, typename SrcNumericT>
+void convert(matrix_base<DestNumericT> & mat1, matrix_base<SrcNumericT> const & mat2)
+{
+  assert(mat1.row_major() == mat2.row_major() && bool("Addition/subtraction on mixed matrix layouts not supported yet!"));
+
+  if (mat1.row_major())
+  {
+    convert_row_kernel<<<128, 128>>>(viennacl::cuda_arg(mat1),
+                                    static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
+                                    static_cast<unsigned int>(viennacl::traits::stride1(mat1)),          static_cast<unsigned int>(viennacl::traits::stride2(mat1)),
+                                    static_cast<unsigned int>(viennacl::traits::size1(mat1)),            static_cast<unsigned int>(viennacl::traits::size2(mat1)),
+                                    static_cast<unsigned int>(viennacl::traits::internal_size1(mat1)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat1)),
+
+                                    viennacl::cuda_arg(mat2),
+                                    static_cast<unsigned int>(viennacl::traits::start1(mat2)),           static_cast<unsigned int>(viennacl::traits::start2(mat2)),
+                                    static_cast<unsigned int>(viennacl::traits::stride1(mat2)),          static_cast<unsigned int>(viennacl::traits::stride2(mat2)),
+                                    static_cast<unsigned int>(viennacl::traits::internal_size1(mat2)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat2))
+                                  );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("convert_row_kernel");
+  }
+  else
+  {
+    convert_col_kernel<<<128, 128>>>(viennacl::cuda_arg(mat1),
+                                    static_cast<unsigned int>(viennacl::traits::start1(mat1)),           static_cast<unsigned int>(viennacl::traits::start2(mat1)),
+                                    static_cast<unsigned int>(viennacl::traits::stride1(mat1)),          static_cast<unsigned int>(viennacl::traits::stride2(mat1)),
+                                    static_cast<unsigned int>(viennacl::traits::size1(mat1)),            static_cast<unsigned int>(viennacl::traits::size2(mat1)),
+                                    static_cast<unsigned int>(viennacl::traits::internal_size1(mat1)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat1)),
+
+                                    viennacl::cuda_arg(mat2),
+                                    static_cast<unsigned int>(viennacl::traits::start1(mat2)),           static_cast<unsigned int>(viennacl::traits::start2(mat2)),
+                                    static_cast<unsigned int>(viennacl::traits::stride1(mat2)),          static_cast<unsigned int>(viennacl::traits::stride2(mat2)),
+                                    static_cast<unsigned int>(viennacl::traits::internal_size1(mat2)),   static_cast<unsigned int>(viennacl::traits::internal_size2(mat2))
+                                  );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("convert_col_kernel");
+  }
+}
+
 template<typename NumericT, typename SizeT, typename DistanceT>
 void trans(matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>,const matrix_base<NumericT, SizeT, DistanceT>, op_trans> const & proxy,
            matrix_base<NumericT> & temp_trans)

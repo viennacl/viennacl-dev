@@ -5,11 +5,12 @@ include_directories(${Boost_INCLUDE_DIRS})
 foreach(PROG matrix_product_float matrix_product_double blas3_solve fft_1d fft_2d iterators
              global_variables
              nmf
+             matrix_convert
              matrix_vector matrix_vector_int
              matrix_row_float matrix_row_double matrix_row_int
              matrix_col_float matrix_col_double matrix_col_int
              scalar scheduler_matrix scheduler_matrix_matrix self_assign qr_method qr_method_func scan scheduler_matrix_vector scheduler_sparse scheduler_vector sparse sparse_prod
-             tql vector_float_double vector_int vector_uint vector_multi_inner_prod
+             tql vector_convert vector_float_double vector_int vector_uint vector_multi_inner_prod
              spmdm)
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
    target_link_libraries(${PROG}-test-cpu ${Boost_LIBRARIES})
@@ -21,12 +22,13 @@ endforeach(PROG)
 if (ENABLE_OPENCL)
   foreach(PROG bisect matrix_product_float matrix_product_double blas3_solve fft_1d fft_2d iterators
                global_variables
+               matrix_convert
                matrix_vector matrix_vector_int
                matrix_row_float matrix_row_double matrix_row_int
                matrix_col_float matrix_col_double matrix_col_int
                nmf qr_method qr_method_func scan
                scalar self_assign sparse sparse_prod structured-matrices svd tql
-               vector_float_double vector_int vector_uint vector_multi_inner_prod
+               vector_convert vector_float_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      add_executable(${PROG}-test-opencl src/${PROG}.cpp)
      target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES} ${Boost_LIBRARIES})
@@ -46,11 +48,12 @@ endif (ENABLE_OPENCL)
 if (ENABLE_CUDA)
   foreach(PROG bisect matrix_product_float matrix_product_double blas3_solve fft_1d fft_2d iterators
                global_variables
+               matrix_convert
                matrix_vector matrix_vector_int
                matrix_row_float matrix_row_double matrix_row_int
                matrix_col_float matrix_col_double matrix_col_int nmf
                scalar self_assign sparse qr_method qr_method_func scan sparse_prod tql
-               vector_float_double vector_int vector_uint vector_multi_inner_prod
+               vector_convert vector_float_double vector_int vector_uint vector_multi_inner_prod
                spmdm)
      cuda_add_executable(${PROG}-test-cuda src/${PROG}.cu)
      target_link_libraries(${PROG}-test-cuda ${Boost_LIBRARIES})

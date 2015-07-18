@@ -745,7 +745,7 @@ public:
       handler.add("prod_TT", ds::matrix_product_template(matrix_product_params_TT, 'T', 'T'), scheduler::preset::mat_mat_prod(alpha, &A, true, &B, true, beta, &C));
 
     }
-	return viennacl::device_specific::at(handlers_map, key);
+  return viennacl::device_specific::at(handlers_map, key);
   }
 };
 
@@ -794,6 +794,133 @@ struct matrix_legacy
     } //if
   } //init
 };
+
+
+
+
+template<typename StringT>
+void generate_matrix_convert_row(StringT & source, std::string const & dest_type, std::string const & src_type)
+{
+ source.append(" __kernel void convert_row_" + dest_type + "_" + src_type + "( \n");
+ source.append("  __global " + dest_type + " * dest, \n");
+ source.append("  unsigned int start1_dest, unsigned int inc1_dest, unsigned int size1_dest, unsigned int internal_size1_dest, \n");
+ source.append("  unsigned int start2_dest, unsigned int inc2_dest, unsigned int size2_dest, unsigned int internal_size2_dest, \n");
+ source.append("  __global const " + src_type + " * src, \n");
+ source.append("  unsigned int start1_src, unsigned int inc1_src, unsigned int size1_src, unsigned int internal_size1_src, \n");
+ source.append("  unsigned int start2_src, unsigned int inc2_src, unsigned int size2_src, unsigned int internal_size2_src) \n");
+ source.append("  { \n");
+ source.append("   for (unsigned int i = get_group_id(0); i < size1_dest; i += get_num_groups(0)) \n");
+ source.append("     for (unsigned int j = get_local_id(0); j < size2_dest; j += get_local_size(0)) \n");
+ source.append("       dest[(start1_dest + i * inc1_dest) * internal_size2_dest + (start2_dest + j * inc2_dest)] = src[(start1_src + i * inc1_src) * internal_size2_src + (start2_src + j * inc2_src)]; \n");
+ source.append("  } \n");
+}
+
+template<typename StringT>
+void generate_matrix_convert_col(StringT & source, std::string const & dest_type, std::string const & src_type)
+{
+  source.append(" __kernel void convert_col_" + dest_type + "_" + src_type + "( \n");
+  source.append("  __global " + dest_type + " * dest, \n");
+  source.append("  unsigned int start1_dest, unsigned int inc1_dest, unsigned int size1_dest, unsigned int internal_size1_dest, \n");
+  source.append("  unsigned int start2_dest, unsigned int inc2_dest, unsigned int size2_dest, unsigned int internal_size2_dest, \n");
+  source.append("  __global const " + src_type + " * src, \n");
+  source.append("  unsigned int start1_src, unsigned int inc1_src, unsigned int size1_src, unsigned int internal_size1_src, \n");
+  source.append("  unsigned int start2_src, unsigned int inc2_src, unsigned int size2_src, unsigned int internal_size2_src) \n");
+  source.append("  { \n");
+  source.append("   for (unsigned int j = get_group_id(0); j < size2_dest; j += get_num_groups(0)) \n");
+  source.append("     for (unsigned int i = get_local_id(0); i < size1_dest; i += get_local_size(0)) \n");
+  source.append("       dest[(start1_dest + i * inc1_dest) + (start2_dest + j * inc2_dest) * internal_size1_dest] = src[(start1_src + i * inc1_src) + (start2_src + j * inc2_src) * internal_size1_src]; \n");
+  source.append("  } \n");
+}
+
+template<typename StringT>
+void generate_matrix_convert(StringT & source, std::string const & dest_type, std::string const & src_type)
+{
+  generate_matrix_convert_row(source, dest_type, src_type);
+  generate_matrix_convert_col(source, dest_type, src_type);
+}
+
+/** @brief Main kernel class for vector conversion routines (e.g. convert vector<int> to vector<float>). */
+struct matrix_convert
+{
+
+public:
+  static std::string program_name()
+  {
+    return "matrix_convert";
+  }
+
+  static void init(viennacl::ocl::context & ctx)
+  {
+    static std::map<cl_context, bool> init_done;
+    if (!init_done[ctx.handle().get()])
+    {
+      std::string source;
+      source.reserve(4096);
+
+      // int
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<int>::apply(), viennacl::ocl::type_to_string<int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<int>::apply(), viennacl::ocl::type_to_string<unsigned int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<int>::apply(), viennacl::ocl::type_to_string<long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<int>::apply(), viennacl::ocl::type_to_string<unsigned long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<int>::apply(), viennacl::ocl::type_to_string<float>::apply());
+
+      // unsigned int
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned int>::apply(), viennacl::ocl::type_to_string<int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned int>::apply(), viennacl::ocl::type_to_string<unsigned int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned int>::apply(), viennacl::ocl::type_to_string<long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned int>::apply(), viennacl::ocl::type_to_string<unsigned long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned int>::apply(), viennacl::ocl::type_to_string<float>::apply());
+
+      // long
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<long>::apply(), viennacl::ocl::type_to_string<int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<long>::apply(), viennacl::ocl::type_to_string<unsigned int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<long>::apply(), viennacl::ocl::type_to_string<long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<long>::apply(), viennacl::ocl::type_to_string<unsigned long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<long>::apply(), viennacl::ocl::type_to_string<float>::apply());
+
+      // unsigned long
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned long>::apply(), viennacl::ocl::type_to_string<int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned long>::apply(), viennacl::ocl::type_to_string<unsigned int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned long>::apply(), viennacl::ocl::type_to_string<long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned long>::apply(), viennacl::ocl::type_to_string<unsigned long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned long>::apply(), viennacl::ocl::type_to_string<float>::apply());
+
+      // float
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<float>::apply(), viennacl::ocl::type_to_string<int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<float>::apply(), viennacl::ocl::type_to_string<unsigned int>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<float>::apply(), viennacl::ocl::type_to_string<long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<float>::apply(), viennacl::ocl::type_to_string<unsigned long>::apply());
+      generate_matrix_convert(source, viennacl::ocl::type_to_string<float>::apply(), viennacl::ocl::type_to_string<float>::apply());
+
+      if (ctx.current_device().double_support())
+      {
+        viennacl::ocl::append_double_precision_pragma<double>(ctx, source);
+
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<int>::apply(),           viennacl::ocl::type_to_string<double>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned int>::apply(),  viennacl::ocl::type_to_string<double>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<long>::apply(),          viennacl::ocl::type_to_string<double>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<unsigned long>::apply(), viennacl::ocl::type_to_string<double>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<float>::apply(),         viennacl::ocl::type_to_string<double>::apply());
+
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<int>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<unsigned int>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<long>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<unsigned long>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<float>::apply());
+        generate_matrix_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<double>::apply());
+      }
+
+      std::string prog_name = program_name();
+      #ifdef VIENNACL_BUILD_INFO
+      std::cout << "Creating program " << prog_name << std::endl;
+      #endif
+      ctx.add_program(source, prog_name);
+      init_done[ctx.handle().get()] = true;
+    } //if
+  } //init
+
+};
+
 
 }  // namespace kernels
 }  // namespace opencl

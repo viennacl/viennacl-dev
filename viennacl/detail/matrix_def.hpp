@@ -157,8 +157,17 @@ public:
                        bool is_row_major);
 #endif
 
+  /* Copy CTOR */
   matrix_base(const self_type & other);
+
+  /* Conversion CTOR */
+  template<typename OtherNumericT>
+  matrix_base(const matrix_base<OtherNumericT, SizeT, DistanceT> & other);
+
   self_type & operator=(const self_type & other);
+  template<typename OtherNumericT>
+  self_type & operator=(const matrix_base<OtherNumericT, SizeT, DistanceT> & other);
+
   /** @brief Implementation of the operation m1 = m2 @ alpha, where @ denotes either multiplication or division, and alpha is either a CPU or a GPU scalar
     * @param proxy  An expression template proxy class. */
   template<typename LHS, typename RHS, typename OP>

@@ -223,8 +223,27 @@ matrix_base<NumericT, SizeT, DistanceT>::matrix_base(cl_mem mem, viennacl::conte
 }
 #endif
 
+// Copy CTOR
 template<class NumericT, typename SizeT, typename DistanceT>
 matrix_base<NumericT, SizeT, DistanceT>::matrix_base(const matrix_base<NumericT, SizeT, DistanceT> & other) :
+  size1_(other.size1()), size2_(other.size2()), start1_(0), start2_(0), stride1_(1), stride2_(1),
+  internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size)),
+  internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, dense_padding_size)),
+  row_major_fixed_(true), row_major_(other.row_major())
+{
+  elements_.switch_active_handle_id(viennacl::traits::active_handle_id(other));
+  if (internal_size() > 0)
+  {
+    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(other));
+    clear();
+    self_type::operator=(other);
+  }
+}
+
+// Conversion CTOR
+template<typename NumericT, typename SizeT, typename DistanceT>
+template<typename OtherNumericT>
+matrix_base<NumericT, SizeT, DistanceT>::matrix_base(const matrix_base<OtherNumericT, SizeT, DistanceT> & other) :
   size1_(other.size1()), size2_(other.size2()), start1_(0), start2_(0), stride1_(1), stride2_(1),
   internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size)),
   internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, dense_padding_size)),
@@ -256,6 +275,24 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
 
   viennacl::linalg::am(*this,
                        other, cpu_value_type(1.0), 1, false, false);
+  return *this;
+}
+
+// Conversion assignment
+template<class NumericT, typename SizeT, typename DistanceT>
+template<typename OtherNumericT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator=(const matrix_base<OtherNumericT, SizeT, DistanceT> & other)
+{
+  if (internal_size() == 0)
+  {
+    if (other.internal_size() == 0)
+      return *this;
+    if (!row_major_fixed_)
+      row_major_ = other.row_major();
+    resize(other.size1(), other.size2(), false);
+  }
+
+  viennacl::linalg::convert(*this, other);
   return *this;
 }
 
