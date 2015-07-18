@@ -164,16 +164,16 @@ public:
       ds::reduction_template::parameters_type reduction_params = ds::builtin_database::reduction_params<NumericT>(device);
 
       //Dummy holders for the statements
-      viennacl::vector<NumericT> *x;
-      viennacl::vector<NumericT> *y;
-      viennacl::vector<NumericT> *res;
-      viennacl::vector_range< viennacl::vector_base<NumericT> > *da;
+      viennacl::vector<NumericT> x;
+      viennacl::vector<NumericT> y;
+      viennacl::vector<NumericT> res;
+      viennacl::vector_range< viennacl::vector_base<NumericT> > da(res, viennacl::range(0, 1));
 
-      generate_inner_prod_impl(handler, "inner_prod_1", reduction_params, 1, x, y, da);
-      generate_inner_prod_impl(handler, "inner_prod_2", reduction_params, 2, x, y, da);
-      generate_inner_prod_impl(handler, "inner_prod_3", reduction_params, 3, x, y, da);
-      generate_inner_prod_impl(handler, "inner_prod_4", reduction_params, 4, x, y, da);
-      generate_inner_prod_impl(handler, "inner_prod_8", reduction_params, 8, x, y, da);
+      generate_inner_prod_impl(handler, "inner_prod_1", reduction_params, 1, &x, &y, &da);
+      generate_inner_prod_impl(handler, "inner_prod_2", reduction_params, 2, &x, &y, &da);
+      generate_inner_prod_impl(handler, "inner_prod_3", reduction_params, 3, &x, &y, &da);
+      generate_inner_prod_impl(handler, "inner_prod_4", reduction_params, 4, &x, &y, &da);
+      generate_inner_prod_impl(handler, "inner_prod_8", reduction_params, 8, &x, &y, &da);
     }
     return viennacl::device_specific::at(handlers_map, h);
   }
