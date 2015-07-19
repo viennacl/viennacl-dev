@@ -58,7 +58,7 @@ namespace viennacl
           viennacl::linalg::opencl::prod_impl(mat, vec, result);
           break;
         default:
-          throw "not implemented";
+          throw std::runtime_error("not implemented");
       }
     }
 

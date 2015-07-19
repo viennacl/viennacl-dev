@@ -133,7 +133,7 @@ public:
 #ifdef VIENNACL_WITH_OPENCL
         active_handle_ = new_id;
 #else
-        throw "compiled without OpenCL suppport!";
+        throw memory_exception("compiled without OpenCL suppport!");
 #endif
       }
       else if (active_handle_ == CUDA_MEMORY)
@@ -141,11 +141,11 @@ public:
 #ifdef VIENNACL_WITH_CUDA
         active_handle_ = new_id;
 #else
-        throw "compiled without CUDA suppport!";
+        throw memory_exception("compiled without CUDA suppport!");
 #endif
       }
       else
-        throw "invalid new memory region!";
+        throw memory_exception("invalid new memory region!");
     }
   }
 

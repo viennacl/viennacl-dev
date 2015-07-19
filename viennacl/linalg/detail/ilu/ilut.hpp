@@ -309,7 +309,7 @@ void precondition(viennacl::compressed_matrix<NumericT> const & A,
         if (value <= 0 && value >= 0)
         {
           std::cerr << "ViennaCL: FATAL ERROR in ILUT(): Diagonal entry computed to zero (" << value << ") in row " << i << "!" << std::endl;
-          throw "ILUT zero diagonal!";
+          throw zero_on_diagonal_exception("ILUT zero diagonal!");
         }
       }
       else // entry for U:

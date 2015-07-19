@@ -77,7 +77,7 @@ class jacobi_precond
           }
         }
         if (!diag_found)
-          throw "ViennaCL: Zero in diagonal encountered while setting up Jacobi preconditioner!";
+          throw zero_on_diagonal_exception("ViennaCL: Zero in diagonal encountered while setting up Jacobi preconditioner!");
       }
     }
 

@@ -64,6 +64,7 @@
 #include <cstddef>
 #include <cassert>
 #include <string>
+#include <stdexcept>
 
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/version.hpp"
@@ -591,6 +592,18 @@ namespace viennacl
     virtual ~cuda_not_available_exception() throw() {}
   private:
     std::string message_;
+  };
+
+  class zero_on_diagonal_exception : public std::runtime_error
+  {
+  public:
+    zero_on_diagonal_exception(std::string const & what_arg) : std::runtime_error(what_arg) {}
+  };
+
+  class unknown_norm_exception : public std::runtime_error
+  {
+  public:
+    unknown_norm_exception(std::string const & what_arg) : std::runtime_error(what_arg) {}
   };
 
 
