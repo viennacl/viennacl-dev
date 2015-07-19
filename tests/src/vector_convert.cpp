@@ -72,7 +72,7 @@ int test(STLVectorT1 & std_src,  std::size_t start_src,  std::size_t inc_src,  s
   typedef typename STLVectorT2::value_type  DestNumericT;
 
   for (std::size_t i=0; i<size_src; ++i)
-    std_dest[start_dest + i * inc_dest] = std_src[start_src + i * inc_src];
+    std_dest[start_dest + i * inc_dest] = static_cast<DestNumericT>(std_src[start_src + i * inc_src]);
 
   vcl_dest = vcl_src; // here is the conversion taking place
 
@@ -125,7 +125,7 @@ int test()
   viennacl::copy(std_src, vcl_src);
 
   viennacl::vector<FromNumericT> vcl_src_small(small_size);
-  viennacl::copy(std_src.begin(), std_src.begin() + small_size, vcl_src_small.begin());
+  viennacl::copy(std_src.begin(), std_src.begin() + typename std::vector<FromNumericT>::difference_type(small_size), vcl_src_small.begin());
   viennacl::vector<ToNumericT> vcl_dest_small(small_size);
 
   std::size_t r1_start = 1 +     vcl_src.size() / 4;

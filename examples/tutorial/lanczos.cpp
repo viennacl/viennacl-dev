@@ -95,7 +95,7 @@ int main()
     std::cout << "Approx. eigenvalue " << std::setprecision(7) << lanczos_eigenvalues[i];
 
     // test approximated eigenvector by computing A*v:
-    viennacl::vector<ScalarType> approx_eigenvector = viennacl::column(approx_eigenvectors_A, i);
+    viennacl::vector<ScalarType> approx_eigenvector = viennacl::column(approx_eigenvectors_A, static_cast<unsigned int>(i));
     viennacl::vector<ScalarType> Aq = viennacl::linalg::prod(A, approx_eigenvector);
     std::cout << " (" << viennacl::linalg::inner_prod(Aq, approx_eigenvector) << " for <Av,v> with approx. eigenvector v)" << std::endl;
   }

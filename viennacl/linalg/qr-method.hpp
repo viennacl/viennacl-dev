@@ -769,7 +769,7 @@ void update_float_QR_column_gpu(matrix_base<SCALARTYPE> & A,
         }
 
 
-        boost::numeric::ublas::matrix<float> eigen_values(A.size1(), A.size1());
+        boost::numeric::ublas::matrix<SCALARTYPE> eigen_values(A.size1(), A.size1());
         eigen_values.clear();
 
         for (vcl_size_t i = 0; i < A.size1(); i++)

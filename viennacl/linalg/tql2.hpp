@@ -38,11 +38,11 @@ namespace linalg
   // This is derived from the Algol procedures tql1, by Bowdler, Martin, Reinsch, and Wilkinson,
   // Handbook for Auto. Comp., Vol.ii-Linear Algebra, and the corresponding Fortran subroutine in EISPACK.
   template <typename SCALARTYPE, typename VectorType>
-  void tql1(int n,
+  void tql1(vcl_size_t n,
             VectorType & d,
             VectorType & e)
   {
-      for (int i = 1; i < n; i++)
+      for (vcl_size_t i = 1; i < n; i++)
           e[i - 1] = e[i];
 
 
@@ -53,11 +53,11 @@ namespace linalg
       SCALARTYPE eps = static_cast<SCALARTYPE>(1e-6);
 
 
-      for (int l = 0; l < n; l++)
+      for (vcl_size_t l = 0; l < n; l++)
       {
           // Find small subdiagonal element.
           tst1 = std::max<SCALARTYPE>(tst1, std::fabs(d[l]) + std::fabs(e[l]));
-          int m = l;
+          vcl_size_t m = l;
           while (m < n)
           {
               if (std::fabs(e[m]) <= eps * tst1)
@@ -68,7 +68,7 @@ namespace linalg
           // If m == l, d[l) is an eigenvalue, otherwise, iterate.
           if (m > l)
           {
-              int iter = 0;
+              vcl_size_t iter = 0;
               do
               {
                   iter = iter + 1;  // (Could check iteration count here.)
@@ -85,7 +85,7 @@ namespace linalg
                   d[l] = e[l] / (p + r);
                   d[l + 1] = e[l] * (p + r);
                   SCALARTYPE h = g - d[l];
-                  for (int i = l + 2; i < n; i++)
+                  for (vcl_size_t i = l + 2; i < n; i++)
                   {
                       d[i] -= h;
                   }
@@ -96,16 +96,16 @@ namespace linalg
                   p = d[m];
                   SCALARTYPE c = 1;
                   SCALARTYPE s = 0;
-                  for (int i = m - 1; i >= l; i--)
+                  for (int i = int(m - 1); i >= int(l); i--)
                   {
-                      g = c * e[i];
+                      g = c * e[vcl_size_t(i)];
                       h = c * p;
-                      r = viennacl::linalg::detail::pythag<SCALARTYPE>(p, e[i]);
-                      e[i + 1] = s * r;
-                      s = e[i] / r;
+                      r = viennacl::linalg::detail::pythag<SCALARTYPE>(p, e[vcl_size_t(i)]);
+                      e[vcl_size_t(i) + 1] = s * r;
+                      s = e[vcl_size_t(i)] / r;
                       c = p / r;
-                      p = c * d[i] - s * g;
-                      d[i + 1] = h + s * (c * g + s * d[i]);
+                      p = c * d[vcl_size_t(i)] - s * g;
+                      d[vcl_size_t(i) + 1] = h + s * (c * g + s * d[vcl_size_t(i)]);
                   }
                   e[l] = s * p;
                   d[l] = c * p;
@@ -132,13 +132,13 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
           VectorType & d,
           VectorType & e)
 {
-    int n = static_cast<int>(viennacl::traits::size1(Q));
+    vcl_size_t n = static_cast<vcl_size_t>(viennacl::traits::size1(Q));
 
     //boost::numeric::ublas::vector<SCALARTYPE> cs(n), ss(n);
     std::vector<SCALARTYPE> cs(n), ss(n);
     viennacl::vector<SCALARTYPE> tmp1(n), tmp2(n);
 
-    for (int i = 1; i < n; i++)
+    for (vcl_size_t i = 1; i < n; i++)
         e[i - 1] = e[i];
 
     e[n - 1] = 0;
@@ -147,11 +147,11 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
     SCALARTYPE tst1 = 0;
     SCALARTYPE eps = static_cast<SCALARTYPE>(viennacl::linalg::detail::EPS);
 
-    for (int l = 0; l < n; l++)
+    for (vcl_size_t l = 0; l < n; l++)
     {
         // Find small subdiagonal element.
         tst1 = std::max<SCALARTYPE>(tst1, std::fabs(d[l]) + std::fabs(e[l]));
-        int m = l;
+        vcl_size_t m = l;
         while (m < n)
         {
             if (std::fabs(e[m]) <= eps * tst1)
@@ -162,7 +162,7 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
         // If m == l, d[l) is an eigenvalue, otherwise, iterate.
         if (m > l)
         {
-            int iter = 0;
+            vcl_size_t iter = 0;
             do
             {
                 iter = iter + 1;  // (Could check iteration count here.)
@@ -180,7 +180,7 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 d[l + 1] = e[l] * (p + r);
                 SCALARTYPE dl1 = d[l + 1];
                 SCALARTYPE h = g - d[l];
-                for (int i = l + 2; i < n; i++)
+                for (vcl_size_t i = l + 2; i < n; i++)
                 {
                     d[i] -= h;
                 }
@@ -195,23 +195,23 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 SCALARTYPE el1 = e[l + 1];
                 SCALARTYPE s = 0;
                 SCALARTYPE s2 = 0;
-                for (int i = m - 1; i >= l; i--)
+                for (int i = int(m - 1); i >= int(l); i--)
                 {
                     c3 = c2;
                     c2 = c;
                     s2 = s;
-                    g = c * e[i];
+                    g = c * e[vcl_size_t(i)];
                     h = c * p;
-                    r = viennacl::linalg::detail::pythag(p, e[i]);
-                    e[i + 1] = s * r;
-                    s = e[i] / r;
+                    r = viennacl::linalg::detail::pythag(p, e[vcl_size_t(i)]);
+                    e[vcl_size_t(i) + 1] = s * r;
+                    s = e[vcl_size_t(i)] / r;
                     c = p / r;
-                    p = c * d[i] - s * g;
-                    d[i + 1] = h + s * (c * g + s * d[i]);
+                    p = c * d[vcl_size_t(i)] - s * g;
+                    d[vcl_size_t(i) + 1] = h + s * (c * g + s * d[vcl_size_t(i)]);
 
 
-                    cs[i] = c;
-                    ss[i] = s;
+                    cs[vcl_size_t(i)] = c;
+                    ss[vcl_size_t(i)] = s;
                 }
 
 
@@ -222,7 +222,7 @@ void tql2(matrix_base<SCALARTYPE, F> & Q,
                 viennacl::copy(cs, tmp1);
                 viennacl::copy(ss, tmp2);
 
-                viennacl::linalg::givens_next(Q, tmp1, tmp2, l, m);
+                viennacl::linalg::givens_next(Q, tmp1, tmp2, int(l), int(m));
 
                 // Check for convergence.
             }

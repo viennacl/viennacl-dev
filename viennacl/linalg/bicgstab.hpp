@@ -177,12 +177,14 @@ namespace detail
 
       viennacl::fast_copy(inner_prod_buffer.begin(), inner_prod_buffer.end(), host_inner_prod_buffer.begin());
 
-       r_dot_r0 = std::accumulate(host_inner_prod_buffer.begin(),                              host_inner_prod_buffer.begin() +     buffer_size_per_vector, NumericT(0));
-      As_dot_As = std::accumulate(host_inner_prod_buffer.begin() +     buffer_size_per_vector, host_inner_prod_buffer.begin() + 2 * buffer_size_per_vector, NumericT(0));
-      As_dot_s  = std::accumulate(host_inner_prod_buffer.begin() + 2 * buffer_size_per_vector, host_inner_prod_buffer.begin() + 3 * buffer_size_per_vector, NumericT(0));
-      Ap_dot_r0 = std::accumulate(host_inner_prod_buffer.begin() + 3 * buffer_size_per_vector, host_inner_prod_buffer.begin() + 4 * buffer_size_per_vector, NumericT(0));
-      As_dot_r0 = std::accumulate(host_inner_prod_buffer.begin() + 4 * buffer_size_per_vector, host_inner_prod_buffer.begin() + 5 * buffer_size_per_vector, NumericT(0));
-       s_dot_s  = std::accumulate(host_inner_prod_buffer.begin() + 5 * buffer_size_per_vector, host_inner_prod_buffer.begin() + 6 * buffer_size_per_vector, NumericT(0));
+      typedef typename std::vector<NumericT>::difference_type       difference_type;
+
+       r_dot_r0 = std::accumulate(host_inner_prod_buffer.begin(),                                               host_inner_prod_buffer.begin() + difference_type(    buffer_size_per_vector), NumericT(0));
+      As_dot_As = std::accumulate(host_inner_prod_buffer.begin() + difference_type(    buffer_size_per_vector), host_inner_prod_buffer.begin() + difference_type(2 * buffer_size_per_vector), NumericT(0));
+      As_dot_s  = std::accumulate(host_inner_prod_buffer.begin() + difference_type(2 * buffer_size_per_vector), host_inner_prod_buffer.begin() + difference_type(3 * buffer_size_per_vector), NumericT(0));
+      Ap_dot_r0 = std::accumulate(host_inner_prod_buffer.begin() + difference_type(3 * buffer_size_per_vector), host_inner_prod_buffer.begin() + difference_type(4 * buffer_size_per_vector), NumericT(0));
+      As_dot_r0 = std::accumulate(host_inner_prod_buffer.begin() + difference_type(4 * buffer_size_per_vector), host_inner_prod_buffer.begin() + difference_type(5 * buffer_size_per_vector), NumericT(0));
+       s_dot_s  = std::accumulate(host_inner_prod_buffer.begin() + difference_type(5 * buffer_size_per_vector), host_inner_prod_buffer.begin() + difference_type(6 * buffer_size_per_vector), NumericT(0));
 
       alpha =   r_dot_r0 / Ap_dot_r0;
       beta  = - As_dot_r0 / Ap_dot_r0;

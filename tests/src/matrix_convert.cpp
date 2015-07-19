@@ -85,7 +85,7 @@ int test(STLVectorT1 & std_src,  std::size_t start1_src,  std::size_t inc1_src, 
 
   for (std::size_t i=0; i<size1_src; ++i)
     for (std::size_t j=0; j<size2_src; ++j)
-      std_dest[(start1_dest + i * inc1_dest) * internal_size2_dest + (start2_dest + j * inc2_dest)] = std_src[(start1_src + i * inc1_src) * internal_size2_src + (start2_src + j * inc2_src)];
+      std_dest[(start1_dest + i * inc1_dest) * internal_size2_dest + (start2_dest + j * inc2_dest)] = static_cast<DestNumericT>(std_src[(start1_src + i * inc1_src) * internal_size2_src + (start2_src + j * inc2_src)]);
 
   vcl_dest = vcl_src; // here is the conversion taking place
 
