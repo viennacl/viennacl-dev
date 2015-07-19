@@ -26,6 +26,8 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <stdexcept>
+#include <sstream>
 
 #include "viennacl/forwards.h"
 #include "viennacl/tools/shared_ptr.hpp"
@@ -54,16 +56,27 @@ typedef viennacl::tools::shared_ptr<char>  handle_type;
 // *
 //
 
+class cuda_exception : public std::runtime_error
+{
+public:
+  cuda_exception(std::string const & what_arg, cudaError_t err_code) : std::runtime_error(what_arg), error_code_(err_code) {}
+
+  cudaError_t error_code() const { return error_code_; }
+
+private:
+  cudaError_t error_code_;
+};
+
 namespace detail
 {
-
 
   inline void cuda_error_check(cudaError error_code, const char *file, const int line )
   {
     if (cudaSuccess != error_code)
     {
-      std::cerr << file << "(" << line << "): " << ": CUDA Runtime API error " << error_code << ": " << cudaGetErrorString( error_code ) << std::endl;
-      throw "CUDA error";
+      std::stringstream ss;
+      ss << file << "(" << line << "): " << ": CUDA Runtime API error " << error_code << ": " << cudaGetErrorString( error_code ) << std::endl;
+      throw viennacl::backend::cuda::cuda_exception(ss.str(), error_code);
     }
   }
 

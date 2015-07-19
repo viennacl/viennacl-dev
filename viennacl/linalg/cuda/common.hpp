@@ -22,6 +22,9 @@
     @brief Common routines for CUDA execution
 */
 
+#include <sstream>
+#include <cuda_runtime.h>
+#include "viennacl/backend/cuda.hpp"
 #include "viennacl/traits/handle.hpp"
 
 #define VIENNACL_CUDA_LAST_ERROR_CHECK(message)  detail::cuda_last_error_check (message, __FILE__, __LINE__)
@@ -149,6 +152,8 @@ namespace linalg
 {
 namespace cuda
 {
+
+
 namespace detail
 {
 
@@ -163,8 +168,9 @@ inline void cuda_last_error_check(const char * message, const char * file, const
 
   if (cudaSuccess != error_code)
   {
-    std::cerr << file << "(" << line << "): " << ": getLastCudaError() CUDA error " << error_code << ": " << cudaGetErrorString( error_code ) << " @ " << message << std::endl;
-    throw "CUDA error";
+    std::stringstream ss;
+    ss << file << "(" << line << "): " << ": getLastCudaError() CUDA error " << error_code << ": " << cudaGetErrorString( error_code ) << " @ " << message << std::endl;
+    throw viennacl::backend::cuda::cuda_exception(ss.str(), error_code);
   }
 }
 

@@ -2341,44 +2341,6 @@ namespace detail
 
   }
 
-  // C = A * B, using fast kernel
-  template<typename MatrixT1, typename MatrixT2, typename MatrixT3, typename ScalarT>
-  void prod_fast_kernel(const MatrixT1 & A,
-                        const MatrixT2 & B,
-                        MatrixT3 & C,
-                        ScalarT alpha,
-                        ScalarT beta,
-                        std::string kernel_name)
-  {
-    typedef typename viennacl::result_of::cpu_value_type< typename MatrixT1::value_type >::type   cpu_value_type;
-
-    cpu_value_type cl_alpha = static_cast<cpu_value_type>(alpha);
-    cpu_value_type cl_beta  = static_cast<cpu_value_type>(beta);
-
-    /*viennacl::ocl::enqueue(k(cl_alpha,
-                            viennacl::traits::opencl_handle(A),
-                            cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
-                            cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
-                            cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
-                            cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
-
-                            viennacl::traits::opencl_handle(B),
-                            cl_uint(viennacl::traits::start1(B)),           cl_uint(viennacl::traits::start2(B)),
-                            cl_uint(viennacl::traits::stride1(B)),          cl_uint(viennacl::traits::stride2(B)),
-                            cl_uint(viennacl::traits::size1(B)),            cl_uint(viennacl::traits::size2(B)),
-                            cl_uint(viennacl::traits::internal_size1(B)),   cl_uint(viennacl::traits::internal_size2(B)),
-
-                            cl_beta,
-                            viennacl::traits::opencl_handle(C),
-                            cl_uint(viennacl::traits::start1(C)),           cl_uint(viennacl::traits::start2(C)),
-                            cl_uint(viennacl::traits::stride1(C)),          cl_uint(viennacl::traits::stride2(C)),
-                            cl_uint(viennacl::traits::size1(C)),            cl_uint(viennacl::traits::size2(C)),
-                            cl_uint(viennacl::traits::internal_size1(C)),   cl_uint(viennacl::traits::internal_size2(C))
-                            )
-                          );*/
-
-    throw "not implemented yet";
-  }
 
   template<typename MatrixT1, typename MatrixT2, typename MatrixT3, typename ScalarT>
   void prod(const MatrixT1 & A, bool transposed_A,
