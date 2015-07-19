@@ -256,16 +256,13 @@ template<typename StringT>
 void generate_vector_convert(StringT & source, std::string const & dest_type, std::string const & src_type)
 {
  source.append(" __kernel void convert_" + dest_type + "_" + src_type + "( \n");
- source.append("  __global const dest_type * dest, \n");
- source.append("  unsigned int start_dest, \n");
- source.append("  unsigned int inc_dest, \n");
- source.append("  unsigned int size_dest, \n");
- source.append("  __global const src_type  * src, \n");
- source.append("  unsigned int start_src, \n");
- source.append("  unsigned int inc_src) \n");
+ source.append("  __global " + dest_type + " * dest, \n");
+ source.append("  unsigned int start_dest, unsigned int inc_dest, unsigned int size_dest, \n");
+ source.append("  __global const " + src_type + " * src, \n");
+ source.append("  unsigned int start_src, unsigned int inc_src) \n");
  source.append("  { \n");
  source.append("   for (unsigned int i = get_global_id(0); i < size_dest; i += get_global_size(0)) \n");
- source.append("     dest[start_dest + i * inc_dest] = src[start_src + i * inc_src] \n");
+ source.append("     dest[start_dest + i * inc_dest] = src[start_src + i * inc_src]; \n");
  source.append("  } \n");
 }
 
@@ -337,7 +334,7 @@ public:
         generate_vector_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<long>::apply());
         generate_vector_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<unsigned long>::apply());
         generate_vector_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<float>::apply());
-        generate_vector_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<float>::apply());
+        generate_vector_convert(source, viennacl::ocl::type_to_string<double>::apply(), viennacl::ocl::type_to_string<double>::apply());
       }
 
       std::string prog_name = program_name();
