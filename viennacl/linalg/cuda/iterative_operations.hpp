@@ -110,8 +110,75 @@ void pipelined_cg_vector_update(vector_base<NumericT> & result,
 //
 
 
+template<unsigned int SubWarpSizeV, typename NumericT>
+__global__ void pipelined_cg_csr_vec_mul_blocked_kernel(
+          const unsigned int * row_indices,
+          const unsigned int * column_indices,
+          const NumericT * elements,
+          const NumericT * p,
+          NumericT * Ap,
+          unsigned int size,
+          NumericT * inner_prod_buffer,
+          unsigned int buffer_size)
+{
+  __shared__ NumericT shared_elements[256];
+  NumericT inner_prod_ApAp = 0;
+  NumericT inner_prod_pAp = 0;
+
+  const unsigned int id_in_row = threadIdx.x % SubWarpSizeV;
+  const unsigned int block_increment = blockDim.x * ((size - 1) / (gridDim.x * blockDim.x) + 1);
+  const unsigned int block_start = blockIdx.x * block_increment;
+  const unsigned int block_stop  = min(block_start + block_increment, size);
+
+  for (unsigned int row  = block_start + threadIdx.x / SubWarpSizeV;
+                    row  < block_stop;
+                    row += blockDim.x / SubWarpSizeV)
+  {
+    NumericT dot_prod = NumericT(0);
+    unsigned int row_end = row_indices[row+1];
+    for (unsigned int i = row_indices[row] + id_in_row; i < row_end; i += SubWarpSizeV)
+      dot_prod += elements[i] * p[column_indices[i]];
+
+    shared_elements[threadIdx.x] = dot_prod;
+    if (1  < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^  1];
+    if (2  < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^  2];
+    if (4  < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^  4];
+    if (8  < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^  8];
+    if (16 < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^ 16];
+
+    if (id_in_row == 0)
+    {
+      Ap[row] = shared_elements[threadIdx.x];
+      inner_prod_ApAp += shared_elements[threadIdx.x] * shared_elements[threadIdx.x];
+      inner_prod_pAp  +=                       p[row] * shared_elements[threadIdx.x];
+    }
+  }
+
+  ////////// parallel reduction in work group
+  __shared__ NumericT shared_array_ApAp[256];
+  __shared__ NumericT shared_array_pAp[256];
+  shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
+  shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    if (threadIdx.x < stride)
+    {
+      shared_array_ApAp[threadIdx.x] += shared_array_ApAp[threadIdx.x + stride];
+      shared_array_pAp[threadIdx.x]  += shared_array_pAp[threadIdx.x + stride];
+    }
+  }
+
+  // write results to result array
+  if (threadIdx.x == 0) {
+    inner_prod_buffer[  buffer_size + blockIdx.x] = shared_array_ApAp[0];
+    inner_prod_buffer[2*buffer_size + blockIdx.x] = shared_array_pAp[0];
+  }
+
+}
+
 template<typename NumericT>
-__global__ void pipelined_cg_csr_vec_mul_kernel(
+__global__ void pipelined_cg_csr_vec_mul_adaptive_kernel(
           const unsigned int * row_indices,
           const unsigned int * column_indices,
           const unsigned int * row_blocks,
@@ -218,17 +285,40 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_csr_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
-                                                viennacl::cuda_arg<unsigned int>(A.handle2()),
-                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
-                                                viennacl::cuda_arg<NumericT>(A.handle()),
-                                                static_cast<unsigned int>(A.blocks1()),
-                                                viennacl::cuda_arg(p),
-                                                viennacl::cuda_arg(Ap),
-                                                size,
-                                                viennacl::cuda_arg(inner_prod_buffer),
-                                                buffer_size_per_vector);
-  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_kernel");
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 500
+  if (double(A.nnz()) / double(A.size1()) > 6.4) // less than 10% of threads expected to idle
+  {
+    pipelined_cg_csr_vec_mul_blocked_kernel<8,  NumericT><<<256, 256>>>(   // experience on a GTX 750 Ti suggests that 8 is a substantially better choice here
+#else
+  if (double(A.nnz()) / double(A.size1()) > 12.0) // less than 25% of threads expected to idle
+  {
+    pipelined_cg_csr_vec_mul_blocked_kernel<16, NumericT><<<256, 256>>>(   // Fermi and Kepler prefer 16 threads per row (half-warp)
+#endif
+                                                                        viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                                        viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                                        viennacl::cuda_arg<NumericT>(A.handle()),
+                                                                        viennacl::cuda_arg(p),
+                                                                        viennacl::cuda_arg(Ap),
+                                                                        size,
+                                                                        viennacl::cuda_arg(inner_prod_buffer),
+                                                                        buffer_size_per_vector
+                                                                       );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_blocked_kernel");
+  }
+  else
+  {
+    pipelined_cg_csr_vec_mul_adaptive_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                           viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                           viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                           viennacl::cuda_arg<NumericT>(A.handle()),
+                                                           static_cast<unsigned int>(A.blocks1()),
+                                                           viennacl::cuda_arg(p),
+                                                           viennacl::cuda_arg(Ap),
+                                                           size,
+                                                           viennacl::cuda_arg(inner_prod_buffer),
+                                                           buffer_size_per_vector);
+    VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_kernel");
+  }
 }
 
 
@@ -796,8 +886,84 @@ void pipelined_bicgstab_vector_update(vector_base<NumericT> & result, NumericT a
 //
 
 
+template<unsigned int SubWarpSizeV, typename NumericT>
+__global__ void pipelined_bicgstab_csr_vec_mul_blocked_kernel(
+          const unsigned int * row_indices,
+          const unsigned int * column_indices,
+          const NumericT * elements,
+          const NumericT * p,
+          NumericT * Ap,
+          const NumericT * r0star,
+          unsigned int size,
+          NumericT * inner_prod_buffer,
+          unsigned int buffer_size,
+          unsigned int buffer_offset)
+{
+  __shared__ NumericT shared_elements[256];
+  NumericT inner_prod_ApAp = 0;
+  NumericT inner_prod_pAp = 0;
+  NumericT inner_prod_r0Ap  = 0;
+
+  const unsigned int id_in_row = threadIdx.x % SubWarpSizeV;
+  const unsigned int block_increment = blockDim.x * ((size - 1) / (gridDim.x * blockDim.x) + 1);
+  const unsigned int block_start = blockIdx.x * block_increment;
+  const unsigned int block_stop  = min(block_start + block_increment, size);
+
+  for (unsigned int row  = block_start + threadIdx.x / SubWarpSizeV;
+                    row  < block_stop;
+                    row += blockDim.x / SubWarpSizeV)
+  {
+    NumericT dot_prod = NumericT(0);
+    unsigned int row_end = row_indices[row+1];
+    for (unsigned int i = row_indices[row] + id_in_row; i < row_end; i += SubWarpSizeV)
+      dot_prod += elements[i] * p[column_indices[i]];
+
+    shared_elements[threadIdx.x] = dot_prod;
+    if (1  < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^  1];
+    if (2  < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^  2];
+    if (4  < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^  4];
+    if (8  < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^  8];
+    if (16 < SubWarpSizeV) shared_elements[threadIdx.x] += shared_elements[threadIdx.x ^ 16];
+
+    if (id_in_row == 0)
+    {
+      Ap[row] = shared_elements[threadIdx.x];
+      inner_prod_ApAp += shared_elements[threadIdx.x] * shared_elements[threadIdx.x];
+      inner_prod_pAp  +=                       p[row] * shared_elements[threadIdx.x];
+      inner_prod_r0Ap +=                  r0star[row] * shared_elements[threadIdx.x];
+    }
+  }
+
+  ////////// parallel reduction in work group
+  __shared__ NumericT shared_array_ApAp[256];
+  __shared__ NumericT shared_array_pAp[256];
+  __shared__ NumericT shared_array_r0Ap[256];
+  shared_array_ApAp[threadIdx.x] = inner_prod_ApAp;
+  shared_array_pAp[threadIdx.x]  = inner_prod_pAp;
+  shared_array_r0Ap[threadIdx.x] = inner_prod_r0Ap;
+  for (unsigned int stride=blockDim.x/2; stride > 0; stride /= 2)
+  {
+    __syncthreads();
+    if (threadIdx.x < stride)
+    {
+      shared_array_ApAp[threadIdx.x] += shared_array_ApAp[threadIdx.x + stride];
+      shared_array_pAp[threadIdx.x]  += shared_array_pAp[threadIdx.x + stride];
+      shared_array_r0Ap[threadIdx.x] += shared_array_r0Ap[threadIdx.x + stride];
+    }
+  }
+
+  // write results to result array
+  if (threadIdx.x == 0) {
+    inner_prod_buffer[  buffer_size + blockIdx.x] = shared_array_ApAp[0];
+    inner_prod_buffer[2*buffer_size + blockIdx.x] = shared_array_pAp[0];
+    inner_prod_buffer[buffer_offset + blockIdx.x] = shared_array_r0Ap[0];
+  }
+
+}
+
+
 template<typename NumericT>
-__global__ void pipelined_bicgstab_csr_vec_mul_kernel(
+__global__ void pipelined_bicgstab_csr_vec_mul_adaptive_kernel(
           const unsigned int * row_indices,
           const unsigned int * column_indices,
           const unsigned int * row_blocks,
@@ -917,19 +1083,44 @@ void pipelined_bicgstab_prod(compressed_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_csr_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
-                                                      viennacl::cuda_arg<unsigned int>(A.handle2()),
-                                                      viennacl::cuda_arg<unsigned int>(A.handle3()),
-                                                      viennacl::cuda_arg<NumericT>(A.handle()),
-                                                      static_cast<unsigned int>(A.blocks1()),
-                                                      viennacl::cuda_arg(p),
-                                                      viennacl::cuda_arg(Ap),
-                                                      viennacl::cuda_arg(r0star),
-                                                      vec_size,
-                                                      viennacl::cuda_arg(inner_prod_buffer),
-                                                      chunk_size,
-                                                      chunk_offset);
-  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_csr_vec_mul_kernel");
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 500
+  if (double(A.nnz()) / double(A.size1()) > 6.4) // less than 10% of threads expected to idle
+  {
+    pipelined_bicgstab_csr_vec_mul_blocked_kernel<8,  NumericT><<<256, 256>>>(   // experience on a GTX 750 Ti suggests that 8 is a substantially better choice here
+#else
+  if (double(A.nnz()) / double(A.size1()) > 12.0) // less than 25% of threads expected to idle
+  {
+    pipelined_bicgstab_csr_vec_mul_blocked_kernel<16, NumericT><<<256, 256>>>(   // Fermi and Kepler prefer 16 threads per row (half-warp)
+#endif
+                                                                        viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                                        viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                                        viennacl::cuda_arg<NumericT>(A.handle()),
+                                                                        viennacl::cuda_arg(p),
+                                                                        viennacl::cuda_arg(Ap),
+                                                                        viennacl::cuda_arg(r0star),
+                                                                        vec_size,
+                                                                        viennacl::cuda_arg(inner_prod_buffer),
+                                                                        chunk_size,
+                                                                        chunk_offset
+                                                                       );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_blocked_kernel");
+  }
+  else
+  {
+    pipelined_bicgstab_csr_vec_mul_adaptive_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                                viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                                viennacl::cuda_arg<NumericT>(A.handle()),
+                                                                static_cast<unsigned int>(A.blocks1()),
+                                                                viennacl::cuda_arg(p),
+                                                                viennacl::cuda_arg(Ap),
+                                                                viennacl::cuda_arg(r0star),
+                                                                vec_size,
+                                                                viennacl::cuda_arg(inner_prod_buffer),
+                                                                chunk_size,
+                                                                chunk_offset);
+    VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_csr_vec_mul_adaptive_kernel");
+  }
 }
 
 
@@ -1700,26 +1891,50 @@ void pipelined_gmres_update_result(vector_base<T> & result,
 
 
 
-template <typename T>
-void pipelined_gmres_prod(compressed_matrix<T> const & A,
-                          vector_base<T> const & p,
-                          vector_base<T> & Ap,
-                          vector_base<T> & inner_prod_buffer)
+template <typename NumericT>
+void pipelined_gmres_prod(compressed_matrix<NumericT> const & A,
+                          vector_base<NumericT> const & p,
+                          vector_base<NumericT> & Ap,
+                          vector_base<NumericT> & inner_prod_buffer)
 {
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_csr_vec_mul_kernel<<<128, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
-                                                viennacl::cuda_arg<unsigned int>(A.handle2()),
-                                                viennacl::cuda_arg<unsigned int>(A.handle3()),
-                                                viennacl::cuda_arg<T>(A.handle()),
-                                                static_cast<unsigned int>(A.blocks1()),
-                                                viennacl::cuda_arg(p) + viennacl::traits::start(p),
-                                                viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
-                                                size,
-                                                viennacl::cuda_arg(inner_prod_buffer),
-                                                buffer_size_per_vector);
-  VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_kernel");
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 500
+  if (double(A.nnz()) / double(A.size1()) > 6.4) // less than 10% of threads expected to idle
+  {
+    pipelined_cg_csr_vec_mul_blocked_kernel<8,  NumericT><<<256, 256>>>(   // experience on a GTX 750 Ti suggests that 8 is a substantially better choice here
+#else
+  if (double(A.nnz()) / double(A.size1()) > 12.0) // less than 25% of threads expected to idle
+  {
+    pipelined_cg_csr_vec_mul_blocked_kernel<16, NumericT><<<128, 256>>>(   // Fermi and Kepler prefer 16 threads per row (half-warp)
+#endif
+                                                                        viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                                        viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                                        viennacl::cuda_arg<NumericT>(A.handle()),
+                                                                        viennacl::cuda_arg(p) + viennacl::traits::start(p),
+                                                                        viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
+                                                                        size,
+                                                                        viennacl::cuda_arg(inner_prod_buffer),
+                                                                        buffer_size_per_vector
+                                                                       );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_blocked_kernel");
+  }
+  else
+  {
+    pipelined_cg_csr_vec_mul_adaptive_kernel<<<128, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                           viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                           viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                           viennacl::cuda_arg<NumericT>(A.handle()),
+                                                           static_cast<unsigned int>(A.blocks1()),
+                                                           viennacl::cuda_arg(p) + viennacl::traits::start(p),
+                                                           viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
+                                                           size,
+                                                           viennacl::cuda_arg(inner_prod_buffer),
+                                                           buffer_size_per_vector);
+    VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_csr_vec_mul_adaptive_kernel");
+  }
+
 }
 
 template <typename T>

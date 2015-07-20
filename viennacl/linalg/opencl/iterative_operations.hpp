@@ -84,7 +84,9 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::iterative<NumericT>::init(ctx);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), "cg_csr_prod");
+  bool use_nvidia_blocked = (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id && (double(A.nnz()) / double(A.size1()) > 12.0));
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), use_nvidia_blocked ? "cg_csr_blocked_prod" : "cg_csr_prod");
 
   cl_uint vec_size               = cl_uint(viennacl::traits::size(p));
   cl_uint buffer_size_per_vector = cl_uint(inner_prod_buffer.size()) / cl_uint(3);
@@ -98,16 +100,31 @@ void pipelined_cg_prod(compressed_matrix<NumericT> const & A,
     k.global_work_size(0, 256*256);
   }
 
-  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
-                           p,
-                           Ap,
-                           vec_size,
-                           inner_prod_buffer,
-                           buffer_size_per_vector,
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
-                           viennacl::ocl::local_mem(1024 * sizeof(NumericT))
-                          ));
+  if (use_nvidia_blocked)
+  {
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                             p,
+                             Ap,
+                             vec_size,
+                             inner_prod_buffer,
+                             buffer_size_per_vector,
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT))
+                            ));
+  }
+  else
+  {
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                             p,
+                             Ap,
+                             vec_size,
+                             inner_prod_buffer,
+                             buffer_size_per_vector,
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
+                             viennacl::ocl::local_mem(1024 * sizeof(NumericT))
+                            ));
+  }
 
 }
 
@@ -348,7 +365,9 @@ void pipelined_bicgstab_prod(compressed_matrix<NumericT> const & A,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::iterative<NumericT>::init(ctx);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), "bicgstab_csr_prod");
+  bool use_nvidia_blocked = (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id && (double(A.nnz()) / double(A.size1()) > 12.0));
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), use_nvidia_blocked ? "bicgstab_csr_blocked_prod" : "bicgstab_csr_prod");
 
   cl_uint vec_size     = cl_uint(viennacl::traits::size(p));
   cl_uint chunk_size   = cl_uint(buffer_chunk_size);
@@ -363,16 +382,32 @@ void pipelined_bicgstab_prod(compressed_matrix<NumericT> const & A,
     k.global_work_size(0, 256*256);
   }
 
-  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
-                           p,
-                           Ap,
-                           r0star,
-                           vec_size,
-                           inner_prod_buffer, chunk_size, chunk_offset,
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT))
-                          ));
+  if (use_nvidia_blocked)
+  {
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                             p,
+                             Ap,
+                             r0star,
+                             vec_size,
+                             inner_prod_buffer, chunk_size, chunk_offset,
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT))
+                            ));
+  }
+  else
+  {
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                             p,
+                             Ap,
+                             r0star,
+                             vec_size,
+                             inner_prod_buffer, chunk_size, chunk_offset,
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT))
+                            ));
+  }
 
 }
 
@@ -690,7 +725,9 @@ void pipelined_gmres_prod(compressed_matrix<T> const & A,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::iterative<T>::init(ctx);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_csr_prod");
+  bool use_nvidia_blocked = (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id && (double(A.nnz()) / double(A.size1()) > 12.0));
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), use_nvidia_blocked ? "gmres_csr_blocked_prod" : "gmres_csr_prod");
 
   cl_uint vec_size               = cl_uint(viennacl::traits::size(p));
   cl_uint buffer_size_per_vector = cl_uint(inner_prod_buffer.size()) / cl_uint(3);
@@ -706,17 +743,31 @@ void pipelined_gmres_prod(compressed_matrix<T> const & A,
     k.global_work_size(0, 256*128);
   }
 
-  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
-                           p, start_p,
-                           Ap, start_Ap,
-                           vec_size,
-                           inner_prod_buffer,
-                           buffer_size_per_vector,
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
-                           viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
-                           viennacl::ocl::local_mem(1024 * sizeof(T))
-                          ));
-
+  if (use_nvidia_blocked)
+  {
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                             p, start_p,
+                             Ap, start_Ap,
+                             vec_size,
+                             inner_prod_buffer,
+                             buffer_size_per_vector,
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(T))
+                            ));
+  }
+  else
+  {
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                             p, start_p,
+                             Ap, start_Ap,
+                             vec_size,
+                             inner_prod_buffer,
+                             buffer_size_per_vector,
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                             viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),
+                             viennacl::ocl::local_mem(1024 * sizeof(T))
+                            ));
+  }
 }
 
 template <typename T>
