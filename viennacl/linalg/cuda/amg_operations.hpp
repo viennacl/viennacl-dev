@@ -73,7 +73,7 @@ __global__ void amg_influence_trivial_kernel(
 template<typename NumericT>
 void amg_influence_trivial(compressed_matrix<NumericT> const & A,
                            viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                           viennacl::linalg::detail::amg::amg_tag & tag)
+                           viennacl::linalg::amg_tag & tag)
 {
   (void)tag;
 
@@ -93,7 +93,7 @@ void amg_influence_trivial(compressed_matrix<NumericT> const & A,
 template<typename NumericT>
 void amg_influence_advanced(compressed_matrix<NumericT> const & A,
                             viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                            viennacl::linalg::detail::amg::amg_tag & tag)
+                            viennacl::linalg::amg_tag & tag)
 {
   throw std::runtime_error("not implemented yet");
 }
@@ -102,7 +102,7 @@ void amg_influence_advanced(compressed_matrix<NumericT> const & A,
 template<typename NumericT>
 void amg_influence(compressed_matrix<NumericT> const & A,
                    viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                   viennacl::linalg::detail::amg::amg_tag & tag)
+                   viennacl::linalg::amg_tag & tag)
 {
   // TODO: dispatch based on influence tolerance provided
   amg_influence_trivial(A, amg_context, tag);
@@ -289,7 +289,7 @@ __global__ void amg_pmis2_reset_state(unsigned int *point_types, unsigned int si
 template<typename NumericT>
 void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
                                viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                               viennacl::linalg::detail::amg::amg_tag & tag)
+                               viennacl::linalg::amg_tag & tag)
 {
   viennacl::vector<unsigned int> random_weights(A.size1(), viennacl::context(viennacl::MAIN_MEMORY));
   unsigned int *random_weights_ptr = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(random_weights.handle());
@@ -465,7 +465,7 @@ __global__ void amg_agg_merge_undecided_2(unsigned int *point_types,
 template<typename NumericT>
 void amg_coarse_ag(compressed_matrix<NumericT> const & A,
                    viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                   viennacl::linalg::detail::amg::amg_tag & tag)
+                   viennacl::linalg::amg_tag & tag)
 {
 
   amg_influence_trivial(A, amg_context, tag);
@@ -473,7 +473,7 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
   //
   // Stage 1: Build aggregates:
   //
-  if (tag.get_coarse() == VIENNACL_AMG_COARSE_AG_MIS2)
+  if (tag.get_coarsening_method() == viennacl::linalg::AMG_COARSENING_METHOD_AGGREGATION)
     amg_coarse_ag_stage1_mis2(A, amg_context, tag);
   else
     throw std::runtime_error("Only MIS2 coarsening implemented. Selected coarsening not available with CUDA backend!");
@@ -525,11 +525,11 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
 template<typename InternalT1>
 void amg_coarse(InternalT1 & A,
                 viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                viennacl::linalg::detail::amg::amg_tag & tag)
+                viennacl::linalg::amg_tag & tag)
 {
-  switch (tag.get_coarse())
+  switch (tag.get_coarsening_method())
   {
-  case VIENNACL_AMG_COARSE_AG_MIS2: amg_coarse_ag(A, amg_context, tag); break;
+  case viennacl::linalg::AMG_COARSENING_METHOD_MIS2_AGGREGATION: amg_coarse_ag(A, amg_context, tag); break;
   default: throw std::runtime_error("not implemented yet");
   }
 }
@@ -572,7 +572,7 @@ template<typename NumericT>
 void amg_interpol_ag(compressed_matrix<NumericT> const & A,
                      compressed_matrix<NumericT> & P,
                      viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                     viennacl::linalg::detail::amg::amg_tag & tag)
+                     viennacl::linalg::amg_tag & tag)
 {
   (void)tag;
   P = compressed_matrix<NumericT>(A.size1(), amg_context.num_coarse_, A.size1(), viennacl::traits::context(A));
@@ -654,7 +654,7 @@ template<typename NumericT>
 void amg_interpol_sa(compressed_matrix<NumericT> const & A,
                      compressed_matrix<NumericT> & P,
                      viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                     viennacl::linalg::detail::amg::amg_tag & tag)
+                     viennacl::linalg::amg_tag & tag)
 {
   (void)tag;
   viennacl::compressed_matrix<NumericT> P_tentative(A.size1(), amg_context.num_coarse_, A.size1(), viennacl::traits::context(A));
@@ -672,7 +672,7 @@ void amg_interpol_sa(compressed_matrix<NumericT> const & A,
                                        viennacl::cuda_arg<unsigned int>(Jacobi.handle1().cuda_handle()),
                                        viennacl::cuda_arg<unsigned int>(Jacobi.handle2().cuda_handle()),
                                        viennacl::cuda_arg<NumericT>(Jacobi.handle().cuda_handle()),
-                                       NumericT(tag.get_interpolweight())
+                                       NumericT(tag.get_jacobi_weight())
                                       );
   VIENNACL_CUDA_LAST_ERROR_CHECK("amg_interpol_sa_kernel");
 
@@ -693,12 +693,12 @@ template<typename MatrixT>
 void amg_interpol(MatrixT const & A,
                   MatrixT & P,
                   viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                  viennacl::linalg::detail::amg::amg_tag & tag)
+                  viennacl::linalg::amg_tag & tag)
 {
-  switch (tag.get_interpol())
+  switch (tag.get_interpolation_method())
   {
-  case VIENNACL_AMG_INTERPOL_AG:      amg_interpol_ag     (A, P, amg_context, tag); break;
-  case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (A, P, amg_context, tag); break;
+  case viennacl::linalg::AMG_INTERPOLATION_METHOD_AGGREGATION:          amg_interpol_ag     (A, P, amg_context, tag); break;
+  case viennacl::linalg::AMG_INTERPOLATION_METHOD_SMOOTHED_AGGREGATION: amg_interpol_sa     (A, P, amg_context, tag); break;
   default: throw std::runtime_error("Not implemented yet!");
   }
 }

@@ -48,7 +48,7 @@ namespace amg
 template<typename NumericT>
 void amg_influence_trivial(compressed_matrix<NumericT> const & A,
                            viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                           viennacl::linalg::detail::amg::amg_tag & tag)
+                           viennacl::linalg::amg_tag & tag)
 {
   (void)tag;
 
@@ -81,7 +81,7 @@ void amg_influence_trivial(compressed_matrix<NumericT> const & A,
 template<typename NumericT>
 void amg_influence_advanced(compressed_matrix<NumericT> const & A,
                             viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                            viennacl::linalg::detail::amg::amg_tag & tag)
+                            viennacl::linalg::amg_tag & tag)
 {
   NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
   unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
@@ -136,8 +136,8 @@ void amg_influence_advanced(compressed_matrix<NumericT> const & A,
 
       NumericT value   = A_elements[nnz_index];
 
-      if (   (diag > 0 && diag * value <= tag.get_threshold() * diag * largest_negative)
-          || (diag < 0 && diag * value <= tag.get_threshold() * diag * largest_positive))
+      if (   (diag > 0 && diag * value <= tag.get_strong_connection_threshold() * diag * largest_negative)
+          || (diag < 0 && diag * value <= tag.get_strong_connection_threshold() * diag * largest_positive))
       {
         ++num_influences;
       }
@@ -202,8 +202,8 @@ void amg_influence_advanced(compressed_matrix<NumericT> const & A,
 
       NumericT value   = A_elements[nnz_index];
 
-      if (   (diag > 0 && diag * value <= tag.get_threshold() * diag * largest_negative)
-          || (diag < 0 && diag * value <= tag.get_threshold() * diag * largest_positive))
+      if (   (diag > 0 && diag * value <= tag.get_strong_connection_threshold() * diag * largest_negative)
+          || (diag < 0 && diag * value <= tag.get_strong_connection_threshold() * diag * largest_positive))
       {
         //std::cout << " - Adding influence from point " << col << std::endl;
         *influences_id_write_ptr = col;
@@ -219,7 +219,7 @@ void amg_influence_advanced(compressed_matrix<NumericT> const & A,
 template<typename NumericT>
 void amg_influence(compressed_matrix<NumericT> const & A,
                    viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                   viennacl::linalg::detail::amg::amg_tag & tag)
+                   viennacl::linalg::amg_tag & tag)
 {
   // TODO: dispatch based on influence tolerance provided
   amg_influence_trivial(A, amg_context, tag);
@@ -279,7 +279,7 @@ inline bool operator>(amg_id_influence const & a, amg_id_influence const & b)
 template<typename NumericT>
 void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A,
                                 viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                                viennacl::linalg::detail::amg::amg_tag & tag)
+                                viennacl::linalg::amg_tag & tag)
 {
   unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
@@ -362,7 +362,7 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A,
 template<typename NumericT>
 void amg_coarse_ag_stage1_sequential(compressed_matrix<NumericT> const & A,
                                      viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                                     viennacl::linalg::detail::amg::amg_tag & tag)
+                                     viennacl::linalg::amg_tag & tag)
 {
   unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
@@ -412,7 +412,7 @@ void amg_coarse_ag_stage1_sequential(compressed_matrix<NumericT> const & A,
 template<typename NumericT>
 void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
                                viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                               viennacl::linalg::detail::amg::amg_tag & tag)
+                               viennacl::linalg::amg_tag & tag)
 {
   unsigned int  *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
@@ -594,7 +594,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
 template<typename NumericT>
 void amg_coarse_ag(compressed_matrix<NumericT> const & A,
                    viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                   viennacl::linalg::detail::amg::amg_tag & tag)
+                   viennacl::linalg::amg_tag & tag)
 {
   unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
@@ -606,8 +606,8 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
   //
   // Stage 1: Build aggregates:
   //
-  if (tag.get_coarse() == VIENNACL_AMG_COARSE_AG)      amg_coarse_ag_stage1_sequential(A, amg_context, tag);
-  if (tag.get_coarse() == VIENNACL_AMG_COARSE_AG_MIS2) amg_coarse_ag_stage1_mis2(A, amg_context, tag);
+  if (tag.get_coarsening_method() == viennacl::linalg::AMG_COARSENING_METHOD_AGGREGATION)      amg_coarse_ag_stage1_sequential(A, amg_context, tag);
+  if (tag.get_coarsening_method() == viennacl::linalg::AMG_COARSENING_METHOD_MIS2_AGGREGATION) amg_coarse_ag_stage1_mis2(A, amg_context, tag);
 
   viennacl::linalg::host_based::amg::enumerate_coarse_points(amg_context);
 
@@ -686,13 +686,13 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
 template<typename InternalT1>
 void amg_coarse(InternalT1 & A,
                 viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                viennacl::linalg::detail::amg::amg_tag & tag)
+                viennacl::linalg::amg_tag & tag)
 {
-  switch (tag.get_coarse())
+  switch (tag.get_coarsening_method())
   {
-  case VIENNACL_AMG_COARSE_ONEPASS: amg_coarse_classic_onepass(A, amg_context, tag); break;
-  case VIENNACL_AMG_COARSE_AG:
-  case VIENNACL_AMG_COARSE_AG_MIS2: amg_coarse_ag(A, amg_context, tag); break;
+  case viennacl::linalg::AMG_COARSENING_METHOD_ONEPASS: amg_coarse_classic_onepass(A, amg_context, tag); break;
+  case viennacl::linalg::AMG_COARSENING_METHOD_AGGREGATION:
+  case viennacl::linalg::AMG_COARSENING_METHOD_MIS2_AGGREGATION: amg_coarse_ag(A, amg_context, tag); break;
   default: throw std::runtime_error("not implemented yet");
   }
 }
@@ -714,7 +714,7 @@ template<typename NumericT>
 void amg_interpol_direct(compressed_matrix<NumericT> const & A,
                          compressed_matrix<NumericT> & P,
                          viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                         viennacl::linalg::detail::amg::amg_tag & tag)
+                         viennacl::linalg::amg_tag & tag)
 {
   NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
   unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
@@ -830,7 +830,7 @@ template<typename NumericT>
 void amg_interpol_ag(compressed_matrix<NumericT> const & A,
                      compressed_matrix<NumericT> & P,
                      viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                     viennacl::linalg::detail::amg::amg_tag & tag)
+                     viennacl::linalg::amg_tag & tag)
 {
   (void)tag;
   P = compressed_matrix<NumericT>(A.size1(), amg_context.num_coarse_, A.size1(), viennacl::traits::context(A));
@@ -868,7 +868,7 @@ template<typename NumericT>
 void amg_interpol_sa(compressed_matrix<NumericT> const & A,
                      compressed_matrix<NumericT> & P,
                      viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                     viennacl::linalg::detail::amg::amg_tag & tag)
+                     viennacl::linalg::amg_tag & tag)
 {
   (void)tag;
   viennacl::compressed_matrix<NumericT> P_tentative(A.size1(), amg_context.num_coarse_, A.size1(), viennacl::traits::context(A));
@@ -915,9 +915,9 @@ void amg_interpol_sa(compressed_matrix<NumericT> const & A,
       Jacobi_col_buffer[j] = col_index;
 
       if (col_index == row)
-        Jacobi_elements[j] = NumericT(1) - NumericT(tag.get_interpolweight());
+        Jacobi_elements[j] = NumericT(1) - NumericT(tag.get_jacobi_weight());
       else
-        Jacobi_elements[j] = - NumericT(tag.get_interpolweight()) * A_elements[j] / diag;
+        Jacobi_elements[j] = - NumericT(tag.get_jacobi_weight()) * A_elements[j] / diag;
     }
   }
   Jacobi_row_buffer[A.size1()] = Jacobi.nnz(); // don't forget finalizer
@@ -939,14 +939,13 @@ template<typename MatrixT>
 void amg_interpol(MatrixT const & A,
                   MatrixT & P,
                   viennacl::linalg::detail::amg::amg_level_context & amg_context,
-                  viennacl::linalg::detail::amg::amg_tag & tag)
+                  viennacl::linalg::amg_tag & tag)
 {
-  switch (tag.get_interpol())
+  switch (tag.get_interpolation_method())
   {
-  case VIENNACL_AMG_INTERPOL_DIRECT:  amg_interpol_direct (A, P, amg_context, tag); break;
-  //case VIENNACL_AMG_INTERPOL_CLASSIC: amg_interpol_classic(level, A, P, pointvector, tag); break;
-  case VIENNACL_AMG_INTERPOL_AG:      amg_interpol_ag     (A, P, amg_context, tag); break;
-  case VIENNACL_AMG_INTERPOL_SA:      amg_interpol_sa     (A, P, amg_context, tag); break;
+  case viennacl::linalg::AMG_INTERPOLATION_METHOD_DIRECT:               amg_interpol_direct (A, P, amg_context, tag); break;
+  case viennacl::linalg::AMG_INTERPOLATION_METHOD_AGGREGATION:          amg_interpol_ag     (A, P, amg_context, tag); break;
+  case viennacl::linalg::AMG_INTERPOLATION_METHOD_SMOOTHED_AGGREGATION: amg_interpol_sa     (A, P, amg_context, tag); break;
   default: throw std::runtime_error("Not implemented yet!");
   }
 }

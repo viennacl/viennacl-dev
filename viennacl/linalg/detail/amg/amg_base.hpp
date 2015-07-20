@@ -37,174 +37,167 @@
 
 #include "viennacl/context.hpp"
 
-#define VIENNACL_AMG_COARSE_RS      1
-#define VIENNACL_AMG_COARSE_ONEPASS 2
-#define VIENNACL_AMG_COARSE_RS0     3
-#define VIENNACL_AMG_COARSE_RS3     4
-#define VIENNACL_AMG_COARSE_AG      5
-#define VIENNACL_AMG_COARSE_AG_MIS2 6
-
-#define VIENNACL_AMG_INTERPOL_DIRECT  1
-#define VIENNACL_AMG_INTERPOL_CLASSIC 2
-#define VIENNACL_AMG_INTERPOL_AG      3
-#define VIENNACL_AMG_INTERPOL_SA      4
-
 namespace viennacl
 {
 namespace linalg
 {
-namespace detail
+
+/** @brief Enumeration of coarsening methods for algebraic multigrid. */
+enum amg_coarsening_method
 {
-namespace amg
+  AMG_COARSENING_METHOD_ONEPASS = 1,
+  AMG_COARSENING_METHOD_AGGREGATION,
+  AMG_COARSENING_METHOD_MIS2_AGGREGATION
+};
+
+/** @brief Enumeration of interpolation methods for algebraic multigrid. */
+enum amg_interpolation_method
 {
+  AMG_INTERPOLATION_METHOD_DIRECT = 1,
+  AMG_INTERPOLATION_METHOD_AGGREGATION,
+  AMG_INTERPOLATION_METHOD_SMOOTHED_AGGREGATION
+};
+
 
 /** @brief A tag for algebraic multigrid (AMG). Used to transport information from the user to the implementation.
 */
 class amg_tag
 {
 public:
-  /** @brief The constructor.
-  * @param coarse    Coarsening Routine (Default: VIENNACL_AMG_COARSE_CLASSIC)
-  * @param interpol  Interpolation routine (Default: VIENNACL_AMG_INTERPOL_DIRECT)
-  * @param threshold    Strength of dependence threshold for the coarsening process (Default: 0.25)
-  * @param interpolweight  Interpolation parameter for SA interpolation and truncation parameter for direct+classical interpolation
-  * @param jacobiweight  Weight of the weighted Jacobi smoother iteration step (Default: 1 = Regular Jacobi smoother)
-  * @param presmooth    Number of presmoothing operations on every level (Default: 1)
-  * @param postsmooth   Number of postsmoothing operations on every level (Default: 1)
-  * @param coarselevels  Number of coarse levels that are constructed
-  *      (Default: 0 = Optimize coarse levels for direct solver such that coarsest level has a maximum of COARSE_LIMIT points)
-  *      (Note: Coarsening stops when number of coarse points = 0 and overwrites the parameter with actual number of coarse levels)
-  */
-  amg_tag(unsigned int coarse = 1,
-          unsigned int interpol = 1,
-          double threshold = 0.1,
-          double interpolweight = 0.2,
-          double jacobiweight = 1,
-          unsigned int presmooth = 1,
-          unsigned int postsmooth = 1,
-          unsigned int coarselevels = 0)
-  : coarse_(coarse), interpol_(interpol),
-    threshold_(threshold), interpolweight_(interpolweight), jacobiweight_(jacobiweight),
-    presmooth_(presmooth), postsmooth_(postsmooth), coarselevels_(coarselevels),
-    coarse_info_(20), use_coarse_info_(false), save_coarse_info_(false) {}
-
-  amg_tag & operator=(amg_tag const & other)
-  {
-    coarse_ = other.coarse_;
-    interpol_ = other.interpol_;
-    threshold_ = other.threshold_;
-    interpolweight_ = other.interpolweight_;
-    jacobiweight_ = other.jacobiweight_;
-    presmooth_ = other.presmooth_;
-    postsmooth_ = other.postsmooth_;
-    coarselevels_ = other.coarselevels_;
-    setup_ctx_ = other.setup_ctx_;
-    target_ctx_ = other.target_ctx_;
-
-    for (std::size_t i=0; i < coarselevels_; ++i)
-    {
-      if (other.coarse_info_[i].size() > 0)
-      {
-        std::vector<char> tmp(other.coarse_info_[i].size());
-        viennacl::copy(other.coarse_info_[i], tmp);
-        coarse_info_[i].resize(tmp.size(), false);
-        viennacl::copy(tmp, coarse_info_[i]);
-      }
-    }
-    use_coarse_info_ = other.use_coarse_info_;
-    save_coarse_info_ = other.save_coarse_info_;
-
-    return *this;
-  }
+  /** @brief The constructor, setting default values for the various parameters.
+    *
+    * Default coarsening routine: Aggreggation based on maximum independent sets of distance (MIS-2)
+    * Default interpolation routine: Smoothed aggregation
+    * Default threshold for strong connections: 0.1 (customizations are recommeded!)
+    * Default weight for Jacobi smoother: 1.0
+    * Default number of pre-smooth operations: 2
+    * Default number of post-smooth operations: 2
+    * Default number of coarse levels: 0 (this indicates that as many coarse levels as needed are constructed until the cutoff is reached)
+    * Default coarse grid size for direct solver (coarseing cutoff): 50
+    */
+  amg_tag()
+  : coarsening_method_(AMG_COARSENING_METHOD_MIS2_AGGREGATION), interpolation_method_(AMG_INTERPOLATION_METHOD_AGGREGATION),
+    strong_connection_threshold_(0.1), jacobi_weight_(1.0),
+    presmooth_steps_(2), postsmooth_steps_(2),
+    coarse_levels_(0), coarse_cutoff_(50) {}
 
   // Getter-/Setter-Functions
-  void set_coarse(unsigned int coarse) { coarse_ = coarse; }
-  unsigned int get_coarse() const { return coarse_; }
+  /** @brief Sets the strategy used for constructing coarse grids  */
+  void set_coarsening_method(amg_coarsening_method s) { coarsening_method_ = s; }
+  /** @brief Returns the current coarsening strategy */
+  amg_coarsening_method get_coarsening_method() const { return coarsening_method_; }
 
-  void set_interpol(unsigned int interpol) { interpol_ = interpol; }
-  unsigned int get_interpol() const { return interpol_; }
+  /** @brief Sets the interpolation method to the provided method */
+  void set_interpolation_method(amg_interpolation_method interpol) { interpolation_method_ = interpol; }
+  /** @brief Returns the current interpolation method */
+  amg_interpolation_method get_interpolation_method() const { return interpolation_method_; }
 
-  void set_threshold(double threshold) { if (threshold > 0 && threshold <= 1) threshold_ = threshold; }
-  double get_threshold() const { return threshold_; }
+  /** @brief Sets the strong connection threshold. Customizations by the user essential for best results!
+    *
+    * With classical interpolation, a connection is considered strong if |a_ij| >= threshold * max_k(|a_ik|)
+    * Strength of connection currently ignored for aggregation-based coarsening (to be added in the future).
+    */
+  void set_strong_connection_threshold(double threshold) { if (threshold > 0) strong_connection_threshold_ = threshold; }
+  /** @brief Returns the strong connection threshold parameter.
+    *
+    * @see set_strong_connection_threshold() for an explanation of the threshold parameter
+    */
+  double get_strong_connection_threshold() const { return strong_connection_threshold_; }
 
-  void set_as(double jacobiweight) { if (jacobiweight > 0 && jacobiweight <= 2) jacobiweight_ = jacobiweight; }
-  double get_interpolweight() const { return interpolweight_; }
+  /** @brief Sets the weight (damping) for the Jacobi smoother.
+    *
+    * The optimal value depends on the problem at hand. Values of 0.67 or 1.0 are usually a good starting point for further experiments.
+    */
+  void set_jacobi_weight(double w) { if (w > 0) jacobi_weight_ = w; }
+  /** @brief Returns the Jacobi smoother weight (damping). */
+  double get_jacobi_weight() const { return jacobi_weight_; }
 
-  void set_interpolweight(double interpolweight) { if (interpolweight > 0 && interpolweight <= 2) interpolweight_ = interpolweight; }
-  double get_jacobiweight() const { return jacobiweight_; }
+  /** @brief Sets the number of smoother applications on the fine level before restriction to the coarser level. */
+  void set_presmooth_steps(vcl_size_t steps) { presmooth_steps_ = steps; }
+  /** @brief Returns the number of smoother applications on the fine level before restriction to the coarser level. */
+  vcl_size_t get_presmooth_steps() const { return presmooth_steps_; }
 
-  void set_presmooth(unsigned int presmooth) { presmooth_ = presmooth; }
-  unsigned int get_presmooth() const { return presmooth_; }
+  /** @brief Sets the number of smoother applications on the coarse level before interpolation to the finer level. */
+  void set_postsmooth_steps(vcl_size_t steps) { postsmooth_steps_ = steps; }
+  /** @brief Returns the number of smoother applications on the coarse level before interpolation to the finer level. */
+  vcl_size_t get_postsmooth_steps() const { return postsmooth_steps_; }
 
-  void set_postsmooth(unsigned int postsmooth) { postsmooth_ = postsmooth; }
-  unsigned int get_postsmooth() const { return postsmooth_; }
+  /** @brief Sets the number of coarse levels. If set to zero, then coarse levels are constructed until the cutoff size is reached. */
+  void set_coarse_levels(vcl_size_t levels)  { coarse_levels_ = levels; }
+  /** @brief Returns the number of coarse levels. If zero, then coarse levels are constructed until the cutoff size is reached. */
+  vcl_size_t get_coarse_levels() const { return coarse_levels_; }
 
-  void set_coarselevels(unsigned int coarselevels)  { coarselevels_ = coarselevels; }
-  unsigned int get_coarselevels() const { return coarselevels_; }
+  /** @brief Sets the coarse grid size for which the recursive multigrid scheme is stopped and a direct solver is used. */
+  void set_coarseing_cutoff(vcl_size_t size)  { coarse_cutoff_ = size; }
+  /** @brief Returns the coarse grid size for which the recursive multigrid scheme is stopped and a direct solver is used. */
+  vcl_size_t get_coarseing_cutoff() const { return coarse_cutoff_; }
 
+  /** @brief Sets the ViennaCL context for the setup stage. Set this to a host context if you want to run the setup on the host.
+    *
+    * Set the ViennaCL context for the solver application via set_target_context().
+    * Target and setup context can be different.
+    */
   void set_setup_context(viennacl::context ctx)  { setup_ctx_ = ctx; }
+  /** @brief Returns the ViennaCL context for the preconditioenr setup. */
   viennacl::context const & get_setup_context() const { return setup_ctx_; }
 
+  /** @brief Sets the ViennaCL context for the solver cycle stage (i.e. preconditioner applications).
+    *
+    * Since the cycle stage easily benefits from accelerators, you usually want to set this to a CUDA or OpenCL-enabled context.
+    */
   void set_target_context(viennacl::context ctx)  { target_ctx_ = ctx; }
+  /** @brief Returns the ViennaCL context for the solver cycle stage (i.e. preconditioner applications). */
   viennacl::context const & get_target_context() const { return target_ctx_; }
 
-  void set_coarse_information(std::size_t level, viennacl::vector<char> const & c_info) { coarse_info_.at(level) = c_info; }
-  void set_coarse_information(std::size_t level,      std::vector<char> const & c_info) { viennacl::copy(c_info, coarse_info_.at(level)); }
-  viennacl::vector<char> & get_coarse_information(std::size_t level) { return coarse_info_.at(level); }
-
-  void use_coarse_information(bool b) { use_coarse_info_ = b; }
-  bool use_coarse_information() const { return use_coarse_info_; }
-
-  void save_coarse_information(bool b) { save_coarse_info_ = b; }
-  bool save_coarse_information() const { return save_coarse_info_; }
-
 private:
-  unsigned int coarse_, interpol_;
-  double threshold_, interpolweight_, jacobiweight_;
-  unsigned int presmooth_, postsmooth_, coarselevels_;
+  amg_coarsening_method coarsening_method_;
+  amg_interpolation_method interpolation_method_;
+  double strong_connection_threshold_, jacobi_weight_;
+  vcl_size_t presmooth_steps_, postsmooth_steps_, coarse_levels_, coarse_cutoff_;
   viennacl::context setup_ctx_, target_ctx_;
-  std::vector<viennacl::vector<char> > coarse_info_;
-  bool use_coarse_info_, save_coarse_info_;
 };
 
 
-
-struct amg_level_context
+namespace detail
 {
-  void resize(vcl_size_t num_points, vcl_size_t max_nnz)
+namespace amg
+{
+
+
+  struct amg_level_context
   {
-    influence_jumper_.resize(num_points + 1, false);
-    influence_ids_.resize(max_nnz, false);
-    influence_values_.resize(num_points, false);
-    point_types_.resize(num_points, false);
-    coarse_id_.resize(num_points, false);
-  }
+    void resize(vcl_size_t num_points, vcl_size_t max_nnz)
+    {
+      influence_jumper_.resize(num_points + 1, false);
+      influence_ids_.resize(max_nnz, false);
+      influence_values_.resize(num_points, false);
+      point_types_.resize(num_points, false);
+      coarse_id_.resize(num_points, false);
+    }
 
-  void switch_context(viennacl::context ctx)
-  {
-    influence_jumper_.switch_memory_context(ctx);
-    influence_ids_.switch_memory_context(ctx);
-    influence_values_.switch_memory_context(ctx);
-    point_types_.switch_memory_context(ctx);
-    coarse_id_.switch_memory_context(ctx);
-  }
+    void switch_context(viennacl::context ctx)
+    {
+      influence_jumper_.switch_memory_context(ctx);
+      influence_ids_.switch_memory_context(ctx);
+      influence_values_.switch_memory_context(ctx);
+      point_types_.switch_memory_context(ctx);
+      coarse_id_.switch_memory_context(ctx);
+    }
 
-  enum
-  {
-    POINT_TYPE_UNDECIDED = 0,
-    POINT_TYPE_COARSE,
-    POINT_TYPE_FINE
-  } amg_point_types;
+    enum
+    {
+      POINT_TYPE_UNDECIDED = 0,
+      POINT_TYPE_COARSE,
+      POINT_TYPE_FINE
+    } amg_point_types;
 
-  viennacl::vector<unsigned int> influence_jumper_; // similar to row_buffer for CSR matrices
-  viennacl::vector<unsigned int> influence_ids_;    // IDs of influencing points
-  viennacl::vector<unsigned int> influence_values_; // Influence measure for each point
-  viennacl::vector<unsigned int> point_types_;      // 0: undecided, 1: coarse point, 2: fine point. Using char here because type for enum might be a larger type
-  viennacl::vector<unsigned int> coarse_id_;        // coarse ID used on the next level. Only valid for coarse points. Fine points may (ab)use their entry for something else.
-  unsigned int num_coarse_;
-};
-
-
+    viennacl::vector<unsigned int> influence_jumper_; // similar to row_buffer for CSR matrices
+    viennacl::vector<unsigned int> influence_ids_;    // IDs of influencing points
+    viennacl::vector<unsigned int> influence_values_; // Influence measure for each point
+    viennacl::vector<unsigned int> point_types_;      // 0: undecided, 1: coarse point, 2: fine point. Using char here because type for enum might be a larger type
+    viennacl::vector<unsigned int> coarse_id_;        // coarse ID used on the next level. Only valid for coarse points. Fine points may (ab)use their entry for something else.
+    unsigned int num_coarse_;
+  };
 
 
 } //namespace amg

@@ -44,7 +44,6 @@
  #include <omp.h>
 #endif
 
-#define VIENNACL_AMG_COARSE_LIMIT 50
 #define VIENNACL_AMG_MAX_LEVELS 20
 
 namespace viennacl
@@ -52,175 +51,174 @@ namespace viennacl
 namespace linalg
 {
 
-typedef detail::amg::amg_tag          amg_tag;
-
-
-/** @brief Sparse Galerkin product: Calculates A_coarse = trans(P)*A_fine*P
-  * @param A    Operator matrix on fine grid (quadratic)
-  * @param P    Prolongation/Interpolation matrix
-  * @param C_coarse    Result Matrix (Galerkin operator)
-  */
-template<typename NumericT>
-void amg_galerkin_prod(compressed_matrix<NumericT> & A_fine,
-                       compressed_matrix<NumericT> & P,
-                       compressed_matrix<NumericT> & R, //P^T
-                       compressed_matrix<NumericT> & A_coarse)
+namespace detail
 {
-
-  compressed_matrix<NumericT> A_fine_times_P(viennacl::traits::context(A_fine));
-
-  // transpose P in memory (no known way of efficiently multiplying P^T * B for CSR-matrices P and B):
-  viennacl::linalg::detail::amg::amg_transpose(P, R);
-
-  // compute Galerkin product using a temporary for the result of A_fine * P
-  A_fine_times_P = viennacl::linalg::prod(A_fine, P);
-  A_coarse = viennacl::linalg::prod(R, A_fine_times_P);
-
-}
-
-
-/** @brief Setup AMG preconditioner
-*
-* @param A            Operator matrices on all levels
-* @param P            Prolongation/Interpolation operators on all levels
-* @param pointvector  Vector of points on all levels
-* @param tag          AMG preconditioner tag
-*/
-template<typename NumericT, typename AMGContextListT>
-void amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
-               std::vector<compressed_matrix<NumericT> > & list_of_P,
-               std::vector<compressed_matrix<NumericT> > & list_of_R,
-               AMGContextListT & list_of_amg_level_context,
-               amg_tag & tag)
-{
-  viennacl::tools::timer timer;
-
-  // Set number of iterations. If automatic coarse grid construction is chosen (0), then set a maximum size and stop during the process.
-  unsigned int iterations = tag.get_coarselevels();
-  if (iterations == 0)
-    iterations = VIENNACL_AMG_MAX_LEVELS;
-
-  for (unsigned int i=0; i<iterations; ++i)
+  /** @brief Sparse Galerkin product: Calculates A_coarse = trans(P)*A_fine*P
+    * @param A    Operator matrix on fine grid (quadratic)
+    * @param P    Prolongation/Interpolation matrix
+    * @param C_coarse    Result Matrix (Galerkin operator)
+    */
+  template<typename NumericT>
+  void amg_galerkin_prod(compressed_matrix<NumericT> & A_fine,
+                         compressed_matrix<NumericT> & P,
+                         compressed_matrix<NumericT> & R, //P^T
+                         compressed_matrix<NumericT> & A_coarse)
   {
-    list_of_amg_level_context[i].switch_context(tag.get_setup_context());
-    list_of_amg_level_context[i].resize(list_of_A[i].size1(), list_of_A[i].nnz());
 
-    // Construct C and F points on coarse level (i is fine level, i+1 coarse level).
-    detail::amg::amg_coarse(list_of_A[i], list_of_amg_level_context[i], tag);
+    compressed_matrix<NumericT> A_fine_times_P(viennacl::traits::context(A_fine));
 
-    // Calculate number of C and F points on level i.
-    unsigned int c_points = list_of_amg_level_context[i].num_coarse_;
-    unsigned int f_points = list_of_A[i].size1() - c_points;
+    // transpose P in memory (no known way of efficiently multiplying P^T * B for CSR-matrices P and B):
+    viennacl::linalg::detail::amg::amg_transpose(P, R);
 
-    // Stop routine when the maximal coarse level is found (no C or F point). Coarsest level is level i.
-    if (c_points == 0 || f_points == 0)
-      break;
+    // compute Galerkin product using a temporary for the result of A_fine * P
+    A_fine_times_P = viennacl::linalg::prod(A_fine, P);
+    A_coarse = viennacl::linalg::prod(R, A_fine_times_P);
 
-    // Construct interpolation matrix for level i.
-    detail::amg::amg_interpol(list_of_A[i], list_of_P[i], list_of_amg_level_context[i], tag);
+  }
 
-    // Compute coarse grid operator (A[i+1] = R * A[i] * P) with R = trans(P).
-    amg_galerkin_prod(list_of_A[i], list_of_P[i], list_of_R[i], list_of_A[i+1]);
 
-    // send matrices to target context:
-    list_of_A[i].switch_memory_context(tag.get_target_context());
-    list_of_P[i].switch_memory_context(tag.get_target_context());
-    list_of_R[i].switch_memory_context(tag.get_target_context());
+  /** @brief Setup AMG preconditioner
+  *
+  * @param A            Operator matrices on all levels
+  * @param P            Prolongation/Interpolation operators on all levels
+  * @param pointvector  Vector of points on all levels
+  * @param tag          AMG preconditioner tag
+  */
+  template<typename NumericT, typename AMGContextListT>
+  vcl_size_t amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
+                       std::vector<compressed_matrix<NumericT> > & list_of_P,
+                       std::vector<compressed_matrix<NumericT> > & list_of_R,
+                       AMGContextListT & list_of_amg_level_context,
+                       amg_tag & tag)
+  {
+    // Set number of iterations. If automatic coarse grid construction is chosen (0), then set a maximum size and stop during the process.
+    vcl_size_t iterations = tag.get_coarse_levels();
+    if (iterations == 0)
+      iterations = VIENNACL_AMG_MAX_LEVELS;
 
-    // If Limit of coarse points is reached then stop. Coarsest level is level i+1.
-    if (tag.get_coarselevels() == 0 && c_points <= VIENNACL_AMG_COARSE_LIMIT)
+    for (vcl_size_t i=0; i<iterations; ++i)
     {
-      tag.set_coarselevels(i+1);
-      return;
+      list_of_amg_level_context[i].switch_context(tag.get_setup_context());
+      list_of_amg_level_context[i].resize(list_of_A[i].size1(), list_of_A[i].nnz());
+
+      // Construct C and F points on coarse level (i is fine level, i+1 coarse level).
+      detail::amg::amg_coarse(list_of_A[i], list_of_amg_level_context[i], tag);
+
+      // Calculate number of C and F points on level i.
+      unsigned int c_points = list_of_amg_level_context[i].num_coarse_;
+      unsigned int f_points = list_of_A[i].size1() - c_points;
+
+      // Stop routine when the maximal coarse level is found (no C or F point). Coarsest level is level i.
+      if (c_points == 0 || f_points == 0)
+        break;
+
+      // Construct interpolation matrix for level i.
+      detail::amg::amg_interpol(list_of_A[i], list_of_P[i], list_of_amg_level_context[i], tag);
+
+      // Compute coarse grid operator (A[i+1] = R * A[i] * P) with R = trans(P).
+      amg_galerkin_prod(list_of_A[i], list_of_P[i], list_of_R[i], list_of_A[i+1]);
+
+      // send matrices to target context:
+      list_of_A[i].switch_memory_context(tag.get_target_context());
+      list_of_P[i].switch_memory_context(tag.get_target_context());
+      list_of_R[i].switch_memory_context(tag.get_target_context());
+
+      // If Limit of coarse points is reached then stop. Coarsest level is level i+1.
+      if (tag.get_coarse_levels() == 0 && c_points <= tag.get_coarseing_cutoff())
+        return i+1;
+    }
+
+    return iterations;
+  }
+
+
+  /** @brief Initialize AMG preconditioner
+  *
+  * @param mat          System matrix
+  * @param A            Operator matrices on all levels
+  * @param P            Prolongation/Interpolation operators on all levels
+  * @param pointvector  Vector of points on all levels
+  * @param tag          AMG preconditioner tag
+  */
+  template<typename MatrixT, typename InternalT1, typename InternalT2>
+  void amg_init(MatrixT const & mat, InternalT1 & A, InternalT1 & P, InternalT1 & R, InternalT2 & amg_context, amg_tag & tag)
+  {
+    //typedef typename MatrixType::value_type ScalarType;
+    typedef typename InternalT1::value_type SparseMatrixType;
+
+    vcl_size_t num_levels = (tag.get_coarse_levels() > 0) ? tag.get_coarse_levels() : VIENNACL_AMG_MAX_LEVELS;
+
+    A.resize(num_levels+1, SparseMatrixType(tag.get_setup_context()));
+    P.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
+    R.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
+    amg_context.resize(num_levels);
+
+    // Insert operator matrix as operator for finest level.
+    //SparseMatrixType A0(mat);
+    //A.insert_element(0, A0);
+    A[0].switch_memory_context(viennacl::traits::context(mat));
+    A[0] = mat;
+    A[0].switch_memory_context(tag.get_setup_context());
+  }
+
+  /** @brief Setup data structures for precondition phase for later use on the GPU
+  *
+  * @param result      Result vector on all levels
+  * @param rhs         RHS vector on all levels
+  * @param residual    Residual vector on all levels
+  * @param A           Operators matrices on all levels from setup phase
+  * @param tag         AMG preconditioner tag
+  * @param ctx         Optional context in which the auxiliary objects are created (one out of multiple OpenCL contexts, CUDA, host)
+  */
+  template<typename InternalVectorT, typename SparseMatrixT>
+  void amg_setup_apply(InternalVectorT & result,
+                       InternalVectorT & result_backup,
+                       InternalVectorT & rhs,
+                       InternalVectorT & residual,
+                       SparseMatrixT const & A,
+                       vcl_size_t coarse_levels,
+                       amg_tag const & tag)
+  {
+    typedef typename InternalVectorT::value_type VectorType;
+
+    result.resize(coarse_levels + 1);
+    result_backup.resize(coarse_levels + 1);
+    rhs.resize(coarse_levels + 1);
+    residual.resize(coarse_levels);
+
+    for (vcl_size_t level=0; level <= coarse_levels; ++level)
+    {
+             result[level] = VectorType(A[level].size1(), tag.get_target_context());
+      result_backup[level] = VectorType(A[level].size1(), tag.get_target_context());
+                rhs[level] = VectorType(A[level].size1(), tag.get_target_context());
+    }
+    for (vcl_size_t level=0; level < coarse_levels; ++level)
+    {
+      residual[level] = VectorType(A[level].size1(), tag.get_target_context());
     }
   }
-}
 
 
-/** @brief Initialize AMG preconditioner
-*
-* @param mat          System matrix
-* @param A            Operator matrices on all levels
-* @param P            Prolongation/Interpolation operators on all levels
-* @param pointvector  Vector of points on all levels
-* @param tag          AMG preconditioner tag
-*/
-template<typename MatrixT, typename InternalT1, typename InternalT2>
-void amg_init(MatrixT const & mat, InternalT1 & A, InternalT1 & P, InternalT1 & R, InternalT2 & amg_context, amg_tag & tag)
-{
-  //typedef typename MatrixType::value_type ScalarType;
-  typedef typename InternalT1::value_type SparseMatrixType;
-
-  std::size_t num_levels = (tag.get_coarselevels() > 0) ? tag.get_coarselevels() : VIENNACL_AMG_MAX_LEVELS;
-
-  A.resize(num_levels+1, SparseMatrixType(tag.get_setup_context()));
-  P.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
-  R.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
-  amg_context.resize(num_levels);
-
-  // Insert operator matrix as operator for finest level.
-  //SparseMatrixType A0(mat);
-  //A.insert_element(0, A0);
-  A[0].switch_memory_context(viennacl::traits::context(mat));
-  A[0] = mat;
-  A[0].switch_memory_context(tag.get_setup_context());
-}
-
-/** @brief Setup data structures for precondition phase for later use on the GPU
-*
-* @param result      Result vector on all levels
-* @param rhs         RHS vector on all levels
-* @param residual    Residual vector on all levels
-* @param A           Operators matrices on all levels from setup phase
-* @param tag         AMG preconditioner tag
-* @param ctx         Optional context in which the auxiliary objects are created (one out of multiple OpenCL contexts, CUDA, host)
-*/
-template<typename InternalVectorT, typename SparseMatrixT>
-void amg_setup_apply(InternalVectorT & result,
-                     InternalVectorT & result_backup,
-                     InternalVectorT & rhs,
-                     InternalVectorT & residual,
-                     SparseMatrixT const & A,
-                     amg_tag const & tag)
-{
-  typedef typename InternalVectorT::value_type VectorType;
-
-  result.resize(tag.get_coarselevels()+1);
-  result_backup.resize(tag.get_coarselevels()+1);
-  rhs.resize(tag.get_coarselevels()+1);
-  residual.resize(tag.get_coarselevels());
-
-  for (unsigned int level=0; level < tag.get_coarselevels()+1; ++level)
+  /** @brief Pre-compute LU factorization for direct solve (ublas library).
+   *  @brief Speeds up precondition phase as this is computed only once overall instead of once per iteration.
+  *
+  * @param op           Operator matrix for direct solve
+  * @param permutation  Permutation matrix which saves the factorization result
+  * @param A            Operator matrix on coarsest level
+  */
+  template<typename NumericT, typename SparseMatrixT>
+  void amg_lu(viennacl::matrix<NumericT> & op,
+              SparseMatrixT const & A,
+              amg_tag const & tag)
   {
-           result[level] = VectorType(A[level].size1(), tag.get_target_context());
-    result_backup[level] = VectorType(A[level].size1(), tag.get_target_context());
-              rhs[level] = VectorType(A[level].size1(), tag.get_target_context());
+    op.switch_memory_context(tag.get_setup_context());
+    op.resize(A.size1(), A.size2(), false);
+    viennacl::linalg::detail::amg::assign_to_dense(A, op);
+
+    viennacl::linalg::lu_factorize(op);
+    op.switch_memory_context(tag.get_target_context());
   }
-  for (unsigned int level=0; level < tag.get_coarselevels(); ++level)
-  {
-    residual[level] = VectorType(A[level].size1(), tag.get_target_context());
-  }
-}
 
-
-/** @brief Pre-compute LU factorization for direct solve (ublas library).
- *  @brief Speeds up precondition phase as this is computed only once overall instead of once per iteration.
-*
-* @param op           Operator matrix for direct solve
-* @param permutation  Permutation matrix which saves the factorization result
-* @param A            Operator matrix on coarsest level
-*/
-template<typename NumericT, typename SparseMatrixT>
-void amg_lu(viennacl::matrix<NumericT> & op,
-            SparseMatrixT const & A,
-            amg_tag const & tag)
-{
-  op.switch_memory_context(tag.get_setup_context());
-  op.resize(A.size1(), A.size2(), false);
-  viennacl::linalg::detail::amg::assign_to_dense(A, op);
-
-  viennacl::linalg::lu_factorize(op);
-  op.switch_memory_context(tag.get_target_context());
 }
 
 /** @brief AMG preconditioner class, can be supplied to solve()-routines
@@ -252,8 +250,6 @@ class amg_precond< compressed_matrix<NumericT, AlignmentV> >
   mutable std::vector<VectorType> rhs_list_;
   mutable std::vector<VectorType> residual_list_;
 
-  mutable bool done_init_apply_;
-
   amg_tag tag_;
 
 public:
@@ -271,7 +267,7 @@ public:
     tag_ = tag;
 
     // Initialize data structures.
-    amg_init(mat, A_list_, P_list_, R_list_, amg_context_list_, tag_);
+    detail::amg_init(mat, A_list_, P_list_, R_list_, amg_context_list_, tag_);
   }
 
   /** @brief Start setup phase for this class and copy data structures.
@@ -279,13 +275,13 @@ public:
   void setup()
   {
     // Start setup phase.
-    amg_setup(A_list_, P_list_, R_list_, amg_context_list_, tag_);
+    vcl_size_t num_coarse_levels = detail::amg_setup(A_list_, P_list_, R_list_, amg_context_list_, tag_);
 
     // Setup precondition phase (Data structures).
-    amg_setup_apply(result_list_, result_backup_list_, rhs_list_, residual_list_, A_list_, tag_);
+    detail::amg_setup_apply(result_list_, result_backup_list_, rhs_list_, residual_list_, A_list_, num_coarse_levels, tag_);
 
     // LU factorization for direct solve.
-    amg_lu(coarsest_op_, A_list_[tag_.get_coarselevels()], tag_);
+    detail::amg_lu(coarsest_op_, A_list_[num_coarse_levels], tag_);
   }
 
 
@@ -302,17 +298,17 @@ public:
     rhs_list_[0] = vec;
 
     // Part 1: Restrict down to coarsest level
-    for (level=0; level < tag_.get_coarselevels(); level++)
+    for (level=0; level < residual_list_.size(); level++)
     {
       result_list_[level].clear();
 
       // Apply Smoother presmooth_ times.
-      viennacl::linalg::detail::amg::smooth_jacobi(tag_.get_presmooth(),
+      viennacl::linalg::detail::amg::smooth_jacobi(tag_.get_presmooth_steps(),
                                                    A_list_[level],
                                                    result_list_[level],
                                                    result_backup_list_[level],
                                                    rhs_list_[level],
-                                                   static_cast<NumericT>(tag_.get_jacobiweight()));
+                                                   static_cast<NumericT>(tag_.get_jacobi_weight()));
 
       // Compute residual.
       //residual[level] = rhs_[level] - viennacl::linalg::prod(A_[level], result_[level]);
@@ -329,7 +325,7 @@ public:
     viennacl::linalg::lu_substitute(coarsest_op_, result_list_[level]);
 
     // Part 3: Prolongation to finest level
-    for (int level2 = static_cast<int>(tag_.get_coarselevels()-1); level2 >= 0; level2--)
+    for (int level2 = static_cast<int>(residual_list_.size()-1); level2 >= 0; level2--)
     {
       level = static_cast<vcl_size_t>(level2);
 
@@ -338,12 +334,12 @@ public:
       result_list_[level] += result_backup_list_[level];
 
       // Apply Smoother postsmooth_ times.
-      viennacl::linalg::detail::amg::smooth_jacobi(tag_.get_postsmooth(),
+      viennacl::linalg::detail::amg::smooth_jacobi(tag_.get_postsmooth_steps(),
                                                    A_list_[level],
                                                    result_list_[level],
                                                    result_backup_list_[level],
                                                    rhs_list_[level],
-                                                   static_cast<NumericT>(tag_.get_jacobiweight()));
+                                                   static_cast<NumericT>(tag_.get_jacobi_weight()));
     }
     vec = result_list_[0];
   }

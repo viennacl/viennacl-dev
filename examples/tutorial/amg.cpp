@@ -85,15 +85,10 @@ void run_amg(viennacl::linalg::cg_tag & cg_solver,
              std::string info,
              viennacl::linalg::amg_tag & amg_tag)
 {
-  //boost::numeric::ublas::vector<ScalarType> avgstencil;
-  unsigned int coarselevels = amg_tag.get_coarselevels();
-
   std::cout << "-- CG with AMG preconditioner, " << info << " --" << std::endl;
 
-  amg_tag.set_coarselevels(coarselevels);
-  viennacl::linalg::amg_precond<viennacl::compressed_matrix<ScalarType> > vcl_amg = viennacl::linalg::amg_precond<viennacl::compressed_matrix<ScalarType> > (vcl_compressed_matrix, amg_tag);
+  viennacl::linalg::amg_precond<viennacl::compressed_matrix<ScalarType> > vcl_amg(vcl_compressed_matrix, amg_tag);
   std::cout << " * Setup phase (ViennaCL types)..." << std::endl;
-  vcl_amg.tag().set_coarselevels(coarselevels);
   viennacl::tools::timer timer;
   timer.start();
   vcl_amg.setup();
@@ -102,18 +97,6 @@ void run_amg(viennacl::linalg::cg_tag & cg_solver,
 
   std::cout << " * CG solver (ViennaCL types)..." << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, vcl_amg);
-
-  // note: direct assignment runs into issues with OpenCL (kernels for char poor)
-  amg_tag.set_coarselevels(vcl_amg.tag().get_coarselevels());
-  for (std::size_t i=0; i<amg_tag.get_coarselevels(); ++i)
-  {
-    if (vcl_amg.tag().get_coarse_information(i).size() > 0)
-    {
-      std::vector<char> tmp(vcl_amg.tag().get_coarse_information(i).size());
-      viennacl::copy(vcl_amg.tag().get_coarse_information(i), tmp);
-      viennacl::copy(tmp, amg_tag.get_coarse_information(i));
-    }
-  }
 }
 
 /**
@@ -198,7 +181,6 @@ int main(int argc, char **argv)
   * Instantiate a tag for the conjugate gradient solver, the AMG preconditioner tag, and create an AMG preconditioner object:
   **/
   viennacl::linalg::cg_tag cg_solver(1e-8, 10000);
-  viennacl::linalg::amg_tag amg_tag;
 
   viennacl::context host_ctx(viennacl::MAIN_MEMORY);
   viennacl::context target_ctx = viennacl::traits::context(vcl_compressed_matrix);
@@ -211,36 +193,33 @@ int main(int argc, char **argv)
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, viennacl::linalg::no_precond());
 
   /**
-  * Generate the setup for an AMG preconditioner of Ruge-Stueben type with direct interpolation (RS+DIRECT) and run the solver:
-  **/
-  amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_RS,       // coarsening strategy
-                                      VIENNACL_AMG_INTERPOL_DIRECT, // interpolation strategy
-                                      0.25, // strength of dependence threshold
-                                      0.2,  // interpolation weight
-                                      0.67, // jacobi smoother weight
-                                      1,    // presmoothing steps
-                                      1,    // postsmoothing steps
-                                      0);   // number of coarse levels to be used (0: automatically use as many as reasonable)
-  //run_amg (cg_solver, ublas_vec, ublas_result, ublas_matrix, vcl_vec, vcl_result, vcl_compressed_matrix, "RS COARSENING, DIRECT INTERPOLATION", amg_tag);
-
-  /**
   * Generate the setup for an AMG preconditioner of Ruge-Stueben type with only one pass and direct interpolation (ONEPASS+DIRECT)
   **/
-  amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_ONEPASS, VIENNACL_AMG_INTERPOL_DIRECT,0.25, 0.2, 0.67, 1, 1, 0);
-  amg_tag.set_setup_context(host_ctx);    // run setup on host
-  amg_tag.set_target_context(target_ctx); // run solver cycles on device
-  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag);
+  viennacl::linalg::amg_tag amg_tag_direct;
+  amg_tag_direct.set_coarsening_method(viennacl::linalg::AMG_COARSENING_METHOD_ONEPASS);
+  amg_tag_direct.set_interpolation_method(viennacl::linalg::AMG_INTERPOLATION_METHOD_DIRECT);
+  amg_tag_direct.set_strong_connection_threshold(0.25);
+  amg_tag_direct.set_jacobi_weight(0.67);
+  amg_tag_direct.set_presmooth_steps(1);
+  amg_tag_direct.set_postsmooth_steps(1);
+  amg_tag_direct.set_setup_context(host_ctx);    // run setup on host
+  amg_tag_direct.set_target_context(target_ctx); // run solver cycles on device
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag_direct);
 
   /**
   * Generate the setup for an aggregation-based AMG preconditioner with unsmoothed aggregation
   **/
-  viennacl::linalg::amg_tag amg_tag_agg_pmis(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_AG, 0.002, 0, 0.67, 2, 2, 0);
+  viennacl::linalg::amg_tag amg_tag_agg_pmis;
+  amg_tag_agg_pmis.set_coarsening_method(viennacl::linalg::AMG_COARSENING_METHOD_MIS2_AGGREGATION);
+  amg_tag_agg_pmis.set_interpolation_method(viennacl::linalg::AMG_INTERPOLATION_METHOD_AGGREGATION);
   run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), AG INTERPOLATION", amg_tag_agg_pmis);
 
   /**
   * Generate the setup for a smoothed aggregation AMG preconditioner
   **/
-  viennacl::linalg::amg_tag amg_tag_sa_pmis(VIENNACL_AMG_COARSE_AG_MIS2, VIENNACL_AMG_INTERPOL_SA, 0.08, 0.67, 0.67, 2, 2, 0);
+  viennacl::linalg::amg_tag amg_tag_sa_pmis;
+  amg_tag_sa_pmis.set_coarsening_method(viennacl::linalg::AMG_COARSENING_METHOD_MIS2_AGGREGATION);
+  amg_tag_sa_pmis.set_interpolation_method(viennacl::linalg::AMG_INTERPOLATION_METHOD_SMOOTHED_AGGREGATION);
   run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
 
   std::cout << std::endl;
@@ -249,14 +228,8 @@ int main(int argc, char **argv)
 
   std::cout << "-- CG solver (no preconditioner) --" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, cg_solver, viennacl::linalg::no_precond());
-
-  amg_tag = viennacl::linalg::amg_tag(VIENNACL_AMG_COARSE_ONEPASS, VIENNACL_AMG_INTERPOL_DIRECT,0.25, 0.2, 0.67, 1, 1, 0);
-  amg_tag.set_setup_context(host_ctx);
-  amg_tag.set_target_context(target_ctx);
-  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag);
-
+  run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag_direct);
   run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), AG INTERPOLATION", amg_tag_agg_pmis);
-
   run_amg (cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
 
   /**
