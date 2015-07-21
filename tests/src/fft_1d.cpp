@@ -1,19 +1,19 @@
 /* =========================================================================
- Copyright (c) 2010-2014, Institute for Microelectronics,
- Institute for Analysis and Scientific Computing,
- TU Wien.
- Portions of this software are copyright by UChicago Argonne, LLC.
+   Copyright (c) 2010-2015, Institute for Microelectronics,
+                            Institute for Analysis and Scientific Computing,
+                            TU Wien.
+   Portions of this software are copyright by UChicago Argonne, LLC.
 
- -----------------
- ViennaCL - The Vienna Computing Library
- -----------------
+                            -----------------
+                  ViennaCL - The Vienna Computing Library
+                            -----------------
 
- Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
+   Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
 
- (A list of authors and contributors can be found in the PDF manual)
+   (A list of authors and contributors can be found in the PDF manual)
 
- License:         MIT (X11), see file LICENSE in the base directory
- ============================================================================= */
+   License:         MIT (X11), see file LICENSE in the base directory
+============================================================================= */
 
 /** \file tests/src/fft_1d.cpp  Tests the one-dimensional FFT routines.
 *   \test Tests the one-dimensional FFT routines.

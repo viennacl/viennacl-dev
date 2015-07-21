@@ -2,7 +2,7 @@
 #define VIENNACL_VERSION_HPP
 
 /* =========================================================================
-   Copyright (c) 2010-2014, Institute for Microelectronics,
+   Copyright (c) 2010-2015, Institute for Microelectronics,
                             Institute for Analysis and Scientific Computing,
                             TU Wien.
    Portions of this software are copyright by UChicago Argonne, LLC.
@@ -13,7 +13,7 @@
 
    Project Head:    Karl Rupp                   rupp@iue.tuwien.ac.at
 
-   (A list of authors and contributors can be found in the PDF manual)
+   (A list of authors and contributors can be found in the manual)
 
    License:         MIT (X11), see file LICENSE in the base directory
 ============================================================================= */
@@ -24,8 +24,8 @@
 */
 
 #define VIENNACL_MAJOR_VERSION 1
-#define VIENNACL_MINOR_VERSION 6
-#define VIENNACL_PATCH_VERSION 2
+#define VIENNACL_MINOR_VERSION 7
+#define VIENNACL_PATCH_VERSION 0
 
 #endif
 
