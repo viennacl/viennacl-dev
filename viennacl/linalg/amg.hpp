@@ -51,6 +51,19 @@ namespace viennacl
 namespace linalg
 {
 
+class amg_coarse_problem_too_large_exception : public std::runtime_error
+{
+public:
+  amg_coarse_problem_too_large_exception(std::string const & msg, vcl_size_t num_points) : std::runtime_error(msg), c_points_(num_points) {}
+
+  /** @brief Returns the number of coarse points for which no further coarsening could be applied */
+  vcl_size_t coarse_points() const { return c_points_; }
+
+private:
+  vcl_size_t c_points_;
+};
+
+
 namespace detail
 {
   /** @brief Sparse Galerkin product: Calculates A_coarse = trans(P)*A_fine*P
@@ -107,6 +120,13 @@ namespace detail
       // Calculate number of C and F points on level i.
       unsigned int c_points = list_of_amg_level_context[i].num_coarse_;
       unsigned int f_points = list_of_A[i].size1() - c_points;
+
+      if (f_points == 0 && c_points > tag.get_coarseing_cutoff())
+      {
+        std::stringstream ss;
+        ss << "No further coarsening possible (" << c_points << " coarse points). Consider changing the strong connection threshold or increasing the coarsening cutoff." << std::endl;
+        throw amg_coarse_problem_too_large_exception(ss.str(), c_points);
+      }
 
       // Stop routine when the maximal coarse level is found (no C or F point). Coarsest level is level i.
       if (c_points == 0 || f_points == 0)
@@ -238,20 +258,6 @@ class amg_precond< compressed_matrix<NumericT, AlignmentV> >
   typedef viennacl::vector<NumericT>                        VectorType;
   typedef detail::amg::amg_level_context                    AMGContextType;
 
-  std::vector<SparseMatrixType> A_list_;
-  std::vector<SparseMatrixType> P_list_;
-  std::vector<SparseMatrixType> R_list_;
-  std::vector<AMGContextType>   amg_context_list_;
-
-  viennacl::matrix<NumericT>        coarsest_op_;
-
-  mutable std::vector<VectorType> result_list_;
-  mutable std::vector<VectorType> result_backup_list_;
-  mutable std::vector<VectorType> rhs_list_;
-  mutable std::vector<VectorType> residual_list_;
-
-  amg_tag tag_;
-
 public:
 
   amg_precond() {}
@@ -344,9 +350,37 @@ public:
     vec = result_list_[0];
   }
 
+  /** @brief Returns the total number of multigrid levels in the hierarchy including the finest level. */
+  vcl_size_t levels() const { return residual_list_.size(); }
 
 
-  amg_tag & tag() { return tag_; }
+  /** @brief Returns the problem/operator size at the respective multigrid level
+    *
+    * @param level     Index of the multigrid level. 0 is the finest level, levels() - 1 is the coarsest level.
+    */
+  vcl_size_t size(vcl_size_t level) const
+  {
+    assert(level < levels() && bool("Level index out of bounds!"));
+    return residual_list_[level].size();
+  }
+
+  /** @brief Returns the associated preconditioner tag containing the configuration for the multigrid preconditioner. */
+  amg_tag const & tag() const { return tag_; }
+
+private:
+  std::vector<SparseMatrixType> A_list_;
+  std::vector<SparseMatrixType> P_list_;
+  std::vector<SparseMatrixType> R_list_;
+  std::vector<AMGContextType>   amg_context_list_;
+
+  viennacl::matrix<NumericT>        coarsest_op_;
+
+  mutable std::vector<VectorType> result_list_;
+  mutable std::vector<VectorType> result_backup_list_;
+  mutable std::vector<VectorType> rhs_list_;
+  mutable std::vector<VectorType> residual_list_;
+
+  amg_tag tag_;
 };
 
 }
