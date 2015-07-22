@@ -33,53 +33,6 @@ The third parameter denotes the relative tolerance for the inner low-precision C
 \section manual-additional-algorithms-preconditioners Additional Preconditioners
 In addition to the \ref manual-algorithms-preconditioners "Preconditioners available in the ViennaCL core", two more preconditioners are available with the OpenCL backend and are described in the following.
 
-\subsection manual-additional-algorithms-preconditioners-amg Algebraic Multigrid
-
-\note Algebraic Multigrid preconditioners are only available with the OpenCL backend and are still experimental in ViennaCL. Interface changes as well as considerable performance improvements may be included in future releases!
-
-\note Algebraic Multigrid preconditioners depend on Boost.uBLAS.
-
-Algebraic multigrid mimics the behavior of geometric multigrid on the algebraic level and is thus suited for black-box purposes, where only the system matrix and the right hand side vector are available \cite trottenberg:multigrid .
-Many different flavors of the individual multigrid ingredients exist \cite yang:parallel-amg, of which the most common ones are implemented in ViennaCL.
-
-The two main ingredients of algebraic multigrid are a coarsening algorithm and an interpolation algorithm.
-The available coarsening methods are:
-
-<center>
-<table>
-<tr><th>Description                     </th><th> ViennaCL option constant </th></tr>
-<tr><td>Classical Ruge-St&uuml;ben (RS) </td><td> `VIENNACL_AMG_COARSE_RS` </td></tr>
-<tr><td>One-Pass                        </td><td> `VIENNACL_AMG_COARSE_ONEPASS` </td></tr>
-<tr><td>RS0                             </td><td> `VIENNACL_AMG_COARSE_RS0` </td></tr>
-<tr><td>RS3                             </td><td> `VIENNACL_AMG_COARSE_RS3` </td></tr>
-<tr><td>Aggregation                     </td><td> `VIENNACL_AMG_COARSE_AG` </td></tr>
-<tr><td>Smoothed aggregation            </td><td> `VIENNACL_AMG_COARSE_SA` </td></tr>
-</table>
-<b>AMG coarsening methods available in ViennaCL. Per default, classical RS coarsening is used. </b>
-</center>
-
-The available interpolation methods are:
-<center>
-<table>
-<tr><th>Description    </th><th> ViennaCL option constant </th></tr>
-<tr><td>Direct         </td><td> `VIENNACL_AMG_INTERPOL_DIRECT` </td></tr>
-<tr><td>Classic        </td><td> `VIENNACL_AMG_INTERPOL_ONEPASS` </td></tr>
-<tr><td>RS0 coarsening </td><td> `VIENNACL_AMG_INTERPOL_RS0` </td></tr>
-<tr><td>RS3 coarsening </td><td> `VIENNACL_AMG_INTERPOL_RS3` </td></tr>
-</table>
-<b>AMG interpolation methods available in ViennaCL. Per default, direct interpolation is used.</b>
-</center>
-
-In addition, the following parameters can be controlled in the `amg_tag` and can be passed to the constructor:
-  - Strength of dependence threshold (default: `0.25`)
-  - Interpolation weight (default: `1`)
-  - Jacobi smoother weight (default: `1`)
-  - Number of pre-smoothing steps (default: `1`)
-  - Number of post-smoothing steps (default: `1`)
-  - Number of coarse levels
-
-
-\note Note that the efficiency of the various AMG flavors are typically highly problem-specific. Therefore, failure of one method for a particular problem does NOT imply that other coarsening or interpolation strategies will fail as well.
 
 \subsection manual-additional-algorithms-preconditioners-spai Sparse Approximate Inverses
 

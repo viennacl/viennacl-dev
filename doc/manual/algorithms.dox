@@ -113,7 +113,7 @@ ViennaCL ships with a generic implementation of several preconditioners.
 The preconditioner setup is expect for simple diagonal preconditioners always carried out on the CPU host due to the need for dynamically allocating memory.
 Thus, one may not obtain an overall performance benefit if too much time is spent on the preconditioner setup.
 
-\note The preconditioner also works for Boost.uBLAS types!
+\note Some preconditioners also work for Boost.uBLAS types!
 
 An overview of preconditioners available for the various sparse matrix types is as follows:
 <center>
@@ -123,10 +123,11 @@ An overview of preconditioners available for the various sparse matrix types is 
  <tr><td> `coordinate_matrix` </td><td> no    </td><td> no               </td><td> yes    </td><td> yes         </td><td> no  </td><td> no   </td></tr>
  <tr><td> `ell_matrix`        </td><td> no    </td><td> no               </td><td> no     </td><td> no          </td><td> no  </td><td> no   </td></tr>
  <tr><td> `hyb_matrix`        </td><td> no    </td><td> no               </td><td> no     </td><td> no          </td><td> no  </td><td> no   </td></tr>
+ <tr><td> `sliced_ell_matrix` </td><td> no    </td><td> no               </td><td> no     </td><td> no          </td><td> no  </td><td> no   </td></tr>
 </table>
 </center>
-Broader support of preconditioners particularly for `ell_matrix` and `hyb_matrix` is scheduled for future releases.
-AMG and SPAI preconditioners are described in \ref manual-additional-algorithms "Additional Algorithms" section.
+We aim to provide broader support for preconditioners using other sparse matrix formats in future releases.
+Sparse approximate inverse (SPAI) preconditioners are described in \ref manual-additional-algorithms "Additional Algorithms" section.
 
 
 \subsection manual-algorithms-preconditioners-ilut Incomplete LU Factorization with Threshold (ILUT)
@@ -205,7 +206,7 @@ vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs,
 \endcode
 
 
-\subsection manual-algorithms-preconditioners-row-scaling Row Scaling Preconditioner
+\subsection manual-algorithms-preconditioners-row-scaling Row-Scaling Preconditioner
 A row scaling preconditioner is a simple diagonal preconditioner given by the reciprocals of the norms of the rows of the system matrix.
 Use the preconditioner as follows:
 \code
@@ -219,6 +220,90 @@ vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs,
 \endcode
 The tag `viennacl::linalg::row_scaling_tag()` can be supplied with a parameter denoting the norm to be used.
 A value of `1` specifies the \f$ l^1 \f$-norm, while a value of \f$ 2 \f$ selects the \f$ l^2 \f$-norm (default).
+
+
+\subsection manual-algorithms-preconditioners-amg Algebraic Multigrid Preconditioners
+
+Algebraic multigrid (AMG) mimics the behavior of geometric multigrid on the algebraic level and is thus suited for black-box purposes, where only the system matrix and the right hand side vector are available \cite trottenberg:multigrid .
+Many different flavors of the individual multigrid ingredients exist \cite yang:parallel-amg, of which some (with an emphasis on fine-grained parallelism) are implemented in ViennaCL.
+
+\note Despite the asymptotic optimality of AMG for e.g. systems arising from finite difference or finite element discretizations of elliptic PDEs, AMG methods are not a silver bullet and may just as well fail for general matrices.
+
+The two main ingredients of algebraic multigrid are a coarsening algorithm and an interpolation algorithm.
+The available coarsening methods are:
+
+<center>
+<table>
+<tr><th>Description                           </th><th> ViennaCL option in `viennacl::linalg::` </th></tr>
+<tr><td>One-Pass Classical Coarsening         </td><td> `AMG_COARSENING_METHOD_ONEPASS` </td></tr>
+<tr><td>Sequential Aggregation                </td><td> `AMG_COARSENING_METHOD_AGGREGATION` </td></tr>
+<tr><td>Parallel MIS-2 aggregation (default)  </td><td> `AMG_COARSENING_METHOD_MIS2_AGGREGATION` </td></tr>
+</table>
+<b>AMG coarsening methods available in ViennaCL. </b>
+</center>
+
+The parallel maximum independent set (MIS) algorithm for distance 2 was initially described in \cite Bell:AMG for CUDA.
+ViennaCL's implementation also supports OpenCL and OpenMP, thus making the method available for all major computing platforms.
+
+The available interpolation methods are:
+<center>
+<table>
+<tr><th>Description                    </th><th> ViennaCL option constant </th></tr>
+<tr><td>Direct interpolation           </td><td> `AMG_INTERPOLATION_METHOD_DIRECT` </td></tr>
+<tr><td>Aggregation                    </td><td> `AMG_INTERPOLATION_METHOD_AGGREGATION` </td></tr>
+<tr><td>Smoothed aggregation (default) </td><td> `AMG_INTERPOLATION_METHOD_SMOOTHED_AGGREGATION` </td></tr>
+</table>
+<b>AMG interpolation methods available in ViennaCL.</b>
+</center>
+
+The preconditioner setup follows a two-stage process:
+Parameters for customizing the preconditioner are configured through the `viennacl::linalg::amg_tag`.
+Since AMG preconditioners are not a silver bullet, some user customization are typically required for best results.
+These customizations require a certain familiarity with the concept of multigrid methods.
+A list of parameters available for tweaks is as follows:
+  - <b>Strong connection threshold</b>: A relative threshold value above which two nodes in the algebraic graph are considered to be strongly connected.
+  - <b>Jacobi smoother weight</b>: Damping parameter for the damped Jacobi method. Parameter values of 0.67 or 1.0 are good starting points for experimentation.
+  - <b>Number of pre-smoothing steps</b>: Number of smoother applications on the fine level before restricting the residual to the coarse level.
+  - <b>Number of post-smoothing steps</b>: Number of smoother applications after the coarse grid correction has been interpolated back to the fine level.
+  - <b>Maximum number of coarse levels</b>: Maximum number of coarse levels to use when setting up the hierarchy. A direct solver is employed on the coarsest level.
+  - <b>Coarse level cut-off</b>: Number of unknowns below which the coarsening stops and a direct solver is employed.
+  - <b>Context for the preconditioner setup</b>: Explicitly specify the backend to be used for setting up the preconditioner. This way one can e.g. run the setup on the CPU and the preconditioner applications on the GPU.
+  - <b>Context for the preconditioner application</b>: Explicitly specify the backend to be used for applying the preconditioner to a vector. This way one can e.g. run the setup on the CPU and the preconditioner applications on the GPU.
+
+A typical customization code snippet for running the setup on the CPU and the preconditioner application on a CUDA-enabled GPU is as follows:
+\code
+viennacl::context host_ctx(viennacl::MAIN_MEMORY);
+viennacl::context target_ctx(viennacl::CUDA_MEMORY);
+
+viennacl::linalg::amg_tag amg_tag_direct;
+amg_tag_direct.set_coarsening_method(viennacl::linalg::AMG_COARSENING_METHOD_ONEPASS);
+amg_tag_direct.set_interpolation_method(viennacl::linalg::AMG_INTERPOLATION_METHOD_DIRECT);
+amg_tag_direct.set_strong_connection_threshold(0.25);
+amg_tag_direct.set_jacobi_weight(0.67);
+amg_tag_direct.set_presmooth_steps(1);
+amg_tag_direct.set_postsmooth_steps(1);
+amg_tag_direct.set_setup_context(host_ctx);    // run setup on host
+amg_tag_direct.set_target_context(target_ctx); // run solver cycles on device
+\endcode
+
+The actual preconditioner class is `viennacl::linalg::amg_precond<MatrixT>` for the sparse matrix type `MatrixT`.
+Unlike other preconditioner objects, the AMG preconditioner requires an explicit call to the member function `.setup()` for constructing interpolations, coarse grid hierarchies, etc.
+A minimal code for using an AMG preconditioner within an iterative solver is as follows:
+\code
+viennacl::compressed_matrix<NumericT> A;
+viennacl::vector<NumericT> b;
+
+// Setup A and b here
+
+viennacl::linalg::amg_tag my_amg_tag;
+// customize my_amg_tag here if needed
+viennacl::linalg::amg_precond<viennacl::compressed_matrix<NumericT> > my_amg(A, my_amg_tag);
+my_amg.setup();
+viennacl::vector<NumericT> x = viennacl::linalg::solve(A, b, viennacl::linalg::cg_tag(), my_amg);
+\endcode
+
+
+\note Note that the efficiency of the various AMG flavors are typically highly problem-specific. Therefore, failure of one method for a particular problem does NOT imply that other coarsening or interpolation strategies will fail as well.
 
 
 \section manual-algorithms-eigenvalues Eigenvalue Computations
