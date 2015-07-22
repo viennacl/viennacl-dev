@@ -118,7 +118,8 @@ namespace detail
 template<typename MatrixT>
 class chow_patel_ilu_precond
 {
-  // only works for compressed_matrix!
+  // only works with compressed_matrix!
+  typedef typename MatrixT::CHOW_PATEL_ILU_ONLY_WORKS_WITH_COMPRESSED_MATRIX  error_type;
 };
 
 
