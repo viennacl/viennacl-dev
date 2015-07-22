@@ -227,6 +227,8 @@ A value of `1` specifies the \f$ l^1 \f$-norm, while a value of \f$ 2 \f$ select
 Algebraic multigrid (AMG) mimics the behavior of geometric multigrid on the algebraic level and is thus suited for black-box purposes, where only the system matrix and the right hand side vector are available \cite trottenberg:multigrid .
 Many different flavors of the individual multigrid ingredients exist \cite yang:parallel-amg, of which some (with an emphasis on fine-grained parallelism) are implemented in ViennaCL.
 
+\note Despite the asymptotic optimality of AMG for e.g. systems arising from finite difference or finite element discretizations of elliptic PDEs, AMG methods are not a silver bullet and may just as well fail for general matrices.
+
 The two main ingredients of algebraic multigrid are a coarsening algorithm and an interpolation algorithm.
 The available coarsening methods are:
 
