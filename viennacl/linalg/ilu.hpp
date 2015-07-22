@@ -25,6 +25,7 @@
 #include "viennacl/linalg/detail/ilu/ilut.hpp"
 #include "viennacl/linalg/detail/ilu/ilu0.hpp"
 #include "viennacl/linalg/detail/ilu/block_ilu.hpp"
+#include "viennacl/linalg/detail/ilu/chow_patel_ilu.hpp"
 
 #endif
 

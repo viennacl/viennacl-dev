@@ -220,6 +220,19 @@ int run_benchmark(viennacl::context ctx)
   exec_time = timer.get();
   std::cout << "ViennaCL time: " << exec_time << std::endl;
 
+  std::cout << "------- Chow-Patel parallel ICC with ViennaCL ----------" << std::endl;
+
+  timer.start();
+  viennacl::linalg::chow_patel_icc_precond< viennacl::compressed_matrix<ScalarType> > vcl_chow_patel_icc(vcl_compressed_matrix, viennacl::linalg::chow_patel_tag());
+  viennacl::backend::finish();
+  std::cout << "Setup time: " << timer.get() << std::endl;
+
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+    vcl_chow_patel_icc.apply(vcl_vec1);
+  viennacl::backend::finish();
+  std::cout << "ViennaCL Chow-Patel-ILU substitution time: " << timer.get() << std::endl;
+
 
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////           ILU preconditioner         //////////////////
@@ -235,7 +248,6 @@ int run_benchmark(viennacl::context ctx)
     ublas_ilu0.apply(ublas_vec1);
   exec_time = timer.get();
   std::cout << "ublas ILU0 substitution time (no level scheduling): " << exec_time << std::endl;
-
 
   std::cout << "------- ILU0 with ViennaCL ----------" << std::endl;
 
@@ -389,6 +401,18 @@ int run_benchmark(viennacl::context ctx)
   exec_time = timer.get();
   std::cout << "ViennaCL time: " << exec_time << std::endl;
 
+  std::cout << "------- Chow-Patel parallel ILU with ViennaCL ----------" << std::endl;
+
+  timer.start();
+  viennacl::linalg::chow_patel_ilu_precond< viennacl::compressed_matrix<ScalarType> > vcl_chow_patel_ilu(vcl_compressed_matrix, viennacl::linalg::chow_patel_tag());
+  viennacl::backend::finish();
+  std::cout << "Setup time: " << timer.get() << std::endl;
+
+  timer.start();
+  for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
+    vcl_chow_patel_ilu.apply(vcl_vec1);
+  viennacl::backend::finish();
+  std::cout << "ViennaCL Chow-Patel-ILU substitution time: " << timer.get() << std::endl;
 
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////              CG solver                //////////////////
@@ -433,6 +457,8 @@ int run_benchmark(viennacl::context ctx)
   std::cout << "------- CG solver (ICHOL0 preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, vcl_ichol0, cg_ops);
 
+  std::cout << "------- CG solver (Chow-Patel ICHOL0 preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
+  run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, vcl_chow_patel_icc, cg_ops);
 
   std::cout << "------- CG solver (ILU0 preconditioner) using ublas ----------" << std::endl;
   run_solver(ublas_matrix, ublas_vec2, ublas_result, cg_solver, ublas_ilu0, cg_ops);
@@ -481,7 +507,6 @@ int run_benchmark(viennacl::context ctx)
   std::cout << "------- CG solver (row scaling preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
   run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, cg_solver, vcl_row_scaling_coo, cg_ops);
 
-
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////           BiCGStab solver             //////////////////
   ///////////////////////////////////////////////////////////////////////////////
@@ -495,6 +520,12 @@ int run_benchmark(viennacl::context ctx)
 
   std::cout << "------- BiCGStab solver (no preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, bicgstab_solver, viennacl::linalg::no_precond(), bicgstab_ops);
+
+  std::cout << "------- BiCGStab solver (ILU0 preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
+  run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, bicgstab_solver, vcl_ilu0, bicgstab_ops);
+
+  std::cout << "------- BiCGStab solver (Chow-Patel-ILU preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
+  run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, bicgstab_solver, vcl_chow_patel_ilu, bicgstab_ops);
 
   std::cout << "------- BiCGStab solver (no preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
   run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, bicgstab_solver, viennacl::linalg::no_precond(), bicgstab_ops);
