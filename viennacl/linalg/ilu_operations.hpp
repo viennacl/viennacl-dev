@@ -47,6 +47,106 @@ namespace viennacl
 namespace linalg
 {
 
+/** @brief Extracts the lower triangular part L from A.
+  *
+  * Diagonal of L is stored explicitly in order to enable better code reuse.
+  *
+  */
+template<typename NumericT>
+void extract_L(compressed_matrix<NumericT> const & A,
+               compressed_matrix<NumericT>       & L)
+{
+  switch (viennacl::traits::handle(A).get_active_handle_id())
+  {
+  case viennacl::MAIN_MEMORY:
+    viennacl::linalg::host_based::extract_L(A, L);
+    break;
+#ifdef VIENNACL_WITH_OPENCL
+  case viennacl::OPENCL_MEMORY:
+    viennacl::linalg::opencl::extract_L(A, L);
+    break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+  case viennacl::CUDA_MEMORY:
+    viennacl::linalg::cuda::extract_L(A, L);
+    break;
+#endif
+  case viennacl::MEMORY_NOT_INITIALIZED:
+    throw memory_exception("not initialised!");
+  default:
+    throw memory_exception("not implemented");
+  }
+}
+
+/** @brief Scales the values extracted from A such that A' = DAD has unit diagonal. Updates values from A in L accordingly.
+  *
+  * Since A should not be modified (const-correctness), updates are in L.
+  *
+  */
+template<typename NumericT>
+void icc_scale(compressed_matrix<NumericT> const & A,
+               compressed_matrix<NumericT>       & L)
+{
+  switch (viennacl::traits::handle(A).get_active_handle_id())
+  {
+  case viennacl::MAIN_MEMORY:
+    viennacl::linalg::host_based::icc_scale(A, L);
+    break;
+#ifdef VIENNACL_WITH_OPENCL
+  case viennacl::OPENCL_MEMORY:
+    viennacl::linalg::opencl::icc_scale(A, L);
+    break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+  case viennacl::CUDA_MEMORY:
+    viennacl::linalg::cuda::icc_scale(A, L);
+    break;
+#endif
+  case viennacl::MEMORY_NOT_INITIALIZED:
+    throw memory_exception("not initialised!");
+  default:
+    throw memory_exception("not implemented");
+  }
+}
+
+/** @brief Performs one nonlinear relaxation step in the Chow-Patel-ICC (cf. Algorithm 3 in paper, but for L rather than U)
+  *
+  * We use a fully synchronous (Jacobi-like) variant, because asynchronous methods as described in the paper are a nightmare to debug
+  * (and particularly funny if they sometimes fail, sometimes not)
+  *
+  * @param A       The system matrix
+  * @param L       Lower-triangular matrix L in LL^T factorization
+  */
+template<typename NumericT>
+void icc_chow_patel_sweep(compressed_matrix<NumericT>       & L,
+                          vector<NumericT>                  & aij_L)
+{
+  switch (viennacl::traits::handle(L).get_active_handle_id())
+  {
+  case viennacl::MAIN_MEMORY:
+    viennacl::linalg::host_based::icc_chow_patel_sweep(L, aij_L);
+    break;
+#ifdef VIENNACL_WITH_OPENCL
+  case viennacl::OPENCL_MEMORY:
+    viennacl::linalg::opencl::icc_chow_patel_sweep(L, aij_L);
+    break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+  case viennacl::CUDA_MEMORY:
+    viennacl::linalg::cuda::icc_chow_patel_sweep(L, aij_L);
+    break;
+#endif
+  case viennacl::MEMORY_NOT_INITIALIZED:
+    throw memory_exception("not initialised!");
+  default:
+    throw memory_exception("not implemented");
+  }
+}
+
+
+
+//////////////////////// ILU ////////////////////
+
 /** @brief Extracts the lower triangular part L and the upper triangular part U from A.
   *
   * Diagonals of L and U are stored explicitly in order to enable better code reuse.

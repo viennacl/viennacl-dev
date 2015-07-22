@@ -43,6 +43,128 @@ void generate_ilu_level_scheduling_substitute(StringT & source, std::string cons
   source.append("} \n");
 }
 
+///////////// ICC ///////////////
+
+
+template<typename StringT>
+void generate_icc_extract_L_1(StringT & source)
+{
+  source.append("__kernel void extract_L_1( \n");
+  source.append("  __global unsigned int const *A_row_indices, \n");
+  source.append("  __global unsigned int const *A_col_indices, \n");
+  source.append("  unsigned int A_size1, \n");
+  source.append("  __global unsigned int *L_row_indices) { \n");
+
+  source.append("  for (unsigned int row  = get_global_id(0); \n");
+  source.append("                    row  < A_size1; \n");
+  source.append("                    row += get_global_size(0)) \n");
+  source.append("  { \n");
+  source.append("    unsigned int row_begin = A_row_indices[row]; \n");
+  source.append("    unsigned int row_end   = A_row_indices[row+1]; \n");
+
+  source.append("    unsigned int num_entries_L = 0; \n");
+  source.append("    for (unsigned int j=row_begin; j<row_end; ++j) { \n");
+  source.append("      unsigned int col = A_col_indices[j]; \n");
+  source.append("      if (col <= row) ++num_entries_L; \n");
+  source.append("    } \n");
+
+  source.append("    L_row_indices[row] = num_entries_L;   \n");
+  source.append("  } \n");
+  source.append("} \n");
+}
+
+template<typename StringT>
+void generate_icc_extract_L_2(StringT & source, std::string const & numeric_string)
+{
+  source.append("__kernel void extract_L_2( \n");
+  source.append("  __global unsigned int const *A_row_indices, \n");
+  source.append("  __global unsigned int const *A_col_indices, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" const *A_elements, \n");
+  source.append("  unsigned int A_size1, \n");
+  source.append("  __global unsigned int const *L_row_indices, \n");
+  source.append("  __global unsigned int       *L_col_indices, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" *L_elements) { \n");
+
+  source.append("  for (unsigned int row  = get_global_id(0); \n");
+  source.append("                    row  < A_size1; \n");
+  source.append("                    row += get_global_size(0)) \n");
+  source.append("  { \n");
+  source.append("    unsigned int row_begin = A_row_indices[row]; \n");
+  source.append("    unsigned int row_end   = A_row_indices[row+1]; \n");
+
+  source.append("    unsigned int index_L = L_row_indices[row]; \n");
+  source.append("    for (unsigned int j=row_begin; j<row_end; ++j) { \n");
+  source.append("      unsigned int col = A_col_indices[j]; \n");
+  source.append("      "); source.append(numeric_string); source.append(" value = A_elements[j]; \n");
+
+  source.append("      if (col <= row) { \n");
+  source.append("        L_col_indices[index_L] = col; \n");
+  source.append("        L_elements[index_L]    = value; \n");
+  source.append("        ++index_L; \n");
+  source.append("      } \n");
+  source.append("    } \n");
+
+  source.append("  } \n");
+  source.append("} \n");
+}
+
+
+template<typename StringT>
+void generate_icc_chow_patel_sweep_kernel(StringT & source, std::string const & numeric_string)
+{
+  source.append("__kernel void icc_chow_patel_sweep_kernel( \n");
+  source.append("  __global unsigned int const *L_row_indices, \n");
+  source.append("  __global unsigned int const *L_col_indices, \n");
+  source.append("  __global "); source.append(numeric_string); source.append("       *L_elements, \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" const *L_backup, \n");
+  source.append("  unsigned int L_size1, \n");
+
+  source.append("  __global "); source.append(numeric_string); source.append(" const *aij_L) { \n");
+
+  source.append("  for (unsigned int row  = get_global_id(0); \n");
+  source.append("                    row  < L_size1; \n");
+  source.append("                    row += get_global_size(0)) \n");
+  source.append("  { \n");
+
+  //
+  // Update L:
+  //
+  source.append("    unsigned int row_Li_start = L_row_indices[row]; \n");
+  source.append("    unsigned int row_Li_end   = L_row_indices[row + 1]; \n");
+
+  source.append("    for (unsigned int i = row_Li_start; i < row_Li_end; ++i) { \n");
+  source.append("      unsigned int col = L_col_indices[i]; \n");
+
+  source.append("      unsigned int row_Lj_start = L_row_indices[col]; \n");
+  source.append("      unsigned int row_Lj_end   = L_row_indices[col + 1]; \n");
+
+  source.append("      unsigned int index_Lj = row_Lj_start; \n");
+  source.append("      unsigned int col_Lj = L_col_indices[index_Lj]; \n");
+
+  source.append("      "); source.append(numeric_string); source.append(" s = aij_L[i]; \n");
+  source.append("      for (unsigned int index_Li = row_Li_start; index_Li < i; ++index_Li) { \n");
+  source.append("        unsigned int col_Li = L_col_indices[index_Li]; \n");
+
+  source.append("        while (col_Lj < col_Li) { \n");
+  source.append("          ++index_Lj; \n");
+  source.append("          col_Lj = L_col_indices[index_Lj]; \n");
+  source.append("        } \n");
+
+  source.append("        if (col_Lj == col_Li) \n");
+  source.append("          s -= L_backup[index_Li] * L_backup[index_Lj]; \n");
+  source.append("      } \n");
+
+  // update l_ij:
+  source.append("      L_elements[i] = (row == col) ? sqrt(s) : (s / L_backup[row_Lj_end - 1]); \n");
+  source.append("    } \n");
+
+  source.append("  } \n");
+  source.append("} \n");
+}
+
+
+///////////// ILU ///////////////
+
 template<typename StringT>
 void generate_ilu_extract_LU_1(StringT & source)
 {
@@ -335,6 +457,11 @@ struct ilu
       if (numeric_string == "float" || numeric_string == "double")
       {
         generate_ilu_level_scheduling_substitute(source, numeric_string);
+
+        generate_icc_extract_L_1(source);
+        generate_icc_extract_L_2(source, numeric_string);
+        generate_icc_chow_patel_sweep_kernel(source, numeric_string);
+
         generate_ilu_extract_LU_1(source);
         generate_ilu_extract_LU_2(source, numeric_string);
         generate_ilu_scale_kernel_1(source, numeric_string);

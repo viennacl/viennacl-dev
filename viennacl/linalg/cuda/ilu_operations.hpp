@@ -43,6 +43,267 @@ namespace linalg
 namespace cuda
 {
 
+
+__global__ void extract_L_kernel_1(
+          const unsigned int * A_row_indices,
+          const unsigned int * A_col_indices,
+          unsigned int A_size1,
+          unsigned int * L_row_indices)
+{
+  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                    row  < A_size1;
+                    row += gridDim.x * blockDim.x)
+  {
+    unsigned int row_begin = A_row_indices[row];
+    unsigned int row_end   = A_row_indices[row+1];
+
+    unsigned int num_entries_L = 0;
+    for (unsigned int j=row_begin; j<row_end; ++j)
+    {
+      unsigned int col = A_col_indices[j];
+      if (col <= row)
+        ++num_entries_L;
+    }
+
+    L_row_indices[row] = num_entries_L;
+  }
+}
+
+template<typename NumericT>
+__global__ void extract_L_kernel_2(
+          unsigned int const *A_row_indices,
+          unsigned int const *A_col_indices,
+          NumericT     const *A_elements,
+          unsigned int A_size1,
+
+          unsigned int const *L_row_indices,
+          unsigned int       *L_col_indices,
+          NumericT           *L_elements)
+{
+  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                    row  < A_size1;
+                    row += gridDim.x * blockDim.x)
+  {
+    unsigned int row_begin = A_row_indices[row];
+    unsigned int row_end   = A_row_indices[row+1];
+
+    unsigned int index_L = L_row_indices[row];
+    for (unsigned int j = row_begin; j < row_end; ++j)
+    {
+      unsigned int col = A_col_indices[j];
+      NumericT value = A_elements[j];
+
+      if (col <= row)
+      {
+        L_col_indices[index_L] = col;
+        L_elements[index_L]    = value;
+        ++index_L;
+      }
+    }
+  }
+}
+
+template<typename NumericT>
+void extract_L(compressed_matrix<NumericT> const & A,
+               compressed_matrix<NumericT>       & L)
+{
+  //
+  // Step 1: Count elements in L and U:
+  //
+  extract_L_kernel_1<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                   detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                   static_cast<unsigned int>(A.size1()),
+                                   detail::cuda_arg<unsigned int>(L.handle1().cuda_handle())
+                                  );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("extract_L_kernel_1");
+
+  //
+  // Step 2: Exclusive scan on row_buffers:
+  //
+  viennacl::vector<unsigned int> wrapped_L_row_buffer(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()), viennacl::CUDA_MEMORY, A.size1() + 1);
+  viennacl::linalg::exclusive_scan(wrapped_L_row_buffer, wrapped_L_row_buffer);
+  L.reserve(wrapped_L_row_buffer[L.size1()], false);
+
+  //
+  // Step 3: Write entries
+  //
+  extract_L_kernel_2<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                   detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                   detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                   static_cast<unsigned int>(A.size1()),
+                                   detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
+                                   detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
+                                   detail::cuda_arg<NumericT>(L.handle().cuda_handle())
+                                  );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("extract_L_kernel_2");
+
+  L.generate_row_block_information();
+
+} // extract_L
+
+///////////////////////////////////////////////
+
+
+template<typename NumericT>
+__global__ void ilu_scale_kernel_1(
+          unsigned int const *A_row_indices,
+          unsigned int const *A_col_indices,
+          NumericT     const *A_elements,
+          unsigned int A_size1,
+
+          NumericT           *D_elements)
+{
+  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                    row  < A_size1;
+                    row += gridDim.x * blockDim.x)
+  {
+    unsigned int row_begin = A_row_indices[row];
+    unsigned int row_end   = A_row_indices[row+1];
+
+    for (unsigned int j = row_begin; j < row_end; ++j)
+    {
+      unsigned int col = A_col_indices[j];
+      if (row == col)
+      {
+        D_elements[row] = NumericT(1) / sqrt(fabs(A_elements[j]));
+        break;
+      }
+    }
+  }
+}
+
+/** @brief Scales values in a matrix such that output = D * input * D, where D is a diagonal matrix (only the diagonal is provided) */
+template<typename NumericT>
+__global__ void ilu_scale_kernel_2(
+          unsigned int const *R_row_indices,
+          unsigned int const *R_col_indices,
+          NumericT           *R_elements,
+          unsigned int R_size1,
+
+          NumericT           *D_elements)
+{
+  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                    row  < R_size1;
+                    row += gridDim.x * blockDim.x)
+  {
+    unsigned int row_begin = R_row_indices[row];
+    unsigned int row_end   = R_row_indices[row+1];
+
+    NumericT D_row = D_elements[row];
+
+    for (unsigned int j = row_begin; j < row_end; ++j)
+      R_elements[j] *= D_row * D_elements[R_col_indices[j]];
+  }
+}
+
+
+
+/** @brief Scales the values extracted from A such that A' = DAD has unit diagonal. Updates values from A in L and U accordingly. */
+template<typename NumericT>
+void icc_scale(compressed_matrix<NumericT> const & A,
+               compressed_matrix<NumericT>       & L)
+{
+  viennacl::vector<NumericT> D(A.size1(), viennacl::traits::context(A));
+
+  // fill D:
+  ilu_scale_kernel_1<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
+                                   detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+                                   detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+                                   static_cast<unsigned int>(A.size1()),
+                                   detail::cuda_arg<NumericT>(D.handle().cuda_handle())
+                                  );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_scale_kernel_1");
+
+  // scale L:
+  ilu_scale_kernel_2<<<128, 128>>>(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
+                                   detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
+                                   detail::cuda_arg<NumericT>(L.handle().cuda_handle()),
+                                   static_cast<unsigned int>(L.size1()),
+                                   detail::cuda_arg<NumericT>(D.handle().cuda_handle())
+                                  );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_scale_kernel_1");
+}
+
+/////////////////////////////////////
+
+/** @brief CUDA kernel for one Chow-Patel-ICC sweep */
+template<typename NumericT>
+__global__ void icc_chow_patel_sweep_kernel(
+          unsigned int const *L_row_indices,
+          unsigned int const *L_col_indices,
+          NumericT           *L_elements,
+          NumericT     const *L_backup,
+          unsigned int L_size1,
+          NumericT     const *aij_L)
+{
+  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
+                    row  < L_size1;
+                    row += gridDim.x * blockDim.x)
+  {
+    //
+    // update L:
+    //
+    unsigned int row_Li_start = L_row_indices[row];
+    unsigned int row_Li_end   = L_row_indices[row + 1];
+
+    for (unsigned int i = row_Li_start; i < row_Li_end; ++i)
+    {
+      unsigned int col = L_col_indices[i];
+
+      unsigned int row_Lj_start = L_row_indices[col];
+      unsigned int row_Lj_end   = L_row_indices[col + 1];
+
+      // compute \sum_{k=1}^{j-1} l_ik u_kj
+      unsigned int index_Lj = row_Lj_start;
+      unsigned int col_Lj = L_col_indices[index_Lj];
+      NumericT s = aij_L[i];
+      for (unsigned int index_Li = row_Li_start; index_Li < i; ++index_Li)
+      {
+        unsigned int col_Li = L_col_indices[index_Li];
+
+        // find element in U
+        while (col_Lj < col_Li)
+        {
+          ++index_Lj;
+          col_Lj = L_col_indices[index_Lj];
+        }
+
+        if (col_Lj == col_Li)
+          s -= L_backup[index_Li] * L_backup[index_Lj];
+      }
+
+      // update l_ij:
+      L_elements[i] = (row == col) ? sqrt(s) : (s / L_backup[row_Lj_end - 1]);  // diagonal element is last entry in U
+    }
+
+  }
+}
+
+
+/** @brief Performs one nonlinear relaxation step in the Chow-Patel-ILU using OpenMP (cf. Algorithm 2 in paper) */
+template<typename NumericT>
+void icc_chow_patel_sweep(compressed_matrix<NumericT>       & L,
+                          vector<NumericT>            const & aij_L)
+{
+  viennacl::backend::mem_handle L_backup;
+  viennacl::backend::memory_create(L_backup, L.handle().raw_size(), viennacl::traits::context(L));
+  viennacl::backend::memory_copy(L.handle(), L_backup, 0, 0, L.handle().raw_size());
+
+  icc_chow_patel_sweep_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
+                                            detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
+                                            detail::cuda_arg<NumericT>(L.handle().cuda_handle()),
+                                            detail::cuda_arg<NumericT>(L_backup.cuda_handle()),
+                                            static_cast<unsigned int>(L.size1()),
+
+                                            detail::cuda_arg<NumericT>(aij_L.handle().cuda_handle())
+                                           );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("icc_chow_patel_sweep_kernel");
+
+}
+
+
+////////////////////////////// ILU ///////////////////////////
+
 __global__ void extract_LU_kernel_1(
           const unsigned int * A_row_indices,
           const unsigned int * A_col_indices,
@@ -170,61 +431,6 @@ void extract_LU(compressed_matrix<NumericT> const & A,
 } // extract_LU
 
 ///////////////////////////////////////////////
-
-template<typename NumericT>
-__global__ void ilu_scale_kernel_1(
-          unsigned int const *A_row_indices,
-          unsigned int const *A_col_indices,
-          NumericT     const *A_elements,
-          unsigned int A_size1,
-
-          NumericT           *D_elements)
-{
-  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
-                    row  < A_size1;
-                    row += gridDim.x * blockDim.x)
-  {
-    unsigned int row_begin = A_row_indices[row];
-    unsigned int row_end   = A_row_indices[row+1];
-
-    for (unsigned int j = row_begin; j < row_end; ++j)
-    {
-      unsigned int col = A_col_indices[j];
-      if (row == col)
-      {
-        D_elements[row] = NumericT(1) / sqrt(fabs(A_elements[j]));
-        break;
-      }
-    }
-  }
-}
-
-/** @brief Scales values in a matrix such that output = D * input * D, where D is a diagonal matrix (only the diagonal is provided) */
-template<typename NumericT>
-__global__ void ilu_scale_kernel_2(
-          unsigned int const *R_row_indices,
-          unsigned int const *R_col_indices,
-          NumericT           *R_elements,
-          unsigned int R_size1,
-
-          NumericT           *D_elements)
-{
-  for (unsigned int row  = blockDim.x * blockIdx.x + threadIdx.x;
-                    row  < R_size1;
-                    row += gridDim.x * blockDim.x)
-  {
-    unsigned int row_begin = R_row_indices[row];
-    unsigned int row_end   = R_row_indices[row+1];
-
-    NumericT D_row = D_elements[row];
-
-    for (unsigned int j = row_begin; j < row_end; ++j)
-      R_elements[j] *= D_row * D_elements[R_col_indices[j]];
-  }
-}
-
-
-
 
 /** @brief Scales the values extracted from A such that A' = DAD has unit diagonal. Updates values from A in L and U accordingly. */
 template<typename NumericT>

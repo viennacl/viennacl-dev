@@ -45,6 +45,93 @@ namespace linalg
 namespace opencl
 {
 
+/////////////////////// ICC /////////////////////
+
+template<typename NumericT>
+void extract_L(compressed_matrix<NumericT> const & A,
+                compressed_matrix<NumericT>       & L)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::ilu<NumericT>::init(ctx);
+
+  //
+  // Step 1: Count elements in L:
+  //
+  viennacl::ocl::kernel & k1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<NumericT>::program_name(), "extract_L_1");
+
+  viennacl::ocl::enqueue(k1(A.handle1().opencl_handle(), A.handle2().opencl_handle(), cl_uint(A.size1()),
+                            L.handle1().opencl_handle())
+                        );
+
+  //
+  // Step 2: Exclusive scan on row_buffers:
+  //
+  viennacl::vector_base<unsigned int> wrapped_L_row_buffer(L.handle1(), A.size1() + 1, 0, 1);
+  viennacl::linalg::exclusive_scan(wrapped_L_row_buffer, wrapped_L_row_buffer);
+  L.reserve(wrapped_L_row_buffer[L.size1()], false);
+
+
+  //
+  // Step 3: Write entries
+  //
+  viennacl::ocl::kernel & k2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<NumericT>::program_name(), "extract_L_2");
+
+  viennacl::ocl::enqueue(k2(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.size1()),
+                            L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle())
+                        );
+
+  L.generate_row_block_information();
+
+} // extract_LU
+
+///////////////////////////////////////////////
+
+
+
+/** @brief Scales the values extracted from A such that A' = DAD has unit diagonal. Updates values from A in L and U accordingly. */
+template<typename NumericT>
+void icc_scale(compressed_matrix<NumericT> const & A,
+               compressed_matrix<NumericT>       & L)
+{
+  viennacl::vector<NumericT> D(A.size1(), viennacl::traits::context(A));
+
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
+  viennacl::linalg::opencl::kernels::ilu<NumericT>::init(ctx);
+
+  // fill D:
+  viennacl::ocl::kernel & k1 = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<NumericT>::program_name(), "ilu_scale_kernel_1");
+  viennacl::ocl::enqueue(k1(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.size1()), D) );
+
+  // scale L:
+  viennacl::ocl::kernel & k2 = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<NumericT>::program_name(), "ilu_scale_kernel_2");
+  viennacl::ocl::enqueue(k2(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(), cl_uint(A.size1()), D) );
+
+}
+
+/////////////////////////////////////
+
+
+/** @brief Performs one nonlinear relaxation step in the Chow-Patel-ILU using OpenMP (cf. Algorithm 2 in paper) */
+template<typename NumericT>
+void icc_chow_patel_sweep(compressed_matrix<NumericT>       & L,
+                          vector<NumericT>            const & aij_L)
+{
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(L).context());
+  viennacl::linalg::opencl::kernels::ilu<NumericT>::init(ctx);
+
+  viennacl::backend::mem_handle L_backup;
+  viennacl::backend::memory_create(L_backup, L.handle().raw_size(), viennacl::traits::context(L));
+  viennacl::backend::memory_copy(L.handle(), L_backup, 0, 0, L.handle().raw_size());
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ilu<NumericT>::program_name(), "icc_chow_patel_sweep_kernel");
+  viennacl::ocl::enqueue(k(L.handle1().opencl_handle(), L.handle2().opencl_handle(), L.handle().opencl_handle(), L_backup.opencl_handle(), cl_uint(L.size1()),
+                           aij_L)
+                        );
+
+}
+
+
+/////////////////////// ILU /////////////////////
 
 template<typename NumericT>
 void extract_LU(compressed_matrix<NumericT> const & A,
