@@ -110,30 +110,30 @@ void extract_L(compressed_matrix<NumericT> const & A,
   //
   // Step 1: Count elements in L and U:
   //
-  extract_L_kernel_1<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                   detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  extract_L_kernel_1<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                   viennacl::cuda_arg<unsigned int>(A.handle2()),
                                    static_cast<unsigned int>(A.size1()),
-                                   detail::cuda_arg<unsigned int>(L.handle1().cuda_handle())
+                                   viennacl::cuda_arg<unsigned int>(L.handle1())
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("extract_L_kernel_1");
 
   //
   // Step 2: Exclusive scan on row_buffers:
   //
-  viennacl::vector<unsigned int> wrapped_L_row_buffer(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()), viennacl::CUDA_MEMORY, A.size1() + 1);
+  viennacl::vector<unsigned int> wrapped_L_row_buffer(viennacl::cuda_arg<unsigned int>(L.handle1().cuda_handle()), viennacl::CUDA_MEMORY, A.size1() + 1);
   viennacl::linalg::exclusive_scan(wrapped_L_row_buffer, wrapped_L_row_buffer);
   L.reserve(wrapped_L_row_buffer[L.size1()], false);
 
   //
   // Step 3: Write entries
   //
-  extract_L_kernel_2<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                   detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                   detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+  extract_L_kernel_2<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                   viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                   viennacl::cuda_arg<NumericT>(A.handle()),
                                    static_cast<unsigned int>(A.size1()),
-                                   detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
-                                   detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
-                                   detail::cuda_arg<NumericT>(L.handle().cuda_handle())
+                                   viennacl::cuda_arg<unsigned int>(L.handle1()),
+                                   viennacl::cuda_arg<unsigned int>(L.handle2()),
+                                   viennacl::cuda_arg<NumericT>(L.handle())
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("extract_L_kernel_2");
 
@@ -206,20 +206,20 @@ void icc_scale(compressed_matrix<NumericT> const & A,
   viennacl::vector<NumericT> D(A.size1(), viennacl::traits::context(A));
 
   // fill D:
-  ilu_scale_kernel_1<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                   detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                   detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+  ilu_scale_kernel_1<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                   viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                   viennacl::cuda_arg<NumericT>(A.handle()),
                                    static_cast<unsigned int>(A.size1()),
-                                   detail::cuda_arg<NumericT>(D.handle().cuda_handle())
+                                   viennacl::cuda_arg(D)
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_scale_kernel_1");
 
   // scale L:
-  ilu_scale_kernel_2<<<128, 128>>>(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
-                                   detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
-                                   detail::cuda_arg<NumericT>(L.handle().cuda_handle()),
+  ilu_scale_kernel_2<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(L.handle1()),
+                                   viennacl::cuda_arg<unsigned int>(L.handle2()),
+                                   viennacl::cuda_arg<NumericT>(L.handle()),
                                    static_cast<unsigned int>(L.size1()),
-                                   detail::cuda_arg<NumericT>(D.handle().cuda_handle())
+                                   viennacl::cuda_arg(D)
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_scale_kernel_1");
 }
@@ -289,13 +289,13 @@ void icc_chow_patel_sweep(compressed_matrix<NumericT>       & L,
   viennacl::backend::memory_create(L_backup, L.handle().raw_size(), viennacl::traits::context(L));
   viennacl::backend::memory_copy(L.handle(), L_backup, 0, 0, L.handle().raw_size());
 
-  icc_chow_patel_sweep_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
-                                            detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
-                                            detail::cuda_arg<NumericT>(L.handle().cuda_handle()),
-                                            detail::cuda_arg<NumericT>(L_backup.cuda_handle()),
+  icc_chow_patel_sweep_kernel<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(L.handle1()),
+                                            viennacl::cuda_arg<unsigned int>(L.handle2()),
+                                            viennacl::cuda_arg<NumericT>(L.handle()),
+                                            viennacl::cuda_arg<NumericT>(L_backup),
                                             static_cast<unsigned int>(L.size1()),
 
-                                            detail::cuda_arg<NumericT>(aij_L.handle().cuda_handle())
+                                            viennacl::cuda_arg<NumericT>(aij_L.handle())
                                            );
   VIENNACL_CUDA_LAST_ERROR_CHECK("icc_chow_patel_sweep_kernel");
 
@@ -390,38 +390,38 @@ void extract_LU(compressed_matrix<NumericT> const & A,
   //
   // Step 1: Count elements in L and U:
   //
-  extract_LU_kernel_1<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                    detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
+  extract_LU_kernel_1<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                    viennacl::cuda_arg<unsigned int>(A.handle2()),
                                     static_cast<unsigned int>(A.size1()),
-                                    detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
-                                    detail::cuda_arg<unsigned int>(U.handle1().cuda_handle())
+                                    viennacl::cuda_arg<unsigned int>(L.handle1()),
+                                    viennacl::cuda_arg<unsigned int>(U.handle1())
                                    );
   VIENNACL_CUDA_LAST_ERROR_CHECK("extract_LU_kernel_1");
 
   //
   // Step 2: Exclusive scan on row_buffers:
   //
-  viennacl::vector<unsigned int> wrapped_L_row_buffer(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()), viennacl::CUDA_MEMORY, A.size1() + 1);
+  viennacl::vector<unsigned int> wrapped_L_row_buffer(viennacl::cuda_arg<unsigned int>(L.handle1()), viennacl::CUDA_MEMORY, A.size1() + 1);
   viennacl::linalg::exclusive_scan(wrapped_L_row_buffer, wrapped_L_row_buffer);
   L.reserve(wrapped_L_row_buffer[L.size1()], false);
 
-  viennacl::vector<unsigned int> wrapped_U_row_buffer(detail::cuda_arg<unsigned int>(U.handle1().cuda_handle()), viennacl::CUDA_MEMORY, A.size1() + 1);
+  viennacl::vector<unsigned int> wrapped_U_row_buffer(viennacl::cuda_arg<unsigned int>(U.handle1()), viennacl::CUDA_MEMORY, A.size1() + 1);
   viennacl::linalg::exclusive_scan(wrapped_U_row_buffer, wrapped_U_row_buffer);
   U.reserve(wrapped_U_row_buffer[U.size1()], false);
 
   //
   // Step 3: Write entries
   //
-  extract_LU_kernel_2<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                    detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                    detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+  extract_LU_kernel_2<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                    viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                    viennacl::cuda_arg<NumericT>(A.handle()),
                                     static_cast<unsigned int>(A.size1()),
-                                    detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
-                                    detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
-                                    detail::cuda_arg<NumericT>(L.handle().cuda_handle()),
-                                    detail::cuda_arg<unsigned int>(U.handle1().cuda_handle()),
-                                    detail::cuda_arg<unsigned int>(U.handle2().cuda_handle()),
-                                    detail::cuda_arg<NumericT>(U.handle().cuda_handle())
+                                    viennacl::cuda_arg<unsigned int>(L.handle1()),
+                                    viennacl::cuda_arg<unsigned int>(L.handle2()),
+                                    viennacl::cuda_arg<NumericT>(L.handle()),
+                                    viennacl::cuda_arg<unsigned int>(U.handle1()),
+                                    viennacl::cuda_arg<unsigned int>(U.handle2()),
+                                    viennacl::cuda_arg<NumericT>(U.handle())
                                    );
   VIENNACL_CUDA_LAST_ERROR_CHECK("extract_LU_kernel_2");
 
@@ -441,29 +441,29 @@ void ilu_scale(compressed_matrix<NumericT> const & A,
   viennacl::vector<NumericT> D(A.size1(), viennacl::traits::context(A));
 
   // fill D:
-  ilu_scale_kernel_1<<<128, 128>>>(detail::cuda_arg<unsigned int>(A.handle1().cuda_handle()),
-                                   detail::cuda_arg<unsigned int>(A.handle2().cuda_handle()),
-                                   detail::cuda_arg<NumericT>(A.handle().cuda_handle()),
+  ilu_scale_kernel_1<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                   viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                   viennacl::cuda_arg<NumericT>(A.handle()),
                                    static_cast<unsigned int>(A.size1()),
-                                   detail::cuda_arg<NumericT>(D.handle().cuda_handle())
+                                   viennacl::cuda_arg<NumericT>(D.handle())
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_scale_kernel_1");
 
   // scale L:
-  ilu_scale_kernel_2<<<128, 128>>>(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
-                                   detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
-                                   detail::cuda_arg<NumericT>(L.handle().cuda_handle()),
+  ilu_scale_kernel_2<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(L.handle1()),
+                                   viennacl::cuda_arg<unsigned int>(L.handle2()),
+                                   viennacl::cuda_arg<NumericT>(L.handle()),
                                    static_cast<unsigned int>(L.size1()),
-                                   detail::cuda_arg<NumericT>(D.handle().cuda_handle())
+                                   viennacl::cuda_arg<NumericT>(D.handle())
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_scale_kernel_2");
 
   // scale U:
-  ilu_scale_kernel_2<<<128, 128>>>(detail::cuda_arg<unsigned int>(U.handle1().cuda_handle()),
-                                   detail::cuda_arg<unsigned int>(U.handle2().cuda_handle()),
-                                   detail::cuda_arg<NumericT>(U.handle().cuda_handle()),
+  ilu_scale_kernel_2<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(U.handle1()),
+                                   viennacl::cuda_arg<unsigned int>(U.handle2()),
+                                   viennacl::cuda_arg<NumericT>(U.handle()),
                                    static_cast<unsigned int>(U.size1()),
-                                   detail::cuda_arg<NumericT>(D.handle().cuda_handle())
+                                   viennacl::cuda_arg<NumericT>(D.handle())
                                   );
   VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_scale_kernel_2");
 }
@@ -585,20 +585,20 @@ void ilu_chow_patel_sweep(compressed_matrix<NumericT>       & L,
   viennacl::backend::memory_create(U_backup, U_trans.handle().raw_size(), viennacl::traits::context(U_trans));
   viennacl::backend::memory_copy(U_trans.handle(), U_backup, 0, 0, U_trans.handle().raw_size());
 
-  ilu_chow_patel_sweep_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(L.handle1().cuda_handle()),
-                                            detail::cuda_arg<unsigned int>(L.handle2().cuda_handle()),
-                                            detail::cuda_arg<NumericT>(L.handle().cuda_handle()),
-                                            detail::cuda_arg<NumericT>(L_backup.cuda_handle()),
+  ilu_chow_patel_sweep_kernel<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(L.handle1()),
+                                            viennacl::cuda_arg<unsigned int>(L.handle2()),
+                                            viennacl::cuda_arg<NumericT>(L.handle()),
+                                            viennacl::cuda_arg<NumericT>(L_backup),
                                             static_cast<unsigned int>(L.size1()),
 
-                                            detail::cuda_arg<NumericT>(aij_L.handle().cuda_handle()),
+                                            viennacl::cuda_arg<NumericT>(aij_L.handle()),
 
-                                            detail::cuda_arg<unsigned int>(U_trans.handle1().cuda_handle()),
-                                            detail::cuda_arg<unsigned int>(U_trans.handle2().cuda_handle()),
-                                            detail::cuda_arg<NumericT>(U_trans.handle().cuda_handle()),
-                                            detail::cuda_arg<NumericT>(U_backup.cuda_handle()),
+                                            viennacl::cuda_arg<unsigned int>(U_trans.handle1()),
+                                            viennacl::cuda_arg<unsigned int>(U_trans.handle2()),
+                                            viennacl::cuda_arg<NumericT>(U_trans.handle()),
+                                            viennacl::cuda_arg<NumericT>(U_backup),
 
-                                            detail::cuda_arg<NumericT>(aij_U_trans.handle().cuda_handle())
+                                            viennacl::cuda_arg<NumericT>(aij_U_trans.handle())
                                            );
   VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_chow_patel_sweep_kernel");
 
@@ -648,11 +648,11 @@ template<typename NumericT>
 void ilu_form_neumann_matrix(compressed_matrix<NumericT> & R,
                              vector<NumericT> & diag_R)
 {
-  ilu_form_neumann_matrix_kernel<<<128, 128>>>(detail::cuda_arg<unsigned int>(R.handle1().cuda_handle()),
-                                               detail::cuda_arg<unsigned int>(R.handle2().cuda_handle()),
-                                               detail::cuda_arg<NumericT>(R.handle().cuda_handle()),
+  ilu_form_neumann_matrix_kernel<<<128, 128>>>(viennacl::cuda_arg<unsigned int>(R.handle1()),
+                                               viennacl::cuda_arg<unsigned int>(R.handle2()),
+                                               viennacl::cuda_arg<NumericT>(R.handle()),
                                                static_cast<unsigned int>(R.size1()),
-                                               detail::cuda_arg<NumericT>(diag_R.handle().cuda_handle())
+                                               viennacl::cuda_arg<NumericT>(diag_R.handle())
                                               );
   VIENNACL_CUDA_LAST_ERROR_CHECK("ilu_form_neumann_matrix_kernel");
 }
