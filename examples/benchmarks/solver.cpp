@@ -44,15 +44,12 @@
 #include "viennacl/linalg/cg.hpp"
 #include "viennacl/linalg/bicgstab.hpp"
 #include "viennacl/linalg/gmres.hpp"
+#include "viennacl/linalg/mixed_precision_cg.hpp"
 
 #include "viennacl/linalg/ilu.hpp"
 #include "viennacl/linalg/ichol.hpp"
 #include "viennacl/linalg/jacobi_precond.hpp"
 #include "viennacl/linalg/row_scaling.hpp"
-
-#ifdef VIENNACL_WITH_OPENCL
-  #include "viennacl/linalg/mixed_precision_cg.hpp"
-#endif
 
 #include "viennacl/io/matrix_market.hpp"
 #include "viennacl/tools/timer.hpp"
@@ -134,8 +131,6 @@ int run_benchmark(viennacl::context ctx)
 
   ScalarType std_factor1 = static_cast<ScalarType>(3.1415);
   ScalarType std_factor2 = static_cast<ScalarType>(42.0);
-  viennacl::scalar<ScalarType> vcl_factor1(std_factor1, ctx);
-  viennacl::scalar<ScalarType> vcl_factor2(std_factor2, ctx);
 
   ublas::vector<ScalarType> ublas_vec1;
   ublas::vector<ScalarType> ublas_vec2;
@@ -150,7 +145,6 @@ int run_benchmark(viennacl::context ctx)
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;
   }
-  //unsigned int cg_mat_size = cg_mat.size();
   std::cout << "done reading matrix" << std::endl;
 
   ublas_result = ublas::scalar_vector<ScalarType>(ublas_matrix.size1(), ScalarType(1.0));
@@ -427,7 +421,6 @@ int run_benchmark(viennacl::context ctx)
   std::cout << "------- CG solver (no preconditioner) via ViennaCL, compressed_matrix ----------" << std::endl;
   run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
 
-#ifdef VIENNACL_WITH_OPENCL
   bool is_double = (sizeof(ScalarType) == sizeof(double));
   if (is_double)
   {
@@ -435,9 +428,7 @@ int run_benchmark(viennacl::context ctx)
     viennacl::linalg::mixed_precision_cg_tag mixed_precision_cg_solver(solver_tolerance, solver_iters);
 
     run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, mixed_precision_cg_solver, viennacl::linalg::no_precond(), cg_ops);
-    run_solver(vcl_compressed_matrix, vcl_vec2, vcl_result, mixed_precision_cg_solver, viennacl::linalg::no_precond(), cg_ops);
   }
-#endif
 
   std::cout << "------- CG solver (no preconditioner) via ViennaCL, coordinate_matrix ----------" << std::endl;
   run_solver(vcl_coordinate_matrix, vcl_vec2, vcl_result, cg_solver, viennacl::linalg::no_precond(), cg_ops);
