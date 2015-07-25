@@ -96,7 +96,7 @@ endif()
 
 if (ENABLE_CUDA)
    find_package(CUDA REQUIRED)
-   #set(CUDA_ARCH_FLAG "-arch=sm_13" CACHE STRING "Use one out of sm_13, sm_20, sm_30, ...")
+   set(CUDA_ARCH_FLAG "-arch=sm_20" CACHE STRING "Use one out of sm_13, sm_20, sm_30, ...")
    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" "${CUDA_ARCH_FLAG}" "-DVIENNACL_WITH_CUDA")
 endif(ENABLE_CUDA)
 
