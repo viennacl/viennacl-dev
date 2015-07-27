@@ -673,6 +673,22 @@ namespace viennacl
     }
 
 
+    ///////////////////////// summation operations /////////////
+
+    template<typename NumericT>
+    void row_sum_impl(matrix_base<NumericT> const & A, vector_base<NumericT> & result)
+    {
+      viennacl::vector<NumericT> all_ones = viennacl::scalar_vector<NumericT>(A.size2(), NumericT(1), viennacl::traits::context(A));
+      viennacl::linalg::prod_impl(A, all_ones, result);
+    }
+
+    template<typename NumericT>
+    void column_sum_impl(matrix_base<NumericT> const & A, vector_base<NumericT> & result)
+    {
+      viennacl::vector<NumericT> all_ones = viennacl::scalar_vector<NumericT>(A.size1(), NumericT(1), viennacl::traits::context(A));
+      viennacl::linalg::prod_impl(matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>(A, A), all_ones, result);
+    }
+
     ///////////////////////// Elementwise operations /////////////
 
 

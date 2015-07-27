@@ -39,6 +39,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/linalg/maxmin.hpp"
+#include "viennacl/linalg/sum.hpp"
 
 #include "viennacl/tools/random.hpp"
 
@@ -446,6 +447,29 @@ int test(Epsilon const& epsilon,
   if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  // --------------------------------------------------------------------------
+  std::cout << "Testing sum..." << std::endl;
+  cpu_result = 0;
+  for (std::size_t i=0; i<host_v1.size(); ++i)
+    cpu_result += host_v1[i];
+  cpu_result2 = viennacl::linalg::sum(vcl_v1);
+  gpu_result = viennacl::linalg::sum(vcl_v1);
+
+  if (check(cpu_result, cpu_result2, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  cpu_result = 0;
+  for (std::size_t i=0; i<host_v1.size(); ++i)
+    cpu_result += host_v1[i] + host_v2[i];
+  cpu_result3 = viennacl::linalg::sum(vcl_v1 + vcl_v2);
+  gpu_result = viennacl::linalg::sum(vcl_v1 + vcl_v2);
+
+  if (check(cpu_result, cpu_result3, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(cpu_result, gpu_result, epsilon) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
 
   //

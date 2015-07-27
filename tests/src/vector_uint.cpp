@@ -46,6 +46,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/linalg/maxmin.hpp"
+#include "viennacl/linalg/sum.hpp"
 
 using namespace boost::numeric;
 
@@ -346,6 +347,29 @@ int test(UblasVectorType     & ublas_v1, UblasVectorType     & ublas_v2,
   if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
+  // --------------------------------------------------------------------------
+  std::cout << "Testing sum..." << std::endl;
+  cpu_result = 0;
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    cpu_result += ublas_v1[i];
+  cpu_result2 = viennacl::linalg::sum(vcl_v1);
+  gpu_result = viennacl::linalg::sum(vcl_v1);
+
+  if (check(cpu_result, cpu_result2) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+
+  cpu_result = 0;
+  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+    cpu_result += ublas_v1[i] + ublas_v2[i];
+  cpu_result3 = viennacl::linalg::sum(vcl_v1 + vcl_v2);
+  gpu_result = viennacl::linalg::sum(vcl_v1 + vcl_v2);
+
+  if (check(cpu_result, cpu_result3) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
+  if (check(cpu_result, gpu_result) != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
 
   // --------------------------------------------------------------------------

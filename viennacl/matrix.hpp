@@ -2862,6 +2862,46 @@ namespace detail
     }
   };
 
+  //////////////////// row_sum(), column_sum() operations ////////////////////////////////////////
+
+  template<typename T>
+  struct op_executor<vector_base<T>, op_assign, vector_expression<const matrix_base<T>, const matrix_base<T>, op_row_sum> >
+  {
+    static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T>, const matrix_base<T>, op_row_sum> const & proxy)
+    {
+      viennacl::linalg::row_sum_impl(proxy.lhs(), lhs);
+    }
+  };
+
+  template<typename T, typename LHS, typename RHS, typename OP>
+  struct op_executor<vector_base<T>, op_assign, vector_expression<const matrix_expression<LHS, RHS, OP>, const matrix_expression<LHS, RHS, OP>, op_row_sum> >
+  {
+    static void apply(vector_base<T> & lhs, vector_expression<const matrix_expression<LHS, RHS, OP>, const matrix_expression<LHS, RHS, OP>, op_row_sum> const & proxy)
+    {
+      matrix_base<T> tmp(proxy.lhs());
+      viennacl::linalg::row_sum_impl(tmp, lhs);
+    }
+  };
+
+  template<typename T>
+  struct op_executor<vector_base<T>, op_assign, vector_expression<const matrix_base<T>, const matrix_base<T>, op_col_sum> >
+  {
+    static void apply(vector_base<T> & lhs, vector_expression<const matrix_base<T>, const matrix_base<T>, op_col_sum> const & proxy)
+    {
+      viennacl::linalg::column_sum_impl(proxy.lhs(), lhs);
+    }
+  };
+
+
+  template<typename T, typename LHS, typename RHS, typename OP>
+  struct op_executor<vector_base<T>, op_assign, vector_expression<const matrix_expression<LHS, RHS, OP>, const matrix_expression<LHS, RHS, OP>, op_col_sum> >
+  {
+    static void apply(vector_base<T> & lhs, vector_expression<const matrix_expression<LHS, RHS, OP>, const matrix_expression<LHS, RHS, OP>, op_col_sum> const & proxy)
+    {
+      matrix_base<T> tmp(proxy.lhs());
+      viennacl::linalg::column_sum_impl(tmp, lhs);
+    }
+  };
 
   //////////////////// Element-wise operations ////////////////////////////////////////
 

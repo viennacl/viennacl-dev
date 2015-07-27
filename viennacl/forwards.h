@@ -112,14 +112,14 @@ namespace viennacl
  /** @brief A tag class representing less-than-or-equal-to */
  struct op_leq {};
 
-  template<class T>
-  struct op_reduce_vector{ };
+  /** @brief A tag class representing the summation of a vector */
+  struct op_sum {};
 
-  template<class T>
-  struct op_reduce_rows{ };
+  /** @brief A tag class representing the summation of all rows of a matrix */
+  struct op_row_sum {};
 
-  template<class T>
-  struct op_reduce_columns{ };
+  /** @brief A tag class representing the summation of all columns of a matrix */
+  struct op_col_sum {};
 
   /** @brief A tag class representing element-wise casting operations on vectors and matrices */
   template<typename OP>
@@ -768,6 +768,22 @@ namespace viennacl
     void min_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                  S2 & result);
 
+    //forward definition of sum()-related functions
+    template<typename T>
+    void sum_impl(vector_base<T> const & vec, scalar<T> & result);
+
+    template<typename LHS, typename RHS, typename OP, typename T>
+    void sum_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                  scalar<T> & result);
+
+
+    template<typename T>
+    void sum_cpu(vector_base<T> const & vec, T & result);
+
+    template<typename LHS, typename RHS, typename OP, typename S2>
+    void sum_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
+                 S2 & result);
+
 
     // forward definition of frobenius norm:
     template<typename T>
@@ -803,6 +819,17 @@ namespace viennacl
                                  >::type
     prod_impl(const SparseMatrixType & mat,
               const vector<SCALARTYPE, ALIGNMENT> & vec);
+
+    // forward definition of summation routines for matrices:
+
+    template<typename NumericT>
+    void row_sum_impl(const matrix_base<NumericT> & A,
+                            vector_base<NumericT> & result);
+
+    template<typename NumericT>
+    void column_sum_impl(const matrix_base<NumericT> & A,
+                               vector_base<NumericT> & result);
+
 #endif
 
     namespace detail

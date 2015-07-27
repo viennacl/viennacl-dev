@@ -472,6 +472,35 @@ void min_cpu(vector_base<NumericT> const & x,
   result = tmp;
 }
 
+////////// sum
+
+/** @brief Computes the sum over all entries of a vector
+*
+* @param x      The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void sum_impl(vector_base<NumericT> const & x,
+                   scalar<NumericT> & result)
+{
+  assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  viennacl::vector<NumericT> all_ones = viennacl::scalar_vector<NumericT>(x.size(), NumericT(1), viennacl::traits::context(x));
+  viennacl::linalg::opencl::inner_prod_impl(x, all_ones, result);
+}
+
+/** @brief Computes the sum over all entries of a vector.
+*
+* @param x      The vector
+* @param result The result scalar
+*/
+template<typename NumericT>
+void sum_cpu(vector_base<NumericT> const & x, NumericT & result)
+{
+  scalar<NumericT> tmp(0, viennacl::traits::context(x));
+  sum_impl(x, tmp);
+  result = tmp;
+}
 
 
 //TODO: Special case x == y allows improvement!!

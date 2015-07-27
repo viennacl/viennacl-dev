@@ -219,10 +219,6 @@ namespace result_of
   template<> struct op_type_info<op_mat_mat_prod>                  { enum { id = OPERATION_BINARY_MAT_MAT_PROD_TYPE, family = OPERATION_BINARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_inner_prod>                    { enum { id = OPERATION_BINARY_INNER_PROD_TYPE,   family = OPERATION_BINARY_TYPE_FAMILY}; };
 
-  template<typename OP> struct op_type_info<op_reduce_vector<OP>   >      { enum { id = op_type_info<OP>::id,        family = OPERATION_VECTOR_REDUCTION_TYPE_FAMILY}; };
-  template<typename OP> struct op_type_info<op_reduce_rows<OP>   >       { enum { id = op_type_info<OP>::id,         family = OPERATION_ROWS_REDUCTION_TYPE_FAMILY}; };
-  template<typename OP> struct op_type_info<op_reduce_columns<OP>   >      { enum { id = op_type_info<OP>::id,       family = OPERATION_COLUMNS_REDUCTION_TYPE_FAMILY}; };
-
   //elementwise operator
   template<> struct op_type_info<op_assign>                        { enum { id = OPERATION_BINARY_ASSIGN_TYPE,       family = OPERATION_BINARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_inplace_add>                   { enum { id = OPERATION_BINARY_INPLACE_ADD_TYPE,  family = OPERATION_BINARY_TYPE_FAMILY}; };

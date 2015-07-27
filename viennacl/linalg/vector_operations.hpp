@@ -874,6 +874,7 @@ namespace viennacl
       return index_norm_inf(temp);
     }
 
+///////////////////
 
     /** @brief Computes the maximum of a vector with final reduction on the CPU
     *
@@ -960,6 +961,7 @@ namespace viennacl
       max_cpu(temp, result);
     }
 
+///////////////////
 
     /** @brief Computes the minimum of a vector with final reduction on the CPU
     *
@@ -1045,6 +1047,95 @@ namespace viennacl
       viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
       min_cpu(temp, result);
     }
+
+///////////////////
+
+    /** @brief Computes the sum of a vector with final reduction on the device (GPU, etc.)
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template<typename NumericT>
+    void sum_impl(vector_base<NumericT> const & vec, viennacl::scalar<NumericT> & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::sum_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::sum_impl(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::sum_impl(vec, result);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Computes the sum of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template<typename LHS, typename RHS, typename OP, typename NumericT>
+    void sum_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec, viennacl::scalar<NumericT> & result)
+    {
+      viennacl::vector<NumericT> temp = vec;
+      sum_impl(temp, result);
+    }
+
+
+    /** @brief Computes the sum of a vector with final reduction on the CPU
+    *
+    * @param vec The vector
+    * @param result The result scalar
+    */
+    template<typename T>
+    void sum_cpu(vector_base<T> const & vec, T & result)
+    {
+      switch (viennacl::traits::handle(vec).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::sum_impl(vec, result);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::sum_cpu(vec, result);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::sum_cpu(vec, result);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Computes the sum of a vector with final reduction on the CPU - interface for a vector expression. Creates a temporary.
+    *
+    * @param vec    The vector expression
+    * @param result The result scalar
+    */
+    template<typename LHS, typename RHS, typename OP, typename S2>
+    void sum_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec, S2 & result)
+    {
+      viennacl::vector<typename viennacl::result_of::cpu_value_type<LHS>::type> temp = vec;
+      sum_cpu(temp, result);
+    }
+
+
 
 
 

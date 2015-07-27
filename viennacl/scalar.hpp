@@ -268,6 +268,37 @@ private:
   RHS & rhs_;
 };
 
+/** @brief Specialization of a scalar expression for norm_inf. Allows for a final reduction on the CPU
+  *
+  * @tparam LHS   The left hand side operand
+  * @tparam RHS   The right hand side operand
+  */
+template<typename LHS, typename RHS>
+class scalar_expression<LHS, RHS, op_sum>
+{
+  //typedef typename LHS::value_type          DummyType; //Visual C++ 2005 does not allow to write LHS::value_type::value_type
+public:
+  typedef typename viennacl::result_of::cpu_value_type<LHS>::type    ScalarType;
+
+  scalar_expression(LHS & lhs, RHS & rhs) : lhs_(lhs), rhs_(rhs) {}
+
+  /** @brief Returns the left hand side operand */
+  LHS & lhs() const { return lhs_; }
+  /** @brief Returns the left hand side operand */
+  RHS & rhs() const { return rhs_; }
+
+  /** @brief Conversion operator to a ViennaCL scalar */
+  operator ScalarType () const
+  {
+    ScalarType result;
+    viennacl::linalg::sum_cpu(lhs_, result);
+    return result;
+  }
+
+private:
+  LHS & lhs_;
+  RHS & rhs_;
+};
 
 
 /** @brief Specialization of a scalar expression for norm_frobenius. Allows for a final reduction on the CPU
@@ -490,7 +521,7 @@ public:
     return *this;
   }
 
-  /** @brief Sets the scalar to the result of supplied norm_inf expression. */
+  /** @brief Sets the scalar to the result of supplied max expression. */
   template<typename T1, typename T2>
   self_type & operator= (scalar_expression<T1, T2, op_max> const & proxy)
   {
@@ -500,13 +531,23 @@ public:
     return *this;
   }
 
-  /** @brief Sets the scalar to the result of supplied norm_inf expression. */
+  /** @brief Sets the scalar to the result of supplied min expression. */
   template<typename T1, typename T2>
   self_type & operator= (scalar_expression<T1, T2, op_min> const & proxy)
   {
     init_if_necessary(viennacl::traits::context(proxy));
 
     viennacl::linalg::min_impl(proxy.lhs(), *this);
+    return *this;
+  }
+
+  /** @brief Sets the scalar to the result of supplied sum expression. */
+  template<typename T1, typename T2>
+  self_type & operator= (scalar_expression<T1, T2, op_sum> const & proxy)
+  {
+    init_if_necessary(viennacl::traits::context(proxy));
+
+    viennacl::linalg::sum_impl(proxy.lhs(), *this);
     return *this;
   }
 

@@ -2863,6 +2863,40 @@ void min_cpu(vector_base<NumericT> const & vec1,
 }
 
 
+//////////////////
+
+/** @brief Computes the maximum of a vector, both reduction stages run on the GPU
+*
+* @param vec1   The vector
+* @param result The result GPU scalar
+*/
+template<typename NumericT>
+void sum_impl(vector_base<NumericT> const & vec1,
+              scalar<NumericT> & result)
+{
+  typedef NumericT      value_type;
+
+  viennacl::vector<NumericT> all_ones = viennacl::scalar_vector<NumericT>(vec1.size(), NumericT(1), viennacl::traits::context(vec1));
+  viennacl::linalg::cuda::inner_prod_impl(vec1, all_ones, result);
+}
+
+
+
+/** @brief Computes the maximum of a vector, first reduction stage on the GPU, second stage on the CPU
+*
+* @param vec1   The vector
+* @param result The result host scalar
+*/
+template<typename NumericT>
+void sum_cpu(vector_base<NumericT> const & vec1,
+             NumericT & result)
+{
+  typedef NumericT        value_type;
+
+  viennacl::vector<NumericT> all_ones = viennacl::scalar_vector<NumericT>(vec1.size(), NumericT(1), viennacl::traits::context(vec1));
+  viennacl::linalg::cuda::inner_prod_cpu(vec1, all_ones, result);
+}
+
 
 
 //////////////////////////////////////

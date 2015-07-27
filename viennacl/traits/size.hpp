@@ -189,7 +189,7 @@ vcl_size_t size1(mtl::dense2D<NumericT, T> const & m) { return static_cast<vcl_s
 template<typename NumericT>
 vcl_size_t size1(mtl::compressed2D<NumericT> const & m) { return static_cast<vcl_size_t>(m.num_rows()); }
 #endif
-
+/** \endcond */
 
 
 //
@@ -200,6 +200,7 @@ template<typename MatrixType>
 typename result_of::size_type<MatrixType>::type
 size2(MatrixType const & mat) { return mat.size2(); }
 
+/** \cond */
 #ifdef VIENNACL_WITH_ARMADILLO
 template<typename NumericT>
 inline vcl_size_t size2(arma::Mat<NumericT> const & A) { return A.n_cols; }
@@ -207,7 +208,6 @@ template<typename NumericT>
 inline vcl_size_t size2(arma::SpMat<NumericT> const & A) { return A.n_cols; }
 #endif
 
-/** \cond */
 #ifdef VIENNACL_WITH_EIGEN
 template<typename NumericT, int Options>
 inline vcl_size_t size2(Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic, Options> const & m) { return m.cols(); }
@@ -304,8 +304,6 @@ vcl_size_t size(vector_expression<LHS, const vector_tuple<RHS>, op_inner_prod> c
   return proxy.rhs().const_size();
 }
 
-/** \endcond */
-
 template<typename LhsT, typename RhsT, typename OpT, typename VectorT>
 vcl_size_t size(vector_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
                                   VectorT,
@@ -329,6 +327,38 @@ vcl_size_t size(vector_expression<const matrix_expression<const LhsT1, const Rhs
                                   op_prod> const & proxy)
 {
   return size1(proxy.lhs());
+}
+
+template<typename NumericT>
+vcl_size_t size(vector_expression<const matrix_base<NumericT>,
+                                  const matrix_base<NumericT>,
+                                  op_row_sum> const & proxy)
+{
+  return size1(proxy.lhs());
+}
+
+template<typename LhsT, typename RhsT, typename OpT>
+vcl_size_t size(vector_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
+                                  const matrix_expression<const LhsT, const RhsT, OpT>,
+                                  op_row_sum> const & proxy)
+{
+  return size1(proxy.lhs());
+}
+
+template<typename NumericT>
+vcl_size_t size(vector_expression<const matrix_base<NumericT>,
+                                  const matrix_base<NumericT>,
+                                  op_col_sum> const & proxy)
+{
+  return size2(proxy.lhs());
+}
+
+template<typename LhsT, typename RhsT, typename OpT>
+vcl_size_t size(vector_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
+                                  const matrix_expression<const LhsT, const RhsT, OpT>,
+                                  op_col_sum> const & proxy)
+{
+  return size2(proxy.lhs());
 }
 
 /** \endcond */

@@ -64,8 +64,8 @@
 #include "viennacl/linalg/lanczos.hpp"
 #include "viennacl/linalg/qr.hpp"
 #include "viennacl/linalg/qr-method.hpp"
-#include "viennacl/linalg/reduce.hpp"
 #include "viennacl/linalg/row_scaling.hpp"
+#include "viennacl/linalg/sum.hpp"
 #include "viennacl/linalg/tql2.hpp"
 
 #include "viennacl/misc/bandwidth_reduction.hpp"
