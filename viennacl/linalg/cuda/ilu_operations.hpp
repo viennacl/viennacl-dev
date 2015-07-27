@@ -43,10 +43,10 @@ namespace linalg
 namespace cuda
 {
 
-
+template<typename IndexT> // to control external linkage
 __global__ void extract_L_kernel_1(
-          const unsigned int * A_row_indices,
-          const unsigned int * A_col_indices,
+          const IndexT * A_row_indices,
+          const IndexT * A_col_indices,
           unsigned int A_size1,
           unsigned int * L_row_indices)
 {
@@ -304,9 +304,10 @@ void icc_chow_patel_sweep(compressed_matrix<NumericT>       & L,
 
 ////////////////////////////// ILU ///////////////////////////
 
+template<typename IndexT> // to control external linkage
 __global__ void extract_LU_kernel_1(
-          const unsigned int * A_row_indices,
-          const unsigned int * A_col_indices,
+          const IndexT * A_row_indices,
+          const IndexT * A_col_indices,
           unsigned int A_size1,
 
           unsigned int * L_row_indices,
