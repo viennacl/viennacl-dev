@@ -121,14 +121,8 @@ inline void resize(arma::SpMat<NumericT> & A,
 #endif
 
 #ifdef VIENNACL_WITH_EIGEN
-inline void resize(Eigen::MatrixXf & m,
-                   vcl_size_t new_rows,
-                   vcl_size_t new_cols)
-{
-  m.resize(new_rows, new_cols);
-}
-
-inline void resize(Eigen::MatrixXd & m,
+template<typename NumericT, int Options>
+inline void resize(Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic, Options> & m,
                    vcl_size_t new_rows,
                    vcl_size_t new_cols)
 {
@@ -181,10 +175,10 @@ inline vcl_size_t size1(arma::SpMat<NumericT> const & A) { return A.n_rows; }
 #endif
 
 #ifdef VIENNACL_WITH_EIGEN
-inline vcl_size_t size1(Eigen::MatrixXf const & m) { return static_cast<vcl_size_t>(m.rows()); }
-inline vcl_size_t size1(Eigen::MatrixXd const & m) { return static_cast<vcl_size_t>(m.rows()); }
-inline vcl_size_t size1(Eigen::Map<Eigen::MatrixXf> const & m) { return static_cast<vcl_size_t>(m.rows()); }
-inline vcl_size_t size1(Eigen::Map<Eigen::MatrixXd> const & m) { return static_cast<vcl_size_t>(m.rows()); }
+template<typename NumericT, int Options>
+vcl_size_t size1(Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic, Options> const & m) { return static_cast<vcl_size_t>(m.rows()); }
+template<typename NumericT, int Options>
+vcl_size_t size1(Eigen::Map< Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic, Options> > const & m) { return static_cast<vcl_size_t>(m.rows()); }
 template<typename T, int options>
 inline vcl_size_t size1(Eigen::SparseMatrix<T, options> & m) { return static_cast<vcl_size_t>(m.rows()); }
 #endif
@@ -215,10 +209,10 @@ inline vcl_size_t size2(arma::SpMat<NumericT> const & A) { return A.n_cols; }
 
 /** \cond */
 #ifdef VIENNACL_WITH_EIGEN
-inline vcl_size_t size2(Eigen::MatrixXf const & m) { return m.cols(); }
-inline vcl_size_t size2(Eigen::MatrixXd const & m) { return m.cols(); }
-inline vcl_size_t size2(Eigen::Map<Eigen::MatrixXf> const & m) { return m.cols(); }
-inline vcl_size_t size2(Eigen::Map<Eigen::MatrixXd> const & m) { return m.cols(); }
+template<typename NumericT, int Options>
+inline vcl_size_t size2(Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic, Options> const & m) { return m.cols(); }
+template<typename NumericT, int Options>
+inline vcl_size_t size2(Eigen::Map< Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic, Options> > const & m) { return m.cols(); }
 template<typename T, int options>
 inline vcl_size_t size2(Eigen::SparseMatrix<T, options> & m) { return m.cols(); }
 #endif

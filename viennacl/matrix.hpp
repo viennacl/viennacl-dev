@@ -1077,8 +1077,8 @@ namespace detail
 * @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
 * @param vcl_matrix   A dense ViennaCL matrix
 */
-template<typename NumericT, typename F, unsigned int AlignmentV>
-void copy(Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic> const & cpu_matrix,
+template<typename NumericT, int EigenOptions, typename F, unsigned int AlignmentV>
+void copy(Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic, EigenOptions> const & cpu_matrix,
           viennacl::matrix<NumericT, F, AlignmentV> & vcl_matrix)
 {
   detail::copy_from_eigen_matrix(cpu_matrix, vcl_matrix);
@@ -1089,8 +1089,8 @@ void copy(Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic> const & cpu_ma
 * @param cpu_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
 * @param vcl_matrix   A dense ViennaCL matrix
 */
-template<typename NumericT, int EigenMatTypeV, typename EigenStrideT, typename F, unsigned int AlignmentV>
-void copy(Eigen::Map<Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic>, EigenMatTypeV, EigenStrideT> const & cpu_matrix,
+template<typename NumericT, int EigenOptions, int EigenMatTypeV, typename EigenStrideT, typename F, unsigned int AlignmentV>
+void copy(Eigen::Map<Eigen::Matrix<NumericT, Eigen::Dynamic, Eigen::Dynamic, EigenOptions>, EigenMatTypeV, EigenStrideT> const & cpu_matrix,
           viennacl::matrix<NumericT, F, AlignmentV> & vcl_matrix)
 {
   detail::copy_from_eigen_matrix(cpu_matrix, vcl_matrix);
