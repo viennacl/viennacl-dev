@@ -255,7 +255,7 @@ inline void enumerate_coarse_points(viennacl::linalg::detail::amg::amg_level_con
 /** @brief Helper struct for sequential classical one-pass coarsening */
 struct amg_id_influence
 {
-  amg_id_influence(std::size_t id2, std::size_t influences2) : id(id2), influences(influences2) {}
+  amg_id_influence(std::size_t id2, std::size_t influences2) : id(static_cast<unsigned int>(id2)), influences(static_cast<unsigned int>(influences2)) {}
 
   unsigned int  id;
   unsigned int  influences;
@@ -364,6 +364,7 @@ void amg_coarse_ag_stage1_sequential(compressed_matrix<NumericT> const & A,
                                      viennacl::linalg::detail::amg::amg_level_context & amg_context,
                                      viennacl::linalg::amg_tag & tag)
 {
+  (void)tag;
   unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
@@ -414,6 +415,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
                                viennacl::linalg::detail::amg::amg_level_context & amg_context,
                                viennacl::linalg::amg_tag & tag)
 {
+  (void)tag;
   unsigned int  *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
@@ -693,7 +695,7 @@ void amg_coarse(InternalT1 & A,
   case viennacl::linalg::AMG_COARSENING_METHOD_ONEPASS: amg_coarse_classic_onepass(A, amg_context, tag); break;
   case viennacl::linalg::AMG_COARSENING_METHOD_AGGREGATION:
   case viennacl::linalg::AMG_COARSENING_METHOD_MIS2_AGGREGATION: amg_coarse_ag(A, amg_context, tag); break;
-  default: throw std::runtime_error("not implemented yet");
+  //default: throw std::runtime_error("not implemented yet");
   }
 }
 
@@ -851,7 +853,7 @@ void amg_interpol_ag(compressed_matrix<NumericT> const & A,
     P_row_buffer[row] = row;
     P_col_buffer[row] = coarse_id_ptr[row];
   }
-  P_row_buffer[A.size1()] = A.size1(); // don't forget finalizer
+  P_row_buffer[A.size1()] = static_cast<unsigned int>(A.size1()); // don't forget finalizer
 
   P.generate_row_block_information();
 }
@@ -920,7 +922,7 @@ void amg_interpol_sa(compressed_matrix<NumericT> const & A,
         Jacobi_elements[j] = - NumericT(tag.get_jacobi_weight()) * A_elements[j] / diag;
     }
   }
-  Jacobi_row_buffer[A.size1()] = Jacobi.nnz(); // don't forget finalizer
+  Jacobi_row_buffer[A.size1()] = static_cast<unsigned int>(Jacobi.nnz()); // don't forget finalizer
 
   P = viennacl::linalg::prod(Jacobi, P_tentative);
 
@@ -1013,7 +1015,7 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
     {
       unsigned int col_in_A = A_col_buffer[nnz_index];
       unsigned int B_nnz_index = B_row_buffer[col_in_A] + B_row_offsets[col_in_A];
-      B_col_buffer[B_nnz_index] = row;
+      B_col_buffer[B_nnz_index] = static_cast<unsigned int>(row);
       B_elements[B_nnz_index] = A_elements[nnz_index];
       ++B_row_offsets[col_in_A];
       //B_temp.at(A_col_buffer[nnz_index])[row] = A_elements[nnz_index];
@@ -1043,7 +1045,7 @@ void assign_to_dense(viennacl::compressed_matrix<NumericT, AlignmentV> const & A
     unsigned int row_stop  = A_row_buffer[row+1];
 
     for (unsigned int nnz_index = A_row_buffer[row]; nnz_index < row_stop; ++nnz_index)
-      B_elements[row * B.internal_size2() + A_col_buffer[nnz_index]] = A_elements[nnz_index];
+      B_elements[static_cast<unsigned int>(row) * static_cast<unsigned int>(B.internal_size2()) + A_col_buffer[nnz_index]] = A_elements[nnz_index];
   }
 
 }

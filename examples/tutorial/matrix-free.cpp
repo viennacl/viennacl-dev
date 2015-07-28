@@ -158,8 +158,8 @@ void MyOperator<NumericT>::apply_host(viennacl::vector_base<NumericT> const & x,
   NumericT const * values_x = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(x.handle());
   NumericT       * values_y = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(y.handle());
 
-  NumericT dx = NumericT(1) / (N_ + 1);
-  NumericT dy = NumericT(1) / (N_ + 1);
+  NumericT dx = NumericT(1) / NumericT(N_ + 1);
+  NumericT dy = NumericT(1) / NumericT(N_ + 1);
 
 /**
   *  In the following we iterate over all \f$ N \times N \f$ points and apply the five-point stencil directly.

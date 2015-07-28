@@ -72,6 +72,7 @@ void amg_influence_advanced(compressed_matrix<NumericT> const & A,
                             viennacl::linalg::detail::amg::amg_level_context & amg_context,
                             viennacl::linalg::amg_tag & tag)
 {
+  (void)A; (void)amg_context; (void)tag;
   throw std::runtime_error("amg_influence_advanced() not implemented for OpenCL yet");
 }
 
@@ -128,6 +129,7 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
                                viennacl::linalg::detail::amg::amg_level_context & amg_context,
                                viennacl::linalg::amg_tag & tag)
 {
+  (void)tag;
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::amg<NumericT>::init(ctx);
 

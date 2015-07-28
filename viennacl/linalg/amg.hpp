@@ -120,7 +120,7 @@ namespace detail
 
       // Calculate number of C and F points on level i.
       unsigned int c_points = list_of_amg_level_context[i].num_coarse_;
-      unsigned int f_points = list_of_A[i].size1() - c_points;
+      unsigned int f_points = static_cast<unsigned int>(list_of_A[i].size1()) - c_points;
 
       if (f_points == 0 && c_points > tag.get_coarseing_cutoff())
       {
@@ -310,7 +310,7 @@ public:
       result_list_[level].clear();
 
       // Apply Smoother presmooth_ times.
-      viennacl::linalg::detail::amg::smooth_jacobi(tag_.get_presmooth_steps(),
+      viennacl::linalg::detail::amg::smooth_jacobi(static_cast<unsigned int>(tag_.get_presmooth_steps()),
                                                    A_list_[level],
                                                    result_list_[level],
                                                    result_backup_list_[level],
@@ -341,7 +341,7 @@ public:
       result_list_[level] += result_backup_list_[level];
 
       // Apply Smoother postsmooth_ times.
-      viennacl::linalg::detail::amg::smooth_jacobi(tag_.get_postsmooth_steps(),
+      viennacl::linalg::detail::amg::smooth_jacobi(static_cast<unsigned int>(tag_.get_postsmooth_steps()),
                                                    A_list_[level],
                                                    result_list_[level],
                                                    result_backup_list_[level],

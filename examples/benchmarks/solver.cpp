@@ -129,9 +129,6 @@ int run_benchmark(viennacl::context ctx)
   viennacl::tools::timer timer;
   double exec_time;
 
-  ScalarType std_factor1 = static_cast<ScalarType>(3.1415);
-  ScalarType std_factor2 = static_cast<ScalarType>(42.0);
-
   ublas::vector<ScalarType> ublas_vec1;
   ublas::vector<ScalarType> ublas_vec2;
   ublas::vector<ScalarType> ublas_result;
