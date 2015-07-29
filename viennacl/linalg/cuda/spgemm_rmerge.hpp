@@ -322,9 +322,10 @@ __global__ void compressed_matrix_gemm_stage_3(
         {
           C_col_indices[index_in_C + id_in_warp] = index_buffer;
           C_elements[index_in_C + id_in_warp]    = value_buffer;
-          buffer_size = 0;
-          index_in_C += SubWarpSizeV;
         }
+
+        index_in_C += (buffer_size == SubWarpSizeV) ? SubWarpSizeV : 0;
+        buffer_size = (buffer_size == SubWarpSizeV) ?           0  : buffer_size;
       }
 
       // write remaining entries in register buffer to C:
