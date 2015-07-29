@@ -495,33 +495,6 @@ VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & 
 }
 
 
-template<typename MatrixT, typename VectorT>
-VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & tag)
-{
-  return detail::solve_impl(matrix, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Convenience overload for calling the BiCGStab solver without preconditioner using types from the C++ STL.
-  *
-  * A std::vector<std::map<T, U> > matrix is convenient for e.g. finite element assembly.
-  * It is not the fastest option for setting up a system, but often it is fast enough - particularly for just trying things out.
-  */
-template<typename IndexT, typename NumericT>
-std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A, std::vector<NumericT> const & rhs, bicgstab_tag const & tag)
-{
-  viennacl::compressed_matrix<NumericT> vcl_A;
-  viennacl::copy(A, vcl_A);
-
-  viennacl::vector<NumericT> vcl_rhs(rhs.size());
-  viennacl::copy(rhs, vcl_rhs);
-
-  viennacl::vector<NumericT> vcl_result = solve(vcl_A, vcl_rhs, tag);
-
-  std::vector<NumericT> result(vcl_result.size());
-  viennacl::copy(vcl_result, result);
-  return result;
-}
-
 /** @brief Convenience overload for calling the preconditioned BiCGStab solver using types from the C++ STL.
   *
   * A std::vector<std::map<T, U> > matrix is convenient for e.g. finite element assembly.
@@ -541,6 +514,18 @@ std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A,
   std::vector<NumericT> result(vcl_result.size());
   viennacl::copy(vcl_result, result);
   return result;
+}
+
+/** @brief Entry point for the unpreconditioned BiCGStab method.
+ *
+ *  @param matrix    The system matrix
+ *  @param rhs       Right hand side vector (load vector)
+ *  @param tag       A BiCGStab tag providing relative tolerances, etc.
+ */
+template<typename MatrixT, typename VectorT>
+VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & tag)
+{
+  return solve(matrix, rhs, tag, viennacl::linalg::no_precond());
 }
 
 

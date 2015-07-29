@@ -360,10 +360,16 @@ std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A,
   return result;
 }
 
+/** @brief Entry point for the unpreconditioned CG method.
+ *
+ *  @param matrix    The system matrix
+ *  @param rhs       Right hand side vector (load vector)
+ *  @param tag       A BiCGStab tag providing relative tolerances, etc.
+ */
 template<typename MatrixT, typename VectorT>
 VectorT solve(MatrixT const & matrix, VectorT const & rhs, cg_tag const & tag)
 {
-  return detail::solve_impl(matrix, rhs, tag, viennacl::linalg::no_precond());
+  return solve(matrix, rhs, tag, viennacl::linalg::no_precond());
 }
 
 

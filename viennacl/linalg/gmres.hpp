@@ -654,12 +654,17 @@ std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A,
   return result;
 }
 
-/** @brief Convenience overload of the solve() function using GMRES. Per default, no preconditioner is used
-*/
+/** @brief Entry point for the unpreconditioned GMRES method.
+ *
+ *  @param matrix    The system matrix
+ *  @param rhs       Right hand side vector (load vector)
+ *  @param tag       A BiCGStab tag providing relative tolerances, etc.
+ */
+
 template<typename MatrixT, typename VectorT>
 VectorT solve(MatrixT const & A, VectorT const & rhs, gmres_tag const & tag)
 {
-  return detail::solve_impl(A, rhs, tag, no_precond());
+  return solve(A, rhs, tag, no_precond());
 }
 
 
