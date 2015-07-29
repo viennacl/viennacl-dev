@@ -125,7 +125,7 @@ namespace detail
       unsigned int c_points = list_of_amg_level_context[i].num_coarse_;
       unsigned int f_points = static_cast<unsigned int>(list_of_A[i].size1()) - c_points;
 
-      if (f_points == 0 && c_points > tag.get_coarseing_cutoff())
+      if (f_points == 0 && c_points > tag.get_coarsening_cutoff())
       {
         std::stringstream ss;
         ss << "No further coarsening possible (" << c_points << " coarse points). Consider changing the strong connection threshold or increasing the coarsening cutoff." << std::endl;
@@ -148,7 +148,7 @@ namespace detail
       list_of_R[i].switch_memory_context(tag.get_target_context());
 
       // If Limit of coarse points is reached then stop. Coarsest level is level i+1.
-      if (tag.get_coarse_levels() == 0 && c_points <= tag.get_coarseing_cutoff())
+      if (tag.get_coarse_levels() == 0 && c_points <= tag.get_coarsening_cutoff())
         return i+1;
     }
 
