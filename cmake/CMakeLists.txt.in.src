@@ -43,9 +43,7 @@ ENDIF()
 
 option(BUILD_DOXYGEN_DOCS "Build the Doxygen-generated API docs" ON)
 
-option(BUILD_MANUAL "Build the PDF manual" ON)
-
-mark_as_advanced(BUILD_DOXYGEN_DOCS BUILD_MANUAL)
+mark_as_advanced(BUILD_DOXYGEN_DOCS)
 
 # Find prerequisites
 ####################
@@ -54,9 +52,6 @@ if(BUILD_DOXYGEN_DOCS)
    find_package(Doxygen REQUIRED)
 endif()
 
-if(BUILD_MANUAL)
-   find_package(LATEX REQUIRED)
-endif()
 
 # Compile options
 #################

@@ -34,7 +34,6 @@ set(CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE FILEPATH "Path to the C++ c
 option(ENABLE_DIST "Build the dist package" FALSE)
 option(BUILD_DOXYGEN_DOCS "Build the doxygen docs" TRUE)
 option(BUILD_EXAMPLES "Build the example applications" TRUE)
-option(BUILD_MANUAL "Build the manual" TRUE)
 option(BUILD_TESTING "Build the tests" FALSE)
 option(ENABLE_ARMADILLO "Build examples that use Armadillo" FALSE)
 option(ENABLE_EIGEN "Build examples that use Eigen" FALSE)

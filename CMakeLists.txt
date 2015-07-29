@@ -46,11 +46,9 @@ ENDIF()
 
 option(BUILD_DOXYGEN_DOCS "Build the Doxygen-generated API docs" OFF)
 
-option(BUILD_MANUAL "Build the PDF manual" OFF)
+cmake_dependent_option(ENABLE_DIST "Enable the the distribution tarball target" ON "BUILD_DOXYGEN_DOCS" OFF)
 
-cmake_dependent_option(ENABLE_DIST "Enable the the distribution tarball target" ON "BUILD_DOXYGEN_DOCS;BUILD_MANUAL" OFF)
-
-mark_as_advanced(BUILD_DOXYGEN_DOCS BUILD_MANUAL ENABLE_DIST)
+mark_as_advanced(BUILD_DOXYGEN_DOCS ENABLE_DIST)
 
 # Find prerequisites
 ####################
@@ -59,9 +57,6 @@ if(BUILD_DOXYGEN_DOCS)
    find_package(Doxygen REQUIRED)
 endif()
 
-if(BUILD_MANUAL)
-   find_package(LATEX REQUIRED)
-endif()
 
 # Compile options
 #################
@@ -135,8 +130,6 @@ if(ENABLE_DIST)
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/cmake/FindOpenCL.cmake" "${DISTDIR}/cmake/FindOpenCL.cmake"
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-         "${PROJECT_SOURCE_DIR}/cmake/FindViennaProfiler.cmake" "${DISTDIR}/cmake/FindViennaProfiler.cmake"
-      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/cmake/ViennaCLCommon.cmake" "${DISTDIR}/cmake/ViennaCLCommon.cmake"
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/cmake/ViennaCLConfig.cmake.in" "${DISTDIR}/cmake/ViennaCLConfig.cmake.in"
@@ -181,7 +174,7 @@ if(ENABLE_DIST)
       WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/dist"
       COMMENT "Generating dist/ViennaCL-${VERSION}-all-arch.tar.gz"
       VERBATIM)
-   add_dependencies(dist kernels apidoc manual)
+   add_dependencies(dist kernels apidoc)
 
    #
    # Sources only (no generated files):
@@ -192,7 +185,6 @@ if(ENABLE_DIST)
              cmake/copymanual.cmake
              cmake/FindMTL.cmake
              cmake/FindOpenCL.cmake
-             cmake/FindViennaProfiler.cmake
              cmake/ViennaCLCommon.cmake
              cmake/ViennaCLConfig.cmake.in
              cmake/ViennaCLConfigVersion.cmake.in
