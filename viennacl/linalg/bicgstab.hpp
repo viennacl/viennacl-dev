@@ -285,9 +285,11 @@ namespace detail
   *
   * Following the description in "Iterative Methods for Sparse Linear Systems" by Y. Saad
   *
-  * @param matrix     The system matrix
-  * @param rhs        The load vector
-  * @param tag        Solver configuration tag
+  * @param matrix       The system matrix
+  * @param rhs          The load vector
+  * @param tag          Solver configuration tag
+  * @param monitor      A callback routine which is called at each GMRES restart
+  * @param monitor_data Data pointer to be passed to the callback routine to pass on user-specific data
   * @return The result vector
   */
   template<typename MatrixT, typename VectorT>
@@ -385,10 +387,12 @@ namespace detail
   *
   * Following the description of the unpreconditioned case in "Iterative Methods for Sparse Linear Systems" by Y. Saad
   *
-  * @param matrix     The system matrix
-  * @param rhs        The load vector
-  * @param tag        Solver configuration tag
-  * @param precond    A preconditioner. Precondition operation is done via member function apply()
+  * @param matrix       The system matrix
+  * @param rhs          The load vector
+  * @param tag          Solver configuration tag
+  * @param precond      A preconditioner. Precondition operation is done via member function apply()
+  * @param monitor      A callback routine which is called at each GMRES restart
+  * @param monitor_data Data pointer to be passed to the callback routine to pass on user-specific data
   * @return The result vector
   */
   template<typename MatrixT, typename VectorT, typename PreconditionerT>

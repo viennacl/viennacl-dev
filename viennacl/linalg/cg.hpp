@@ -117,9 +117,11 @@ namespace detail
   *
   * Pipelined version from A. T. Chronopoulos and C. W. Gear, J. Comput. Appl. Math. 25(2), 153–168 (1989)
   *
-  * @param A          The system matrix
-  * @param rhs        The load vector
-  * @param tag        Solver configuration tag
+  * @param A            The system matrix
+  * @param rhs          The load vector
+  * @param tag          Solver configuration tag
+  * @param monitor      A callback routine which is called at each GMRES restart
+  * @param monitor_data Data pointer to be passed to the callback routine to pass on user-specific data
   * @return The result vector
   */
   //template<typename MatrixType, typename ScalarType>

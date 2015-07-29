@@ -778,12 +778,14 @@ __global__ void compressed_matrix_smooth_jacobi_kernel(
 
 
 
-/** @brief Jacobi Smoother (OpenCL version)
-* @param level       Coarse level to which smoother is applied to
+/** @brief Damped Jacobi Smoother (CUDA version)
+*
 * @param iterations  Number of smoother iterations
+* @param A           Operator matrix for the smoothing
 * @param x           The vector smoothing is applied to
-* @param x_backup    Vector holding the same values as x (but diffferent from x)
+* @param x_backup    (Different) Vector holding the same values as x
 * @param rhs_smooth  The right hand side of the equation for the smoother
+* @param weight      Damping factor. 0: No effect of smoother. 1: Undamped Jacobi iteration
 */
 template<typename NumericT>
 void smooth_jacobi(unsigned int iterations,

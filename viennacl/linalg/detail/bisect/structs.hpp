@@ -61,14 +61,12 @@ struct InputData
   //!device side representation of superdiagonal
   viennacl::vector<NumericT> g_b;
 
-  ////////////////////////////////////////////////////////////////////////////////
-  //! Initialize the input data to the algorithm
-  //! Contructor for std::vector
-  //! @param diagonal        vector with the diagonal elements
-  //! @param superdiagonal   vector with the superdiagonal elements
-  //! @param sz              size of the matrix
-  ////////////////////////////////////////////////////////////////////////////////
-
+  /** @brief Initialize the input data to the algorithm
+   *
+   * @param diagonal        vector with the diagonal elements
+   * @param superdiagonal   vector with the superdiagonal elements
+   * @param sz              size of the matrix
+   */
   InputData(std::vector<NumericT> diagonal, std::vector<NumericT> superdiagonal, const unsigned int sz) :
               std_a(sz), std_b(sz), g_a(sz), g_b(sz)
   {
@@ -98,24 +96,22 @@ template<typename NumericT>
 struct ResultDataSmall
 {
   //! eigenvalues (host side)
-    std::vector<NumericT> std_eigenvalues;
-    //! left interval limits at the end of the computation
-    viennacl::vector<NumericT> vcl_g_left;
-    //! right interval limits at the end of the computation
-    viennacl::vector<NumericT> vcl_g_right;
-    //! number of eigenvalues smaller than the left interval limit
-    viennacl::vector<unsigned int> vcl_g_left_count;
-    //! number of eigenvalues bigger than the right interval limit
-    viennacl::vector<unsigned int> vcl_g_right_count;
+  std::vector<NumericT> std_eigenvalues;
+  //! left interval limits at the end of the computation
+  viennacl::vector<NumericT> vcl_g_left;
+  //! right interval limits at the end of the computation
+  viennacl::vector<NumericT> vcl_g_right;
+  //! number of eigenvalues smaller than the left interval limit
+  viennacl::vector<unsigned int> vcl_g_left_count;
+  //! number of eigenvalues bigger than the right interval limit
+  viennacl::vector<unsigned int> vcl_g_right_count;
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //! Initialize variables and memory for the result for small matrices
-    ////////////////////////////////////////////////////////////////////////////////
-    ResultDataSmall(const unsigned int mat_size) :
-      std_eigenvalues(mat_size), vcl_g_left(mat_size), vcl_g_right(mat_size), vcl_g_left_count(mat_size), vcl_g_right_count(mat_size)
-    {
-    }
+  ////////////////////////////////////////////////////////////////////////////////
+  //! Initialize variables and memory for the result for small matrices
+  ////////////////////////////////////////////////////////////////////////////////
+  ResultDataSmall(const unsigned int mat_size) :
+    std_eigenvalues(mat_size), vcl_g_left(mat_size), vcl_g_right(mat_size), vcl_g_left_count(mat_size), vcl_g_right_count(mat_size) {}
 };
 
 
@@ -128,72 +124,55 @@ struct ResultDataSmall
 template<typename NumericT>
 struct ResultDataLarge
 {
-  //! eigenvalues
-    std::vector<NumericT> std_eigenvalues;
+//! eigenvalues
+  std::vector<NumericT> std_eigenvalues;
 
-    //! number of intervals containing one eigenvalue after the first step
-    viennacl::scalar<unsigned int> g_num_one;
+  //! number of intervals containing one eigenvalue after the first step
+  viennacl::scalar<unsigned int> g_num_one;
 
-    //! number of (thread) blocks of intervals containing multiple eigenvalues
-    //! after the first steo
-    viennacl::scalar<unsigned int> g_num_blocks_mult;
+  //! number of (thread) blocks of intervals containing multiple eigenvalues after the first steo
+  viennacl::scalar<unsigned int> g_num_blocks_mult;
 
-    //! left interval limits of intervals containing one eigenvalue after the
-    //! first iteration step
-    viennacl::vector<NumericT> g_left_one;
+  //! left interval limits of intervals containing one eigenvalue after the first iteration step
+  viennacl::vector<NumericT> g_left_one;
 
-    //! right interval limits of intervals containing one eigenvalue after the
-    //! first iteration step
-    viennacl::vector<NumericT> g_right_one;
+  //! right interval limits of intervals containing one eigenvalue after the first iteration step
+  viennacl::vector<NumericT> g_right_one;
 
-    //! interval indices (position in sorted listed of eigenvalues)
-    //! of intervals containing one eigenvalue after the first iteration step
-    viennacl::vector<unsigned int> g_pos_one;
+  //! interval indices (position in sorted listed of eigenvalues) of intervals containing one eigenvalue after the first iteration step
+  viennacl::vector<unsigned int> g_pos_one;
 
-    //! left interval limits of intervals containing multiple eigenvalues
-    //! after the first iteration step
-    viennacl::vector<NumericT> g_left_mult;
-    //! right interval limits of intervals containing multiple eigenvalues
-    //! after the first iteration step
-    viennacl::vector<NumericT> g_right_mult;
+  //! left interval limits of intervals containing multiple eigenvalues after the first iteration step
+  viennacl::vector<NumericT> g_left_mult;
+  //! right interval limits of intervals containing multiple eigenvalues after the first iteration step
+  viennacl::vector<NumericT> g_right_mult;
 
-    //! number of eigenvalues less than the left limit of the eigenvalue
-    //! intervals containing multiple eigenvalues
-    viennacl::vector<unsigned int> g_left_count_mult;
+  //! number of eigenvalues less than the left limit of the eigenvalue intervals containing multiple eigenvalues
+  viennacl::vector<unsigned int> g_left_count_mult;
 
-    //! number of eigenvalues less than the right limit of the eigenvalue
-    //! intervals containing multiple eigenvalues
-    viennacl::vector<unsigned int> g_right_count_mult;
-    //! start addresses in g_left_mult etc. of blocks of intervals containing
-    //! more than one eigenvalue after the first step
-    viennacl::vector<unsigned int> g_blocks_mult;
+  //! number of eigenvalues less than the right limit of the eigenvalue intervals containing multiple eigenvalues
+  viennacl::vector<unsigned int> g_right_count_mult;
+  //! start addresses in g_left_mult etc. of blocks of intervals containing more than one eigenvalue after the first step
+  viennacl::vector<unsigned int> g_blocks_mult;
 
-    //! accumulated number of intervals in g_left_mult etc. of blocks of
-    //! intervals containing more than one eigenvalue after the first step
-    viennacl::vector<unsigned int> g_blocks_mult_sum;
+  //! accumulated number of intervals in g_left_mult etc. of blocks of intervals containing more than one eigenvalue after the first step
+  viennacl::vector<unsigned int> g_blocks_mult_sum;
 
-    //! eigenvalues that have been generated in the second step from intervals
-    //! that still contained multiple eigenvalues after the first step
-    viennacl::vector<NumericT> g_lambda_mult;
+  //! eigenvalues that have been generated in the second step from intervals that still contained multiple eigenvalues after the first step
+  viennacl::vector<NumericT> g_lambda_mult;
 
-    //! eigenvalue index of intervals that have been generated in the second
-    //! processing step
-    viennacl::vector<unsigned int> g_pos_mult;
+  //! eigenvalue index of intervals that have been generated in the second processing step
+  viennacl::vector<unsigned int> g_pos_mult;
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //! Initialize variables and memory for result
-    //! @param  result handles to memory
-    //! @param  matrix_size  size of the matrix
-    ////////////////////////////////////////////////////////////////////////////////
-    ResultDataLarge(const unsigned int mat_size) :
-      std_eigenvalues(mat_size), g_num_one(0), g_num_blocks_mult(0),
-      g_left_one(mat_size), g_right_one(mat_size), g_pos_one(mat_size),
-      g_left_mult(mat_size), g_right_mult(mat_size), g_left_count_mult(mat_size), g_right_count_mult(mat_size),
-      g_blocks_mult(mat_size), g_blocks_mult_sum(mat_size), g_lambda_mult(mat_size), g_pos_mult(mat_size)
-    {
-    }
-
-
+  /** @brief Initialize variables and memory for result
+   *
+   * @param  mat_size  size of the matrix
+   */
+  ResultDataLarge(unsigned int mat_size) :
+    std_eigenvalues(mat_size), g_num_one(0), g_num_blocks_mult(0),
+    g_left_one(mat_size), g_right_one(mat_size), g_pos_one(mat_size),
+    g_left_mult(mat_size), g_right_mult(mat_size), g_left_count_mult(mat_size), g_right_count_mult(mat_size),
+    g_blocks_mult(mat_size), g_blocks_mult_sum(mat_size), g_lambda_mult(mat_size), g_pos_mult(mat_size) {}
 
 };
 } // namespace detail

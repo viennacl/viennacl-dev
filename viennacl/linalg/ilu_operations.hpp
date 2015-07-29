@@ -114,8 +114,8 @@ void icc_scale(compressed_matrix<NumericT> const & A,
   * We use a fully synchronous (Jacobi-like) variant, because asynchronous methods as described in the paper are a nightmare to debug
   * (and particularly funny if they sometimes fail, sometimes not)
   *
-  * @param A       The system matrix
-  * @param L       Lower-triangular matrix L in LL^T factorization
+  * @param L       Factor L to be updated for the incomplete Cholesky factorization
+  * @param aij_L   Lower triangular potion from system matrix
   */
 template<typename NumericT>
 void icc_chow_patel_sweep(compressed_matrix<NumericT>       & L,
@@ -211,11 +211,10 @@ void ilu_scale(compressed_matrix<NumericT> const & A,
   }
 }
 
-/** @brief Transposition U_trans <- U^T, where the aij-vector is permuted in the same way as the value array in U when assigned to U_trans
+/** @brief Transposition B <- A^T, where the aij-vector is permuted in the same way as the value array in A when assigned to B
   *
-  * @param U        Input matrix to be transposed
-  * @param aij      Input vector (of length U.nnz()) which will be permuted the same way as U.elements()
-  * @param U_trans  Output matrix containing the transposed matrix
+  * @param A     Input matrix to be transposed
+  * @param B     Output matrix containing the transposed matrix
   */
 template<typename NumericT>
 void ilu_transpose(compressed_matrix<NumericT> const & A,
@@ -264,15 +263,16 @@ void ilu_transpose(compressed_matrix<NumericT> const & A,
   * We use a fully synchronous (Jacobi-like) variant, because asynchronous methods as described in the paper are a nightmare to debug
   * (and particularly funny if they sometimes fail, sometimes not)
   *
-  * @param A       The system matrix
-  * @param L       Lower-triangular matrix L in LU factorization
-  * @param U_trans Upper-triangular matrix U in CSC-storage, which is the same as U^trans in CSR-storage
+  * @param L            Lower-triangular matrix L in LU factorization
+  * @param aij_L        Lower-triangular matrix L from A
+  * @param U_trans      Upper-triangular matrix U in CSC-storage, which is the same as U^trans in CSR-storage
+  * @param aij_U_trans  Upper-triangular matrix from A in CSC-storage, which is the same as U^trans in CSR-storage
   */
 template<typename NumericT>
 void ilu_chow_patel_sweep(compressed_matrix<NumericT>       & L,
-                          vector<NumericT>                  & aij_L,
+                          vector<NumericT>            const & aij_L,
                           compressed_matrix<NumericT>       & U_trans,
-                          vector<NumericT>                  & aij_U_trans)
+                          vector<NumericT>            const & aij_U_trans)
 {
   switch (viennacl::traits::handle(L).get_active_handle_id())
   {

@@ -142,13 +142,15 @@ namespace detail
   }
 
   /**
-  *   @brief Implementation of the Lanczos PRO algorithm
+  *   @brief Implementation of the Lanczos PRO algorithm (partial reorthogonalization)
   *
-  *   @param A            The system matrix
-  *   @param r            Random start vector
-  *   @param size         Size of krylov-space
-  *   @param tag          Lanczos_tag with several options for the algorithm
-  *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
+  *   @param A              The system matrix
+  *   @param r              Random start vector
+  *   @param eigenvectors_A Dense matrix holding the eigenvectors of A (one eigenvector per column)
+  *   @param size           Size of krylov-space
+  *   @param tag            Lanczos_tag with several options for the algorithm
+  *   @param compute_eigenvectors   Boolean flag. If true, eigenvectors are computed. Otherwise the routine returns after calculating eigenvalues.
+  *   @return               Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
   */
 
   template<typename MatrixT, typename DenseMatrixT, typename NumericT>
@@ -334,6 +336,8 @@ namespace detail
   *   @param r            Random start vector
   *   @param eigenvectors_A  A dense matrix in which the eigenvectors of A will be stored. Both row- and column-major matrices are supported.
   *   @param krylov_dim   Size of krylov-space
+  *   @param tag          The Lanczos tag holding tolerances, etc.
+  *   @param compute_eigenvectors   Boolean flag. If true, eigenvectors are computed. Otherwise the routine returns after calculating eigenvalues.
   *   @return             Returns the eigenvalues (number of eigenvalues equals size of krylov-space)
   */
   template< typename MatrixT, typename DenseMatrixT, typename NumericT>
@@ -437,13 +441,15 @@ namespace detail
 *
 *   Implementation of Lanczos with partial reorthogonalization is implemented separately.
 *
-*   @param matrix        The system matrix
-*   @param tag           Tag with several options for the lanczos algorithm
-*   @return              Returns the n largest eigenvalues (n defined in the lanczos_tag)
+*   @param matrix          The system matrix
+*   @param eigenvectors_A  A dense matrix in which the eigenvectors of A will be stored. Both row- and column-major matrices are supported.
+*   @param tag             Tag with several options for the lanczos algorithm
+*   @param compute_eigenvectors   Boolean flag. If true, eigenvectors are computed. Otherwise the routine returns after calculating eigenvalues.
+*   @return                Returns the n largest eigenvalues (n defined in the lanczos_tag)
 */
 template<typename MatrixT, typename DenseMatrixT>
 std::vector< typename viennacl::result_of::cpu_value_type<typename MatrixT::value_type>::type >
-eig(MatrixT const & matrix, DenseMatrixT & eigenvalues_A, lanczos_tag const & tag, bool compute_eigenvalues = true)
+eig(MatrixT const & matrix, DenseMatrixT & eigenvectors_A, lanczos_tag const & tag, bool compute_eigenvectors = true)
 {
   typedef typename viennacl::result_of::value_type<MatrixT>::type           NumericType;
   typedef typename viennacl::result_of::cpu_value_type<NumericType>::type   CPU_NumericType;
@@ -467,11 +473,11 @@ eig(MatrixT const & matrix, DenseMatrixT & eigenvalues_A, lanczos_tag const & ta
   switch (tag.method())
   {
   case lanczos_tag::partial_reorthogonalization:
-    eigenvalues = detail::lanczosPRO(matrix, r, eigenvalues_A, size_krylov, tag, compute_eigenvalues);
+    eigenvalues = detail::lanczosPRO(matrix, r, eigenvectors_A, size_krylov, tag, compute_eigenvectors);
     break;
   case lanczos_tag::full_reorthogonalization:
   case lanczos_tag::no_reorthogonalization:
-    eigenvalues = detail::lanczos(matrix, r, eigenvalues_A, size_krylov, tag, compute_eigenvalues);
+    eigenvalues = detail::lanczos(matrix, r, eigenvectors_A, size_krylov, tag, compute_eigenvectors);
     break;
   }
 

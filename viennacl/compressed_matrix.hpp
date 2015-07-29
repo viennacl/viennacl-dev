@@ -1036,7 +1036,7 @@ private:
 /** @brief Output stream support for compressed_matrix. Output format is same as MATLAB, Octave, or SciPy
   *
   * @param os   STL output stream
-  * @param val  The vector that should be printed
+  * @param A    The compressed matrix to be printed.
 */
 template<typename NumericT, unsigned int AlignmentV>
 std::ostream & operator<<(std::ostream & os, compressed_matrix<NumericT, AlignmentV> const & A)

@@ -271,9 +271,9 @@ inline bool operator>(amg_id_influence const & a, amg_id_influence const & b)
 }
 
 /** @brief Classical (RS) one-pass coarsening. Single-Threaded! (VIENNACL_AMG_COARSE_CLASSIC_ONEPASS)
-* @param level         Course level identifier
-* @param A             Operator matrix on all levels
-* @param pointvector   Vector of points on all levels
+*
+* @param A             Operator matrix for the respective level
+* @param amg_context   AMG datastructure object for the grid hierarchy
 * @param tag           AMG preconditioner tag
 */
 template<typename NumericT>
@@ -354,9 +354,9 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A,
 
 
 /** @brief AG (aggregation based) coarsening, single-threaded version of stage 1
-* @param level         Course level identifier
-* @param A             Operator matrix on all levels
-* @param pointvector   Vector of points on all levels
+*
+* @param A             Operator matrix for the respective level
+* @param amg_context   AMG datastructure object for the grid hierarchy
 * @param tag           AMG preconditioner tag
 */
 template<typename NumericT>
@@ -404,10 +404,10 @@ void amg_coarse_ag_stage1_sequential(compressed_matrix<NumericT> const & A,
 
 
 
-/** @brief AG (aggregation based) coarsening, single-threaded version of stage 1
-* @param level         Course level identifier
-* @param A             Operator matrix on all levels
-* @param pointvector   Vector of points on all levels
+/** @brief AG (aggregation based) coarsening, multi-threaded version of stage 1 using parallel maximum independent sets
+*
+* @param A             Operator matrix for the respective level
+* @param amg_context   AMG datastructure object for the grid hierarchy
 * @param tag           AMG preconditioner tag
 */
 template<typename NumericT>
@@ -588,9 +588,9 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
 
 
 /** @brief AG (aggregation based) coarsening. Partially single-threaded version (VIENNACL_AMG_COARSE_AG)
-* @param level         Course level identifier
-* @param A             Operator matrix on all levels
-* @param pointvector   Vector of points on all levels
+*
+* @param A             Operator matrix for the respective level
+* @param amg_context   AMG datastructure object for the grid hierarchy
 * @param tag           AMG preconditioner tag
 */
 template<typename NumericT>
@@ -678,15 +678,14 @@ void amg_coarse_ag(compressed_matrix<NumericT> const & A,
 
 
 
-/** @brief Calls the right coarsening procedure
-* @param level        Coarse level identifier
-* @param A            Operator matrix on all levels
-* @param pointvector  Vector of points on all levels
-* @param slicing      Partitioning of the system matrix to different processors (only used in RS0 and RS3)
-* @param tag          AMG preconditioner tag
+/** @brief Entry point and dispatcher for coarsening procedures
+*
+* @param A             Operator matrix for the respective level
+* @param amg_context   AMG datastructure object for the grid hierarchy
+* @param tag           AMG preconditioner tag
 */
-template<typename InternalT1>
-void amg_coarse(InternalT1 & A,
+template<typename MatrixT>
+void amg_coarse(MatrixT & A,
                 viennacl::linalg::detail::amg::amg_level_context & amg_context,
                 viennacl::linalg::amg_tag & tag)
 {
@@ -1050,7 +1049,15 @@ void assign_to_dense(viennacl::compressed_matrix<NumericT, AlignmentV> const & A
 
 }
 
-
+/** @brief Damped Jacobi Smoother (CUDA version)
+*
+* @param iterations  Number of smoother iterations
+* @param A           Operator matrix for the smoothing
+* @param x           The vector smoothing is applied to
+* @param x_backup    (Different) Vector holding the same values as x
+* @param rhs_smooth  The right hand side of the equation for the smoother
+* @param weight      Damping factor. 0: No effect of smoother. 1: Undamped Jacobi iteration
+*/
 template<typename NumericT>
 void smooth_jacobi(unsigned int iterations,
                    compressed_matrix<NumericT> const & A,

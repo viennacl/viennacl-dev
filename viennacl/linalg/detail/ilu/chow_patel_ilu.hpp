@@ -70,7 +70,7 @@ namespace detail
 {
   /** @brief Implementation of the parallel ICC0 factorization, Algorithm 3 in Chow-Patel paper.
    *
-   *  Rather than dealing with a column-major upper triangular matrix U, we use the lower-triangular matrix L such that A \approx LL^T.
+   *  Rather than dealing with a column-major upper triangular matrix U, we use the lower-triangular matrix L such that A is approximately given by LL^T.
    *  The advantage is that L is readily available in row-major format.
    */
   template<typename NumericT>

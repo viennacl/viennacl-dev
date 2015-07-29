@@ -67,10 +67,12 @@ private:
 
 namespace detail
 {
-  /** @brief Sparse Galerkin product: Calculates A_coarse = trans(P)*A_fine*P
-    * @param A    Operator matrix on fine grid (quadratic)
-    * @param P    Prolongation/Interpolation matrix
-    * @param C_coarse    Result Matrix (Galerkin operator)
+  /** @brief Sparse Galerkin product: Calculates A_coarse = trans(P)*A_fine*P = R*A_fine*P
+    *
+    * @param A_fine    Operator matrix on fine grid (quadratic)
+    * @param P         Prolongation/Interpolation matrix
+    * @param R         Restriction matrix
+    * @param A_coarse  Result matrix on coarse grid (Galerkin operator)
     */
   template<typename NumericT>
   void amg_galerkin_prod(compressed_matrix<NumericT> & A_fine,
@@ -93,10 +95,11 @@ namespace detail
 
   /** @brief Setup AMG preconditioner
   *
-  * @param A            Operator matrices on all levels
-  * @param P            Prolongation/Interpolation operators on all levels
-  * @param pointvector  Vector of points on all levels
-  * @param tag          AMG preconditioner tag
+  * @param list_of_A                  Operator matrices on all levels
+  * @param list_of_P                  Prolongation/Interpolation operators on all levels
+  * @param list_of_R                  Restriction operators on all levels
+  * @param list_of_amg_level_context  Auxiliary datastructures for managing the grid hierarchy (coarse nodes, etc.)
+  * @param tag                        AMG preconditioner tag
   */
   template<typename NumericT, typename AMGContextListT>
   vcl_size_t amg_setup(std::vector<compressed_matrix<NumericT> > & list_of_A,
@@ -155,41 +158,42 @@ namespace detail
 
   /** @brief Initialize AMG preconditioner
   *
-  * @param mat          System matrix
-  * @param A            Operator matrices on all levels
-  * @param P            Prolongation/Interpolation operators on all levels
-  * @param pointvector  Vector of points on all levels
-  * @param tag          AMG preconditioner tag
+  * @param mat                        System matrix
+  * @param list_of_A                  Operator matrices on all levels
+  * @param list_of_P                  Prolongation/Interpolation operators on all levels
+  * @param list_of_R                  Restriction operators on all levels
+  * @param list_of_amg_level_context  Auxiliary datastructures for managing the grid hierarchy (coarse nodes, etc.)
+  * @param tag                        AMG preconditioner tag
   */
   template<typename MatrixT, typename InternalT1, typename InternalT2>
-  void amg_init(MatrixT const & mat, InternalT1 & A, InternalT1 & P, InternalT1 & R, InternalT2 & amg_context, amg_tag & tag)
+  void amg_init(MatrixT const & mat, InternalT1 & list_of_A, InternalT1 & list_of_P, InternalT1 & list_of_R, InternalT2 & list_of_amg_level_context, amg_tag & tag)
   {
-    //typedef typename MatrixType::value_type ScalarType;
     typedef typename InternalT1::value_type SparseMatrixType;
 
     vcl_size_t num_levels = (tag.get_coarse_levels() > 0) ? tag.get_coarse_levels() : VIENNACL_AMG_MAX_LEVELS;
 
-    A.resize(num_levels+1, SparseMatrixType(tag.get_setup_context()));
-    P.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
-    R.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
-    amg_context.resize(num_levels);
+    list_of_A.resize(num_levels+1, SparseMatrixType(tag.get_setup_context()));
+    list_of_P.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
+    list_of_R.resize(num_levels,   SparseMatrixType(tag.get_setup_context()));
+    list_of_amg_level_context.resize(num_levels);
 
     // Insert operator matrix as operator for finest level.
     //SparseMatrixType A0(mat);
     //A.insert_element(0, A0);
-    A[0].switch_memory_context(viennacl::traits::context(mat));
-    A[0] = mat;
-    A[0].switch_memory_context(tag.get_setup_context());
+    list_of_A[0].switch_memory_context(viennacl::traits::context(mat));
+    list_of_A[0] = mat;
+    list_of_A[0].switch_memory_context(tag.get_setup_context());
   }
 
   /** @brief Setup data structures for precondition phase for later use on the GPU
   *
-  * @param result      Result vector on all levels
-  * @param rhs         RHS vector on all levels
-  * @param residual    Residual vector on all levels
-  * @param A           Operators matrices on all levels from setup phase
-  * @param tag         AMG preconditioner tag
-  * @param ctx         Optional context in which the auxiliary objects are created (one out of multiple OpenCL contexts, CUDA, host)
+  * @param result          Result vector on all levels
+  * @param result_backup   Copy of result vector on all levels
+  * @param rhs             RHS vector on all levels
+  * @param residual        Residual vector on all levels
+  * @param A               Operators matrices on all levels from setup phase
+  * @param coarse_levels   Number of coarse levels for which the datastructures should be set up.
+  * @param tag             AMG preconditioner tag
   */
   template<typename InternalVectorT, typename SparseMatrixT>
   void amg_setup_apply(InternalVectorT & result,
@@ -221,11 +225,12 @@ namespace detail
 
 
   /** @brief Pre-compute LU factorization for direct solve (ublas library).
-   *  @brief Speeds up precondition phase as this is computed only once overall instead of once per iteration.
+  *
+  * Speeds up precondition phase as this is computed only once overall instead of once per iteration.
   *
   * @param op           Operator matrix for direct solve
-  * @param permutation  Permutation matrix which saves the factorization result
   * @param A            Operator matrix on coarsest level
+  * @param tag          AMG preconditioner tag
   */
   template<typename NumericT, typename SparseMatrixT>
   void amg_lu(viennacl::matrix<NumericT> & op,
@@ -294,7 +299,7 @@ public:
 
   /** @brief Precondition Operation
   *
-  * @param vec The vector to which preconditioning is applied to
+  * @param vec       The vector to which preconditioning is applied to
   */
   template<typename VectorT>
   void apply(VectorT & vec) const

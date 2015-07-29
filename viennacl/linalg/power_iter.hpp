@@ -110,7 +110,7 @@ namespace viennacl
     /**
      *   @brief Implementation of the calculation of eigenvalues using power iteration. Does not return the eigenvector.
      *
-     *   @param matrix        The system matrix
+     *   @param A             The system matrix
      *   @param tag           Tag with termination factor
      *   @return              Returns the largest eigenvalue computed by the power iteration method
      */

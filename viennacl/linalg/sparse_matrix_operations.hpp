@@ -203,13 +203,14 @@ namespace viennacl
 
     // A * B with both A and B sparse
 
-    /** @brief Carries out matrix-vector multiplication involving a sparse matrix type
+    /** @brief Carries out sparse_matrix-sparse_matrix multiplication for CSR matrices
     *
-    * Implementation of the convenience expression result = prod(mat, vec);
+    * Implementation of the convenience expression C = prod(A, B);
+    * Based on computing C(i, :) = A(i, :) * B via merging the respective rows of B
     *
-    * @param mat    The matrix
-    * @param vec    The vector
-    * @param result The result vector
+    * @param A     Left factor
+    * @param B     Right factor
+    * @param C     Result matrix
     */
     template<typename NumericT>
     void

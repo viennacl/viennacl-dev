@@ -171,9 +171,11 @@ namespace detail
   * Following algorithm 2.1 proposed by Walker in "A Simpler GMRES", but uses classical Gram-Schmidt instead of modified Gram-Schmidt for better parallelization.
   * Uses some pipelining techniques for minimizing host-device transfer
   *
-  * @param A          The system matrix
-  * @param rhs        The load vector
-  * @param tag        Solver configuration tag
+  * @param A            The system matrix
+  * @param rhs          The load vector
+  * @param tag          Solver configuration tag
+  * @param monitor      A callback routine which is called at each GMRES restart
+  * @param monitor_data Data pointer to be passed to the callback routine to pass on user-specific data
   * @return The result vector
   */
   template <typename MatrixType, typename ScalarType>
@@ -435,10 +437,13 @@ namespace detail
   *
   * Following the algorithm proposed by Walker in "A Simpler GMRES"
   *
-  * @param matrix     The system matrix
-  * @param rhs        The load vector
-  * @param tag        Solver configuration tag
-  * @param precond    A preconditioner. Precondition operation is done via member function apply()
+  * @param matrix       The system matrix
+  * @param rhs          The load vector
+  * @param tag          Solver configuration tag
+  * @param precond      A preconditioner. Precondition operation is done via member function apply()
+  * @param monitor      A callback routine which is called at each GMRES restart
+  * @param monitor_data Data pointer to be passed to the callback routine to pass on user-specific data
+  *
   * @return The result vector
   */
   template<typename MatrixT, typename VectorT, typename PreconditionerT>
@@ -656,7 +661,7 @@ std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A,
 
 /** @brief Entry point for the unpreconditioned GMRES method.
  *
- *  @param matrix    The system matrix
+ *  @param A         The system matrix
  *  @param rhs       Right hand side vector (load vector)
  *  @param tag       A BiCGStab tag providing relative tolerances, etc.
  */

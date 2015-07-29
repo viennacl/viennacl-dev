@@ -151,12 +151,14 @@ enum operation_node_type
 
 namespace result_of
 {
+  /** @brief Metafunction for querying type informations */
   template<typename T>
   struct op_type_info
   {
     typedef typename T::ERROR_UNKNOWN_OP_TYPE   error_type;
   };
 
+  /** \cond */
   // elementwise casts
   template<> struct op_type_info<op_element_cast<char> >      { enum { id = OPERATION_UNARY_CAST_CHAR_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_cast<unsigned char> >      { enum { id = OPERATION_UNARY_CAST_UCHAR_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
