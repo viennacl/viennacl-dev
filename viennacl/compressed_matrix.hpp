@@ -687,6 +687,20 @@ public:
   }
 #endif
 
+  /** @brief Assignment a compressed matrix from the product of two compressed_matrix objects (C = A * B). */
+  compressed_matrix(matrix_expression<const compressed_matrix, const compressed_matrix, op_prod> const & proxy)
+    : rows_(0), cols_(0), nonzeros_(0), row_block_num_(0)
+  {
+    viennacl::context ctx = viennacl::traits::context(proxy.lhs());
+
+    row_buffer_.switch_active_handle_id(ctx.memory_type());
+    col_buffer_.switch_active_handle_id(ctx.memory_type());
+    elements_.switch_active_handle_id(ctx.memory_type());
+    row_blocks_.switch_active_handle_id(ctx.memory_type());
+
+    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+    generate_row_block_information();
+  }
 
   /** @brief Assignment a compressed matrix from possibly another memory domain. */
   compressed_matrix & operator=(compressed_matrix const & other)

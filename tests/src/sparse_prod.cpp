@@ -171,11 +171,26 @@ int test(Epsilon const& epsilon)
 
   if ( std::fabs(diff(stl_C, vcl_C)) > epsilon )
   {
-    std::cout << "# Error at operation: matrix-matrix product with compressed_matrix" << std::endl;
+    std::cout << "# Error at operation: matrix-matrix product with compressed_matrix (vcl_C)" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(stl_C, vcl_C)) << std::endl;
     retval = EXIT_FAILURE;
   }
 
+  viennacl::compressed_matrix<NumericT> vcl_D = viennacl::linalg::prod(vcl_A, vcl_B);
+  if ( std::fabs(diff(stl_C, vcl_D)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-matrix product with compressed_matrix (vcl_D)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(stl_C, vcl_C)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
+
+  viennacl::compressed_matrix<NumericT> vcl_E(viennacl::linalg::prod(vcl_A, vcl_B));
+  if ( std::fabs(diff(stl_C, vcl_E)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-matrix product with compressed_matrix (vcl_E)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(stl_C, vcl_C)) << std::endl;
+    retval = EXIT_FAILURE;
+  }
 
   // --------------------------------------------------------------------------
   return retval;
