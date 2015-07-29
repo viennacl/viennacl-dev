@@ -98,7 +98,9 @@ namespace detail
   viennacl::vector<NumericT> pipelined_solve(MatrixT const & A, //MatrixType const & A,
                                              viennacl::vector_base<NumericT> const & rhs,
                                              bicgstab_tag const & tag,
-                                             viennacl::linalg::no_precond)
+                                             viennacl::linalg::no_precond,
+                                             bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                             void *monitor_data = NULL)
   {
     viennacl::vector<NumericT> result = viennacl::zero_vector<NumericT>(rhs.size(), viennacl::traits::context(rhs));
 
@@ -191,6 +193,8 @@ namespace detail
       omega =   As_dot_s  / As_dot_As;
 
       residual_norm = std::sqrt(s_dot_s - NumericT(2.0) * omega * As_dot_s + omega * omega *  As_dot_As);
+      if (monitor && monitor(result, std::fabs(residual_norm / norm_rhs_host), monitor_data))
+        break;
       if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance() || residual_norm < tag.abs_tolerance())
         break;
 
@@ -209,314 +213,292 @@ namespace detail
 
     return result;
   }
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::compressed_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        bicgstab_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::coordinate_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        bicgstab_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::ell_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        bicgstab_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::sliced_ell_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        bicgstab_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::hyb_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        bicgstab_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+  /** @brief Implementation of the unpreconditioned stabilized Bi-conjugate gradient solver
+  *
+  * Following the description in "Iterative Methods for Sparse Linear Systems" by Y. Saad
+  *
+  * @param matrix     The system matrix
+  * @param rhs        The load vector
+  * @param tag        Solver configuration tag
+  * @return The result vector
+  */
+  template<typename MatrixT, typename VectorT>
+  VectorT solve_impl(MatrixT const & matrix,
+                     VectorT const & rhs,
+                     bicgstab_tag const & tag,
+                     viennacl::linalg::no_precond,
+                     bool (*monitor)(VectorT const &, typename viennacl::result_of::cpu_value_type<typename viennacl::result_of::value_type<VectorT>::type>::type, void*) = NULL,
+                     void *monitor_data = NULL)
+  {
+    typedef typename viennacl::result_of::value_type<VectorT>::type            NumericType;
+    typedef typename viennacl::result_of::cpu_value_type<NumericType>::type    CPU_NumericType;
+    VectorT result = rhs;
+    viennacl::traits::clear(result);
+
+    VectorT residual = rhs;
+    VectorT p = rhs;
+    VectorT r0star = rhs;
+    VectorT tmp0 = rhs;
+    VectorT tmp1 = rhs;
+    VectorT s = rhs;
+
+    CPU_NumericType norm_rhs_host = viennacl::linalg::norm_2(residual);
+    CPU_NumericType ip_rr0star = norm_rhs_host * norm_rhs_host;
+    CPU_NumericType beta;
+    CPU_NumericType alpha;
+    CPU_NumericType omega;
+    //ScalarType inner_prod_temp; //temporary variable for inner product computation
+    CPU_NumericType new_ip_rr0star = 0;
+    CPU_NumericType residual_norm = norm_rhs_host;
+
+    if (norm_rhs_host <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
+      return result;
+
+    bool restart_flag = true;
+    vcl_size_t last_restart = 0;
+    for (vcl_size_t i = 0; i < tag.max_iterations(); ++i)
+    {
+      if (restart_flag)
+      {
+        residual = viennacl::linalg::prod(matrix, result);
+        residual = rhs - residual;
+        p = residual;
+        r0star = residual;
+        ip_rr0star = viennacl::linalg::norm_2(residual);
+        ip_rr0star *= ip_rr0star;
+        restart_flag = false;
+        last_restart = i;
+      }
+
+      tag.iters(i+1);
+      tmp0 = viennacl::linalg::prod(matrix, p);
+      alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
+
+      s = residual - alpha*tmp0;
+
+      tmp1 = viennacl::linalg::prod(matrix, s);
+      CPU_NumericType norm_tmp1 = viennacl::linalg::norm_2(tmp1);
+      omega = viennacl::linalg::inner_prod(tmp1, s) / (norm_tmp1 * norm_tmp1);
+
+      result += alpha * p + omega * s;
+      residual = s - omega * tmp1;
+
+      new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
+      residual_norm = viennacl::linalg::norm_2(residual);
+      if (monitor && monitor(result, std::fabs(residual_norm / norm_rhs_host), monitor_data))
+        break;
+      if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance() || residual_norm < tag.abs_tolerance())
+        break;
+
+      beta = new_ip_rr0star / ip_rr0star * alpha/omega;
+      ip_rr0star = new_ip_rr0star;
+
+      if (    (ip_rr0star <= 0 && ip_rr0star >= 0)
+           || (omega <= 0 && omega >= 0)
+           || (i - last_restart > tag.max_iterations_before_restart())
+         ) //search direction degenerate. A restart might help
+        restart_flag = true;
+
+      // Execution of
+      //  p = residual + beta * (p - omega*tmp0);
+      // without introducing temporary vectors:
+      p -= omega * tmp0;
+      p = residual + beta * p;
+    }
+
+    //store last error estimate:
+    tag.error(residual_norm / norm_rhs_host);
+
+    return result;
+  }
+
+
+  /** @brief Implementation of the preconditioned stabilized Bi-conjugate gradient solver
+  *
+  * Following the description of the unpreconditioned case in "Iterative Methods for Sparse Linear Systems" by Y. Saad
+  *
+  * @param matrix     The system matrix
+  * @param rhs        The load vector
+  * @param tag        Solver configuration tag
+  * @param precond    A preconditioner. Precondition operation is done via member function apply()
+  * @return The result vector
+  */
+  template<typename MatrixT, typename VectorT, typename PreconditionerT>
+  VectorT solve_impl(MatrixT const & matrix,
+                     VectorT const & rhs,
+                     bicgstab_tag const & tag,
+                     PreconditionerT const & precond,
+                     bool (*monitor)(VectorT const &, typename viennacl::result_of::cpu_value_type<typename viennacl::result_of::value_type<VectorT>::type>::type, void*) = NULL,
+                     void *monitor_data = NULL)
+  {
+    typedef typename viennacl::result_of::value_type<VectorT>::type            NumericType;
+    typedef typename viennacl::result_of::cpu_value_type<NumericType>::type    CPU_NumericType;
+    VectorT result = rhs;
+    viennacl::traits::clear(result);
+
+    VectorT residual = rhs;
+    VectorT r0star = residual;  //can be chosen arbitrarily in fact
+    VectorT tmp0 = rhs;
+    VectorT tmp1 = rhs;
+    VectorT s = rhs;
+
+    VectorT p = residual;
+
+    CPU_NumericType ip_rr0star = viennacl::linalg::norm_2(residual);
+    CPU_NumericType norm_rhs_host = viennacl::linalg::norm_2(residual);
+    CPU_NumericType beta;
+    CPU_NumericType alpha;
+    CPU_NumericType omega;
+    CPU_NumericType new_ip_rr0star = 0;
+    CPU_NumericType residual_norm = norm_rhs_host;
+
+    if (norm_rhs_host <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
+      return result;
+
+    bool restart_flag = true;
+    vcl_size_t last_restart = 0;
+    for (unsigned int i = 0; i < tag.max_iterations(); ++i)
+    {
+      if (restart_flag)
+      {
+        residual = viennacl::linalg::prod(matrix, result);
+        residual = rhs - residual;
+        precond.apply(residual);
+        p = residual;
+        r0star = residual;
+        ip_rr0star = viennacl::linalg::norm_2(residual);
+        ip_rr0star *= ip_rr0star;
+        restart_flag = false;
+        last_restart = i;
+      }
+
+      tag.iters(i+1);
+      tmp0 = viennacl::linalg::prod(matrix, p);
+      precond.apply(tmp0);
+      alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
+
+      s = residual - alpha*tmp0;
+
+      tmp1 = viennacl::linalg::prod(matrix, s);
+      precond.apply(tmp1);
+      CPU_NumericType norm_tmp1 = viennacl::linalg::norm_2(tmp1);
+      omega = viennacl::linalg::inner_prod(tmp1, s) / (norm_tmp1 * norm_tmp1);
+
+      result += alpha * p + omega * s;
+      residual = s - omega * tmp1;
+
+      residual_norm = viennacl::linalg::norm_2(residual);
+      if (monitor && monitor(result, std::fabs(residual_norm / norm_rhs_host), monitor_data))
+        break;
+      if (residual_norm / norm_rhs_host < tag.tolerance() || residual_norm < tag.abs_tolerance())
+        break;
+
+      new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
+
+      beta = new_ip_rr0star / ip_rr0star * alpha/omega;
+      ip_rr0star = new_ip_rr0star;
+
+      if (!ip_rr0star || !omega || i - last_restart > tag.max_iterations_before_restart()) //search direction degenerate. A restart might help
+        restart_flag = true;
+
+      // Execution of
+      //  p = residual + beta * (p - omega*tmp0);
+      // without introducing temporary vectors:
+      p -= omega * tmp0;
+      p = residual + beta * p;
+
+      //std::cout << "Rel. Residual in current step: " << std::sqrt(std::fabs(viennacl::linalg::inner_prod(residual, residual) / norm_rhs_host)) << std::endl;
+    }
+
+    //store last error estimate:
+    tag.error(residual_norm / norm_rhs_host);
+
+    return result;
+  }
+
 }
 
-// compressed_matrix
 
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
+
+template<typename MatrixT, typename VectorT, typename PreconditionerT>
+VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & tag, PreconditionerT const & precond)
 {
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
+  return detail::solve_impl(matrix, rhs, tag, precond);
 }
 
 
-// coordinate_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-// ell_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-// sliced_ell_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-
-// hyb_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 bicgstab_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-
-
-
-
-/** @brief Implementation of the stabilized Bi-conjugate gradient solver
-*
-* Following the description in "Iterative Methods for Sparse Linear Systems" by Y. Saad
-*
-* @param matrix     The system matrix
-* @param rhs        The load vector
-* @param tag        Solver configuration tag
-* @return The result vector
-*/
 template<typename MatrixT, typename VectorT>
 VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & tag)
 {
-  typedef typename viennacl::result_of::value_type<VectorT>::type            NumericType;
-  typedef typename viennacl::result_of::cpu_value_type<NumericType>::type    CPU_NumericType;
-  VectorT result = rhs;
-  viennacl::traits::clear(result);
-
-  VectorT residual = rhs;
-  VectorT p = rhs;
-  VectorT r0star = rhs;
-  VectorT tmp0 = rhs;
-  VectorT tmp1 = rhs;
-  VectorT s = rhs;
-
-  CPU_NumericType norm_rhs_host = viennacl::linalg::norm_2(residual);
-  CPU_NumericType ip_rr0star = norm_rhs_host * norm_rhs_host;
-  CPU_NumericType beta;
-  CPU_NumericType alpha;
-  CPU_NumericType omega;
-  //ScalarType inner_prod_temp; //temporary variable for inner product computation
-  CPU_NumericType new_ip_rr0star = 0;
-  CPU_NumericType residual_norm = norm_rhs_host;
-
-  if (norm_rhs_host <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
-    return result;
-
-  bool restart_flag = true;
-  vcl_size_t last_restart = 0;
-  for (vcl_size_t i = 0; i < tag.max_iterations(); ++i)
-  {
-    if (restart_flag)
-    {
-      residual = viennacl::linalg::prod(matrix, result);
-      residual = rhs - residual;
-      p = residual;
-      r0star = residual;
-      ip_rr0star = viennacl::linalg::norm_2(residual);
-      ip_rr0star *= ip_rr0star;
-      restart_flag = false;
-      last_restart = i;
-    }
-
-    tag.iters(i+1);
-    tmp0 = viennacl::linalg::prod(matrix, p);
-    alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
-
-    s = residual - alpha*tmp0;
-
-    tmp1 = viennacl::linalg::prod(matrix, s);
-    CPU_NumericType norm_tmp1 = viennacl::linalg::norm_2(tmp1);
-    omega = viennacl::linalg::inner_prod(tmp1, s) / (norm_tmp1 * norm_tmp1);
-
-    result += alpha * p + omega * s;
-    residual = s - omega * tmp1;
-
-    new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
-    residual_norm = viennacl::linalg::norm_2(residual);
-    if (std::fabs(residual_norm / norm_rhs_host) < tag.tolerance() || residual_norm < tag.abs_tolerance())
-      break;
-
-    beta = new_ip_rr0star / ip_rr0star * alpha/omega;
-    ip_rr0star = new_ip_rr0star;
-
-    if (    (ip_rr0star <= 0 && ip_rr0star >= 0)
-         || (omega <= 0 && omega >= 0)
-         || (i - last_restart > tag.max_iterations_before_restart())
-       ) //search direction degenerate. A restart might help
-      restart_flag = true;
-
-    // Execution of
-    //  p = residual + beta * (p - omega*tmp0);
-    // without introducing temporary vectors:
-    p -= omega * tmp0;
-    p = residual + beta * p;
-  }
-
-  //store last error estimate:
-  tag.error(residual_norm / norm_rhs_host);
-
-  return result;
+  return detail::solve_impl(matrix, rhs, tag, viennacl::linalg::no_precond());
 }
 
 /** @brief Convenience overload for calling the BiCGStab solver without preconditioner using types from the C++ STL.
@@ -540,108 +522,6 @@ std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A,
   return result;
 }
 
-template<typename MatrixT, typename VectorT>
-VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & tag, viennacl::linalg::no_precond)
-{
-  return solve(matrix, rhs, tag);
-}
-
-/** @brief Implementation of the preconditioned stabilized Bi-conjugate gradient solver
-*
-* Following the description of the unpreconditioned case in "Iterative Methods for Sparse Linear Systems" by Y. Saad
-*
-* @param matrix     The system matrix
-* @param rhs        The load vector
-* @param tag        Solver configuration tag
-* @param precond    A preconditioner. Precondition operation is done via member function apply()
-* @return The result vector
-*/
-template<typename MatrixT, typename VectorT, typename PreconditionerT>
-VectorT solve(MatrixT const & matrix, VectorT const & rhs, bicgstab_tag const & tag, PreconditionerT const & precond)
-{
-  typedef typename viennacl::result_of::value_type<VectorT>::type            NumericType;
-  typedef typename viennacl::result_of::cpu_value_type<NumericType>::type    CPU_NumericType;
-  VectorT result = rhs;
-  viennacl::traits::clear(result);
-
-  VectorT residual = rhs;
-  VectorT r0star = residual;  //can be chosen arbitrarily in fact
-  VectorT tmp0 = rhs;
-  VectorT tmp1 = rhs;
-  VectorT s = rhs;
-
-  VectorT p = residual;
-
-  CPU_NumericType ip_rr0star = viennacl::linalg::norm_2(residual);
-  CPU_NumericType norm_rhs_host = viennacl::linalg::norm_2(residual);
-  CPU_NumericType beta;
-  CPU_NumericType alpha;
-  CPU_NumericType omega;
-  CPU_NumericType new_ip_rr0star = 0;
-  CPU_NumericType residual_norm = norm_rhs_host;
-
-  if (norm_rhs_host <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
-    return result;
-
-  bool restart_flag = true;
-  vcl_size_t last_restart = 0;
-  for (unsigned int i = 0; i < tag.max_iterations(); ++i)
-  {
-    if (restart_flag)
-    {
-      residual = viennacl::linalg::prod(matrix, result);
-      residual = rhs - residual;
-      precond.apply(residual);
-      p = residual;
-      r0star = residual;
-      ip_rr0star = viennacl::linalg::norm_2(residual);
-      ip_rr0star *= ip_rr0star;
-      restart_flag = false;
-      last_restart = i;
-    }
-
-    tag.iters(i+1);
-    tmp0 = viennacl::linalg::prod(matrix, p);
-    precond.apply(tmp0);
-    alpha = ip_rr0star / viennacl::linalg::inner_prod(tmp0, r0star);
-
-    s = residual - alpha*tmp0;
-
-    tmp1 = viennacl::linalg::prod(matrix, s);
-    precond.apply(tmp1);
-    CPU_NumericType norm_tmp1 = viennacl::linalg::norm_2(tmp1);
-    omega = viennacl::linalg::inner_prod(tmp1, s) / (norm_tmp1 * norm_tmp1);
-
-    result += alpha * p + omega * s;
-    residual = s - omega * tmp1;
-
-    residual_norm = viennacl::linalg::norm_2(residual);
-    if (residual_norm / norm_rhs_host < tag.tolerance() || residual_norm < tag.abs_tolerance())
-      break;
-
-    new_ip_rr0star = viennacl::linalg::inner_prod(residual, r0star);
-
-    beta = new_ip_rr0star / ip_rr0star * alpha/omega;
-    ip_rr0star = new_ip_rr0star;
-
-    if (!ip_rr0star || !omega || i - last_restart > tag.max_iterations_before_restart()) //search direction degenerate. A restart might help
-      restart_flag = true;
-
-    // Execution of
-    //  p = residual + beta * (p - omega*tmp0);
-    // without introducing temporary vectors:
-    p -= omega * tmp0;
-    p = residual + beta * p;
-
-    //std::cout << "Rel. Residual in current step: " << std::sqrt(std::fabs(viennacl::linalg::inner_prod(residual, residual) / norm_rhs_host)) << std::endl;
-  }
-
-  //store last error estimate:
-  tag.error(residual_norm / norm_rhs_host);
-
-  return result;
-}
-
 /** @brief Convenience overload for calling the preconditioned BiCGStab solver using types from the C++ STL.
   *
   * A std::vector<std::map<T, U> > matrix is convenient for e.g. finite element assembly.
@@ -662,6 +542,66 @@ std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A,
   viennacl::copy(vcl_result, result);
   return result;
 }
+
+
+
+template<typename VectorT>
+class bicgstab_solver
+{
+public:
+  typedef typename viennacl::result_of::cpu_value_type<VectorT>::type   numeric_type;
+
+  bicgstab_solver(bicgstab_tag const & tag) : tag_(tag), monitor_callback_(NULL), user_data_(NULL) {}
+
+  template<typename MatrixT, typename PreconditionerT>
+  VectorT operator()(MatrixT const & A, VectorT const & b, PreconditionerT const & precond) const
+  {
+    if (viennacl::traits::size(init_guess_) > 0) // take initial guess into account
+    {
+      VectorT mod_rhs = viennacl::linalg::prod(A, init_guess_);
+      mod_rhs = b - mod_rhs;
+      VectorT y = detail::solve_impl(A, mod_rhs, tag_, precond, monitor_callback_, user_data_);
+      return init_guess_ + y;
+    }
+    return detail::solve_impl(A, b, tag_, precond, monitor_callback_, user_data_);
+  }
+
+
+  template<typename MatrixT>
+  VectorT operator()(MatrixT const & A, VectorT const & b) const
+  {
+    return operator()(A, b, viennacl::linalg::no_precond());
+  }
+
+  /** @brief Specifies an initial guess for the iterative solver.
+    *
+    * An iterative solver for Ax = b with initial guess x_0 is equivalent to an iterative solver for Ay = b' := b - Ax_0, where x = x_0 + y.
+    */
+  void set_initial_guess(VectorT const & x) { init_guess_ = x; }
+
+  /** @brief Sets a monitor function pointer to be called in each iteration. Set to NULL to run without monitor.
+   *
+   *  The monitor function is called with the current guess for the result as first argument and the current relative residual estimate as second argument.
+   *  The third argument is a pointer to user-defined data, through which additional information can be passed.
+   *  This pointer needs to be set with set_monitor_data. If not set, NULL is passed.
+   *  If the montior function returns true, the solver terminates (either convergence or divergence).
+   */
+  void set_monitor(bool (*monitor_fun)(VectorT const &, numeric_type, void *), void *user_data)
+  {
+    monitor_callback_ = monitor_fun;
+    user_data_ = user_data;
+  }
+
+  /** @brief Returns the solver tag containing basic configuration such as tolerances, etc. */
+  bicgstab_tag const & tag() const { return tag_; }
+
+private:
+  bicgstab_tag  tag_;
+  VectorT       init_guess_;
+  bool          (*monitor_callback_)(VectorT const &, numeric_type, void *);
+  void          *user_data_;
+};
+
 
 }
 }

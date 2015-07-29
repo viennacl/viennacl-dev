@@ -180,7 +180,9 @@ namespace detail
   viennacl::vector<ScalarType> pipelined_solve(MatrixType const & A,
                                                viennacl::vector<ScalarType> const & rhs,
                                                gmres_tag const & tag,
-                                               viennacl::linalg::no_precond)
+                                               viennacl::linalg::no_precond,
+                                               bool (*monitor)(viennacl::vector<ScalarType> const &, ScalarType, void*) = NULL,
+                                               void *monitor_data = NULL)
   {
     viennacl::vector<ScalarType> residual(rhs);
     viennacl::vector<ScalarType> result = viennacl::zero_vector<ScalarType>(rhs.size(), viennacl::traits::context(rhs));
@@ -354,6 +356,270 @@ namespace detail
                                                       device_values_xi_k, k);
 
       tag.error( std::fabs(rho*rho_0 / norm_rhs) );
+
+      if (monitor && monitor(result, std::fabs(rho*rho_0 / norm_rhs), monitor_data))
+        break;
+    }
+
+    return result;
+  }
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::compressed_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        gmres_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::coordinate_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        gmres_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::ell_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        gmres_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::sliced_ell_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        gmres_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+  /** @brief Overload for the pipelined CG implementation for the ViennaCL sparse matrix types */
+  template<typename NumericT>
+  viennacl::vector<NumericT> solve_impl(viennacl::hyb_matrix<NumericT> const & A,
+                                        viennacl::vector<NumericT> const & rhs,
+                                        gmres_tag const & tag,
+                                        viennacl::linalg::no_precond,
+                                        bool (*monitor)(viennacl::vector<NumericT> const &, NumericT, void*) = NULL,
+                                        void *monitor_data = NULL)
+  {
+    return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond(), monitor, monitor_data);
+  }
+
+
+  /** @brief Implementation of the GMRES solver.
+  *
+  * Following the algorithm proposed by Walker in "A Simpler GMRES"
+  *
+  * @param matrix     The system matrix
+  * @param rhs        The load vector
+  * @param tag        Solver configuration tag
+  * @param precond    A preconditioner. Precondition operation is done via member function apply()
+  * @return The result vector
+  */
+  template<typename MatrixT, typename VectorT, typename PreconditionerT>
+  VectorT solve_impl(MatrixT const & matrix,
+                     VectorT const & rhs,
+                     gmres_tag const & tag,
+                     PreconditionerT const & precond,
+                     bool (*monitor)(VectorT const &, typename viennacl::result_of::cpu_value_type<typename viennacl::result_of::value_type<VectorT>::type>::type, void*) = NULL,
+                     void *monitor_data = NULL)
+  {
+    typedef typename viennacl::result_of::value_type<VectorT>::type            NumericType;
+    typedef typename viennacl::result_of::cpu_value_type<NumericType>::type    CPU_NumericType;
+
+    unsigned int problem_size = static_cast<unsigned int>(viennacl::traits::size(rhs));
+    VectorT result = rhs;
+    viennacl::traits::clear(result);
+
+    vcl_size_t krylov_dim = static_cast<vcl_size_t>(tag.krylov_dim());
+    if (problem_size < krylov_dim)
+      krylov_dim = problem_size; //A Krylov space larger than the matrix would lead to seg-faults (mathematically, error is certain to be zero already)
+
+    VectorT res = rhs;
+    VectorT v_k_tilde = rhs;
+    VectorT v_k_tilde_temp = rhs;
+
+    std::vector< std::vector<CPU_NumericType> > R(krylov_dim, std::vector<CPU_NumericType>(tag.krylov_dim()));
+    std::vector<CPU_NumericType> projection_rhs(krylov_dim);
+
+    std::vector<VectorT>          householder_reflectors(krylov_dim, rhs);
+    std::vector<CPU_NumericType>  betas(krylov_dim);
+
+    CPU_NumericType norm_rhs = viennacl::linalg::norm_2(rhs);
+
+    if (norm_rhs <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
+      return result;
+
+    tag.iters(0);
+
+    for (unsigned int it = 0; it <= tag.max_restarts(); ++it)
+    {
+      //
+      // (Re-)Initialize residual: r = b - A*x (without temporary for the result of A*x)
+      //
+      res = viennacl::linalg::prod(matrix, result);  //initial guess zero
+      res = rhs - res;
+      precond.apply(res);
+
+      CPU_NumericType rho_0 = viennacl::linalg::norm_2(res);
+
+      //
+      // Check for premature convergence
+      //
+      if (rho_0 / norm_rhs < tag.tolerance() || rho_0 < tag.abs_tolerance()) // norm_rhs is known to be nonzero here
+      {
+        tag.error(rho_0 / norm_rhs);
+        return result;
+      }
+
+      //
+      // Normalize residual and set 'rho' to 1 as requested in 'A Simpler GMRES' by Walker and Zhou.
+      //
+      res /= rho_0;
+      CPU_NumericType rho = static_cast<CPU_NumericType>(1.0);
+
+
+      //
+      // Iterate up until maximal Krylove space dimension is reached:
+      //
+      vcl_size_t k = 0;
+      for (k = 0; k < krylov_dim; ++k)
+      {
+        tag.iters( tag.iters() + 1 ); //increase iteration counter
+
+        // prepare storage:
+        viennacl::traits::clear(R[k]);
+        viennacl::traits::clear(householder_reflectors[k]);
+
+        //compute v_k = A * v_{k-1} via Householder matrices
+        if (k == 0)
+        {
+          v_k_tilde = viennacl::linalg::prod(matrix, res);
+          precond.apply(v_k_tilde);
+        }
+        else
+        {
+          viennacl::traits::clear(v_k_tilde);
+          v_k_tilde[k-1] = CPU_NumericType(1);
+
+          //Householder rotations, part 1: Compute P_1 * P_2 * ... * P_{k-1} * e_{k-1}
+          for (int i = static_cast<int>(k)-1; i > -1; --i)
+            detail::gmres_householder_reflect(v_k_tilde, householder_reflectors[vcl_size_t(i)], betas[vcl_size_t(i)]);
+
+          v_k_tilde_temp = viennacl::linalg::prod(matrix, v_k_tilde);
+          precond.apply(v_k_tilde_temp);
+          v_k_tilde = v_k_tilde_temp;
+
+          //Householder rotations, part 2: Compute P_{k-1} * ... * P_{1} * v_k_tilde
+          for (vcl_size_t i = 0; i < k; ++i)
+            detail::gmres_householder_reflect(v_k_tilde, householder_reflectors[i], betas[i]);
+        }
+
+        //
+        // Compute Householder reflection for v_k_tilde such that all entries below k-th entry are zero:
+        //
+        CPU_NumericType rho_k_k = 0;
+        detail::gmres_setup_householder_vector(v_k_tilde, householder_reflectors[k], betas[k], rho_k_k, k);
+
+        //
+        // copy first k entries from v_k_tilde to R[k] in order to fill k-th column with result of
+        // P_k * v_k_tilde = (v[0], ... , v[k-1], norm(v), 0, 0, ...) =: (rho_{1,k}, rho_{2,k}, ..., rho_{k,k}, 0, ..., 0);
+        //
+        detail::gmres_copy_helper(v_k_tilde, R[k], k);
+        R[k][k] = rho_k_k;
+
+        //
+        // Update residual: r = P_k r
+        // Set zeta_k = r[k] including machine precision considerations: mathematically we have |r[k]| <= rho
+        // Set rho *= sin(acos(r[k] / rho))
+        //
+        detail::gmres_householder_reflect(res, householder_reflectors[k], betas[k]);
+
+        if (res[k] > rho) //machine precision reached
+          res[k] = rho;
+        if (res[k] < -rho) //machine precision reached
+          res[k] = -rho;
+        projection_rhs[k] = res[k];
+
+        rho *= std::sin( std::acos(projection_rhs[k] / rho) );
+
+        if (std::fabs(rho * rho_0 / norm_rhs) < tag.tolerance())  // Residual is sufficiently reduced, stop here
+        {
+          tag.error( std::fabs(rho*rho_0 / norm_rhs) );
+          ++k;
+          break;
+        }
+      } // for k
+
+      //
+      // Triangular solver stage:
+      //
+
+      for (int i2=static_cast<int>(k)-1; i2>-1; --i2)
+      {
+        vcl_size_t i = static_cast<vcl_size_t>(i2);
+        for (vcl_size_t j=i+1; j<k; ++j)
+          projection_rhs[i] -= R[j][i] * projection_rhs[j];     //R is transposed
+
+        projection_rhs[i] /= R[i][i];
+      }
+
+      //
+      // Note: 'projection_rhs' now holds the solution (eta_1, ..., eta_k)
+      //
+
+      res *= projection_rhs[0];
+
+      if (k > 0)
+      {
+        for (unsigned int i = 0; i < k-1; ++i)
+          res[i] += projection_rhs[i+1];
+      }
+
+      //
+      // Form z inplace in 'res' by applying P_1 * ... * P_{k}
+      //
+      for (int i=static_cast<int>(k)-1; i>=0; --i)
+        detail::gmres_householder_reflect(res, householder_reflectors[vcl_size_t(i)], betas[vcl_size_t(i)]);
+
+      res *= rho_0;
+      result += res;  // x += rho_0 * z    in the paper
+
+      //
+      // Check for convergence:
+      //
+      tag.error(std::fabs(rho*rho_0 / norm_rhs));
+
+      if (monitor && monitor(result, std::fabs(rho*rho_0 / norm_rhs), monitor_data))
+        break;
+
+      if ( tag.error() < tag.tolerance() )
+        return result;
     }
 
     return result;
@@ -361,404 +627,10 @@ namespace detail
 
 }
 
-// compressed_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::compressed_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-
-// coordinate_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::coordinate_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-
-// ell_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::ell_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-
-// sliced_ell_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::sliced_ell_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-
-// hyb_matrix
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
-                                 viennacl::vector_base<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
-                                 viennacl::vector<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
-                                 viennacl::vector_range<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-/** @brief Overload for the pipelined BiCGStab implementation for the ViennaCL sparse matrix types */
-template<typename NumericT>
-viennacl::vector<NumericT> solve(viennacl::hyb_matrix<NumericT> const & A,
-                                 viennacl::vector_slice<NumericT> const & rhs,
-                                 gmres_tag const & tag,
-                                 viennacl::linalg::no_precond)
-{
-  return detail::pipelined_solve(A, rhs, tag, viennacl::linalg::no_precond());
-}
-
-
-
-/** @brief Implementation of the GMRES solver.
-*
-* Following the algorithm proposed by Walker in "A Simpler GMRES"
-*
-* @param matrix     The system matrix
-* @param rhs        The load vector
-* @param tag        Solver configuration tag
-* @param precond    A preconditioner. Precondition operation is done via member function apply()
-* @return The result vector
-*/
 template<typename MatrixT, typename VectorT, typename PreconditionerT>
 VectorT solve(MatrixT const & matrix, VectorT const & rhs, gmres_tag const & tag, PreconditionerT const & precond)
 {
-  typedef typename viennacl::result_of::value_type<VectorT>::type            NumericType;
-  typedef typename viennacl::result_of::cpu_value_type<NumericType>::type    CPU_NumericType;
-  unsigned int problem_size = static_cast<unsigned int>(viennacl::traits::size(rhs));
-  VectorT result = rhs;
-  viennacl::traits::clear(result);
-
-  vcl_size_t krylov_dim = static_cast<vcl_size_t>(tag.krylov_dim());
-  if (problem_size < krylov_dim)
-    krylov_dim = problem_size; //A Krylov space larger than the matrix would lead to seg-faults (mathematically, error is certain to be zero already)
-
-  VectorT res = rhs;
-  VectorT v_k_tilde = rhs;
-  VectorT v_k_tilde_temp = rhs;
-
-  std::vector< std::vector<CPU_NumericType> > R(krylov_dim, std::vector<CPU_NumericType>(tag.krylov_dim()));
-  std::vector<CPU_NumericType> projection_rhs(krylov_dim);
-
-  std::vector<VectorT>          householder_reflectors(krylov_dim, rhs);
-  std::vector<CPU_NumericType>  betas(krylov_dim);
-
-  CPU_NumericType norm_rhs = viennacl::linalg::norm_2(rhs);
-
-  if (norm_rhs <= tag.abs_tolerance()) //solution is zero if RHS norm is zero
-    return result;
-
-  tag.iters(0);
-
-  for (unsigned int it = 0; it <= tag.max_restarts(); ++it)
-  {
-    //
-    // (Re-)Initialize residual: r = b - A*x (without temporary for the result of A*x)
-    //
-    res = viennacl::linalg::prod(matrix, result);  //initial guess zero
-    res = rhs - res;
-    precond.apply(res);
-
-    CPU_NumericType rho_0 = viennacl::linalg::norm_2(res);
-
-    //
-    // Check for premature convergence
-    //
-    if (rho_0 / norm_rhs < tag.tolerance() || rho_0 < tag.abs_tolerance()) // norm_rhs is known to be nonzero here
-    {
-      tag.error(rho_0 / norm_rhs);
-      return result;
-    }
-
-    //
-    // Normalize residual and set 'rho' to 1 as requested in 'A Simpler GMRES' by Walker and Zhou.
-    //
-    res /= rho_0;
-    CPU_NumericType rho = static_cast<CPU_NumericType>(1.0);
-
-
-    //
-    // Iterate up until maximal Krylove space dimension is reached:
-    //
-    vcl_size_t k = 0;
-    for (k = 0; k < krylov_dim; ++k)
-    {
-      tag.iters( tag.iters() + 1 ); //increase iteration counter
-
-      // prepare storage:
-      viennacl::traits::clear(R[k]);
-      viennacl::traits::clear(householder_reflectors[k]);
-
-      //compute v_k = A * v_{k-1} via Householder matrices
-      if (k == 0)
-      {
-        v_k_tilde = viennacl::linalg::prod(matrix, res);
-        precond.apply(v_k_tilde);
-      }
-      else
-      {
-        viennacl::traits::clear(v_k_tilde);
-        v_k_tilde[k-1] = CPU_NumericType(1);
-
-        //Householder rotations, part 1: Compute P_1 * P_2 * ... * P_{k-1} * e_{k-1}
-        for (int i = static_cast<int>(k)-1; i > -1; --i)
-          detail::gmres_householder_reflect(v_k_tilde, householder_reflectors[vcl_size_t(i)], betas[vcl_size_t(i)]);
-
-        v_k_tilde_temp = viennacl::linalg::prod(matrix, v_k_tilde);
-        precond.apply(v_k_tilde_temp);
-        v_k_tilde = v_k_tilde_temp;
-
-        //Householder rotations, part 2: Compute P_{k-1} * ... * P_{1} * v_k_tilde
-        for (vcl_size_t i = 0; i < k; ++i)
-          detail::gmres_householder_reflect(v_k_tilde, householder_reflectors[i], betas[i]);
-      }
-
-      //
-      // Compute Householder reflection for v_k_tilde such that all entries below k-th entry are zero:
-      //
-      CPU_NumericType rho_k_k = 0;
-      detail::gmres_setup_householder_vector(v_k_tilde, householder_reflectors[k], betas[k], rho_k_k, k);
-
-      //
-      // copy first k entries from v_k_tilde to R[k] in order to fill k-th column with result of
-      // P_k * v_k_tilde = (v[0], ... , v[k-1], norm(v), 0, 0, ...) =: (rho_{1,k}, rho_{2,k}, ..., rho_{k,k}, 0, ..., 0);
-      //
-      detail::gmres_copy_helper(v_k_tilde, R[k], k);
-      R[k][k] = rho_k_k;
-
-      //
-      // Update residual: r = P_k r
-      // Set zeta_k = r[k] including machine precision considerations: mathematically we have |r[k]| <= rho
-      // Set rho *= sin(acos(r[k] / rho))
-      //
-      detail::gmres_householder_reflect(res, householder_reflectors[k], betas[k]);
-
-      if (res[k] > rho) //machine precision reached
-        res[k] = rho;
-      if (res[k] < -rho) //machine precision reached
-        res[k] = -rho;
-      projection_rhs[k] = res[k];
-
-      rho *= std::sin( std::acos(projection_rhs[k] / rho) );
-
-      if (std::fabs(rho * rho_0 / norm_rhs) < tag.tolerance())  // Residual is sufficiently reduced, stop here
-      {
-        tag.error( std::fabs(rho*rho_0 / norm_rhs) );
-        ++k;
-        break;
-      }
-    } // for k
-
-    //
-    // Triangular solver stage:
-    //
-
-    for (int i2=static_cast<int>(k)-1; i2>-1; --i2)
-    {
-      vcl_size_t i = static_cast<vcl_size_t>(i2);
-      for (vcl_size_t j=i+1; j<k; ++j)
-        projection_rhs[i] -= R[j][i] * projection_rhs[j];     //R is transposed
-
-      projection_rhs[i] /= R[i][i];
-    }
-
-    //
-    // Note: 'projection_rhs' now holds the solution (eta_1, ..., eta_k)
-    //
-
-    res *= projection_rhs[0];
-
-    if (k > 0)
-    {
-      for (unsigned int i = 0; i < k-1; ++i)
-        res[i] += projection_rhs[i+1];
-    }
-
-    //
-    // Form z inplace in 'res' by applying P_1 * ... * P_{k}
-    //
-    for (int i=static_cast<int>(k)-1; i>=0; --i)
-      detail::gmres_householder_reflect(res, householder_reflectors[vcl_size_t(i)], betas[vcl_size_t(i)]);
-
-    res *= rho_0;
-    result += res;  // x += rho_0 * z    in the paper
-
-    //
-    // Check for convergence:
-    //
-    tag.error(std::fabs(rho*rho_0 / norm_rhs));
-    if ( tag.error() < tag.tolerance() )
-      return result;
-  }
-
-  return result;
+  return detail::solve_impl(matrix, rhs, tag, precond);
 }
 
 /** @brief Convenience overload for calling the preconditioned BiCGStab solver using types from the C++ STL.
@@ -787,8 +659,67 @@ std::vector<NumericT> solve(std::vector< std::map<IndexT, NumericT> > const & A,
 template<typename MatrixT, typename VectorT>
 VectorT solve(MatrixT const & A, VectorT const & rhs, gmres_tag const & tag)
 {
-  return solve(A, rhs, tag, no_precond());
+  return detail::solve_impl(A, rhs, tag, no_precond());
 }
+
+
+
+template<typename VectorT>
+class gmres_solver
+{
+public:
+  typedef typename viennacl::result_of::cpu_value_type<VectorT>::type   numeric_type;
+
+  gmres_solver(gmres_tag const & tag) : tag_(tag), monitor_callback_(NULL), user_data_(NULL) {}
+
+  template<typename MatrixT, typename PreconditionerT>
+  VectorT operator()(MatrixT const & A, VectorT const & b, PreconditionerT const & precond) const
+  {
+    if (viennacl::traits::size(init_guess_) > 0) // take initial guess into account
+    {
+      VectorT mod_rhs = viennacl::linalg::prod(A, init_guess_);
+      mod_rhs = b - mod_rhs;
+      VectorT y = detail::solve_impl(A, mod_rhs, tag_, precond, monitor_callback_, user_data_);
+      return init_guess_ + y;
+    }
+    return detail::solve_impl(A, b, tag_, precond, monitor_callback_, user_data_);
+  }
+
+
+  template<typename MatrixT>
+  VectorT operator()(MatrixT const & A, VectorT const & b) const
+  {
+    return operator()(A, b, viennacl::linalg::no_precond());
+  }
+
+  /** @brief Specifies an initial guess for the iterative solver.
+    *
+    * An iterative solver for Ax = b with initial guess x_0 is equivalent to an iterative solver for Ay = b' := b - Ax_0, where x = x_0 + y.
+    */
+  void set_initial_guess(VectorT const & x) { init_guess_ = x; }
+
+  /** @brief Sets a monitor function pointer to be called in each iteration. Set to NULL to run without monitor.
+   *
+   *  The monitor function is called with the current guess for the result as first argument and the current relative residual estimate as second argument.
+   *  The third argument is a pointer to user-defined data, through which additional information can be passed.
+   *  This pointer needs to be set with set_monitor_data. If not set, NULL is passed.
+   *  If the montior function returns true, the solver terminates (either convergence or divergence).
+   */
+  void set_monitor(bool (*monitor_fun)(VectorT const &, numeric_type, void *), void *user_data)
+  {
+    monitor_callback_ = monitor_fun;
+    user_data_ = user_data;
+  }
+
+  /** @brief Returns the solver tag containing basic configuration such as tolerances, etc. */
+  gmres_tag const & tag() const { return tag_; }
+
+private:
+  gmres_tag  tag_;
+  VectorT    init_guess_;
+  bool       (*monitor_callback_)(VectorT const &, numeric_type, void *);
+  void       *user_data_;
+};
 
 
 }
