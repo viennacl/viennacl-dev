@@ -41,12 +41,6 @@ option(ENABLE_OPENMP "Use OpenMP acceleration" OFF)
 
 option(ENABLE_ASAN "Build with address sanitizer if available" OFF)
 
-# If you are interested in the impact of different kernel parameters on
-# performance, you may want to give ViennaProfiler a try (see
-# http://sourceforge.net/projects/viennaprofiler/) Set your connection
-# parameters in examples/parameters/common_vprof.hpp accordingly.
-cmake_dependent_option(ENABLE_VIENNAPROFILER
-   "Enable examples using ViennaProfiler" OFF BUILD_EXAMPLES OFF)
 
 
 # If you want to build the examples that use boost::numeric::ublas, enable
@@ -68,8 +62,7 @@ cmake_dependent_option(ENABLE_MTL4 "Enable examples that use MTL4" OFF
 
 option(ENABLE_PEDANTIC_FLAGS "Enable pedantic compiler flags (GCC and Clang only)" OFF)
 
-mark_as_advanced(BOOSTPATH ENABLE_ASAN ENABLE_VIENNAPROFILER ENABLE_ARMADILLO ENABLE_EIGEN
-   ENABLE_MTL4 ENABLE_PEDANTIC_FLAGS)
+mark_as_advanced(BOOSTPATH ENABLE_ASAN ENABLE_ARMADILLO ENABLE_EIGEN ENABLE_MTL4 ENABLE_PEDANTIC_FLAGS)
 
 # Find prerequisites
 ####################
@@ -119,9 +112,6 @@ if (ENABLE_ASAN)
   add_c_linker_flag_if_supported("-fsanitize=address")
 endif(ENABLE_ASAN)
 
-if(ENABLE_VIENNAPROFILER)
-   find_package(ViennaProfiler REQUIRED)
-endif()
 
 if(ENABLE_ARMADILLO)
    # find Armadillo

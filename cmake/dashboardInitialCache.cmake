@@ -41,4 +41,3 @@ option(ENABLE_EIGEN "Build examples that use Eigen" FALSE)
 option(ENABLE_MTL4 "Build examples that use MTL4" FALSE)
 # Boost is required anyways...
 option(ENABLE_UBLAS "Build examples that use UBLAS" TRUE)
-option(ENABLE_VIENNAPROFILER "Build examples that use the ViennaProfiler" FALSE)
