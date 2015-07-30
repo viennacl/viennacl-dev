@@ -66,6 +66,16 @@ public:
                 other.size(), other.start(), other.stride()) {}
 
   using base_type::operator=;
+
+  // the following are needed for Visual Studio:
+  template<typename OtherNumericT>
+  base_type & operator=(viennacl::vector<OtherNumericT> const & v)                          { return base_type::operator=(static_cast<viennacl::vector_base<OtherNumericT> const &>(v)); }
+
+  template<typename OtherNumericT>
+  base_type & operator=(viennacl::vector_range<viennacl::vector<OtherNumericT> > const & v) { return base_type::operator=(static_cast<viennacl::vector_base<OtherNumericT> const &>(v)); }
+
+  template<typename OtherNumericT>
+  base_type & operator=(viennacl::vector_slice<viennacl::vector<OtherNumericT> > const & v) { return base_type::operator=(static_cast<viennacl::vector_base<OtherNumericT> const &>(v)); }
 };
 
 template<typename VectorType>
@@ -214,6 +224,15 @@ public:
 
   using base_type::operator=;
 
+  // the following are needed for Visual Studio:
+  template<typename OtherNumericT>
+  base_type & operator=(viennacl::vector<OtherNumericT> const & v)                          { return base_type::operator=(static_cast<viennacl::vector_base<OtherNumericT> const &>(v)); }
+
+  template<typename OtherNumericT>
+  base_type & operator=(viennacl::vector_range<viennacl::vector<OtherNumericT> > const & v) { return base_type::operator=(static_cast<viennacl::vector_base<OtherNumericT> const &>(v)); }
+
+  template<typename OtherNumericT>
+  base_type & operator=(viennacl::vector_slice<viennacl::vector<OtherNumericT> > const & v) { return base_type::operator=(static_cast<viennacl::vector_base<OtherNumericT> const &>(v)); }
 };
 
 

@@ -793,6 +793,16 @@ public:
 
   using base_type::operator=;
 
+  // the following are needed for Visual Studio:
+  template<typename OtherNumericT, typename F2>
+  base_type & operator=(viennacl::matrix<OtherNumericT, F2> const & B)                          { return base_type::operator=(static_cast<viennacl::matrix_base<OtherNumericT> const &>(B)); }
+
+  template<typename OtherNumericT, typename F2>
+  base_type & operator=(viennacl::matrix_range<viennacl::matrix<OtherNumericT, F2> > const & B) { return base_type::operator=(static_cast<viennacl::matrix_base<OtherNumericT> const &>(B)); }
+
+  template<typename OtherNumericT, typename F2>
+  base_type & operator=(viennacl::matrix_slice<viennacl::matrix<OtherNumericT, F2> > const & B) { return base_type::operator=(static_cast<viennacl::matrix_base<OtherNumericT> const &>(B)); }
+
   /** @brief Resizes the matrix.
     *   Existing entries can optionally be preserved
     *
