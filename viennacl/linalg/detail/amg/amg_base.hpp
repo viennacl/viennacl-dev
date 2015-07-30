@@ -73,7 +73,7 @@ public:
     * Default number of pre-smooth operations: 2
     * Default number of post-smooth operations: 2
     * Default number of coarse levels: 0 (this indicates that as many coarse levels as needed are constructed until the cutoff is reached)
-    * Default coarse grid size for direct solver (coarseing cutoff): 50
+    * Default coarse grid size for direct solver (coarsening cutoff): 50
     */
   amg_tag()
   : coarsening_method_(AMG_COARSENING_METHOD_MIS2_AGGREGATION), interpolation_method_(AMG_INTERPOLATION_METHOD_AGGREGATION),
@@ -128,9 +128,9 @@ public:
   vcl_size_t get_coarse_levels() const { return coarse_levels_; }
 
   /** @brief Sets the coarse grid size for which the recursive multigrid scheme is stopped and a direct solver is used. */
-  void set_coarseing_cutoff(vcl_size_t size)  { coarse_cutoff_ = size; }
+  void set_coarsening_cutoff(vcl_size_t size)  { coarse_cutoff_ = size; }
   /** @brief Returns the coarse grid size for which the recursive multigrid scheme is stopped and a direct solver is used. */
-  vcl_size_t get_coarseing_cutoff() const { return coarse_cutoff_; }
+  vcl_size_t get_coarsening_cutoff() const { return coarse_cutoff_; }
 
   /** @brief Sets the ViennaCL context for the setup stage. Set this to a host context if you want to run the setup on the host.
     *
