@@ -124,6 +124,10 @@ if(ENABLE_DIST)
 
       COMMAND "${CMAKE_COMMAND}" -E make_directory "${DISTDIR}/cmake"
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+         "${PROJECT_SOURCE_DIR}/cmake/AddCCompilerFlagIfSupported.cmake" "${DISTDIR}/cmake/AddCCompilerFlagIfSupported.cmake"
+      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+         "${PROJECT_SOURCE_DIR}/cmake/AddCLinkerFlagIfSupported.cmake" "${DISTDIR}/cmake/AddCLinkerFlagIfSupported.cmake"
+      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/cmake/copymanual.cmake" "${DISTDIR}/cmake/copymanual.cmake"
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
          "${PROJECT_SOURCE_DIR}/cmake/FindMTL.cmake" "${DISTDIR}/cmake/FindMTL.cmake"
@@ -182,6 +186,8 @@ if(ENABLE_DIST)
    foreach(f LICENSE
              README
              changelog
+             cmake/AddCCompilerFlagIfSupported.cmake
+             cmake/AddCLinkerFlagIfSupported.cmake
              cmake/copymanual.cmake
              cmake/FindMTL.cmake
              cmake/FindOpenCL.cmake
