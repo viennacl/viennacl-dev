@@ -698,6 +698,16 @@ public:
     elements_.switch_active_handle_id(ctx.memory_type());
     row_blocks_.switch_active_handle_id(ctx.memory_type());
 
+#ifdef VIENNACL_WITH_OPENCL
+    if (ctx.memory_type() == OPENCL_MEMORY)
+    {
+      row_buffer_.opencl_handle().context(ctx.opencl_context());
+      col_buffer_.opencl_handle().context(ctx.opencl_context());
+      elements_.opencl_handle().context(ctx.opencl_context());
+      row_blocks_.opencl_handle().context(ctx.opencl_context());
+    }
+#endif
+
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
     generate_row_block_information();
   }
