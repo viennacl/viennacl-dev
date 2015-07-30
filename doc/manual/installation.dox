@@ -18,7 +18,7 @@ If you experience any trouble, please write to the maining list at <br />
 ViennaCL uses the CMake build system for multi-platform support.
 Thus, before you proceed with the installation of ViennaCL, make sure you have a recent version of CMake installed.
 
-To use ViennaCL, only a fairly recent C++ compiler (e.g. GCC version 4.2.x or above and Visual C++ 2005 and 2010 are known to work) is required.
+To use ViennaCL, only a fairly recent C++ compiler (e.g. GCC version 4.2.x or above and Visual C++ 2008 and 2010 are known to work) is required.
 
 The full potential of ViennaCL is available with the following optional libraries:
     - CMake  \cite cmake as build system (optional, but highly recommended for building examples)
@@ -26,9 +26,7 @@ The full potential of ViennaCL is available with the following optional librarie
     - CUDA \cite nvidiacuda for using CUDA-accelerated operations.
     - OpenMP \cite openmp for directive-based parallelism on CPUs.
     - ublas (shipped with Boost \cite boost ) provides the same interface as ViennaCL and allows to switch between CPU and GPU seamlessly, see the tutorials.
-    - Eigen \cite eigen can be used to fill ViennaCL types directly. Moreover, the iterative solvers in ViennaCL can directly be used with Eigen objects.
-    - MTL 4 \cite mtl4 can be used to fill ViennaCL types directly. Even though MTL 4 provides its own iterative solvers, the ViennaCL solvers can also be used with MTL 4 objects.
-
+    - Armadillo \cite armadillo, Eigen \cite eigen, or MTL 4 \cite mtl4 can be used to fill ViennaCL types directly. Moreover, the iterative solvers in ViennaCL can directly be used with objects from these libraries.
 
 
 \section manual-installation-generic Generic Installation of ViennaCL
@@ -113,38 +111,46 @@ In such case, CUDA has higher priority than OpenCL, which has higher priority ov
 
 \section manual-installation-examples Building the Examples and Tutorials
 
-For building the examples, we suppose that CMake is properly set up on your system.
-Other dependencies are as follows:
+ViennaCL provides several examples for users to get started quickly.
+A list of examples and tutorials including their dependencies are as follows:
 
 <center>
 <table>
 <tr><th>  Example/Tutorial                          </th><th> Dependencies </th></tr>
-<tr><td><tt>tutorial/amg.cpp</tt>                   </td><td> OpenCL, uBLAS </td></tr>
+<tr><td><tt>tutorial/amg.cpp/cu</tt>                </td><td> - </td></tr>
+<tr><td><tt>tutorial/armadillo-with-viennacl.cpp</tt></td><td>Armadillo  </td></tr>
 <tr><td><tt>tutorial/bandwidth-reduction.cpp</tt>   </td><td> - </td></tr>
+<tr><td><tt>tutorial/bisect.cpp/cu</tt>             </td><td> - </td></tr>
 <tr><td><tt>tutorial/blas1.cpp/cu</tt>              </td><td> - </td></tr>
 <tr><td><tt>tutorial/blas2.cpp/cu</tt>              </td><td> uBLAS  </td></tr>
 <tr><td><tt>tutorial/blas3.cpp/cu</tt>              </td><td> uBLAS  </td></tr>
-<tr><td><tt>tutorial/custom-kernels.cpp</tt>        </td><td> OpenCL </td></tr>
 <tr><td><tt>tutorial/custom-context.cpp</tt>        </td><td> OpenCL </td></tr>
+<tr><td><tt>tutorial/custom-cuda.cu</tt>            </td><td> CUDA </td></tr>
+<tr><td><tt>tutorial/custom-kernels.cpp</tt>        </td><td> OpenCL </td></tr>
 <tr><td><tt>tutorial/eigen-with-viennacl.cpp</tt>   </td><td> Eigen  </td></tr>
-<tr><td><tt>tutorial/fft.cpp</tt>                   </td><td> OpenCL </td></tr>
+<tr><td><tt>tutorial/fft.cpp/cu</tt>                </td><td> OpenCL </td></tr>
 <tr><td><tt>tutorial/iterative.cpp/cu</tt>          </td><td> uBLAS  </td></tr>
+<tr><td><tt>tutorial/iterative-armadillo.cpp</tt>   </td><td> Armadillo  </td></tr>
+<tr><td><tt>tutorial/iterative-custom.cpp/cu</tt>   </td><td> -  </td></tr>
 <tr><td><tt>tutorial/iterative-ublas.cpp</tt>       </td><td> uBLAS  </td></tr>
 <tr><td><tt>tutorial/iterative-eigen.cpp</tt>       </td><td> Eigen  </td></tr>
 <tr><td><tt>tutorial/iterative-mtl4.cpp</tt>        </td><td> MTL    </td></tr>
 <tr><td><tt>tutorial/lanczos.cpp/cu</tt>            </td><td> uBLAS  </td></tr>
-<tr><td><tt>tutorial/libviennacl.cpp/cu</tt>        </td><td> -      </td></tr>
 <tr><td><tt>tutorial/least-squares.cpp/cu</tt>      </td><td> uBLAS  </td></tr>
+<tr><td><tt>tutorial/libviennacl.cpp/cu</tt>        </td><td> -      </td></tr>
+<tr><td><tt>tutorial/matrix-free.cpp/cu</tt>        </td><td> -      </td></tr>
 <tr><td><tt>tutorial/matrix-range.cpp/cu</tt>       </td><td> uBLAS  </td></tr>
 <tr><td><tt>tutorial/mtl4-with-viennacl.cpp</tt>    </td><td> MTL    </td></tr>
 <tr><td><tt>tutorial/multithreaded.cpp/cu</tt>      </td><td> Boost  </td></tr>
 <tr><td><tt>tutorial/multithreaded_cg.cpp/cu</tt>   </td><td> Boost  </td></tr>
+<tr><td><tt>tutorial/nmf.cpp/cu</tt>                </td><td> -      </td></tr>
 <tr><td><tt>tutorial/power-iter.cpp/cu</tt>         </td><td> uBLAS  </td></tr>
 <tr><td><tt>tutorial/qr.cpp/cu</tt>                 </td><td> uBLAS  </td></tr>
 <tr><td><tt>tutorial/scheduler.cpp</tt>             </td><td> -      </td></tr>
 <tr><td><tt>tutorial/spai.cpp</tt>                  </td><td> OpenCL, uBLAS </td></tr>
 <tr><td><tt>tutorial/sparse.cpp/cu</tt>             </td><td> uBLAS  </td></tr>
 <tr><td><tt>tutorial/structured-matrices.cpp</tt>   </td><td> OpenCL, uBLAS </td></tr>
+<tr><td><tt>tutorial/tql2.cpp/cu</tt>               </td><td> -      </td></tr>
 <tr><td><tt>tutorial/vector-range.cpp/cu</tt>       </td><td> uBLAS  </td></tr>
 <tr><td><tt>tutorial/viennacl-info.cpp</tt>         </td><td> OpenCL </td></tr>
 <tr><td><tt>tutorial/wrap-cuda-buffer.cu</tt>       </td><td> CUDA   </td></tr>
@@ -156,8 +162,36 @@ Other dependencies are as follows:
 <tr><td><tt>benchmarks/vector.cpp/cu</tt>           </td><td> -      </td></tr>
 </table>
 <b>Dependencies for the examples in the `examples/` folder. Examples using the CUDA-backend use the `.cu` file extension.
-Note that all examples can be run using either of the CPU, OpenCL, and CUDA backend unless an explicit OpenCL-dependency is stated.</b>
+Note that all examples can be built and run using either of the CPU, OpenCL, and CUDA backend (if .cu file available) unless an explicit OpenCL-dependency is stated.</b>
 </center>
+
+These examples can be built and run either manually, or using the provided CMake build setup.
+We recommend the CMake builds for all first-time users of ViennaCL.
+
+\note It is not required to build any of the examples. Feel free to just take the `viennacl/` source folder and start your project!
+
+\subsection manual-installation-examples-manual Manual Builds (no CMake)
+
+The manual way of building the examples and tutorials is to directly invoke the compiler.
+For example, to build `examples/tutorial/amg.cpp using GCC or Clang it is enough to issue
+
+    $> g++ /path/to/ViennaCL/examples/tutorial/amg.hpp -I/path/to/ViennaCL
+
+where '/path/to/ViennaCL/` needs to be replaced with a proper absolute or relative path.
+This will then result in a binary executable <tt>a.out</tt>, in which the CPU-backend of ViennaCL will be used.
+To enable OpenCL or CUDA, pass the additional flags <tt>-DVIENNACL_WITH_OPENCL</tt> or <tt>-DVIENNACL_WITH_CUDA</tt>.
+In the former case you also need to pass <tt>-lOpenCL</tt> and eventually <tt>-L/path/to/libOpenCL.so</tt>.
+In the latter case you need to use the NVIDIA compiler wrapper <tt>nvcc</tt> instead of GCC or Clang in order to properly compile all CUDA kernels.
+
+In a GUI-assisted integrated development environment (IDE) such as Visual Studio you need to set the include-directory for the source file appropriately.
+Please consult your IDE's manual for further information on how to do that.
+
+Since such a manual compilation gets fairly tedious quickly, we recommend for a start to use the CMake-assisted builds described next.
+
+\subsection manual-installation-examples-cmake CMake-Assisted Builds
+
+For building the examples, we suppose that CMake is properly set up on your system.
+
 
 Before building the examples, customize the CMake setup according to your needs.
 Per default, all examples using uBLAS, Eigen and MTL4 are turned off.

@@ -131,6 +131,58 @@ The OpenMP backend, however, currently provides only moderate performance and is
 
 \warning The operator overloads make extensive use of expression templates. Do not use the C++11 keyword `auto` for the result type, as this might result in unexpected performance regressions or dangling references.
 
+
+\section manual-operations-sparse Sparse Matrix Operations
+
+\subsection manual-operations-sparse-spmv Sparse Matrix-Vector Products
+
+The most important operation on sparse matrices is the sparse matrix-vector product, available for all sparse matrix types in ViennaCL.
+An example for `compressed_matrix<T>` is as follows:
+\code
+#include "viennacl/vector.hpp"
+#include "viennacl/compressed_matrix.hpp"
+#include "viennacl/linalg/prod.hpp"
+
+int main() {
+  viennacl::compressed_matrix<T> A;
+  viennacl::vector<T> x;
+
+  // fill A and x with data here
+
+  viennacl::vector<T> y = viennacl::linalg::prod(A, x);
+}
+\endcode
+
+For best performance we recommend `compressed_matrix<T>`, `hyb_matrix<T>`, or `sliced_ell_matrix<T>`.
+Unfortunately it is not possible to predict the fastest matrix type in general, thus a certain amount of trial-and-error by the library user is required.
+
+Have a look at the <a href="http://viennacl.sourceforge.net/viennacl-benchmarks.html">ViennaCL Benchmark Section</a> for a performance comparison of sparse matrix-vector products for different storage formats.
+
+\subsection manual-operations-sparse-spgemm Sparse Matrix-Matrix Products
+
+Several graph algorithms or multigrid methods require the multiplication of two sparse matrices.
+ViennaCL provides an implementation based on the row-merge algorithm developed by Gremse et al. for NVIDIA GPUs \cite Gremse:SpGEMM.
+We extended the row-merge algorithm and derived high-performance implemented for CPUs, OpenCL-enabled GPUs from AMD, and INTEL's Xeon Phi.
+The calling code, however, remains as simple as possible:
+\code
+#include "viennacl/compressed_matrix.hpp"
+#include "viennacl/linalg/prod.hpp"
+
+int main() {
+  viennacl::compressed_matrix<T> A;
+  viennacl::compressed_matrix<T> B;
+
+  // fill A and B with data here
+
+  viennacl::compressed_matrix<T> C = viennacl::linalg::prod(A, B);
+}
+\endcode
+
+Have a look at the <a href="http://viennacl.sourceforge.net/viennacl-benchmarks.html">ViennaCL Benchmark Section</a> for a performance comparison of sparse matrix-matrix products.
+
+\note Sparse Matrix times Sparse Matrix products are only available for `compressed_matrix<T>`. Other sparse matrix formats do not allow for a high-performance implementation.
+
+
 \section manual-operations-row-column-diagonal Row, Column, and Diagonal Extraction
 For many algorithms it is of interest to extract a single row or column of a dense matrix, or to access the matrix diagonal.
 This is provided in the same way as for Boost.uBLAS through the free functions `row()`, `column()`, and `diag()`:
@@ -159,6 +211,22 @@ The function `diag` can also be used to create a matrix which has the provided v
 \endcode
 This is similar to MATLAB's `diag()` function.
 
+
+
+\section manual-operations-conversion Conversion Operations
+
+Operations such as the vector operation `x = y + z;` in ViennaCL require that the numeric type (i.e. the first template parameter for the type) is the same.
+Thus, it is not possible to e.g. mix single-precision floating point vectors with integer vectors within the same operation.
+However, it is possible to convert vectors and dense matrices by direct assignment.
+An example code snippet for vectors is as follows:
+\code
+ viennacl::vector<long> x_long(10);
+ viennacl::vector<int>  x_int = viennacl::scalar_vector<int>(10, 1);
+ viennacl::vector<float> x_float(10);
+
+ x_long = x_int;   // conversion from int to long
+ x_float = x_long; // conversion from long to float
+\endcode
 
 
 */

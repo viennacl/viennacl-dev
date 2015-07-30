@@ -56,8 +56,8 @@ The main vector type in ViennaCL is `vector<T, alignment>`, representing a chunk
 Complex types are not supported in ViennaCL.
 The second template argument `alignment` is deprecated and should not be specified by the library user.
 
-At construction, `vector<T, alignment>` is initialized to have the supplied length, but the memory is not initialized to zero.
-Another difference to CPU implementations is that accessing single vector elements is very costly, because every time an element is accessed, it has to be transferred from the CPU to the compute device or vice versa.
+At construction, `vector<T, alignment>` is initialized to have the supplied length and the memory is initialized to zero (similar to `std::vector<T>`).
+A difference to CPU implementations is that accessing single vector elements is very costly, because every time an element is accessed, it has to be transferred from the CPU to the compute device or vice versa.
 
 \subsection manual-types-vector-usage Example Usage
 The following code snippet shows the typical use of the vector type provided by ViennaCL.

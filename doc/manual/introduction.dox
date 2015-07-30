@@ -10,68 +10,55 @@ The Vienna Computing Library (ViennaCL) is a scientific computing library writte
 It provides simple, high-level access to the vast computing resources available on parallel architectures such as GPUs and multi-core CPUs by using either a host based computing backend, an OpenCL computing backend, or CUDA.
 The primary focus is on common linear algebra operations (BLAS levels 1, 2 and 3) and the solution of large sparse systems of equations by means of iterative methods.
 The following iterative solvers are currently implemented (confer for example to the book of Y.~Saad \cite saad-iterative-solution ):
-    - Conjugate Gradient (CG)
-    - Stabilized BiConjugate Gradient (BiCGStab)
-    - Generalized Minimum Residual (GMRES)
+  - Conjugate Gradient (CG)
+  - Stabilized BiConjugate Gradient (BiCGStab)
+  - Generalized Minimum Residual (GMRES)
+
 A number of preconditioners is also provided in order to improve convergence of these solvers, see \ref manual-algorithms "chapter on algorithms".
 
-The solvers and preconditioners can also be used with different libraries due to their generic implementation.
-Currently it is possible to use the solvers and preconditioners directly with types from the uBLAS library, which is part of Boost \cite boost .
-The iterative solvers can directly be used with Eigen \cite eigen and MTL 4 \cite mtl4.
+The solvers and some preconditioners can also be used with different libraries due to their generic implementation.
+Currently it is possible to use the solvers and some preconditioners directly with types from the uBLAS library, which is part of Boost \cite boost .
+The iterative solvers can directly be used with Armadillo \cite armadillo, Eigen \cite eigen, and MTL 4 \cite mtl4.
 
 Under the hood, ViennaCL uses a unified layer to access CUDA \cite nvidiacuda, OpenCL \cite khronoscl, and/or OpenMP \cite openmp for accessing and executing code on compute devices.
 Therefore, ViennaCL is not tailored to products from a particular vendor and can be used on many different platforms.
 At present, ViennaCL is known to work on all current CPUs and modern GPUs from NVIDIA and AMD (see table below), CPUs using either the AMD Accelerated Parallel Processing (APP) SDK (formerly ATI Stream SDK) or the Intel OpenCL SDK, and Intels MIC platform (Xeon Phi).
-Double precision arithmetic on GPUs is only possible if provided in hardware by the GPU.
+Double precision arithmetic on GPUs is only possible if provided in hardware by the respective device.
 There is no double precision emulation in software in ViennaCL.
 
 \anchor manual-introduction-hardware-table
 <center>
 <table>
-<tr><th>Compute Device</th><th>float</th><th>double</th></tr>
-<tr><td>NVIDIA Geforce 86XX GT/GSO   </td><td> ok </td><td> - </td></tr>
-<tr><td>NVIDIA Geforce 88XX GTX/GTS  </td><td> ok </td><td> - </td></tr>
-<tr><td>NVIDIA Geforce 96XX GT/GSO   </td><td> ok </td><td> - </td></tr>
-<tr><td>NVIDIA Geforce 98XX GTX/GTS  </td><td> ok </td><td> - </td></tr>
-<tr><td>NVIDIA GT 230         </td><td> ok </td><td> -  </td></tr>
-<tr><td>NVIDIA GT(S) 240      </td><td> ok </td><td> -  </td></tr>
-<tr><td>NVIDIA GTS 250        </td><td> ok </td><td> -  </td></tr>
-<tr><td>NVIDIA GTX 260        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA GTX 275        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA GTX 280        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA GTX 285        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA GTX 4XX        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA GTX 5XX        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA GTX 6XX        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA GTX 7XX        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA GTX 9XX        </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA Quadro FX 46XX </td><td> ok </td><td> -  </td></tr>
-<tr><td>NVIDIA Quadro FX 48XX </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA Quadro FX 56XX </td><td> ok </td><td> -  </td></tr>
-<tr><td>NVIDIA Quadro FX 58XX </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA Tesla 870      </td><td> ok </td><td> -  </td></tr>
-<tr><td>NVIDIA Tesla C10XX    </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA Tesla C20XX    </td><td> ok </td><td> ok </td></tr>
-<tr><td>NVIDIA Tesla K20      </td><td> ok </td><td> ok </td></tr>
-<tr><td>                      </td><td>    </td><td>   </td></tr>
-<tr><td>ATI Radeon HD 4XXX   </td><td> ok </td><td> -  </td></tr>
-<tr><td>ATI Radeon HD 48XX   </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI Radeon HD 5XXX   </td><td> ok </td><td> -  </td></tr>
-<tr><td>ATI Radeon HD 58XX   </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI Radeon HD 59XX   </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI Radeon HD 68XX   </td><td> ok </td><td> -  </td></tr>
-<tr><td>ATI Radeon HD 69XX   </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI Radeon HD 77XX   </td><td> ok </td><td> -  </td></tr>
-<tr><td>ATI Radeon HD 78XX   </td><td> ok </td><td> -  </td></tr>
-<tr><td>ATI Radeon HD 79XX   </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI FireStream V92XX </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI FirePro V78XX    </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI FirePro V87XX    </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI FirePro V88XX    </td><td> ok </td><td> ok </td></tr>
-<tr><td>ATI FirePro W9XXX    </td><td> ok </td><td> ok </td></tr>
+<tr><th colspan="3">NVIDIA GPUs</th>                             <td>&nbsp;</td> <th colspan="3"><b>AMD GPUs</b></th></tr>
+<tr><th>Compute Device        </th><th>float</th><th>double</th> <td>&nbsp;</td> <th>Compute Device   </th><th>float</th><th>double</th></tr>
+<tr><td>GeForce 86XX GT/GSO   </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>Radeon HD 4XXX   </td><td> ok  </td><td> -  </td></tr>
+<tr><td>GeForce 88XX GTX/GTS  </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>Radeon HD 48XX   </td><td> ok  </td><td> ok </td></tr>
+<tr><td>GeForce 96XX GT/GSO   </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>Radeon HD 5XXX   </td><td> ok  </td><td> -  </td></tr>
+<tr><td>GeForce 98XX GTX/GTS  </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>Radeon HD 58XX   </td><td> ok  </td><td> ok </td></tr>
+<tr><td>GeForce GT 230        </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>Radeon HD 59XX   </td><td> ok  </td><td> ok </td></tr>
+<tr><td>GeForce GT(S) 240     </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>Radeon HD 6XXX   </td><td> ok  </td><td> -  </td></tr>
+<tr><td>GeForce GTS 250       </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>Radeon HD 69XX   </td><td> ok  </td><td> ok </td></tr>
+<tr><td>GeForce GTX 260       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon HD 7XXX   </td><td> ok  </td><td> -  </td></tr>
+<tr><td>GeForce GTX 275       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon HD 77XX   </td><td> ok  </td><td> ok </td></tr>
+<tr><td>GeForce GTX 280       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon HD 78XX   </td><td> ok  </td><td> ok </td></tr>
+<tr><td>GeForce GTX 285       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon HD 79XX   </td><td> ok  </td><td> ok </td></tr>
+<tr><td>GeForce GTX 4XX       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon HD 8350   </td><td> ok  </td><td> -  </td></tr>
+<tr><td>GeForce GTX 5XX       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon HD 84XX   </td><td> ok  </td><td> -  </td></tr>
+<tr><td>GeForce GTX 6XX       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon HD 8XXX   </td><td> ok  </td><td> ok </td></tr>
+<tr><td>GeForce GTX 7XX       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon R5 2XX    </td><td> ok  </td><td> -  </td></tr>
+<tr><td>GeForce GTX 9XX       </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon R7 2XX    </td><td> ok  </td><td> ok </td></tr>
+<tr><td>Quadro FX 46XX        </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>Radeon R9 2XX    </td><td> ok  </td><td> ok </td></tr>
+<tr><td>Quadro FX 48XX        </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>Radeon RX 3XX    </td><td> ok  </td><td> ok </td></tr>
+<tr><td>Quadro FX 56XX        </td><td> ok  </td><td> -    </td> <td>&nbsp;</td> <td>FirePro V7XXX    </td><td> ok  </td><td> ok </td></tr>
+<tr><td>Quadro FX 58XX        </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>FirePro V8XXX    </td><td> ok  </td><td> ok </td></tr>
+<tr><td>Tesla C10XX           </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>FirePro V9XXX    </td><td> ok  </td><td> ok </td></tr>
+<tr><td>Tesla C20XX           </td><td> ok  </td><td> ok   </td> <td>&nbsp;</td> <td>FirePro WXXXX    </td><td> ok  </td><td> ok </td></tr>
+<tr><td>Tesla K20             </td><td> ok  </td><td> ok   </td></tr>
 </table>
-<b>Available arithmetics in ViennaCL provided by selected GPUs.
+<b>Available arithmetics in ViennaCL provided by selected GPUs. Letter 'X' is used as a placeholder in numbers to denote multiple GPUs from the same series.
 Make sure you use recent GPU drivers, as there are some known bugs affecting ViennaCL in older drivers.</b>
 </center>
+
+For additional details of a look at the <a href="https://en.wikipedia.org/wiki/List_of_Nvidia_graphics_processing_units"> Wikipedia list of NVIDIA GPUs</a> and the <a href="https://en.wikipedia.org/wiki/List_of_AMD_graphics_processing_units"> Wikipedia list of AMD GPUs</a>.
 
 */

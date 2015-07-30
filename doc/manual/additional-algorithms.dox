@@ -10,26 +10,6 @@ The implementations of the algorithms described in this chapter are still not ye
 
 \warning The implementations of the algorithms described in this chapter are not considered mature yet.
 
-\section manual-additional-algorithms-iterative-solvers Additional Iterative Solvers
-The following iterative solvers are only available on selected computing backends.
-
-\subsection manual-additional-algorithms-iterative-solvers-mixed-cg Mixed-Precision Conjugate Gradients
-A two-stage mixed-precision CG algorithm is available as follows:
-\code
-viennacl::linalg::mixed_precision_cg_tag   mixed_prec_cg_config;
-vcl_result = viennacl::linalg::solve(vcl_matrix,
-                                     vcl_rhs,
-                                     mixed_prec_cg_config);
-\endcode
-As usual, the first parameter to the constructor of `mixed_precision_cg_tag` is the relative tolerance for the residual, while the second parameter denotes the maximum number of solver iterations.
-The third parameter denotes the relative tolerance for the inner low-precision CG iterations and defaults to `0.01`.
-
-\note Have a look at `examples/banchmarks/solver.cpp` for an example.
-
-\note A mixed-precision solver makes sense only if the matrix and right-hand-side vector are supplied in `double` precision.
-
-\note The mixed-precision solver is currently available with the OpenCL compute backend only.
-
 \section manual-additional-algorithms-preconditioners Additional Preconditioners
 In addition to the \ref manual-algorithms-preconditioners "Preconditioners available in the ViennaCL core", two more preconditioners are available with the OpenCL backend and are described in the following.
 

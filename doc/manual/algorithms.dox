@@ -51,65 +51,158 @@ It is also possible to solve for multiple right hand sides:
 
 \section manual-algorithms-iterative-solvers Iterative Solvers
 Iterative solvers approximately solve a (usually sparse) system \f$ Ax = b \f$ through iterated application of the matrix \f$ A \f$ to vectors.
-ViennaCL provides iterative solvers which can be used both with assembled matrices as well as in a so-called matrix-free setting, where to user provides the operator \f$ A \f$.
-Unlike direct solvers, the convergence of iterative solvers relies on certain properties of the system matrix.
-Keep in mind that an iterative solver may fail to converge, especially if the matrix is ill conditioned or a wrong solver is chosen.
-
-\note The iterative solvers can also be used for Boost.uBLAS, Eigen and MTL4 objects! Have a look at \ref manual-interfacing  "Interfacing Other Libraries" and the respective tutorials in the `examples/tutorials/` folder.
-
-\note An example of a matrix-free use of the iterative solvers can be found in examples/tutorial/matrix-free.cpp, where additional informations on the interface requirements are given.
-
-\code
-viennacl::compressed_matrix<float>  vcl_matrix;
-viennacl::vector<float>             vcl_rhs;
-viennacl::vector<float>             vcl_result;
-
-// Set up matrix and vectors here
-
-// solution using conjugate gradient solver:
-vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs, viennacl::linalg::cg_tag());
-
-// solution using BiCGStab solver:
-vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs, viennacl::linalg::bicgstab_tag());
-
-// solution using GMRES solver:
-vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs, viennacl::linalg::gmres_tag());
-\endcode
+ViennaCL provides the following iterative solvers for use with both assembled matrices as well as in a so-called matrix-free setting, where to user provides the operator \f$ A \f$:
 
 <center>
 <table>
-<tr><th> Method                               </th><th> Matrix class                </th><th> ViennaCL </th></tr>
-<tr><td> Conjugate Gradient (CG)              </td><td> symmetric positive definite </td><td> `y = solve(A, x, cg_tag());`       </td></tr>
-<tr><td> Stabilized Bi-CG (BiCGStab)          </td><td> non-symmetric               </td><td> `y = solve(A, x, bicgstab_tag());` </td></tr>
-<tr><td> Generalized Minimum Residual (GMRES) </td><td> general                     </td><td> `y = solve(A, x, gmres_tag());`    </td></tr>
+<tr><th> Method                                        </th><th> Matrix class                </th><th> ViennaCL </th></tr>
+<tr><td> Conjugate Gradient (CG)                       </td><td> symmetric positive definite </td><td> `y = solve(A, x, cg_tag());`                  </td></tr>
+<tr><td> Mixed-Precision Conjugate Gradient (Mixed-CG) </td><td> symmetric positive definite </td><td> `y = solve(A, x, mixed_precision_cg_tag());`  </td></tr>
+<tr><td> Stabilized Bi-CG (BiCGStab)                   </td><td> non-symmetric               </td><td> `y = solve(A, x, bicgstab_tag());`            </td></tr>
+<tr><td> Generalized Minimum Residual (GMRES)          </td><td> general                     </td><td> `y = solve(A, x, gmres_tag());`               </td></tr>
 </table>
-<b>Linear solver routines in ViennaCL for the computation of \f$ y \f$ in the expression \f$ Ay = x \f$ with given \f$ A \f$, \f$ x \f$.</b>
+<b>Linear solver routines in ViennaCL for the computation of \f$ x \f$ in the expression \f$ Ax = b \f$ with given \f$ A \f$, \f$ b \f$.</b>
 </center>
+Pipelined versions of CG, BiCGStab as well as GMRES are implemented for the case that no preconditioner is provided.
+This provides performance benefits for medium-sized systems of about 10k to 100k unknowns, because kernel launch and data transfer latencies are reduced by a factor of two to three.
 
-Customized error tolerances can be set in the solver tags. The convention is
-that solver tags take the relative error tolerance as first argument and the
-maximum number of iteration steps as second argument. Furthermore, after the
-solver run the number of iterations and the estimated error can be obtained from
-the solver tags as follows:
+Unlike direct solvers, the convergence of iterative solvers relies on certain properties of the system matrix.
+Keep in mind that an iterative solver may fail to converge, especially if the matrix is ill conditioned or a wrong solver is chosen.
+
+\note The iterative solvers can also be used for Armadillo, Boost.uBLAS, Eigen and MTL4 objects! Have a look at \ref manual-interfacing  "Interfacing Other Libraries" and the respective tutorials in the `examples/tutorials/` folder.
+
+\note An example of a matrix-free use of the iterative solvers can be found in examples/tutorial/matrix-free.cpp, where additional informations on the interface requirements are given.
+
+\subsection manual-algorithms-iterative-solvers-cg Conjugate Gradients (CG)
+The conjugate gradient method is the method of choice for many symmetric positive definite systems.
+A minimal snippet for running a CG solver is as follows:
+\code
+viennacl::compressed_matrix<T>  A;
+viennacl::vector<T>             b;
+
+// Set up A and b here
+
+viennacl::vector<T> x = viennacl::linalg::solve(A, b, viennacl::linalg::cg_tag());
+\endcode
+A preconditioner object can be passed as optional fourth argument to the solve() routine.
+Customized iteration counts as well as relative or absolute tolerances can be provided through the respective member functions of `cg_tag`:
+The convention is that solver tags take the relative error tolerance as first argument and the maximum number of iteration steps as second argument.
+Furthermore, after the solver run the number of iterations and the estimated error can be obtained from the solver tags as follows:
 \code
 // conjugate gradient solver with tolerance 1e10
 // and at most 100 iterations:
 viennacl::linalg::cg_tag custom_cg(1e-10, 100);
-vcl_result = viennacl::linalg::solve(vcl_matrix, vcl_rhs, custom_cg);
+x = viennacl::linalg::solve(A, b, custom_cg);
 
 // print number of iterations taken and estimated error:
 std::cout << "No. of iters: " << custom_cg.iters() << std::endl;
 std::cout << "Est. error: " << custom_cg.error() << std::endl;
 \endcode
-The BiCGStab solver tag can be customized in exactly the same way.
-The GMRES solver tag takes as third argument the dimension of the Krylov space.
-Thus, a tag for GMRES(30) with tolerance \f$ 10^{-10} \f$ and at most `100` total iterations (hence, up to three restarts) can be set up by
+Absolute tolerances can be set via the member function `abs_tolerance()`.
+
+An initial guess \f$ x_0 \f$ for the iterative solution of the system \f$ Ax = b \f$ can be incorporated manually by considering
+\f[
+ x = x_0 + y \\
+ \Rightarrow A(x_0 + y) = b  \Leftrightarrow Ay = b - Ax_0 := \tilde{b}
+\f]
+Thus, one may provide a nonzero initial guess by supplying the modified right hand side \f$ b - Ax_0 \f$ instead of \f$ b \f$.
+The obtained solution \f$ y \f$ then needs to be added to \f$ x_0 \f$ to obtain \f$ x \f$.
+
+If a custom monitor callback function should be provided, or ViennaCL should deal with the initial guess internally, then the extended CG interface is required.
+This extended interface relies on the solver class `cg_solver<T>`, which takes the vector type as template argument and the `cg_tag` as constructor argument.
+A custom monitor callback routine returns a bool and takes the following three parameters:
+  - The current approximation to the solution \f$ x \f$
+  - The current relative residual norm estimate
+  - An optional user-provided void pointer to additional user data
+If the monitor returns `true`, the iterative solver terminates.
+If the monitor returns `false`, the iterative solver may still terminate because the maximum iteration count, or the absolute or relative tolerance is reached.
+
+An exemplary code snippet for a CG solver with custom monitor callback and initial guess is as follows:
 \code
-viennacl::linalg::gmres_tag custom_gmres(1e-10, 100, 30);
+viennacl::compressed_matrix<T>  A;
+viennacl::vector<T>             b;
+viennacl::vector<T>             init_guess;
+
+// Set up A, b, and init_guess here
+
+// Set up CG solver object
+viennacl::linalg::cg_tag my_cg_tag(1e-5, 20);
+viennacl::linalg::cg_solver<viennacl::vector<T> > my_cg_solver(my_cg_tag);
+
+// Register monitor and initial guess:
+my_cg_solver.set_monitor(my_custom_monitor, &my_monitor_data);
+my_cg_solver.set_initial_guess(init_guess);
+
+// Run solver:
+viennacl::vector<T> x = my_cg_solver(A, b);
 \endcode
 
+\note The monitor routine is called for the CG method applied to the system \f$ Ay = b - Ax_0 \f$ if an initial guess is provided.
+
+
+\subsection manual-algorithms-iterative-solvers-mixed-cg Mixed-Precision Conjugate Gradients
+A mixed precision CG solver is available for symmetric positive systems with low to moderate condition number in double precision.
+The solver operates in a two-stage manner: The residual is computed in double precision, for which a correction is then computed in low precision.
+
+While single precision floating point numbers only require half the number of bytes as double precision floating point numbers, in practice one also needs to transfer indices.
+This limits the possible performance gains over a conventional CG method to about 20 percent in practice.
+Also, a mixed precision solver is fairly sensitive with respect to high condition numbers, hence we advise users to only use a mixed precision CG if the system matrix is known to be well-behaved.
+
+Sample code for running a mixed-precision CG solver is as follows:
+\code
+viennacl::linalg::mixed_precision_cg_tag   mixed_prec_cg_config;
+x = viennacl::linalg::solve(A, b, mixed_prec_cg_config);
+\endcode
+As usual, the first parameter to the constructor of `mixed_precision_cg_tag` is the relative tolerance for the residual, while the second parameter denotes the maximum number of solver iterations.
+The third parameter denotes the relative tolerance for the inner low-precision CG iterations and defaults to `0.01`.
+
+\note Have a look at `examples/banchmarks/solver.cpp` for an example.
+
+\note A mixed-precision solver makes sense only if the matrix and right-hand-side vector are supplied in `double` precision.
+
+Currently no extended interface for passing monitors or initial guesses is available for the mixed precision CG solver.
+
+
+\subsection manual-algorithms-iterative-solvers-bicgstab Stabilized Bi-CG (BiCGStab)
+
+The BiCGStab method is an attractive option for non-symmetric systems.
+It can be used for general systems, but it is not guaranteed to converge.
+In comparison to GMRES, BiCGStab has constant costs per iteration and lower memory footprint.
+
+In its shortest form, a BiCGStab solver is called as follows:
+\code
+x = viennacl::linalg::solve(A, b, viennacl::linalg::bicgstab_tag());
+\endcode
+Similar to the CG method, relative tolerances and maximum iteration counts can be passed to the constructor of the `bicgstab_tag` object.
+
+An extended interface for custom monitors and initial guesses is available.
+The templated class `viennacl::linalg::bicgstab_solver<VectorT>` is used in exactly the same way as `cg_solver` above.
+
+
+\subsection manual-algorithms-iterative-solvers-gmres Generalized Minimum Residual (GMRES)
+
+ViennaCL provides an implementation of the GMRES method with (optional) restart.
+GMRES is guaranteed to converge after \f$ n \f$ steps for a system with \f$ n \f$ unknowns, even though in practice one usually needs significantly less iterations.
+The computational cost of GMRES grows with the number of iterations, hence GMRES is either used with a restart after every \f$ k \f$ steps, or with a good preconditioner.
+
+A sample code snippet for running the GMRES solver in ViennaCL is as follows:
+\code
+viennacl::compressed_matrix<T>  A;
+viennacl::vector<T>             b;
+
+// Set up A and b here
+
+viennacl::linalg::gmres_tag my_gmres_tag(1e-5, 100, 20); // up to 100 iterations, restart after 20 iterations
+viennacl::vector<T> x = viennacl::linalg::solve(A, b, my_gmres_tag);
+
+// print number of iterations taken and estimated error:
+std::cout << "No. of iters: " << my_gmres_tag.iters() << std::endl;
+std::cout << "Est. error: " << my_gmres_tag.error() << std::endl;
+\endcode
+
+
 \section manual-algorithms-preconditioners Preconditioners
-ViennaCL ships with a generic implementation of several preconditioners.
+ViennaCL provides (partially) generic implementations of several preconditioners.
 The preconditioner setup is expect for simple diagonal preconditioners always carried out on the CPU host due to the need for dynamically allocating memory.
 Thus, one may not obtain an overall performance benefit if too much time is spent on the preconditioner setup.
 
@@ -128,6 +221,60 @@ An overview of preconditioners available for the various sparse matrix types is 
 </center>
 We aim to provide broader support for preconditioners using other sparse matrix formats in future releases.
 Sparse approximate inverse (SPAI) preconditioners are described in \ref manual-additional-algorithms "Additional Algorithms" section.
+
+
+\subsection manual-algorithms-preconditioners-parallel-ilu0 Parallel Incomplete LU Factorization with Static Pattern (Chow-Patel-ILU0)
+Incomplete LU (ILU) factorizations are popular black-box preconditioners and may work in cases where more advanced and problem-specific techniques such as multigrid approaches are not possible.
+A drawback of classical ILU algorithms is the sequential nature, which prohibits good performance on massively parallel hardware such as GPUs.
+
+ViennaCL provides an implementation of the recently proposed parallel ILU factorization algorithm proposed by Chow and Patel \cite chow:fine-grained-ilu.
+While the authors propose an asynchronous algorithm, we use a synchronous variant for reasons of better maintainability and user support in the case of failures.
+Internal evaluations suggest that the performance difference of the synchronous and asynchronous variants are negligible in practice.
+Also, the static pattern of \f$ L \f$ and \f$ U \f$ are taken from the system matrix \f$ A \f$ for efficiency reasons.
+
+The preconditioner exposes two parameters:
+First, the incomplete factors \f$ L \f$ and \f$ U \f$ with \f$ A \approx LU \f$ are computed in parallel using a nonlinear iteration scheme.
+The number of these sweeps can be adjusted in the configuration class `chow_patel_tag`.
+Second, the forward- and backward solves in the preconditioner application is approximated by a Jacobi method for the truncated Neumann series.
+That is, instead of the forward- or backward substition when solving \f$ R x = r \f$ for some vector \f$ r \f$ and lower or upper triangular matrix \f$ R \f$, one or several Jacobi iterations of the form
+\f[
+ x_{k+1} = (I - R)x_k + D^{-1} b
+\f]
+are used. The number of Jacobi iterations for each triangular factor is a second parameter.
+For full details of the underlying algorithm we refer to the original paper \cite chow:fine-grained-ilu.
+
+The preconditioner class is `chow_patel_ilu_precond<MatrixT>` with sparse matrix type `MatrixT`.
+`MatrixT` is currently limited to `compressed_matrix`, which denotes the system matrix type passed as first parameter.
+A sample code snippet for using the Chow-Patel-ILU0 preconditioner with a BiCGStab solver is as follows:
+\code
+// configuration of preconditioner:
+viennacl::linalg::chow_patel_tag chow_patel_ilu_config;
+chow_patel_ilu_config.sweeps(3);       // three nonlinear sweeps
+chow_patel_ilu_config.jacobi_iters(2); // two Jacobi iterations per triangular 'solve' Rx=r
+
+// create and compute preconditioner:
+viennacl::linalg::chow_patel_ilu_precond< viennacl::compressed_matrix<ScalarType> > chow_patel_ilu(A, chow_patel_ilu_config);
+
+// use in solver (e.g. using BiCGStab solver)
+vcl_result = viennacl::linalg::solve(A, b,
+                                     viennacl::linalg::bicgstab_tag(), // solver here
+                                     chow_patel_ilu);                  // preconditioner here
+\endcode
+
+Even though the setup and solve phase are executed on the GPU when using the CUDA or OpenCL backend, any overall performance gains are highly problem-specific.
+The number of nonlinear sweeps and Jacobi iterations need to be set problem-specific for best performance.
+Values between one and four are likely to give best results.
+
+
+\subsection manual-algorithms-preconditioners-parallel-icc0 Parallel Incomplete Cholesky Factorization with Static Pattern (Chow-Patel-IChol0)
+
+The parallel incomplete Cholesky factorization is similar to the parallel Chow-Patel-ILU0 preconditioner in the previous section, but with a factorization $LL^T$ for symmetric positive definite matrices.
+The associated preconditioner class is `chow_patel_ichol_precond<MatrixT>` and used in the same way as the class chow_patel_ilu_precond` described above:
+\code
+ viennacl::linalg::chow_patel_icc_precond< viennacl::compressed_matrix<ScalarType> > vcl_chow_patel_icc(A, viennacl::linalg::chow_patel_tag());
+\endcode
+The configuration tag of type `chow_patel_tag` is of the same type for both the incomplete LU and the incomplete Cholesky factorization case.
+Thus, the same parameters are exposed for tweaking.
 
 
 \subsection manual-algorithms-preconditioners-ilut Incomplete LU Factorization with Threshold (ILUT)
@@ -172,6 +319,17 @@ The triangular substitutions may be applied in parallel on GPUs by enabling \em 
 One parameter can be passed to the constructor of `ilu0_tag`, being the boolean specifying whether level scheduling should be used.
 
 \note The performance of level scheduling depends strongly on the matrix pattern and is thus disabled by default.
+
+
+\subsection manual-algorithms-preconditioners-icc0 Incomplete Cholesky Factorization with Static Pattern (IChol0)
+
+Similar to the Chow-Patel-family of incomplete LU and incomplete Cholesky factorization preconditioners, ViennaCL also provides a 'classical' incomplete Cholesky factorization preconditioner with static pattern identical to the system matrix.
+A sample code snippet is as follows:
+\code
+  viennacl::linalg::ichol0_tag ichol0_config;
+  viennacl::linalg::ichol0_precond< SparseMatrix > vcl_ilut(A, ichol0_config);
+\endcode
+No level scheduling is currently available for this preconditioner.
 
 \subsection manual-algorithms-preconditioners-block-ilu Block-ILU
 To overcome the serial nature of ILUT and ILU0 applied to the full system matrix, a parallel variant is to apply ILU to diagonal blocks of the system matrix.
