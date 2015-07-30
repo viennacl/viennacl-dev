@@ -28,6 +28,7 @@
 
 #include <map>
 #include <set>
+#include <functional>
 #ifdef VIENNACL_WITH_OPENMP
 #include <omp.h>
 #endif
