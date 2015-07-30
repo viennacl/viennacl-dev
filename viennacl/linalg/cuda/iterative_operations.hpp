@@ -548,24 +548,29 @@ __global__ void pipelined_cg_sliced_ell_vec_mul_kernel(const unsigned int * colu
                                                        const NumericT * p,
                                                        NumericT * Ap,
                                                        unsigned int size,
+                                                       unsigned int block_size,
                                                        NumericT * inner_prod_buffer,
                                                        unsigned int buffer_size)
 {
   NumericT inner_prod_ApAp = 0;
   NumericT inner_prod_pAp  = 0;
-  unsigned int local_id = threadIdx.x;
-  unsigned int local_size = blockDim.x;
 
-  for (unsigned int block_idx = blockIdx.x; block_idx <= size / local_size; block_idx += gridDim.x)
+  unsigned int blocks_per_threadblock = blockDim.x / block_size;
+  unsigned int id_in_block = threadIdx.x % block_size;
+  unsigned int num_blocks = (size - 1) / block_size + 1;
+  unsigned int global_warp_count = blocks_per_threadblock * gridDim.x;
+  unsigned int global_warp_id = blocks_per_threadblock * blockIdx.x + threadIdx.x / block_size;
+
+  for (unsigned int block_idx = global_warp_id; block_idx < num_blocks; block_idx += global_warp_count)
   {
-    unsigned int row         = block_idx * local_size + local_id;
+    unsigned int row         = block_idx * block_size + id_in_block;
     unsigned int offset      = block_start[block_idx];
     unsigned int num_columns = columns_per_block[block_idx];
 
     NumericT sum = 0;
     for (unsigned int item_id = 0; item_id < num_columns; item_id++)
     {
-      unsigned int index = offset + item_id * local_size + local_id;
+      unsigned int index = offset + item_id * block_size + id_in_block;
       NumericT val = elements[index];
 
       sum += val ? (p[column_indices[index]] * val) : 0;
@@ -610,15 +615,16 @@ void pipelined_cg_prod(sliced_ell_matrix<NumericT> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_sliced_ell_vec_mul_kernel<<<256, A.rows_per_block()>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
-                                                                      viennacl::cuda_arg<unsigned int>(A.handle2()),
-                                                                      viennacl::cuda_arg<unsigned int>(A.handle3()),
-                                                                      viennacl::cuda_arg<NumericT>(A.handle()),
-                                                                      viennacl::cuda_arg(p),
-                                                                      viennacl::cuda_arg(Ap),
-                                                                      size,
-                                                                      viennacl::cuda_arg(inner_prod_buffer),
-                                                                      buffer_size_per_vector);
+  pipelined_cg_sliced_ell_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                       viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                       viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                       viennacl::cuda_arg<NumericT>(A.handle()),
+                                                       viennacl::cuda_arg(p),
+                                                       viennacl::cuda_arg(Ap),
+                                                       size,
+                                                       static_cast<unsigned int>(A.rows_per_block()),
+                                                       viennacl::cuda_arg(inner_prod_buffer),
+                                                       buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_sliced_ell_vec_mul_kernel");
 }
 
@@ -1381,6 +1387,7 @@ __global__ void pipelined_bicgstab_sliced_ell_vec_mul_kernel(const unsigned int 
                                                              NumericT * Ap,
                                                              const NumericT * r0star,
                                                              unsigned int size,
+                                                             unsigned int block_size,
                                                              NumericT * inner_prod_buffer,
                                                              unsigned int buffer_size,
                                                              unsigned int buffer_offset)
@@ -1388,19 +1395,23 @@ __global__ void pipelined_bicgstab_sliced_ell_vec_mul_kernel(const unsigned int 
   NumericT inner_prod_ApAp = 0;
   NumericT inner_prod_pAp  = 0;
   NumericT inner_prod_r0Ap  = 0;
-  unsigned int local_id = threadIdx.x;
-  unsigned int local_size = blockDim.x;
 
-  for (unsigned int block_idx = blockIdx.x; block_idx <= size / local_size; block_idx += gridDim.x)
+  unsigned int blocks_per_threadblock = blockDim.x / block_size;
+  unsigned int id_in_block = threadIdx.x % block_size;
+  unsigned int num_blocks = (size - 1) / block_size + 1;
+  unsigned int global_warp_count = blocks_per_threadblock * gridDim.x;
+  unsigned int global_warp_id = blocks_per_threadblock * blockIdx.x + threadIdx.x / block_size;
+
+  for (unsigned int block_idx = global_warp_id; block_idx < num_blocks; block_idx += global_warp_count)
   {
-    unsigned int row         = block_idx * local_size + local_id;
+    unsigned int row         = block_idx * block_size + id_in_block;
     unsigned int offset      = block_start[block_idx];
     unsigned int num_columns = columns_per_block[block_idx];
 
     NumericT sum = 0;
     for (unsigned int item_id = 0; item_id < num_columns; item_id++)
     {
-      unsigned int index = offset + item_id * local_size + local_id;
+      unsigned int index = offset + item_id * block_size + id_in_block;
       NumericT val = elements[index];
 
       sum += val ? (p[column_indices[index]] * val) : 0;
@@ -1454,17 +1465,18 @@ void pipelined_bicgstab_prod(sliced_ell_matrix<NumericT> const & A,
   unsigned int chunk_size   = static_cast<unsigned int>(buffer_chunk_size);
   unsigned int chunk_offset = static_cast<unsigned int>(buffer_chunk_offset);
 
-  pipelined_bicgstab_sliced_ell_vec_mul_kernel<<<256, A.rows_per_block()>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
-                                                                            viennacl::cuda_arg<unsigned int>(A.handle2()),
-                                                                            viennacl::cuda_arg<unsigned int>(A.handle3()),
-                                                                            viennacl::cuda_arg<NumericT>(A.handle()),
-                                                                            viennacl::cuda_arg(p),
-                                                                            viennacl::cuda_arg(Ap),
-                                                                            viennacl::cuda_arg(r0star),
-                                                                            vec_size,
-                                                                            viennacl::cuda_arg(inner_prod_buffer),
-                                                                            chunk_size,
-                                                                            chunk_offset);
+  pipelined_bicgstab_sliced_ell_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                             viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                             viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                             viennacl::cuda_arg<NumericT>(A.handle()),
+                                                             viennacl::cuda_arg(p),
+                                                             viennacl::cuda_arg(Ap),
+                                                             viennacl::cuda_arg(r0star),
+                                                             vec_size,
+                                                             static_cast<unsigned int>(A.rows_per_block()),
+                                                             viennacl::cuda_arg(inner_prod_buffer),
+                                                             chunk_size,
+                                                             chunk_offset);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_bicgstab_sliced_ell_vec_mul_kernel");
 }
 
@@ -1989,15 +2001,16 @@ void pipelined_gmres_prod(sliced_ell_matrix<T> const & A,
   unsigned int size = p.size();
   unsigned int buffer_size_per_vector = static_cast<unsigned int>(inner_prod_buffer.size()) / static_cast<unsigned int>(3);
 
-  pipelined_cg_sliced_ell_vec_mul_kernel<<<128, A.rows_per_block()>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
-                                                                      viennacl::cuda_arg<unsigned int>(A.handle2()),
-                                                                      viennacl::cuda_arg<unsigned int>(A.handle3()),
-                                                                      viennacl::cuda_arg<T>(A.handle()),
-                                                                      viennacl::cuda_arg(p) + viennacl::traits::start(p),
-                                                                      viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
-                                                                      size,
-                                                                      viennacl::cuda_arg(inner_prod_buffer),
-                                                                      buffer_size_per_vector);
+  pipelined_cg_sliced_ell_vec_mul_kernel<<<128, 256>>>(viennacl::cuda_arg<unsigned int>(A.handle1()),
+                                                       viennacl::cuda_arg<unsigned int>(A.handle2()),
+                                                       viennacl::cuda_arg<unsigned int>(A.handle3()),
+                                                       viennacl::cuda_arg<T>(A.handle()),
+                                                       viennacl::cuda_arg(p) + viennacl::traits::start(p),
+                                                       viennacl::cuda_arg(Ap) + viennacl::traits::start(Ap),
+                                                       size,
+                                                       A.rows_per_block(),
+                                                       viennacl::cuda_arg(inner_prod_buffer),
+                                                       buffer_size_per_vector);
   VIENNACL_CUDA_LAST_ERROR_CHECK("pipelined_cg_sliced_ell_vec_mul_kernel");
 }
 

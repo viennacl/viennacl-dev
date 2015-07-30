@@ -2054,28 +2054,31 @@ __global__ void sliced_ell_matrix_vec_mul_kernel(const unsigned int * columns_pe
                                                  NumericT * result,
                                                  unsigned int start_result,
                                                  unsigned int inc_result,
-                                                 unsigned int size_result)
+                                                 unsigned int size_result,
+                                                 unsigned int block_size)
 {
-  unsigned int local_id = threadIdx.x;
-  unsigned int local_size = blockDim.x;
-  unsigned int num_rows = size_result;
+  unsigned int blocks_per_threadblock = blockDim.x / block_size;
+  unsigned int id_in_block = threadIdx.x % block_size;
+  unsigned int num_blocks = (size_result - 1) / block_size + 1;
+  unsigned int global_warp_count = blocks_per_threadblock * gridDim.x;
+  unsigned int global_warp_id = blocks_per_threadblock * blockIdx.x + threadIdx.x / block_size;
 
-  for (unsigned int block_idx = blockIdx.x; block_idx <= num_rows / local_size; block_idx += gridDim.x)
+  for (unsigned int block_idx = global_warp_id; block_idx < num_blocks; block_idx += global_warp_count)
   {
-    unsigned int row         = block_idx * local_size + local_id;
+    unsigned int row         = block_idx * block_size + id_in_block;
     unsigned int offset      = block_start[block_idx];
     unsigned int num_columns = columns_per_block[block_idx];
 
     NumericT sum = 0;
     for (unsigned int item_id = 0; item_id < num_columns; item_id++)
     {
-      unsigned int index = offset + item_id * local_size + local_id;
+      unsigned int index = offset + item_id * block_size + id_in_block;
       NumericT val = elements[index];
 
       sum += val ? (x[column_indices[index] * inc_x + start_x] * val) : 0;
     }
 
-    if (row < num_rows)
+    if (row < size_result)
       result[row * inc_result + start_result] = sum;
   }
 }
@@ -2093,18 +2096,19 @@ void prod_impl(const viennacl::sliced_ell_matrix<NumericT, IndexT> & mat,
                const viennacl::vector_base<NumericT> & vec,
                      viennacl::vector_base<NumericT> & result)
 {
-  sliced_ell_matrix_vec_mul_kernel<<<128, mat.rows_per_block()>>>(viennacl::cuda_arg<unsigned int>(mat.handle1()),
-                                                                  viennacl::cuda_arg<unsigned int>(mat.handle2()),
-                                                                  viennacl::cuda_arg<unsigned int>(mat.handle3()),
-                                                                  viennacl::cuda_arg<NumericT>(mat.handle()),
-                                                                  viennacl::cuda_arg(vec),
-                                                                  static_cast<unsigned int>(vec.start()),
-                                                                  static_cast<unsigned int>(vec.stride()),
-                                                                  static_cast<unsigned int>(vec.size()),
-                                                                  viennacl::cuda_arg(result),
-                                                                  static_cast<unsigned int>(result.start()),
-                                                                  static_cast<unsigned int>(result.stride()),
-                                                                  static_cast<unsigned int>(result.size())
+  sliced_ell_matrix_vec_mul_kernel<<<256, 256>>>(viennacl::cuda_arg<unsigned int>(mat.handle1()),
+                                                 viennacl::cuda_arg<unsigned int>(mat.handle2()),
+                                                 viennacl::cuda_arg<unsigned int>(mat.handle3()),
+                                                 viennacl::cuda_arg<NumericT>(mat.handle()),
+                                                 viennacl::cuda_arg(vec),
+                                                 static_cast<unsigned int>(vec.start()),
+                                                 static_cast<unsigned int>(vec.stride()),
+                                                 static_cast<unsigned int>(vec.size()),
+                                                 viennacl::cuda_arg(result),
+                                                 static_cast<unsigned int>(result.start()),
+                                                 static_cast<unsigned int>(result.stride()),
+                                                 static_cast<unsigned int>(result.size()),
+                                                 static_cast<unsigned int>(mat.rows_per_block())
                                                                  );
   VIENNACL_CUDA_LAST_ERROR_CHECK("sliced_ell_matrix_vec_mul_kernel");
 }

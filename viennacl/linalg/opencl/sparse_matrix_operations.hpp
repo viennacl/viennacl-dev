@@ -993,8 +993,11 @@ void prod_impl(viennacl::sliced_ell_matrix<ScalarT, IndexT> const & A,
   ss << "vec_mul_" << 1;//(AlignmentV != 1?4:1);
   viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::sliced_ell_matrix<ScalarT, IndexT>::program_name(), "vec_mul");
 
-  vcl_size_t thread_num = A.rows_per_block();
+  vcl_size_t thread_num = std::max(A.rows_per_block(), static_cast<vcl_size_t>(128));
   unsigned int group_num = 256;
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+    thread_num = 256;
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
@@ -1006,7 +1009,8 @@ void prod_impl(viennacl::sliced_ell_matrix<ScalarT, IndexT> const & A,
                            viennacl::traits::opencl_handle(x),
                            layout_x,
                            viennacl::traits::opencl_handle(y),
-                           layout_y)
+                           layout_y,
+                           cl_uint(A.rows_per_block()))
   );
 }
 

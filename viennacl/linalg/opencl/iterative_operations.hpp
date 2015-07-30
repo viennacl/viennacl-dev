@@ -218,8 +218,11 @@ void pipelined_cg_prod(sliced_ell_matrix<NumericT> const & A,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), "cg_sliced_ell_prod");
 
-  unsigned int thread_num = static_cast<unsigned int>(A.rows_per_block());
+  vcl_size_t thread_num = std::max(A.rows_per_block(), static_cast<vcl_size_t>(128));
   unsigned int group_num = 256;
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+    thread_num = 256;
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
@@ -231,6 +234,7 @@ void pipelined_cg_prod(sliced_ell_matrix<NumericT> const & A,
                            viennacl::traits::opencl_handle(p),
                            viennacl::traits::opencl_handle(Ap),
                            vec_size,
+                           cl_uint(A.rows_per_block()),
                            inner_prod_buffer,
                            buffer_size_per_vector,
                            viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
@@ -516,8 +520,11 @@ void pipelined_bicgstab_prod(sliced_ell_matrix<NumericT> const & A,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<NumericT>::program_name(), "bicgstab_sliced_ell_prod");
 
-  unsigned int thread_num = static_cast<unsigned int>(A.rows_per_block());
-  unsigned int group_num = (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id) ? 256 : 128;
+  vcl_size_t thread_num = std::max(A.rows_per_block(), static_cast<vcl_size_t>(128));
+  unsigned int group_num = 256;
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+    thread_num = 256;
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
@@ -530,6 +537,7 @@ void pipelined_bicgstab_prod(sliced_ell_matrix<NumericT> const & A,
                            viennacl::traits::opencl_handle(Ap),
                            r0star,
                            vec_size,
+                           cl_uint(A.rows_per_block()),
                            inner_prod_buffer, chunk_size, chunk_offset,
                            viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
                            viennacl::ocl::local_mem(k.local_work_size() * sizeof(NumericT)),
@@ -861,8 +869,11 @@ void pipelined_gmres_prod(sliced_ell_matrix<T> const & A,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::iterative<T>::program_name(), "gmres_sliced_ell_prod");
 
-  unsigned int thread_num = static_cast<unsigned int>(A.rows_per_block());
+  vcl_size_t thread_num = std::max(A.rows_per_block(), static_cast<vcl_size_t>(128));
   unsigned int group_num = 128;
+
+  if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+    thread_num = 256;
 
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
@@ -874,6 +885,7 @@ void pipelined_gmres_prod(sliced_ell_matrix<T> const & A,
                            viennacl::traits::opencl_handle(p), start_p,
                            viennacl::traits::opencl_handle(Ap), start_Ap,
                            vec_size,
+                           cl_uint(A.rows_per_block()),
                            inner_prod_buffer,
                            buffer_size_per_vector,
                            viennacl::ocl::local_mem(k.local_work_size() * sizeof(T)),

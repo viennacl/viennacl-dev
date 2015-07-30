@@ -49,25 +49,28 @@ void generate_sliced_ell_vec_mul(StringT & source, std::string const & numeric_s
   source.append("  __global const "); source.append(numeric_string); source.append(" * x, \n");
   source.append("  uint4 layout_x, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
-  source.append("  uint4 layout_result) \n");
+  source.append("  uint4 layout_result, \n");
+  source.append("  unsigned int block_size) \n");
   source.append("{ \n");
-  source.append("  uint local_id   = get_local_id(0); \n");
-  source.append("  uint local_size = get_local_size(0); \n");
-  source.append("  uint num_rows   = layout_result.z; \n");
+  source.append("  uint blocks_per_workgroup = get_local_size(0) / block_size; \n");
+  source.append("  uint id_in_block = get_local_id(0) % block_size; \n");
+  source.append("  uint num_blocks  = (layout_result.z - 1) / block_size + 1; \n");
+  source.append("  uint global_warp_count  = blocks_per_workgroup * get_num_groups(0); \n");
+  source.append("  uint global_warp_id     = blocks_per_workgroup * get_group_id(0) + get_local_id(0) / block_size; \n");
 
-  source.append("  for (uint block_idx = get_group_id(0); block_idx <= num_rows / local_size; block_idx += get_num_groups(0)) { \n");
+  source.append("  for (uint block_idx = global_warp_id; block_idx < num_blocks; block_idx += global_warp_count) { \n");
   source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
-  source.append("    uint row    = block_idx * local_size + local_id; \n");
+  source.append("    uint row    = block_idx * block_size + id_in_block; \n");
   source.append("    uint offset = block_start[block_idx]; \n");
   source.append("    uint num_columns = columns_per_block[block_idx]; \n");
   source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
-  source.append("      uint index = offset + item_id * local_size + local_id; \n");
+  source.append("      uint index = offset + item_id * block_size + id_in_block; \n");
   source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
   source.append("      sum += val ? (x[column_indices[index] * layout_x.y + layout_x.x] * val) : 0; \n");
   source.append("    } \n");
 
-  source.append("    if (row < num_rows) \n");
+  source.append("    if (row < layout_result.z) \n");
   source.append("      result[row * layout_result.y + layout_result.x] = sum; \n");
   source.append("  } \n");
   source.append("} \n");

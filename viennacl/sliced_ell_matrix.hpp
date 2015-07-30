@@ -52,6 +52,10 @@ public:
 
   explicit sliced_ell_matrix() : rows_(0), cols_(0), rows_per_block_(0) {}
 
+  /** @brief Standard constructor for setting the row and column sizes as well as the block size.
+    *
+    * Supported values for num_rows_per_block_ are 32, 64, 128, 256. Other values may work, but are unlikely to yield good performance.
+    **/
   sliced_ell_matrix(size_type num_rows,
                     size_type num_cols,
                     size_type num_rows_per_block_ = 0)
@@ -139,38 +143,24 @@ void copy(CPUMatrixT const & cpu_matrix, sliced_ell_matrix<ScalarT, IndexT> & gp
   assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(cpu_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
   assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(cpu_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
 
-  if (gpu_matrix.rows_per_block() == 0) // not yet initialized by user. Set defaults.
-  {
-    viennacl::context ctx = traits::context(gpu_matrix.handle1());
-    gpu_matrix.rows_per_block_ = 128;
-
-    if (ctx.memory_type() == CUDA_MEMORY)
-      gpu_matrix.rows_per_block_ = 256;
-    else if (ctx.memory_type() == OPENCL_MEMORY)
-    {
-#ifdef VIENNACL_WITH_OPENCL
-      if (ctx.opencl_context().current_device().vendor_id() == viennacl::ocl::nvidia_id)
-        gpu_matrix.rows_per_block_ = 256;
-#endif
-    }
-  }
+  if (gpu_matrix.rows_per_block() == 0) // not yet initialized by user. Set default: 32 is perfect for NVIDIA GPUs and older AMD GPUs. Still okay for newer AMD GPUs.
+    gpu_matrix.rows_per_block_ = 32;
 
   if (viennacl::traits::size1(cpu_matrix) > 0 && viennacl::traits::size2(cpu_matrix) > 0)
   {
     //determine max capacity for row
     IndexT columns_in_current_block = 0;
-    vcl_size_t row_counter_in_current_block = 0;
     vcl_size_t total_element_buffer_size = 0;
-    viennacl::backend::typesafe_host_array<IndexT> columns_in_block_buffer(gpu_matrix.handle1(), viennacl::traits::size1(cpu_matrix) / gpu_matrix.rows_per_block() + 1);
+    viennacl::backend::typesafe_host_array<IndexT> columns_in_block_buffer(gpu_matrix.handle1(), (viennacl::traits::size1(cpu_matrix) - 1) / gpu_matrix.rows_per_block() + 1);
     for (typename CPUMatrixT::const_iterator1 row_it = cpu_matrix.begin1(); row_it != cpu_matrix.end1(); ++row_it)
     {
-      ++row_counter_in_current_block;
       vcl_size_t entries_in_row = 0;
       for (typename CPUMatrixT::const_iterator2 col_it = row_it.begin(); col_it != row_it.end(); ++col_it)
         ++entries_in_row;
 
       columns_in_current_block = std::max(columns_in_current_block, static_cast<IndexT>(entries_in_row));
 
+      // check for end of block
       if ( (row_it.index1() % gpu_matrix.rows_per_block() == gpu_matrix.rows_per_block() - 1)
            || row_it.index1() == viennacl::traits::size1(cpu_matrix) - 1)
       {

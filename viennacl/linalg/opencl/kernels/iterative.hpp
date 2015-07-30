@@ -423,6 +423,7 @@ void generate_sliced_ell_matrix_pipelined_cg_prod(StringT & source, std::string 
   source.append("  __global const "); source.append(numeric_string); source.append(" * p, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
   source.append("  unsigned int size, \n");
+  source.append("  unsigned int block_size, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
   source.append("  unsigned int buffer_size, \n");
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
@@ -430,17 +431,20 @@ void generate_sliced_ell_matrix_pipelined_cg_prod(StringT & source, std::string 
   source.append("{ \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_ApAp = 0; \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_pAp = 0; \n");
-  source.append("  uint local_id   = get_local_id(0); \n");
-  source.append("  uint local_size = get_local_size(0); \n");
+  source.append("  uint blocks_per_workgroup = get_local_size(0) / block_size; \n");
+  source.append("  uint id_in_block = get_local_id(0) % block_size; \n");
+  source.append("  uint num_blocks  = (size - 1) / block_size + 1; \n");
+  source.append("  uint global_warp_count  = blocks_per_workgroup * get_num_groups(0); \n");
+  source.append("  uint global_warp_id     = blocks_per_workgroup * get_group_id(0) + get_local_id(0) / block_size; \n");
 
-  source.append("  for (uint block_idx = get_group_id(0); block_idx <= size / local_size; block_idx += get_num_groups(0)) { \n");
+  source.append("  for (uint block_idx = global_warp_id; block_idx < num_blocks; block_idx += global_warp_count) { \n");
   source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
-  source.append("    uint row    = block_idx * local_size + local_id; \n");
+  source.append("    uint row    = block_idx * block_size + id_in_block; \n");
   source.append("    uint offset = block_start[block_idx]; \n");
   source.append("    uint num_columns = columns_per_block[block_idx]; \n");
   source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
-  source.append("      uint index = offset + item_id * local_size + local_id; \n");
+  source.append("      uint index = offset + item_id * block_size + id_in_block; \n");
   source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
   source.append("      sum += val ? (p[column_indices[index]] * val) : 0; \n");
   source.append("    } \n");
@@ -1027,6 +1031,7 @@ void generate_sliced_ell_matrix_pipelined_bicgstab_prod(StringT & source, std::s
   source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * r0star, \n");
   source.append("  unsigned int size, \n");
+  source.append("  unsigned int block_size, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
   source.append("  unsigned int buffer_size, \n");
   source.append("  unsigned int buffer_offset, \n");
@@ -1037,17 +1042,20 @@ void generate_sliced_ell_matrix_pipelined_bicgstab_prod(StringT & source, std::s
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_ApAp = 0; \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_pAp = 0; \n");
   source.append("  "); source.append(numeric_string); source.append(" inner_prod_r0Ap = 0; \n");
-  source.append("  uint local_id   = get_local_id(0); \n");
-  source.append("  uint local_size = get_local_size(0); \n");
+  source.append("  uint blocks_per_workgroup = get_local_size(0) / block_size; \n");
+  source.append("  uint id_in_block = get_local_id(0) % block_size; \n");
+  source.append("  uint num_blocks  = (size - 1) / block_size + 1; \n");
+  source.append("  uint global_warp_count  = blocks_per_workgroup * get_num_groups(0); \n");
+  source.append("  uint global_warp_id     = blocks_per_workgroup * get_group_id(0) + get_local_id(0) / block_size; \n");
 
-  source.append("  for (uint block_idx = get_group_id(0); block_idx <= size / local_size; block_idx += get_num_groups(0)) { \n");
+  source.append("  for (uint block_idx = global_warp_id; block_idx < num_blocks; block_idx += global_warp_count) { \n");
   source.append("    "); source.append(numeric_string); source.append(" sum = 0; \n");
 
-  source.append("    uint row    = block_idx * local_size + local_id; \n");
+  source.append("    uint row    = block_idx * block_size + id_in_block; \n");
   source.append("    uint offset = block_start[block_idx]; \n");
   source.append("    uint num_columns = columns_per_block[block_idx]; \n");
   source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
-  source.append("      uint index = offset + item_id * local_size + local_id; \n");
+  source.append("      uint index = offset + item_id * block_size + id_in_block; \n");
   source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
   source.append("      sum += val ? (p[column_indices[index]] * val) : 0; \n");
   source.append("    } \n");
@@ -1501,12 +1509,13 @@ void generate_sliced_ell_matrix_pipelined_gmres_prod(StringType & source, std::s
   source.append("  __global "); source.append(numeric_string); source.append(" * Ap, \n");
   source.append("  unsigned int offset_Ap, \n");
   source.append("  unsigned int size, \n");
+  source.append("  unsigned int block_size, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * inner_prod_buffer, \n");
   source.append("  unsigned int buffer_size, \n");
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_ApAp, \n");
   source.append("  __local "); source.append(numeric_string); source.append(" * shared_array_pAp) \n");
   source.append("{ \n");
-  source.append("  cg_sliced_ell_prod(columns_per_block, column_indices, block_start, elements, p + offset_p, Ap + offset_Ap, size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
+  source.append("  cg_sliced_ell_prod(columns_per_block, column_indices, block_start, elements, p + offset_p, Ap + offset_Ap, size, block_size, inner_prod_buffer, buffer_size, shared_array_ApAp, shared_array_pAp); \n");
   source.append("} \n \n");
 }
 
