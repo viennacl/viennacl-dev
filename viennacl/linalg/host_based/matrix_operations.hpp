@@ -1019,7 +1019,7 @@ namespace detail
     if (C_size1 == 0 || C_size2 == 0 || A_size2 == 0)
       return;
 
-    static const vcl_size_t blocksize = 128;
+    static const vcl_size_t blocksize = 64;
 
     vcl_size_t num_blocks_C1 = (C_size1 - 1) / blocksize + 1;
     vcl_size_t num_blocks_C2 = (C_size2 - 1) / blocksize + 1;
