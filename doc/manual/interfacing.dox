@@ -46,6 +46,39 @@ More examples for the exchangability of Boost.uBLAS and ViennaCL can be found in
 
 \note Refer in particular to `iterative-ublas.cpp` for a complete example on iterative solvers using Boost.uBLAS types.
 
+\section manual-interfacing-armadillo Armadillo
+To copy data from Armadillo \cite armadillo objects (version 5.x) to ViennaCL, the `copy()`-functions are used just as for Boost.uBLAS and STL types:
+\code
+ // from Armadillo to ViennaCL
+ viennacl::copy(arma_vector,       vcl_vector);
+ viennacl::copy(arma_densematrix,  vcl_densematrix);
+ viennacl::copy(arma_sparsematrix, vcl_sparsematrix);
+\endcode
+In addition, the STL-compliant iterator-version of `viennacl::copy()` taking three arguments can be used for copying vector data.
+Here, all types prefixed with `arma` are Armadillo types, the prefix `vcl` indicates ViennaCL objects.
+Similarly, the transfer from ViennaCL back to Armadillo is accomplished by
+\code
+ //from ViennaCL to Armadillo
+ viennacl::copy(vcl_vector,       arma_vector);
+ viennacl::copy(vcl_densematrix,  arma_densematrix);
+ viennacl::copy(vcl_sparsematrix, arma_sparsematrix);
+\endcode
+
+The iterative solvers in ViennaCL can also be used directly with Armadillo objects:
+\code
+  using namespace viennacl::linalg; // for brevity of the following lines
+
+  arma_result = solve(arma_matrix, arma_rhs, cg_tag());
+  arma_result = solve(arma_matrix, arma_rhs, bicgstab_tag());
+  arma_result = solve(arma_matrix, arma_rhs, gmres_tag());
+\endcode
+
+\warning When using the iterative solvers with Armadillo, the preprocessor constant `VIENNACL_WITH_ARMADILLO` must be defined prior to any other ViennaCL include statements. This is essential for enabling the respective wrappers.
+
+\note Refer to `iterative-armadillo.cpp` and `armadillo-with-viennacl.cpp` for complete examples.
+
+
+
 \section manual-interfacing-eigen Eigen
 To copy data from Eigen \cite eigen objects (version 3.x.y) to ViennaCL, the `copy()`-functions are used just as for Boost.uBLAS and STL types:
 \code

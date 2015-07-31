@@ -3,7 +3,7 @@
 
 /**
 
-   \page manual-additional-algorithms    Additional Algorithms
+   \page manual-additional-algorithms    Additional Algorithms (Unstable)
 
 
 The implementations of the algorithms described in this chapter are still not yet mature enough to be considered core-functionality, and/or are available with the OpenCL backend only.
@@ -71,6 +71,72 @@ Our experience is that FSPAI is typically more efficient than SPAI when applied 
 
 Note that FSPAI depends on the ordering of the unknowns, thus bandwidth reduction algorithms may be employed first, cf. \ref manual-additional-algorithms-bandwidth-reduction "Bandwidth Reduction".
 
+
+\section manual-additional-algorithms-eigenvalues Additional Eigenvalue Routines
+Several routines for computing the eigenvalues of symmetric tridiagonal as well as dense matrices are provided with ViennaCL.
+The following routines are available for one or two compute backends, hence they are not considered to be part of the core.
+Also, use the implementations with care: Even though the routines pass the respective tests, they are not as extensively tested as core functionality.
+
+\subsection manual-additional-algorithms-eigenvalues-bisection Symmetric Tridiagonal Matrices: Bisection
+The bisection method for finding the eigenvalues of a symmetric tridiagonal matrix has been implemented within the CUDA SDK as an example.
+ViennaCL provides an extension of the implementation also suitable for eigenvalues with multiplicity higher than one.
+In addition, our implementation is not limited to CUDA and also available for OpenCL.
+
+The interface in ViennaCL takes STL vectors as inputs, holding the diagonal and the sub/superdiagonal.
+The third argument is the vector to be overwritten with the computed eigenvalues.
+A sample code snippet is as follows:
+\code
+std::vector<NumericT> diagonal(mat_size);
+std::vector<NumericT> superdiagonal(mat_size);
+std::vector<NumericT> eigenvalues_bisect(mat_size);
+
+bool bResult = viennacl::linalg::bisect(diagonal, superdiagonal, eigenvalues_bisect);
+\endcode
+The return value `bResult` is `false` if an error occurred, and `true` otherwise.
+Note that the sub/superdiagonal array `superdiagonal` is required to have an value of zero at index zero (indicating an element outside the matrix).
+
+\note A fully working example is available in  `examples/tutorial/bisect.cpp`.
+
+\subsection manual-additional-algorithms-eigenvalues-tql2 Symmetric Tridiagonal Matrices: TQL2
+The bisection method allows for a fast computation of eigenvalues, but it does not compute eigenvectors directly.
+If eigenvectors are needed, the tql2-version of the QL algorithm as described in the Algol procedures can be used.
+
+The interface to the routine `tql2()` is as follows: The first argument is a dense ViennaCL matrix.
+The second and third argument are STL vectors representing the diagonal and the sub/superdiagonal, respectively.
+Thus, a minimal code example for a 20-by-20 tridiagonal matrix is as follows:
+\code
+  std::size_t N = 20;
+  std::vector<NumericT> d(N), e(N);
+  viennacl::matrix<NumericT> Q = viennacl::identity_matrix<NumericT>(N);
+
+  // fill d and e with data here
+
+  viennacl::linalg::tql2(Q, d, e);
+\endcode
+Note that the sub/superdiagonal array `e` is required to have an value of zero at index zero (indicating an element outside the matrix).
+
+\note A fully working example is available in  `examples/tutorial/tql2.cpp`.
+
+\subsection manual-additional-algorithms-eigenvalues-qr-method-symmetric QR Method for Symmetric Dense Matrices
+Symmetric dense real-valued matrices have real-valued eigenvalues, hence the current lack of complex arithmetic in ViennaCL is not limiting.
+An implementation of the QR method for the symmetric case for computing eigenvalues and eigenvectors is provided.
+
+The current implementation of the QR method for symmetric dense matrices in ViennaCL takes three parameters:
+  -  The input matrix to find eigenvalues and eigenvectors from
+  -  A matrix in which the calculated eigenvectors will be stored
+  -  An STL vector in which the calculated eigenvalues will be stored
+
+A minimal example is as follows:
+\code
+  std::size_t N = 20;
+  viennacl::matrix<ScalarType> A_input(N,N);
+  viennacl::matrix<ScalarType> Q(N, N);
+  std::vector<ScalarType> eigenvalues(N);
+
+  viennacl::linalg::qr_method_sym(A_input, Q, eigenvalues);
+\endcode
+
+\note A fully working example is available in  `examples/tutorial/qr_method.cpp`.
 
 \section manual-additional-algorithms-fft Fast Fourier Transform
 
@@ -154,6 +220,34 @@ To reverse a vector `v` inplace, use
  viennacl::linalg::reverse(v);
 \endcode
 
+\section manual-additional-algorithms-svd Singular Value Decomposition
+The singular decomposition of a real-valued matrix \f$ A \in \mathbb{R}^{M \times N} \f$ is a decomposition of the form
+\f[
+ A = U \Sigma V^T
+\f]
+where \f$ U \in \mathbb{R}^{M\times M} \f$ is a unitary matrix holding the left-singular vectors, \f$ \Sigma \in \mathbb{R}^{M \times N} \f$ holds the singular values of \f$ A \f$ on the diagonal, and \f$ V \in \mathbb{R}^{N \times N} \f$ holds the right-singular vectors of \f$ A \f$.
+The singular vectors are stored column-wise in both \f$ U \f$ and \f$ V \f$.
+
+ViennaCL provides an implementation of the SVD method based on bidiagonalization and QR methods with shift.
+The API of the `svd()` routine takes three parameters:
+  - The input matrix \f$ A \f$, which gets overwritten with \f$ \Sigma \f$,
+  - The matrix \f$ U \f$ for the left-singular vectors,
+  - The matrix \f$ V \f$ for the right-singular vectors.
+
+A minimal example is as follows:
+\code
+  std::size_t M = 20;
+  std::size_t N = 30;
+  viennacl::matrix<NumericT> A(M, N), U(M, M), V(N, N);
+
+  // fill A with values here
+
+  viennacl::linalg::svd(A, U, V);
+\endcode
+
+\note Have a look at `tests/src/svd.cpp` for an example.
+
+\note There are known performance bottlenecks in the current implementation. Any contributions welcome!
 
 \section manual-additional-algorithms-bandwidth-reduction Bandwidth Reduction
 

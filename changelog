@@ -5,10 +5,10 @@
 ### Version 1.7.0
 This new minor release series introduces several new high-performance algorithms and implementations in addition to usability enhancements.
 The highlights of this new release are as follows:
-  - ILU: Added implementation of the fine-grained parallel incomplete LU factorization preconditioner proposed by Chow and Patel and SIAM J. Sci. Comp., 2015. Available for all three backends.
+  - Parallel ILU: Added implementation of the fine-grained parallel incomplete LU factorization preconditioner proposed by Chow and Patel and SIAM J. Sci. Comp., 2015. Available for all three backends.
   - compressed_matrix: Implemented fast sparse matrix-matrix multiplications for all three computing backends. Implementations are extensions of ideas described in paper by Gremse et al. in SIAM J. Sci. Comp., 2015.
   - compressed_matrix: Improved performance for sparse matrix-vector multiplications (SpMVs) on CUDA GPUs. These improvements also apply to the pipelined iterative solvers.
-  - (#16) Algebraic Multigrid: Completely refurbished the implementation. Fully parallel preconditioner setup on all three computing backends now available.
+  - (#16) Algebraic Multigrid: Completely refurbished the implementation. Fully parallel preconditioner setup and solver cycles on all three computing backends now available.
   - (#80) Mixed precision: Vectors and dense matrices of different arithmetic type can now be assigned to each other. As a consequence, the mixed precision CG solver is now available for all three backends.
   - (#138) Lanczos method: Extended interface and implementation to also compute eigenvectors if desired.
   - (#125) Armadillo: Added convenience overloads such that one can directly pass Armadillo types to viennacl::copy() as well as iterative solvers (similar to Eigen and MTL 4). Thanks to GitHub user jeremysalwen for the suggestion and feedback.
@@ -20,22 +20,28 @@ Further new features and enhancements:
   - (#74) Iterative solvers: Added tutorial on how to use the iterative solvers in a matrix-free fashion (i.e. without assembling the system matrix explicitly).
   - (#123) Iterative solvers: Added option to specify an absolute tolerance. Thanks to Andreas Rost for the suggestion.
   - (#126) prod: It is now possible to directly pass expressions as parameters, e.g. A = prod(B + C, 2 * D);
+  - (#127) sum: Added convenience overload for computing sums of vectors as well as row- and column-sums of dense matrices.
   - (#132, #133) CUDA: Fixed incorrect calculation in custom-cuda tutorial due to wrong type deduction. To prevent similar issues in the future, the respective interface has been refined. Thanks to GitHub user ahazra for bringing this to our attention.
   - (#137) Eigen: One may now use an Eigen::Map with viennacl::copy()
   - (#139) Lanczos method: Removed uBLAS-dependency and improved performance. Thanks to Charles Determan and GitHub user ramirezaa for requesting and testing these new features.
   - (#145) QR method: Fixed compilation problems when using double precision.
   - compressed_matrix: Added overload for operator<< to directly print the sparse matrix. Mostly for convenience.
+  - CUDA: Default arch-flag is now 'sm_20'. This is because older architectures are deprecated or even removed in the latest CUDA releases.
+  - Eigen: Added support for dense row-major matrices. Thanks to Sumit Kumar for the suggestion.
+  - Eigenvalues: Fixes and extensions for the bisection method to find the eigenvalues of tridiagonal matrices have been contributed by Andreas Selinger.
   - Exceptions: Proper exception objects are now consistently thrown, rather than throwing const-char objects at some locations.
   - FFT: Fixed incorrect loop length for radix-2 implementation on CPU. Thanks to Bruno Turcksin for reporting the issue.
   - ILU0: Fixed incorrect calculation of coefficients in U.
   - ILUT: Improved performance and reduced memory footprint by replacing tree-based datastructures with flat arrays.
+  - Iterative solvers: Added API for passing custom monitors and initial guesses.
   - Matrix Market Reader: Added support for pattern matrices and complex-valued matrices (imaginary part ignored).
   - OpenCL: Fixed invalid query of double precision configuration if double precision is not supported. Thanks to Koldo Ramirez for the report.
   - Power method: Extended interface to also return the approximate eigenvector for the approximate largest eigenvalue (in modulus). Thanks to Charles Determan for the input.
   - QR method: Extended interface to also accept viennacl::vector instead of only std::vector (thanks to Charles Determan for the input).
   - Random: Integrated simple random number generator in viennacl::tools.
   - Scan: Improved performance for inclusive_scan() and exclusive_scan()
-  - Eigenvalues: Fixes and extensions for the bisection method to find the eigenvalues of tridiagonal matrices have been contributed by Andreas Selinger.
+  - sliced_ell_matrix: Improved performance of sparse matrix-vector products by reducing block size to 32.
+  - ViennaProfiler: Removed obsolete bindings.
 
 ## Version 1.6.x
 

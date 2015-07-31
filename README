@@ -17,7 +17,7 @@ A. License
 ViennaCL requires the following:
  * A recent C++ compiler (e.g. gcc 4.x.x)
  * For accessing GPUs and multi-core CPUs: OpenCL (shared library and include files) or CUDA if only targeting NVIDIA GPUs
- * For building some of the tutorials: uBLAS (shipped with the Boost libraries)
+ * For building some of the tutorials: Armadillo, Eigen, MTL4, or uBLAS (shipped with the Boost libraries).
 
 
 2. Installation
@@ -35,7 +35,8 @@ Extract the file using your favorite compressor/decompressor, e.g. 7-zip.
 
 ViennaCL is a header-only library, therefore it is sufficient to copy the subfolder viennacl/ (holding the header files) into you project directory or your system include directory. For instructions on how to set the include paths correctly, please refer to the documentation of your compiler.
 
-For building the examples, proceed as follows:
+Manual builds of the examples are possible and described in the manual.
+In the following we describe the use of CMake:
 
 Unix-based clients:
  * change to the build directory:
