@@ -247,15 +247,48 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & mat,
                const viennacl::vector_base<NumericT> & vec,
                      viennacl::vector_base<NumericT> & result)
 {
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 500
-  if (double(mat.nnz()) / double(mat.size1()) > 6.4) // less than 10% of threads expected to idle
+  static bool first = true;
+  static bool is_maxwell = false;
+
+  // check whether the CUDA device is from the Maxwell family.
+  // Only run once, because the query to the backend takes about the same time as a kernel launch (~15us), thus being too expensive to query each time.
+  //
+  // Note: This might result in non-optimal kernels being selected if multiple Maxwell- and non-Maxwell GPUs are available in the system and devices are switched at runtime.
+  //       However, this situation is certainly rare, hence the the benefits of this singleton outweigh the disadvantages encountered in such a corner case.
+  if (first)
+  {
+    cudaDeviceProp prop;
+    int device_index = 0;
+
+    cudaError_t err_flag = cudaGetDevice(&device_index);
+    if (err_flag == cudaSuccess)
+    {
+      err_flag = cudaGetDeviceProperties(&prop, device_index);
+      if (err_flag == cudaSuccess && prop.major >= 5)
+        is_maxwell = true;
+    }
+    first = false;
+  }
+
+  if (is_maxwell && double(mat.nnz()) / double(mat.size1()) > 6.4) // less than 10% of threads expected to idle
   {
     compressed_matrix_vec_mul_kernel<8,  NumericT><<<512, 256>>>(   // experience on a GTX 750 Ti suggests that 8 is a substantially better choice here
-#else
-  if (double(mat.nnz()) / double(mat.size1()) > 12.0) // less than 25% of threads expected to idle
+                                                                    viennacl::cuda_arg<unsigned int>(mat.handle1()),
+                                                                    viennacl::cuda_arg<unsigned int>(mat.handle2()),
+                                                                    viennacl::cuda_arg<NumericT>(mat.handle()),
+                                                                    viennacl::cuda_arg(vec),
+                                                                    static_cast<unsigned int>(vec.start()),
+                                                                    static_cast<unsigned int>(vec.stride()),
+                                                                    viennacl::cuda_arg(result),
+                                                                    static_cast<unsigned int>(result.start()),
+                                                                    static_cast<unsigned int>(result.stride()),
+                                                                    static_cast<unsigned int>(result.size())
+                                                                   );
+       VIENNACL_CUDA_LAST_ERROR_CHECK("compressed_matrix_vec_mul_kernel");
+  }
+  else if (!is_maxwell && double(mat.nnz()) / double(mat.size1()) > 12.0) // less than 25% of threads expected to idle
   {
     compressed_matrix_vec_mul_kernel<16, NumericT><<<512, 256>>>(   // Fermi and Kepler prefer 16 threads per row (half-warp)
-#endif
                                                                  viennacl::cuda_arg<unsigned int>(mat.handle1()),
                                                                  viennacl::cuda_arg<unsigned int>(mat.handle2()),
                                                                  viennacl::cuda_arg<NumericT>(mat.handle()),
