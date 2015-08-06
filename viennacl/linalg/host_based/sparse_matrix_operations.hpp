@@ -335,6 +335,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
 #if defined(VIENNACL_WITH_OPENMP)
   unsigned int block_factor = 10;
   unsigned int max_threads = omp_get_max_threads();
+  long chunk_size = long(A.size1()) / long(block_factor * max_threads) + 1;
 #else
   unsigned int max_threads = 1;
 #endif
@@ -348,7 +349,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
    */
 
 #if defined(VIENNACL_WITH_OPENMP)
-  #pragma omp parallel for schedule(dynamic, A.size1() / (block_factor * max_threads) + 1)
+  #pragma omp parallel for schedule(dynamic, chunk_size)
 #endif
   for (long i=0; i<long(A.size1()); ++i)
   {
@@ -387,7 +388,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
    */
 
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for schedule(dynamic, A.size1() / (block_factor * max_threads) + 1)
+  #pragma omp parallel for schedule(dynamic, chunk_size)
 #endif
   for (long i=0; i<long(A.size1()); ++i)
   {
@@ -431,7 +432,7 @@ void prod_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & A,
   unsigned int * C_col_buffer = detail::extract_raw_pointer<unsigned int>(C.handle2());
 
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for schedule(dynamic, A.size1() / (block_factor * max_threads) + 1)
+  #pragma omp parallel for schedule(dynamic, chunk_size)
 #endif
   for (long i = 0; i < long(A.size1()); ++i)
   {
