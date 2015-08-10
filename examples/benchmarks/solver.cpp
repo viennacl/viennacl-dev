@@ -21,10 +21,10 @@
 *
 */
 
-
-#ifndef NDEBUG
- #define NDEBUG
+#ifndef BOOST_UBLAS_NDEBUG
+ #define BOOST_UBLAS_NDEBUG
 #endif
+
 
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/io.hpp>
