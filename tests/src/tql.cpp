@@ -30,11 +30,6 @@
 // include necessary system headers
 #include <iostream>
 
-#ifndef NDEBUG
-  #define NDEBUG
-#endif
-
-#define VIENNACL_WITH_UBLAS
 
 //include basic scalar and vector types of ViennaCL
 #include "viennacl/scalar.hpp"
@@ -44,8 +39,6 @@
 #define EPS 10.0e-5
 
 
-
-namespace ublas = boost::numeric::ublas;
 typedef float     ScalarType;
 
 
