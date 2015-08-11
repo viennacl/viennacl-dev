@@ -869,7 +869,10 @@ public:
           }
         }
 
-        viennacl::copy(stl_sparse_matrix, *this);
+        viennacl::tools::sparse_matrix_adapter<NumericT> adapted_matrix(stl_sparse_matrix, new_size1, new_size2);
+        rows_ = new_size1;
+        cols_ = new_size2;
+        viennacl::copy(adapted_matrix, *this);
       }
 
       rows_ = new_size1;
