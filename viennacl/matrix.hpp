@@ -352,7 +352,7 @@ matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT
   else
   {
     if ( proxy.lhs().size1() != proxy.lhs().size2() )
-      this->resize(proxy.lhs().size2(), proxy.lhs().size1());
+      this->resize(proxy.lhs().size2(), proxy.lhs().size1(), false);
     viennacl::linalg::trans(proxy, *this);
   }
   return *this;
