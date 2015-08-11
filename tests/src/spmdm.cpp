@@ -25,26 +25,8 @@
 //
 #include <iostream>
 #include <cmath>
-
-//
-// ublas includes
-//
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/operation.hpp>
-#include <boost/numeric/ublas/operation_sparse.hpp>
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/lu.hpp>
-
-// Must be set if you want to use ViennaCL algorithms on ublas objects
-#define VIENNACL_WITH_UBLAS 1
-//#define VIENNACL_WITH_OPENCL 1
-//#define VIENNACL_WITH_CUDA 1
-//#define VIENNACL_DEBUG_KERNEL 1
-//#define VIENNACL_BUILD_INFO 1
+#include <vector>
+#include <map>
 
 //
 // ViennaCL includes
@@ -63,23 +45,22 @@
 #include "viennacl/tools/random.hpp"
 
 
-using namespace boost::numeric;
-
-template< typename ScalarType >
-int check_matrices(const ublas::matrix< ScalarType >& ref_mat, const ublas::matrix< ScalarType >& mat, ScalarType eps) {
-
-  std::size_t size1, size2;
-  size1 = ref_mat.size1(); size2 = ref_mat.size2();
-  if ( (size1 != mat.size1()) || (size2 != mat.size2()) )
+template<typename NumericT>
+int check_matrices(std::vector<std::vector<NumericT> > const & ref_mat,
+                   std::vector<std::vector<NumericT> > const & mat,
+                   NumericT eps)
+{
+  if ( (ref_mat.size() != mat.size()) || (ref_mat[0].size() != mat[0].size()) )
     return EXIT_FAILURE;
 
-  for (unsigned int i = 0; i < size1; i++)
-    for (unsigned int j = 0; j < size2; j++)
+  for (std::size_t i = 0; i < ref_mat.size(); i++)
+    for (std::size_t j = 0; j < ref_mat[0].size(); j++)
     {
-      ScalarType rel_error = std::abs(ref_mat(i,j) - mat(i,j)) / std::max(std::abs(ref_mat(i,j)), std::abs(mat(i,j)));
-      if ( rel_error > eps ) {
+      NumericT rel_error = std::abs(ref_mat[i][j] - mat[i][j]) / std::max(std::abs(ref_mat[i][j]), std::abs(mat[i][j]));
+      if (rel_error > eps)
+      {
         std::cout << "ERROR: Verification failed at (" << i <<", "<< j << "): "
-                  << " Expected: " << ref_mat(i,j) << ", got: " << mat(i,j) << " (relative error: " << rel_error << ")" << std::endl;
+                  << " Expected: " << ref_mat[i][j] << ", got: " << mat[i][j] << " (relative error: " << rel_error << ")" << std::endl;
         return EXIT_FAILURE;
       }
     }
@@ -88,6 +69,28 @@ int check_matrices(const ublas::matrix< ScalarType >& ref_mat, const ublas::matr
   return EXIT_SUCCESS;
 }
 
+
+// Computes C = A * B for a sparse matrix A and dense matrices B and C.
+// C is initialized with zeros
+template<typename IndexT, typename NumericT>
+void compute_reference_result(std::vector<std::map<IndexT, NumericT> > const & A,
+                              std::vector<std::vector<NumericT> > const & B,
+                              std::vector<std::vector<NumericT> >       & C)
+{
+  typedef typename std::map<IndexT, NumericT>::const_iterator RowIterator;
+
+  for (std::size_t i=0; i<C.size(); ++i)
+    for (RowIterator it = A[i].begin(); it != A[i].end(); ++it)
+    {
+      IndexT   col_A = it->first;
+      NumericT val_A = it->second;
+
+      for (std::size_t j=0; j<C[i].size(); ++j)
+        C[i][j] += val_A * B[col_A][j];
+    }
+}
+
+
 template<typename NumericT, typename ResultLayoutT, typename FactorLayoutT>
 int test(NumericT epsilon)
 {
@@ -95,130 +98,183 @@ int test(NumericT epsilon)
 
   viennacl::tools::uniform_random_numbers<NumericT> randomNumber;
 
-  ublas::compressed_matrix<NumericT>    ublas_lhs;
-
-  if (viennacl::io::read_matrix_market_file(ublas_lhs, "../examples/testdata/mat65k.mtx") == EXIT_FAILURE)
+  std::vector<std::map<unsigned int, NumericT> > std_A;
+  if (viennacl::io::read_matrix_market_file(std_A, "../examples/testdata/mat65k.mtx") == EXIT_FAILURE)
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;
   }
 
   // add some extra weight to diagonal in order to avoid issues with round-off errors
-  for (std::size_t i=0; i<ublas_lhs.size1(); ++i)
-    ublas_lhs(i,i) *= NumericT(1.5);
+  for (std::size_t i=0; i<std_A.size(); ++i)
+    std_A[i][i] *= NumericT(1.5);
 
-  std::size_t cols_rhs = 1;
+  std::size_t cols_rhs = 5;
 
-  viennacl::compressed_matrix<NumericT> compressed_lhs;
-  viennacl::ell_matrix<NumericT>        ell_lhs;
-  viennacl::coordinate_matrix<NumericT> coo_lhs;
-  viennacl::hyb_matrix<NumericT>     hyb_lhs;
+  viennacl::compressed_matrix<NumericT> compressed_A;
+  viennacl::ell_matrix<NumericT>        ell_A;
+  viennacl::coordinate_matrix<NumericT> coo_A;
+  viennacl::hyb_matrix<NumericT>        hyb_A;
 
-  ublas::matrix<NumericT> ublas_result;
-  viennacl::matrix<NumericT, ResultLayoutT> result;
+  std::vector<std::vector<NumericT> >       std_C(std_A.size(), std::vector<NumericT>(cols_rhs));
+  viennacl::matrix<NumericT, ResultLayoutT>     C;
 
-  viennacl::copy( ublas_lhs, compressed_lhs);
-  viennacl::copy( ublas_lhs, ell_lhs);
-  viennacl::copy( ublas_lhs, coo_lhs);
-  viennacl::copy( ublas_lhs, hyb_lhs);
+  viennacl::copy(std_A, compressed_A);
+  viennacl::copy(std_A, ell_A);
+  viennacl::copy(std_A, coo_A);
+  viennacl::copy(std_A, hyb_A);
 
-  ublas::matrix<NumericT> ublas_rhs1(ublas_lhs.size2(), cols_rhs);
-  viennacl::matrix<NumericT, FactorLayoutT> rhs1(ublas_lhs.size2(), cols_rhs);
+  std::vector<std::vector<NumericT> >        std_B(std_A.size(), std::vector<NumericT>(cols_rhs));
+  viennacl::matrix<NumericT, FactorLayoutT>  B1(std_A.size(), cols_rhs);
+  viennacl::matrix<NumericT, FactorLayoutT>  B2;
 
-  ublas::matrix<NumericT> ublas_rhs2;
-  viennacl::matrix<NumericT, FactorLayoutT> rhs2;
+  std::vector<std::vector<NumericT> > temp(std_A.size(), std::vector<NumericT>(cols_rhs));
 
-  ublas::matrix<NumericT> temp(ublas_rhs1.size1(), cols_rhs);
+  for (unsigned int i = 0; i < std_B.size(); i++)
+    for (unsigned int j = 0; j < std_B[i].size(); j++)
+      std_B[i][j] = NumericT(0.5) + NumericT(0.1) * randomNumber();
+  viennacl::copy(std_B, B1);
 
-  for (unsigned int i = 0; i < ublas_rhs1.size1(); i++)
-    for (unsigned int j = 0; j < ublas_rhs1.size2(); j++)
-      ublas_rhs1(i,j) = NumericT(0.5) + NumericT(0.1) * randomNumber();
-  viennacl::copy( ublas_rhs1, rhs1);
-
-  ublas_rhs2 = ublas::trans( ublas_rhs1);
-  viennacl::copy( ublas_rhs2, rhs2);
 
   /* gold result */
-  ublas_result = ublas::prod( ublas_lhs, ublas_rhs1);
+  compute_reference_result(std_A, std_B, std_C);
 
   /******************************************************************/
   std::cout << "Testing compressed(CSR) lhs * dense rhs" << std::endl;
-  result = viennacl::linalg::prod( compressed_lhs, rhs1);
+  C = viennacl::linalg::prod(compressed_A, B1);
 
-  temp.clear();
-  viennacl::copy( result, temp);
-  retVal = check_matrices(ublas_result, temp, epsilon);
+  for (std::size_t i=0; i<temp.size(); ++i)
+    for (std::size_t j=0; j<temp[i].size(); ++j)
+      temp[i][j] = 0;
+  viennacl::copy(C, temp);
+  retVal = check_matrices(std_C, temp, epsilon);
+  if (retVal != EXIT_SUCCESS)
+  {
+    std::cerr << "Test failed!" << std::endl;
+    return retVal;
+  }
 
   /******************************************************************/
   std::cout << "Testing compressed(ELL) lhs * dense rhs" << std::endl;
-  result.clear();
-  result = viennacl::linalg::prod( ell_lhs, rhs1);
+  C.clear();
+  C = viennacl::linalg::prod(ell_A, B1);
 
-  temp.clear();
-  viennacl::copy( result, temp);
-  check_matrices(ublas_result, temp, epsilon);
+  for (std::size_t i=0; i<temp.size(); ++i)
+    for (std::size_t j=0; j<temp[i].size(); ++j)
+      temp[i][j] = 0;
+  viennacl::copy(C, temp);
+  retVal = check_matrices(std_C, temp, epsilon);
+  if (retVal != EXIT_SUCCESS)
+  {
+    std::cerr << "Test failed!" << std::endl;
+    return retVal;
+  }
 
   /******************************************************************/
 
   std::cout << "Testing compressed(COO) lhs * dense rhs" << std::endl;
-  result.clear();
-  result = viennacl::linalg::prod( coo_lhs, rhs1);
+  C.clear();
+  C = viennacl::linalg::prod(coo_A, B1);
 
-  temp.clear();
-  viennacl::copy( result, temp);
-  check_matrices(ublas_result, temp, epsilon);
+  for (std::size_t i=0; i<temp.size(); ++i)
+    for (std::size_t j=0; j<temp[i].size(); ++j)
+      temp[i][j] = 0;
+  viennacl::copy(C, temp);
+  retVal = check_matrices(std_C, temp, epsilon);
+  if (retVal != EXIT_SUCCESS)
+  {
+    std::cerr << "Test failed!" << std::endl;
+    return retVal;
+  }
 
   /******************************************************************/
 
   std::cout << "Testing compressed(HYB) lhs * dense rhs" << std::endl;
-  result.clear();
-  result = viennacl::linalg::prod( hyb_lhs, rhs1);
+  C.clear();
+  C = viennacl::linalg::prod(hyb_A, B1);
 
-  temp.clear();
-  viennacl::copy( result, temp);
-  check_matrices(ublas_result, temp, epsilon);
+  for (std::size_t i=0; i<temp.size(); ++i)
+    for (std::size_t j=0; j<temp[i].size(); ++j)
+      temp[i][j] = 0;
+  viennacl::copy(C, temp);
+  retVal = check_matrices(std_C, temp, epsilon);
+  if (retVal != EXIT_SUCCESS)
+  {
+    std::cerr << "Test failed!" << std::endl;
+    return retVal;
+  }
 
   /******************************************************************/
 
-  /* gold result */
-  ublas_result = ublas::prod( ublas_lhs, ublas::trans(ublas_rhs2));
+
+  ///////////// transposed right hand side
+
+  B2 = viennacl::trans(B1);
 
   /******************************************************************/
   std::cout << std::endl << "Testing compressed(CSR) lhs * transposed dense rhs:" << std::endl;
-  result.clear();
-  result = viennacl::linalg::prod( compressed_lhs, viennacl::trans(rhs2));
+  C.clear();
+  C = viennacl::linalg::prod(compressed_A, viennacl::trans(B2));
 
-  temp.clear();
-  viennacl::copy( result, temp);
-  retVal = check_matrices(ublas_result, temp, epsilon);
+  for (std::size_t i=0; i<temp.size(); ++i)
+    for (std::size_t j=0; j<temp[i].size(); ++j)
+      temp[i][j] = 0;
+  viennacl::copy(C, temp);
+  retVal = check_matrices(std_C, temp, epsilon);
+  if (retVal != EXIT_SUCCESS)
+  {
+    std::cerr << "Test failed!" << std::endl;
+    return retVal;
+  }
 
   /******************************************************************/
   std::cout << "Testing compressed(ELL) lhs * transposed dense rhs" << std::endl;
-  result.clear();
-  result = viennacl::linalg::prod( ell_lhs, viennacl::trans(rhs2));
+  C.clear();
+  C = viennacl::linalg::prod(ell_A, viennacl::trans(B2));
 
-  temp.clear();
-  viennacl::copy( result, temp);
-  check_matrices(ublas_result, temp, epsilon);
+  for (std::size_t i=0; i<temp.size(); ++i)
+    for (std::size_t j=0; j<temp[i].size(); ++j)
+      temp[i][j] = 0;
+  viennacl::copy(C, temp);
+  retVal = check_matrices(std_C, temp, epsilon);
+  if (retVal != EXIT_SUCCESS)
+  {
+    std::cerr << "Test failed!" << std::endl;
+    return retVal;
+  }
 
   /******************************************************************/
   std::cout << "Testing compressed(COO) lhs * transposed dense rhs" << std::endl;
-  result.clear();
-  result = viennacl::linalg::prod( coo_lhs, viennacl::trans(rhs2));
+  C.clear();
+  C = viennacl::linalg::prod(coo_A, viennacl::trans(B2));
 
-  temp.clear();
-  viennacl::copy( result, temp);
-  check_matrices(ublas_result, temp, epsilon);
+  for (std::size_t i=0; i<temp.size(); ++i)
+    for (std::size_t j=0; j<temp[i].size(); ++j)
+      temp[i][j] = 0;
+  viennacl::copy(C, temp);
+  retVal = check_matrices(std_C, temp, epsilon);
+  if (retVal != EXIT_SUCCESS)
+  {
+    std::cerr << "Test failed!" << std::endl;
+    return retVal;
+  }
 
   /******************************************************************/
 
   std::cout << "Testing compressed(HYB) lhs * transposed dense rhs" << std::endl;
-  result.clear();
-  result = viennacl::linalg::prod( hyb_lhs, viennacl::trans(rhs2));
+  C.clear();
+  C = viennacl::linalg::prod(hyb_A, viennacl::trans(B2));
 
-  temp.clear();
-  viennacl::copy( result, temp);
-  check_matrices(ublas_result, temp, epsilon);
+  for (std::size_t i=0; i<temp.size(); ++i)
+    for (std::size_t j=0; j<temp[i].size(); ++j)
+      temp[i][j] = 0;
+  viennacl::copy(C, temp);
+  retVal = check_matrices(std_C, temp, epsilon);
+  if (retVal != EXIT_SUCCESS)
+  {
+    std::cerr << "Test failed!" << std::endl;
+    return retVal;
+  }
 
   /******************************************************************/
   if (retVal == EXIT_SUCCESS) {
