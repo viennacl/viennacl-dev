@@ -224,8 +224,14 @@ template<typename IndexT, typename NumericT, typename IndexT2>
 void copy(std::vector< std::map<IndexT, NumericT> > const & cpu_matrix,
           sliced_ell_matrix<NumericT, IndexT2> & gpu_matrix)
 {
-  tools::const_sparse_matrix_adapter<NumericT, IndexT> temp(cpu_matrix, cpu_matrix.size(), cpu_matrix.size());
-  viennacl::copy(temp, gpu_matrix);
+  vcl_size_t max_col = 0;
+  for (vcl_size_t i=0; i<cpu_matrix.size(); ++i)
+  {
+    if (cpu_matrix[i].size() > 0)
+      max_col = std::max<vcl_size_t>(max_col, (cpu_matrix[i].rbegin())->first);
+  }
+
+  viennacl::copy(tools::const_sparse_matrix_adapter<NumericT, IndexT>(cpu_matrix, cpu_matrix.size(), max_col + 1), gpu_matrix);
 }
 
 
