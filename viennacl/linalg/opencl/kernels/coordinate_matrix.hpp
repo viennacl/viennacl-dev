@@ -152,7 +152,7 @@ namespace detail
     source.append("    tmp = (local_index < group_end) ? coords[local_index] : (uint2) 0; \n");
     if (B_transposed && B_row_major)
       source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start + result_col * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start +      tmp.y * d_mat_col_inc ] : 0; \n");
-    if (B_transposed && !B_row_major)
+    else if (B_transposed && !B_row_major)
       source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start + result_col * d_mat_row_inc)                       + (d_mat_col_start +      tmp.y * d_mat_col_inc) * d_mat_internal_rows ] : 0; \n");
     else if (!B_transposed && B_row_major)
       source.append("    val = (local_index < group_end) ? elements[local_index] * d_mat[ (d_mat_row_start +      tmp.y * d_mat_row_inc) * d_mat_internal_cols + d_mat_col_start + result_col * d_mat_col_inc ] : 0; \n");
