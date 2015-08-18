@@ -789,13 +789,34 @@ void norm_inf_impl(vector_base<NumericT> const & vec1,
   vcl_size_t inc1   = viennacl::traits::stride(vec1);
   vcl_size_t size1  = viennacl::traits::size(vec1);
 
-  value_type temp = 0;
+  vcl_size_t thread_count=1;
 
-  // Note: No max() reduction in OpenMP yet
-  for (vcl_size_t i = 0; i < size1; ++i)
-    temp = std::max<value_type>(temp, static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[i*inc1+start1]))));  //casting to double in order to avoid problems if T is an integer type
+  #ifdef VIENNACL_WITH_OPENMP
+  if(size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+      thread_count = omp_get_max_threads();
+  #endif
 
-  result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+  value_type temp[thread_count];
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+  {
+    vcl_size_t id = 0;
+#ifdef VIENNACL_WITH_OPENMP
+    id = omp_get_thread_num();
+#endif
+
+    vcl_size_t begin = (size1 * id) / thread_count;
+    vcl_size_t end   = (size1 * (id + 1)) / thread_count;
+    temp[id]         = 0;
+
+    for (vcl_size_t i = begin; i < end; ++i)
+      temp[id] = std::max<value_type>(temp[id], static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[i*inc1+start1]))));  //casting to double in order to avoid problems if T is an integer type
+  }
+  for (vcl_size_t i = 1; i < thread_count; ++i)
+    temp[0] = std::max<value_type>( temp[0], temp[i]);
+  result  = temp[0];
 }
 
 //This function should return a CPU scalar, otherwise statements like
