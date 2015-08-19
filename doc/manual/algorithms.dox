@@ -203,8 +203,10 @@ std::cout << "Est. error: " << my_gmres_tag.error() << std::endl;
 
 \section manual-algorithms-preconditioners Preconditioners
 ViennaCL provides (partially) generic implementations of several preconditioners.
-The preconditioner setup is expect for simple diagonal preconditioners always carried out on the CPU host due to the need for dynamically allocating memory.
+Due to the need to dynamically allocate memory, preconditioner setup is usually carried out on the CPU host.
 Thus, one may not obtain an overall performance benefit if too much time is spent on the preconditioner setup.
+Exceptions are simple diagonal preconditioners and the Chow-Patel ILU and ICC preconditioners, which have static
+allocation patterns and can be computed on the backend device.
 
 \note Some preconditioners also work for Boost.uBLAS types!
 
