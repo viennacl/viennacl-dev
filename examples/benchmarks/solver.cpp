@@ -222,7 +222,7 @@ int run_benchmark(viennacl::context ctx)
   for (int runs=0; runs<BENCHMARK_RUNS; ++runs)
     vcl_chow_patel_icc.apply(vcl_vec1);
   viennacl::backend::finish();
-  std::cout << "ViennaCL Chow-Patel-ILU substitution time: " << timer.get() << std::endl;
+  std::cout << "ViennaCL Chow-Patel-ICC substitution time: " << timer.get() << std::endl;
 
 
   ///////////////////////////////////////////////////////////////////////////////

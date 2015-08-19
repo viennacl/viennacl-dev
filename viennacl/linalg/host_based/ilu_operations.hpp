@@ -576,7 +576,7 @@ void ilu_chow_patel_sweep(compressed_matrix<NumericT>       & L,
       }
 
       // update l_ij:
-      assert(U_col_buffer[row_U_end - 1] == row && bool("Accessing U element which is not a diagonal element!"));
+      assert(U_col_buffer[row_U_end - 1] == col && bool("Accessing U element which is not a diagonal element!"));
       L_elements[j] = (aij_L_ptr[j] - sum) / U_backup[row_U_end - 1];  // diagonal element is last entry in U
     }
 
