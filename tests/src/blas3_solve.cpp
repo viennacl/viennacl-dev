@@ -27,29 +27,13 @@
 // *** System
 //
 #include <iostream>
-
-// We don't need debug mode in UBLAS:
-#ifndef NDEBUG
-  #define BOOST_UBLAS_NDEBUG
-#endif
-
-//
-// *** Boost
-//
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/lu.hpp>
-#include <boost/numeric/ublas/io.hpp>
+#include <vector>
 
 //
 // *** ViennaCL
 //
 //#define VIENNACL_DEBUG_ALL
 //#define VIENNACL_DEBUG_BUILD
-#define VIENNACL_WITH_UBLAS 1
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/matrix_proxy.hpp"
@@ -58,10 +42,7 @@
 #include "viennacl/linalg/norm_2.hpp"
 #include "viennacl/linalg/direct_solve.hpp"
 #include "viennacl/tools/random.hpp"
-//
-// -------------------------------------------------------------
-//
-using namespace boost::numeric;
+
 //
 // -------------------------------------------------------------
 //
@@ -75,9 +56,9 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 }
 
 template<typename ScalarType>
-ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
+ScalarType diff(std::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
-   ublas::vector<ScalarType> v2_cpu(v2.size());
+   std::vector<ScalarType> v2_cpu(v2.size());
    viennacl::backend::finish();
    viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
    viennacl::backend::finish();
@@ -95,19 +76,19 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
 
 
 template<typename ScalarType, typename VCLMatrixType>
-ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
+ScalarType diff(std::vector<std::vector<ScalarType> > & mat1, VCLMatrixType & mat2)
 {
-   ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
+   std::vector<std::vector<ScalarType> > mat2_cpu(mat2.size1(), std::vector<ScalarType>(mat2.size2()));
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
    ScalarType ret = 0;
    ScalarType act = 0;
 
-    for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
+    for (unsigned int i = 0; i < mat2_cpu.size(); ++i)
     {
-      for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
+      for (unsigned int j = 0; j < mat2_cpu[i].size(); ++j)
       {
-         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
+        act = std::fabs(mat2_cpu[i][j] - mat1[i][j]) / std::max( std::fabs(mat2_cpu[i][j]), std::fabs(mat1[i][j]) );
          if (act > ret)
            ret = act;
       }
@@ -122,6 +103,76 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
 // Triangular solvers
 //
 
+template<typename NumericT>
+void inplace_solve_lower(std::vector<std::vector<NumericT> > const & A, std::vector<std::vector<NumericT> > & B, bool unit_diagonal)
+{
+  for (std::size_t i=0; i<A.size(); ++i)
+  {
+    for (std::size_t j=0; j < i; ++j)
+    {
+      NumericT val_A = A[i][j];
+      for (std::size_t k=0; k<B[i].size(); ++k)
+        B[i][k] -= val_A * B[j][k];
+    }
+
+    NumericT diag_A = unit_diagonal ? NumericT(1) : A[i][i];
+
+    for (std::size_t k=0; k<B[i].size(); ++k)
+      B[i][k] /= diag_A;
+  }
+}
+
+template<typename NumericT>
+void inplace_solve(std::vector<std::vector<NumericT> > const & A, std::vector<std::vector<NumericT> > & B, viennacl::linalg::lower_tag)
+{
+  inplace_solve_lower(A, B, false);
+}
+
+template<typename NumericT>
+void inplace_solve(std::vector<std::vector<NumericT> > const & A, std::vector<std::vector<NumericT> > & B, viennacl::linalg::unit_lower_tag)
+{
+  inplace_solve_lower(A, B, true);
+}
+
+template<typename NumericT>
+void inplace_solve_upper(std::vector<std::vector<NumericT> > const & A, std::vector<std::vector<NumericT> > & B, bool unit_diagonal)
+{
+  for (std::size_t i2=0; i2<A.size(); ++i2)
+  {
+    std::size_t i = A.size() - i2 - 1;
+    for (std::size_t j=i+1; j < A[0].size(); ++j)
+    {
+      NumericT val_A = A[i][j];
+      for (std::size_t k=0; k<B[i].size(); ++k)
+        B[i][k] -= val_A * B[j][k];
+    }
+
+    NumericT diag_A = unit_diagonal ? NumericT(1) : A[i][i];
+
+    for (std::size_t k=0; k<B[i].size(); ++k)
+      B[i][k] /= diag_A;
+  }
+}
+
+template<typename NumericT>
+void inplace_solve(std::vector<std::vector<NumericT> > const & A, std::vector<std::vector<NumericT> > & B, viennacl::linalg::upper_tag)
+{
+  inplace_solve_upper(A, B, false);
+}
+
+template<typename NumericT>
+void inplace_solve(std::vector<std::vector<NumericT> > const & A, std::vector<std::vector<NumericT> > & B, viennacl::linalg::unit_upper_tag)
+{
+  inplace_solve_upper(A, B, true);
+}
+
+template<typename NumericT, typename SolverTagT>
+std::vector<std::vector<NumericT> > solve(std::vector<std::vector<NumericT> > const & A, std::vector<std::vector<NumericT> > const & B, SolverTagT)
+{
+  std::vector<std::vector<NumericT> > C(B);
+  inplace_solve(A, C, SolverTagT());
+  return C;
+}
 
 
 template<typename RHSTypeRef, typename RHSTypeCheck, typename Epsilon >
@@ -138,6 +189,18 @@ void run_solver_check(RHSTypeRef & B_ref, RHSTypeCheck & B_check, int & retval, 
    else
      std::cout << " passed! " << act_diff << std::endl;
 
+}
+
+template<typename NumericT>
+std::vector<std::vector<NumericT> > trans(std::vector<std::vector<NumericT> > const & A)
+{
+  std::vector<std::vector<NumericT> > A_trans(A[0].size(), std::vector<NumericT>(A.size()));
+
+  for (std::size_t i=0; i<A.size(); ++i)
+    for (std::size_t j=0; j<A[i].size(); ++j)
+      A_trans[j][i] = A[i][j];
+
+  return A_trans;
 }
 
 
@@ -171,22 +234,22 @@ int test_solve(Epsilon const& epsilon,
    // Test: A \ B with various tags --------------------------------------------------------------------------
    std::cout << "Testing A \\ B: " << std::endl;
    std::cout << " * upper_tag:      ";
-   result = ublas::solve(A, B, ublas::upper_tag());
+   result = solve(A, B, viennacl::linalg::upper_tag());
    vcl_result = viennacl::linalg::solve(vcl_A, vcl_B, viennacl::linalg::upper_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
 
    std::cout << " * unit_upper_tag: ";
-   result = ublas::solve(A, B, ublas::unit_upper_tag());
+   result = solve(A, B, viennacl::linalg::unit_upper_tag());
    vcl_result = viennacl::linalg::solve(vcl_A, vcl_B, viennacl::linalg::unit_upper_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
 
    std::cout << " * lower_tag:      ";
-   result = ublas::solve(A, B, ublas::lower_tag());
+   result = solve(A, B, viennacl::linalg::lower_tag());
    vcl_result = viennacl::linalg::solve(vcl_A, vcl_B, viennacl::linalg::lower_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
 
    std::cout << " * unit_lower_tag: ";
-   result = ublas::solve(A, B, ublas::unit_lower_tag());
+   result = solve(A, B, viennacl::linalg::unit_lower_tag());
    vcl_result = viennacl::linalg::solve(vcl_A, vcl_B, viennacl::linalg::unit_lower_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
 
@@ -201,30 +264,30 @@ int test_solve(Epsilon const& epsilon,
    std::cout << " * upper_tag:      ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
    //check solve():
-   result = ublas::solve(A, C_trans, ublas::upper_tag());
+   result = solve(A, C_trans, viennacl::linalg::upper_tag());
    vcl_result = viennacl::linalg::solve(vcl_A, trans(vcl_C), viennacl::linalg::upper_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
    //check compute kernels:
    std::cout << " * upper_tag:      ";
-   ublas::inplace_solve(A, C_trans, ublas::upper_tag());
+   inplace_solve(A, C_trans, viennacl::linalg::upper_tag());
    viennacl::linalg::inplace_solve(vcl_A, trans(vcl_C), viennacl::linalg::upper_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
 
    std::cout << " * unit_upper_tag: ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
-   ublas::inplace_solve(A, C_trans, ublas::unit_upper_tag());
+   inplace_solve(A, C_trans, viennacl::linalg::unit_upper_tag());
    viennacl::linalg::inplace_solve(vcl_A, trans(vcl_C), viennacl::linalg::unit_upper_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
 
    std::cout << " * lower_tag:      ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
-   ublas::inplace_solve(A, C_trans, ublas::lower_tag());
+   inplace_solve(A, C_trans, viennacl::linalg::lower_tag());
    viennacl::linalg::inplace_solve(vcl_A, trans(vcl_C), viennacl::linalg::lower_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
 
    std::cout << " * unit_lower_tag: ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
-   ublas::inplace_solve(A, C_trans, ublas::unit_lower_tag());
+   inplace_solve(A, C_trans, viennacl::linalg::unit_lower_tag());
    viennacl::linalg::inplace_solve(vcl_A, trans(vcl_C), viennacl::linalg::unit_lower_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
 
@@ -238,25 +301,25 @@ int test_solve(Epsilon const& epsilon,
    std::cout << "Testing A^T \\ B: " << std::endl;
    std::cout << " * upper_tag:      ";
    viennacl::copy(B, vcl_B);
-   result = ublas::solve(trans(A), B, ublas::upper_tag());
+   result = solve(trans(A), B, viennacl::linalg::upper_tag());
    vcl_result = viennacl::linalg::solve(trans(vcl_A), vcl_B, viennacl::linalg::upper_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
 
    std::cout << " * unit_upper_tag: ";
    viennacl::copy(B, vcl_B);
-   result = ublas::solve(trans(A), B, ublas::unit_upper_tag());
+   result = solve(trans(A), B, viennacl::linalg::unit_upper_tag());
    vcl_result = viennacl::linalg::solve(trans(vcl_A), vcl_B, viennacl::linalg::unit_upper_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
 
    std::cout << " * lower_tag:      ";
    viennacl::copy(B, vcl_B);
-   result = ublas::solve(trans(A), B, ublas::lower_tag());
+   result = solve(trans(A), B, viennacl::linalg::lower_tag());
    vcl_result = viennacl::linalg::solve(trans(vcl_A), vcl_B, viennacl::linalg::lower_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
 
    std::cout << " * unit_lower_tag: ";
    viennacl::copy(B, vcl_B);
-   result = ublas::solve(trans(A), B, ublas::unit_lower_tag());
+   result = solve(trans(A), B, viennacl::linalg::unit_lower_tag());
    vcl_result = viennacl::linalg::solve(trans(vcl_A), vcl_B, viennacl::linalg::unit_lower_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
 
@@ -271,30 +334,30 @@ int test_solve(Epsilon const& epsilon,
    std::cout << " * upper_tag:      ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
    //check solve():
-   result = ublas::solve(trans(A), C_trans, ublas::upper_tag());
+   result = solve(trans(A), C_trans, viennacl::linalg::upper_tag());
    vcl_result = viennacl::linalg::solve(trans(vcl_A), trans(vcl_C), viennacl::linalg::upper_tag());
    run_solver_check(result, vcl_result, retval, epsilon);
    //check kernels:
    std::cout << " * upper_tag:      ";
-   ublas::inplace_solve(trans(A), C_trans, ublas::upper_tag());
+   inplace_solve(trans(A), C_trans, viennacl::linalg::upper_tag());
    viennacl::linalg::inplace_solve(trans(vcl_A), trans(vcl_C), viennacl::linalg::upper_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
 
    std::cout << " * unit_upper_tag: ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
-   ublas::inplace_solve(trans(A), C_trans, ublas::unit_upper_tag());
+   inplace_solve(trans(A), C_trans, viennacl::linalg::unit_upper_tag());
    viennacl::linalg::inplace_solve(trans(vcl_A), trans(vcl_C), viennacl::linalg::unit_upper_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
 
    std::cout << " * lower_tag:      ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
-   ublas::inplace_solve(trans(A), C_trans, ublas::lower_tag());
+   inplace_solve(trans(A), C_trans, viennacl::linalg::lower_tag());
    viennacl::linalg::inplace_solve(trans(vcl_A), trans(vcl_C), viennacl::linalg::lower_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
 
    std::cout << " * unit_lower_tag: ";
    viennacl::copy(C, vcl_C); C_trans = trans(C);
-   ublas::inplace_solve(trans(A), C_trans, ublas::unit_lower_tag());
+   inplace_solve(trans(A), C_trans, viennacl::linalg::unit_lower_tag());
    viennacl::linalg::inplace_solve(trans(vcl_A), trans(vcl_C), viennacl::linalg::unit_lower_tag());
    C = trans(C_trans); run_solver_check(C, vcl_C, retval, epsilon);
 
@@ -317,24 +380,24 @@ int test_solve(Epsilon const& epsilon)
   std::cout << "--- Part 2: Testing matrix-matrix solver ---" << std::endl;
 
 
-  ublas::matrix<NumericT> A(matrix_size, matrix_size);
-  ublas::matrix<NumericT> B_start(matrix_size, rhs_num);
-  ublas::matrix<NumericT> C_start(rhs_num, matrix_size);
+  std::vector<std::vector<NumericT> > A(matrix_size, std::vector<NumericT>(matrix_size));
+  std::vector<std::vector<NumericT> > B_start(matrix_size,  std::vector<NumericT>(rhs_num));
+  std::vector<std::vector<NumericT> > C_start(rhs_num,  std::vector<NumericT>(matrix_size));
 
-  for (std::size_t i = 0; i < A.size1(); ++i)
+  for (std::size_t i = 0; i < A.size(); ++i)
   {
-    for (std::size_t j = 0; j < A.size2(); ++j)
-        A(i,j) = static_cast<NumericT>(-0.5) * randomNumber();
-    A(i,i) = NumericT(1.0) + NumericT(2.0) * randomNumber(); //some extra weight on diagonal for stability
+    for (std::size_t j = 0; j < A[i].size(); ++j)
+        A[i][j] = static_cast<NumericT>(-0.5) * randomNumber();
+    A[i][i] = NumericT(1.0) + NumericT(2.0) * randomNumber(); //some extra weight on diagonal for stability
   }
 
-  for (std::size_t i = 0; i < B_start.size1(); ++i)
-    for (std::size_t j = 0; j < B_start.size2(); ++j)
-        B_start(i,j) = randomNumber();
+  for (std::size_t i = 0; i < B_start.size(); ++i)
+    for (std::size_t j = 0; j < B_start[i].size(); ++j)
+      B_start[i][j] = randomNumber();
 
-  for (std::size_t i = 0; i < C_start.size1(); ++i)
-    for (std::size_t j = 0; j < C_start.size2(); ++j)
-        C_start(i,j) = randomNumber();
+  for (std::size_t i = 0; i < C_start.size(); ++i)
+    for (std::size_t j = 0; j < C_start[i].size(); ++j)
+      C_start[i][j] = randomNumber();
 
 
   // A
