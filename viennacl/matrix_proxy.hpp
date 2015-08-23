@@ -26,9 +26,42 @@
 #include "viennacl/range.hpp"
 #include "viennacl/slice.hpp"
 #include "viennacl/detail/matrix_def.hpp"
+#include "viennacl/traits/size.hpp"
 
 namespace viennacl
 {
+
+namespace detail
+{
+  ///////// const access
+
+  template<typename NumericT, typename MatrixT>
+  NumericT const & matrix_access(MatrixT const & A, vcl_size_t i, vcl_size_t j)
+  {
+    return A(i, j);
+  }
+
+  template<typename NumericT>
+  NumericT const & matrix_access(std::vector< std::vector<NumericT> > const & A, vcl_size_t i, vcl_size_t j)
+  {
+    return A[i][j];
+  }
+
+  //////// non-const access
+
+  template<typename NumericT, typename MatrixT>
+  NumericT & matrix_access(MatrixT & A, vcl_size_t i, vcl_size_t j)
+  {
+    return A(i, j);
+  }
+
+  template<typename NumericT>
+  NumericT & matrix_access(std::vector< std::vector<NumericT> > & A, vcl_size_t i, vcl_size_t j)
+  {
+    return A[i][j];
+  }
+
+}
 
 /** @brief Class for representing non-strided submatrices of a bigger matrix A.
   *
@@ -114,8 +147,8 @@ template<typename CPUMatrixT, typename NumericT>
 void copy(const CPUMatrixT & cpu_matrix,
           matrix_range<matrix<NumericT, row_major, 1> > & gpu_matrix_range )
 {
-  assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
-          && (cpu_matrix.size2() == gpu_matrix_range.size2())
+  assert(    (viennacl::traits::size1(cpu_matrix) == gpu_matrix_range.size1())
+          && (viennacl::traits::size2(cpu_matrix) == gpu_matrix_range.size2())
           && bool("Matrix size mismatch!"));
 
   if ( gpu_matrix_range.start2() != 0)
@@ -126,7 +159,7 @@ void copy(const CPUMatrixT & cpu_matrix,
     for (vcl_size_t i=0; i < gpu_matrix_range.size1(); ++i)
     {
       for (vcl_size_t j=0; j < gpu_matrix_range.size2(); ++j)
-        entries[j] = cpu_matrix(i,j);
+        entries[j] = detail::matrix_access<NumericT>(cpu_matrix, i, j);
 
       vcl_size_t start_offset = (gpu_matrix_range.start1() + i) * gpu_matrix_range.internal_size2() + gpu_matrix_range.start2();
       vcl_size_t num_entries = gpu_matrix_range.size2();
@@ -142,7 +175,7 @@ void copy(const CPUMatrixT & cpu_matrix,
     //copy each stride separately:
     for (vcl_size_t i=0; i < gpu_matrix_range.size1(); ++i)
       for (vcl_size_t j=0; j < gpu_matrix_range.size2(); ++j)
-        entries[i*gpu_matrix_range.internal_size2() + j] = cpu_matrix(i,j);
+        entries[i*gpu_matrix_range.internal_size2() + j] = detail::matrix_access<NumericT>(cpu_matrix, i, j);
 
     vcl_size_t start_offset = gpu_matrix_range.start1() * gpu_matrix_range.internal_size2();
     vcl_size_t num_entries = gpu_matrix_range.size1() * gpu_matrix_range.internal_size2();
@@ -156,8 +189,8 @@ template<typename CPUMatrixT, typename NumericT>
 void copy(const CPUMatrixT & cpu_matrix,
           matrix_range<matrix<NumericT, column_major, 1> > & gpu_matrix_range )
 {
-  assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
-          && (cpu_matrix.size2() == gpu_matrix_range.size2())
+  assert(    (viennacl::traits::size1(cpu_matrix) == gpu_matrix_range.size1())
+          && (viennacl::traits::size2(cpu_matrix) == gpu_matrix_range.size2())
           && bool("Matrix size mismatch!"));
 
   if ( gpu_matrix_range.start1() != 0 ||  gpu_matrix_range.size1() != gpu_matrix_range.size1())
@@ -168,7 +201,7 @@ void copy(const CPUMatrixT & cpu_matrix,
     for (vcl_size_t j=0; j < gpu_matrix_range.size2(); ++j)
     {
       for (vcl_size_t i=0; i < gpu_matrix_range.size1(); ++i)
-        entries[i] = cpu_matrix(i,j);
+        entries[i] = detail::matrix_access<NumericT>(cpu_matrix, i, j);
 
       vcl_size_t start_offset = (gpu_matrix_range.start2() + j) * gpu_matrix_range.internal_size1() + gpu_matrix_range.start1();
       vcl_size_t num_entries = gpu_matrix_range.size1();
@@ -184,7 +217,7 @@ void copy(const CPUMatrixT & cpu_matrix,
     //copy each stride separately:
     for (vcl_size_t i=0; i < gpu_matrix_range.size1(); ++i)
       for (vcl_size_t j=0; j < gpu_matrix_range.size2(); ++j)
-        entries[i + j*gpu_matrix_range.internal_size1()] = cpu_matrix(i,j);
+        entries[i + j*gpu_matrix_range.internal_size1()] = detail::matrix_access<NumericT>(cpu_matrix, i, j);
 
     vcl_size_t start_offset = gpu_matrix_range.start2() * gpu_matrix_range.internal_size1();
     vcl_size_t num_entries = gpu_matrix_range.internal_size1() * gpu_matrix_range.size2();
@@ -205,8 +238,8 @@ template<typename CPUMatrixT, typename NumericT>
 void copy(matrix_range<matrix<NumericT, row_major, 1> > const & gpu_matrix_range,
           CPUMatrixT & cpu_matrix)
 {
-  assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
-          && (cpu_matrix.size2() == gpu_matrix_range.size2())
+  assert(    (viennacl::traits::size1(cpu_matrix) == gpu_matrix_range.size1())
+          && (viennacl::traits::size2(cpu_matrix) == gpu_matrix_range.size2())
           && bool("Matrix size mismatch!"));
 
   if ( gpu_matrix_range.start2() != 0)
@@ -222,7 +255,7 @@ void copy(matrix_range<matrix<NumericT, row_major, 1> > const & gpu_matrix_range
       //std::cout << "Strided copy worked!" << std::endl;
 
       for (vcl_size_t j=0; j < gpu_matrix_range.size2(); ++j)
-        cpu_matrix(i,j) = entries[j];
+        detail::matrix_access<NumericT>(cpu_matrix, i, j) = entries[j];
     }
   }
   else
@@ -236,7 +269,7 @@ void copy(matrix_range<matrix<NumericT, row_major, 1> > const & gpu_matrix_range
 
     for (vcl_size_t i=0; i < gpu_matrix_range.size1(); ++i)
       for (vcl_size_t j=0; j < gpu_matrix_range.size2(); ++j)
-        cpu_matrix(i,j) = entries[i*gpu_matrix_range.internal_size2() + j];
+        detail::matrix_access<NumericT>(cpu_matrix, i, j) = entries[i*gpu_matrix_range.internal_size2() + j];
   }
 
 }
@@ -247,8 +280,8 @@ template<typename CPUMatrixT, typename NumericT>
 void copy(matrix_range<matrix<NumericT, column_major, 1> > const & gpu_matrix_range,
           CPUMatrixT & cpu_matrix)
 {
-  assert( (cpu_matrix.size1() == gpu_matrix_range.size1())
-          && (cpu_matrix.size2() == gpu_matrix_range.size2())
+  assert(    (viennacl::traits::size1(cpu_matrix) == gpu_matrix_range.size1())
+          && (viennacl::traits::size2(cpu_matrix) == gpu_matrix_range.size2())
           && bool("Matrix size mismatch!"));
 
   if ( gpu_matrix_range.start1() != 0)
@@ -264,7 +297,7 @@ void copy(matrix_range<matrix<NumericT, column_major, 1> > const & gpu_matrix_ra
       //std::cout << "Strided copy worked!" << std::endl;
 
       for (vcl_size_t i=0; i < gpu_matrix_range.size1(); ++i)
-        cpu_matrix(i,j) = entries[i];
+        detail::matrix_access<NumericT>(cpu_matrix, i, j) = entries[i];
     }
   }
   else
@@ -280,7 +313,7 @@ void copy(matrix_range<matrix<NumericT, column_major, 1> > const & gpu_matrix_ra
 
     for (vcl_size_t i=0; i < gpu_matrix_range.size1(); ++i)
       for (vcl_size_t j=0; j < gpu_matrix_range.size2(); ++j)
-        cpu_matrix(i,j) = entries[i + j*gpu_matrix_range.internal_size1()];
+        detail::matrix_access<NumericT>(cpu_matrix, i, j) = entries[i + j*gpu_matrix_range.internal_size1()];
   }
 
 }
@@ -406,8 +439,8 @@ template<typename CPUMatrixT, typename NumericT>
 void copy(const CPUMatrixT & cpu_matrix,
           matrix_slice<matrix<NumericT, row_major, 1> > & gpu_matrix_slice )
 {
-  assert( (cpu_matrix.size1() == gpu_matrix_slice.size1())
-          && (cpu_matrix.size2() == gpu_matrix_slice.size2())
+  assert(    (viennacl::traits::size1(cpu_matrix) == gpu_matrix_slice.size1())
+          && (viennacl::traits::size2(cpu_matrix) == gpu_matrix_slice.size2())
           && bool("Matrix size mismatch!"));
 
   if ( (gpu_matrix_slice.size1() > 0) && (gpu_matrix_slice.size1() > 0) )
@@ -423,7 +456,7 @@ void copy(const CPUMatrixT & cpu_matrix,
       viennacl::backend::memory_read(gpu_matrix_slice.handle(), sizeof(NumericT)*start_offset, sizeof(NumericT)*num_entries, &(entries[0]));
 
       for (vcl_size_t j=0; j < gpu_matrix_slice.size2(); ++j)
-        entries[j * gpu_matrix_slice.stride2()] = cpu_matrix(i,j);
+        entries[j * gpu_matrix_slice.stride2()] = detail::matrix_access<NumericT>(cpu_matrix, i, j);
 
       viennacl::backend::memory_write(gpu_matrix_slice.handle(), sizeof(NumericT)*start_offset, sizeof(NumericT)*num_entries, &(entries[0]));
     }
@@ -435,8 +468,8 @@ template<typename CPUMatrixT, typename NumericT>
 void copy(const CPUMatrixT & cpu_matrix,
           matrix_slice<matrix<NumericT, column_major, 1> > & gpu_matrix_slice )
 {
-  assert( (cpu_matrix.size1() == gpu_matrix_slice.size1())
-          && (cpu_matrix.size2() == gpu_matrix_slice.size2())
+  assert(    (viennacl::traits::size1(cpu_matrix) == gpu_matrix_slice.size1())
+          && (viennacl::traits::size2(cpu_matrix) == gpu_matrix_slice.size2())
           && bool("Matrix size mismatch!"));
 
 
@@ -454,7 +487,7 @@ void copy(const CPUMatrixT & cpu_matrix,
       viennacl::backend::memory_read(gpu_matrix_slice.handle(), sizeof(NumericT)*start_offset, sizeof(NumericT)*num_entries, &(entries[0]));
 
       for (vcl_size_t i=0; i < gpu_matrix_slice.size1(); ++i)
-        entries[i * gpu_matrix_slice.stride1()] = cpu_matrix(i,j);
+        entries[i * gpu_matrix_slice.stride1()] = detail::matrix_access<NumericT>(cpu_matrix, i, j);
 
       viennacl::backend::memory_write(gpu_matrix_slice.handle(), sizeof(NumericT)*start_offset, sizeof(NumericT)*num_entries, &(entries[0]));
     }
@@ -473,8 +506,8 @@ template<typename CPUMatrixT, typename NumericT>
 void copy(matrix_slice<matrix<NumericT, row_major, 1> > const & gpu_matrix_slice,
           CPUMatrixT & cpu_matrix)
 {
-  assert( (cpu_matrix.size1() == gpu_matrix_slice.size1())
-          && (cpu_matrix.size2() == gpu_matrix_slice.size2())
+  assert(    (viennacl::traits::size1(cpu_matrix) == gpu_matrix_slice.size1())
+          && (viennacl::traits::size2(cpu_matrix) == gpu_matrix_slice.size2())
           && bool("Matrix size mismatch!"));
 
   if ( (gpu_matrix_slice.size1() > 0) && (gpu_matrix_slice.size1() > 0) )
@@ -491,7 +524,7 @@ void copy(matrix_slice<matrix<NumericT, row_major, 1> > const & gpu_matrix_slice
       viennacl::backend::memory_read(gpu_matrix_slice.handle(), sizeof(NumericT)*start_offset, sizeof(NumericT)*num_entries, &(entries[0]));
 
       for (vcl_size_t j=0; j < gpu_matrix_slice.size2(); ++j)
-        cpu_matrix(i,j) = entries[j * gpu_matrix_slice.stride2()];
+        detail::matrix_access<NumericT>(cpu_matrix, i, j) = entries[j * gpu_matrix_slice.stride2()];
     }
   }
 
@@ -503,8 +536,8 @@ template<typename CPUMatrixT, typename NumericT>
 void copy(matrix_slice<matrix<NumericT, column_major, 1> > const & gpu_matrix_slice,
           CPUMatrixT & cpu_matrix)
 {
-  assert( (cpu_matrix.size1() == gpu_matrix_slice.size1())
-          && (cpu_matrix.size2() == gpu_matrix_slice.size2())
+  assert(    (viennacl::traits::size1(cpu_matrix) == gpu_matrix_slice.size1())
+          && (viennacl::traits::size2(cpu_matrix) == gpu_matrix_slice.size2())
           && bool("Matrix size mismatch!"));
 
   if ( (gpu_matrix_slice.size1() > 0) && (gpu_matrix_slice.size1() > 0) )
@@ -521,7 +554,7 @@ void copy(matrix_slice<matrix<NumericT, column_major, 1> > const & gpu_matrix_sl
       viennacl::backend::memory_read(gpu_matrix_slice.handle(), sizeof(NumericT)*start_offset, sizeof(NumericT)*num_entries, &(entries[0]));
 
       for (vcl_size_t i=0; i < gpu_matrix_slice.size1(); ++i)
-        cpu_matrix(i,j) = entries[i * gpu_matrix_slice.stride1()];
+        detail::matrix_access<NumericT>(cpu_matrix, i, j) = entries[i * gpu_matrix_slice.stride1()];
     }
   }
 

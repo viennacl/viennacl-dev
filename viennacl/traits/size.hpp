@@ -201,6 +201,10 @@ typename result_of::size_type<MatrixType>::type
 size2(MatrixType const & mat) { return mat.size2(); }
 
 /** \cond */
+template<typename RowType>
+vcl_size_t
+size2(std::vector< RowType > const & mat) { return mat[0].size(); }
+
 #ifdef VIENNACL_WITH_ARMADILLO
 template<typename NumericT>
 inline vcl_size_t size2(arma::Mat<NumericT> const & A) { return A.n_cols; }
