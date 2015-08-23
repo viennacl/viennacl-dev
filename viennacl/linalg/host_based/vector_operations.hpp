@@ -796,7 +796,7 @@ void norm_inf_impl(vector_base<NumericT> const & vec1,
       thread_count = omp_get_max_threads();
   #endif
 
-  value_type temp[thread_count];
+  std::vector<value_type> temp(thread_count);
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
