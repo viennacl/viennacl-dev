@@ -28,10 +28,7 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
-#include "viennacl/device_specific/execution_handler.hpp"
 
-#include "viennacl/device_specific/builtin_database/vector_axpy.hpp"
-#include "viennacl/device_specific/builtin_database/reduction.hpp"
 
 /** @file viennacl/linalg/opencl/kernels/vector.hpp
  *  @brief OpenCL kernel file for vector operations */
@@ -44,229 +41,714 @@ namespace opencl
 namespace kernels
 {
 
-template<typename NumericT, typename ScalarT>
-static void generate_inner_prod_impl(device_specific::execution_handler & handler, std::string const & prefix, device_specific::reduction_template::parameters_type const & parameters, vcl_size_t vector_num,
-                                     viennacl::vector<NumericT> const * x, viennacl::vector<NumericT> const * y, ScalarT const* s)
+//////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
+
+/** @brief Enumeration for the scalar type in avbv-like operations */
+enum avbv_scalar_type
 {
-  namespace ds = device_specific;
-  ds::statements_container::data_type statements;
-  for (unsigned int i = 0; i < vector_num; ++i)
-    statements.push_back(scheduler::preset::inner_prod(s, x, y));
-  handler.add(prefix, ds::reduction_template(parameters), ds::statements_container(statements,ds::statements_container::INDEPENDENT));
+  VIENNACL_AVBV_NONE = 0, // vector does not exist/contribute
+  VIENNACL_AVBV_CPU,
+  VIENNACL_AVBV_GPU
+};
+
+/** @brief Configuration struct for generating OpenCL kernels for linear combinations of vectors */
+struct avbv_config
+{
+  avbv_config() : with_stride_and_range(true), a(VIENNACL_AVBV_CPU), b(VIENNACL_AVBV_NONE) {}
+
+  bool with_stride_and_range;
+  std::string      assign_op;
+  avbv_scalar_type a;
+  avbv_scalar_type b;
+};
+
+// just returns the for-loop
+template <typename StringType>
+void generate_avbv_impl2(StringType & source, std::string const & /*numeric_string*/, avbv_config const & cfg, bool mult_alpha, bool mult_beta)
+{
+  source.append("    for (unsigned int i = get_global_id(0); i < size1.z; i += get_global_size(0)) \n");
+  if (cfg.with_stride_and_range)
+  {
+    source.append("      vec1[i*size1.y+size1.x] "); source.append(cfg.assign_op); source.append(" vec2[i*size2.y+size2.x] ");
+    if (mult_alpha)
+      source.append("* alpha ");
+    else
+      source.append("/ alpha ");
+    if (cfg.b != VIENNACL_AVBV_NONE)
+    {
+      source.append("+ vec3[i*size3.y+size3.x] ");
+      if (mult_beta)
+        source.append("* beta");
+      else
+        source.append("/ beta");
+    }
+  }
+  else
+  {
+    source.append("    vec1[i] "); source.append(cfg.assign_op); source.append(" vec2[i] ");
+    if (mult_alpha)
+      source.append("* alpha ");
+    else
+      source.append("/ alpha ");
+    if (cfg.b != VIENNACL_AVBV_NONE)
+    {
+      source.append("+ vec3[i] ");
+      if (mult_beta)
+        source.append("* beta");
+      else
+        source.append("/ beta");
+    }
+  }
+  source.append("; \n");
 }
 
+template <typename StringType>
+void generate_avbv_impl(StringType & source, std::string const & numeric_string, avbv_config const & cfg)
+{
+  source.append("__kernel void av");
+  if (cfg.b != VIENNACL_AVBV_NONE)
+    source.append("bv");
+  if (cfg.assign_op != "=")
+    source.append("_v");
 
+  if (cfg.a == VIENNACL_AVBV_CPU)
+    source.append("_cpu");
+  else if (cfg.a == VIENNACL_AVBV_GPU)
+    source.append("_gpu");
+
+  if (cfg.b == VIENNACL_AVBV_CPU)
+    source.append("_cpu");
+  else if (cfg.b == VIENNACL_AVBV_GPU)
+    source.append("_gpu");
+  source.append("( \n");
+  source.append("  __global "); source.append(numeric_string); source.append(" * vec1, \n");
+  source.append("  uint4 size1, \n");
+  source.append(" \n");
+  if (cfg.a == VIENNACL_AVBV_CPU)
+  {
+    source.append("  "); source.append(numeric_string); source.append(" fac2, \n");
+  }
+  else if (cfg.a == VIENNACL_AVBV_GPU)
+  {
+    source.append("  __global "); source.append(numeric_string); source.append(" * fac2, \n");
+  }
+  source.append("  unsigned int options2, \n");  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
+  source.append("  __global const "); source.append(numeric_string); source.append(" * vec2, \n");
+  source.append("  uint4 size2");
+
+  if (cfg.b != VIENNACL_AVBV_NONE)
+  {
+    source.append(", \n\n");
+    if (cfg.b == VIENNACL_AVBV_CPU)
+    {
+      source.append("  "); source.append(numeric_string); source.append(" fac3, \n");
+    }
+    else if (cfg.b == VIENNACL_AVBV_GPU)
+    {
+      source.append("  __global "); source.append(numeric_string); source.append(" * fac3, \n");
+    }
+    source.append("  unsigned int options3, \n");  // 0: no action, 1: flip sign, 2: take inverse, 3: flip sign and take inverse
+    source.append("  __global const "); source.append(numeric_string); source.append(" * vec3, \n");
+    source.append("  uint4 size3 \n");
+  }
+  source.append(") { \n");
+
+  if (cfg.a == VIENNACL_AVBV_CPU)
+  {
+    source.append("  "); source.append(numeric_string); source.append(" alpha = fac2; \n");
+  }
+  else if (cfg.a == VIENNACL_AVBV_GPU)
+  {
+    source.append("  "); source.append(numeric_string); source.append(" alpha = fac2[0]; \n");
+  }
+  source.append("  if (options2 & (1 << 0)) \n");
+  source.append("    alpha = -alpha; \n");
+  source.append(" \n");
+
+  if (cfg.b == VIENNACL_AVBV_CPU)
+  {
+    source.append("  "); source.append(numeric_string); source.append(" beta = fac3; \n");
+  }
+  else if (cfg.b == VIENNACL_AVBV_GPU)
+  {
+    source.append("  "); source.append(numeric_string); source.append(" beta = fac3[0]; \n");
+  }
+  if (cfg.b != VIENNACL_AVBV_NONE)
+  {
+    source.append("  if (options3 & (1 << 0)) \n");
+    source.append("    beta = -beta; \n");
+    source.append(" \n");
+  }
+  source.append("  if (options2 & (1 << 1)) { \n");
+  if (cfg.b != VIENNACL_AVBV_NONE)
+  {
+    source.append("    if (options3 & (1 << 1)) {\n");
+    generate_avbv_impl2(source, numeric_string, cfg, false, false);
+    source.append("    } else {\n");
+    generate_avbv_impl2(source, numeric_string, cfg, false, true);
+    source.append("    } \n");
+  }
+  else
+    generate_avbv_impl2(source, numeric_string, cfg, false, true);
+  source.append("  } else { \n");
+  if (cfg.b != VIENNACL_AVBV_NONE)
+  {
+    source.append("    if (options3 & (1 << 1)) {\n");
+    generate_avbv_impl2(source, numeric_string, cfg, true, false);
+    source.append("    } else {\n");
+    generate_avbv_impl2(source, numeric_string, cfg, true, true);
+    source.append("    } \n");
+  }
+  else
+    generate_avbv_impl2(source, numeric_string, cfg, true, true);
+  source.append("  } \n");
+  source.append("} \n");
+}
+
+template <typename StringType>
+void generate_avbv(StringType & source, std::string const & numeric_string)
+{
+  avbv_config cfg;
+  cfg.assign_op = "=";
+  cfg.with_stride_and_range = true;
+
+  // av
+  cfg.b = VIENNACL_AVBV_NONE; cfg.a = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
+  cfg.b = VIENNACL_AVBV_NONE; cfg.a = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
+
+  // avbv
+  cfg.a = VIENNACL_AVBV_CPU; cfg.b = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
+  cfg.a = VIENNACL_AVBV_CPU; cfg.b = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
+  cfg.a = VIENNACL_AVBV_GPU; cfg.b = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
+  cfg.a = VIENNACL_AVBV_GPU; cfg.b = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
+
+  // avbv
+  cfg.assign_op = "+=";
+
+  cfg.a = VIENNACL_AVBV_CPU; cfg.b = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
+  cfg.a = VIENNACL_AVBV_CPU; cfg.b = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
+  cfg.a = VIENNACL_AVBV_GPU; cfg.b = VIENNACL_AVBV_CPU; generate_avbv_impl(source, numeric_string, cfg);
+  cfg.a = VIENNACL_AVBV_GPU; cfg.b = VIENNACL_AVBV_GPU; generate_avbv_impl(source, numeric_string, cfg);
+}
+
+template <typename StringType>
+void generate_plane_rotation(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void plane_rotation( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec2, \n");
+  source.append("          unsigned int start2, \n");
+  source.append("          unsigned int inc2, \n");
+  source.append("          unsigned int size2, \n");
+  source.append("          "); source.append(numeric_string); source.append(" alpha, \n");
+  source.append("          "); source.append(numeric_string); source.append(" beta) \n");
+  source.append("{ \n");
+  source.append("  "); source.append(numeric_string); source.append(" tmp1 = 0; \n");
+  source.append("  "); source.append(numeric_string); source.append(" tmp2 = 0; \n");
+  source.append(" \n");
+  source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
+  source.append(" { \n");
+  source.append("    tmp1 = vec1[i*inc1+start1]; \n");
+  source.append("    tmp2 = vec2[i*inc2+start2]; \n");
+  source.append(" \n");
+  source.append("    vec1[i*inc1+start1] = alpha * tmp1 + beta * tmp2; \n");
+  source.append("    vec2[i*inc2+start2] = alpha * tmp2 - beta * tmp1; \n");
+  source.append("  } \n");
+  source.append(" \n");
+  source.append("} \n");
+}
+
+template <typename StringType>
+void generate_vector_swap(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void swap( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec2, \n");
+  source.append("          unsigned int start2, \n");
+  source.append("          unsigned int inc2, \n");
+  source.append("          unsigned int size2 \n");
+  source.append("          ) \n");
+  source.append("{ \n");
+  source.append("  "); source.append(numeric_string); source.append(" tmp; \n");
+  source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
+  source.append("  { \n");
+  source.append("    tmp = vec2[i*inc2+start2]; \n");
+  source.append("    vec2[i*inc2+start2] = vec1[i*inc1+start1]; \n");
+  source.append("    vec1[i*inc1+start1] = tmp; \n");
+  source.append("  } \n");
+  source.append("} \n");
+}
+
+template <typename StringType>
+void generate_assign_cpu(StringType & source, std::string const & numeric_string)
+{
+  source.append("__kernel void assign_cpu( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          unsigned int internal_size1, \n");
+  source.append("          "); source.append(numeric_string); source.append(" alpha) \n");
+  source.append("{ \n");
+  source.append("  for (unsigned int i = get_global_id(0); i < internal_size1; i += get_global_size(0)) \n");
+  source.append("    vec1[i*inc1+start1] = (i < size1) ? alpha : 0; \n");
+  source.append("} \n");
+
+}
+
+template <typename StringType>
+void generate_inner_prod(StringType & source, std::string const & numeric_string, vcl_size_t vector_num)
+{
+  std::stringstream ss;
+  ss << vector_num;
+  std::string vector_num_string = ss.str();
+
+  source.append("__kernel void inner_prod"); source.append(vector_num_string); source.append("( \n");
+  source.append("          __global const "); source.append(numeric_string); source.append(" * x, \n");
+  source.append("          uint4 params_x, \n");
+  for (vcl_size_t i=0; i<vector_num; ++i)
+  {
+    ss.str("");
+    ss << i;
+    source.append("          __global const "); source.append(numeric_string); source.append(" * y"); source.append(ss.str()); source.append(", \n");
+    source.append("          uint4 params_y"); source.append(ss.str()); source.append(", \n");
+  }
+  source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * group_buffer) \n");
+  source.append("{ \n");
+  source.append("  unsigned int entries_per_thread = (params_x.z - 1) / get_global_size(0) + 1; \n");
+  source.append("  unsigned int vec_start_index = get_group_id(0) * get_local_size(0) * entries_per_thread; \n");
+  source.append("  unsigned int vec_stop_index  = min((unsigned int)((get_group_id(0) + 1) * get_local_size(0) * entries_per_thread), params_x.z); \n");
+
+  // compute partial results within group:
+  for (vcl_size_t i=0; i<vector_num; ++i)
+  {
+    ss.str("");
+    ss << i;
+    source.append("  "); source.append(numeric_string); source.append(" tmp"); source.append(ss.str()); source.append(" = 0; \n");
+  }
+  source.append("  for (unsigned int i = vec_start_index + get_local_id(0); i < vec_stop_index; i += get_local_size(0)) { \n");
+  source.append("    ");  source.append(numeric_string); source.append(" val_x = x[i*params_x.y + params_x.x]; \n");
+  for (vcl_size_t i=0; i<vector_num; ++i)
+  {
+    ss.str("");
+    ss << i;
+    source.append("    tmp"); source.append(ss.str()); source.append(" += val_x * y"); source.append(ss.str()); source.append("[i * params_y"); source.append(ss.str()); source.append(".y + params_y"); source.append(ss.str()); source.append(".x]; \n");
+  }
+  source.append("  } \n");
+  for (vcl_size_t i=0; i<vector_num; ++i)
+  {
+    ss.str("");
+    ss << i;
+    source.append("  tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)] = tmp"); source.append(ss.str()); source.append("; \n");
+  }
+
+  // now run reduction:
+  source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride) { \n");
+  for (vcl_size_t i=0; i<vector_num; ++i)
+  {
+    ss.str("");
+    ss << i;
+    source.append("      tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0)] += tmp_buffer[get_local_id(0) + "); source.append(ss.str()); source.append(" * get_local_size(0) + stride]; \n");
+  }
+  source.append("    } \n");
+  source.append("  } \n");
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  source.append("  if (get_local_id(0) == 0) { \n");
+  for (vcl_size_t i=0; i<vector_num; ++i)
+  {
+    ss.str("");
+    ss << i;
+    source.append("    group_buffer[get_group_id(0) + "); source.append(ss.str()); source.append(" * get_num_groups(0)] = tmp_buffer["); source.append(ss.str()); source.append(" * get_local_size(0)]; \n");
+  }
+  source.append("  } \n");
+  source.append("} \n");
+
+}
+
+template <typename StringType>
+void generate_norm(StringType & source, std::string const & numeric_string)
+{
+  bool is_float_or_double = (numeric_string == "float" || numeric_string == "double");
+
+  source.append(numeric_string); source.append(" impl_norm( \n");
+  source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          unsigned int norm_selector, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer) \n");
+  source.append("{ \n");
+  source.append("  "); source.append(numeric_string); source.append(" tmp = 0; \n");
+  source.append("  if (norm_selector == 1) \n"); //norm_1
+  source.append("  { \n");
+  source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
+  if (is_float_or_double)
+    source.append("      tmp += fabs(vec[i*inc1 + start1]); \n");
+  else
+    source.append("      tmp += abs(vec[i*inc1 + start1]); \n");
+  source.append("  } \n");
+  source.append("  else if (norm_selector == 2) \n"); //norm_2
+  source.append("  { \n");
+  source.append("    "); source.append(numeric_string); source.append(" vec_entry = 0; \n");
+  source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
+  source.append("    { \n");
+  source.append("      vec_entry = vec[i*inc1 + start1]; \n");
+  source.append("      tmp += vec_entry * vec_entry; \n");
+  source.append("    } \n");
+  source.append("  } \n");
+  source.append("  else if (norm_selector == 0) \n"); //norm_inf
+  source.append("  { \n");
+  source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
+  if (is_float_or_double)
+    source.append("      tmp = fmax(fabs(vec[i*inc1 + start1]), tmp); \n");
+  else
+  {
+    source.append("      tmp = max(("); source.append(numeric_string); source.append(")abs(vec[i*inc1 + start1]), tmp); \n");
+  }
+  source.append("  } \n");
+
+  source.append("  tmp_buffer[get_local_id(0)] = tmp; \n");
+
+  source.append("  if (norm_selector > 0) \n"); //norm_1 or norm_2:
+  source.append("  { \n");
+  source.append("    for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("    { \n");
+  source.append("      barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("      if (get_local_id(0) < stride) \n");
+  source.append("        tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0)+stride]; \n");
+  source.append("    } \n");
+  source.append("    return tmp_buffer[0]; \n");
+  source.append("  } \n");
+
+  //norm_inf:
+  source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride) \n");
+  if (is_float_or_double)
+    source.append("      tmp_buffer[get_local_id(0)] = fmax(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
+  else
+    source.append("      tmp_buffer[get_local_id(0)] = max(tmp_buffer[get_local_id(0)], tmp_buffer[get_local_id(0)+stride]); \n");
+  source.append("  } \n");
+
+  source.append("  return tmp_buffer[0]; \n");
+  source.append("}; \n");
+
+  source.append("__kernel void norm( \n");
+  source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          unsigned int norm_selector, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * group_buffer) \n");
+  source.append("{ \n");
+  source.append("  "); source.append(numeric_string); source.append(" tmp = impl_norm(vec, \n");
+  source.append("                        (        get_group_id(0)  * size1) / get_num_groups(0) * inc1 + start1, \n");
+  source.append("                        inc1, \n");
+  source.append("                        (   (1 + get_group_id(0)) * size1) / get_num_groups(0) \n");
+  source.append("                      - (        get_group_id(0)  * size1) / get_num_groups(0), \n");
+  source.append("                        norm_selector, \n");
+  source.append("                        tmp_buffer); \n");
+
+  source.append("  if (get_local_id(0) == 0) \n");
+  source.append("    group_buffer[get_group_id(0)] = tmp; \n");
+  source.append("} \n");
+
+}
+
+template <typename StringType>
+void generate_inner_prod_sum(StringType & source, std::string const & numeric_string)
+{
+  // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
+  source.append("__kernel void sum_inner_prod( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
+  source.append("          unsigned int start_result, \n");
+  source.append("          unsigned int inc_result) \n");
+  source.append("{ \n");
+  source.append("  tmp_buffer[get_local_id(0)] = vec1[get_global_id(0)]; \n");
+
+  source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride) \n");
+  source.append("      tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
+  source.append("  } \n");
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  source.append("  if (get_local_id(0) == 0) \n");
+  source.append("    result[start_result + inc_result * get_group_id(0)] = tmp_buffer[0]; \n");
+  source.append("} \n");
+
+}
+
+template <typename StringType>
+void generate_sum(StringType & source, std::string const & numeric_string)
+{
+  // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
+  source.append("__kernel void sum( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          unsigned int option,  \n"); //0: use fmax, 1: just sum, 2: sum and return sqrt of sum
+  source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * result) \n");
+  source.append("{ \n");
+  source.append("  "); source.append(numeric_string); source.append(" thread_sum = 0; \n");
+  source.append("  "); source.append(numeric_string); source.append(" tmp = 0; \n");
+  source.append("  for (unsigned int i = get_local_id(0); i<size1; i += get_local_size(0)) \n");
+  source.append("  { \n");
+  source.append("    if (option > 0) \n");
+  source.append("      thread_sum += vec1[i*inc1+start1]; \n");
+  source.append("    else \n");
+  source.append("    { \n");
+  source.append("      tmp = vec1[i*inc1+start1]; \n");
+  source.append("      tmp = (tmp < 0) ? -tmp : tmp; \n");
+  source.append("      thread_sum = (thread_sum > tmp) ? thread_sum : tmp; \n");
+  source.append("    } \n");
+  source.append("  } \n");
+
+  source.append("  tmp_buffer[get_local_id(0)] = thread_sum; \n");
+
+  source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride) \n");
+  source.append("    { \n");
+  source.append("      if (option > 0) \n");
+  source.append("        tmp_buffer[get_local_id(0)] += tmp_buffer[get_local_id(0) + stride]; \n");
+  source.append("      else \n");
+  source.append("        tmp_buffer[get_local_id(0)] = (tmp_buffer[get_local_id(0)] > tmp_buffer[get_local_id(0) + stride]) ? tmp_buffer[get_local_id(0)] : tmp_buffer[get_local_id(0) + stride]; \n");
+  source.append("    } \n");
+  source.append("  } \n");
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  source.append("  if (get_global_id(0) == 0) \n");
+  source.append("  { \n");
+  if (numeric_string == "float" || numeric_string == "double")
+  {
+    source.append("    if (option == 2) \n");
+    source.append("      *result = sqrt(tmp_buffer[0]); \n");
+    source.append("    else \n");
+  }
+  source.append("      *result = tmp_buffer[0]; \n");
+  source.append("  } \n");
+  source.append("} \n");
+
+}
+
+template <typename StringType>
+void generate_index_norm_inf(StringType & source, std::string const & numeric_string)
+{
+  //index_norm_inf:
+  source.append("unsigned int index_norm_inf_impl( \n");
+  source.append("          __global const "); source.append(numeric_string); source.append(" * vec, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * entry_buffer, \n");
+  source.append("          __local unsigned int * index_buffer) \n");
+  source.append("{ \n");
+  //step 1: fill buffer:
+  source.append("  "); source.append(numeric_string); source.append(" cur_max = 0; \n");
+  source.append("  "); source.append(numeric_string); source.append(" tmp; \n");
+  source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
+  source.append("  { \n");
+  if (numeric_string == "float" || numeric_string == "double")
+    source.append("    tmp = fabs(vec[i*inc1+start1]); \n");
+  else
+    source.append("    tmp = abs(vec[i*inc1+start1]); \n");
+  source.append("    if (cur_max < tmp) \n");
+  source.append("    { \n");
+  source.append("      entry_buffer[get_global_id(0)] = tmp; \n");
+  source.append("      index_buffer[get_global_id(0)] = i; \n");
+  source.append("      cur_max = tmp; \n");
+  source.append("    } \n");
+  source.append("  } \n");
+
+  //step 2: parallel reduction:
+  source.append("  for (unsigned int stride = get_global_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_global_id(0) < stride) \n");
+  source.append("   { \n");
+  //find the first occurring index
+  source.append("      if (entry_buffer[get_global_id(0)] < entry_buffer[get_global_id(0)+stride]) \n");
+  source.append("      { \n");
+  source.append("        index_buffer[get_global_id(0)] = index_buffer[get_global_id(0)+stride]; \n");
+  source.append("        entry_buffer[get_global_id(0)] = entry_buffer[get_global_id(0)+stride]; \n");
+  source.append("      } \n");
+  source.append("    } \n");
+  source.append("  } \n");
+  source.append(" \n");
+  source.append("  return index_buffer[0]; \n");
+  source.append("} \n");
+
+  source.append("__kernel void index_norm_inf( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * entry_buffer, \n");
+  source.append("          __local unsigned int * index_buffer, \n");
+  source.append("          __global unsigned int * result) \n");
+  source.append("{ \n");
+  source.append("  entry_buffer[get_global_id(0)] = 0; \n");
+  source.append("  index_buffer[get_global_id(0)] = 0; \n");
+  source.append("  unsigned int tmp = index_norm_inf_impl(vec, start1, inc1, size1, entry_buffer, index_buffer); \n");
+  source.append("  if (get_global_id(0) == 0) *result = tmp; \n");
+  source.append("} \n");
+
+}
+
+template <typename StringType>
+void generate_maxmin(StringType & source, std::string const & numeric_string, bool is_max)
+{
+  // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
+  if (is_max)
+    source.append("__kernel void max_kernel( \n");
+  else
+    source.append("__kernel void min_kernel( \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+  source.append("          unsigned int start1, \n");
+  source.append("          unsigned int inc1, \n");
+  source.append("          unsigned int size1, \n");
+  source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
+  source.append("          __global "); source.append(numeric_string); source.append(" * result) \n");
+  source.append("{ \n");
+  source.append("  "); source.append(numeric_string); source.append(" thread_result = vec1[start1]; \n");
+  source.append("  for (unsigned int i = get_global_id(0); i<size1; i += get_global_size(0)) \n");
+  source.append("  { \n");
+  source.append("    "); source.append(numeric_string); source.append(" tmp = vec1[i*inc1+start1]; \n");
+  if (is_max)
+    source.append("      thread_result = thread_result > tmp ? thread_result : tmp; \n");
+  else
+    source.append("      thread_result = thread_result < tmp ? thread_result : tmp; \n");
+  source.append("  } \n");
+
+  source.append("  tmp_buffer[get_local_id(0)] = thread_result; \n");
+
+  source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
+  source.append("  { \n");
+  source.append("    barrier(CLK_LOCAL_MEM_FENCE); \n");
+  source.append("    if (get_local_id(0) < stride) \n");
+  source.append("    { \n");
+  if (is_max)
+    source.append("        tmp_buffer[get_local_id(0)] = tmp_buffer[get_local_id(0)] > tmp_buffer[get_local_id(0) + stride] ? tmp_buffer[get_local_id(0)] : tmp_buffer[get_local_id(0) + stride]; \n");
+  else
+    source.append("        tmp_buffer[get_local_id(0)] = tmp_buffer[get_local_id(0)] < tmp_buffer[get_local_id(0) + stride] ? tmp_buffer[get_local_id(0)] : tmp_buffer[get_local_id(0) + stride]; \n");
+  source.append("    } \n");
+  source.append("  } \n");
+  source.append("  barrier(CLK_LOCAL_MEM_FENCE); \n");
+
+  source.append("  if (get_local_id(0) == 0) \n");
+  source.append("    result[get_group_id(0)] = tmp_buffer[0]; \n");
+  source.append("} \n");
+}
+
+//////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
 // main kernel class
 /** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
 template<typename NumericT>
-class vector
+struct vector
 {
-private:
-
-  template<typename ScalarT1, typename ScalarT2>
-  static void generate_avbv_impl2(device_specific::execution_handler & handler, std::string const & prefix, device_specific::vector_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
-                                 viennacl::vector_base<NumericT> const * x, viennacl::vector_base<NumericT> const * y, ScalarT1 const * a,
-                                 viennacl::vector_base<NumericT> const * z, ScalarT2 const * b)
+  static std::string program_name()
   {
-    namespace ds = device_specific;
-    handler.add(prefix + "0000", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, false));
-    handler.add(prefix + "1000", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, false));
-    handler.add(prefix + "0100", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, false));
-    handler.add(prefix + "1100", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, false));
-    if (b)
+    return viennacl::ocl::type_to_string<NumericT>::apply() + "_vector";
+  }
+
+  static void init(viennacl::ocl::context & ctx)
+  {
+    viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+    std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
+
+    static std::map<cl_context, bool> init_done;
+    if (!init_done[ctx.handle().get()])
     {
-      handler.add(prefix + "0010", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, false));
-      handler.add(prefix + "1010", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, false));
-      handler.add(prefix + "0110", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, false));
-      handler.add(prefix + "1110", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, false));
+      std::string source;
+      source.reserve(8192);
 
-      handler.add(prefix + "0001", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, false, true));
-      handler.add(prefix + "1001", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, false, true));
-      handler.add(prefix + "0101", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, false, true));
-      handler.add(prefix + "1101", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, false, true));
+      viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
-      handler.add(prefix + "0011", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, false, z, b, true, true));
-      handler.add(prefix + "1011", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, false, z, b, true, true));
-      handler.add(prefix + "0111", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, false, true, z, b, true, true));
-      handler.add(prefix + "1111", ds::vector_axpy_template(parameters), scheduler::preset::avbv(ASSIGN_OP, x, y, a, true, true, z, b, true, true));
-    }
-  }
+      // fully parametrized kernels:
+      generate_avbv(source, numeric_string);
 
-  template<typename ScalarT>
-  static void generate_avbv_impl(device_specific::execution_handler & handler, std::string const & prefix, device_specific::vector_axpy_template::parameters_type const & parameters, scheduler::operation_node_type ASSIGN_OP,
-                                 viennacl::vector_base<NumericT> const * x, viennacl::vector_base<NumericT> const * y, ScalarT const * ha, viennacl::scalar<NumericT> const * da,
-                                 viennacl::vector_base<NumericT> const * z, ScalarT const * hb, viennacl::scalar<NumericT> const * db)
-  {
-    //x ASSIGN_OP a*y
-    generate_avbv_impl2(handler, prefix + "hv_", parameters, ASSIGN_OP, x, y, ha, (viennacl::vector<NumericT>*)NULL, (NumericT*)NULL);
-    generate_avbv_impl2(handler, prefix + "dv_", parameters, ASSIGN_OP, x, y, da, (viennacl::vector<NumericT>*)NULL, (NumericT*)NULL);
+      // kernels with mostly predetermined skeleton:
+      generate_plane_rotation(source, numeric_string);
+      generate_vector_swap(source, numeric_string);
+      generate_assign_cpu(source, numeric_string);
 
-    //x ASSIGN_OP a*y + b*z
-    generate_avbv_impl2(handler, prefix + "hvhv_", parameters, ASSIGN_OP, x, y, ha, z, hb);
-    generate_avbv_impl2(handler, prefix + "dvhv_", parameters, ASSIGN_OP, x, y, da, z, hb);
-    generate_avbv_impl2(handler, prefix + "hvdv_", parameters, ASSIGN_OP, x, y, ha, z, db);
-    generate_avbv_impl2(handler, prefix + "dvdv_", parameters, ASSIGN_OP, x, y, da, z, db);
-  }
+      generate_inner_prod(source, numeric_string, 1);
+      generate_norm(source, numeric_string);
+      generate_sum(source, numeric_string);
+      generate_index_norm_inf(source, numeric_string);
+      generate_maxmin(source, numeric_string, true);
+      generate_maxmin(source, numeric_string, false);
 
-public:
-  static device_specific::execution_handler & execution_handler(viennacl::ocl::context & ctx)
-  {
-    static std::map<cl_context, device_specific::execution_handler> handlers_map;
-    cl_context h = ctx.handle().get();
-    if (handlers_map.find(h) == handlers_map.end())
-    {
-      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
-
-      namespace ds = viennacl::device_specific;
-      viennacl::ocl::device const & device = ctx.current_device();
-      handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<NumericT>::apply() + "_vector", ctx, device)));
-      ds::execution_handler & handler = at(handlers_map, h);
-
-      viennacl::vector<NumericT> x;
-      viennacl::vector<NumericT> y;
-      viennacl::scalar_vector<NumericT> scalary(0,0,viennacl::context(ctx));
-      viennacl::vector<NumericT> z;
-      viennacl::scalar<NumericT> da;
-      viennacl::scalar<NumericT> db;
-      NumericT ha;
-      NumericT hb;
-
-      ds::vector_axpy_template::parameters_type vector_axpy_params = ds::builtin_database::vector_axpy_params<NumericT>(device);
-      ds::reduction_template::parameters_type     reduction_params = ds::builtin_database::reduction_params<NumericT>(device);
-
-      generate_avbv_impl(handler, "assign_", vector_axpy_params, scheduler::OPERATION_BINARY_ASSIGN_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
-      generate_avbv_impl(handler, "ip_add_", vector_axpy_params, scheduler::OPERATION_BINARY_INPLACE_ADD_TYPE, &x, &y, &ha, &da, &z, &hb, &db);
-
-      handler.add("plane_rotation", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::plane_rotation(&x, &y, &ha, &hb));
-      handler.add("swap", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::swap(&x, &y));
-      handler.add("assign_cpu", ds::vector_axpy_template(vector_axpy_params), scheduler::preset::assign_cpu(&x, &scalary));
-
-      generate_inner_prod_impl(handler, "inner_prod", reduction_params, 1, &x, &y, &da);
-
-      handler.add("norm_1", ds::reduction_template(reduction_params), scheduler::preset::norm_1(&da, &x));
-      bool is_float_or_double = is_floating_point<NumericT>::value;
-      if (is_float_or_double) //BIND_TO_HANDLE for optimization (will load x once in the internal inner product)
-        handler.add("norm_2", ds::reduction_template(reduction_params, ds::BIND_TO_HANDLE), scheduler::preset::norm_2(&da, &x));
-      handler.add("norm_inf", ds::reduction_template(reduction_params), scheduler::preset::norm_inf(&da, &x));
-      handler.add("index_norm_inf", ds::reduction_template(reduction_params), scheduler::preset::index_norm_inf(&da, &x));
-      handler.add("sum", ds::reduction_template(reduction_params), scheduler::preset::sum(&da, &x));
-      handler.add("max", ds::reduction_template(reduction_params), scheduler::preset::max(&da, &x));
-      handler.add("min", ds::reduction_template(reduction_params), scheduler::preset::min(&da, &x));
-    }
-    return at(handlers_map, h);
-  }
+      std::string prog_name = program_name();
+      #ifdef VIENNACL_BUILD_INFO
+      std::cout << "Creating program " << prog_name << std::endl;
+      #endif
+      ctx.add_program(source, prog_name);
+      init_done[ctx.handle().get()] = true;
+    } //if
+  } //init
 };
 
-// main kernel class
-/** @brief Main kernel class for generating OpenCL kernels for operations on/with viennacl::vector<> without involving matrices, multiple inner products, or element-wise operations other than addition or subtraction. */
+// class with kernels for multiple inner products.
+/** @brief Main kernel class for generating OpenCL kernels for multiple inner products on/with viennacl::vector<>. */
 template<typename NumericT>
-class vector_multi_inner_prod
+struct vector_multi_inner_prod
 {
-public:
-  static device_specific::execution_handler & execution_handler(viennacl::ocl::context & ctx)
+  static std::string program_name()
   {
-    static std::map<cl_context, device_specific::execution_handler> handlers_map;
-    cl_context h = ctx.handle().get();
-    if (handlers_map.find(h) == handlers_map.end())
-    {
-      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
-
-      namespace ds = viennacl::device_specific;
-
-      viennacl::ocl::device const & device = ctx.current_device();
-      handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<NumericT>::apply() + "_vector_multi_inner_prod", ctx, device)));
-      ds::execution_handler & handler = viennacl::device_specific::at(handlers_map, h);
-
-      ds::reduction_template::parameters_type reduction_params = ds::builtin_database::reduction_params<NumericT>(device);
-
-      //Dummy holders for the statements
-      viennacl::vector<NumericT> x;
-      viennacl::vector<NumericT> y;
-      viennacl::vector<NumericT> res;
-      viennacl::vector_range< viennacl::vector_base<NumericT> > da(res, viennacl::range(0, 1));
-
-      generate_inner_prod_impl(handler, "inner_prod_1", reduction_params, 1, &x, &y, &da);
-      generate_inner_prod_impl(handler, "inner_prod_2", reduction_params, 2, &x, &y, &da);
-      generate_inner_prod_impl(handler, "inner_prod_3", reduction_params, 3, &x, &y, &da);
-      generate_inner_prod_impl(handler, "inner_prod_4", reduction_params, 4, &x, &y, &da);
-      generate_inner_prod_impl(handler, "inner_prod_8", reduction_params, 8, &x, &y, &da);
-    }
-    return viennacl::device_specific::at(handlers_map, h);
+    return viennacl::ocl::type_to_string<NumericT>::apply() + "_vector_multi";
   }
-};
 
-// main kernel class
-/** @brief Main kernel class for generating OpenCL kernels for elementwise operations other than addition and subtraction on/with viennacl::vector<>. */
-template<typename NumericT>
-struct vector_element
-{
-
-public:
-  static device_specific::execution_handler & execution_handler(viennacl::ocl::context & ctx)
+  static void init(viennacl::ocl::context & ctx)
   {
-    static std::map<cl_context, device_specific::execution_handler> handlers_map;
-    cl_context h = ctx.handle().get();
-    if (handlers_map.find(h) == handlers_map.end())
+    viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+    std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
+
+    static std::map<cl_context, bool> init_done;
+    if (!init_done[ctx.handle().get()])
     {
-      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+      std::string source;
+      source.reserve(8192);
 
-      namespace ds = viennacl::device_specific;
-      using namespace scheduler;
-      using device_specific::tree_parsing::operator_string;
+      viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
-      std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
-      viennacl::ocl::device const & device = ctx.current_device();
-      handlers_map.insert(std::make_pair(h, ds::execution_handler(viennacl::ocl::type_to_string<NumericT>::apply() + "_vector_element", ctx, device)));
-      ds::execution_handler & handler = viennacl::device_specific::at(handlers_map, h);
-      ds::vector_axpy_template::parameters_type vector_axpy_params = ds::builtin_database::vector_axpy_params<NumericT>(device);
+      generate_inner_prod(source, numeric_string, 2);
+      generate_inner_prod(source, numeric_string, 3);
+      generate_inner_prod(source, numeric_string, 4);
+      generate_inner_prod(source, numeric_string, 8);
 
-      viennacl::vector<NumericT> x;
-      viennacl::vector<NumericT> y;
-      viennacl::vector<NumericT> z;
+      generate_inner_prod_sum(source, numeric_string);
 
-      // unary operations
-#define VIENNACL_ADD_UNARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::vector_axpy_template(vector_axpy_params),scheduler::preset::unary_element_op(&x, &y, OPTYPE))
-      if (numeric_string == "float" || numeric_string == "double")
-      {
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_ACOS_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_ASIN_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_ATAN_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_CEIL_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_COS_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_COSH_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_EXP_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_FABS_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_FLOOR_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_LOG_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_LOG10_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_SIN_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_SINH_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_SQRT_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_TAN_TYPE);
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_TANH_TYPE);
-      }
-      else
-      {
-        VIENNACL_ADD_UNARY(OPERATION_UNARY_ABS_TYPE);
-      }
-#undef VIENNACL_ADD_UNARY
-
-      // binary operations
-#define VIENNACL_ADD_BINARY(OPTYPE) handler.add(operator_string(OPTYPE), ds::vector_axpy_template(vector_axpy_params),scheduler::preset::binary_element_op(&x, &y, &z, OPTYPE))
-      VIENNACL_ADD_BINARY(OPERATION_BINARY_ELEMENT_DIV_TYPE);
-      VIENNACL_ADD_BINARY(OPERATION_BINARY_ELEMENT_PROD_TYPE);
-      if (numeric_string == "float" || numeric_string == "double")
-      {
-        VIENNACL_ADD_BINARY(OPERATION_BINARY_ELEMENT_POW_TYPE);
-      }
-#undef VIENNACL_ADD_BINARY
-
-    }
-    return viennacl::device_specific::at(handlers_map, h);
-  }
+      std::string prog_name = program_name();
+      #ifdef VIENNACL_BUILD_INFO
+      std::cout << "Creating program " << prog_name << std::endl;
+      #endif
+      ctx.add_program(source, prog_name);
+      init_done[ctx.handle().get()] = true;
+    } //if
+  } //init
 };
-
 
 
 template<typename StringT>
