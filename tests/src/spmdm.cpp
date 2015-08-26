@@ -107,7 +107,7 @@ int test(NumericT epsilon)
 
   // add some extra weight to diagonal in order to avoid issues with round-off errors
   for (std::size_t i=0; i<std_A.size(); ++i)
-    std_A[i][i] *= NumericT(1.5);
+    std_A[i][static_cast<unsigned int>(i)] *= NumericT(1.5);
 
   std::size_t cols_rhs = 5;
 

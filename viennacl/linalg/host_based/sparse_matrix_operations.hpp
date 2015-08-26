@@ -1669,9 +1669,9 @@ void prod_impl(const viennacl::ell_matrix<NumericT, AlignmentV> & sp_mat,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-    for (long item_id = 0; item_id < static_cast<long>(sp_mat.maxnnz()); ++item_id) {
+    for (vcl_size_t row = 0; row < sp_mat.size1(); ++row) {
 
-      for (vcl_size_t row = 0; row < sp_mat.size1(); ++row) {
+      for (long item_id = 0; item_id < static_cast<long>(sp_mat.maxnnz()); ++item_id) {
 
         vcl_size_t offset = row + static_cast<vcl_size_t>(item_id) * sp_mat.internal_size1();
         NumericT sp_mat_val = static_cast<NumericT>(sp_mat_elements[offset]);
