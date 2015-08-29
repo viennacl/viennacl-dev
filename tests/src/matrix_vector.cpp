@@ -24,6 +24,7 @@
 // *** System
 //
 #include <iostream>
+#include <vector>
 
 //
 // *** ViennaCL
@@ -1221,7 +1222,7 @@ int test(Epsilon const& epsilon)
    for (std::size_t j=0; j<lu_dim; ++j)
    {
      square_matrix[j][j] = static_cast<NumericT>(20.0) + randomNumber();
-     lu_result[j] = randomNumber();
+     lu_result[j] = NumericT(0.1) + randomNumber();
    }
 
    for (std::size_t i=0; i<lu_dim; ++i)
