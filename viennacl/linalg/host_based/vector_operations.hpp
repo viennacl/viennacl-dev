@@ -954,7 +954,7 @@ void min_impl(vector_base<NumericT> const & vec1,
   result  = temp[0];//Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
 }
 
-/** @brief Computes the maximum of a vector
+/** @brief Computes the sum of all elements from the vector
 *
 * @param vec1 The vector
 * @param result The result scalar
@@ -972,8 +972,9 @@ void sum_impl(vector_base<NumericT> const & vec1,
   vcl_size_t size1  = viennacl::traits::size(vec1);
 
   value_type temp = 0;
-
-  // Note: Have a look at inner_prod and norm_X before adding OpenMP pragmas here
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+:temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
   for (vcl_size_t i = 0; i < size1; ++i)
     temp += data_vec1[i*inc1+start1];
 
