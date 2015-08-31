@@ -20,32 +20,14 @@
 *   \test Tests the scheduler for sparse matrix operations.
 **/
 
-#ifndef NDEBUG
- #define NDEBUG
-#endif
-
 //
 // *** System
 //
 #include <iostream>
 
 //
-// *** Boost
-//
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/lu.hpp>
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/operation_sparse.hpp>
-
-//
 // *** ViennaCL
 //
-//#define VIENNACL_DEBUG_ALL
-#define VIENNACL_WITH_UBLAS 1
 #include "viennacl/scalar.hpp"
 #include "viennacl/compressed_matrix.hpp"
 #include "viennacl/coordinate_matrix.hpp"
@@ -63,10 +45,7 @@
 #include "viennacl/scheduler/execute.hpp"
 #include "viennacl/scheduler/io.hpp"
 
-//
-// -------------------------------------------------------------
-//
-using namespace boost::numeric;
+
 //
 // -------------------------------------------------------------
 //
@@ -79,9 +58,9 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
 }
 
 template<typename ScalarType>
-ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
+ScalarType diff(std::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
 {
-   ublas::vector<ScalarType> v2_cpu(v2.size());
+   std::vector<ScalarType> v2_cpu(v2.size());
    viennacl::backend::finish();
    viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
@@ -100,46 +79,46 @@ ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v
       if (v2_cpu[i] > 0.0001)
       {
         //std::cout << "Neighbor: "      << i-1 << ": " << v1[i-1] << " vs. " << v2_cpu[i-1] << std::endl;
-        std::cout << "Error at entry " << i   << ": " << v1[i]   << " vs. " << v2_cpu[i]   << std::endl;
+        std::cout << "Error at entry " << i   << ": Should: " << v1[i]   << " vs. Is: " << v2[i]   << std::endl;
         //std::cout << "Neighbor: "      << i+1 << ": " << v1[i+1] << " vs. " << v2_cpu[i+1] << std::endl;
         exit(EXIT_FAILURE);
       }
    }
 
-   return norm_inf(v2_cpu);
+   ScalarType norm_inf = 0;
+   for (std::size_t i=0; i<v2_cpu.size(); ++i)
+     norm_inf = std::max<ScalarType>(norm_inf, std::fabs(v2_cpu[i]));
+
+   return norm_inf;
 }
 
 
-template<typename ScalarType, typename VCL_MATRIX>
-ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & gpu_matrix)
+template<typename IndexT, typename NumericT, typename SparseMatrixT>
+NumericT diff(std::vector<std::map<IndexT, NumericT> > & cpu_A, SparseMatrixT & vcl_A)
 {
-  typedef ublas::compressed_matrix<ScalarType>  CPU_MATRIX;
-  CPU_MATRIX from_gpu;
+  typedef typename std::map<IndexT, NumericT>::const_iterator  RowIterator;
+
+  std::vector<std::map<IndexT, NumericT> > from_gpu(vcl_A.size1());
 
   viennacl::backend::finish();
-  viennacl::copy(gpu_matrix, from_gpu);
+  viennacl::copy(vcl_A, from_gpu);
 
-  ScalarType error = 0;
+  NumericT error = 0;
 
-  //step 1: compare all entries from cpu_matrix with gpu_matrix:
-  //std::cout << "Ublas matrix: " << std::endl;
-  for (typename CPU_MATRIX::const_iterator1 row_it = cpu_matrix.begin1();
-        row_it != cpu_matrix.end1();
-        ++row_it)
+  //step 1: compare all entries from cpu_A with vcl_A:
+  for (std::size_t i=0; i<cpu_A.size(); ++i)
   {
     //std::cout << "Row " << row_it.index1() << ": " << std::endl;
-    for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin();
-          col_it != row_it.end();
-          ++col_it)
+    for (RowIterator it = cpu_A[i].begin(); it != cpu_A[i].end(); ++it)
     {
       //std::cout << "(" << col_it.index2() << ", " << *col_it << std::endl;
-      ScalarType current_error = 0;
+      NumericT current_error = 0;
+      NumericT val_cpu_A = it->second;
+      NumericT val_gpu_A = from_gpu[i][it->first];
 
-      if ( std::max( std::fabs(cpu_matrix(col_it.index1(), col_it.index2())),
-                      std::fabs(from_gpu(col_it.index1(), col_it.index2()))   ) > 0 )
-        current_error = std::fabs(cpu_matrix(col_it.index1(), col_it.index2()) - from_gpu(col_it.index1(), col_it.index2()))
-                          / std::max( std::fabs(cpu_matrix(col_it.index1(), col_it.index2())),
-                                      std::fabs(from_gpu(col_it.index1(), col_it.index2()))   );
+      NumericT max_val = std::max(std::fabs(val_cpu_A), std::fabs(val_gpu_A));
+      if (max_val > 0)
+        current_error = std::fabs(val_cpu_A - val_gpu_A) / max_val;
       if (current_error > error)
         error = current_error;
     }
@@ -147,29 +126,40 @@ ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & 
 
   //step 2: compare all entries from gpu_matrix with cpu_matrix (sparsity pattern might differ):
   //std::cout << "ViennaCL matrix: " << std::endl;
-  for (typename CPU_MATRIX::const_iterator1 row_it = from_gpu.begin1();
-        row_it != from_gpu.end1();
-        ++row_it)
+  for (std::size_t i=0; i<from_gpu.size(); ++i)
   {
     //std::cout << "Row " << row_it.index1() << ": " << std::endl;
-    for (typename CPU_MATRIX::const_iterator2 col_it = row_it.begin();
-          col_it != row_it.end();
-          ++col_it)
+    for (RowIterator it = from_gpu[i].begin(); it != from_gpu[i].end(); ++it)
     {
       //std::cout << "(" << col_it.index2() << ", " << *col_it << std::endl;
-      ScalarType current_error = 0;
+      NumericT current_error = 0;
+      NumericT val_gpu_A = it->second;
+      NumericT val_cpu_A = cpu_A[i][it->first];
 
-      if ( std::max( std::fabs(cpu_matrix(col_it.index1(), col_it.index2())),
-                      std::fabs(from_gpu(col_it.index1(), col_it.index2()))   ) > 0 )
-        current_error = std::fabs(cpu_matrix(col_it.index1(), col_it.index2()) - from_gpu(col_it.index1(), col_it.index2()))
-                          / std::max( std::fabs(cpu_matrix(col_it.index1(), col_it.index2())),
-                                      std::fabs(from_gpu(col_it.index1(), col_it.index2()))   );
+      NumericT max_val = std::max(std::fabs(val_cpu_A), std::fabs(val_gpu_A));
+      if (max_val > 0)
+        current_error = std::fabs(val_cpu_A - val_gpu_A) / max_val;
       if (current_error > error)
         error = current_error;
     }
   }
 
   return error;
+}
+
+// computes x = alpha * A * y + beta * x
+template<typename IndexT, typename NumericT, typename VectorT>
+void sparse_prod(std::vector<std::map<IndexT, NumericT> > const & A, VectorT const & y, VectorT & x, NumericT alpha, NumericT beta)
+{
+  typedef typename std::map<IndexT, NumericT>::const_iterator     RowIterator;
+
+  for (std::size_t i=0; i<A.size(); ++i)
+  {
+    NumericT val = 0;
+    for (RowIterator it = A[i].begin(); it != A[i].end(); ++it)
+      val += it->second * y[it->first];
+    x[i] = alpha * val + beta * x[i];
+  }
 }
 
 //
@@ -186,11 +176,11 @@ int test(Epsilon const& epsilon)
   NumericT alpha = static_cast<NumericT>(2.786);
   NumericT beta = static_cast<NumericT>(1.432);
 
-  ublas::vector<NumericT> rhs;
-  ublas::vector<NumericT> result;
-  ublas::compressed_matrix<NumericT> ublas_matrix;
+  std::vector<NumericT> rhs;
+  std::vector<NumericT> result;
+  std::vector<std::map<unsigned int, NumericT> > std_matrix;
 
-  if (viennacl::io::read_matrix_market_file(ublas_matrix, "../examples/testdata/mat65k.mtx") == EXIT_FAILURE)
+  if (viennacl::io::read_matrix_market_file(std_matrix, "../examples/testdata/mat65k.mtx") == EXIT_FAILURE)
   {
     std::cout << "Error reading Matrix file" << std::endl;
     return EXIT_FAILURE;
@@ -199,10 +189,10 @@ int test(Epsilon const& epsilon)
   std::cout << "done reading matrix" << std::endl;
 
 
-  rhs.resize(ublas_matrix.size2());
+  rhs.resize(std_matrix.size());
   for (std::size_t i=0; i<rhs.size(); ++i)
   {
-    ublas_matrix(i,i) = NumericT(0.5);   // Get rid of round-off errors by making row-sums unequal to zero:
+    std_matrix[i][i] = NumericT(0.5);   // Get rid of round-off errors by making row-sums unequal to zero:
     rhs[i] = NumericT(1) + randomNumber();
   }
 
@@ -218,12 +208,12 @@ int test(Epsilon const& epsilon)
   viennacl::hyb_matrix<NumericT> vcl_hyb_matrix;
 
   viennacl::copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
-  viennacl::copy(ublas_matrix, vcl_compressed_matrix);
-  viennacl::copy(ublas_matrix, vcl_coordinate_matrix);
+  viennacl::copy(std_matrix, vcl_compressed_matrix);
+  viennacl::copy(std_matrix, vcl_coordinate_matrix);
 
   // --------------------------------------------------------------------------
   std::cout << "Testing products: compressed_matrix" << std::endl;
-  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  sparse_prod(std_matrix, rhs, result, NumericT(1), NumericT(0));
   {
   viennacl::scheduler::statement my_statement(vcl_result, viennacl::op_assign(), viennacl::linalg::prod(vcl_compressed_matrix, vcl_rhs));
   viennacl::scheduler::execute(my_statement);
@@ -238,9 +228,10 @@ int test(Epsilon const& epsilon)
   }
 
   std::cout << "Testing products: coordinate_matrix" << std::endl;
-  rhs *= NumericT(1.1);
+  for (std::size_t i=0; i<rhs.size(); ++i)
+    rhs[i] *= NumericT(1.1);
   vcl_rhs *= NumericT(1.1);
-  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  sparse_prod(std_matrix, rhs, result, NumericT(1), NumericT(0));
   {
   viennacl::scheduler::statement my_statement(vcl_result, viennacl::op_assign(), viennacl::linalg::prod(vcl_coordinate_matrix, vcl_rhs));
   viennacl::scheduler::execute(my_statement);
@@ -253,29 +244,17 @@ int test(Epsilon const& epsilon)
     retval = EXIT_FAILURE;
   }
 
-  result     = alpha * viennacl::linalg::prod(ublas_matrix, rhs) + beta * result;
-  {
-  viennacl::scheduler::statement my_statement(vcl_result2, viennacl::op_assign(), alpha * viennacl::linalg::prod(vcl_coordinate_matrix, vcl_rhs) + beta * vcl_result);
-  viennacl::scheduler::execute(my_statement);
-  }
-
-  if ( std::fabs(diff(result, vcl_result2)) > epsilon )
-  {
-    std::cout << "# Error at operation: matrix-vector product (coordinate_matrix) with scaled additions" << std::endl;
-    std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
-    retval = EXIT_FAILURE;
-  }
-
   //std::cout << "Copying ell_matrix" << std::endl;
-  viennacl::copy(ublas_matrix, vcl_ell_matrix);
-  ublas_matrix.clear();
-  viennacl::copy(vcl_ell_matrix, ublas_matrix);// just to check that it's works
+  viennacl::copy(std_matrix, vcl_ell_matrix);
+  std_matrix.clear();
+  viennacl::copy(vcl_ell_matrix, std_matrix);// just to check that it's works
 
 
   std::cout << "Testing products: ell_matrix" << std::endl;
-  rhs *= NumericT(1.1);
+  for (std::size_t i=0; i<rhs.size(); ++i)
+    rhs[i] *= NumericT(1.1);
   vcl_rhs *= NumericT(1.1);
-  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  sparse_prod(std_matrix, rhs, result, NumericT(1), NumericT(0));
   {
   //viennacl::scheduler::statement my_statement(vcl_result, viennacl::op_assign(), viennacl::linalg::prod(vcl_ell_matrix, vcl_rhs));
   //viennacl::scheduler::execute(my_statement);
@@ -290,15 +269,16 @@ int test(Epsilon const& epsilon)
   }
 
   //std::cout << "Copying hyb_matrix" << std::endl;
-  viennacl::copy(ublas_matrix, vcl_hyb_matrix);
-  ublas_matrix.clear();
-  viennacl::copy(vcl_hyb_matrix, ublas_matrix);// just to check that it's works
-  viennacl::copy(ublas_matrix, vcl_hyb_matrix);
+  viennacl::copy(std_matrix, vcl_hyb_matrix);
+  std_matrix.clear();
+  viennacl::copy(vcl_hyb_matrix, std_matrix);// just to check that it's works
+  viennacl::copy(std_matrix, vcl_hyb_matrix);
 
   std::cout << "Testing products: hyb_matrix" << std::endl;
-  rhs *= NumericT(1.1);
+  for (std::size_t i=0; i<rhs.size(); ++i)
+    rhs[i] *= NumericT(1.1);
   vcl_rhs *= NumericT(1.1);
-  result     = viennacl::linalg::prod(ublas_matrix, rhs);
+  sparse_prod(std_matrix, rhs, result, NumericT(1), NumericT(0));
   {
   viennacl::scheduler::statement my_statement(vcl_result, viennacl::op_assign(), viennacl::linalg::prod(vcl_hyb_matrix, vcl_rhs));
   viennacl::scheduler::execute(my_statement);
@@ -317,15 +297,16 @@ int test(Epsilon const& epsilon)
   copy(rhs.begin(), rhs.end(), vcl_rhs.begin());
   copy(result.begin(), result.end(), vcl_result.begin());
   copy(result.begin(), result.end(), vcl_result2.begin());
-  copy(ublas_matrix, vcl_compressed_matrix);
-  copy(ublas_matrix, vcl_coordinate_matrix);
-  copy(ublas_matrix, vcl_ell_matrix);
-  copy(ublas_matrix, vcl_hyb_matrix);
+  copy(std_matrix, vcl_compressed_matrix);
+  copy(std_matrix, vcl_coordinate_matrix);
+  copy(std_matrix, vcl_ell_matrix);
+  copy(std_matrix, vcl_hyb_matrix);
 
   std::cout << "Testing scaled additions of products and vectors: compressed_matrix" << std::endl;
-  rhs *= NumericT(1.1);
+  for (std::size_t i=0; i<rhs.size(); ++i)
+    rhs[i] *= NumericT(1.1);
   vcl_rhs *= NumericT(1.1);
-  result     = alpha * viennacl::linalg::prod(ublas_matrix, rhs) + beta * result;
+  sparse_prod(std_matrix, rhs, result, NumericT(alpha), beta);
   {
   viennacl::scheduler::statement my_statement(vcl_result2, viennacl::op_assign(), alpha * viennacl::linalg::prod(vcl_compressed_matrix, vcl_rhs) + beta * vcl_result);
   viennacl::scheduler::execute(my_statement);
@@ -341,9 +322,10 @@ int test(Epsilon const& epsilon)
 
   std::cout << "Testing scaled additions of products and vectors: coordinate_matrix" << std::endl;
   copy(result.begin(), result.end(), vcl_result.begin());
-  rhs *= NumericT(1.1);
+  for (std::size_t i=0; i<rhs.size(); ++i)
+    rhs[i] *= NumericT(1.1);
   vcl_rhs *= NumericT(1.1);
-  result     = alpha * viennacl::linalg::prod(ublas_matrix, rhs) + beta * result;
+  sparse_prod(std_matrix, rhs, result, NumericT(alpha), beta);
   {
   viennacl::scheduler::statement my_statement(vcl_result2, viennacl::op_assign(), alpha * viennacl::linalg::prod(vcl_coordinate_matrix, vcl_rhs) + beta * vcl_result);
   viennacl::scheduler::execute(my_statement);
@@ -358,9 +340,10 @@ int test(Epsilon const& epsilon)
 
   std::cout << "Testing scaled additions of products and vectors: ell_matrix" << std::endl;
   copy(result.begin(), result.end(), vcl_result.begin());
-  rhs *= NumericT(1.1);
+  for (std::size_t i=0; i<rhs.size(); ++i)
+    rhs[i] *= NumericT(1.1);
   vcl_rhs *= NumericT(1.1);
-  result     = alpha * viennacl::linalg::prod(ublas_matrix, rhs) + beta * result;
+  sparse_prod(std_matrix, rhs, result, NumericT(alpha), beta);
   {
   viennacl::scheduler::statement my_statement(vcl_result2, viennacl::op_assign(), alpha * viennacl::linalg::prod(vcl_ell_matrix, vcl_rhs) + beta * vcl_result);
   viennacl::scheduler::execute(my_statement);
@@ -375,9 +358,10 @@ int test(Epsilon const& epsilon)
 
   std::cout << "Testing scaled additions of products and vectors: hyb_matrix" << std::endl;
   copy(result.begin(), result.end(), vcl_result.begin());
-  rhs *= NumericT(1.1);
+  for (std::size_t i=0; i<rhs.size(); ++i)
+    rhs[i] *= NumericT(1.1);
   vcl_rhs *= NumericT(1.1);
-  result     = alpha * viennacl::linalg::prod(ublas_matrix, rhs) + beta * result;
+  sparse_prod(std_matrix, rhs, result, NumericT(alpha), beta);
   {
   viennacl::scheduler::statement my_statement(vcl_result2, viennacl::op_assign(), alpha * viennacl::linalg::prod(vcl_hyb_matrix, vcl_rhs) + beta * vcl_result);
   viennacl::scheduler::execute(my_statement);
