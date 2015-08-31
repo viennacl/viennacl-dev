@@ -26,19 +26,11 @@
 //
 #include <iostream>
 #include <iomanip>
-
-//
-// *** Boost
-//
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/vector_proxy.hpp>
+#include <vector>
 
 //
 // *** ViennaCL
 //
-//#define VIENNACL_DEBUG_ALL
-#define VIENNACL_WITH_UBLAS 1
 #include "viennacl/vector.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/vector_proxy.hpp"
@@ -51,8 +43,6 @@
 #include "viennacl/scheduler/io.hpp"
 
 #include "viennacl/tools/random.hpp"
-
-using namespace boost::numeric;
 
 
 //
@@ -92,21 +82,23 @@ ScalarType diff(ScalarType const & s1, viennacl::entry_proxy<ScalarType> const &
 // -------------------------------------------------------------
 //
 template<typename ScalarType, typename ViennaCLVectorType>
-ScalarType diff(ublas::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
+ScalarType diff(std::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
 {
-   ublas::vector<ScalarType> v2_cpu(vcl_vec.size());
-   viennacl::backend::finish();
-   viennacl::copy(vcl_vec, v2_cpu);
+  std::vector<ScalarType> v2_cpu(vcl_vec.size());
+  viennacl::backend::finish();
+  viennacl::copy(vcl_vec, v2_cpu);
 
-   for (unsigned int i=0;i<v1.size(); ++i)
-   {
-      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
-         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
-      else
-         v2_cpu[i] = 0.0;
-   }
+  ScalarType norm_inf_value = 0;
+  for (std::size_t i=0;i<v1.size(); ++i)
+  {
+    ScalarType tmp = 0;
+    if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
+       tmp = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
 
-   return ublas::norm_inf(v2_cpu);
+    norm_inf_value = (tmp > norm_inf_value) ? tmp : norm_inf_value;
+  }
+
+  return norm_inf_value;
 }
 
 
@@ -130,10 +122,10 @@ int check(T1 const & t1, T2 const & t2, double epsilon)
 //
 // -------------------------------------------------------------
 //
-template< typename NumericT, typename Epsilon, typename UblasVectorType, typename ViennaCLVectorType1, typename ViennaCLVectorType2 >
+template< typename NumericT, typename Epsilon, typename STLVectorType, typename ViennaCLVectorType1, typename ViennaCLVectorType2 >
 int test(Epsilon const& epsilon,
-         UblasVectorType     & ublas_v1, UblasVectorType     & ublas_v2,
-         ViennaCLVectorType1 &   vcl_v1, ViennaCLVectorType2 &   vcl_v2)
+         STLVectorType       & std_v1, STLVectorType       & std_v2,
+         ViennaCLVectorType1 & vcl_v1, ViennaCLVectorType2 & vcl_v2)
 {
   int retval = EXIT_SUCCESS;
 
@@ -148,42 +140,42 @@ int test(Epsilon const& epsilon,
   // Initializer:
   //
   std::cout << "Checking for zero_vector initializer..." << std::endl;
-  ublas_v1 = ublas::zero_vector<NumericT>(ublas_v1.size());
+  std_v1 = std::vector<NumericT>(std_v1.size());
   vcl_v1 = viennacl::zero_vector<NumericT>(vcl_v1.size());
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << "Checking for scalar_vector initializer..." << std::endl;
-  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), cpu_result);
+  std_v1 = std::vector<NumericT>(std_v1.size(), cpu_result);
   vcl_v1 = viennacl::scalar_vector<NumericT>(vcl_v1.size(), cpu_result);
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
-  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), gpu_result);
+  std_v1 = std::vector<NumericT>(std_v1.size(), gpu_result);
   vcl_v1 = viennacl::scalar_vector<NumericT>(vcl_v1.size(), gpu_result);
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << "Checking for unit_vector initializer..." << std::endl;
-  ublas_v1 = ublas::unit_vector<NumericT>(ublas_v1.size(), 5);
+  std_v1 = std::vector<NumericT>(std_v1.size()); std_v1[5] = NumericT(1);
   vcl_v1 = viennacl::unit_vector<NumericT>(vcl_v1.size(), 5);
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
 
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  for (std::size_t i=0; i<std_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(1.0) + randomNumber();
-    ublas_v2[i] = NumericT(1.0) + randomNumber();
+    std_v1[i] = NumericT(1.0) + randomNumber();
+    std_v2[i] = NumericT(1.0) + randomNumber();
   }
 
-  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin());  //resync
-  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin());
+  viennacl::copy(std_v1.begin(), std_v1.end(), vcl_v1.begin());  //resync
+  viennacl::copy(std_v2.begin(), std_v2.end(), vcl_v2.begin());
 
   std::cout << "Checking for successful copy..." << std::endl;
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
-  if (check(ublas_v2, vcl_v2, epsilon) != EXIT_SUCCESS)
+  if (check(std_v2, vcl_v2, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
 
@@ -192,63 +184,71 @@ int test(Epsilon const& epsilon,
   std::cout << "Testing simple assignments..." << std::endl;
 
   {
-  ublas_v1 = ublas_v2;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v2); // same as vcl_v1 = vcl_v2;
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   {
-  ublas_v1 += ublas_v2;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] += std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_add(), vcl_v2); // same as vcl_v1 += vcl_v2;
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   {
-  ublas_v1 -= ublas_v2;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] -= std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_sub(), vcl_v2); // same as vcl_v1 -= vcl_v2;
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "Testing composite assignments..." << std::endl;
   {
-  ublas_v1 = ublas_v1 + ublas_v2;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std_v1[i] + std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v1 + vcl_v2); // same as vcl_v1 = vcl_v1 + vcl_v2;
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
   {
-  ublas_v1 += alpha * ublas_v1 - beta * ublas_v2 + ublas_v1 / beta - ublas_v2 / alpha;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] += alpha * std_v1[i] - beta * std_v2[i] + std_v1[i] / beta - std_v2[i] / alpha;
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_inplace_add(), alpha * vcl_v1 - beta * vcl_v2 + vcl_v1 / beta - vcl_v2 / alpha); // same as vcl_v1 += alpha * vcl_v1 - beta * vcl_v2 + beta * vcl_v1 - alpha * vcl_v2;
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   {
-  ublas_v1 = ublas_v1 - ublas_v2;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std_v1[i] - std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v1 - vcl_v2); // same as vcl_v1 = vcl_v1 - vcl_v2;
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "--- Testing reductions ---" << std::endl;
   std::cout << "inner_prod..." << std::endl;
   {
-  cpu_result = inner_prod(ublas_v1, ublas_v2);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += std_v1[i] * std_v2[i];
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2)); // same as gpu_result = inner_prod(vcl_v1, vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
@@ -257,7 +257,9 @@ int test(Epsilon const& epsilon,
   }
 
   {
-  cpu_result = inner_prod(ublas_v1 + ublas_v2, ublas_v2);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += (std_v1[i] + std_v2[i]) * std_v2[i];
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1 + vcl_v2, vcl_v2)); // same as gpu_result = inner_prod(vcl_v1 + vcl_v2, vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
@@ -266,7 +268,9 @@ int test(Epsilon const& epsilon,
   }
 
   {
-  cpu_result = inner_prod(ublas_v1, ublas_v2 - ublas_v1);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += std_v1[i] * (std_v2[i] - std_v1[i]);
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2 - vcl_v1)); // same as gpu_result = inner_prod(vcl_v1, vcl_v2 - vcl_v1);
   viennacl::scheduler::execute(my_statement);
 
@@ -275,7 +279,9 @@ int test(Epsilon const& epsilon,
   }
 
   {
-  cpu_result = inner_prod(ublas_v1 - ublas_v2, ublas_v2 + ublas_v1);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += (std_v1[i] - std_v2[i]) * (std_v2[i] + std_v1[i]);
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1)); // same as gpu_result = inner_prod(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1);
   viennacl::scheduler::execute(my_statement);
 
@@ -285,7 +291,9 @@ int test(Epsilon const& epsilon,
 
   std::cout << "norm_1..." << std::endl;
   {
-  cpu_result = norm_1(ublas_v1);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += std::fabs(std_v1[i]);
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_1(vcl_v1)); // same as gpu_result = norm_1(vcl_v1);
   viennacl::scheduler::execute(my_statement);
 
@@ -294,7 +302,9 @@ int test(Epsilon const& epsilon,
   }
 
   {
-  cpu_result = norm_1(ublas_v1 + ublas_v2);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += std::fabs(std_v1[i] + std_v2[i]);
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_1(vcl_v1 + vcl_v2)); // same as gpu_result = norm_1(vcl_v1 + vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
@@ -304,7 +314,10 @@ int test(Epsilon const& epsilon,
 
   std::cout << "norm_2..." << std::endl;
   {
-  cpu_result = norm_2(ublas_v1);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += std_v1[i] * std_v1[i];
+  cpu_result = std::sqrt(cpu_result);
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_2(vcl_v1)); // same as gpu_result = norm_2(vcl_v1);
   viennacl::scheduler::execute(my_statement);
 
@@ -313,7 +326,10 @@ int test(Epsilon const& epsilon,
   }
 
   {
-  cpu_result = norm_2(ublas_v1 + ublas_v2);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += (std_v1[i] + std_v2[i]) * (std_v1[i] + std_v2[i]);
+  cpu_result = std::sqrt(cpu_result);
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_2(vcl_v1 + vcl_v2)); // same as gpu_result = norm_2(vcl_v1 + vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
@@ -323,7 +339,9 @@ int test(Epsilon const& epsilon,
 
   std::cout << "norm_inf..." << std::endl;
   {
-  cpu_result = norm_inf(ublas_v1);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result = std::max(cpu_result, std::fabs(std_v1[i]));
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_inf(vcl_v1)); // same as gpu_result = norm_inf(vcl_v1);
   viennacl::scheduler::execute(my_statement);
 
@@ -332,7 +350,9 @@ int test(Epsilon const& epsilon,
   }
 
   {
-  cpu_result = norm_inf(ublas_v1 - ublas_v2);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result = std::max(cpu_result, std::fabs(std_v1[i] - std_v2[i]));
   viennacl::scheduler::statement   my_statement(gpu_result, viennacl::op_assign(), viennacl::linalg::norm_inf(vcl_v1 - vcl_v2)); // same as gpu_result = norm_inf(vcl_v1 - vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
@@ -343,41 +363,45 @@ int test(Epsilon const& epsilon,
   std::cout << "--- Testing elementwise operations (binary) ---" << std::endl;
   std::cout << "x = element_prod(x, y)... ";
   {
-  ublas_v1 = element_prod(ublas_v1, ublas_v2);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std_v1[i] * std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1, vcl_v2));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_prod(x + y, y)... ";
   {
-  ublas_v1 = element_prod(ublas_v1 + ublas_v2, ublas_v2);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = (std_v1[i] + std_v2[i]) * std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1 + vcl_v2, vcl_v2));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_prod(x, x + y)... ";
   {
-  ublas_v1 = element_prod(ublas_v1, ublas_v1 + ublas_v2);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std_v1[i] * (std_v1[i] + std_v2[i]);
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1, vcl_v2 + vcl_v1));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_prod(x - y, y + x)... ";
   {
-  ublas_v1 = element_prod(ublas_v1 - ublas_v2, ublas_v2 + ublas_v1);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = (std_v1[i] - std_v2[i]) * (std_v2[i] + std_v1[i]);
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_prod(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
@@ -385,141 +409,146 @@ int test(Epsilon const& epsilon,
 
   std::cout << "x = element_div(x, y)... ";
   {
-  ublas_v1 = element_div(ublas_v1, ublas_v2);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std_v1[i] / std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1, vcl_v2));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_div(x + y, y)... ";
   {
-  ublas_v1 = element_div(ublas_v1 + ublas_v2, ublas_v2);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = (std_v1[i] + std_v2[i]) / std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1 + vcl_v2, vcl_v2));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_div(x, x + y)... ";
   {
-  ublas_v1 = element_div(ublas_v1, ublas_v1 + ublas_v2);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std_v1[i] / (std_v1[i] + std_v2[i]);
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1, vcl_v2 + vcl_v1));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_div(x - y, y + x)... ";
   {
-  ublas_v1 = element_div(ublas_v1 - ublas_v2, ublas_v2 + ublas_v1);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = (std_v1[i] - std_v2[i]) / (std_v2[i] + std_v1[i]);
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_div(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
 
   std::cout << "x = element_pow(x, y)... ";
   {
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  for (std::size_t i=0; i<std_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(2.0) + randomNumber();
-    ublas_v2[i] = NumericT(1.0) + randomNumber();
+    std_v1[i] = NumericT(2.0) + randomNumber();
+    std_v2[i] = NumericT(1.0) + randomNumber();
   }
-  viennacl::copy(ublas_v1, vcl_v1);
-  viennacl::copy(ublas_v2, vcl_v2);
+  viennacl::copy(std_v1, vcl_v1);
+  viennacl::copy(std_v2, vcl_v2);
 
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
-    ublas_v1[i] = std::pow(ublas_v1[i], ublas_v2[i]);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std::pow(std_v1[i], std_v2[i]);
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_pow(vcl_v1, vcl_v2));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_pow(x + y, y)... ";
   {
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  for (std::size_t i=0; i<std_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(2.0) + randomNumber();
-    ublas_v2[i] = NumericT(1.0) + randomNumber();
+    std_v1[i] = NumericT(2.0) + randomNumber();
+    std_v2[i] = NumericT(1.0) + randomNumber();
   }
-  viennacl::copy(ublas_v1, vcl_v1);
-  viennacl::copy(ublas_v2, vcl_v2);
+  viennacl::copy(std_v1, vcl_v1);
+  viennacl::copy(std_v2, vcl_v2);
 
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
-    ublas_v1[i] = std::pow(ublas_v1[i]  + ublas_v2[i], ublas_v2[i]);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std::pow(std_v1[i]  + std_v2[i], std_v2[i]);
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_pow(vcl_v1 + vcl_v2, vcl_v2));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_pow(x, x + y)... ";
   {
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  for (std::size_t i=0; i<std_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(2.0) + randomNumber();
-    ublas_v2[i] = NumericT(1.0) + randomNumber();
+    std_v1[i] = NumericT(2.0) + randomNumber();
+    std_v2[i] = NumericT(1.0) + randomNumber();
   }
-  viennacl::copy(ublas_v1, vcl_v1);
-  viennacl::copy(ublas_v2, vcl_v2);
+  viennacl::copy(std_v1, vcl_v1);
+  viennacl::copy(std_v2, vcl_v2);
 
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
-    ublas_v1[i] = std::pow(ublas_v1[i], ublas_v1[i] + ublas_v2[i]);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std::pow(std_v1[i], std_v1[i] + std_v2[i]);
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_pow(vcl_v1, vcl_v2 + vcl_v1));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = element_pow(x - y, y + x)... ";
   {
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
+  for (std::size_t i=0; i<std_v1.size(); ++i)
   {
-    ublas_v1[i] = NumericT(2.0) + randomNumber();
-    ublas_v2[i] = NumericT(1.0) + randomNumber();
+    std_v1[i] = NumericT(2.0) + randomNumber();
+    std_v2[i] = NumericT(1.0) + randomNumber();
   }
-  viennacl::copy(ublas_v1, vcl_v1);
-  viennacl::copy(ublas_v2, vcl_v2);
+  viennacl::copy(std_v1, vcl_v1);
+  viennacl::copy(std_v2, vcl_v2);
 
-  for (std::size_t i=0; i<ublas_v1.size(); ++i)
-    ublas_v1[i] = std::pow(ublas_v1[i] - ublas_v2[i], ublas_v2[i] + ublas_v1[i]);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std::pow(std_v1[i] - std_v2[i], std_v2[i] + std_v1[i]);
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_pow(vcl_v1 - vcl_v2, vcl_v2 + vcl_v1));
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "--- Testing elementwise operations (unary) ---" << std::endl;
 #define GENERATE_UNARY_OP_TEST(OPNAME) \
-  ublas_v1 = ublas::scalar_vector<NumericT>(ublas_v1.size(), NumericT(0.21)); \
-  ublas_v2 = NumericT(3.1415) * ublas_v1; \
-  viennacl::copy(ublas_v1.begin(), ublas_v1.end(), vcl_v1.begin()); \
-  viennacl::copy(ublas_v2.begin(), ublas_v2.end(), vcl_v2.begin()); \
+  std_v1 = std::vector<NumericT>(std_v1.size(), NumericT(0.21)); \
+  for (std::size_t i=0; i<std_v1.size(); ++i) \
+    std_v2[i] = NumericT(3.1415) * std_v1[i]; \
+  viennacl::copy(std_v1.begin(), std_v1.end(), vcl_v1.begin()); \
+  viennacl::copy(std_v2.begin(), std_v2.end(), vcl_v2.begin()); \
   { \
-  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
-    ublas_v1[i] = std::OPNAME(ublas_v2[i]); \
+  for (std::size_t i=0; i<std_v1.size(); ++i) \
+    std_v1[i] = std::OPNAME(std_v2[i]); \
   viennacl::scheduler::statement my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_v2)); \
   viennacl::scheduler::execute(my_statement); \
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
     return EXIT_FAILURE; \
   } \
   { \
-  for (std::size_t i=0; i<ublas_v1.size(); ++i) \
-  ublas_v1[i] = std::OPNAME(ublas_v2[i] / NumericT(2)); \
+  for (std::size_t i=0; i<std_v1.size(); ++i) \
+  std_v1[i] = std::OPNAME(std_v2[i] / NumericT(2)); \
   viennacl::scheduler::statement my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_v2 / NumericT(2))); \
   viennacl::scheduler::execute(my_statement); \
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS) \
     return EXIT_FAILURE; \
   }
 
@@ -543,21 +572,29 @@ int test(Epsilon const& epsilon,
   std::cout << "--- Testing complicated composite operations ---" << std::endl;
   std::cout << "x = inner_prod(x, y) * y..." << std::endl;
   {
-  ublas_v1 = inner_prod(ublas_v1, ublas_v2) * ublas_v2;
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += std_v1[i] * std_v2[i];
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = cpu_result * std_v2[i];
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), viennacl::linalg::inner_prod(vcl_v1, vcl_v2) * vcl_v2);
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
   std::cout << "x = y / norm_1(x)..." << std::endl;
   {
-  ublas_v1 = ublas_v2 / norm_1(ublas_v1);
+  cpu_result = 0;
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    cpu_result += std::fabs(std_v1[i]);
+  for (std::size_t i=0; i<std_v1.size(); ++i)
+    std_v1[i] = std_v2[i] / cpu_result;
   viennacl::scheduler::statement   my_statement(vcl_v1, viennacl::op_assign(), vcl_v2 / viennacl::linalg::norm_1(vcl_v1) );
   viennacl::scheduler::execute(my_statement);
 
-  if (check(ublas_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
+  if (check(std_v1, vcl_v1, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
   }
 
@@ -578,35 +615,41 @@ int test(Epsilon const& epsilon)
   std::cout << "Running tests for vector of size " << size << std::endl;
 
   //
-  // Set up UBLAS objects
+  // Set up STL objects
   //
-  ublas::vector<NumericT> ublas_full_vec(size);
-  ublas::vector<NumericT> ublas_full_vec2(ublas_full_vec.size());
+  std::vector<NumericT> std_full_vec(size);
+  std::vector<NumericT> std_full_vec2(std_full_vec.size());
 
-  for (std::size_t i=0; i<ublas_full_vec.size(); ++i)
+  for (std::size_t i=0; i<std_full_vec.size(); ++i)
   {
-    ublas_full_vec[i]  = NumericT(1.0) + randomNumber();
-    ublas_full_vec2[i] = NumericT(1.0) + randomNumber();
+    std_full_vec[i]  = NumericT(1.0) + randomNumber();
+    std_full_vec2[i] = NumericT(1.0) + randomNumber();
   }
 
-  ublas::range r1(    ublas_full_vec.size() / 4, 2 * ublas_full_vec.size() / 4);
-  ublas::range r2(2 * ublas_full_vec2.size() / 4, 3 * ublas_full_vec2.size() / 4);
-  ublas::vector_range< ublas::vector<NumericT> > ublas_range_vec(ublas_full_vec, r1);
-  ublas::vector_range< ublas::vector<NumericT> > ublas_range_vec2(ublas_full_vec2, r2);
+  std::vector<NumericT> std_range_vec (2 * std_full_vec.size() / 4 - std_full_vec.size() / 4);
+  std::vector<NumericT> std_range_vec2(2 * std_full_vec.size() / 4 - std_full_vec.size() / 4);
 
-  ublas::slice s1(    ublas_full_vec.size() / 4, 3, ublas_full_vec.size() / 4);
-  ublas::slice s2(2 * ublas_full_vec2.size() / 4, 2, ublas_full_vec2.size() / 4);
-  ublas::vector_slice< ublas::vector<NumericT> > ublas_slice_vec(ublas_full_vec, s1);
-  ublas::vector_slice< ublas::vector<NumericT> > ublas_slice_vec2(ublas_full_vec2, s2);
+  for (std::size_t i=0; i<std_range_vec.size(); ++i)
+    std_range_vec[i] = std_full_vec[i + std_full_vec.size() / 4];
+  for (std::size_t i=0; i<std_range_vec2.size(); ++i)
+    std_range_vec2[i] = std_full_vec2[i + 2 * std_full_vec2.size() / 4];
+
+  std::vector<NumericT> std_slice_vec (std_full_vec.size() / 4);
+  std::vector<NumericT> std_slice_vec2(std_full_vec.size() / 4);
+
+  for (std::size_t i=0; i<std_slice_vec.size(); ++i)
+    std_slice_vec[i] = std_full_vec[3*i + std_full_vec.size() / 4];
+  for (std::size_t i=0; i<std_slice_vec2.size(); ++i)
+    std_slice_vec2[i] = std_full_vec2[2*i + 2 * std_full_vec2.size() / 4];
 
   //
   // Set up ViennaCL objects
   //
-  viennacl::vector<NumericT> vcl_full_vec(ublas_full_vec.size());
-  viennacl::vector<NumericT> vcl_full_vec2(ublas_full_vec2.size());
+  viennacl::vector<NumericT> vcl_full_vec(std_full_vec.size());
+  viennacl::vector<NumericT> vcl_full_vec2(std_full_vec2.size());
 
-  viennacl::fast_copy(ublas_full_vec.begin(), ublas_full_vec.end(), vcl_full_vec.begin());
-  viennacl::copy(ublas_full_vec2.begin(), ublas_full_vec2.end(), vcl_full_vec2.begin());
+  viennacl::fast_copy(std_full_vec.begin(), std_full_vec.end(), vcl_full_vec.begin());
+  viennacl::copy(std_full_vec2.begin(), std_full_vec2.end(), vcl_full_vec2.begin());
 
   viennacl::range vcl_r1(    vcl_full_vec.size() / 4, 2 * vcl_full_vec.size() / 4);
   viennacl::range vcl_r2(2 * vcl_full_vec2.size() / 4, 3 * vcl_full_vec2.size() / 4);
@@ -617,13 +660,13 @@ int test(Epsilon const& epsilon)
     viennacl::vector<NumericT> vcl_short_vec(vcl_range_vec);
     viennacl::vector<NumericT> vcl_short_vec2 = vcl_range_vec2;
 
-    ublas::vector<NumericT> ublas_short_vec(ublas_range_vec);
-    ublas::vector<NumericT> ublas_short_vec2(ublas_range_vec2);
+    std::vector<NumericT> std_short_vec(std_range_vec);
+    std::vector<NumericT> std_short_vec2(std_range_vec2);
 
     std::cout << "Testing creation of vectors from range..." << std::endl;
-    if (check(ublas_short_vec, vcl_short_vec, epsilon) != EXIT_SUCCESS)
+    if (check(std_short_vec, vcl_short_vec, epsilon) != EXIT_SUCCESS)
       return EXIT_FAILURE;
-    if (check(ublas_short_vec2, vcl_short_vec2, epsilon) != EXIT_SUCCESS)
+    if (check(std_short_vec2, vcl_short_vec2, epsilon) != EXIT_SUCCESS)
       return EXIT_FAILURE;
   }
 
@@ -635,13 +678,13 @@ int test(Epsilon const& epsilon)
   viennacl::vector<NumericT> vcl_short_vec(vcl_slice_vec);
   viennacl::vector<NumericT> vcl_short_vec2 = vcl_slice_vec2;
 
-  ublas::vector<NumericT> ublas_short_vec(ublas_slice_vec);
-  ublas::vector<NumericT> ublas_short_vec2(ublas_slice_vec2);
+  std::vector<NumericT> std_short_vec(std_slice_vec);
+  std::vector<NumericT> std_short_vec2(std_slice_vec2);
 
   std::cout << "Testing creation of vectors from slice..." << std::endl;
-  if (check(ublas_short_vec, vcl_short_vec, epsilon) != EXIT_SUCCESS)
+  if (check(std_short_vec, vcl_short_vec, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
-  if (check(ublas_short_vec2, vcl_short_vec2, epsilon) != EXIT_SUCCESS)
+  if (check(std_short_vec2, vcl_short_vec2, epsilon) != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
 
@@ -651,21 +694,21 @@ int test(Epsilon const& epsilon)
 
   std::cout << " ** vcl_v1 = vector, vcl_v2 = vector **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_short_vec, vcl_short_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << " ** vcl_v1 = vector, vcl_v2 = range **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_short_vec, vcl_range_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << " ** vcl_v1 = vector, vcl_v2 = slice **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_short_vec, vcl_slice_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -674,21 +717,21 @@ int test(Epsilon const& epsilon)
 
   std::cout << " ** vcl_v1 = range, vcl_v2 = vector **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_range_vec, vcl_short_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << " ** vcl_v1 = range, vcl_v2 = range **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_range_vec, vcl_range_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << " ** vcl_v1 = range, vcl_v2 = slice **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_range_vec, vcl_slice_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
@@ -697,21 +740,21 @@ int test(Epsilon const& epsilon)
 
   std::cout << " ** vcl_v1 = slice, vcl_v2 = vector **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_slice_vec, vcl_short_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << " ** vcl_v1 = slice, vcl_v2 = range **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_slice_vec, vcl_range_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
 
   std::cout << " ** vcl_v1 = slice, vcl_v2 = slice **" << std::endl;
   retval = test<NumericT>(epsilon,
-                          ublas_short_vec, ublas_short_vec2,
+                          std_short_vec, std_short_vec2,
                           vcl_slice_vec, vcl_slice_vec2);
   if (retval != EXIT_SUCCESS)
     return EXIT_FAILURE;
