@@ -24,24 +24,11 @@
 // *** System
 //
 #include <iostream>
-
-//
-// *** Boost
-//
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/lu.hpp>
-#include <boost/numeric/ublas/io.hpp>
+#include <vector>
 
 //
 // *** ViennaCL
 //
-//#define VIENNACL_DEBUG_ALL
-//#define VIENNACL_DEBUG_BUILD
-#define VIENNACL_WITH_UBLAS 1
 #include "viennacl/scalar.hpp"
 #include "viennacl/matrix.hpp"
 #include "viennacl/matrix_proxy.hpp"
@@ -54,10 +41,7 @@
 #include "viennacl/scheduler/execute.hpp"
 #include "viennacl/scheduler/io.hpp"
 
-//
-// -------------------------------------------------------------
-//
-using namespace boost::numeric;
+
 //
 // -------------------------------------------------------------
 //
@@ -70,39 +54,41 @@ ScalarType diff(ScalarType & s1, viennacl::scalar<ScalarType> & s2)
    return 0;
 }
 
-template<typename ScalarType>
-ScalarType diff(ublas::vector<ScalarType> & v1, viennacl::vector<ScalarType> & v2)
+template<typename ScalarType, typename VCLVectorType>
+ScalarType diff(std::vector<ScalarType> const & v1, VCLVectorType const & v2)
 {
-   ublas::vector<ScalarType> v2_cpu(v2.size());
+   std::vector<ScalarType> v2_cpu(v2.size());
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(v2.begin(), v2.end(), v2_cpu.begin());
 
-   for (std::size_t i=0;i<v1.size(); ++i)
+   ScalarType norm_inf = 0;
+   for (unsigned int i=0;i<v1.size(); ++i)
    {
-      if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
-         v2_cpu[i] = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
-      else
-         v2_cpu[i] = 0.0;
+     if ( std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) ) > 0 )
+     {
+       ScalarType tmp = std::fabs(v2_cpu[i] - v1[i]) / std::max( std::fabs(v2_cpu[i]), std::fabs(v1[i]) );
+       if (tmp > norm_inf)
+         norm_inf = tmp;
+     }
    }
 
-   return norm_inf(v2_cpu);
+   return norm_inf;
 }
 
-
 template<typename ScalarType, typename VCLMatrixType>
-ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
+ScalarType diff(std::vector<std::vector<ScalarType> > const & mat1, VCLMatrixType const & mat2)
 {
-   ublas::matrix<ScalarType> mat2_cpu(mat2.size1(), mat2.size2());
+   std::vector<std::vector<ScalarType> > mat2_cpu(mat2.size1(), std::vector<ScalarType>(mat2.size2()));
    viennacl::backend::finish();  //workaround for a bug in APP SDK 2.7 on Trinity APUs (with Catalyst 12.8)
    viennacl::copy(mat2, mat2_cpu);
    ScalarType ret = 0;
    ScalarType act = 0;
 
-    for (unsigned int i = 0; i < mat2_cpu.size1(); ++i)
+    for (std::size_t i = 0; i < mat2_cpu.size(); ++i)
     {
-      for (unsigned int j = 0; j < mat2_cpu.size2(); ++j)
+      for (std::size_t j = 0; j < mat2_cpu[i].size(); ++j)
       {
-         act = std::fabs(mat2_cpu(i,j) - mat1(i,j)) / std::max( std::fabs(mat2_cpu(i, j)), std::fabs(mat1(i,j)) );
+         act = std::fabs(mat2_cpu[i][j] - mat1[i][j]) / std::max( std::fabs(mat2_cpu[i][j]), std::fabs(mat1[i][j]) );
          if (act > ret)
            ret = act;
       }
@@ -110,7 +96,6 @@ ScalarType diff(ublas::matrix<ScalarType> & mat1, VCLMatrixType & mat2)
    //std::cout << ret << std::endl;
    return ret;
 }
-
 
 
 
@@ -140,7 +125,14 @@ int test_prod(Epsilon const& epsilon,
 
 
    // Test: C +-= A * B --------------------------------------------------------------------------
-   C = viennacl::linalg::prod(A, B);
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A[i][k] * B[k][j];
+       C[i][j] = tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A, vcl_B));
    viennacl::scheduler::execute(my_statement);
@@ -157,7 +149,14 @@ int test_prod(Epsilon const& epsilon,
      std::cout << "Test C = A * B passed!" << std::endl;
 
 
-   C += viennacl::linalg::prod(A, B);
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A[i][k] * B[k][j];
+       C[i][j] += tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_add(), viennacl::linalg::prod(vcl_A, vcl_B));
    viennacl::scheduler::execute(my_statement);
@@ -173,7 +172,14 @@ int test_prod(Epsilon const& epsilon,
    else
      std::cout << "Test C += A * B passed!" << std::endl;
 
-   C -= viennacl::linalg::prod(A, B);
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A[i][k] * B[k][j];
+       C[i][j] -= tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_sub(), viennacl::linalg::prod(vcl_A, vcl_B));
    viennacl::scheduler::execute(my_statement);
@@ -194,7 +200,14 @@ int test_prod(Epsilon const& epsilon,
 
 
    // Test: C +-= A * trans(B) --------------------------------------------------------------------------
-   C     = boost::numeric::ublas::prod(A, trans(B_trans));
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A[i][k] * B_trans[j][k];
+       C[i][j] = tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(vcl_A, trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
@@ -211,7 +224,14 @@ int test_prod(Epsilon const& epsilon,
      std::cout << "Test C = A * trans(B) passed!" << std::endl;
 
 
-   C     += boost::numeric::ublas::prod(A, trans(B_trans));
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A[i][k] * B_trans[j][k];
+       C[i][j] += tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_add(), viennacl::linalg::prod(vcl_A, trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
@@ -228,7 +248,14 @@ int test_prod(Epsilon const& epsilon,
      std::cout << "Test C += A * trans(B) passed!" << std::endl;
 
 
-   C     -= boost::numeric::ublas::prod(A, trans(B_trans));
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A[i][k] * B_trans[j][k];
+       C[i][j] -= tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_sub(), viennacl::linalg::prod(vcl_A, trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
@@ -247,7 +274,14 @@ int test_prod(Epsilon const& epsilon,
 
 
    // Test: C +-= trans(A) * B --------------------------------------------------------------------------
-   C     = boost::numeric::ublas::prod(trans(A_trans), B);
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A_trans[k][i] * B[k][j];
+       C[i][j] = tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans), vcl_B));
    viennacl::scheduler::execute(my_statement);
@@ -264,7 +298,14 @@ int test_prod(Epsilon const& epsilon,
      std::cout << "Test C = trans(A) * B passed!" << std::endl;
 
 
-   C     += boost::numeric::ublas::prod(trans(A_trans), B);
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A_trans[k][i] * B[k][j];
+       C[i][j] += tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_add(), viennacl::linalg::prod(trans(vcl_A_trans), vcl_B));
    viennacl::scheduler::execute(my_statement);
@@ -281,7 +322,14 @@ int test_prod(Epsilon const& epsilon,
      std::cout << "Test C += trans(A) * B passed!" << std::endl;
 
 
-   C     -= boost::numeric::ublas::prod(trans(A_trans), B);
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A_trans[k][i] * B[k][j];
+       C[i][j] -= tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_sub(), viennacl::linalg::prod(trans(vcl_A_trans), vcl_B));
    viennacl::scheduler::execute(my_statement);
@@ -302,7 +350,14 @@ int test_prod(Epsilon const& epsilon,
 
 
    // Test: C +-= trans(A) * trans(B) --------------------------------------------------------------------------
-   C     = boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A_trans[k][i] * B_trans[j][k];
+       C[i][j] = tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
@@ -318,7 +373,14 @@ int test_prod(Epsilon const& epsilon,
    else
      std::cout << "Test C = trans(A) * trans(B) passed!" << std::endl;
 
-   C     += boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A_trans[k][i] * B_trans[j][k];
+       C[i][j] += tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_add(), viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
@@ -335,7 +397,14 @@ int test_prod(Epsilon const& epsilon,
      std::cout << "Test C += trans(A) * trans(B) passed!" << std::endl;
 
 
-   C     -= boost::numeric::ublas::prod(trans(A_trans), trans(B_trans));
+   for (std::size_t i=0; i<C.size(); ++i)
+     for (std::size_t j=0; j<C[i].size(); ++j)
+     {
+       NumericT tmp = 0;
+       for (std::size_t k=0; k<A[i].size(); ++k)
+         tmp += A_trans[k][i] * B_trans[j][k];
+       C[i][j] -= tmp;
+     }
    {
    viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_inplace_sub(), viennacl::linalg::prod(trans(vcl_A_trans), trans(vcl_B_trans)));
    viennacl::scheduler::execute(my_statement);
@@ -379,27 +448,42 @@ int test_prod(Epsilon const& epsilon)
   // --------------------------------------------------------------------------
 
   // ublas reference:
-  ublas::matrix<NumericT> A(matrix_size1, matrix_size2);
-  ublas::matrix<NumericT> big_A = ublas::scalar_matrix<NumericT>(4*matrix_size1, 4*matrix_size2, NumericT(3.1415));
+  std::vector<std::vector<NumericT> > A(matrix_size1, std::vector<NumericT>(matrix_size2));
+  std::vector<std::vector<NumericT> > big_A(4*matrix_size1, std::vector<NumericT>(4*matrix_size2, NumericT(3.1415)));
 
-  ublas::matrix<NumericT> B(matrix_size2, matrix_size3);
-  ublas::matrix<NumericT> big_B = ublas::scalar_matrix<NumericT>(4*matrix_size2, 4*matrix_size3, NumericT(42.0));
+  std::vector<std::vector<NumericT> > B(matrix_size2, std::vector<NumericT>(matrix_size3));
+  std::vector<std::vector<NumericT> > big_B(4*matrix_size2, std::vector<NumericT>(4*matrix_size3, NumericT(42.0)));
 
-  ublas::matrix<NumericT> C(matrix_size1, matrix_size3);
+  std::vector<std::vector<NumericT> > C(matrix_size1, std::vector<NumericT>(matrix_size3));
 
   //fill A and B:
-  for (unsigned int i = 0; i < A.size1(); ++i)
-    for (unsigned int j = 0; j < A.size2(); ++j)
-        A(i,j) = static_cast<NumericT>(0.1) * randomNumber();
-  for (unsigned int i = 0; i < B.size1(); ++i)
-    for (unsigned int j = 0; j < B.size2(); ++j)
-        B(i,j) = static_cast<NumericT>(0.1) * randomNumber();
+  for (std::size_t i = 0; i < A.size(); ++i)
+    for (std::size_t j = 0; j < A[0].size(); ++j)
+      A[i][j] = static_cast<NumericT>(0.1) * randomNumber();
+  for (std::size_t i = 0; i < B.size(); ++i)
+    for (std::size_t j = 0; j < B[0].size(); ++j)
+      B[i][j] = static_cast<NumericT>(0.1) * randomNumber();
 
-  ublas::matrix<NumericT>     A_trans = trans(A);
-  ublas::matrix<NumericT> big_A_trans = trans(big_A);
+  std::vector<std::vector<NumericT> >     A_trans(A[0].size(), std::vector<NumericT>(A.size()));
+  for (std::size_t i = 0; i < A.size(); ++i)
+    for (std::size_t j = 0; j < A[0].size(); ++j)
+      A_trans[j][i] = A[i][j];
 
-  ublas::matrix<NumericT>     B_trans = trans(B);
-  ublas::matrix<NumericT> big_B_trans = trans(big_B);
+  std::vector<std::vector<NumericT> > big_A_trans(big_A[0].size(), std::vector<NumericT>(big_A.size()));
+  for (std::size_t i = 0; i < big_A.size(); ++i)
+    for (std::size_t j = 0; j < big_A[0].size(); ++j)
+      big_A_trans[j][i] = big_A[i][j];
+
+
+  std::vector<std::vector<NumericT> >     B_trans(B[0].size(), std::vector<NumericT>(B.size()));
+  for (std::size_t i = 0; i < B.size(); ++i)
+    for (std::size_t j = 0; j < B[0].size(); ++j)
+      B_trans[j][i] = B[i][j];
+
+  std::vector<std::vector<NumericT> > big_B_trans(big_B[0].size(), std::vector<NumericT>(big_B.size()));
+  for (std::size_t i = 0; i < big_B.size(); ++i)
+    for (std::size_t j = 0; j < big_B[0].size(); ++j)
+      big_B_trans[j][i] = big_B[i][j];
 
   //
   // ViennaCL objects
