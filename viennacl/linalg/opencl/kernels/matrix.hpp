@@ -1019,7 +1019,7 @@ struct matrix_legacy
 {
   static std::string program_name()
   {
-    return viennacl::ocl::type_to_string<NumericT>::apply() + "_matrix_" + detail::type_to_string(LayoutT());
+    return viennacl::ocl::type_to_string<NumericT>::apply() + "_matrix_legacy_" + detail::type_to_string(LayoutT());
   }
 
   static void init(viennacl::ocl::context & ctx)
