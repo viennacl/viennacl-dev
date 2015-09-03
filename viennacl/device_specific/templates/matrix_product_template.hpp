@@ -273,17 +273,17 @@ private:
       stream << B->process("__local #scalartype lB[" + to_string(p.kL*(p.nL+1)) + "];");
     stream << std::endl;
 
-    stream << "uint gidx = get_group_id(0);" << std::endl;
-    stream << "uint gidy = get_group_id(1);" << std::endl;
-    stream << "uint idx = get_local_id(0);" << std::endl;
-    stream << "uint idy = get_local_id(1);" << std::endl;
+    stream << "size_t gidx = get_group_id(0);" << std::endl;
+    stream << "size_t gidy = get_group_id(1);" << std::endl;
+    stream << "size_t idx = get_local_id(0);" << std::endl;
+    stream << "size_t idy = get_local_id(1);" << std::endl;
 
     if (p.A_fetching_policy==FETCH_FROM_LOCAL || p.B_fetching_policy==FETCH_FROM_LOCAL)
     {
       stream << std::endl;
-      stream << "uint idt = " << p.local_size_0 << "*idy + idx;" << std::endl;
-      stream << "uint idxT = idt % " << p.local_fetch_0 << ";" << std::endl;
-      stream << "uint idyT = idt / " << p.local_fetch_0 << ";" << std::endl;
+      stream << "size_t idt = " << p.local_size_0 << "*idy + idx;" << std::endl;
+      stream << "size_t idxT = idt % " << p.local_fetch_0 << ";" << std::endl;
+      stream << "size_t idyT = idt / " << p.local_fetch_0 << ";" << std::endl;
     }
     stream << std::endl;
 
@@ -291,7 +291,7 @@ private:
     {
       //Bounds checking for M (in A, C)
       stream << "bool in_bounds_m[" << p.mS << "];" << std::endl;
-      stream << "for(unsigned int m = 0; m < " << p.mS << "; m++)" << std::endl;
+      stream << "for(size_t m = 0; m < " << p.mS << "; m++)" << std::endl;
       stream.inc_tab();
       switch (p.A_fetching_policy)
       {
@@ -309,7 +309,7 @@ private:
       {
         unsigned int fetch_size = (A_trans_=='N'?p.local_fetch_0*p.simd_width:p.local_fetch_1);
         stream << "bool in_bounds_m_local[" << p.mL/fetch_size << "];" << std::endl;
-        stream << "for(unsigned int m = 0; m < " << p.mL/fetch_size << "; m++)" << std::endl;
+        stream << "for(size_t m = 0; m < " << p.mL/fetch_size << "; m++)" << std::endl;
         stream.inc_tab();
         stream << "in_bounds_m_local[m] = gidx*" << p.mL << " + " << (A_trans_=='N'?"idxT":"idyT") << " + m*" << fetch_size << " < M;" << std::endl;
         stream.dec_tab();
@@ -317,7 +317,7 @@ private:
 
       //Bounds checking for N (in B, C)
       stream << "bool in_bounds_n[" << p.nS << "];" << std::endl;
-      stream << "for(unsigned int n = 0; n < " << p.nS << "; n++)" << std::endl;
+      stream << "for(size_t n = 0; n < " << p.nS << "; n++)" << std::endl;
       stream.inc_tab();
       switch (p.B_fetching_policy)
       {
@@ -335,7 +335,7 @@ private:
       {
         unsigned int fetch_size = (B_trans_=='T'?p.local_fetch_0*p.simd_width:p.local_fetch_1);
         stream << "bool in_bounds_n_local[" << p.nL/fetch_size << "];" << std::endl;
-        stream << "for(unsigned int n = 0; n < " <<  p.nL/fetch_size << "; n++)" << std::endl;
+        stream << "for(size_t n = 0; n < " <<  p.nL/fetch_size << "; n++)" << std::endl;
         stream.inc_tab();
         stream << "in_bounds_n_local[n] = gidy*" << p.nL << " + " << (B_trans_=='T'?"idxT":"idyT") << " + n*" << fetch_size << " < N;" << std::endl;
         stream.dec_tab();
@@ -395,7 +395,8 @@ private:
     }
 
     stream << std::endl;
-    stream << "for(unsigned int block_k=0; block_k < K; block_k+=" << p.kL << "){" << std::endl;
+    stream << "size_t K_size_t = K;" << std::endl;
+    stream << "for(size_t block_k=0; block_k < K_size_t; block_k+=" << p.kL << "){" << std::endl;
     stream.inc_tab();
 
     if (p.A_fetching_policy==FETCH_FROM_LOCAL)
@@ -457,21 +458,21 @@ private:
     if (p.A_fetching_policy==FETCH_FROM_LOCAL || p.B_fetching_policy == FETCH_FROM_LOCAL)
     {
       stream << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-      stream << "uint offA = " << p.simd_width << "*idx;" << std::endl;
-      stream << "uint offB = " << p.simd_width << "*idy;" << std::endl;
+      stream << "size_t offA = " << p.simd_width << "*idx;" << std::endl;
+      stream << "size_t offB = " << p.simd_width << "*idy;" << std::endl;
     }
 
     if (fallback)
-      stream << "for(unsigned int k = 0; k < " << p.kL << " && (block_k + k < K); k+=" << p.kS << "){" << std::endl;
+      stream << "for(size_t k = 0; k < " << p.kL << " && (block_k + k < K_size_t); k+=" << p.kS << "){" << std::endl;
     else
-      stream << "for(unsigned int k = 0; k < " << p.kL << "; k+=" << p.kS << "){" << std::endl;
+      stream << "for(size_t k = 0; k < " << p.kL << "; k+=" << p.kS << "){" << std::endl;
     stream.inc_tab();
 
     ///Fetch LHS to registers
     stream << "#pragma unroll " << p.kS <<  std::endl;
-    stream << "for(unsigned int kk = 0; kk < " << p.kS << "; kk++)" << std::endl;
+    stream << "for(size_t kk = 0; kk < " << p.kS << "; kk++)" << std::endl;
     stream << "#pragma unroll " << p.mS/p.simd_width << std::endl;
-    stream << "for(unsigned int mm = 0; mm < " << p.mS/p.simd_width << "; mm++)" << std::endl;
+    stream << "for(size_t mm = 0; mm < " << p.mS/p.simd_width << "; mm++)" << std::endl;
     stream << "{" << std::endl;
     stream.inc_tab();
     switch (p.A_fetching_policy)
@@ -505,9 +506,9 @@ private:
     stream << "}" << std::endl;
 
     stream << "#pragma unroll " << p.kS << std::endl;
-    stream << "for(unsigned int kk = 0; kk < " << p.kS << "; kk++)" << std::endl;
+    stream << "for(size_t kk = 0; kk < " << p.kS << "; kk++)" << std::endl;
     stream << "#pragma unroll " << p.nS/p.simd_width << std::endl;
-    stream << "for(unsigned int nn = 0; nn < " << p.nS/p.simd_width << "; nn++)" << std::endl;
+    stream << "for(size_t nn = 0; nn < " << p.nS/p.simd_width << "; nn++)" << std::endl;
     stream << "{" << std::endl;
     stream.inc_tab();
     switch (p.B_fetching_policy)
@@ -573,7 +574,7 @@ private:
 
 
     stream << "#pragma unroll " << p.kS << std::endl;
-    stream << "for(unsigned int kk = 0; kk <" << p.kS << "; ++kk)" << std::endl;
+    stream << "for(size_t kk = 0; kk <" << p.kS << "; ++kk)" << std::endl;
     stream << "{" << std::endl;
     stream.inc_tab();
     for (unsigned int nn=0; nn < p.nS; ++nn)
