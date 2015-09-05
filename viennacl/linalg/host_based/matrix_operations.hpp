@@ -1014,32 +1014,45 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
 namespace detail
 {
   template<typename MatrixAccT1, typename MatrixAccT2, typename MatrixAccT3, typename NumericT>
-  void prod(MatrixAccT1 & A, bool A_trans, MatrixAccT2 & B, MatrixAccT3 & C,
-            vcl_size_t C_size1, vcl_size_t C_size2, vcl_size_t A_size2,
+  void prod(MatrixAccT1 & A, bool A_trans, MatrixAccT2 & B, bool B_trans, MatrixAccT3 & C,
+            vcl_size_t C_size1, vcl_size_t C_size2, 
             NumericT alpha, NumericT beta)
   {
-    if (C_size1 == 0 || C_size2 == 0 || A_size2 == 0)
-      return;
-
     /* setup matrices */
     NumericT const * data_A = detail::extract_raw_pointer<NumericT>(A);
-
     vcl_size_t A_start1 = viennacl::traits::start1(A);
     vcl_size_t A_start2 = viennacl::traits::start2(A);
     vcl_size_t A_inc1   = viennacl::traits::stride1(A);
     vcl_size_t A_inc2   = viennacl::traits::stride2(A);
     vcl_size_t A_size1  = viennacl::traits::size1(A);
-    //    vcl_size_t A_size2  = viennacl::traits::size2(A); //shadows parameter, fix this
+    vcl_size_t A_size2  = viennacl::traits::size2(A); 
     vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
     vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
     bool A_row_major = A.row_major();
+
+    NumericT const * data_B = detail::extract_raw_pointer<NumericT>(B);
+    vcl_size_t B_start1 = viennacl::traits::start1(B);
+    vcl_size_t B_start2 = viennacl::traits::start2(B);
+    vcl_size_t B_inc1   = viennacl::traits::stride1(B);
+    vcl_size_t B_inc2   = viennacl::traits::stride2(B);
+    vcl_size_t B_size1  = viennacl::traits::size1(B);
+    vcl_size_t B_size2  = viennacl::traits::size2(B);
+    vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B);
+    vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B);
+    bool B_row_major = B.row_major();
     /* ************* */
+
+    if (C_size1 == 0 || C_size2 == 0 || (A_trans ? A_size1 : A_size2) == 0)
+      return;
 
     static const vcl_size_t blocksize = 64;
     
     vcl_size_t num_blocks_C1 = (C_size1 - 1) / blocksize + 1;
     vcl_size_t num_blocks_C2 = (C_size2 - 1) / blocksize + 1;
-    vcl_size_t num_blocks_A2 = (A_size2 - 1) / blocksize + 1;
+    vcl_size_t num_blocks_A2 = ((A_trans ? A_size1 : A_size2) - 1) / blocksize + 1;
+
+    //std::cout << "num_blocksA2 " << num_blocks_A2 << std::endl;//DEBUG	
+
 
     //
     // outer loop pair: Run over all blocks with indices (block_idx_i, block_idx_j) of the result matrix C:
@@ -1077,11 +1090,12 @@ namespace detail
             for (vcl_size_t k = offset_k; k < std::min(offset_k + blocksize, A_size2); ++k)
             buffer_A[(i - offset_i) * blocksize + (k - offset_k)] = A(i, k);*/
           //          std::cout << "packing matrix A" << std::endl;//DEBUG
-          pack_matrix_in_row_major(buffer_A, offset_i, offset_j, blocksize, data_A, A_size1, A_size2, A_internal_size1, A_internal_size2, A_inc1, A_inc2, A_start1, A_start2,  A_trans, A_row_major);
+          pack_matrix_in_row_major(buffer_A, offset_i, offset_k, blocksize, data_A, A_size1, A_size2, A_internal_size1, A_internal_size2, A_inc1, A_inc2, A_start1, A_start2,  A_trans, A_row_major);
 
-          for (vcl_size_t j = offset_j; j < std::min(offset_j + blocksize, C_size2); ++j)
+          /*          for (vcl_size_t j = offset_j; j < std::min(offset_j + blocksize, C_size2); ++j)
             for (vcl_size_t k = offset_k; k < std::min(offset_k + blocksize, A_size2); ++k)
-              buffer_B[(k - offset_k) + (j - offset_j) * blocksize] = B(k, j);
+            buffer_B[(k - offset_k) + (j - offset_j) * blocksize] = B(k, j);*/
+          pack_matrix_in_col_major(buffer_B, offset_k, offset_j, blocksize, data_B, B_size1, B_size2, B_internal_size1, B_internal_size2, B_inc1, B_inc2, B_start1, B_start2,  B_trans, B_row_major);
 
           // multiply (this is the hot spot in terms of flops)
           for (vcl_size_t i = 0; i < blocksize; ++i)
@@ -1135,11 +1149,16 @@ void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
 {
   typedef NumericT        value_type;
 
+  //std::cout << "A[1] is " << viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A)[1] << std::endl;//DEBUG 
+  //std::cout << "A is row-major? " << A.row_major() << std::endl;//DEBUG
+  //std::cout << std::endl <<"    -> A sizes: " << A.size1() << " " << A.size2() << " " << A.internal_size1() << " " << A.internal_size2() << std::endl;//DEBUG
+  //std::cout << "    -> B sizes: " << B.size1() << " " << B.size2() << " " << B.internal_size1() << " " << B.internal_size2() << std::endl;//DEBUG
+
   //  value_type const * data_A = detail::extract_raw_pointer<value_type>(A);
-  value_type const * data_B = detail::extract_raw_pointer<value_type>(B);
+  //value_type const * data_B = detail::extract_raw_pointer<value_type>(B);
   value_type       * data_C = detail::extract_raw_pointer<value_type>(C);
 
-  vcl_size_t A_start1 = viennacl::traits::start1(A);
+  /*vcl_size_t A_start1 = viennacl::traits::start1(A);
   vcl_size_t A_start2 = viennacl::traits::start2(A);
   vcl_size_t A_inc1   = viennacl::traits::stride1(A);
   vcl_size_t A_inc2   = viennacl::traits::stride2(A);
@@ -1147,14 +1166,15 @@ void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
   vcl_size_t A_size2  = viennacl::traits::size2(A);
   vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
   vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
-  
-
+  */
+  /*
   vcl_size_t B_start1 = viennacl::traits::start1(B);
   vcl_size_t B_start2 = viennacl::traits::start2(B);
   vcl_size_t B_inc1   = viennacl::traits::stride1(B);
   vcl_size_t B_inc2   = viennacl::traits::stride2(B);
   vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(B);
   vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(B);
+  */
 
   vcl_size_t C_start1 = viennacl::traits::start1(C);
   vcl_size_t C_start2 = viennacl::traits::start2(C);
@@ -1165,71 +1185,82 @@ void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
   vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(C);
   vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(C);
 
+  if (C.row_major())
+  {
+    detail::matrix_array_wrapper<value_type,row_major,false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+    detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+  }
+  else
+  {
+    detail::matrix_array_wrapper<value_type,column_major,false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+    detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+  }
+  /*
   if (!trans_A && !trans_B)
   {
     if (A.row_major() && B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && !B.row_major() && C.row_major())
     {
       // detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && !B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && !B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else
     {
       //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
   }
   else if (!trans_A && trans_B)
@@ -1237,66 +1268,66 @@ void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
     if (A.row_major() && B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && !B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && !B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && !B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else
     {
       //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size2, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
   }
   else if (trans_A && !trans_B)
@@ -1304,66 +1335,66 @@ void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
     if (A.row_major() && B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && !B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && !B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && !B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else
     {
       //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, false>   wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
   }
   else if (trans_A && trans_B)
@@ -1371,68 +1402,68 @@ void prod_impl(const matrix_base<NumericT> & A, bool trans_A,
     if (A.row_major() && B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && !B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,          row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (A.row_major() && !B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,          row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && B.row_major() && !C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const,    row_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else if (!A.row_major() && !B.row_major() && C.row_major())
     {
       //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,          row_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
     else
     {
       //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+      //detail::matrix_array_wrapper<value_type const, column_major, true>    wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
       detail::matrix_array_wrapper<value_type,       column_major, false>   wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
-      detail::prod(A, trans_A, wrapper_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
+      detail::prod(A, trans_A, B, trans_B, wrapper_C, C_size1, C_size2, A_size1, static_cast<value_type>(alpha), static_cast<value_type>(beta));
     }
-  }
+    }*/
 }
 
 

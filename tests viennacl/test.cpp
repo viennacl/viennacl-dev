@@ -2,7 +2,14 @@
 #include "viennacl/matrix.hpp"
 #include "viennacl/matrix_proxy.hpp"
 
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+#include <boost/numeric/ublas/matrix_expression.hpp>
+#include <boost/numeric/ublas/io.hpp>
+
 #include <stdlib.h>
+
+#define UBLAS boost::numeric::ublas
 
 int main()
 {
@@ -13,6 +20,13 @@ int main()
   a(1,2) = 0.12;
 
   viennacl::matrix<double,viennacl::row_major> at = trans(a);
+
+  UBLAS::matrix<double> a_ublas(2,3);
+  viennacl::copy(a,a_ublas);
+  
+  a = a - a_ublas;
+
+  std::cout << a_ublas << std::endl;
 
   std::cout << "a sizes " << a.size1() << " "
             << a.size2() << " " << a.internal_size1() << " " << a.internal_size2() << std::endl;
@@ -32,7 +46,7 @@ int main()
   }
   std::cout << temp << std::endl;
 
-  //  /*
+    /*
    std::cout << "elems of a:" << std::endl;
   for (size_t i=0; i<a.internal_size(); ++i)
   {
@@ -43,7 +57,7 @@ int main()
   {
     std::cout << p_at[i] << ",";
     }
-  //  */
+    */
   /*  for (size_t i=0; i<a.size1(); ++i)
   {
     std::cout << "(";
