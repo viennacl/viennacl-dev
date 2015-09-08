@@ -190,9 +190,10 @@ int run_test(double epsilon,
   if (std_C.size() == std_C[0].size())
   {
     std::cout << "Inplace add (transposed): ";
+    STLMatrixType std_C2(std_C);
     for (std::size_t i=0; i<std_C.size(); ++i)
       for (std::size_t j=0; j<std_C[i].size(); ++j)
-        std_C[i][j] += std_C[j][i];
+        std_C[i][j] += std_C2[j][i];
     vcl_C   += viennacl::trans(vcl_C);
 
     if (!check_for_equality(std_C, vcl_C, epsilon))
@@ -344,10 +345,11 @@ int run_test(double epsilon,
 
   if (std_C.size() == std_C[0].size())
   {
-    std::cout << "Inplace add (transposed): ";
+    std::cout << "Inplace sub (transposed): ";
+    STLMatrixType std_C2(std_C);
     for (std::size_t i=0; i<std_C.size(); ++i)
       for (std::size_t j=0; j<std_C[i].size(); ++j)
-        std_C[i][j] -= std_C[j][i];
+        std_C[i][j] -= std_C2[j][i];
     vcl_C   -= viennacl::trans(vcl_C);
   }
 
