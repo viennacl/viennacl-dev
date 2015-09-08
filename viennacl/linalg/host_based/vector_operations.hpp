@@ -1001,8 +1001,8 @@ void sum_impl(vector_base<NumericT> const & vec1,
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for reduction(+:temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
 #endif
-  for (vcl_size_t i = 0; i < size1; ++i)
-    temp += data_vec1[i*inc1+start1];
+  for (long i = 0; i < static_cast<long>(size1); ++i)
+    temp += data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
 
   result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
 }
