@@ -1585,26 +1585,60 @@ void scaled_rank_1_update(matrix_base<NumericT> & mat1,
   value_type data_alpha = alpha;
   if (flip_sign_alpha)
     data_alpha = -data_alpha;
-  if (reciprocal_alpha)
-    data_alpha = static_cast<value_type>(1) / data_alpha;
 
   if (mat1.row_major())
   {
-    for (vcl_size_t row = 0; row < A_size1; ++row)
+    if(reciprocal_alpha)
     {
-      value_type value_v1 = data_alpha * data_v1[row * inc1 + start1];
-      for (vcl_size_t col = 0; col < A_size2; ++col)
-        data_A[viennacl::row_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] += value_v1 * data_v2[col * inc2 + start2];
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel for
+#endif
+      for (long row = 0; row < static_cast<long>(A_size1); ++row)
+      {
+        value_type value_v1 = data_v1[static_cast<vcl_size_t>(row) * inc1 + start1] / data_alpha;
+        for (vcl_size_t col = 0; col < A_size2; ++col)
+          data_A[viennacl::row_major::mem_index(static_cast<vcl_size_t>(row) * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] += value_v1 * data_v2[col * inc2 + start2];
+      }
+    }
+    else
+    {
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel for
+#endif
+      for (long row = 0; row < static_cast<long>(A_size1); ++row)
+      {
+        value_type value_v1 = data_v1[static_cast<vcl_size_t>(row) * inc1 + start1] * data_alpha;
+        for (vcl_size_t col = 0; col < A_size2; ++col)
+          data_A[viennacl::row_major::mem_index(static_cast<vcl_size_t>(row) * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] += value_v1 * data_v2[col * inc2 + start2];
+      }
     }
   }
   else
   {
-    for (vcl_size_t col = 0; col < A_size2; ++col)  //run through matrix sequentially
-    {
-      value_type value_v2 = data_alpha * data_v2[col * inc2 + start2];
-      for (vcl_size_t row = 0; row < A_size1; ++row)
-        data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] += data_v1[row * inc1 + start1] * value_v2;
-    }
+      if(reciprocal_alpha)
+      {
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
+        for (long col = 0; col < static_cast<long>(A_size2); ++col)  //run through matrix sequentially
+        {
+          value_type value_v2 = data_v2[static_cast<vcl_size_t>(col) * inc2 + start2] / data_alpha;
+          for (vcl_size_t row = 0; row < A_size1; ++row)
+            data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, static_cast<vcl_size_t>(col) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] += data_v1[row * inc1 + start1] * value_v2;
+        }
+      }
+      else
+      {
+#ifdef VIENNACL_WITH_OPENMP
+        #pragma omp parallel for
+#endif
+        for (long col = 0; col < static_cast<long>(A_size2); ++col)  //run through matrix sequentially
+        {
+          value_type value_v2 = data_v2[static_cast<vcl_size_t>(col) * inc2 + start2] * data_alpha;
+          for (vcl_size_t row = 0; row < A_size1; ++row)
+            data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, static_cast<vcl_size_t>(col) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] += data_v1[row * inc1 + start1] * value_v2;
+        }
+      }
   }
 }
 
