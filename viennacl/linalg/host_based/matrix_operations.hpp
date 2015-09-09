@@ -106,44 +106,116 @@ template<typename NumericT,
 void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>,
            const matrix_base<NumericT, SizeT, DistanceT>, op_trans> & proxy, matrix_base<NumericT> & temp_trans)
 {
-  const NumericT * temp_proxy = detail::extract_raw_pointer<NumericT>(proxy.lhs());
-  NumericT * temp = detail::extract_raw_pointer<NumericT>(temp_trans);
+  typedef NumericT        value_type;
+  const value_type * mat = detail::extract_raw_pointer<value_type>(proxy.lhs());
+  value_type * temp = detail::extract_raw_pointer<value_type>(temp_trans);
 
-  vcl_size_t proxy_int_size1=proxy.lhs().internal_size1();
-  vcl_size_t proxy_int_size2=proxy.lhs().internal_size2();
-  vcl_size_t temp_int_size1=temp_trans.internal_size1();
-  vcl_size_t temp_int_size2=temp_trans.internal_size2();
+  vcl_size_t mat_start1          = viennacl::traits::start1(proxy.lhs());
+  vcl_size_t mat_start2          = viennacl::traits::start2(proxy.lhs());
+  vcl_size_t mat_internal_size1  = viennacl::traits::internal_size1(proxy.lhs());
+  vcl_size_t mat_internal_size2  = viennacl::traits::internal_size2(proxy.lhs());
+  vcl_size_t mat_inc1            = viennacl::traits::stride1(proxy.lhs());
+  vcl_size_t mat_inc2            = viennacl::traits::stride2(proxy.lhs());
+  vcl_size_t mat_size1           = viennacl::traits::size1(proxy.lhs());
+  vcl_size_t mat_size2           = viennacl::traits::size2(proxy.lhs());
+
+  vcl_size_t temp_start1         = viennacl::traits::start1(temp_trans);
+  vcl_size_t temp_start2         = viennacl::traits::start2(temp_trans);
+  vcl_size_t temp_internal_size1 = viennacl::traits::internal_size1(temp_trans);
+  vcl_size_t temp_internal_size2 = viennacl::traits::internal_size2(temp_trans);
+  vcl_size_t temp_inc1           = viennacl::traits::stride1(temp_trans);
+  vcl_size_t temp_inc2           = viennacl::traits::stride2(temp_trans);
+
+  const vcl_size_t sub_mat_size = 64; //The matrix will be divided into sub-matrices for better storage access.
+
+  vcl_size_t row_count = mat_size2 / sub_mat_size;
+  vcl_size_t col_count = mat_size1 / sub_mat_size;
+
+  vcl_size_t row_count_remainder = mat_size2 % sub_mat_size;
+  vcl_size_t col_count_remainder = mat_size1 % sub_mat_size;
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
-  for (long i2 = 0; i2 < static_cast<long>(proxy_int_size1*proxy_int_size2); ++i2)
+  for(long i = 0; i < static_cast<long>(row_count*col_count); ++i)//This is the main part of the transposition
   {
-    vcl_size_t row = vcl_size_t(i2) / proxy_int_size2;
-    vcl_size_t col = vcl_size_t(i2) % proxy_int_size2;
+    vcl_size_t row = vcl_size_t(i) / col_count;
+    vcl_size_t col = vcl_size_t(i) % col_count;
 
-    if (row < proxy.lhs().size1() && col < proxy.lhs().size2())
+    if (proxy.lhs().row_major())
     {
-      if (proxy.lhs().row_major())
-      {
-        vcl_size_t pos = row_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * row,
-                                              proxy.lhs().start2() + proxy.lhs().stride2() * col,
-                                              proxy_int_size1, proxy_int_size2);
-        vcl_size_t new_pos = row_major::mem_index(temp_trans.start2() + temp_trans.stride2() * col,
-                                                  temp_trans.start1() + temp_trans.stride1() * row, temp_int_size1,
-                                                  temp_int_size2);
-        temp[new_pos] = temp_proxy[pos];
-      }
-      else
-      {
-        vcl_size_t pos = column_major::mem_index(proxy.lhs().start1() + proxy.lhs().stride1() * row,
-                                                 proxy.lhs().start2() + proxy.lhs().stride2() * col, proxy_int_size1,
-                                                 proxy_int_size2);
-        vcl_size_t new_pos = column_major::mem_index(temp_trans.start2() + temp_trans.stride2() * col,
-                                                     temp_trans.start1() + temp_trans.stride1() * row, temp_int_size1,
-                                                     temp_int_size2);
-        temp[new_pos] = temp_proxy[pos];
-      }
+      detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_mat(mat, mat_start1 + mat_inc1 * (row * sub_mat_size)
+                                                                                 , mat_start2 + mat_inc2 * (col * sub_mat_size), mat_inc1
+                                                                                 , mat_inc2, mat_internal_size1, mat_internal_size2);
+      detail::matrix_array_wrapper<value_type      , row_major, false> wrapper_temp(temp, temp_start1 + temp_inc1 * (col * sub_mat_size)
+                                                                                  , temp_start2 + temp_inc2 * (row * sub_mat_size), temp_inc1
+                                                                                  , temp_inc2, temp_internal_size1, temp_internal_size2);
+      for(vcl_size_t j = 0; j < (sub_mat_size); ++j)
+        for(vcl_size_t k = 0; k < (sub_mat_size); ++k)
+          wrapper_temp(j, k) = wrapper_mat(k, j);
+    }
+    else
+    {
+      detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_mat(mat, mat_start1 + mat_inc1 * (row * sub_mat_size)
+                                                                                    , mat_start2 + mat_inc2 * (col * sub_mat_size), mat_inc1
+                                                                                    , mat_inc2, mat_internal_size1, mat_internal_size2);
+      detail::matrix_array_wrapper<value_type      , column_major, false> wrapper_temp(temp, temp_start1 + temp_inc1 * (col * sub_mat_size)
+                                                                                     , temp_start2 + temp_inc2 * (row * sub_mat_size), temp_inc1
+                                                                                     , temp_inc2, temp_internal_size1, temp_internal_size2);
+      for(vcl_size_t j = 0; j < (sub_mat_size); ++j)
+        for(vcl_size_t k = 0; k < (sub_mat_size); ++k)
+          wrapper_temp(k, j)=wrapper_mat(j, k);
+    }
+
+  }
+  if (proxy.lhs().row_major())
+  {
+    { //This is the transposition of the remainder on the right side of the matrix
+      detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_mat( mat, mat_start1
+                                                                                  , mat_start2 + mat_inc2 * (col_count * sub_mat_size), mat_inc1
+                                                                                  , mat_inc2, mat_internal_size1, mat_internal_size2);
+      detail::matrix_array_wrapper<value_type      , row_major, false> wrapper_temp( temp, temp_start1 + temp_inc1 * (col_count * sub_mat_size)
+                                                                                   , temp_start2, temp_inc1
+                                                                                   , temp_inc2, temp_internal_size1, temp_internal_size2);
+      for(vcl_size_t i = 0; i < col_count_remainder; ++i)
+        for(vcl_size_t j = 0 ; j < mat_size1; ++j)
+          wrapper_temp(i, j) = wrapper_mat(j, i);
+    }
+    { //This is the transposition of the remainder on the bottom side of the matrix
+      detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_mat( mat, mat_start1 + mat_inc1 * (row_count * sub_mat_size)
+                                                                                  , mat_start2, mat_inc1
+                                                                                  , mat_inc2, mat_internal_size1, mat_internal_size2);
+      detail::matrix_array_wrapper<value_type      , row_major, false> wrapper_temp( temp,temp_start1
+                                                                                   , temp_start2  + temp_inc2 * (row_count * sub_mat_size), temp_inc1
+                                                                                   , temp_inc2, temp_internal_size1, temp_internal_size2);
+      for(vcl_size_t i = 0; i < row_count_remainder; ++i)
+        for(vcl_size_t j = 0; j < (mat_size2 - col_count_remainder); ++j)
+          wrapper_temp(j, i) = wrapper_mat(i, j);
+    }
+  }
+  else
+  {
+    { //This is the transposition of the remainder on the right side of the matrix
+      detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_mat(mat, mat_start1
+                                                                                    , mat_start2 + mat_inc2 * (col_count * sub_mat_size), mat_inc1
+                                                                                    , mat_inc2, mat_internal_size1, mat_internal_size2);
+      detail::matrix_array_wrapper<value_type      , column_major, false> wrapper_temp(temp,temp_start1 + temp_inc1 * (col_count * sub_mat_size)
+                                                                                    , temp_start2, temp_inc1
+                                                                                    , temp_inc2, temp_internal_size1, temp_internal_size2);
+      for(vcl_size_t i = 0; i < col_count_remainder; ++i)
+        for(vcl_size_t j = 0; j < mat_size1; ++j)
+          wrapper_temp(i, j)=wrapper_mat(j, i);
+    }
+    { //This is the transposition of the remainder on the bottom side of the matrix
+      detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_mat(mat, mat_start1 + mat_inc1 * (row_count * sub_mat_size)
+                                                                                    , mat_start2, mat_inc1
+                                                                                    , mat_inc2, mat_internal_size1, mat_internal_size2);
+      detail::matrix_array_wrapper<value_type      , column_major, false> wrapper_temp(temp, temp_start1
+                                                                                     , temp_start2  + temp_inc2 * (row_count * sub_mat_size), temp_inc1
+                                                                                     , temp_inc2, temp_internal_size1, temp_internal_size2);
+      for(vcl_size_t i = 0; i < row_count_remainder; ++i)
+        for(vcl_size_t j = 0; j < (mat_size2 - col_count_remainder); ++j)
+          wrapper_temp(j, i)=wrapper_mat(i, j);
     }
   }
 }
