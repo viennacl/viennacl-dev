@@ -1012,21 +1012,44 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
   {
     if (trans)
     {
-      {
-        value_type temp = data_x[start1];
-        for (vcl_size_t row = 0; row < A_size2; ++row)
-          data_result[row * inc2 + start2] = data_A[viennacl::row_major::mem_index(A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
-      }
+#ifdef VIENNACL_WITH_OPENMP
+      vcl_size_t thread_count = omp_get_max_threads();
+#else
+      vcl_size_t thread_count = 1;
+#endif
+      std::vector<value_type> temp_array(A_size2*thread_count, 0);
+      detail::vector_array_wrapper<value_type> wrapper_res(data_result, start2, inc2);
 
-      for (vcl_size_t col = 1; col < A_size1; ++col)  //run through matrix sequentially
+      for (vcl_size_t col = 0; col < A_size2; ++col)
+        wrapper_res(col) = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel
+#endif
       {
-        value_type temp = data_x[col * inc1 + start1];
-        for (vcl_size_t row = 0; row < A_size2; ++row)
+#ifdef VIENNACL_WITH_OPENMP
+        vcl_size_t id = omp_get_thread_num();
+#else
+        vcl_size_t id = 0;
+#endif
+        vcl_size_t begin = (A_size1 * id) / thread_count;
+        vcl_size_t end   = (A_size1 * (id + 1)) / thread_count;
+
+        detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_mat(data_A, A_start1 + A_inc1 * begin, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::vector_array_wrapper<value_type const> wrapper_vec(data_x, start1 + inc1 * begin, inc1);
+
+        for (vcl_size_t row = 0; row < (end - begin); ++row)  //run through matrix sequentially
         {
-          data_result[row * inc2 + start2] += data_A[viennacl::row_major::mem_index(col * A_inc1 + A_start1, row * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
+          value_type temp = wrapper_vec(row);
+          for (vcl_size_t col = 0; col < A_size2; ++col)
+            temp_array[A_size2 * id + col] += wrapper_mat(row , col) * temp;
         }
       }
+      for (vcl_size_t id = 0; id < thread_count; ++id)
+        for (vcl_size_t col = 0; col < A_size2; ++col)
+          wrapper_res(col) += temp_array[A_size2 * id + col];
     }
+
     else
     {
 #ifdef VIENNACL_WITH_OPENMP
@@ -1046,17 +1069,42 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
   {
     if (!trans)
     {
+#ifdef VIENNACL_WITH_OPENMP
+      vcl_size_t thread_count = omp_get_max_threads();
+#else
+      vcl_size_t thread_count = 1;
+#endif
+      std::vector<value_type> temp_array(A_size1*thread_count, 0);
+      detail::vector_array_wrapper<value_type> wrapper_res(data_result, start2, inc2);
+
+      for (vcl_size_t row = 0; row < A_size1; ++row)
+        wrapper_res(row) = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+      #pragma omp parallel
+#endif
       {
-        value_type temp = data_x[start1];
-        for (vcl_size_t row = 0; row < A_size1; ++row)
-          data_result[row * inc2 + start2] = data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, A_start2, A_internal_size1, A_internal_size2)] * temp;
+#ifdef VIENNACL_WITH_OPENMP
+        vcl_size_t id = omp_get_thread_num();
+#else
+        vcl_size_t id = 0;
+#endif
+        vcl_size_t begin = (A_size2 * id) / thread_count;
+        vcl_size_t end   = (A_size2 * (id + 1)) / thread_count;
+
+        detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_mat(data_A, A_start1, A_start2 + A_inc2 * begin, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+        detail::vector_array_wrapper<value_type const> wrapper_vec(data_x, start1 + inc1 * begin, inc1);
+
+        for (vcl_size_t col = 0; col < (end - begin); ++col)  //run through matrix sequentially
+        {
+          value_type temp = wrapper_vec(col);
+          for (vcl_size_t row = 0; row < A_size1; ++row)
+            temp_array[A_size1 * id + row] += wrapper_mat(row , col) * temp;
+        }
       }
-      for (vcl_size_t col = 1; col < A_size2; ++col)  //run through matrix sequentially
-      {
-        value_type temp = data_x[col * inc1 + start1];
+      for (vcl_size_t id = 0; id < thread_count; ++id)
         for (vcl_size_t row = 0; row < A_size1; ++row)
-          data_result[row * inc2 + start2] += data_A[viennacl::column_major::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] * temp;
-      }
+          wrapper_res(row) += temp_array[A_size1 * id + row];
     }
     else
     {
