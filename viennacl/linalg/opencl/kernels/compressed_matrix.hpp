@@ -1022,8 +1022,11 @@ void generate_compressed_matrix_vec_mul(StringT & source, std::string const & nu
   source.append("        if (get_local_id(0) < stride && thread_base_id < current_row_stop)\n");
   source.append("          shared_elements[thread_base_id] += (thread_base_id + stride < current_row_stop) ? shared_elements[thread_base_id+stride] : 0;\n");
   source.append("      }\n");
+  source.append("      "); source.append(numeric_string); source.append(" row_result = 0; \n");
+  source.append("      if (current_row_stop > current_row_start)\n");
+  source.append("        row_result = shared_elements[current_row_start]; \n");
   source.append("      if (get_local_id(0) == 0)\n");
-  source.append("        result[row * layout_result.y + layout_result.x] = shared_elements[current_row_start];\n");
+  source.append("        result[row * layout_result.y + layout_result.x] = row_result;\n");
   source.append("    }\n");
   source.append("  }\n");
 
