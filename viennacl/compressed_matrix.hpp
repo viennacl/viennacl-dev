@@ -593,6 +593,8 @@ public:
     if (rows > 0)
     {
       viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (rows + 1), ctx);
+      viennacl::vector_base<unsigned int> init_temporary(row_buffer_, size_type(rows+1), 0, 1);
+      init_temporary = viennacl::zero_vector<unsigned int>(size_type(rows+1), ctx);
     }
     if (nonzeros > 0)
     {
@@ -627,6 +629,8 @@ public:
     if (rows > 0)
     {
       viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (rows + 1), ctx);
+      viennacl::vector_base<unsigned int> init_temporary(row_buffer_, size_type(rows+1), 0, 1);
+      init_temporary = viennacl::zero_vector<unsigned int>(size_type(rows+1), ctx);
     }
   }
 
