@@ -38,6 +38,11 @@
 #include "viennacl/linalg/host_based/common.hpp"
 #include "viennacl/linalg/prod.hpp"
 
+// Minimum Matrix size(size1*size2) for using OpenMP on matrix operations:
+#ifndef VIENNACL_OPENMP_MATRIX_MIN_SIZE
+  #define VIENNACL_OPENMP_MATRIX_MIN_SIZE  5000
+#endif
+
 namespace viennacl
 {
 namespace linalg
@@ -79,7 +84,7 @@ void convert(matrix_base<DestNumericT> & mat1, matrix_base<SrcNumericT> const & 
     detail::matrix_array_wrapper<SrcNumericT const, row_major, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long row = 0; row < static_cast<long>(A_size1); ++row)
       for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -91,7 +96,7 @@ void convert(matrix_base<DestNumericT> & mat1, matrix_base<SrcNumericT> const & 
     detail::matrix_array_wrapper<SrcNumericT const, column_major, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long col = 0; col < static_cast<long>(A_size2); ++col)
       for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -135,7 +140,7 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
   vcl_size_t col_count_remainder = mat_size1 % sub_mat_size;
 
 #ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for
+  #pragma omp parallel for if ((mat_size1*mat_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
   for(long i = 0; i < static_cast<long>(row_count*col_count); ++i)//This is the main part of the transposition
   {
@@ -259,7 +264,7 @@ void am(matrix_base<NumericT> & mat1,
     if (reciprocal_alpha)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -268,7 +273,7 @@ void am(matrix_base<NumericT> & mat1,
     else
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -283,7 +288,7 @@ void am(matrix_base<NumericT> & mat1,
     if (reciprocal_alpha)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -292,7 +297,7 @@ void am(matrix_base<NumericT> & mat1,
     else
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -356,7 +361,7 @@ void ambm(matrix_base<NumericT> & mat1,
     if (reciprocal_alpha && reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -365,7 +370,7 @@ void ambm(matrix_base<NumericT> & mat1,
     else if (reciprocal_alpha && !reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -374,7 +379,7 @@ void ambm(matrix_base<NumericT> & mat1,
     else if (!reciprocal_alpha && reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -383,7 +388,7 @@ void ambm(matrix_base<NumericT> & mat1,
     else if (!reciprocal_alpha && !reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -399,7 +404,7 @@ void ambm(matrix_base<NumericT> & mat1,
     if (reciprocal_alpha && reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -408,7 +413,7 @@ void ambm(matrix_base<NumericT> & mat1,
     else if (reciprocal_alpha && !reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -417,7 +422,7 @@ void ambm(matrix_base<NumericT> & mat1,
     else if (!reciprocal_alpha && reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -426,7 +431,7 @@ void ambm(matrix_base<NumericT> & mat1,
     else if (!reciprocal_alpha && !reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -491,7 +496,7 @@ void ambm_m(matrix_base<NumericT> & mat1,
     if (reciprocal_alpha && reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -500,7 +505,7 @@ void ambm_m(matrix_base<NumericT> & mat1,
     else if (reciprocal_alpha && !reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -509,7 +514,7 @@ void ambm_m(matrix_base<NumericT> & mat1,
     else if (!reciprocal_alpha && reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -518,7 +523,7 @@ void ambm_m(matrix_base<NumericT> & mat1,
     else if (!reciprocal_alpha && !reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
         for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -534,7 +539,7 @@ void ambm_m(matrix_base<NumericT> & mat1,
     if (reciprocal_alpha && reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -543,7 +548,7 @@ void ambm_m(matrix_base<NumericT> & mat1,
     else if (reciprocal_alpha && !reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -552,7 +557,7 @@ void ambm_m(matrix_base<NumericT> & mat1,
     else if (!reciprocal_alpha && reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -561,7 +566,7 @@ void ambm_m(matrix_base<NumericT> & mat1,
     else if (!reciprocal_alpha && !reciprocal_beta)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long col = 0; col < static_cast<long>(A_size2); ++col)
         for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -596,7 +601,7 @@ void matrix_assign(matrix_base<NumericT> & mat, NumericT s, bool clear = false)
     detail::matrix_array_wrapper<value_type, row_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long row = 0; row < static_cast<long>(A_size1); ++row)
       for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -609,7 +614,7 @@ void matrix_assign(matrix_base<NumericT> & mat, NumericT s, bool clear = false)
     detail::matrix_array_wrapper<value_type, column_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long col = 0; col < static_cast<long>(A_size2); ++col)
       for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -643,7 +648,7 @@ void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
     detail::matrix_array_wrapper<value_type, row_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long row = 0; row < static_cast<long>(A_size1); ++row)
       wrapper_A(row, row) = alpha;
@@ -653,7 +658,7 @@ void matrix_diagonal_assign(matrix_base<NumericT> & mat, NumericT s)
     detail::matrix_array_wrapper<value_type, column_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long row = 0; row < static_cast<long>(A_size1); ++row)
       wrapper_A(row, row) = alpha;
@@ -880,7 +885,7 @@ void element_op(matrix_base<NumericT> & A,
     detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long row = 0; row < static_cast<long>(A_size1); ++row)
       for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -896,7 +901,7 @@ void element_op(matrix_base<NumericT> & A,
     detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long col = 0; col < static_cast<long>(A_size2); ++col)
       for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -945,7 +950,7 @@ void element_op(matrix_base<NumericT> & A,
     detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long row = 0; row < static_cast<long>(A_size1); ++row)
       for (vcl_size_t col = 0; col < A_size2; ++col)
@@ -957,7 +962,7 @@ void element_op(matrix_base<NumericT> & A,
     detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
 
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long col = 0; col < static_cast<long>(A_size2); ++col)
       for (vcl_size_t row = 0; row < A_size1; ++row)
@@ -1012,10 +1017,10 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
   {
     if (trans)
     {
-#ifdef VIENNACL_WITH_OPENMP
-      vcl_size_t thread_count = omp_get_max_threads();
-#else
       vcl_size_t thread_count = 1;
+#ifdef VIENNACL_WITH_OPENMP
+      if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+        thread_count = omp_get_max_threads();
 #endif
       std::vector<value_type> temp_array(A_size2*thread_count, 0);
       detail::vector_array_wrapper<value_type> wrapper_res(data_result, start2, inc2);
@@ -1024,14 +1029,14 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
         wrapper_res(col) = 0;
 
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel
+      #pragma omp parallel if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       {
-#ifdef VIENNACL_WITH_OPENMP
-        vcl_size_t id = omp_get_thread_num();
-#else
         vcl_size_t id = 0;
-#endif
+#ifdef VIENNACL_WITH_OPENMP
+        if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+          id = omp_get_thread_num();
+ #endif
         vcl_size_t begin = (A_size1 * id) / thread_count;
         vcl_size_t end   = (A_size1 * (id + 1)) / thread_count;
 
@@ -1053,7 +1058,7 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
     else
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
       {
@@ -1069,10 +1074,10 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
   {
     if (!trans)
     {
-#ifdef VIENNACL_WITH_OPENMP
-      vcl_size_t thread_count = omp_get_max_threads();
-#else
       vcl_size_t thread_count = 1;
+#ifdef VIENNACL_WITH_OPENMP
+      if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+        thread_count = omp_get_max_threads();
 #endif
       std::vector<value_type> temp_array(A_size1*thread_count, 0);
       detail::vector_array_wrapper<value_type> wrapper_res(data_result, start2, inc2);
@@ -1081,14 +1086,14 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
         wrapper_res(row) = 0;
 
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel
+      #pragma omp parallel if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       {
-#ifdef VIENNACL_WITH_OPENMP
-        vcl_size_t id = omp_get_thread_num();
-#else
         vcl_size_t id = 0;
-#endif
+#ifdef VIENNACL_WITH_OPENMP
+        if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+          id = omp_get_thread_num();
+ #endif
         vcl_size_t begin = (A_size2 * id) / thread_count;
         vcl_size_t end   = (A_size2 * (id + 1)) / thread_count;
 
@@ -1109,7 +1114,7 @@ void prod_impl(const matrix_base<NumericT> & mat, bool trans,
     else
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size2); ++row)
       {
@@ -1149,7 +1154,7 @@ namespace detail
     // outer loop pair: Run over all blocks with indices (block_idx_i, block_idx_j) of the result matrix C:
     //
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if ((C_size1*C_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
     for (long block_idx_i2=0; block_idx_i2<static_cast<long>(num_blocks_C1); ++block_idx_i2)
     {
@@ -1591,7 +1596,7 @@ void scaled_rank_1_update(matrix_base<NumericT> & mat1,
     if(reciprocal_alpha)
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
       {
@@ -1603,7 +1608,7 @@ void scaled_rank_1_update(matrix_base<NumericT> & mat1,
     else
     {
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+      #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
       for (long row = 0; row < static_cast<long>(A_size1); ++row)
       {
@@ -1618,7 +1623,7 @@ void scaled_rank_1_update(matrix_base<NumericT> & mat1,
       if(reciprocal_alpha)
       {
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for
+        #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
         for (long col = 0; col < static_cast<long>(A_size2); ++col)  //run through matrix sequentially
         {
@@ -1630,7 +1635,7 @@ void scaled_rank_1_update(matrix_base<NumericT> & mat1,
       else
       {
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for
+        #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
         for (long col = 0; col < static_cast<long>(A_size2); ++col)  //run through matrix sequentially
         {
@@ -1682,7 +1687,7 @@ template <typename NumericT, typename S1>
    if (A.row_major())
    {
 #ifdef VIENNACL_WITH_OPENMP
-     #pragma omp parallel for
+     #pragma omp parallel for if ((size1*size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
      for(long i2 = 0;  i2 < long(size) - 1; i2++)
      {
@@ -1696,7 +1701,7 @@ template <typename NumericT, typename S1>
    else
    {
 #ifdef VIENNACL_WITH_OPENMP
-    #pragma omp parallel for
+     #pragma omp parallel for if ((size1*size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
      for(long i2 = 0;  i2 < long(size) - 1; i2++)
      {
@@ -1760,7 +1765,7 @@ template <typename NumericT, typename S1>
            for(vcl_size_t j = row_start; j < A_size1; j++)
                ss = ss + data_D[start1 + inc1 * j] * data_A[viennacl::row_major::mem_index((j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+           #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
            for(long j = static_cast<long>(row_start); j < static_cast<long>(A_size1); j++)
                data_A[viennacl::row_major::mem_index(static_cast<vcl_size_t>(j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)] =
@@ -1776,7 +1781,7 @@ template <typename NumericT, typename S1>
            for(vcl_size_t j = row_start; j < A_size1; j++)
                ss = ss + data_D[start1 + inc1 * j] * data_A[viennacl::column_major::mem_index((j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)];
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+           #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
            for(long j = static_cast<long>(row_start); j < static_cast<long>(A_size1); j++)
                data_A[viennacl::column_major::mem_index(static_cast<vcl_size_t>(j) * A_inc1 + A_start1, (i) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]=
@@ -1825,7 +1830,7 @@ template <typename NumericT, typename S1>
 
            NumericT sum_Av = ss;
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+           #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
            for(long j = 0; j < static_cast<long>(A_size2); j++) // A(i, j) = A(i, j) - 2 * D[j] * sum_Av
                data_A[viennacl::row_major::mem_index((i) * A_inc1 + A_start1, static_cast<vcl_size_t>(j) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]  =
@@ -1842,7 +1847,7 @@ template <typename NumericT, typename S1>
 
            NumericT sum_Av = ss;
 #ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
+           #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
            for(long j = 0; j < static_cast<long>(A_size2); j++) // A(i, j) = A(i, j) - 2 * D[j] * sum_Av
                data_A[viennacl::column_major::mem_index((i) * A_inc1 + A_start1, static_cast<vcl_size_t>(j) * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]  =
@@ -1918,7 +1923,7 @@ template <typename NumericT, typename S1>
          for( int i = m - 1; i >= l; i--)
            {
 #ifdef VIENNACL_WITH_OPENMP
-             #pragma omp parallel for
+             #pragma omp parallel for if ((Q_size1*Q_size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
              for(long k = 0; k < static_cast<long>(Q_size1); k++)
                {
@@ -1941,7 +1946,7 @@ template <typename NumericT, typename S1>
          for( int i = m - 1; i >= l; i--)
            {
 #ifdef VIENNACL_WITH_OPENMP
-             #pragma omp parallel for
+             #pragma omp parallel for if ((Q_size1*Q_size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
              for(long k = 0; k < static_cast<long>(Q_size1); k++)
                {
@@ -1999,7 +2004,7 @@ template <typename NumericT, typename S1>
        if (A.row_major())
        {
 #ifdef VIENNACL_WITH_OPENMP
-       #pragma omp parallel for
+         #pragma omp parallel for if ((A_size1*A_size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
          for(long i = static_cast<long>(row_start); i < static_cast<long>(A_size1); i++)
          {
@@ -2009,7 +2014,7 @@ template <typename NumericT, typename S1>
         else
         {
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for
+          #pragma omp parallel for if ((A_size1*A_size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
           for(long i = static_cast<long>(row_start); i < static_cast<long>(A_size1); i++)
           {
@@ -2022,7 +2027,7 @@ template <typename NumericT, typename S1>
         if (A.row_major())
         {
 #ifdef VIENNACL_WITH_OPENMP
-        #pragma omp parallel for
+           #pragma omp parallel for if ((A_size1*A_size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
            for(long i = static_cast<long>(col_start); i < static_cast<long>(A_size1); i++)
            {
@@ -2032,7 +2037,7 @@ template <typename NumericT, typename S1>
          else
          {
 #ifdef VIENNACL_WITH_OPENMP
-         #pragma omp parallel for
+             #pragma omp parallel for if ((A_size1*A_size1) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
 #endif
              for(long i = static_cast<long>(col_start); i < static_cast<long>(A_size1); i++)
              {
