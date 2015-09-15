@@ -133,11 +133,11 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
 
   const vcl_size_t sub_mat_size = 64; //The matrix will be divided into sub-matrices for better storage access.
 
-  vcl_size_t row_count = A_size2 / sub_mat_size;
-  vcl_size_t col_count = A_size1 / sub_mat_size;
+  vcl_size_t row_count = A_size1 / sub_mat_size;
+  vcl_size_t col_count = A_size2 / sub_mat_size;
 
-  vcl_size_t row_count_remainder = A_size2 % sub_mat_size;
-  vcl_size_t col_count_remainder = A_size1 % sub_mat_size;
+  vcl_size_t row_count_remainder = A_size1 % sub_mat_size;
+  vcl_size_t col_count_remainder = A_size2 % sub_mat_size;
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
