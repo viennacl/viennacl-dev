@@ -139,16 +139,16 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
   vcl_size_t row_count_remainder = A_size1 % sub_mat_size;
   vcl_size_t col_count_remainder = A_size2 % sub_mat_size;
 
-#ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
-#endif
-  for(long i = 0; i < static_cast<long>(row_count*col_count); ++i)//This is the main part of the transposition
+  if (proxy.lhs().row_major())
   {
-    vcl_size_t row = vcl_size_t(i) / col_count;
-    vcl_size_t col = vcl_size_t(i) % col_count;
-
-    if (proxy.lhs().row_major())
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+#endif
+    for(long i = 0; i < static_cast<long>(row_count*col_count); ++i)//This is the main part of the transposition
     {
+      vcl_size_t row = vcl_size_t(i) / col_count;
+      vcl_size_t col = vcl_size_t(i) % col_count;
+
       detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1 + A_inc1 * (row * sub_mat_size)
                                                                                , A_start2 + A_inc2 * (col * sub_mat_size), A_inc1
                                                                                , A_inc2, A_internal_size1, A_internal_size2);
@@ -159,8 +159,39 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
         for(vcl_size_t k = 0; k < (sub_mat_size); ++k)
           wrapper_B(j, k) = wrapper_A(k, j);
     }
-    else
+    { //This is the transposition of the remainder on the right side of the matrix
+      detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1
+                                                                               , A_start2 + A_inc2 * (col_count * sub_mat_size), A_inc1
+                                                                               , A_inc2, A_internal_size1, A_internal_size2);
+      detail::matrix_array_wrapper<value_type      , row_major, false> wrapper_B(data_B, B_start1 + B_inc1 * (col_count * sub_mat_size)
+                                                                               , B_start2, B_inc1
+                                                                               , B_inc2, B_internal_size1, B_internal_size2);
+      for(vcl_size_t j = 0; j < col_count_remainder; ++j)
+        for(vcl_size_t k = 0 ; k < A_size1; ++k)
+          wrapper_B(j, k) = wrapper_A(k, j);
+    }
+    { //This is the transposition of the remainder on the bottom side of the matrix
+      detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1 + A_inc1 * (row_count * sub_mat_size)
+                                                                               , A_start2, A_inc1
+                                                                               , A_inc2, A_internal_size1, A_internal_size2);
+      detail::matrix_array_wrapper<value_type      , row_major, false> wrapper_B(data_B,B_start1
+                                                                               , B_start2  + B_inc2 * (row_count * sub_mat_size), B_inc1
+                                                                               , B_inc2, B_internal_size1, B_internal_size2);
+      for(vcl_size_t j = 0; j < row_count_remainder; ++j)
+        for(vcl_size_t k = 0; k < (A_size2 - col_count_remainder); ++k)
+          wrapper_B(k, j) = wrapper_A(j, k);
+    }
+  }
+  else
+  {
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+#endif
+    for(long i = 0; i < static_cast<long>(row_count*col_count); ++i)//This is the main part of the transposition
     {
+      vcl_size_t row = vcl_size_t(i) / col_count;
+      vcl_size_t col = vcl_size_t(i) % col_count;
+
       detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_A(data_A, A_start1 + A_inc1 * (row * sub_mat_size)
                                                                                   , A_start2 + A_inc2 * (col * sub_mat_size), A_inc1
                                                                                   , A_inc2, A_internal_size1, A_internal_size2);
@@ -171,35 +202,6 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
         for(vcl_size_t k = 0; k < (sub_mat_size); ++k)
           wrapper_B(k, j)=wrapper_A(j, k);
     }
-
-  }
-  if (proxy.lhs().row_major())
-  {
-    { //This is the transposition of the remainder on the right side of the matrix
-      detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1
-                                                                               , A_start2 + A_inc2 * (col_count * sub_mat_size), A_inc1
-                                                                               , A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type      , row_major, false> wrapper_B(data_B, B_start1 + B_inc1 * (col_count * sub_mat_size)
-                                                                               , B_start2, B_inc1
-                                                                               , B_inc2, B_internal_size1, B_internal_size2);
-      for(vcl_size_t i = 0; i < col_count_remainder; ++i)
-        for(vcl_size_t j = 0 ; j < A_size1; ++j)
-          wrapper_B(i, j) = wrapper_A(j, i);
-    }
-    { //This is the transposition of the remainder on the bottom side of the matrix
-      detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_A(data_A, A_start1 + A_inc1 * (row_count * sub_mat_size)
-                                                                               , A_start2, A_inc1
-                                                                               , A_inc2, A_internal_size1, A_internal_size2);
-      detail::matrix_array_wrapper<value_type      , row_major, false> wrapper_B(data_B,B_start1
-                                                                               , B_start2  + B_inc2 * (row_count * sub_mat_size), B_inc1
-                                                                               , B_inc2, B_internal_size1, B_internal_size2);
-      for(vcl_size_t i = 0; i < row_count_remainder; ++i)
-        for(vcl_size_t j = 0; j < (A_size2 - col_count_remainder); ++j)
-          wrapper_B(j, i) = wrapper_A(i, j);
-    }
-  }
-  else
-  {
     { //This is the transposition of the remainder on the right side of the matrix
       detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_A(data_A, A_start1
                                                                                   , A_start2 + A_inc2 * (col_count * sub_mat_size), A_inc1
@@ -207,9 +209,9 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
       detail::matrix_array_wrapper<value_type      , column_major, false> wrapper_B(data_B,B_start1 + B_inc1 * (col_count * sub_mat_size)
                                                                                   , B_start2, B_inc1
                                                                                   , B_inc2, B_internal_size1, B_internal_size2);
-      for(vcl_size_t i = 0; i < col_count_remainder; ++i)
-        for(vcl_size_t j = 0; j < A_size1; ++j)
-          wrapper_B(i, j)=wrapper_A(j, i);
+      for(vcl_size_t j = 0; j < col_count_remainder; ++j)
+        for(vcl_size_t k = 0; k < A_size1; ++k)
+          wrapper_B(j, k)=wrapper_A(k, j);
     }
     { //This is the transposition of the remainder on the bottom side of the matrix
       detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_A(data_A, A_start1 + A_inc1 * (row_count * sub_mat_size)
@@ -218,9 +220,9 @@ void trans(const matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>
       detail::matrix_array_wrapper<value_type      , column_major, false> wrapper_B(data_B, B_start1
                                                                                   , B_start2  + B_inc2 * (row_count * sub_mat_size), B_inc1
                                                                                   , B_inc2, B_internal_size1, B_internal_size2);
-      for(vcl_size_t i = 0; i < row_count_remainder; ++i)
-        for(vcl_size_t j = 0; j < (A_size2 - col_count_remainder); ++j)
-          wrapper_B(j, i)=wrapper_A(i, j);
+      for(vcl_size_t j = 0; j < row_count_remainder; ++j)
+        for(vcl_size_t k = 0; k < (A_size2 - col_count_remainder); ++k)
+          wrapper_B(k, j)=wrapper_A(j, k);
     }
   }
 }
