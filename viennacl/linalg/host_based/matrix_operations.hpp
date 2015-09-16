@@ -39,7 +39,8 @@
 #include "viennacl/linalg/prod.hpp"
 
 #include "viennacl/linalg/host_based/packing.hpp"
-//#include "viennacl/linalg/host_based/avx_kernel.hpp"
+#include "viennacl/linalg/host_based/gemm_standard_micro_kernel.hpp"
+#include "viennacl/linalg/host_based/gemm_avx_micro_kernel.hpp"
 #include "viennacl/linalg/host_based/get_cache_sizes.hpp"
 
 namespace viennacl
@@ -1061,16 +1062,16 @@ namespace viennacl
             get_block_sizes<NumericT>(mc,kc,nc,mr,nr);
             block_sizes_unknown = false;
           }
-    
+
           vcl_size_t m_size = A_trans ? A_size2 : A_size1;
           vcl_size_t k_size = A_trans ? A_size1 : A_size2;
           vcl_size_t n_size = B_trans ? B_size1 : B_size2;
 
-          vcl_size_t num_blocks_C1         = (C_size1 - 1)     / mc + 1;
-          vcl_size_t num_blocks_C2         = (C_size2 - 1)     / nc + 1;
+          vcl_size_t num_blocks_C1         = (m_size/*C_size1*/ - 1)     / mc + 1;
+          vcl_size_t num_blocks_C2         = (n_size/*C_size2*/ - 1)     / nc + 1;
           vcl_size_t num_blocks_A2         = (k_size  - 1)     / kc + 1;
-          vcl_size_t num_slivers_A         = (mc - 1)          / mr + 1; // number of slivers a mc*kc block contains
-          vcl_size_t num_slivers_B         = (nc - 1)          / nr + 1; // actually nc/nr would do just fine as we assumed nc is divisible by nr (same for mc/mr)
+          vcl_size_t num_slivers_A         =  mc               / mr    ; // number of slivers a mc*kc block contains
+          vcl_size_t num_slivers_B         =  nc               / nr    ; // mc and nc are divisble by mr and nr respectively (see get_block_sizes())
           vcl_size_t num_residue_slivers_A = ((m_size%mc) - 1) / mr + 1;
           vcl_size_t num_residue_slivers_B = ((n_size%nc) - 1) / nr + 1;
 
@@ -1091,75 +1092,86 @@ namespace viennacl
           for (vcl_size_t C2B2_idx=0; C2B2_idx<num_blocks_C2; ++C2B2_idx)
           {
             // thread-local auxiliary buffers
-            std::vector<NumericT> buffer_A(mc * kc); // row-major
-            std::vector<NumericT> buffer_B(kc * nc); // column-major
+            std::vector<NumericT> buffer_A(mc * kc); // row-major slivers, column-major micro-slivers 
+            std::vector<NumericT> buffer_B(kc * nc); // column-major slivers, row-major mirco-slivers (see packing.hpp)
 
-            for (vcl_size_t A2B1_idx=0; A2B1_idx<num_blocks_C1; ++A2B1_idx)
+            for (vcl_size_t A2B1_idx=0; A2B1_idx<num_blocks_A2; ++A2B1_idx)
             {
-              // pack B
-              pack_matrix_B(buffer_B, A2B1_idx*kc, C2B2_idx*nc, kc, nc, nr, data_B, B_size1, B_size2, B_internal_size1, B_internal_size2, B_inc1, B_inc2, B_start1, B_start2,  B_trans, B_row_major);
+              // "flush buffers" was here. needed? what if we have a full buffer from last iteration and in this iteration buffer is not completely filled (border of matrix inside of block)?
+              std::fill(buffer_B.begin(), buffer_B.end(), NumericT(0));
+              pack_matrix_B(buffer_B, A2B1_idx*kc, C2B2_idx*nc, kc, nc, nr,
+                            data_B, B_size1, B_size2, B_internal_size1, B_internal_size2,
+                            B_inc1, B_inc2, B_start1, B_start2,  B_trans, B_row_major);
 
-              for (vcl_size_t C1A1_idx=0; C1A1_idx<num_blocks_A2; ++C1A1_idx)
+              for (vcl_size_t C1A1_idx=0; C1A1_idx<num_blocks_C1; ++C1A1_idx)
               {
-                /*// flush buffers:
-                  std::fill(buffer_A.begin(), buffer_A.end(), NumericT(0));
-                  std::fill(buffer_B.begin(), buffer_B.end(), NumericT(0));*/ //what for?
-
-                // pack A 
-                //          std::cout << "packing matrix A" << std::endl;//DEBUG
-                pack_matrix_A(buffer_A, C1A1_idx*mc, A2B1_idx*kc, mc, kc, mr, data_A, A_size1, A_size2, A_internal_size1, A_internal_size2, A_inc1, A_inc2, A_start1, A_start2,  A_trans, A_row_major);
-
+                // "flush buffers" was here. needed? what if we have a full buffer from last iteration and in this iteration buffer is not completely filled (border of matrix inside of block)?
+                std::fill(buffer_A.begin(), buffer_A.end(), NumericT(0));
+                pack_matrix_A(buffer_A, C1A1_idx*mc, A2B1_idx*kc, mc, kc, mr,
+                              data_A, A_size1, A_size2, A_internal_size1, A_internal_size2,
+                              A_inc1, A_inc2, A_start1, A_start2,  A_trans, A_row_major);
+                
+                vcl_size_t max_sliver_B_idx = (n_size-C2B2_idx*nc) < nc ? num_residue_slivers_B : num_slivers_B;
                 // multiply (this is the hot spot in terms of flops)
-                // ADD SOMETHING LIKE sliver_B_idx<std::min(num_slivers_B, size2%nc%nr + 1)! ELSE READ OUTSIDE MATRIX! 
-                for (vcl_size_t sliver_B_idx = 0; sliver_B_idx < ( (n_size-C2B2_idx*nc)<nc ? num_residue_slivers_B : num_slivers_B ) ; ++sliver_B_idx)
+                for (vcl_size_t sliver_B_idx = 0; sliver_B_idx < max_sliver_B_idx; ++sliver_B_idx)
                 {
                   //if ( (B_size2-C2B2_idx)<nc )//DEBUG
                     //std::cout << "residue B! " << std::endl;//DEBUG
 
-                  for (vcl_size_t sliver_A_idx = 0; sliver_A_idx < ( (m_size-C1A1_idx*mc)<mc ? num_residue_slivers_A : num_slivers_A ); ++sliver_A_idx)
+                  vcl_size_t max_sliver_A_idx = (m_size-C1A1_idx*mc)<mc ? num_residue_slivers_A : num_slivers_A;
+                  
+                  for (vcl_size_t sliver_A_idx = 0; sliver_A_idx < max_sliver_A_idx; ++sliver_A_idx)
                   {
-                    //if ( (A_size1-C1A1_idx)<mc ) //DEBUG
-                      //std::cout << "residue A! " << std::endl;//DEBUG
-
                     std::vector<NumericT> buffer_C(mr * nr);
                     std::fill(buffer_C.begin(), buffer_C.end(), NumericT(0));
                     NumericT const * ptrA = &(buffer_A[sliver_A_idx * mr * kc]);
                     NumericT const * ptrB = &(buffer_B[sliver_B_idx * nr * kc]);
-              
-                    for (vcl_size_t l=0; l<kc; ++l)
-                    {
-                      for (vcl_size_t j=0; j<nr; ++j)
-                      {
-                        for (vcl_size_t i=0; i<mr; ++i)
-                        {
-                          buffer_C[i + j*mr] += ptrA[i] * ptrB[j];  
-                        }
-                      }
-                      ptrA += mr;
-                      ptrB += nr;
-                    }
+                    NumericT       * ptrC = &(buffer_C[0]);
+                    
+                    vcl_size_t num_micros_slivers = std::min(kc, k_size-A2B1_idx*kc);
+
+                    /* the micro kernels write to buffer_C */
+#ifdef VIENNACL_WITH_AVX
+                    //TODO: clean up arguments
+		    avx_micro_kernel_double(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
+		    
+#elif  VIENNACL_WITH_AVX_512
+                    //not yet implemented
+                    standard_micro_kernel(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
+#elif  VIENNACL_WITH_SSE
+		    //not yet implemented
+                    standard_micro_kernel(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
+#else
+                    standard_micro_kernel(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
+#endif
                     // write result:
                     if (beta > 0 || beta < 0)
                     {
-                      for (vcl_size_t j = 0; j<std::min(nr, n_size-(C2B2_idx*nc + sliver_B_idx*nr)); ++j)
-                        for (vcl_size_t i = 0 ; i<std::min(mr, m_size-(C1A1_idx*mc + sliver_A_idx*mr)); ++i)
-                          C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) = beta * C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) + alpha * buffer_C[i + j*mr];
+                      for (vcl_size_t i = 0 ; i<std::min(mr, m_size-(C1A1_idx*mc + sliver_A_idx*mr)); ++i)
+                        for (vcl_size_t j = 0; j<std::min(nr, n_size-(C2B2_idx*nc + sliver_B_idx*nr)); ++j)
+                          C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) = beta * C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) + alpha * buffer_C[i*nr + j];
                     }
                     else
                     {
-                      for (vcl_size_t j = 0; j<std::min(nr, n_size-(C2B2_idx*nc + sliver_B_idx*nr)); ++j)
+                      for (vcl_size_t i = 0 ; i<std::min(mr, m_size-(C1A1_idx*mc + sliver_A_idx*mr)); ++i)
                       {
-                        for (vcl_size_t i = 0 ; i<std::min(mr, m_size-(C1A1_idx*mc + sliver_A_idx*mr)); ++i)
+                        for (vcl_size_t j = 0; j<std::min(nr, n_size-(C2B2_idx*nc + sliver_B_idx*nr)); ++j)
                         {
-                          C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) =                 alpha * buffer_C[i + j*mr];
+                          /* Blocks indexed by A2B1_idx write to same entries of C.
+                           * Therefore, always add the new, partial results after the first write to C */
+                          if (A2B1_idx == 0)
+                            C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) = alpha * buffer_C[i*nr + j];
+                          else
+                            C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) += alpha * buffer_C[i*nr + j];
                         }
                       }
                     }
-                  }
-                }
-              }
-            } // for block j
-          } // for block i
+                    
+                  } // for slivers A
+                } // for slivers B
+              } // for block C1A1_idx
+            } // for block A2B1_idx
+          } // for block C2B2_idx
 
         } // prod()
 

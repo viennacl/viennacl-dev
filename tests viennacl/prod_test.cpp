@@ -17,7 +17,7 @@
 
 /** \file tests/src/libviennacl_blas3.cpp  Testing the BLAS level 3 routines in the ViennaCL BLAS-like shared library
  *   \test Testing the BLAS level 3 routines in the ViennaCL BLAS-like shared library
- **/
+n **/
 
 #include "../viennacl/matrix.hpp"
 #include "../viennacl/matrix_proxy.hpp"
@@ -33,7 +33,8 @@
 #include <boost/numeric/ublas/matrix_expression.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
-
+//#define TEST_FLOAT  //if defined, floats are tested
+#define TEST_DOUBLE //if defined, doubles are tested
 
 /*
   template<typename T, typename U, typename EpsilonT>
@@ -68,7 +69,7 @@
   return array[static_cast<std::size_t>((j*stride1 + start1) + (i*stride2 + start2) * rows)];
   return array[static_cast<std::size_t>((i*stride1 + start1) + (j*stride2 + start2) * rows)];
   }*/
-#define UBLAS boost::numeric::ublas
+
 /*
 template<typename ScalarType, typename ViennaCLVectorType>
 ScalarType diff(std::vector<ScalarType> const & v1, ViennaCLVectorType const & vcl_vec)
@@ -102,6 +103,8 @@ void check(T const & t, U const & u, EpsilonT eps)
   std::cout << "SUCCESS ";
 }
 */
+
+#define UBLAS boost::numeric::ublas
 
 template<typename NumericT, typename order_viennacl, typename order_ublas, typename EpsilonT>
 int check(viennacl::matrix<NumericT,order_viennacl> result, UBLAS::matrix<NumericT,order_ublas> reference_ublas, EpsilonT eps)
@@ -173,25 +176,25 @@ int test_prod(viennacl::matrix<NumericT,orderC>  & C, viennacl::matrix<NumericT,
   C = prod(trans(At),trans(Bt));
   C_ublas = UBLAS::prod(UBLAS::trans(At_ublas),UBLAS::trans(Bt_ublas)); 
   error_count += check(C, C_ublas, eps);
-  //  std::cout << "       C is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;
+  //std::cout << "                     C       is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;//DEBUG
   
   std::cout << "    -> trans-no:    ";
   C = prod(trans(At),B);
   C_ublas = UBLAS::prod(UBLAS::trans(At_ublas),B_ublas); 
   error_count += check(C, C_ublas, eps);
-  //std::cout << "       C is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;
+  //  std::cout << "                     C       is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;//DEBUG
 
   std::cout << "    -> no-trans:    ";
   C = prod(A,trans(Bt));
   C_ublas = UBLAS::prod(A_ublas,UBLAS::trans(Bt_ublas)); 
   error_count += check(C, C_ublas, eps);
-  //std::cout << "       C is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;
+  //std::cout << "                     C       is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;//DEBUG
 
   std::cout << "    -> no-no:       ";
   C = prod(A,B);
   C_ublas = UBLAS::prod(A_ublas,B_ublas);
   error_count += check(C, C_ublas, eps);
-  //std::cout << "       C is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;
+  //std::cout << "                     C       is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;//DEBUG
   
   return error_count;
 }
@@ -213,8 +216,12 @@ int main(int argc, char **argv)
   using boost::numeric::ublas::column_major;
   using boost::numeric::ublas::row_major;
 
+  #ifdef TEST_FLOAT
   float  eps_float  = 1e-5f;
-  //double eps_double = 1e-12;
+  #endif
+  #ifdef TEST_DOUBLE
+  double eps_double = 1e-12;
+  #endif
 
   std::size_t n;
   std::size_t k;
@@ -298,43 +305,71 @@ int main(int argc, char **argv)
   std::cout << "m = " << m << std::endl;
   std::cout << "k = " << k << std::endl;
   std::cout << "n = " << n << std::endl;
-  //std::cout << "Af_col is: " << Af_col << std::endl;
-  //std::cout << "Af_row is: " << Af_row << std::endl;
-  //std::cout << "Bf_col is: " << Bf_col << std::endl;
-  //std::cout << "Bf_row is: " << Bf_row << std::endl;
-  std::cout << "*********************" << std::endl << std::endl;
+  //std::cout << "Af_col is: " << Af_col << std::endl;//DEBUG
+  //std::cout << "Af_row is: " << Af_row << std::endl;//DEBUG
+  //std::cout << "Bf_col is: " << Bf_col << std::endl;//DEBUG
+  //std::cout << "Bf_row is: " << Bf_row << std::endl;//DEBUG
+  //std::cout << "Ad_row is: " << Ad_row << std::endl;//DEBUG
+  //std::cout << "Bd_row is: " << Bd_row << std::endl;//DEBUG
   
+  std::cout << "*********************" << std::endl << std::endl;
+
+#ifdef TEST_FLOAT
+  std::cout << "*******FLOAT*********" << std::endl;
   std::cout << "  -> C: row, A: row, B: row" << std::endl;
   error_count += test_prod(Cf_row, Af_row, Bf_row, Cf_row_ublas, Af_row_ublas, Bf_row_ublas, eps_float);
-  //test_prod(Cd_row, Ad_row, Bd_row);
 
   std::cout << "  -> C: row, A: row, B: col" << std::endl;
   error_count += test_prod(Cf_row, Af_row, Bf_col, Cf_row_ublas, Af_row_ublas, Bf_col_ublas, eps_float);
-  //test_prod(Cd_row, Ad_row, Bd_col);
 
   std::cout << "  -> C: row, A: col, B: row" << std::endl;
   error_count += test_prod(Cf_row, Af_col, Bf_row, Cf_row_ublas, Af_col_ublas, Bf_row_ublas, eps_float);
-  //test_prod(Cd_row, Ad_col, Bd_row);
 
   std::cout << "  -> C: row, A: col, B: col" << std::endl;
   error_count += test_prod(Cf_row, Af_col, Bf_col, Cf_row_ublas, Af_col_ublas, Bf_col_ublas, eps_float);
-  //test_prod(Cd_row, Ad_col, Bd_col);
 
   std::cout << "  -> C: col, A: row, B: row" << std::endl;
   error_count += test_prod(Cf_col, Af_row, Bf_row, Cf_col_ublas, Af_row_ublas, Bf_row_ublas, eps_float);
-  //test_prod(Cd_col, Ad_row, Bd_row);
 
   std::cout << "  -> C: col, A: row, B: col" << std::endl;
   error_count += test_prod(Cf_col, Af_row, Bf_col, Cf_col_ublas, Af_row_ublas, Bf_col_ublas, eps_float);
-  //test_prod(Cd_col, Ad_row, Bd_col);
 
   std::cout << "  -> C: col, A: col, B: row" << std::endl;
   error_count += test_prod(Cf_col, Af_col, Bf_row, Cf_col_ublas, Af_col_ublas, Bf_row_ublas, eps_float);
-  //test_prod(Cd_col, Ad_col, Bd_row);
 
   std::cout << "  -> C: col, A: col, B: col" << std::endl;
   error_count += test_prod(Cf_col, Af_col, Bf_col, Cf_col_ublas, Af_col_ublas, Bf_col_ublas, eps_float);
-  //test_prod(Cd_col, Ad_col, Bd_col);
+
+#endif
+#ifdef TEST_DOUBLE
+  std::cout << "******DOUBLE*********" << std::endl;
+  std::cout << "  -> C: row, A: row, B: row" << std::endl;
+  error_count += test_prod(Cd_row, Ad_row, Bd_row, Cd_row_ublas, Ad_row_ublas, Bd_row_ublas, eps_double);
+
+  std::cout << "  -> C: row, A: row, B: col" << std::endl;
+  error_count += test_prod(Cd_row, Ad_row, Bd_col, Cd_row_ublas, Ad_row_ublas, Bd_col_ublas, eps_double);
+
+  std::cout << "  -> C: row, A: col, B: row" << std::endl;
+  error_count += test_prod(Cd_row, Ad_col, Bd_row, Cd_row_ublas, Ad_col_ublas, Bd_row_ublas, eps_double);
+
+  std::cout << "  -> C: row, A: col, B: col" << std::endl;
+  error_count += test_prod(Cd_row, Ad_col, Bd_col, Cd_row_ublas, Ad_col_ublas, Bd_col_ublas, eps_double);
+
+  std::cout << "  -> C: col, A: row, B: row" << std::endl;
+  error_count += test_prod(Cd_col, Ad_row, Bd_row, Cd_col_ublas, Ad_row_ublas, Bd_row_ublas, eps_double);
+
+  std::cout << "  -> C: col, A: row, B: col" << std::endl;
+  error_count += test_prod(Cd_col, Ad_row, Bd_col, Cd_col_ublas, Ad_row_ublas, Bd_col_ublas, eps_double);
+
+  std::cout << "  -> C: col, A: col, B: row" << std::endl;
+  error_count += test_prod(Cd_col, Ad_col, Bd_row, Cd_col_ublas, Ad_col_ublas, Bd_row_ublas, eps_double);
+
+  std::cout << "  -> C: col, A: col, B: col" << std::endl;
+  error_count += test_prod(Cd_col, Ad_col, Bd_col, Cd_col_ublas, Ad_col_ublas, Bd_col_ublas, eps_double);
+
+#endif
+
+  std::cout << "*********************" << std::endl << std::endl;
   
   if (error_count > 0)
   {
