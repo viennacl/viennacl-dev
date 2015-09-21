@@ -65,7 +65,7 @@ namespace viennacl
 #endif
 
     static int l1, l2, l3;
-    static bool cache_sizes_unknown;
+    static bool cache_sizes_unknown = true;
 
     /* hardware won't change during run-time (hopefully)
      * ==> determine cache sizes only once */

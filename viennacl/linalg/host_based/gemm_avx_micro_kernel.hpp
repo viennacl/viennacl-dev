@@ -1,9 +1,6 @@
 #ifndef VIENNACL_LINALG_HOST_BASED_GEMM_AVX_MICRO_KERNEL_HPP_
 #define VIENNACL_LINALG_HOST_BASED_GEMM_AVX_MICRO_KERNEL_HPP_
 
-//#define _POSIX_C_SOURCE
-//#define _XOPEN_SOURCE
-
 #include "viennacl/linalg/host_based/common.hpp"
 #include "immintrin.h"
 
@@ -282,44 +279,5 @@ namespace viennacl
         std::cout << std::endl;//DEBUG*/
     }
   }
-
-  template<typename NumericT>
-  NumericT *get_aligned_buffer(vcl_size_t size, bool fill_zeros)
-  {
-#ifdef VIENNACL_WITH_AVX
-    
-    void *ptr;
-    int error = posix_memalign(&ptr, 32, size*sizeof(NumericT));
-    
-    if (error)
-    {
-      //dunno how to handle, throw exception? which one?
-    }
-    if (fill_zeros)
-    {
-      for (vcl_size_t i=0; i<size; ++i)
-      {
-        ((NumericT *)ptr)[i] = NumericT(0);
-      }
-    }
-        
-    return (NumericT *)ptr;
-    
-#else
-    std::vector<NumericT> buffer(size);
-    
-    if (fill_zeros)
-      std::fill(buffer.begin(), buffer.end(), NumericT(0));
-    
-    return (NumericT *)&(buffer[0]);
-#endif    
-  }
-
-  template<typename NumericT>
-  inline void free_aligned_buffer(NumericT *ptr)
-  {
-    free((void *)ptr);
-  }
 }//viennacl
-
 #endif

@@ -41,6 +41,7 @@
 #include "viennacl/linalg/host_based/packing.hpp"
 #include "viennacl/linalg/host_based/gemm_standard_micro_kernel.hpp"
 #include "viennacl/linalg/host_based/gemm_avx_micro_kernel.hpp"
+#include "viennacl/linalg/host_based/aligned_buffer.hpp"
 #include "viennacl/linalg/host_based/get_block_sizes.hpp"
 
 namespace viennacl
@@ -1077,8 +1078,8 @@ namespace viennacl
           vcl_size_t num_residue_slivers_A = ((m_size%mc) - 1)/mr + 1;//TODO: check m_size%mc for correctness
           vcl_size_t num_residue_slivers_B = ((n_size%nc) - 1)/nr + 1;
 
-          //          std::cout << "num_blocksC1/2 A2, slivers A/B, residue slivers A/B " << num_blocks_C1 << " " << num_blocks_C2 << " " << num_blocks_A2 << " " << num_slivers_A << " " << num_slivers_B //DEBUG
-          //          << " " << num_residue_slivers_A << " " << num_residue_slivers_B << std::endl;//DEBUG
+          //std::cout << "num_blocksC1/2 A2, slivers A/B, residue slivers A/B " << num_blocks_C1 << " " << num_blocks_C2 << " " << num_blocks_A2 << " " << num_slivers_A << " " << num_slivers_B //DEBUG
+              //        << " " << num_residue_slivers_A << " " << num_residue_slivers_B << std::endl;//DEBUG
           //std::cout << " kc mc nc " << kc << " " << mc << " " << nc <<" " << std::endl;//DEBUG
           
 
@@ -1099,7 +1100,7 @@ namespace viennacl
              * Do NOT fill them with zeros (as it's not needed, do it anyway?). */
             NumericT *buffer_A = get_aligned_buffer<NumericT>(mc*kc,false);// row-major slivers, column-major micro-slivers 
             NumericT *buffer_B = get_aligned_buffer<NumericT>(kc*nc,false);// column-major slivers, row-major mirco-slivers (see packing.hpp)
-            
+
             for (vcl_size_t A2B1_idx=0; A2B1_idx<num_blocks_A2; ++A2B1_idx)
             {
               pack_matrix_B(buffer_B, A2B1_idx*kc, C2B2_idx*nc, kc, nc, nr,
