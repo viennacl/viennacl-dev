@@ -33,7 +33,7 @@ n **/
 #include <boost/numeric/ublas/matrix_expression.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
-//#define TEST_FLOAT  //if defined, floats are tested
+#define TEST_FLOAT  //if defined, floats are tested
 #define TEST_DOUBLE //if defined, doubles are tested
 
 /*
@@ -176,7 +176,7 @@ int test_prod(viennacl::matrix<NumericT,orderC>  & C, viennacl::matrix<NumericT,
   C = prod(trans(At),trans(Bt));
   C_ublas = UBLAS::prod(UBLAS::trans(At_ublas),UBLAS::trans(Bt_ublas)); 
   error_count += check(C, C_ublas, eps);
-  //std::cout << "                     C       is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;//DEBUG
+  //  std::cout << "                     C       is:" << C << std::endl << "                     C_ublas is:" << C_ublas <<std::endl;//DEBUG
   
   std::cout << "    -> trans-no:    ";
   C = prod(trans(At),B);

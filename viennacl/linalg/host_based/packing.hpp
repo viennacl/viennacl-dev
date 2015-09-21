@@ -20,7 +20,7 @@ namespace viennacl
 {
   
   template<typename NumericT>
-  void debug_print_package(std::vector<NumericT> const & package, std::string name, vcl_size_t size1, vcl_size_t size2)
+  void debug_print_package(NumericT *package, std::string name, vcl_size_t size1, vcl_size_t size2)
     {
       std::cout << std::endl << "printing package " << name << " : ";
       for (vcl_size_t i=0; i<(size1*size2); ++i)
@@ -31,7 +31,7 @@ namespace viennacl
     }
   
   template<typename NumericT>
-  void pack_matrix_A(std::vector<NumericT> & buffer, vcl_size_t offset_i, vcl_size_t offset_j, 
+  void pack_matrix_A(NumericT *buffer, vcl_size_t offset_i, vcl_size_t offset_j, 
                      vcl_size_t mc, vcl_size_t kc, vcl_size_t mr,
                      NumericT const * data, 
                      vcl_size_t size1, vcl_size_t size2, 
@@ -41,11 +41,11 @@ namespace viennacl
                      bool trans, bool row_major)
   {
     /* see top comment */
-    
-    //TODO: SWAP KC/MC? if kc/mc are not equal...
-    
     if(trans)
+    {
       std::swap(offset_i, offset_j);
+      std::swap(mc,kc);
+    }
     
     if (row_major)
     {
@@ -67,7 +67,8 @@ namespace viennacl
           for (vcl_size_t j = 0; j < std::min(kc, size2-offset_j); ++j)
           {
             //std::cout << "new block " << size1 << " " << offset_i << " "<< std::min(kc, size2-offset_j) << " " << j << " " << ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) << std::endl;//DEBUG
-            buffer[ i*mr + (j/mr)*kc*mr + (j%mr) ] = data[ ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) ];
+            /* Note that in '(j/nr)*mc*nr', mc is used instead of kc due to the swap at the beginning of this function! */
+            buffer[ i*mr + (j/mr)*mc*mr + (j%mr) ] = data[ ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) ];
             //std::cout << "A: pack idx " << (i*inc1+start1)*internal_size2 + j*inc2+start2 << " --> " << i + j*size1  << std::endl;//DEBUG
           } 
         }
@@ -92,7 +93,8 @@ namespace viennacl
         {                                                        
           for (vcl_size_t i = 0; i < std::min(mc, size1-offset_i); ++i)
           {
-            buffer[ i*mr + (j/mr)*kc*mr + (j%mr) ] = data[ ((i+offset_i)*inc1+start1) + ((j+offset_j)*inc2+start2)*internal_size1 ];
+            /* Note that in '(j/nr)*mc*nr', mc is used instead of kc due to the swap at the beginning of this function! */
+            buffer[ i*mr + (j/mr)*mc*mr + (j%mr) ] = data[ ((i+offset_i)*inc1+start1) + ((j+offset_j)*inc2+start2)*internal_size1 ];
             //std::cout << "packed A idx " << i*inc1+start1 + (j*inc2+start2)*internal_size1 << std::endl;//DEBUG
           }
         }
@@ -108,6 +110,7 @@ namespace viennacl
     {
       std::swap(size1, size2);
       std::swap(offset_i, offset_j);
+      std::swap(mc,kc);
     }
     
     vcl_size_t num_remaining_rows = (size1-offset_i) < mc ? (mc-size1+offset_i)%mr : 0;
@@ -125,11 +128,11 @@ namespace viennacl
       }
     }
     
-    //debug_print_package(buffer, "A", mc, kc);//DEBUG
+    //    debug_print_package(buffer, "A", mc, kc);//DEBUG
   }//pack_matrix_A
 
   template<typename NumericT>
-  void pack_matrix_B(std::vector<NumericT> & buffer, vcl_size_t offset_i, vcl_size_t offset_j, 
+  void pack_matrix_B(NumericT *buffer, vcl_size_t offset_i, vcl_size_t offset_j, 
                      vcl_size_t kc, vcl_size_t nc, vcl_size_t nr,
                      NumericT const * data, 
                      vcl_size_t size1, vcl_size_t size2, 
@@ -141,6 +144,7 @@ namespace viennacl
     if (trans)
     {
       std::swap(offset_i, offset_j);
+      std::swap(kc, nc);
     }
     if (row_major)
     {
@@ -161,7 +165,8 @@ namespace viennacl
         {
           for (vcl_size_t j = 0; j < std::min(nc, size2-offset_j); ++j)
           {
-            buffer[ (i/nr)*kc*nr + (i%nr) + j*nr ] = data[ ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) ];
+            /* Note that in '(i/nr)*nc*nr', nc is used instead of kc due to the swap at the beginning of this function! */
+            buffer[ (i/nr)*nc*nr + (i%nr) + j*nr ] = data[ ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) ];
             //std::cout << "A: pack idx " << (i*inc1+start1)*internal_size2 + j*inc2+start2 << " --> " << i + j*size1  << std::endl;//DEBUG
           } 
         }
@@ -186,7 +191,8 @@ namespace viennacl
         {
           for (vcl_size_t i = 0; i < std::min(kc, size1-offset_i); ++i)
           {
-            buffer[ (i/nr)*kc*nr + (i%nr) + j*nr ] = data[ ((i+offset_i)*inc1+start1) + ((j+offset_j)*inc2+start2)*internal_size1 ];
+            /* Note that in '(i/nr)*nc*nr', nc is used instead of kc due to the swap at the beginning of this function! */
+            buffer[ (i/nr)*nc*nr + (i%nr) + j*nr ] = data[ ((i+offset_i)*inc1+start1) + ((j+offset_j)*inc2+start2)*internal_size1 ];
             //std::cout << "packed A idx " << i*inc1+start1 + (j*inc2+start2)*internal_size1 << std::endl;//DEBUG
           }
         }
@@ -196,12 +202,13 @@ namespace viennacl
     /* switch sizes when transposed, since they address the unaltered
      * matrix (not transposed). For padding, however, we address entries
      * as if they were transposed. Same thing holds for offsets:
-     * as we transposed them at the beginning of this function,
+     * since we transposed them at the beginning of this function,
      * they address the unaltered matrix, hence we re-swap them.*/
     if (trans)
     {
       std::swap(size1, size2);
       std::swap(offset_i, offset_j);
+      std::swap(kc,nc);
     }
     
     vcl_size_t num_remaining_cols = (size2-offset_j) < nc ? (nc-size2+offset_j)%nr : 0;
@@ -216,7 +223,7 @@ namespace viennacl
         }
       }
     }
-    //debug_print_package(buffer, "B", kc, nc);//DEBUG
+    //    debug_print_package(buffer, "B", kc, nc);//DEBUG
   }//pack_matrix_B
 }//viennacl
 #endif

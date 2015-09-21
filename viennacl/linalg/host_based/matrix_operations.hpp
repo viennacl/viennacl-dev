@@ -41,7 +41,7 @@
 #include "viennacl/linalg/host_based/packing.hpp"
 #include "viennacl/linalg/host_based/gemm_standard_micro_kernel.hpp"
 #include "viennacl/linalg/host_based/gemm_avx_micro_kernel.hpp"
-#include "viennacl/linalg/host_based/get_cache_sizes.hpp"
+#include "viennacl/linalg/host_based/get_block_sizes.hpp"
 
 namespace viennacl
 {
@@ -1021,6 +1021,7 @@ namespace viennacl
                   vcl_size_t C_size1, vcl_size_t C_size2, 
                   NumericT alpha, NumericT beta)
         {
+          /* TODO: TOP COMMENT WITH PRODUCT vs MEMORY SIZES/ADDRESSING etc. */
           /* setup matrices */
           NumericT const * data_A = detail::extract_raw_pointer<NumericT>(A);
           vcl_size_t A_start1 = viennacl::traits::start1(A);
@@ -1047,36 +1048,39 @@ namespace viennacl
 
           if (C_size1 == 0 || C_size2 == 0 || (A_trans ? A_size1 : A_size2) == 0)
             return;
+
+          /* register-block sizes, depend on architecture and NumericT */
+          vcl_size_t mr;
+          vcl_size_t nr;
           
+          /* block sizes, depend on cache sizes and register-block sizes */
           static vcl_size_t mc;
           static vcl_size_t kc;
           static vcl_size_t nc;
-          static vcl_size_t mr;
-          static vcl_size_t nr;
 
-          static bool block_sizes_unknown = true;
-
-          /* run this only the first time */
-          if (block_sizes_unknown)
-          {
-            get_block_sizes<NumericT>(mc,kc,nc,mr,nr);
-            block_sizes_unknown = false;
-          }
-
+          /* "product-sizes", see top comment */
           vcl_size_t m_size = A_trans ? A_size2 : A_size1;
           vcl_size_t k_size = A_trans ? A_size1 : A_size2;
           vcl_size_t n_size = B_trans ? B_size1 : B_size2;
 
-          vcl_size_t num_blocks_C1         = (m_size/*C_size1*/ - 1)     / mc + 1;
-          vcl_size_t num_blocks_C2         = (n_size/*C_size2*/ - 1)     / nc + 1;
-          vcl_size_t num_blocks_A2         = (k_size  - 1)     / kc + 1;
-          vcl_size_t num_slivers_A         =  mc               / mr    ; // number of slivers a mc*kc block contains
-          vcl_size_t num_slivers_B         =  nc               / nr    ; // mc and nc are divisble by mr and nr respectively (see get_block_sizes())
-          vcl_size_t num_residue_slivers_A = ((m_size%mc) - 1) / mr + 1;
-          vcl_size_t num_residue_slivers_B = ((n_size%nc) - 1) / nr + 1;
+          /* set block and register-block sizes according to NumericT (e.g. double or float) */
+          get_block_sizes<NumericT>(m_size,k_size,n_size,mc,kc,nc,mr,nr);
+          assert( ((mc%mr) == 0) && ((nc%nr) == 0) && bool("mc or (inclusive) nc not divisible by mr/nr!") ); 
+          
+          /* calculate the number of blocks in each dimension, the number of slivers in a block and
+           * the number of slivers in the last block, which is usually not completely filled with slivers */ 
+          vcl_size_t num_blocks_C1         = (m_size - 1)/mc + 1;
+          vcl_size_t num_blocks_C2         = (n_size - 1)/nc + 1;
+          vcl_size_t num_blocks_A2         = (k_size - 1)/kc + 1;
+          vcl_size_t num_slivers_A         =  mc/mr; // number of slivers a mc*kc block contains
+          vcl_size_t num_slivers_B         =  nc/nr; // mc and nc are divisble by mr and nr respectively (see get_block_sizes())
+          vcl_size_t num_residue_slivers_A = ((m_size%mc) - 1)/mr + 1;//TODO: check m_size%mc for correctness
+          vcl_size_t num_residue_slivers_B = ((n_size%nc) - 1)/nr + 1;
 
-          //std::cout << "num_blocksC1/2 A2, slivers A/B, residue slivers A/B " << num_blocks_C1 << " " << num_blocks_C2 << " " << num_blocks_A2 << " " << num_slivers_A << " " << num_slivers_B //DEBUG
-              //        << " " << num_residue_slivers_A << " " << num_residue_slivers_B << std::endl;//DEBUG	
+          //          std::cout << "num_blocksC1/2 A2, slivers A/B, residue slivers A/B " << num_blocks_C1 << " " << num_blocks_C2 << " " << num_blocks_A2 << " " << num_slivers_A << " " << num_slivers_B //DEBUG
+          //          << " " << num_residue_slivers_A << " " << num_residue_slivers_B << std::endl;//DEBUG
+          //std::cout << " kc mc nc " << kc << " " << mc << " " << nc <<" " << std::endl;//DEBUG
+          
 
           //
           // first and third loops: Run over all blocks with indices (C2_block_idx, C1_block_idx) of the result matrix C:
@@ -1088,30 +1092,27 @@ namespace viennacl
           /* BLOCK INDEX NAMING: 
            * All block indices are named after which matrix and what dimension they block.
            * For example, the first index (first loop) divides dimension 2 (columns) of matrix C
-           * and matrix B => C2B2_idx */
+           * and matrix B => C2B2_idx. (order: C A B) */
           for (vcl_size_t C2B2_idx=0; C2B2_idx<num_blocks_C2; ++C2B2_idx)
           {
-            // thread-local auxiliary buffers
-            std::vector<NumericT> buffer_A(mc * kc); // row-major slivers, column-major micro-slivers 
-            std::vector<NumericT> buffer_B(kc * nc); // column-major slivers, row-major mirco-slivers (see packing.hpp)
-
+            /* Allocate thread-local auxiliary buffers.
+             * Do NOT fill them with zeros (as it's not needed, do it anyway?). */
+            NumericT *buffer_A = get_aligned_buffer<NumericT>(mc*kc,false);// row-major slivers, column-major micro-slivers 
+            NumericT *buffer_B = get_aligned_buffer<NumericT>(kc*nc,false);// column-major slivers, row-major mirco-slivers (see packing.hpp)
+            
             for (vcl_size_t A2B1_idx=0; A2B1_idx<num_blocks_A2; ++A2B1_idx)
             {
-              // "flush buffers" was here. needed? what if we have a full buffer from last iteration and in this iteration buffer is not completely filled (border of matrix inside of block)?
-              std::fill(buffer_B.begin(), buffer_B.end(), NumericT(0));
               pack_matrix_B(buffer_B, A2B1_idx*kc, C2B2_idx*nc, kc, nc, nr,
                             data_B, B_size1, B_size2, B_internal_size1, B_internal_size2,
                             B_inc1, B_inc2, B_start1, B_start2,  B_trans, B_row_major);
 
               for (vcl_size_t C1A1_idx=0; C1A1_idx<num_blocks_C1; ++C1A1_idx)
               {
-                // "flush buffers" was here. needed? what if we have a full buffer from last iteration and in this iteration buffer is not completely filled (border of matrix inside of block)?
-                std::fill(buffer_A.begin(), buffer_A.end(), NumericT(0));
                 pack_matrix_A(buffer_A, C1A1_idx*mc, A2B1_idx*kc, mc, kc, mr,
                               data_A, A_size1, A_size2, A_internal_size1, A_internal_size2,
                               A_inc1, A_inc2, A_start1, A_start2,  A_trans, A_row_major);
                 
-                vcl_size_t max_sliver_B_idx = (n_size-C2B2_idx*nc) < nc ? num_residue_slivers_B : num_slivers_B;
+                vcl_size_t max_sliver_B_idx = ((n_size-C2B2_idx*nc) < nc) ? num_residue_slivers_B : num_slivers_B;
                 // multiply (this is the hot spot in terms of flops)
                 for (vcl_size_t sliver_B_idx = 0; sliver_B_idx < max_sliver_B_idx; ++sliver_B_idx)
                 {
@@ -1122,8 +1123,10 @@ namespace viennacl
                   
                   for (vcl_size_t sliver_A_idx = 0; sliver_A_idx < max_sliver_A_idx; ++sliver_A_idx)
                   {
-                    std::vector<NumericT> buffer_C(mr * nr);
-                    std::fill(buffer_C.begin(), buffer_C.end(), NumericT(0));
+                    /* Allocate aligned memory and fill with zeros */
+                    NumericT *buffer_C = get_aligned_buffer<NumericT>(mr*nr,true); //std::vector<NumericT> buffer_C(mr * nr);
+                    
+                    //std::fill(buffer_C.begin(), buffer_C.end(), NumericT(0));
                     NumericT const * ptrA = &(buffer_A[sliver_A_idx * mr * kc]);
                     NumericT const * ptrB = &(buffer_B[sliver_B_idx * nr * kc]);
                     NumericT       * ptrC = &(buffer_C[0]);
@@ -1133,7 +1136,7 @@ namespace viennacl
                     /* the micro kernels write to buffer_C */
 #ifdef VIENNACL_WITH_AVX
                     //TODO: clean up arguments
-		    avx_micro_kernel_double(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
+		    avx_micro_kernel<NumericT>(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
 		    
 #elif  VIENNACL_WITH_AVX_512
                     //not yet implemented
@@ -1160,17 +1163,20 @@ namespace viennacl
                           /* Blocks indexed by A2B1_idx write to same entries of C.
                            * Therefore, always add the new, partial results after the first write to C */
                           if (A2B1_idx == 0)
-                            C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) = alpha * buffer_C[i*nr + j];
+                            C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j )  = alpha * buffer_C[i*nr + j];
                           else
                             C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) += alpha * buffer_C[i*nr + j];
+                          //std::cout << "C (" << C1A1_idx*mc + sliver_A_idx*mr + i << ","<< C2B2_idx*nc + sliver_B_idx*nr + j << " = bufer_C[" << i*nr + j << "]" << std::endl;//DEBUG
                         }
                       }
                     }
-                    
+                    free_aligned_buffer(buffer_C);
                   } // for slivers A
                 } // for slivers B
               } // for block C1A1_idx
             } // for block A2B1_idx
+            free_aligned_buffer(buffer_A);
+            free_aligned_buffer(buffer_B);
           } // for block C2B2_idx
 
         } // prod()
