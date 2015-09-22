@@ -384,7 +384,7 @@ void generate_ell_matrix_pipelined_cg_prod(StringT & source, std::string const &
   source.append("    uint offset = row; \n");
   source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
   source.append("      "); source.append(numeric_string); source.append(" val = elements[offset]; \n");
-  source.append("      sum += val ? p[coords[offset]] * val : ("); source.append(numeric_string); source.append(")0; \n");
+  source.append("      sum += (val != 0) ? p[coords[offset]] * val : ("); source.append(numeric_string); source.append(")0; \n");
   source.append("    } \n");
 
   source.append("    Ap[row] = sum; \n");
@@ -446,7 +446,7 @@ void generate_sliced_ell_matrix_pipelined_cg_prod(StringT & source, std::string 
   source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
   source.append("      uint index = offset + item_id * block_size + id_in_block; \n");
   source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
-  source.append("      sum += val ? (p[column_indices[index]] * val) : 0; \n");
+  source.append("      sum += (val != 0) ? (p[column_indices[index]] * val) : 0; \n");
   source.append("    } \n");
 
   source.append("    if (row < size) {\n");
@@ -507,7 +507,7 @@ void generate_hyb_matrix_pipelined_cg_prod(StringT & source, std::string const &
   source.append("    uint offset = row; \n");
   source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
   source.append("      "); source.append(numeric_string); source.append(" val = ell_elements[offset]; \n");
-  source.append("      sum += val ? (p[ell_coords[offset]] * val) : 0; \n");
+  source.append("      sum += (val != 0) ? (p[ell_coords[offset]] * val) : 0; \n");
   source.append("    } \n");
 
   source.append("    uint col_begin = csr_rows[row]; \n");
@@ -987,7 +987,7 @@ void generate_ell_matrix_pipelined_bicgstab_prod(StringT & source, std::string c
   source.append("    uint offset = row; \n");
   source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
   source.append("      "); source.append(numeric_string); source.append(" val = elements[offset]; \n");
-  source.append("      sum += val ? p[coords[offset]] * val : ("); source.append(numeric_string); source.append(")0; \n");
+  source.append("      sum += (val != 0) ? p[coords[offset]] * val : ("); source.append(numeric_string); source.append(")0; \n");
   source.append("    } \n");
 
   source.append("    Ap[row] = sum; \n");
@@ -1057,7 +1057,7 @@ void generate_sliced_ell_matrix_pipelined_bicgstab_prod(StringT & source, std::s
   source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
   source.append("      uint index = offset + item_id * block_size + id_in_block; \n");
   source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
-  source.append("      sum += val ? (p[column_indices[index]] * val) : 0; \n");
+  source.append("      sum += (val != 0) ? (p[column_indices[index]] * val) : 0; \n");
   source.append("    } \n");
 
   source.append("    if (row < size) {\n");
@@ -1126,7 +1126,7 @@ void generate_hyb_matrix_pipelined_bicgstab_prod(StringT & source, std::string c
   source.append("    uint offset = row; \n");
   source.append("    for (uint item_id = 0; item_id < items_per_row; item_id++, offset += internal_row_num) { \n");
   source.append("      "); source.append(numeric_string); source.append(" val = ell_elements[offset]; \n");
-  source.append("      sum += val ? (p[ell_coords[offset]] * val) : 0; \n");
+  source.append("      sum += (val != 0) ? (p[ell_coords[offset]] * val) : 0; \n");
   source.append("    } \n");
 
   source.append("    uint col_begin = csr_rows[row]; \n");

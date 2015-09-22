@@ -67,7 +67,7 @@ void generate_sliced_ell_vec_mul(StringT & source, std::string const & numeric_s
   source.append("    for (uint item_id = 0; item_id < num_columns; item_id++) { \n");
   source.append("      uint index = offset + item_id * block_size + id_in_block; \n");
   source.append("      "); source.append(numeric_string); source.append(" val = elements[index]; \n");
-  source.append("      sum += val ? (x[column_indices[index] * layout_x.y + layout_x.x] * val) : 0; \n");
+  source.append("      sum += (val != 0) ? (x[column_indices[index] * layout_x.y + layout_x.x] * val) : 0; \n");
   source.append("    } \n");
 
   source.append("    if (row < layout_result.z) \n");
