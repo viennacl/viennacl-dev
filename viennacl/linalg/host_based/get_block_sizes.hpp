@@ -19,21 +19,35 @@
  * quotation marks needed by the inline-assembler */
 #define AMD_GET_L1      "0x80000005"
 #define AMD_GET_L2      "0x80000006"
-#define AMD_GET_L3      "0x80000007"
+#define AMD_GET_L3      "0x80000006"
 #define INTEL_GET_CACHE "0x00000002"
 #define INTEL_GET_L1    "0x00000000"
 #define INTEL_GET_L2    "0x00000001"
 #define INTEL_GET_L3    "0x00000002"
 
 /* auxilary for cache-info arrays */
-#define AMD_CACHE_INFO_SIZE (4)
-#define AMD_CACHE_SIZE_IDX  (3)
+#define AMD_CACHE_INFO_SIZE     (3)
+#define AMD_L1_CACHE_SIZE_IDX   (0)
+#define AMD_L2_CACHE_SIZE_IDX   (1)
+#define AMD_L3_CACHE_SIZE_IDX   (2)
+#define INTEL_CACHE_INFO_SIZE   (3)
+#define INTEL_L1_CACHE_SIZE_IDX (0)
+#define INTEL_L2_CACHE_SIZE_IDX (1)
+#define INTEL_L3_CACHE_SIZE_IDX (2)
 
 /* mask accodording bits obtained by calling 'cpuid' */
+#define AMD_L1_CACHE_SIZE_MASK (0xFF000000)
+#define AMD_L2_CACHE_SIZE_MASK (0xFFFF0000)
+#define AMD_L3_CACHE_SIZE_MASK (0xFFFC0000)
 #define INTEL_CACHE_WAYS       (0xFFC0000000000000)
 #define INTEL_CACHE_PARTITIONS (0x003FF00000000000)
 #define INTEL_CACHE_LINE_SIZE  (0x00000FFF00000000)
 #define INTEL_CACHE_SETS       (0x00000000FFFFFFFF)
+
+  /* calculates cache size, see AMDs "CPUID Specification" */
+#define AMD_CALC_L1_CACHE_SIZE(a) ( (a[AMD_L1_CACHE_SIZE_IDX] & AMD_L1_CACHE_SIZE_MASK) >> 24 ) * KILO
+#define AMD_CALC_L2_CACHE_SIZE(a) ( (a[AMD_L2_CACHE_SIZE_IDX] & AMD_L2_CACHE_SIZE_MASK) >> 16 ) * KILO
+#define AMD_CALC_L3_CACHE_SIZE(a) ( (a[AMD_L3_CACHE_SIZE_IDX] & AMD_L3_CACHE_SIZE_MASK) >> 18 ) * 512 * KILO
 
 /* calculates cache size, Formula found in intels "Intel 64 and IA-32 Architectures Software Developer Manual", p. 198 (pdf:264) */
 #define INTEL_CALC_CACHE_SIZE(a) ((a & INTEL_CACHE_WAYS) +1) * ((a & INTEL_CACHE_PARTITIONS) +1) * ((a & INTEL_CACHE_LINE_SIZE)+1) * ((a & INTEL_CACHE_SETS)+1)
@@ -55,11 +69,11 @@ namespace viennacl
         "movl  %%ecx, 8(%%rdi)   \n\t"
         :              \
         :              \
-        : "%eax"
+        : "%eax", "%edx", "%ecx"
         );
   }
   
-  void get_cache_amd(uint8_t *l1, uint8_t *l2, uint8_t *l3)
+  void get_cache_amd(uint32_t *l1l2l3)
   {
     /* l1 = %rdi, l2 = %rsi, l3 = %rdx, %rcx*/
     __asm__
@@ -71,22 +85,22 @@ namespace viennacl
         /* get L2-cache info */
         "movl  $" AMD_GET_L2 ", %%eax \n\t"
         "cpuid                    \n\t"
-        "movl  %%ecx, (%%rsi)     \n\t"
+        "movl  %%ecx, 4(%%rdi)     \n\t"
         /* get L3-cache info */
         "movl  $" AMD_GET_L3 ", %%eax \n\t"
         "cpuid                    \n\t"
-        "movl  %%ecx, (%%rdx)     \n\t"
+        "movl  %%edx, 8(%%rdi)     \n\t"
         
-        :              \
-        :              \
-        : "%eax"
+        :
+        :
+        : "%eax", "%ebx", "%ecx", "%edx"
         );
     //    *l1 = 16 * 1024; //16KB
     //*l2 =  1 * 1024; // 1KB
     //*l3 =  0 * 1024; // 0KB
   }
   
-  void get_cache_intel(uint64_t *l1, uint64_t *l2, uint64_t *l3)
+  void get_cache_intel(uint64_t *l1l2l3)
   {
     /* l1 = %rdi, l2 = %rsi, l3 = %rdx */
     __asm__
@@ -101,14 +115,14 @@ namespace viennacl
         "movl  $" INTEL_GET_CACHE ", %%eax \n\t"
         "movl  $" INTEL_GET_L2 "   , %%ecx \n\t"
         "cpuid                         \n\t"
-        "movl  %%ebx,  (%%rsi)          \n\t"
-        "movl  %%ecx, 4(%%rsi)          \n\t"
+        "movl  %%ebx,  8(%%rdi)          \n\t"
+        "movl  %%ecx, 12(%%rdi)          \n\t"
         /* get L3-cache info */
         "movl  $" INTEL_GET_CACHE ", %%eax \n\t"
         "movl  $" INTEL_GET_L3 "   , %%ecx \n\t"
         "cpuid                         \n\t"
-        "movl  %%ebx,  (%%rdx)          \n\t"
-        "movl  %%ecx, 4(%%rdx)          \n\t"
+        "movl  %%ebx, 16(%%rdi)          \n\t"
+        "movl  %%ecx, 20(%%rdi)          \n\t"
         :
         :
         :
@@ -127,29 +141,23 @@ namespace viennacl
     {
       std::cout << "INTEL!" << std::endl;//DEBUG
       /* store cache information (size, associativity, etc.)*/
-      uint64_t l1_info;
-      uint64_t l2_info;
-      uint64_t l3_info;
+      uint64_t l1l2l3[INTEL_CACHE_INFO_SIZE];
 
-      get_cache_intel(&l1_info, &l2_info, &l3_info);
-      l1_size = INTEL_CALC_CACHE_SIZE(l1_info);
-      l2_size = INTEL_CALC_CACHE_SIZE(l2_info);
-      l3_size = INTEL_CALC_CACHE_SIZE(l3_info);
+      get_cache_intel(l1l2l3);
+      l1_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L1_CACHE_SIZE_IDX]);
+      l2_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L2_CACHE_SIZE_IDX]);
+      l3_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L3_CACHE_SIZE_IDX]);
     }      
     else if ( strncmp(vendor, AMD, VENDOR_STR_LEN) == 0 )
     {
-      std::cout << "AMD!" << std::endl;//DEBUG
       /* store cache information (size, associativity, etc.)*/
-      uint8_t l1_info[AMD_CACHE_INFO_SIZE];
-      uint8_t l2_info[AMD_CACHE_INFO_SIZE];
-      uint8_t l3_info[AMD_CACHE_INFO_SIZE];
+      uint32_t l1l2l3[AMD_CACHE_INFO_SIZE];
       
       /* gets cache info and sets sizes in Bytes */
-      get_cache_amd(l1_info,l2_info,l3_info);
-      std::cout << "hi" << std::endl;//DEBUG
-      l1_size = l1_info[AMD_CACHE_SIZE_IDX] * KILO;
-      l2_size = l2_info[AMD_CACHE_SIZE_IDX] * KILO;
-      l3_size = l3_info[AMD_CACHE_SIZE_IDX] * KILO;
+      get_cache_amd(l1l2l3);
+      l1_size = AMD_CALC_L1_CACHE_SIZE(l1l2l3);
+      l2_size = AMD_CALC_L2_CACHE_SIZE(l1l2l3);
+      l3_size = AMD_CALC_L3_CACHE_SIZE(l1l2l3);
       std::cout << "AMD! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
 
     }
@@ -157,9 +165,9 @@ namespace viennacl
     {
       /* CPU-vendor unknown, not supported or cpuid could not be read out propperly.
          Assume some (small) cache sizes. */
-      l1_size =  8 * KILO;        // 8KB
-      l2_size = 16 * KILO;        //16KB
-      l3_size =  0 * KILO;        // 0KB
+      l1_size =  4 * KILO;
+      l2_size =  8 * KILO;
+      l3_size =  0 * KILO;
     }
   }
 
@@ -202,6 +210,7 @@ namespace viennacl
     {
       set_cache_sizes(l1, l2, l3);
       cache_sizes_unknown = false;
+      std::cout << "cache sizes set" << std::endl;//DEBUG
     }
     
     /* Calculate blocksizes for L1 (mc x nr) and L2 (mc * kc) and L3 cache. 
