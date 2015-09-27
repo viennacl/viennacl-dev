@@ -39,10 +39,14 @@
 #include "viennacl/linalg/prod.hpp"
 
 #include "viennacl/linalg/host_based/packing.hpp"
-#include "viennacl/linalg/host_based/gemm_standard_micro_kernel.hpp"
-#include "viennacl/linalg/host_based/gemm_avx_micro_kernel.hpp"
 #include "viennacl/linalg/host_based/aligned_buffer.hpp"
 #include "viennacl/linalg/host_based/get_block_sizes.hpp"
+
+#ifdef VIENNACL_WITH_AVX
+#include "viennacl/linalg/host_based/gemm_avx_micro_kernel.hpp"
+#else
+#include "viennacl/linalg/host_based/gemm_standard_micro_kernel.hpp"
+#endif
 
 namespace viennacl
 {

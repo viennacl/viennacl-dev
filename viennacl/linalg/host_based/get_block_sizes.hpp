@@ -139,7 +139,6 @@ namespace viennacl
 
     if ( strncmp(vendor, INTEL, VENDOR_STR_LEN) == 0 )
     {
-      std::cout << "INTEL!" << std::endl;//DEBUG
       /* store cache information (size, associativity, etc.)*/
       uint64_t l1l2l3[INTEL_CACHE_INFO_SIZE];
 
@@ -147,6 +146,8 @@ namespace viennacl
       l1_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L1_CACHE_SIZE_IDX]);
       l2_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L2_CACHE_SIZE_IDX]);
       l3_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L3_CACHE_SIZE_IDX]);
+
+      std::cout << "INTEL! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
     }      
     else if ( strncmp(vendor, AMD, VENDOR_STR_LEN) == 0 )
     {
@@ -158,7 +159,7 @@ namespace viennacl
       l1_size = AMD_CALC_L1_CACHE_SIZE(l1l2l3);
       l2_size = AMD_CALC_L2_CACHE_SIZE(l1l2l3);
       l3_size = AMD_CALC_L3_CACHE_SIZE(l1l2l3);
-      std::cout << "AMD! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
+      //std::cout << "AMD! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
 
     }
     else
