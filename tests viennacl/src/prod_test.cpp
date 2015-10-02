@@ -19,10 +19,10 @@
  *   \test Testing the BLAS level 3 routines in the ViennaCL BLAS-like shared library
 n **/
 
-#include "../viennacl/matrix.hpp"
-#include "../viennacl/matrix_proxy.hpp"
+#include "../../viennacl/matrix.hpp"
+#include "../../viennacl/matrix_proxy.hpp"
 
-#include "../viennacl/linalg/prod.hpp"
+#include "../../viennacl/linalg/prod.hpp"
 
 // include necessary system headers
 #include <iostream>

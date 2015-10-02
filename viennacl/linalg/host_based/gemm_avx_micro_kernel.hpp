@@ -138,121 +138,6 @@ namespace viennacl
 
   template<>
   inline void avx_micro_kernel<double>(double const *buffer_A, double const *buffer_B, double *buffer_C,
-                                       vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)
-  {
-    assert( (mr == MR_D) && (nr == NR_D) && bool("mr and nr obtained by 'get_block_sizes()' in 'matrix_operations.hpp' and given to 'avx_micro_kernel()' do not match with MR_D/NR_D defined in 'gemm_avx_micro_kernel.hpp' ") );
-
-    __m256d ymm0 , ymm1 , ymm2 , ymm3 ;
-    __m256d ymm4 , ymm5 , ymm6 , ymm7 ;
-    __m256d ymm8 , ymm9 , ymm10;//, ymm11;
-    __m256d ymm12, ymm13, ymm14, ymm15;
-
-    for (vcl_size_t l=0; l<num_micro_slivers; ++l)
-    {
-      //load operands for C0 and C1
-      ymm0 = _mm256_load_pd(buffer_A+l*MR_D);
-      ymm1 = _mm256_load_pd(buffer_B+l*NR_D);
-      ymm6 = _mm256_load_pd(buffer_B+l*NR_D+4);
-      
-      /* calculate C0 */
-      ymm2  = _mm256_mul_pd(ymm0, ymm1);
-      ymm7  = _mm256_mul_pd(ymm0, ymm6);
-      ymm0  = _mm256_permute_pd(ymm0, SWAP_64_BIT_D);
-
-      ymm3  = _mm256_mul_pd(ymm0, ymm1);
-      ymm8  = _mm256_mul_pd(ymm0, ymm6);
-      ymm0  = _mm256_permute2f128_pd(ymm0, ymm0, SWAP_128_BIT);
-
-      ymm4  = _mm256_mul_pd(ymm0, ymm1);
-      ymm9  = _mm256_mul_pd(ymm0, ymm6);
-      ymm0  = _mm256_permute_pd(ymm0, SWAP_64_BIT_D);
-
-      ymm5  = _mm256_mul_pd(ymm0, ymm1);
-      ymm10 = _mm256_mul_pd(ymm0, ymm6);      
-
-      /* store C0 */
-      /* C0: store row 0 and 2 */
-      ymm12 = _mm256_shuffle_pd(ymm2 , ymm3 , SHUFFLE_D);
-      ymm13 = _mm256_shuffle_pd(ymm5 , ymm4 , SHUFFLE_D);
-      ymm14 = _mm256_permute2f128_pd(ymm12, ymm13, PERMUTE_D);
-
-      ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
-      ymm14 = _mm256_add_pd(ymm14, ymm15);
-
-      _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm14);
-      ymm14 = _mm256_permute2f128_pd(ymm13, ymm12, PERMUTE_D);
-
-      ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
-      ymm14 = _mm256_add_pd(ymm14, ymm15);
-
-      _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm14);
-      
-    
-      /* C0: store row 1 and 3 */
-      ymm12 = _mm256_shuffle_pd(ymm3 , ymm2 , SHUFFLE_D);
-      ymm13 = _mm256_shuffle_pd(ymm4 , ymm5 , SHUFFLE_D);
-      ymm14 = _mm256_permute2f128_pd(ymm12, ymm13, PERMUTE_D);
-      
-      ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
-      ymm14 = _mm256_add_pd(ymm14, ymm15);
-      _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm14);
-      
-      ymm14 = _mm256_permute2f128_pd(ymm13, ymm12, PERMUTE_D);
-      
-      ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
-      ymm14 = _mm256_add_pd(ymm14, ymm15);
-      _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm14);
-
-      /* store C1 */
-      /* C1: store row 0 and 2 */
-      ymm12 = _mm256_shuffle_pd(ymm7  , ymm8 , SHUFFLE_D);
-      ymm13 = _mm256_shuffle_pd(ymm10 , ymm9 , SHUFFLE_D);
-      ymm14 = _mm256_permute2f128_pd(ymm12, ymm13, PERMUTE_D);
-
-      ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
-      ymm14 = _mm256_add_pd(ymm14, ymm15);
-
-      _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm14);
-      ymm14 = _mm256_permute2f128_pd(ymm13, ymm12, PERMUTE_D);
-
-      ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
-      ymm14 = _mm256_add_pd(ymm14, ymm15);
-
-      _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm14);
-    
-      /* C1: store row 1 and 3 */
-      ymm12 = _mm256_shuffle_pd(ymm8, ymm7 , SHUFFLE_D);
-      ymm13 = _mm256_shuffle_pd(ymm9, ymm10, SHUFFLE_D);
-      ymm14 = _mm256_permute2f128_pd(ymm12, ymm13, PERMUTE_D);
-      
-      ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
-      ymm14 = _mm256_add_pd(ymm14, ymm15);
-      _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm14);
-      
-      ymm14 = _mm256_permute2f128_pd(ymm13, ymm12, PERMUTE_D);
-      
-      ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
-      ymm14 = _mm256_add_pd(ymm14, ymm15);
-      _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm14);
-    }//for
-  }//avx_micro_kernel<double>(...)
-
-  template<typename NumericT>
-  inline void avx_micro_kernel2(NumericT const *buffer_A, NumericT const *buffer_B, NumericT *buffer_C,
-                                        vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)
-  {
-    assert(false && bool("called with unsupported type!"));
-  }
-
-  template<>
-  inline void avx_micro_kernel2<float>(float const *buffer_A, float const *buffer_B, float *buffer_C,
-                                        vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)
-  {
-    avx_micro_kernel(buffer_A, buffer_B, buffer_C, num_micro_slivers, mr, nr);
-  }
-  
-  template<>
-  inline void avx_micro_kernel2<double>(double const *buffer_A, double const *buffer_B, double *buffer_C,
                                         vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)
   {
     assert( (mr == MR_D) && (nr == NR_D) && bool("mr and nr obtained by 'get_block_sizes()' in 'matrix_operations.hpp' and given to 'avx_micro_kernel()' do not match with MR_D/NR_D defined in 'gemm_avx_micro_kernel.hpp' ") );
@@ -317,7 +202,5 @@ namespace viennacl
       _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
     }//for
   }//avx_micro_kernel2<double>
-  
-
 }//viennacl
 #endif

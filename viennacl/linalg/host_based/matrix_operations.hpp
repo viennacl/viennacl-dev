@@ -1136,13 +1136,7 @@ namespace viennacl
 
                     /* the micro kernels write to buffer_C */
 #ifdef VIENNACL_WITH_AVX
-		  
-#  ifdef AVX_KERNEL2
-                    avx_micro_kernel2<NumericT>(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
-#  else
                     avx_micro_kernel<NumericT>(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
-#  endif
-                    
 #else
                     standard_micro_kernel(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
 #endif
