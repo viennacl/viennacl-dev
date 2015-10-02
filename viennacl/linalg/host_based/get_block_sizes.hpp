@@ -44,7 +44,7 @@
 #define INTEL_CACHE_LINE_SIZE  (0x00000FFF00000000)
 #define INTEL_CACHE_SETS       (0x00000000FFFFFFFF)
 
-  /* calculates cache size, see AMDs "CPUID Specification" */
+/* calculates cache size, see AMDs "CPUID Specification" */
 #define AMD_CALC_L1_CACHE_SIZE(a) ( (a[AMD_L1_CACHE_SIZE_IDX] & AMD_L1_CACHE_SIZE_MASK) >> 24 ) * KILO
 #define AMD_CALC_L2_CACHE_SIZE(a) ( (a[AMD_L2_CACHE_SIZE_IDX] & AMD_L2_CACHE_SIZE_MASK) >> 16 ) * KILO
 #define AMD_CALC_L3_CACHE_SIZE(a) ( (a[AMD_L3_CACHE_SIZE_IDX] & AMD_L3_CACHE_SIZE_MASK) >> 18 ) * 512 * KILO
@@ -139,9 +139,9 @@ namespace viennacl
 
     if ( strncmp(vendor, INTEL, VENDOR_STR_LEN) == 0 )
     {
-      std::cout << "INTEL!" << std::endl;//DEBUG
+      //std::cout << "INTEL!" << std::endl;//DEBUG
       /* store cache information (size, associativity, etc.)*/
-      uint64_t l1l2l3[INTEL_CACHE_INFO_SIZE];
+      uint64_t l1l2l3[INTEL_CACHE_INFO_SIZE] = {0};
 
       get_cache_intel(l1l2l3);
       l1_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L1_CACHE_SIZE_IDX]);
@@ -151,14 +151,14 @@ namespace viennacl
     else if ( strncmp(vendor, AMD, VENDOR_STR_LEN) == 0 )
     {
       /* store cache information (size, associativity, etc.)*/
-      uint32_t l1l2l3[AMD_CACHE_INFO_SIZE];
+      uint32_t l1l2l3[AMD_CACHE_INFO_SIZE] = {0};
       
       /* gets cache info and sets sizes in Bytes */
       get_cache_amd(l1l2l3);
       l1_size = AMD_CALC_L1_CACHE_SIZE(l1l2l3);
       l2_size = AMD_CALC_L2_CACHE_SIZE(l1l2l3);
       l3_size = AMD_CALC_L3_CACHE_SIZE(l1l2l3);
-      std::cout << "AMD! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
+      //std::cout << "AMD! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
 
     }
     else
@@ -183,17 +183,6 @@ namespace viennacl
      * but not for floats. Hence, the additional term. */
     nr = AVX_REG_SIZE/sizeof(NumericT) + (sizeof(NumericT)/sizeof(double)) * AVX_REG_SIZE/sizeof(NumericT);
 
-    // not implemented yet
-    /*#elif VIENNACL_WITH_AVX_512
-
-      mr =   AVX_512_REG_SIZE/sizeof(NumericT);
-      nr = 2*AVX_512_REG_SIZE/sizeof(NumericT);
-
-      #elif VIENNACL_WITH_SSE
-
-      mr =   SSE_REG_SIZE/sizeof(NumericT);
-      nr = 2*SSE_REG_SIZE/sizeof(NumericT);*/
-    
 #else
     /* standard case */
     mr = 1;
@@ -210,7 +199,7 @@ namespace viennacl
     {
       set_cache_sizes(l1, l2, l3);
       cache_sizes_unknown = false;
-      std::cout << "cache sizes set" << std::endl;//DEBUG
+      //std::cout << "cache sizes set" << std::endl;//DEBUG
     }
     
     /* Calculate blocksizes for L1 (mc x nr) and L2 (mc * kc) and L3 cache. 
