@@ -67,8 +67,8 @@ namespace viennacl
         "movl  %%ebx, (%%rdi)    \n\t"
         "movl  %%edx, 4(%%rdi)   \n\t"
         "movl  %%ecx, 8(%%rdi)   \n\t"
-        :              \
-        :              \
+        :              
+        :              
         : "%eax", "%edx", "%ecx"
         );
   }
@@ -178,11 +178,11 @@ namespace viennacl
 #ifdef VIENNACL_WITH_AVX
 
     mr = AVX_REG_SIZE/sizeof(NumericT);
-    
-    /* The current microkernel can process a register-block-size 'nr', of 8 for doubles,
-     * but not for floats. Hence, the additional term. */
-    nr = AVX_REG_SIZE/sizeof(NumericT) + (sizeof(NumericT)/sizeof(double)) * AVX_REG_SIZE/sizeof(NumericT);
+    nr = 2*mr;
+#elif VIENNACL_WITH_SSE
 
+    mr = 6 + 2*(sizeof(float)/sizeof(NumericT));
+    nr = 4 + 4*(sizeof(float)/sizeof(NumericT));
 #else
     /* standard case */
     mr = 1;

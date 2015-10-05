@@ -18,10 +18,13 @@ test: src/test.cpp
 	$(CC) src/test.cpp -o build/test $(CFLAGS) 
 
 avx_prod_test: $(DEP_PRODTEST)
-	$(CC) src/prod_test.cpp -o build/avx_prod_test $(CFLAGS) $(LIBS) $(AVX_FLAGS)
+	$(CC) src/prod_test.cpp -o build/avx_prod_test $(CFLAGS) $(LIBS) $(AVX_FLAGS) -g
 
 avx_prod_test2: $(DEP_PRODTEST)
-	$(CC) src/prod_test.cpp -o build/avx_prod_test2 $(CFLAGS) $(LIBS) $(AVX_FLAGS) -DAVX_KERNEL2
+	$(CC) src/prod_test.cpp -o build/avx_prod_test2 $(CFLAGS) $(LIBS) $(AVX_FLAGS) -DAVX_KERNEL2 -g
+
+sse_prod_test: $(DEP_PRODTEST)
+	$(CC) src/prod_test.cpp -o build/sse_prod_test $(CFLAGS) $(LIBS) -DVIENNACL_WITH_SSE -msse3 -g
 
 prod_test: $(DEP_PRODTEST)
 	$(CC) src/prod_test.cpp -o build/prod_test $(CFLAGS) $(LIBS)
@@ -37,6 +40,9 @@ viennacl_avx: src/benchmark_viennacl.cpp
 
 viennacl_avx2: src/benchmark_viennacl.cpp
 	$(CC) src/benchmark_viennacl.cpp -o build/bench_viennacl_avx2 $(CFLAGS) $(LIBS) $(AVX_FLAGS) -DAVX_KERNEL2
+
+viennacl_sse: src/benchmark_viennacl.cpp
+	$(CC) src/benchmark_viennacl.cpp -o build/bench_viennacl_sse $(CFLAGS) $(LIBS) -DVIENNACL_WITH_SSE -msse3
 
 eigen: src/benchmark_eigen.cpp
 	$(CC) src/benchmark_eigen.cpp -o build/bench_1_eigen -Wall -pedantic -O3 -fopenmp -std=c++11

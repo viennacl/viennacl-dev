@@ -39,10 +39,17 @@
 #include "viennacl/linalg/prod.hpp"
 
 #include "viennacl/linalg/host_based/packing.hpp"
-#include "viennacl/linalg/host_based/gemm_standard_micro_kernel.hpp"
-#include "viennacl/linalg/host_based/gemm_avx_micro_kernel.hpp"
 #include "viennacl/linalg/host_based/aligned_buffer.hpp"
 #include "viennacl/linalg/host_based/get_block_sizes.hpp"
+
+
+#ifdef VIENNACL_WITH_AVX
+# include "viennacl/linalg/host_based/gemm_avx_micro_kernel.hpp"
+#elif VIENNACL_WITH_SSE
+# include "viennacl/linalg/host_based/gemm_sse_micro_kernel.hpp"
+#else
+# include "viennacl/linalg/host_based/gemm_standard_micro_kernel.hpp"
+#endif
 
 namespace viennacl
 {
@@ -1137,6 +1144,8 @@ namespace viennacl
                     /* the micro kernels write to buffer_C */
 #ifdef VIENNACL_WITH_AVX
                     avx_micro_kernel<NumericT>(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
+#elif VIENNACL_WITH_SSE
+                    sse_micro_kernel<NumericT>(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
 #else
                     standard_micro_kernel(ptrA, ptrB, ptrC, num_micros_slivers, mr, nr);
 #endif
