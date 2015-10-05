@@ -177,8 +177,8 @@ namespace viennacl
     /* get register-block sizes in bytes and according to NumericT */
 #ifdef VIENNACL_WITH_AVX
 
-    mr = AVX_REG_SIZE/sizeof(NumericT);
-    nr = 2*mr;
+    mr = 6 + 2*(sizeof(float)/sizeof(NumericT));
+    nr = 8 + 8*(sizeof(float)/sizeof(NumericT));
 #elif VIENNACL_WITH_SSE
 
     mr = 6 + 2*(sizeof(float)/sizeof(NumericT));
@@ -187,7 +187,6 @@ namespace viennacl
     /* standard case */
     mr = 1;
     nr = 1;
-    
 #endif
 
     static int l1, l2, l3;
