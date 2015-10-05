@@ -42,7 +42,6 @@
 #include "viennacl/linalg/host_based/aligned_buffer.hpp"
 #include "viennacl/linalg/host_based/get_block_sizes.hpp"
 
-
 #ifdef VIENNACL_WITH_AVX
 # include "viennacl/linalg/host_based/gemm_avx_micro_kernel.hpp"
 #elif VIENNACL_WITH_SSE
@@ -300,7 +299,7 @@ namespace viennacl
 #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (vcl_size_t col = 0; col < A_size2; ++col)
+              for (vNNcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)
