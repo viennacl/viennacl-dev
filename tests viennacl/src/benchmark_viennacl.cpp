@@ -14,18 +14,13 @@
 
    License:         MIT (X11), see file LICENSE in the base directory
    ============================================================================= */
-//g++ ../benchmark_1_viennacl.cpp -o bench_1_viennacl -Wall -pedantic -O3 -fopenmp -std=c++11 -DVIENNACL_WITH_OPENMP
-
-#include "viennacl/matrix.hpp"
-#include "viennacl/matrix_proxy.hpp"
-#include "viennacl/linalg/prod.hpp"
-#include "viennacl/tools/timer.hpp"
+#include "../../viennacl/matrix.hpp"
+#include "../../viennacl/matrix_proxy.hpp"
+#include "../../viennacl/linalg/prod.hpp"
+#include "../../viennacl/tools/timer.hpp"
 
 #include <iomanip>
 #include <stdlib.h>
-
-/* enable openMP */
-//#define VIENNACL_WITH_OPENMP //seems to work only with compiler flag!
 
 template<class T, class F>
 void init_random(viennacl::matrix<T, F> & M)

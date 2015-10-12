@@ -299,7 +299,7 @@ namespace viennacl
 #pragma omp parallel for
 #endif
             for (long row = 0; row < static_cast<long>(A_size1); ++row)
-              for (vNNcl_size_t col = 0; col < A_size2; ++col)
+              for (vcl_size_t col = 0; col < A_size2; ++col)
                 wrapper_A(row, col) = wrapper_B(row, col) / data_alpha + wrapper_C(row, col) / data_beta;
           }
           else if (reciprocal_alpha && !reciprocal_beta)

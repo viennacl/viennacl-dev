@@ -19,15 +19,15 @@
 /* compile with g++ ../benchmark_1_openblas.cpp -o bench_1_openblas -Wall -pedantic -O3 -fopenmp -std=c++11 -I /usr/local/openblas/include/ -L/usr/local/openblas/lib -lopenblas -lpthread
  */
 
-#include "viennacl/matrix.hpp"
-#include "viennacl/matrix_proxy.hpp"
-#include "viennacl/vector.hpp"
-#include "viennacl/vector_proxy.hpp"
+#include "../../viennacl/matrix.hpp"
+#include "../../viennacl/matrix_proxy.hpp"
+#include "../../viennacl/vector.hpp"
+#include "../../viennacl/vector_proxy.hpp"
 
-#include "viennacl/linalg/inner_prod.hpp"
-#include "viennacl/linalg/prod.hpp"
-#include "viennacl/linalg/lu.hpp"
-#include "viennacl/tools/timer.hpp"
+#include "../../viennacl/linalg/inner_prod.hpp"
+#include "../../viennacl/linalg/prod.hpp"
+#include "../../viennacl/linalg/lu.hpp"
+#include "../../viennacl/tools/timer.hpp"
 
 #include <iomanip>
 #include <stdlib.h>

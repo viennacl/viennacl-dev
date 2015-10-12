@@ -274,7 +274,7 @@ namespace viennacl
       ymm15 = _mm256_add_pd(ymm15, ymm14);
       _mm256_store_pd(buffer_C+C1_ROW_D(5), ymm15);
 
-      /* UNROLL 1 *//*
+      /* UNROLL 1 
          ymm0 = _mm256_load_pd(buffer_B+1*NR_D+4*l*NR_D);
          ymm1 = _mm256_load_pd(buffer_B+1*NR_D+4*l*NR_D+4);
 
@@ -294,201 +294,201 @@ namespace viennacl
          ymm9  = _mm256_mul_pd(ymm0, ymm2);
          ymm10 = _mm256_mul_pd(ymm1, ymm2);
     
-         store new entries *//*
-                               ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
-                               ymm15 = _mm256_add_pd(ymm15, ymm3);
-                               _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm15);
+         store new entries
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
+         ymm15 = _mm256_add_pd(ymm15, ymm3);
+         _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm15);
       
-                               ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
-                               ymm15 = _mm256_add_pd(ymm15, ymm4);
-                               _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
+         ymm15 = _mm256_add_pd(ymm15, ymm4);
+         _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm15);
 
-                               ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
-                               ymm15 = _mm256_add_pd(ymm15, ymm5);
-                               _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
+         ymm15 = _mm256_add_pd(ymm15, ymm5);
+         _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm15);
 
-                               ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
-                               ymm15 = _mm256_add_pd(ymm15, ymm6);
-                               _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
+         ymm15 = _mm256_add_pd(ymm15, ymm6);
+         _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm15);
 
-                               ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
-                               ymm15 = _mm256_add_pd(ymm15, ymm7);
-                               _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
+         ymm15 = _mm256_add_pd(ymm15, ymm7);
+         _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm15);
       
-                               ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
-                               ymm15 = _mm256_add_pd(ymm15, ymm8);
-                               _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
+         ymm15 = _mm256_add_pd(ymm15, ymm8);
+         _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm15);
 
-                               ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
-                               ymm15 = _mm256_add_pd(ymm15, ymm9);
-                               _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
+         ymm15 = _mm256_add_pd(ymm15, ymm9);
+         _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm15);
 
-                               ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
-                               ymm15 = _mm256_add_pd(ymm15, ymm10);
-                               _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
+         ymm15 = _mm256_add_pd(ymm15, ymm10);
+         _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
 
-                               UNROLL 2 *//*
-                                            ymm0 = _mm256_load_pd(buffer_B+2*NR_D+4*l*NR_D);
-                                            ymm1 = _mm256_load_pd(buffer_B+2*NR_D+4*l*NR_D+4);
+         UNROLL 2
+         ymm0 = _mm256_load_pd(buffer_B+2*NR_D+4*l*NR_D);
+         ymm1 = _mm256_load_pd(buffer_B+2*NR_D+4*l*NR_D+4);
 
-                                            ymm2 = _mm256_broadcast_sd(buffer_A+2*MR_D+4*l*MR_D);
-                                            ymm3 = _mm256_mul_pd(ymm0, ymm2);
-                                            ymm4 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+2*MR_D+4*l*MR_D);
+         ymm3 = _mm256_mul_pd(ymm0, ymm2);
+         ymm4 = _mm256_mul_pd(ymm1, ymm2);
       
-                                            ymm2 = _mm256_broadcast_sd(buffer_A+2*MR_D+4*l*MR_D+1);
-                                            ymm5 = _mm256_mul_pd(ymm0, ymm2);
-                                            ymm6 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+2*MR_D+4*l*MR_D+1);
+         ymm5 = _mm256_mul_pd(ymm0, ymm2);
+         ymm6 = _mm256_mul_pd(ymm1, ymm2);
 
-                                            ymm2 = _mm256_broadcast_sd(buffer_A+2*MR_D+4*l*MR_D+2);
-                                            ymm7 = _mm256_mul_pd(ymm0, ymm2);
-                                            ymm8 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+2*MR_D+4*l*MR_D+2);
+         ymm7 = _mm256_mul_pd(ymm0, ymm2);
+         ymm8 = _mm256_mul_pd(ymm1, ymm2);
 
-                                            ymm2  = _mm256_broadcast_sd(buffer_A+2*MR_D+4*l*MR_D+3);
-                                            ymm9  = _mm256_mul_pd(ymm0, ymm2);
-                                            ymm10 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2  = _mm256_broadcast_sd(buffer_A+2*MR_D+4*l*MR_D+3);
+         ymm9  = _mm256_mul_pd(ymm0, ymm2);
+         ymm10 = _mm256_mul_pd(ymm1, ymm2);
     
-                                            store new entries *//*
-                                                                  ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
-                                                                  ymm15 = _mm256_add_pd(ymm15, ymm3);
-                                                                  _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm15);
+         store new entries
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
+         ymm15 = _mm256_add_pd(ymm15, ymm3);
+         _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm15);
       
-                                                                  ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
-                                                                  ymm15 = _mm256_add_pd(ymm15, ymm4);
-                                                                  _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
+         ymm15 = _mm256_add_pd(ymm15, ymm4);
+         _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm15);
 
-                                                                  ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
-                                                                  ymm15 = _mm256_add_pd(ymm15, ymm5);
-                                                                  _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
+         ymm15 = _mm256_add_pd(ymm15, ymm5);
+         _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm15);
 
-                                                                  ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
-                                                                  ymm15 = _mm256_add_pd(ymm15, ymm6);
-                                                                  _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
+         ymm15 = _mm256_add_pd(ymm15, ymm6);
+         _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm15);
 
-                                                                  ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
-                                                                  ymm15 = _mm256_add_pd(ymm15, ymm7);
-                                                                  _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
+         ymm15 = _mm256_add_pd(ymm15, ymm7);
+         _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm15);
       
-                                                                  ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
-                                                                  ymm15 = _mm256_add_pd(ymm15, ymm8);
-                                                                  _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
+         ymm15 = _mm256_add_pd(ymm15, ymm8);
+         _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm15);
 
-                                                                  ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
-                                                                  ymm15 = _mm256_add_pd(ymm15, ymm9);
-                                                                  _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
+         ymm15 = _mm256_add_pd(ymm15, ymm9);
+         _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm15);
 
-                                                                  ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
-                                                                  ymm15 = _mm256_add_pd(ymm15, ymm10);
-                                                                  _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
+         ymm15 = _mm256_add_pd(ymm15, ymm10);
+         _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
 
-                                                                  UNROLL 3 (last) *//*
-                                                                                      ymm0 = _mm256_load_pd(buffer_B+3*NR_D+4*l*NR_D);
-                                                                                      ymm1 = _mm256_load_pd(buffer_B+3*NR_D+4*l*NR_D+4);
+         UNROLL 3 (last)
+         ymm0 = _mm256_load_pd(buffer_B+3*NR_D+4*l*NR_D);
+         ymm1 = _mm256_load_pd(buffer_B+3*NR_D+4*l*NR_D+4);
 
-                                                                                      ymm2 = _mm256_broadcast_sd(buffer_A+3*MR_D+4*l*MR_D);
-                                                                                      ymm3 = _mm256_mul_pd(ymm0, ymm2);
-                                                                                      ymm4 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+3*MR_D+4*l*MR_D);
+         ymm3 = _mm256_mul_pd(ymm0, ymm2);
+         ymm4 = _mm256_mul_pd(ymm1, ymm2);
       
-                                                                                      ymm2 = _mm256_broadcast_sd(buffer_A+3*MR_D+4*l*MR_D+1);
-                                                                                      ymm5 = _mm256_mul_pd(ymm0, ymm2);
-                                                                                      ymm6 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+3*MR_D+4*l*MR_D+1);
+         ymm5 = _mm256_mul_pd(ymm0, ymm2);
+         ymm6 = _mm256_mul_pd(ymm1, ymm2);
 
-                                                                                      ymm2 = _mm256_broadcast_sd(buffer_A+3*MR_D+4*l*MR_D+2);
-                                                                                      ymm7 = _mm256_mul_pd(ymm0, ymm2);
-                                                                                      ymm8 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+3*MR_D+4*l*MR_D+2);
+         ymm7 = _mm256_mul_pd(ymm0, ymm2);
+         ymm8 = _mm256_mul_pd(ymm1, ymm2);
 
-                                                                                      ymm2  = _mm256_broadcast_sd(buffer_A+3*MR_D+4*l*MR_D+3);
-                                                                                      ymm9  = _mm256_mul_pd(ymm0, ymm2);
-                                                                                      ymm10 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2  = _mm256_broadcast_sd(buffer_A+3*MR_D+4*l*MR_D+3);
+         ymm9  = _mm256_mul_pd(ymm0, ymm2);
+         ymm10 = _mm256_mul_pd(ymm1, ymm2);
     
-                                                                                      store new entries *//*
-                                                                                                            ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
-                                                                                                            ymm15 = _mm256_add_pd(ymm15, ymm3);
-                                                                                                            _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm15);
+         store new entries
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
+         ymm15 = _mm256_add_pd(ymm15, ymm3);
+         _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm15);
       
-                                                                                                            ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
-                                                                                                            ymm15 = _mm256_add_pd(ymm15, ymm4);
-                                                                                                            _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
+         ymm15 = _mm256_add_pd(ymm15, ymm4);
+         _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm15);
 
-                                                                                                            ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
-                                                                                                            ymm15 = _mm256_add_pd(ymm15, ymm5);
-                                                                                                            _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
+         ymm15 = _mm256_add_pd(ymm15, ymm5);
+         _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm15);
 
-                                                                                                            ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
-                                                                                                            ymm15 = _mm256_add_pd(ymm15, ymm6);
-                                                                                                            _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
+         ymm15 = _mm256_add_pd(ymm15, ymm6);
+         _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm15);
 
-                                                                                                            ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
-                                                                                                            ymm15 = _mm256_add_pd(ymm15, ymm7);
-                                                                                                            _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
+         ymm15 = _mm256_add_pd(ymm15, ymm7);
+         _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm15);
       
-                                                                                                            ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
-                                                                                                            ymm15 = _mm256_add_pd(ymm15, ymm8);
-                                                                                                            _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
+         ymm15 = _mm256_add_pd(ymm15, ymm8);
+         _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm15);
 
-                                                                                                            ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
-                                                                                                            ymm15 = _mm256_add_pd(ymm15, ymm9);
-                                                                                                            _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
+         ymm15 = _mm256_add_pd(ymm15, ymm9);
+         _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm15);
 
-                                                                                                            ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
-                                                                                                            ymm15 = _mm256_add_pd(ymm15, ymm10);
-                                                                                                            _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
-                                                                                                            }//for unrolled 4 times
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
+         ymm15 = _mm256_add_pd(ymm15, ymm10);
+         _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
+         }//for unrolled 4 times
 
-                                                                                                            for (vcl_size_t x=l*4; x<((l*4)+(num_micro_slivers%4)); ++x)
-                                                                                                            {
-                                                                                                            ymm0 = _mm256_load_pd(buffer_B+x*NR_D);
-                                                                                                            ymm1 = _mm256_load_pd(buffer_B+x*NR_D+4);
+         for (vcl_size_t x=l*4; x<((l*4)+(num_micro_slivers%4)); ++x)
+         {
+         ymm0 = _mm256_load_pd(buffer_B+x*NR_D);
+         ymm1 = _mm256_load_pd(buffer_B+x*NR_D+4);
 
-                                                                                                            ymm2 = _mm256_broadcast_sd(buffer_A+x*MR_D);
-                                                                                                            ymm3 = _mm256_mul_pd(ymm0, ymm2);
-                                                                                                            ymm4 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+x*MR_D);
+         ymm3 = _mm256_mul_pd(ymm0, ymm2);
+         ymm4 = _mm256_mul_pd(ymm1, ymm2);
       
-                                                                                                            ymm2 = _mm256_broadcast_sd(buffer_A+x*MR_D+1);
-                                                                                                            ymm5 = _mm256_mul_pd(ymm0, ymm2);
-                                                                                                            ymm6 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+x*MR_D+1);
+         ymm5 = _mm256_mul_pd(ymm0, ymm2);
+         ymm6 = _mm256_mul_pd(ymm1, ymm2);
 
-                                                                                                            ymm2 = _mm256_broadcast_sd(buffer_A+x*MR_D+2);
-                                                                                                            ymm7 = _mm256_mul_pd(ymm0, ymm2);
-                                                                                                            ymm8 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2 = _mm256_broadcast_sd(buffer_A+x*MR_D+2);
+         ymm7 = _mm256_mul_pd(ymm0, ymm2);
+         ymm8 = _mm256_mul_pd(ymm1, ymm2);
 
-                                                                                                            ymm2  = _mm256_broadcast_sd(buffer_A+x*MR_D+3);
-                                                                                                            ymm9  = _mm256_mul_pd(ymm0, ymm2);
-                                                                                                            ymm10 = _mm256_mul_pd(ymm1, ymm2);
+         ymm2  = _mm256_broadcast_sd(buffer_A+x*MR_D+3);
+         ymm9  = _mm256_mul_pd(ymm0, ymm2);
+         ymm10 = _mm256_mul_pd(ymm1, ymm2);
     
-                                                                                                            store new entries *//*
-                                                                                                                                  ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
-                                                                                                                                  ymm15 = _mm256_add_pd(ymm15, ymm3);
-                                                                                                                                  _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm15);
+         store new entries 
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(0));
+         ymm15 = _mm256_add_pd(ymm15, ymm3);
+         _mm256_store_pd(buffer_C+C0_ROW_D(0), ymm15);
       
-                                                                                                                                  ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
-                                                                                                                                  ymm15 = _mm256_add_pd(ymm15, ymm4);
-                                                                                                                                  _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(0));
+         ymm15 = _mm256_add_pd(ymm15, ymm4);
+         _mm256_store_pd(buffer_C+C1_ROW_D(0), ymm15);
 
-                                                                                                                                  ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
-                                                                                                                                  ymm15 = _mm256_add_pd(ymm15, ymm5);
-                                                                                                                                  _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(1));
+         ymm15 = _mm256_add_pd(ymm15, ymm5);
+         _mm256_store_pd(buffer_C+C0_ROW_D(1), ymm15);
 
-                                                                                                                                  ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
-                                                                                                                                  ymm15 = _mm256_add_pd(ymm15, ymm6);
-                                                                                                                                  _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(1));
+         ymm15 = _mm256_add_pd(ymm15, ymm6);
+         _mm256_store_pd(buffer_C+C1_ROW_D(1), ymm15);
 
-                                                                                                                                  ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
-                                                                                                                                  ymm15 = _mm256_add_pd(ymm15, ymm7);
-                                                                                                                                  _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(2));
+         ymm15 = _mm256_add_pd(ymm15, ymm7);
+         _mm256_store_pd(buffer_C+C0_ROW_D(2), ymm15);
       
-                                                                                                                                  ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
-                                                                                                                                  ymm15 = _mm256_add_pd(ymm15, ymm8);
-                                                                                                                                  _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(2));
+         ymm15 = _mm256_add_pd(ymm15, ymm8);
+         _mm256_store_pd(buffer_C+C1_ROW_D(2), ymm15);
 
-                                                                                                                                  ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
-                                                                                                                                  ymm15 = _mm256_add_pd(ymm15, ymm9);
-                                                                                                                                  _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm15);
+         ymm15 = _mm256_load_pd(buffer_C+C0_ROW_D(3));
+         ymm15 = _mm256_add_pd(ymm15, ymm9);
+         _mm256_store_pd(buffer_C+C0_ROW_D(3), ymm15);
 
-                                                                                                                                  ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
-                                                                                                                                  ymm15 = _mm256_add_pd(ymm15, ymm10);
-                                                                                                                                  _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
-                                                                                                                                  }//for residuals*/
-  }//for without unroll
+         ymm15 = _mm256_load_pd(buffer_C+C1_ROW_D(3));
+         ymm15 = _mm256_add_pd(ymm15, ymm10);
+         _mm256_store_pd(buffer_C+C1_ROW_D(3), ymm15);
+         }//for residuals*/
+    }//for without unroll
   }//avx_micro_kernel2<double>
-  }//viennacl
+}//viennacl
 #endif

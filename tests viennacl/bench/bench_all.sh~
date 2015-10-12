@@ -34,7 +34,7 @@ if [[ $1 = $DOUBLE ||  $2 = $DOUBLE ]]; then
     for i in {100..3000..100}
     do
         printf %s "$(echo $i) " >> double_data_all
-        printf %s "$(../build/bench_viennacl_avx $i double)" >> double_data_all
+        printf %s "$(../build/bench_viennacl_avx2 $i double)" >> double_data_all
         printf %s "$(../build/bench_openblas $i double)" >> double_data_all
         printf %s "$(../build/bench_eigen $i double)" >> double_data_all
         printf "\n" >> double_data_all

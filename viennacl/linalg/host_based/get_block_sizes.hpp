@@ -23,27 +23,36 @@
 #define INTEL_GET_CACHE_LEAF2 "0x00000002"
 #define INTEL_GET_CACHE_LEAF4 "0x00000004"
 #define INTEL_GET_L1          "0x00000000"
-#define INTEL_GET_L2          "0x00000001"
-#define INTEL_GET_L3          "0x00000002"
+#define INTEL_GET_L2          "0x00000002"
+#define INTEL_GET_L3          "0x00000004"
 
-/* auxilary for cache-info arrays */
-#define AMD_CACHE_INFO_SIZE     (3)
-#define AMD_L1_CACHE_SIZE_IDX   (0)
-#define AMD_L2_CACHE_SIZE_IDX   (1)
-#define AMD_L3_CACHE_SIZE_IDX   (2)
-#define INTEL_CACHE_INFO_SIZE   (3)
-#define INTEL_L1_CACHE_SIZE_IDX (0)
-#define INTEL_L2_CACHE_SIZE_IDX (1)
-#define INTEL_L3_CACHE_SIZE_IDX (2)
+/* auxilary for cache-info arrays and etc. */
+#define AMD_CACHE_INFO_SIZE      (3)
+#define AMD_L1_CACHE_SIZE_IDX    (0)
+#define AMD_L2_CACHE_SIZE_IDX    (1)
+#define AMD_L3_CACHE_SIZE_IDX    (2)
+#define INTEL_CACHE_INFO_SIZE    (6)
+#define INTEL_L1_CACHE_SIZE_IDX  (0)
+#define INTEL_L2_CACHE_SIZE_IDX  (1)
+#define INTEL_L3_CACHE_SIZE_IDX  (2)
+#define INTEL_CACHE_TYPE_MASK    (0x000F)
+#define INTEL_DATA_CACHE_TYPE    (0x0001)
+#define INTEL_UNIFIED_CACHE_TYPE (0x0003)
+#define INTEL_NO_MORE_CACHE      (0x0000)
 
 /* mask accodording bits obtained by calling 'cpuid' */
 #define AMD_L1_CACHE_SIZE_MASK (0xFF000000)
 #define AMD_L2_CACHE_SIZE_MASK (0xFFFF0000)
 #define AMD_L3_CACHE_SIZE_MASK (0xFFFC0000)
-#define INTEL_CACHE_WAYS       (0xFFC0000000000000)
+/*#define INTEL_CACHE_WAYS       (0xFFC0000000000000)
 #define INTEL_CACHE_PARTITIONS (0x003FF00000000000)
 #define INTEL_CACHE_LINE_SIZE  (0x00000FFF00000000)
-#define INTEL_CACHE_SETS       (0x00000000FFFFFFFF)
+#define INTEL_CACHE_SETS       (0x00000000FFFFFFFF)*/
+
+#define INTEL_CACHE_WAYS       (0xFFC00000)
+#define INTEL_CACHE_PARTITIONS (0x003FF000)
+#define INTEL_CACHE_LINE_SIZE  (0x00000FFF)
+#define INTEL_CACHE_SETS       (0xFFFFFFFF)
 
 /* calculates cache size, see AMDs "CPUID Specification" */
 #define AMD_CALC_L1_CACHE_SIZE(a) ( (a[AMD_L1_CACHE_SIZE_IDX] & AMD_L1_CACHE_SIZE_MASK) >> 24 ) * KILO
@@ -51,15 +60,17 @@
 #define AMD_CALC_L3_CACHE_SIZE(a) ( (a[AMD_L3_CACHE_SIZE_IDX] & AMD_L3_CACHE_SIZE_MASK) >> 18 ) * 512 * KILO
 
 /* calculates cache size, Formula found in intels "Intel 64 and IA-32 Architectures Software Developer Manual", p. 198 (pdf:264) */
-#define INTEL_CALC_CACHE_SIZE(a) \
-  ( ((a & INTEL_CACHE_WAYS)      >>(22+32)) +1 ) *\
-  ( ((a & INTEL_CACHE_PARTITIONS)>>(12+32)) +1 ) *\
-  ( ((a & INTEL_CACHE_LINE_SIZE) >>( 0+32)) +1 ) *\
-  (  (a & INTEL_CACHE_SETS)+1)
+#define INTEL_CALC_CACHE_SIZE(a,b)                    \
+  ( ((a & INTEL_CACHE_WAYS)      >>(22)) +1 ) *      \
+  ( ((a & INTEL_CACHE_PARTITIONS)>>(12)) +1 ) *      \
+  ( ((a & INTEL_CACHE_LINE_SIZE) >>( 0)) +1 ) *      \
+  (  (b & INTEL_CACHE_SETS)              +1 )
 
 /* misc */
-#define KILO (1024)
-#define MEGA (1024*1024)
+#define KILO  (1024)
+#define MEGA  (1024*1024)
+#define FALSE (0x0000)
+#define TRUE  (0x0001)
 
 namespace viennacl
 {
@@ -69,11 +80,11 @@ namespace viennacl
       (
         "movl  $0, %%eax         \n\t"
         "cpuid                  \n\t"
-        "movl  %%ebx, (%%rdi)    \n\t"
-        "movl  %%edx, 4(%%rdi)   \n\t"
-        "movl  %%ecx, 8(%%rdi)   \n\t"
+	"movl  %%ebx, (%0)    \n\t"
+        "movl  %%edx, 4(%0)   \n\t"
+        "movl  %%ecx, 8(%0)   \n\t"
         :              
-        :              
+        : "r" (vendor)              
         : "%eax", "%edx", "%ecx"
         );
   }
@@ -86,72 +97,72 @@ namespace viennacl
         /* get L1-cache info */
         "movl  $" AMD_GET_L1 ", %%eax \n\t"
         "cpuid                    \n\t"
-        "movl  %%ecx, (%%rdi)     \n\t"
+        "movl  %%ecx, (%0)     \n\t"
         /* get L2-cache info */
         "movl  $" AMD_GET_L2 ", %%eax \n\t"
         "cpuid                    \n\t"
-        "movl  %%ecx, 4(%%rdi)     \n\t"
+        "movl  %%ecx, 4(%0)     \n\t"
         /* get L3-cache info */
         "movl  $" AMD_GET_L3 ", %%eax \n\t"
         "cpuid                    \n\t"
-        "movl  %%edx, 8(%%rdi)     \n\t"
-        
-        :
-        :
+        "movl  %%edx, 8(%0)     \n\t"
+        : 
+        : "r" (l1l2l3)
         : "%eax", "%ebx", "%ecx", "%edx"
         );
-    //    *l1 = 16 * 1024; //16KB
-    //*l2 =  1 * 1024; // 1KB
-    //*l3 =  0 * 1024; // 0KB
   }
-  
-  
+
   void get_cache_intel_leaf2(uint32_t *l1l2l3)
   {
-
     __asm__
       (
         "movl  $" INTEL_GET_CACHE_LEAF2 ", %%eax \n\t"
         "cpuid                             \n\t"
-        "movl  %%eax,   (%%rdi)            \n\t"
-        "movl  %%ebx,  4(%%rdi)            \n\t"
-        "movl  %%ecx,  8(%%rdi)            \n\t"
-        "movl  %%edx, 12(%%rdi)            \n\t"
+        "movl  %%eax,   (%0)            \n\t"
+        "movl  %%ebx,  4(%0)            \n\t"
+        "movl  %%ecx,  8(%0)            \n\t"
+        "movl  %%edx, 12(%0)            \n\t"
         :
-        :
+        : "r" (l1l2l3)
         : "%eax", "%ebx", "%ecx", "%edx"
         );
   }
 
-  void get_cache_intel_leaf4(uint64_t *l1l2l3)
+  void get_cache_intel_leaf4(uint32_t *l1l2l3)
   {
-    /* l1 = %rdi, l2 = %rsi, l3 = %rdx */
-    __asm__
-      (
-        /* get L1-cache info */
-        "movl  $" INTEL_GET_CACHE_LEAF4 ", %%eax \n\t"
-        "movl  $" INTEL_GET_L1 "   , %%ecx \n\t"
-        "cpuid                         \n\t"
-        "movl  %%ebx,  (%%rdi)          \n\t"
-        "movl  %%ecx, 4(%%rdi)          \n\t"
-        /* get L2-cache info */
-        "movl  $" INTEL_GET_CACHE_LEAF4 ", %%eax \n\t"
-        "movl  $" INTEL_GET_L2 "   , %%ecx \n\t"
-        "cpuid                         \n\t"
-        "movl  %%ebx,  8(%%rdi)          \n\t"
-        "movl  %%ecx, 12(%%rdi)          \n\t"
-        /* get L3-cache info */
-        "movl  $" INTEL_GET_CACHE_LEAF4 ", %%eax \n\t"
-        "movl  $" INTEL_GET_L3 "   , %%ecx \n\t"
-        "cpuid                         \n\t"
-        "movl  %%ebx, 16(%%rdi)          \n\t"
-        "movl  %%ecx, 20(%%rdi)          \n\t"
-        :
-        :
-        : "%eax", "%ebx", "%ecx", "%edx"
-        );
-  }
+    uint32_t tmp[2] = {0};
+    uint32_t cache_type[1] = {0x0000};
+    uint32_t i = 0x0000;
+    vcl_size_t l1l2l3_idx = 0;
 
+    do
+    {
+      __asm__
+        (
+          "movl  $" INTEL_GET_CACHE_LEAF4 ", %%eax \n\t"
+          "movl  %1   , %%ecx                      \n\t"
+          "cpuid                                   \n\t"
+          "movl  %%ebx,  (%0)          \n\t"
+          "movl  %%ecx, 4(%0)          \n\t"
+          "movl  %%eax,  (%2)                      \n\t"
+          :
+          : "r" (tmp), "r" (i), "r" (cache_type)
+          : "%eax", "%ebx", "%ecx", "%edx"
+          );
+	
+      cache_type[0] = (cache_type[0] & INTEL_CACHE_TYPE_MASK);
+
+      if ( (cache_type[0] == INTEL_DATA_CACHE_TYPE) || (cache_type[0] == INTEL_UNIFIED_CACHE_TYPE) )
+      {
+        assert((l1l2l3_idx < 6) && bool("Apparantly more than three data caches! get_cache_sizes() expects three levels at max..."));
+
+        l1l2l3[l1l2l3_idx] = tmp[0];
+        l1l2l3[l1l2l3_idx+1] = tmp[1];
+        l1l2l3_idx += 2;
+      }
+      ++i;
+    } while (cache_type[0] != INTEL_NO_MORE_CACHE);
+  }
 
   void set_cache_intel(int &l1_size, int &l2_size, int &l3_size)
   {
@@ -178,7 +189,7 @@ namespace viennacl
       {
         for (int j=0; j<4; ++j)
         {
-          //std::cout << (registers[i] & (0xFF000000 >> j*8)) << std::endl;//DEBUG
+	  //std::cout << std::hex << ((registers[i] & (0xFF000000 >> j*8))>>((3-j)*8)) << std::endl;//DEBUG
           /* iterate over all bytes */
           switch ( (registers[i] & (0xFF000000 >> j*8))>>((3-j)*8) )
           {
@@ -250,14 +261,15 @@ namespace viennacl
   leaf4:
     if (use_cpuid_leaf4)
     {
-      uint64_t l1l2l3[INTEL_CACHE_INFO_SIZE];
+      uint32_t l1l2l3[INTEL_CACHE_INFO_SIZE];
 
       get_cache_intel_leaf4(l1l2l3);
-      l1_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L1_CACHE_SIZE_IDX]);
-      l2_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L2_CACHE_SIZE_IDX]);
-      l3_size = INTEL_CALC_CACHE_SIZE(l1l2l3[INTEL_L3_CACHE_SIZE_IDX]);
+      l1_size = INTEL_CALC_CACHE_SIZE(l1l2l3[0], l1l2l3[1]);
+      l2_size = INTEL_CALC_CACHE_SIZE(l1l2l3[2], l1l2l3[3]);
+      l3_size = INTEL_CALC_CACHE_SIZE(l1l2l3[4], l1l2l3[5]);
 
       //std::cout << "CPUID4! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
+      //std::cout << "registers returned by leaf4 " << l1l2l3[0] << " " << l1l2l3[1] << " " << l1l2l3[2] << std::endl;//DEBUG
     }
   
     return;
