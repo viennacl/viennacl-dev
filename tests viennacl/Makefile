@@ -8,7 +8,7 @@ DEP_PRODTEST = src/prod_test.cpp ../viennacl/linalg/host_based/matrix_operations
 
 # variables for benchmarks
 OPENBLAS_LIBS = -I/Users/max/openblas/ -L/Users/max/openblas/ -lopenblas -lpthread
-EIGEN_LIBS    = -I/Users/max/Eigen
+EIGEN_LIBS    = -I/Users/max
 
 
 all: prod_test avx_prod_test avx_prod_test2
@@ -48,7 +48,7 @@ viennacl_sse: src/benchmark_viennacl.cpp
 	$(CC) src/benchmark_viennacl.cpp -o build/bench_viennacl_sse $(CFLAGS) $(LIBS) $(SSE_FLAGS)
 
 eigen: src/benchmark_eigen.cpp
-	$(CC) src/benchmark_eigen.cpp -o build/bench_eigen $(CFLAGS) $(LIBS) $(EIGEN_LIBS)
+	$(CC) src/benchmark_eigen.cpp -o build/bench_eigen $(CFLAGS) $(LIBS) $(EIGEN_LIBS) -mavx
 
 openblas: src/benchmark_openblas.cpp
 	$(CC) src/benchmark_openblas.cpp -o build/bench_openblas $(CFLAGS) $(LIBS) $(OPENBLAS_LIBS)

@@ -351,16 +351,16 @@ namespace viennacl
     else
       kc  = l1 / (2 * nr * sizeof(NumericT));
     
-    if (l1 == 0)
+    if (l2 == 0)
       mc  = m_size;
     else
-      mc = kc;
+      mc = l2 / (2 * kc * sizeof(NumericT));
     mc += mr - (mc%mr); //mc must be divisible by mr
 
     if (l3 == 0)
       nc = n_size;
     else
-      nc  = l3 / (2 * mc * sizeof(NumericT));
+      nc  = l3 / (2 * kc * sizeof(NumericT));
     nc += nr - (nc%nr); // nc must be divisible by nr
 
     /*    //DEBUG

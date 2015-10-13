@@ -43,5 +43,4 @@ if [[ $1 = $DOUBLE || $2 = $DOUBLE ||  $3 = $DOUBLE ]]; then
         printf %s "$(../build/bench_viennacl_avx $i double)" >> double_aux_data
         printf "\n" >> double_aux_data
     done
-    printf %s "$(emacs double_aux_data)"
 fi

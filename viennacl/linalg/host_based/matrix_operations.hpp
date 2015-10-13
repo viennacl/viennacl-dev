@@ -1092,9 +1092,6 @@ namespace viennacl
           //
           // first and third loops: Run over all blocks with indices (C2_block_idx, C1_block_idx) of the result matrix C:
           //
-#ifdef VIENNACL_WITH_OPENMP
-#pragma omp parallel for
-#endif
 
           /* BLOCK INDEX NAMING: 
            * All block indices are named after which matrix and what dimension they block.
@@ -1102,13 +1099,17 @@ namespace viennacl
            * and matrix B => C2B2_idx. (order: C A B) */
           for (vcl_size_t C2B2_idx=0; C2B2_idx<num_blocks_C2; ++C2B2_idx)
           {
-            /* Allocate thread-local auxiliary buffers.
-             * Do NOT fill them with zeros (as it's not needed, do it anyway?). */
-            NumericT *buffer_A = get_aligned_buffer<NumericT>(mc*kc,false);// row-major slivers, column-major micro-slivers 
-            NumericT *buffer_B = get_aligned_buffer<NumericT>(kc*nc,false);// column-major slivers, row-major mirco-slivers (see packing.hpp)
+#ifdef VIENNACL_WITH_OPENMP
+#pragma omp parallel for 
+#endif
 
             for (vcl_size_t A2B1_idx=0; A2B1_idx<num_blocks_A2; ++A2B1_idx)
             {
+              /* Allocate thread-local auxiliary buffers.
+               * Do NOT fill them with zeros (as it's not needed, do it anyway?). */
+              NumericT *buffer_A = get_aligned_buffer<NumericT>(mc*kc,false);// row-major slivers, column-major micro-slivers 
+              NumericT *buffer_B = get_aligned_buffer<NumericT>(kc*nc,false);// column-major slivers, row-major mirco-slivers (see packing.hpp)
+
               pack_matrix_B(buffer_B, A2B1_idx*kc, C2B2_idx*nc, kc, nc, nr,
                             data_B, B_size1, B_size2, B_internal_size1, B_internal_size2,
                             B_inc1, B_inc2, B_start1, B_start2,  B_trans, B_row_major);
@@ -1175,9 +1176,9 @@ namespace viennacl
                   } // for slivers A
                 } // for slivers B
               } // for block C1A1_idx
+              free_aligned_buffer(buffer_A);
+              free_aligned_buffer(buffer_B);
             } // for block A2B1_idx
-            free_aligned_buffer(buffer_A);
-            free_aligned_buffer(buffer_B);
           } // for block C2B2_idx
 
         } // prod()

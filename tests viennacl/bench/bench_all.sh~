@@ -13,12 +13,12 @@ if [[ $1 = $FLOAT || $2 = $FLOAT ]]; then
     # overwrite previous data
     printf "" > float_data_all
 
-    for i in {100..3000..100}
+    for (( i=50; i<3000; i+=50 ))
     do
         printf %s "$(echo $i) " >> float_data_all
-        printf %s "$(../build/bench_viennacl_avx2 $i float)" >> float_data_all
-        printf %s "$(../build/bench_openblas $i float)" >> float_data_all
+        printf %s "$(../build/bench_viennacl_avx $i float)" >> float_data_all
         printf %s "$(../build/bench_eigen $i float)" >> float_data_all
+        printf %s "$(../build/bench_openblas $i float)" >> float_data_all
         printf "\n" >> float_data_all
     done
 
@@ -30,13 +30,13 @@ if [[ $1 = $DOUBLE ||  $2 = $DOUBLE ]]; then
 
     # overwrite previous data
     printf "" > double_data_all
-
-    for i in {100..3000..100}
+    
+    for (( i=50; i<3000; i+=50 )) 
     do
         printf %s "$(echo $i) " >> double_data_all
-        printf %s "$(../build/bench_viennacl_avx2 $i double)" >> double_data_all
-        printf %s "$(../build/bench_openblas $i double)" >> double_data_all
-        printf %s "$(../build/bench_eigen $i double)" >> double_data_all
+        printf %s "$(../build/bench_viennacl_avx $i)" >> double_data_all
+        printf %s "$(../build/bench_eigen $i)" >> double_data_all
+        printf %s "$(../build/bench_openblas $i)" >> double_data_all
         printf "\n" >> double_data_all
     done
 

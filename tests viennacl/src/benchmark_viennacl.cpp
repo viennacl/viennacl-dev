@@ -88,34 +88,48 @@ void bench(size_t BLAS3_N, bool fast)
 
 int main(int argc, char *argv[])
 {
-  /*  if(argc != 3)
-  {
-  std::cout << "usage: bench_blas3 matrix-size entry-type" << std::endl;
-  return 0;
-  }*/
- 
-  std::size_t BLAS3_N = std::stoi(argv[1]);
-  std::string type    = argv[2];
-  std::string mode    = argv[3];
+  std::size_t BLAS3_N;
   bool        fast    = false;         
+  std::string type    = "double";
+  std::string mode    = "not fast";
 
-  /* skips transposed cases */
-  if (mode == "fast")
-    fast = true;
-  else 
-    fast = false;
+  if (argc >= 2)
+  {
+    BLAS3_N = std::stoi(argv[1]);
+  }
+  if (argc >= 3)
+  {
+    type = argv[2];
+
+    if ((type != "float") && (type != "double"))
+    {
+      std::cout << "unsupported entry type!" << std::endl;
+      return -1;
+    }
+
+  }
+  if (argc >= 4)
+  {
+    mode = argv[3];
+
+    /* skips transposed cases */
+    if (mode == "fast")
+      fast = true;
+    else 
+      fast = false;
+  }
+  if ((argc == 1) || (argc >= 5))
+  {
+    std::cout << "usage: bench_viennacl_avx matrix-size [entry-type] [mode]" << std::endl;
+    return -1;
+  }
 
   /* bench with specified datatype */
   if (type == "float")
     bench<float>(BLAS3_N, fast);
   else if(type == "double")
     bench<double>(BLAS3_N, fast);
-  else 
-  {
-    std::cout << "unsupported entry type!" << std::endl;
-    return -1;
-  }
-
+  
 #ifdef VIENNACL_WITH_AVX
 #  ifdef AVX_KERNEL2
   std::cerr << type << ", size " << BLAS3_N << ": ViennaCL with AVX, Kernel2 done!" << std::endl;
