@@ -22,6 +22,9 @@
 #include <iomanip>
 #include <stdlib.h>
 
+#define DOUBLE (1)
+#define FLOAT  (0)
+
 template<class T, class F>
 void init_random(viennacl::matrix<T, F> & M)
 {
@@ -44,99 +47,108 @@ void bench(size_t BLAS3_N, bool fast)
   double time_per_benchmark = 1;
   int i;
 
-#define BENCHMARK_OP(OPERATION, PERF)                   \
-  OPERATION;                                            \
-  timer.start();                                        \
-  Nruns = 0;                                            \
-  time_spent = 0;                                       \
-  i = 0;                                                \
-  while (i < 5)                                         \
-  {                                                     \
-    if(time_spent >= time_per_benchmark)                \
-      break;                                            \
-    time_previous = timer.get();                        \
-    OPERATION;                                          \
-    time_spent += timer.get() - time_previous;          \
-    Nruns+=1;                                           \
-    i++;                                                \
-  }                                                     \
-  time_spent/=(double)Nruns;                            \
+#define BENCHMARK_OP(OPERATION, PERF)           \
+  OPERATION;                                    \
+  timer.start();                                \
+  Nruns = 0;                                    \
+  time_spent = 0;                               \
+  i = 0;                                        \
+  while (i < 5)                                 \
+  {                                             \
+    if(time_spent >= time_per_benchmark)        \
+      break;                                    \
+    time_previous = timer.get();                \
+    OPERATION;                                  \
+    time_spent += timer.get() - time_previous;  \
+    Nruns+=1;                                   \
+    i++;                                        \
+  }                                             \
+  time_spent/=(double)Nruns;                    \
   std::cout << PERF << " ";
 
   //BLAS3
   {
-  viennacl::matrix<T,viennacl::column_major> C(BLAS3_N, BLAS3_N);
-  viennacl::matrix<T,viennacl::column_major> A(BLAS3_N, BLAS3_N);
-  viennacl::matrix<T,viennacl::column_major> B(BLAS3_N, BLAS3_N);
-  init_random(A);
-  init_random(B);
-  viennacl::matrix<T,viennacl::column_major> AT = trans(A);
-  viennacl::matrix<T,viennacl::column_major> BT = trans(B);
+    viennacl::matrix<T,viennacl::column_major> C(BLAS3_N, BLAS3_N);
+    viennacl::matrix<T,viennacl::column_major> A(BLAS3_N, BLAS3_N);
+    viennacl::matrix<T,viennacl::column_major> B(BLAS3_N, BLAS3_N);
+    init_random(A);
+    init_random(B);
+    viennacl::matrix<T,viennacl::column_major> AT = trans(A);
+    viennacl::matrix<T,viennacl::column_major> BT = trans(B);
   
 
-  BENCHMARK_OP(C = prod(A, B),                 double(2*BLAS3_N*BLAS3_N*BLAS3_N)/time_spent*1e-9);
-  if (!fast)
-  {
-    BENCHMARK_OP(C = prod(A, trans(BT)),         double(2*BLAS3_N*BLAS3_N*BLAS3_N)/time_spent*1e-9);
-    BENCHMARK_OP(C = prod(trans(AT), B),         double(2*BLAS3_N*BLAS3_N*BLAS3_N)/time_spent*1e-9);
-    BENCHMARK_OP(C = prod(trans(AT), trans(BT)), double(2*BLAS3_N*BLAS3_N*BLAS3_N)/time_spent*1e-9);
+    BENCHMARK_OP(C = prod(A, B),                 double(2*BLAS3_N*BLAS3_N*BLAS3_N)/time_spent*1e-9);
+    if (!fast)
+    {
+      BENCHMARK_OP(C = prod(A, trans(BT)),         double(2*BLAS3_N*BLAS3_N*BLAS3_N)/time_spent*1e-9);
+      BENCHMARK_OP(C = prod(trans(AT), B),         double(2*BLAS3_N*BLAS3_N*BLAS3_N)/time_spent*1e-9);
+      BENCHMARK_OP(C = prod(trans(AT), trans(BT)), double(2*BLAS3_N*BLAS3_N*BLAS3_N)/time_spent*1e-9);
+    }
   }
 }
 
+void usage()
+{
+  std::cout << "usage: bench_viennacl_avx matrix-size [double|float] [mode]" << std::endl;
+  exit(-1);
+}
 
+void handle_args (int argc, char *argv[], bool &fast, bool &type, std::size_t &BLAS3_N)
+{ 
+  /* fall-through intended! */
+  switch (argc)
+  {
+  case 4: 
+    if (strncmp(argv[3],"fast", 4) == 0)
+      fast = true;
+
+  case 3:
+    if ( strncmp(argv[2],"double", 6) == 0 )
+      type = DOUBLE;
+    else if (strncmp(argv[2],"float", 5) == 0)
+      type = FLOAT;
+    else 
+      usage();
+   
+  case 2: 
+    BLAS3_N = std::stoi(argv[1]);
+    break;
+
+  default: 
+    usage();
+  }
 }
 
 int main(int argc, char *argv[])
 {
   std::size_t BLAS3_N;
-  bool        fast    = false;         
-  std::string type    = "double";
-  std::string mode    = "not fast";
 
-  if (argc >= 2)
-  {
-    BLAS3_N = std::stoi(argv[1]);
-  }
-  if (argc >= 3)
-  {
-    type = argv[2];
+  bool fast    = false;         
+  bool type    = DOUBLE;
 
-    if ((type != "float") && (type != "double"))
-    {
-      std::cout << "unsupported entry type!" << std::endl;
-      return -1;
-    }
+  handle_args(argc, argv, fast, type, BLAS3_N);
 
-  }
-  if (argc >= 4)
-  {
-    mode = argv[3];
+  std::string version;
 
-    /* skips transposed cases */
-    if (mode == "fast")
-      fast = true;
-    else 
-      fast = false;
-  }
-  if ((argc == 1) || (argc >= 5))
-  {
-    std::cout << "usage: bench_viennacl_avx matrix-size [entry-type] [mode]" << std::endl;
-    return -1;
-  }
+# ifdef VIENNACL_WITH_AVX
+#  ifdef AVX_KERNEL2
+    version = "with AVX kernel 2 ";
+#  else
+    version = "with AVX ";
+#  endif
+# else
+   version = "";
+# endif
 
   /* bench with specified datatype */
-  if (type == "float")
+  if (type == FLOAT)
+  {
     bench<float>(BLAS3_N, fast);
-  else if(type == "double")
+    std::cerr << "ViennaCL " << version <<  "done! type: float, size: " << BLAS3_N  << std::endl;
+  }
+  else if(type == DOUBLE)
+  {
     bench<double>(BLAS3_N, fast);
-  
-#ifdef VIENNACL_WITH_AVX
-#  ifdef AVX_KERNEL2
-  std::cerr << type << ", size " << BLAS3_N << ": ViennaCL with AVX, Kernel2 done!" << std::endl;
-#  else
-  std::cerr << type << "size " << BLAS3_N << ": ViennaCL with AVX done!" << std::endl;
-#  endif
-#else
-  std::cerr << type << "size " << BLAS3_N << ": ViennaCL done!" << std::endl;
-#endif
+    std::cerr << "ViennaCL " << version <<  "done! type: double, size: " << BLAS3_N  << std::endl;
+  }
 }
