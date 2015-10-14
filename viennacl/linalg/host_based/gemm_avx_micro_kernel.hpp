@@ -201,7 +201,7 @@ namespace viennacl
       ymm0 = _mm256_load_pd(buffer_B+l*NR_D);
       ymm1 = _mm256_load_pd(buffer_B+l*NR_D+4);
 
-      ymm2 = _mm256_broadcast_sd(buffer_A+l*MR_D);
+      ymm2 = _mm256_broadcast_sd(buffer_A+l*MR_D+0);
       ymm3 = _mm256_mul_pd(ymm0, ymm2);
       ymm4 = _mm256_mul_pd(ymm1, ymm2);
       

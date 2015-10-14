@@ -21,10 +21,10 @@ if [[ $1 = $FLOAT || $2 = $FLOAT || $3 = $FLOAT ]]; then
     # overwrite previous data
     printf "" > float_aux_data
 
-    for i in {1000..2000..50}
+    for (( i=50; i<3001; i+=50 ))
     do
         printf %s "$(echo $i) " >> float_aux_data
-        printf %s "$(../build/bench_viennacl_avx2 $i float $FAST)" >> float_aux_data
+        printf %s "$(../build/bench_viennacl $i float $FAST)" >> float_aux_data
         printf "\n" >> float_aux_data
     done
 fi
@@ -37,11 +37,10 @@ if [[ $1 = $DOUBLE || $2 = $DOUBLE ||  $3 = $DOUBLE ]]; then
     # overwrite previous data
     printf "" > double_aux_data
 
-    for (( i=1000; i<2001; i+=50 ))
+    for (( i=50; i<3001; i+=50 ))
     do
         printf %s "$(echo $i) " >> double_aux_data
-        printf %s "$(../build/bench_viennacl_avx $i double)" >> double_aux_data
+        printf %s "$(../build/bench_viennacl $i double)" >> double_aux_data
         printf "\n" >> double_aux_data
     done
-    printf %s "$(emacs double_aux_data)"
 fi

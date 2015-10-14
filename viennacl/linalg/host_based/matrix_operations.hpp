@@ -1061,9 +1061,9 @@ namespace viennacl
           vcl_size_t nr;
           
           /* block sizes, depend on cache sizes and register-block sizes */
-          static vcl_size_t mc;
-          static vcl_size_t kc;
-          static vcl_size_t nc;
+          vcl_size_t mc;
+          vcl_size_t kc;
+          vcl_size_t nc;
 
           /* "product-sizes", see top comment */
           vcl_size_t m_size = A_trans ? A_size2 : A_size1;
@@ -1099,6 +1099,7 @@ namespace viennacl
            * and matrix B => C2B2_idx. (order: C A B) */
           for (vcl_size_t C2B2_idx=0; C2B2_idx<num_blocks_C2; ++C2B2_idx)
           {
+            //omp_set_num_threads(2);//DEBUG
 #ifdef VIENNACL_WITH_OPENMP
 #pragma omp parallel for 
 #endif

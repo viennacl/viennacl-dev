@@ -164,7 +164,7 @@ namespace viennacl
     } while (cache_type[0] != INTEL_NO_MORE_CACHE);
   }
 
-  void set_cache_intel(int &l1_size, int &l2_size, int &l3_size)
+  void set_cache_intel(vcl_size_t &l1_size, vcl_size_t &l2_size, vcl_size_t &l3_size)
   {
     /* every entry saves the state of one of the registers %eax, %ebx, %ecx and %edx
      * which are represent cache and TLB information after cpuid is called */
@@ -275,7 +275,7 @@ namespace viennacl
     return;
   }
 
-  void set_cache_sizes(int &l1_size, int &l2_size, int &l3_size)
+  void set_cache_sizes(vcl_size_t &l1_size, vcl_size_t &l2_size, vcl_size_t &l3_size)
   {
     /* used to store CPU-vendor string */
     char vendor[VENDOR_STR_LEN] = {0};
@@ -329,9 +329,9 @@ namespace viennacl
     nr = 1;
 #endif
 
-    static int l1 = 0;
-    static int l2 = 0;
-    static int l3 = 0;
+    static vcl_size_t l1 = 0;
+    static vcl_size_t l2 = 0;
+    static vcl_size_t l3 = 0;
     static bool cache_sizes_unknown = true;
 
     /* hardware won't change during run-time (hopefully)

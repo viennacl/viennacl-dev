@@ -33,7 +33,7 @@ n **/
 #include <boost/numeric/ublas/matrix_expression.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
-#define TEST_FLOAT  //if defined, floats are tested
+//#define TEST_FLOAT  //if defined, floats are tested
 #define TEST_DOUBLE //if defined, doubles are tested
 
 /*
