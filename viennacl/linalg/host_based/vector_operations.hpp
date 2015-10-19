@@ -837,23 +837,49 @@ vcl_size_t index_norm_inf(vector_base<NumericT> const & vec1)
   vcl_size_t start1 = viennacl::traits::start(vec1);
   vcl_size_t inc1   = viennacl::traits::stride(vec1);
   vcl_size_t size1  = viennacl::traits::size(vec1);
+  vcl_size_t thread_count=1;
 
-  value_type temp = 0;
-  value_type data;
-  vcl_size_t index = start1;
+#ifdef VIENNACL_WITH_OPENMP
+  if(size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+      thread_count = omp_get_max_threads();
+#endif
 
-  // Note: No suitable reduction in OpenMP yet
-  for (vcl_size_t i = 0; i < size1; ++i)
+  std::vector<value_type> temp(thread_count);
+  std::vector<vcl_size_t> index(thread_count);
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
   {
-    data = static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[i*inc1+start1])));  //casting to double in order to avoid problems if T is an integer type
-    if (data > temp)
+    vcl_size_t id = 0;
+#ifdef VIENNACL_WITH_OPENMP
+    id = omp_get_thread_num();
+#endif
+    vcl_size_t begin = (size1 * id) / thread_count;
+    vcl_size_t end   = (size1 * (id + 1)) / thread_count;
+    index[id]        = start1;
+    temp[id]         = 0;
+    value_type data;
+
+    for (vcl_size_t i = begin; i < end; ++i)
     {
-      index = i;
-      temp = data;
+      data = static_cast<value_type>(std::fabs(static_cast<double>(data_vec1[i*inc1+start1])));  //casting to double in order to avoid problems if T is an integer type
+      if (data > temp[id])
+      {
+        index[id] = i;
+        temp[id]  = data;
+      }
     }
   }
-
-  return index;
+  for (vcl_size_t i = 1; i < thread_count; ++i)
+  {
+    if (temp[i] > temp[0])
+    {
+      index[0] = index[i];
+      temp[0] = temp[i];
+    }
+  }
+  return index[0];
 }
 
 /** @brief Computes the maximum of a vector
@@ -873,16 +899,39 @@ void max_impl(vector_base<NumericT> const & vec1,
   vcl_size_t inc1   = viennacl::traits::stride(vec1);
   vcl_size_t size1  = viennacl::traits::size(vec1);
 
-  value_type temp = data_vec1[start1];
+  vcl_size_t thread_count=1;
 
-  // Note: No max() reduction in OpenMP yet
-  for (vcl_size_t i = 1; i < size1; ++i)
-    temp = std::max<value_type>(temp, data_vec1[i*inc1+start1]);
+#ifdef VIENNACL_WITH_OPENMP
+  if(size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+      thread_count = omp_get_max_threads();
+#endif
 
-  result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+  std::vector<value_type> temp(thread_count);
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+  {
+    vcl_size_t id = 0;
+#ifdef VIENNACL_WITH_OPENMP
+    id = omp_get_thread_num();
+#endif
+    vcl_size_t begin = (size1 * id) / thread_count;
+    vcl_size_t end   = (size1 * (id + 1)) / thread_count;
+    temp[id]         = data_vec1[start1];
+
+    for (vcl_size_t i = begin; i < end; ++i)
+    {
+      value_type v = data_vec1[i*inc1+start1];//Note: Assignment to 'vec1' in std::min might be expensive, thus 'v' is used for the function
+      temp[id] = std::max<value_type>(temp[id],v);
+    }
+  }
+  for (vcl_size_t i = 1; i < thread_count; ++i)
+    temp[0] = std::max<value_type>( temp[0], temp[i]);
+  result  = temp[0];//Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
 }
 
-/** @brief Computes the maximum of a vector
+/** @brief Computes the minimum of a vector
 *
 * @param vec1 The vector
 * @param result The result scalar
@@ -899,16 +948,39 @@ void min_impl(vector_base<NumericT> const & vec1,
   vcl_size_t inc1   = viennacl::traits::stride(vec1);
   vcl_size_t size1  = viennacl::traits::size(vec1);
 
-  value_type temp = data_vec1[start1];
+  vcl_size_t thread_count=1;
 
-  // Note: No max() reduction in OpenMP yet
-  for (vcl_size_t i = 1; i < size1; ++i)
-    temp = std::min<value_type>(temp, data_vec1[i*inc1+start1]);
+#ifdef VIENNACL_WITH_OPENMP
+  if(size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+      thread_count = omp_get_max_threads();
+#endif
 
-  result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
+  std::vector<value_type> temp(thread_count);
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+  {
+    vcl_size_t id = 0;
+#ifdef VIENNACL_WITH_OPENMP
+    id = omp_get_thread_num();
+#endif
+    vcl_size_t begin = (size1 * id) / thread_count;
+    vcl_size_t end   = (size1 * (id + 1)) / thread_count;
+    temp[id]         = data_vec1[start1];
+
+    for (vcl_size_t i = begin; i < end; ++i)
+    {
+      value_type v = data_vec1[i*inc1+start1];//Note: Assignment to 'vec1' in std::min might be expensive, thus 'v' is used for the function
+      temp[id] = std::min<value_type>(temp[id],v);
+    }
+  }
+  for (vcl_size_t i = 1; i < thread_count; ++i)
+    temp[0] = std::min<value_type>( temp[0], temp[i]);
+  result  = temp[0];//Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
 }
 
-/** @brief Computes the maximum of a vector
+/** @brief Computes the sum of all elements from the vector
 *
 * @param vec1 The vector
 * @param result The result scalar
@@ -926,14 +998,14 @@ void sum_impl(vector_base<NumericT> const & vec1,
   vcl_size_t size1  = viennacl::traits::size(vec1);
 
   value_type temp = 0;
-
-  // Note: Have a look at inner_prod and norm_X before adding OpenMP pragmas here
-  for (vcl_size_t i = 0; i < size1; ++i)
-    temp += data_vec1[i*inc1+start1];
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+:temp) if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+  for (long i = 0; i < static_cast<long>(size1); ++i)
+    temp += data_vec1[static_cast<vcl_size_t>(i)*inc1+start1];
 
   result = temp;  //Note: Assignment to result might be expensive, thus 'temp' is used for accumulation
 }
-
 
 /** @brief Computes a plane rotation of two vectors.
 *
