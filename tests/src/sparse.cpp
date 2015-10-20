@@ -342,7 +342,7 @@ int test(Epsilon const& epsilon)
   rhs.resize(std_matrix.size());
   for (std::size_t i=0; i<rhs.size(); ++i)
   {
-    std_matrix[i][i] = NumericT(0.5);   // Get rid of round-off errors by making row-sums unequal to zero:
+    std_matrix[i][static_cast<unsigned int>(i)] = NumericT(0.5);   // Get rid of round-off errors by making row-sums unequal to zero:
     rhs[i] = NumericT(1) + randomNumber();
   }
 

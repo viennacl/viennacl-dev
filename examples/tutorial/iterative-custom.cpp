@@ -111,7 +111,6 @@ int main()
   /**
   * Set up right hand side and reference solution consisting of all ones:
   **/
-  std::size_t size = A.size1();
   viennacl::vector<ScalarType> ref_result = viennacl::scalar_vector<ScalarType>(A.size2(), ScalarType(1.0));
   viennacl::vector<ScalarType> result(A.size2());
 
