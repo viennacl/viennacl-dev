@@ -61,11 +61,13 @@ template<> struct type_to_string<char>   { static std::string apply() { return "
 template<> struct type_to_string<short>  { static std::string apply() { return "short"; } };
 template<> struct type_to_string<int>    { static std::string apply() { return "int";   } };
 template<> struct type_to_string<long>   { static std::string apply() { return "long";  } };
+template<> struct type_to_string<long long>   { static std::string apply() { return "longlong";  } };
 
 template<> struct type_to_string<unsigned char>   { static std::string apply() { return "uchar";  } };
 template<> struct type_to_string<unsigned short>  { static std::string apply() { return "ushort"; } };
 template<> struct type_to_string<unsigned int>    { static std::string apply() { return "uint";   } };
 template<> struct type_to_string<unsigned long>   { static std::string apply() { return "ulong";  } };
+template<> struct type_to_string<unsigned long long>   { static std::string apply() { return "ulonglong";  } };
 
 template<> struct type_to_string<float>  { static std::string apply() { return "float";  } };
 template<> struct type_to_string<double> { static std::string apply() { return "double"; } };
