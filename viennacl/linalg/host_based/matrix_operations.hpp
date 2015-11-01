@@ -1086,7 +1086,7 @@ namespace viennacl
 
           //std::cout << "num_blocksC1/2 A2, slivers A/B, residue slivers A/B " << num_blocks_C1 << " " << num_blocks_C2 << " " << num_blocks_A2 << " " << num_slivers_A << " " << num_slivers_B //DEBUG
               //        << " " << num_residue_slivers_A << " " << num_residue_slivers_B << std::endl;//DEBUG
-          //std::cout << " kc mc nc " << kc << " " << mc << " " << nc <<" " << std::endl;//DEBUG
+          //std::cout << " kc mc nc num_threads " << kc << " " << mc << " " << nc << " " << omp_get_max_threads() << std::endl;//DEBUG
           
 
           //
@@ -1097,32 +1097,33 @@ namespace viennacl
            * All block indices are named after which matrix and what dimension they block.
            * For example, the first index (first loop) divides dimension 2 (columns) of matrix C
            * and matrix B => C2B2_idx. (order: C A B) */
+          #ifdef VIENNACL_WITH_OPENMP
+          #pragma omp parallel for 
+          #endif
           for (vcl_size_t C2B2_idx=0; C2B2_idx<num_blocks_C2; ++C2B2_idx)
           {
-            //omp_set_num_threads(2);//DEBUG
-#ifdef VIENNACL_WITH_OPENMP
-#pragma omp parallel for 
-#endif
+            /* Allocate thread-local auxiliary buffers.
+             * Do NOT fill them with zeros (as it's not needed, do it anyway?). */
+            NumericT *buffer_A = get_aligned_buffer<NumericT>(mc*kc,false);// row-major slivers, column-major micro-slivers 
+            NumericT *buffer_B = get_aligned_buffer<NumericT>(kc*nc,false);// column-major slivers, row-major mirco-slivers (see packing.hpp)
 
             for (vcl_size_t A2B1_idx=0; A2B1_idx<num_blocks_A2; ++A2B1_idx)
             {
-              /* Allocate thread-local auxiliary buffers.
-               * Do NOT fill them with zeros (as it's not needed, do it anyway?). */
-              NumericT *buffer_A = get_aligned_buffer<NumericT>(mc*kc,false);// row-major slivers, column-major micro-slivers 
-              NumericT *buffer_B = get_aligned_buffer<NumericT>(kc*nc,false);// column-major slivers, row-major mirco-slivers (see packing.hpp)
-
               pack_matrix_B(buffer_B, A2B1_idx*kc, C2B2_idx*nc, kc, nc, nr,
                             data_B, B_size1, B_size2, B_internal_size1, B_internal_size2,
                             B_inc1, B_inc2, B_start1, B_start2,  B_trans, B_row_major);
-
+              //#ifdef VIENNACL_WITH_OPENMP
+              //#pragma omp parallel for 
+              //#endif
               for (vcl_size_t C1A1_idx=0; C1A1_idx<num_blocks_C1; ++C1A1_idx)
               {
+                //      NumericT *buffer_A = get_aligned_buffer<NumericT>(mc*kc,false);// row-major slivers, column-major micro-slivers 
                 pack_matrix_A(buffer_A, C1A1_idx*mc, A2B1_idx*kc, mc, kc, mr,
                               data_A, A_size1, A_size2, A_internal_size1, A_internal_size2,
                               A_inc1, A_inc2, A_start1, A_start2,  A_trans, A_row_major);
                 
                 vcl_size_t max_sliver_B_idx = ((n_size-C2B2_idx*nc) < nc) ? num_residue_slivers_B : num_slivers_B;
-                // multiply (this is the hot spot in terms of flops)
+
                 for (vcl_size_t sliver_B_idx = 0; sliver_B_idx < max_sliver_B_idx; ++sliver_B_idx)
                 {
                   //if ( (B_size2-C2B2_idx)<nc )//DEBUG
@@ -1177,9 +1178,9 @@ namespace viennacl
                   } // for slivers A
                 } // for slivers B
               } // for block C1A1_idx
-              free_aligned_buffer(buffer_A);
-              free_aligned_buffer(buffer_B);
             } // for block A2B1_idx
+            free_aligned_buffer(buffer_A);
+            free_aligned_buffer(buffer_B);
           } // for block C2B2_idx
 
         } // prod()

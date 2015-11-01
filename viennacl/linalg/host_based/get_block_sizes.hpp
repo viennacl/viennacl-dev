@@ -360,9 +360,17 @@ namespace viennacl
     if (l3 == 0)
       nc = n_size;
     else
-      nc  = l3 / (2 * kc * sizeof(NumericT));
-    nc += nr - (nc%nr); // nc must be divisible by nr
+    {
+      int num_threads = 1;
+      
+#ifdef VIENNACL_WITH_OPENMP 
+      num_threads = omp_get_max_threads();
+#endif
 
+      nc   = std::min( l3/( std::max(2,num_threads)*kc*sizeof(NumericT) ), (n_size-1)/num_threads+1 );
+    }
+    nc += nr - (nc%nr); // nc must be divisible by nr
+    
     /*    //DEBUG
           kc = 8;//DEBUG
           mc = kc;//DEBUG
