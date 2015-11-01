@@ -30,6 +30,9 @@ namespace viennacl
       std::cout << std::endl;
     }
   
+  /**
+   * @brief packs (ie arranges in memory) a mc x kc block of matrix A into a buffer
+   */
   template<typename NumericT>
   void pack_matrix_A(NumericT *buffer, vcl_size_t offset_i, vcl_size_t offset_j, 
                      vcl_size_t mc, vcl_size_t kc, vcl_size_t mr,
@@ -56,7 +59,6 @@ namespace viennacl
           for (vcl_size_t j = 0; j < std::min(kc, size2-offset_j); ++j)
           {
             buffer[ (i/mr)*kc*mr + (i%mr) + j*mr ] = data[ ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) ];
-            //std::cout << "A: pack idx" << (i*inc1+start1)*internal_size2 + j*inc2+start2 << " --> " << i*size2 + j << std::endl;//DEBUG
           }
         }
       }
@@ -66,10 +68,8 @@ namespace viennacl
         {
           for (vcl_size_t j = 0; j < std::min(kc, size2-offset_j); ++j)
           {
-            //std::cout << "new block " << size1 << " " << offset_i << " "<< std::min(kc, size2-offset_j) << " " << j << " " << ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) << std::endl;//DEBUG
             /* Note that in '(j/nr)*mc*nr', mc is used instead of kc due to the swap at the beginning of this function! */
             buffer[ i*mr + (j/mr)*mc*mr + (j%mr) ] = data[ ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) ];
-            //std::cout << "A: pack idx " << (i*inc1+start1)*internal_size2 + j*inc2+start2 << " --> " << i + j*size1  << std::endl;//DEBUG
           } 
         }
       }
@@ -83,7 +83,6 @@ namespace viennacl
           for (vcl_size_t i = 0; i < std::min(mc, size1-offset_i); ++i)
           {
             buffer[ (i/mr)*kc*mr + (i%mr) + j*mr ] = data[ ((i+offset_i)*inc1+start1) + ((j+offset_j)*inc2+start2)*internal_size1 ];
-            //std::cout << "packed idx A " << i*inc1+start1 + (j*inc2+start2)*internal_size1 << std::endl;//DEBUG
           }
         }
       }
@@ -95,7 +94,6 @@ namespace viennacl
           {
             /* Note that in '(j/nr)*mc*nr', mc is used instead of kc due to the swap at the beginning of this function! */
             buffer[ i*mr + (j/mr)*mc*mr + (j%mr) ] = data[ ((i+offset_i)*inc1+start1) + ((j+offset_j)*inc2+start2)*internal_size1 ];
-            //std::cout << "packed A idx " << i*inc1+start1 + (j*inc2+start2)*internal_size1 << std::endl;//DEBUG
           }
         }
       }
@@ -121,16 +119,15 @@ namespace viennacl
       {
         for (vcl_size_t i = 0; i < num_remaining_rows; ++i)
         {
-          //unsigned int index = ((i+size1-offset_i)/mr)*kc*mr + ((i+size1-offset_i)%mr) + j*mr;//DEBUG
-          //std::cout << "index padding A is: " << index << std::endl;//DEBUG
           buffer[ ((i+size1-offset_i)/mr)*kc*mr + ((i+size1-offset_i)%mr) + j*mr ] = NumericT(0);
         }
       }
     }
-    
-    //    debug_print_package(buffer, "A", mc, kc);//DEBUG
   }//pack_matrix_A
 
+  /**
+   * @brief packs (ie arranges in memory) a kc x nc block of matrix B into a buffer
+   */
   template<typename NumericT>
   void pack_matrix_B(NumericT *buffer, vcl_size_t offset_i, vcl_size_t offset_j, 
                      vcl_size_t kc, vcl_size_t nc, vcl_size_t nr,
@@ -155,7 +152,6 @@ namespace viennacl
           for (vcl_size_t j = 0; j < std::min(nc, size2-offset_j); ++j)
           {
             buffer[ i*nr + (j/nr)*kc*nr + (j%nr) ] = data[ ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) ];
-            //std::cout << "A: pack idx" << (i*inc1+start1)*internal_size2 + j*inc2+start2 << " --> " << i*size2 + j << std::endl;//DEBUG
           }
         }
       }
@@ -167,7 +163,6 @@ namespace viennacl
           {
             /* Note that in '(i/nr)*nc*nr', nc is used instead of kc due to the swap at the beginning of this function! */
             buffer[ (i/nr)*nc*nr + (i%nr) + j*nr ] = data[ ((i+offset_i)*inc1+start1)*internal_size2 + ((j+offset_j)*inc2+start2) ];
-            //std::cout << "A: pack idx " << (i*inc1+start1)*internal_size2 + j*inc2+start2 << " --> " << i + j*size1  << std::endl;//DEBUG
           } 
         }
       }
@@ -181,7 +176,6 @@ namespace viennacl
           for (vcl_size_t i = 0; i < std::min(kc, size1-offset_i); ++i)
           {
             buffer[ i*nr + (j/nr)*kc*nr + (j%nr) ] = data[ ((i+offset_i)*inc1+start1) + ((j+offset_j)*inc2+start2)*internal_size1 ];
-            //std::cout << "packed idx A " << i*inc1+start1 + (j*inc2+start2)*internal_size1 << std::endl;//DEBUG
           }
         }
       }
@@ -193,7 +187,6 @@ namespace viennacl
           {
             /* Note that in '(i/nr)*nc*nr', nc is used instead of kc due to the swap at the beginning of this function! */
             buffer[ (i/nr)*nc*nr + (i%nr) + j*nr ] = data[ ((i+offset_i)*inc1+start1) + ((j+offset_j)*inc2+start2)*internal_size1 ];
-            //std::cout << "packed A idx " << i*inc1+start1 + (j*inc2+start2)*internal_size1 << std::endl;//DEBUG
           }
         }
       }

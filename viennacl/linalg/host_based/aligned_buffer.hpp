@@ -4,6 +4,9 @@
 
 namespace viennacl
 {
+  /**
+   * @brief allocates aligned memory, e.g. for AVX 32-byte aligned
+   */
   template<typename NumericT>
   inline NumericT *get_aligned_buffer(vcl_size_t size, bool fill_zeros)
   {
@@ -44,6 +47,9 @@ namespace viennacl
 #endif    
   }
 
+  /**
+   * @brief frees a previously allocated and aligned buffer
+   */
   template<typename NumericT>
   inline void free_aligned_buffer(NumericT *ptr)
   {

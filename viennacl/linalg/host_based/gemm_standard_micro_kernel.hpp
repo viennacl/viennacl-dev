@@ -5,6 +5,9 @@
 
 namespace viennacl
 {
+  /**
+   * @brief standard micro-kernel with no vectorization
+   */
   template<typename NumericT>
   inline void standard_micro_kernel(NumericT const *buffer_A, NumericT const *buffer_B, NumericT *buffer_C,
                                     vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)

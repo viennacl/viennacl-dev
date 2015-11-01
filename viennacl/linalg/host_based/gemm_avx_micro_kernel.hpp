@@ -29,17 +29,11 @@
 #define SWAP_32_BIT_F (0xB1)
 #define SHUFFLE_F     (0xD8)
 
-//TODO: do some ascii art to demonstrate how data is moved in registers
-/* ymm2    |   ymm3   | ymm4    | ymm5   
- * 0 . . . |  . 1 . . | . . . 3 | . . 2 .
- * . 1 . . |  0 . . . | . . 2 . | . . . 3   ... etc.
- * . . 2 . |  . . . 2 | . 1 . . | 0 . . .
- * . . . 3 |  . . 3 . | 0 . . . | . 1 . .
- */
-
-
 namespace viennacl
 {
+  /**
+   * @brief general "dummy" template,fully specialized for supported types (double/float)
+   */
   template<typename NumericT>
   inline void avx_micro_kernel(NumericT const *buffer_A, NumericT const *buffer_B, NumericT *buffer_C,
                                vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)
@@ -47,6 +41,9 @@ namespace viennacl
     assert(false && bool("called with unsupported numeric type!"));
   }
 
+  /**
+   * @brief AVX micro-kernel for floats, calculates a 8x16 block of matrix C from slivers of A and B
+   */
   template<>
   inline void avx_micro_kernel<float>(float const *buffer_A, float const *buffer_B, float *buffer_C,
                                       vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)
@@ -166,19 +163,12 @@ namespace viennacl
       ymm15 = _mm256_add_ps(ymm15, ymm6);
       _mm256_store_ps(buffer_C+C1_ROW_F(7), ymm15);
 
-      
-      //_mm256_store_ps(buffer_debug, ymm1);//DEBUG
-      //if (l == 1)//DEBUG
-      //std::cout << std::endl <<"ymm1 is: " << buffer_debug[0] << " " << buffer_debug[1] << " " << buffer_debug[2] << " "<< buffer_debug[3] << std::endl;//DEBUG
-
-      
-      /*std::cout << "buffer_C is: ";//DEBUG
-        for (int i=0; i<MR_F*NR_F; i++)//DEBUG
-        std::cout << buffer_C[i] << ", ";//DEBUG
-        std::cout << std::endl;//DEBUG*/
     }
   }
 
+  /**
+   * @brief AVX micro-kernel for doubles, calculates a 6x8 block of matrix C from slivers of A and B
+   */
   template<>
   inline void avx_micro_kernel<double>(double const *buffer_A, double const *buffer_B, double *buffer_C,
                                        vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)

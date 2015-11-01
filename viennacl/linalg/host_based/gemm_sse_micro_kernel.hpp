@@ -20,6 +20,9 @@
 
 namespace viennacl
 {
+  /**
+   * @brief general "dummy" template, fully specialized for supported types (double/float)
+   */
   template<typename NumericT>
   inline void sse_micro_kernel(NumericT const *buffer_A, NumericT const *buffer_B, NumericT *buffer_C,
                                vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)
@@ -27,6 +30,9 @@ namespace viennacl
     assert(false && bool("called with unsupported numeric type!"));
   }
 
+  /**
+   * @brief SSE micro-kernel for floats, calculates a 8x8 block of matrix C from slivers of A and B
+   */
   template<>
   inline void sse_micro_kernel<float>(float const *buffer_A, float const *buffer_B, float *buffer_C,
                                       vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)
@@ -143,20 +149,12 @@ namespace viennacl
       xmm15 = _mm_load_ps(buffer_C+C1_ROW_F(7));
       xmm15 = _mm_add_ps(xmm15, xmm6);
       _mm_store_ps(buffer_C+C1_ROW_F(7), xmm15);
-
-      
-      //_mm_store_ps(buffer_debug, xmm1);//DEBUG
-      //if (l == 1)//DEBUG
-      //std::cout << std::endl <<"xmm1 is: " << buffer_debug[0] << " " << buffer_debug[1] << " " << buffer_debug[2] << " "<< buffer_debug[3] << std::endl;//DEBUG
-
-      
-      /*std::cout << "buffer_C is: ";//DEBUG
-        for (int i=0; i<MR_F*NR_F; i++)//DEBUG
-        std::cout << buffer_C[i] << ", ";//DEBUG
-        std::cout << std::endl;//DEBUG*/
     }//for
   }//sse_micro_kernel()
 
+  /**
+   * @brief SSE micro-kernel for doubles, calculates a 6x4 block of matrix C from slivers of A and B
+   */
   template<>
   inline void sse_micro_kernel<double>(double const *buffer_A, double const *buffer_B, double *buffer_C,
                                         vcl_size_t num_micro_slivers, vcl_size_t mr, vcl_size_t nr)

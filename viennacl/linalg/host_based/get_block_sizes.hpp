@@ -164,6 +164,9 @@ namespace viennacl
     } while (cache_type[0] != INTEL_NO_MORE_CACHE);
   }
 
+  /**
+   * @brief reads cpuid-information on Intel CPUs and sets cache sizes accordingly
+   */
   void set_cache_intel(vcl_size_t &l1_size, vcl_size_t &l2_size, vcl_size_t &l3_size)
   {
     /* every entry saves the state of one of the registers %eax, %ebx, %ecx and %edx
@@ -181,7 +184,6 @@ namespace viennacl
      * Least significant byte of %eax should not be checked as it is always set to 0x01,
      * but 0x01 is a TLB descriptor the default case (do nothing) is matched. */
   
-    //std::cout << std::hex << registers[0] << " " << registers[1] << " "<< registers[2] << " "<< registers[3] << std::endl;//DEBUG
     for (int i=0; i<4; ++i)
     {
       /* Most significant bit is zero if register conatins valid 1-byte-descriptors */
@@ -189,7 +191,6 @@ namespace viennacl
       {
         for (int j=0; j<4; ++j)
         {
-	  //std::cout << std::hex << ((registers[i] & (0xFF000000 >> j*8))>>((3-j)*8)) << std::endl;//DEBUG
           /* iterate over all bytes */
           switch ( (registers[i] & (0xFF000000 >> j*8))>>((3-j)*8) )
           {
@@ -267,9 +268,6 @@ namespace viennacl
       l1_size = INTEL_CALC_CACHE_SIZE(l1l2l3[0], l1l2l3[1]);
       l2_size = INTEL_CALC_CACHE_SIZE(l1l2l3[2], l1l2l3[3]);
       l3_size = INTEL_CALC_CACHE_SIZE(l1l2l3[4], l1l2l3[5]);
-
-      //std::cout << "CPUID4! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
-      //std::cout << "registers returned by leaf4 " << l1l2l3[0] << " " << l1l2l3[1] << " " << l1l2l3[2] << std::endl;//DEBUG
     }
   
     return;
@@ -286,7 +284,6 @@ namespace viennacl
     if ( strncmp(vendor, INTEL, VENDOR_STR_LEN) == 0 )
     {
       set_cache_intel(l1_size, l2_size, l3_size);
-      //std::cout << "INTEL! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
     }      
     else if ( strncmp(vendor, AMD, VENDOR_STR_LEN) == 0 )
     {
@@ -298,8 +295,6 @@ namespace viennacl
       l1_size = AMD_CALC_L1_CACHE_SIZE(l1l2l3);
       l2_size = AMD_CALC_L2_CACHE_SIZE(l1l2l3);
       l3_size = AMD_CALC_L3_CACHE_SIZE(l1l2l3);
-      //std::cout << "AMD! sizes:" << l1_size << " " << l2_size << " " << l3_size <<std::endl;//DEBUG
-
     }
     else
     {
@@ -311,6 +306,9 @@ namespace viennacl
     }
   }
 
+  /**
+   * @brief calcluates block sizes from cache sizes and number of available threads
+   */
   template<typename NumericT> 
   void get_block_sizes(const vcl_size_t m_size, const vcl_size_t k_size, const vcl_size_t n_size, vcl_size_t & mc, vcl_size_t & kc, vcl_size_t & nc, vcl_size_t & mr, vcl_size_t & nr)
   {
@@ -340,12 +338,11 @@ namespace viennacl
     {
       set_cache_sizes(l1, l2, l3);
       cache_sizes_unknown = false;
-      //std::cout << "cache sizes set" << std::endl;//DEBUG
     }
     
     /* Calculate blocksizes for L1 (mc x nr) and L2 (mc * kc) and L3 cache. 
      * Assumed that block in L2 cache should be square and half of cache shuold be empty. */
-    // TODO: improve formula? 
+    // TODO: improve formula! 
     if (l1 == 0)
       kc  = k_size;
     else
@@ -370,11 +367,6 @@ namespace viennacl
       nc   = std::min( l3/( std::max(2,num_threads)*kc*sizeof(NumericT) ), (n_size-1)/num_threads+1 );
     }
     nc += nr - (nc%nr); // nc must be divisible by nr
-    
-    /*    //DEBUG
-          kc = 8;//DEBUG
-          mc = kc;//DEBUG
-          nc = 16;//DEBUG*/
   }
 }//viennacl
 #endif
