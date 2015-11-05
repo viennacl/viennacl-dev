@@ -39,7 +39,6 @@
 #include "viennacl/linalg/prod.hpp"
 
 #include "viennacl/linalg/host_based/packing.hpp"
-#include "viennacl/linalg/host_based/aligned_buffer.hpp"
 #include "viennacl/linalg/host_based/get_block_sizes.hpp"
 
 #ifdef VIENNACL_WITH_AVX
