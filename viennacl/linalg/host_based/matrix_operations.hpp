@@ -1180,13 +1180,10 @@ namespace viennacl
                         }
                       }
                     }
-                    //free_aligned_buffer(buffer_C);
                   } // for slivers A
                 } // for slivers B
               } // for block C1A1_idx
             } // for block A2B1_idx
-            //free_aligned_buffer(buffer_A);
-            //free_aligned_buffer(buffer_B);
           } // for block C2B2_idx
 
         } // prod()
