@@ -70,12 +70,6 @@
 
 namespace viennacl
 {
-  void get_cache_amd(uint32_t *l1l2l3)
-  {
-    /* l1 = %rdi, l2 = %rsi, l3 = %rdx, %rcx*/
-
-  }
-
   void get_cache_intel_leaf4(uint32_t *l1l2l3)
   {
     uint32_t tmp[2] = {0};
@@ -318,7 +312,6 @@ namespace viennacl
     static vcl_size_t l2 = 0;
     static vcl_size_t l3 = 0;
     static bool cache_sizes_unknown = true;
-    //std::cout << "hey you!" << std::endl;//DEBUG    
 
     /* hardware won't change during run-time (hopefully)
      * ==> determine cache sizes only once */
