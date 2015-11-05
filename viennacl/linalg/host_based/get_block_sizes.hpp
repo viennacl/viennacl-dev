@@ -27,10 +27,6 @@
 #define INTEL_GET_L3          "0x00000004"
 
 /* auxilary for cache-info arrays and etc. */
-#define AMD_CACHE_INFO_SIZE      (3)
-#define AMD_L1_CACHE_SIZE_IDX    (0)
-#define AMD_L2_CACHE_SIZE_IDX    (1)
-#define AMD_L3_CACHE_SIZE_IDX    (2)
 #define INTEL_CACHE_INFO_SIZE    (6)
 #define INTEL_L1_CACHE_SIZE_IDX  (0)
 #define INTEL_L2_CACHE_SIZE_IDX  (1)
@@ -55,9 +51,9 @@
 #define INTEL_CACHE_SETS       (0xFFFFFFFF)
 
 /* calculates cache size, see AMDs "CPUID Specification" */
-#define AMD_CALC_L1_CACHE_SIZE(a) ( (a[AMD_L1_CACHE_SIZE_IDX] & AMD_L1_CACHE_SIZE_MASK) >> 24 ) * KILO
-#define AMD_CALC_L2_CACHE_SIZE(a) ( (a[AMD_L2_CACHE_SIZE_IDX] & AMD_L2_CACHE_SIZE_MASK) >> 16 ) * KILO
-#define AMD_CALC_L3_CACHE_SIZE(a) ( (a[AMD_L3_CACHE_SIZE_IDX] & AMD_L3_CACHE_SIZE_MASK) >> 18 ) * 512 * KILO
+#define AMD_CALC_L1_CACHE_SIZE(a) ( (a & AMD_L1_CACHE_SIZE_MASK) >> 24 ) * KILO
+#define AMD_CALC_L2_CACHE_SIZE(a) ( (a & AMD_L2_CACHE_SIZE_MASK) >> 16 ) * KILO
+#define AMD_CALC_L3_CACHE_SIZE(a) ( (a & AMD_L3_CACHE_SIZE_MASK) >> 18 ) * 512 * KILO
 
 /* calculates cache size, Formula found in intels "Intel 64 and IA-32 Architectures Software Developer Manual", p. 198 (pdf:264) */
 #define INTEL_CALC_CACHE_SIZE(a,b)                    \
@@ -74,64 +70,16 @@
 
 namespace viennacl
 {
-  void get_vendor_string(char *vendor)
-  {
-    __asm__
-      (
-        "movl  $0, %%eax         \n\t"
-        "cpuid                  \n\t"
-	"movl  %%ebx, (%0)    \n\t"
-        "movl  %%edx, 4(%0)   \n\t"
-        "movl  %%ecx, 8(%0)   \n\t"
-        :              
-        : "r" (vendor)              
-        : "%eax", "%edx", "%ecx"
-        );
-  }
-  
   void get_cache_amd(uint32_t *l1l2l3)
   {
     /* l1 = %rdi, l2 = %rsi, l3 = %rdx, %rcx*/
-    __asm__
-      (
-        /* get L1-cache info */
-        "movl  $" AMD_GET_L1 ", %%eax \n\t"
-        "cpuid                    \n\t"
-        "movl  %%ecx, (%0)     \n\t"
-        /* get L2-cache info */
-        "movl  $" AMD_GET_L2 ", %%eax \n\t"
-        "cpuid                    \n\t"
-        "movl  %%ecx, 4(%0)     \n\t"
-        /* get L3-cache info */
-        "movl  $" AMD_GET_L3 ", %%eax \n\t"
-        "cpuid                    \n\t"
-        "movl  %%edx, 8(%0)     \n\t"
-        : 
-        : "r" (l1l2l3)
-        : "%eax", "%ebx", "%ecx", "%edx"
-        );
-  }
 
-  void get_cache_intel_leaf2(uint32_t *l1l2l3)
-  {
-    __asm__
-      (
-        "movl  $" INTEL_GET_CACHE_LEAF2 ", %%eax \n\t"
-        "cpuid                             \n\t"
-        "movl  %%eax,   (%0)            \n\t"
-        "movl  %%ebx,  4(%0)            \n\t"
-        "movl  %%ecx,  8(%0)            \n\t"
-        "movl  %%edx, 12(%0)            \n\t"
-        :
-        : "r" (l1l2l3)
-        : "%eax", "%ebx", "%ecx", "%edx"
-        );
   }
 
   void get_cache_intel_leaf4(uint32_t *l1l2l3)
   {
     uint32_t tmp[2] = {0};
-    uint32_t cache_type[1] = {0x0000};
+    uint32_t cache_type = 0x0000;
     uint32_t i = 0x0000;
     vcl_size_t l1l2l3_idx = 0;
 
@@ -140,19 +88,19 @@ namespace viennacl
       __asm__
         (
           "movl  $" INTEL_GET_CACHE_LEAF4 ", %%eax \n\t"
-          "movl  %1   , %%ecx                      \n\t"
+          "movl  %3   , %%ecx                      \n\t"
           "cpuid                                   \n\t"
-          "movl  %%ebx,  (%0)          \n\t"
-          "movl  %%ecx, 4(%0)          \n\t"
-          "movl  %%eax,  (%2)                      \n\t"
-          :
-          : "r" (tmp), "r" (i), "r" (cache_type)
-          : "%eax", "%ebx", "%ecx", "%edx"
+          "movl  %%ebx,  %0          \n\t"
+          "movl  %%ecx,  %1          \n\t"
+          "movl  %%eax,  %2                      \n\t"
+          : "=r" (tmp[0]), "=r" (tmp[1]), "=r" (cache_type)
+          : "r" (i)
+          : "%eax", "%ebx", "%ecx", "%edx", "memory"
           );
 	
-      cache_type[0] = (cache_type[0] & INTEL_CACHE_TYPE_MASK);
+      cache_type = (cache_type & INTEL_CACHE_TYPE_MASK);
 
-      if ( (cache_type[0] == INTEL_DATA_CACHE_TYPE) || (cache_type[0] == INTEL_UNIFIED_CACHE_TYPE) )
+      if ( (cache_type == INTEL_DATA_CACHE_TYPE) || (cache_type == INTEL_UNIFIED_CACHE_TYPE) )
       {
         assert((l1l2l3_idx < 6) && bool("Apparantly more than three data caches! get_cache_sizes() expects three levels at max..."));
 
@@ -161,7 +109,7 @@ namespace viennacl
         l1l2l3_idx += 2;
       }
       ++i;
-    } while (cache_type[0] != INTEL_NO_MORE_CACHE);
+    } while (cache_type != INTEL_NO_MORE_CACHE);
   }
 
   /**
@@ -178,12 +126,22 @@ namespace viennacl
     bool use_cpuid_leaf4 = false;
 
     /* try to read out cache information with cpuid leaf 2 */
-    get_cache_intel_leaf2(registers);
+    __asm__
+      (
+        "movl  $" INTEL_GET_CACHE_LEAF2 ", %%eax \n\t"
+        "cpuid                             \n\t"
+        "movl  %%eax, %0            \n\t"
+        "movl  %%ebx, %1            \n\t"
+        "movl  %%ecx, %2            \n\t"
+        "movl  %%edx, %3            \n\t"
+        : "=r" (registers[0]), "=r" (registers[1]), "=r" (registers[2]), "=r" (registers[3])
+        : 
+        : "%eax", "%ebx", "%ecx", "%edx"
+        );
 
-    /* Iterate over all bytes of registers %eax, %ebx, %ecx and %edx (stored in l1l2l3).
+    /* Iterate over all bytes of registers %eax, %ebx, %ecx and %edx (stored in registers).
      * Least significant byte of %eax should not be checked as it is always set to 0x01,
      * but 0x01 is a TLB descriptor the default case (do nothing) is matched. */
-  
     for (int i=0; i<4; ++i)
     {
       /* Most significant bit is zero if register conatins valid 1-byte-descriptors */
@@ -239,7 +197,7 @@ namespace viennacl
           case 0x00000086: l2_size = 512*KILO; break;
           case 0x00000087: l2_size =   1*MEGA; break;
           case 0x000000D0: l3_size = 512*KILO; break;
-	  case 0x000000D1: l3_size =   1*MEGA; break;	      
+          case 0x000000D1: l3_size =   1*MEGA; break;	      
           case 0x000000D2: l3_size =   2*MEGA; break;	        
           case 0x000000D6: l3_size =   1*MEGA; break;	        
           case 0x000000D7: l3_size =   2*MEGA; break;	        
@@ -265,6 +223,7 @@ namespace viennacl
       uint32_t l1l2l3[INTEL_CACHE_INFO_SIZE];
 
       get_cache_intel_leaf4(l1l2l3);
+      
       l1_size = INTEL_CALC_CACHE_SIZE(l1l2l3[0], l1l2l3[1]);
       l2_size = INTEL_CALC_CACHE_SIZE(l1l2l3[2], l1l2l3[3]);
       l3_size = INTEL_CALC_CACHE_SIZE(l1l2l3[4], l1l2l3[5]);
@@ -276,25 +235,53 @@ namespace viennacl
   void set_cache_sizes(vcl_size_t &l1_size, vcl_size_t &l2_size, vcl_size_t &l3_size)
   {
     /* used to store CPU-vendor string */
-    char vendor[VENDOR_STR_LEN] = {0};
-        
-    /* check CPU-Vendor */
-    get_vendor_string(vendor);
+    uint32_t vendor[3] = {0};
 
-    if ( strncmp(vendor, INTEL, VENDOR_STR_LEN) == 0 )
+    /* get vendor-string */
+    __asm__
+      (
+        "movl  $0, %%eax      \n\t"
+        "cpuid                \n\t"
+        "movl  %%ebx, %0    \n\t"
+        "movl  %%edx, %1   \n\t"
+        "movl  %%ecx, %2   \n\t"
+        : "=r" (vendor[0]), "=r" (vendor[1]), "=r" (vendor[2])
+        : 
+        : "%eax", "%ebx", "%edx", "%ecx"
+       );
+    /* check CPU-Vendor */
+
+    if ( strncmp((char *)vendor, INTEL, VENDOR_STR_LEN) == 0 )
     {
       set_cache_intel(l1_size, l2_size, l3_size);
     }      
-    else if ( strncmp(vendor, AMD, VENDOR_STR_LEN) == 0 )
+    else if ( strncmp((char *)vendor, AMD, VENDOR_STR_LEN) == 0 )
     {
       /* store cache information (size, associativity, etc.)*/
-      uint32_t l1l2l3[AMD_CACHE_INFO_SIZE] = {0};
+      uint32_t registers[3] = {0};
       
       /* gets cache info and sets sizes in Bytes */
-      get_cache_amd(l1l2l3);
-      l1_size = AMD_CALC_L1_CACHE_SIZE(l1l2l3);
-      l2_size = AMD_CALC_L2_CACHE_SIZE(l1l2l3);
-      l3_size = AMD_CALC_L3_CACHE_SIZE(l1l2l3);
+    __asm__
+      (
+        /* get L1-cache info */
+        "movl  $" AMD_GET_L1 ", %%eax \n\t"
+        "cpuid                    \n\t"
+        "movl  %%ecx, %0     \n\t"
+        /* get L2-cache info */
+        "movl  $" AMD_GET_L2 ", %%eax \n\t"
+        "cpuid                    \n\t"
+        "movl  %%ecx, %1     \n\t"
+        /* get L3-cache info */
+        "movl  $" AMD_GET_L3 ", %%eax \n\t"
+        "cpuid                    \n\t"
+        "movl  %%edx, %2     \n\t"
+        : "=r" (registers[0]), "=r" (registers[1]),"=r" (registers[2])
+        : 
+        : "%eax", "%ebx", "%ecx", "%edx"
+       );
+      l1_size = AMD_CALC_L1_CACHE_SIZE(registers[0]);
+      l2_size = AMD_CALC_L2_CACHE_SIZE(registers[1]);
+      l3_size = AMD_CALC_L3_CACHE_SIZE(registers[2]);
     }
     else
     {
@@ -331,6 +318,7 @@ namespace viennacl
     static vcl_size_t l2 = 0;
     static vcl_size_t l3 = 0;
     static bool cache_sizes_unknown = true;
+    //std::cout << "hey you!" << std::endl;//DEBUG    
 
     /* hardware won't change during run-time (hopefully)
      * ==> determine cache sizes only once */
@@ -342,29 +330,43 @@ namespace viennacl
     
     /* Calculate blocksizes for L1 (mc x nr) and L2 (mc * kc) and L3 cache. 
      * Assumed that block in L2 cache should be square and half of cache shuold be empty. */
+    vcl_size_t tmp = l1 / (2 * nr * sizeof(NumericT));
     // TODO: improve formula! 
-    if (l1 == 0)
+    if (tmp <= 0)
+    {
       kc  = k_size;
-    else
-      kc  = l1 / (2 * nr * sizeof(NumericT));
-    
-    if (l2 == 0)
-      mc  = m_size;
-    else
-      mc = l2 / (2 * kc * sizeof(NumericT));
-    mc += mr - (mc%mr); //mc must be divisible by mr
-
-    if (l3 == 0)
-      nc = n_size;
+    }
     else
     {
-      int num_threads = 1;
-      
+      kc  = tmp;
+    }
+    tmp = l2 / (2 * kc * sizeof(NumericT));
+
+    if (tmp <= 0)
+    {
+      mc  = m_size;
+    }
+    else
+    {
+      mc = tmp;
+    }
+    mc += mr - (mc%mr); //mc must be divisible by mr
+
+    int num_threads = 1;
+
 #ifdef VIENNACL_WITH_OPENMP 
-      num_threads = omp_get_max_threads();
+    num_threads = omp_get_max_threads();
 #endif
 
-      nc   = std::min( l3/( std::max(2,num_threads)*kc*sizeof(NumericT) ), (n_size-1)/num_threads+1 );
+    tmp = std::min(l3/( 2*num_threads*kc*sizeof(NumericT)), (n_size-1)/num_threads+1);
+
+    if (tmp <= 0)
+    {
+      nc = (n_size-1)/num_threads+1;
+    }
+    else
+    {
+      nc = tmp;
     }
     nc += nr - (nc%nr); // nc must be divisible by nr
   }

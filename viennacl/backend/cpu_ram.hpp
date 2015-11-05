@@ -24,7 +24,7 @@
 
 #include <cassert>
 #include <vector>
-#ifdef VIENNACL_WITH_AVX2
+#if defined(VIENNACL_WITH_AVX2) || defined(VIENNACL_WITH_AVX)
 #include <stdlib.h>
 #endif
 
@@ -55,7 +55,7 @@ namespace detail
   template<class U>
   struct array_deleter
   {
-#ifdef VIENNACL_WITH_AVX2
+#if defined(VIENNACL_WITH_AVX2) || defined(VIENNACL_WITH_AVX)
     void operator()(U* p) const { free(p); }
 #else
     void operator()(U* p) const { delete[] p; }
@@ -72,7 +72,7 @@ namespace detail
  */
 inline handle_type  memory_create(vcl_size_t size_in_bytes, const void * host_ptr = NULL)
 {
-#ifdef VIENNACL_WITH_AVX2
+#if  defined(VIENNACL_WITH_AVX2) || defined(VIENNACL_WITH_AVX)
   // Note: aligned_alloc not available on all compilers. Consider platform-specific alternatives such as posix_memalign()
   if (!host_ptr)
     return handle_type(reinterpret_cast<char*>(aligned_alloc(32, size_in_bytes)), detail::array_deleter<char>());
