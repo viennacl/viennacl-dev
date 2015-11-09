@@ -5,6 +5,19 @@
 #include "viennacl/forwards.h"
 #include "viennacl/traits/size.hpp"
 
+/* defines to quickly change what denominator of each cache level should be used (what fraction, half, quarter etc.) */
+#define L1_DENOM_AVX (4)
+#define L2_DENOM_AVX (2)
+#define L3_DENOM_AVX (2)
+
+#define L1_DENOM_SSE (4)
+#define L2_DENOM_SSE (4)
+#define L3_DENOM_SSE (2)
+
+#define L1_DENOM_STD (4)
+#define L2_DENOM_STD (2)
+#define L3_DENOM_STD (2)
+
 /* sizes for different architectures in bytes */
 #define AVX_REG_SIZE     (256/8)
 #define AVX_512_REG_SIZE (512/8)
@@ -293,19 +306,30 @@ namespace viennacl
   template<typename NumericT> 
   void get_block_sizes(const vcl_size_t m_size, const vcl_size_t k_size, const vcl_size_t n_size, vcl_size_t & mc, vcl_size_t & kc, vcl_size_t & nc, vcl_size_t & mr, vcl_size_t & nr)
   {
+    vcl_size_t l1_denom, l2_denom, l3_denom;
+
     /* get register-block sizes in bytes and according to NumericT */
 #ifdef VIENNACL_WITH_AVX
 
     mr = 6 + 2*(sizeof(float)/sizeof(NumericT));
     nr = 8 + 8*(sizeof(float)/sizeof(NumericT));
+    l1_denom = L1_DENOM_AVX;
+    l2_denom = L2_DENOM_AVX;
+    l3_denom = L3_DENOM_AVX;
 #elif VIENNACL_WITH_SSE
 
     mr = 6 + 2*(sizeof(float)/sizeof(NumericT));
     nr = 4 + 4*(sizeof(float)/sizeof(NumericT));
+    l1_denom = L1_DENOM_SSE;
+    l2_denom = L2_DENOM_SSE;
+    l3_denom = L3_DENOM_SSE;
 #else
     /* standard case */
     mr = 1;
     nr = 1;
+    l1_denom = L1_DENOM_STD;
+    l2_denom = L2_DENOM_STD;
+    l3_denom = L3_DENOM_STD;
 #endif
 
     static vcl_size_t l1 = 0;
@@ -320,10 +344,10 @@ namespace viennacl
       set_cache_sizes(l1, l2, l3);
       cache_sizes_unknown = false;
     }
-    
+
     /* Calculate blocksizes for L1 (mc x nr) and L2 (mc * kc) and L3 cache. 
      * Assumed that block in L2 cache should be square and half of cache shuold be empty. */
-    vcl_size_t tmp = l1 / (2 * nr * sizeof(NumericT));
+    vcl_size_t tmp = l1 / (l1_denom * nr * sizeof(NumericT));
     // TODO: improve formula! 
     if (tmp <= 0)
     {
@@ -333,7 +357,7 @@ namespace viennacl
     {
       kc  = tmp;
     }
-    tmp = l2 / (2 * kc * sizeof(NumericT));
+    tmp = l2 / (l2_denom * kc * sizeof(NumericT));
 
     if (tmp <= 0)
     {
@@ -351,7 +375,7 @@ namespace viennacl
     num_threads = omp_get_max_threads();
 #endif
 
-    tmp = std::min(l3/( 2*num_threads*kc*sizeof(NumericT)), (n_size-1)/num_threads+1);
+    tmp = std::min(l3/( l3_denom*num_threads*kc*sizeof(NumericT)), (n_size-1)/num_threads+1);
 
     if (tmp <= 0)
     {
