@@ -11,28 +11,18 @@
 #define MR_F ( 8)
 #define NR_F (16)
 
-/* addresses for buffer_C */
+/* addresses for buffer_C, 
+ * where C0 is the right block and C1 is the left block of the whole partial result */
 #define C0_ROW_D(a) (a*NR_D)
 #define C1_ROW_D(a) (a*NR_D + NR_D/2)
 
 #define C0_ROW_F(a) (a*NR_F)
 #define C1_ROW_F(a) (a*NR_F + NR_F/2)
 
-/* imm8 values for permute and shuffle instructions */
-#define SWAP_128_BIT  (0x01)
-
-#define SWAP_64_BIT_D (0x05)
-#define SHUFFLE_D     (0x0A)
-#define PERMUTE_D     (0x30)
-
-#define SWAP_64_BIT_F (0x4E)
-#define SWAP_32_BIT_F (0xB1)
-#define SHUFFLE_F     (0xD8)
-
 namespace viennacl
 {
   /**
-   * @brief general "dummy" template,fully specialized for supported types (double/float)
+   * @brief general "dummy" template, fully specialized for supported types (double/float)
    */
   template<typename NumericT>
   inline void avx_micro_kernel(NumericT const *buffer_A, NumericT const *buffer_B, NumericT *buffer_C,

@@ -1025,7 +1025,6 @@ namespace viennacl
                   vcl_size_t C_size1, vcl_size_t C_size2, 
                   NumericT alpha, NumericT beta)
         {
-          /* TODO: TOP COMMENT WITH PRODUCT vs MEMORY SIZES/ADDRESSING etc. */
           /* setup matrices */
           NumericT const * data_A = detail::extract_raw_pointer<NumericT>(A);
           vcl_size_t A_start1 = viennacl::traits::start1(A);
@@ -1062,7 +1061,8 @@ namespace viennacl
           vcl_size_t kc;
           vcl_size_t nc;
 
-          /* "product-sizes", see top comment */
+          /* "product-sizes", right sizes for a propper matrix-matrix multiplication
+           *  these differ from the "memory" sizes if the matrix is transposed (not moved in memory) */
           vcl_size_t m_size = A_trans ? A_size2 : A_size1;
           vcl_size_t k_size = A_trans ? A_size1 : A_size2;
           vcl_size_t n_size = B_trans ? B_size1 : B_size2;
@@ -1095,7 +1095,7 @@ namespace viennacl
           for (vcl_size_t C2B2_idx=0; C2B2_idx<num_blocks_C2; ++C2B2_idx)
           {
             /* Allocate thread-local auxiliary buffers.
-             * Do NOT fill them with zeros (as it's not needed, do it anyway?). */
+             * Do NOT fill them with zeros, except buffer_C (before micro-kernel is calle) */
             viennacl::context ctx; // dummy fuer CPU-RAM
             viennacl::backend::mem_handle h_A;
             viennacl::backend::mem_handle h_B;
@@ -1169,12 +1169,10 @@ namespace viennacl
                           if (A2B1_idx == 0)
                           {
                             C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j )  = alpha * buffer_C[i*nr + j];
-                            //std::cout << "buffer_C1 " << buffer_C[i*nr+j] << std::endl;//DEBUG
                           }
                           else
                           {
                             C( C1A1_idx*mc + sliver_A_idx*mr + i, C2B2_idx*nc + sliver_B_idx*nr + j ) += alpha * buffer_C[i*nr + j];
-                            //std::cout << "buffer_C2 " << buffer_C[i*nr+j] << std::endl;//DEBUG
                           }
                         }
                       }

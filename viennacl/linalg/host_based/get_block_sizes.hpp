@@ -83,6 +83,9 @@
 
 namespace viennacl
 {
+  /**
+   * @brief reads out cpuid with leaf4 (see Intel's instruction set manual, 'cpuid')
+   */
   void get_cache_intel_leaf4(uint32_t *l1l2l3)
   {
     uint32_t tmp[2] = {0};
@@ -104,7 +107,7 @@ namespace viennacl
           : "r" (i)
           : "%eax", "%ebx", "%ecx", "%edx", "memory"
           );
-	
+
       cache_type = (cache_type & INTEL_CACHE_TYPE_MASK);
 
       if ( (cache_type == INTEL_DATA_CACHE_TYPE) || (cache_type == INTEL_UNIFIED_CACHE_TYPE) )
@@ -132,7 +135,7 @@ namespace viennacl
      * therefore use leaf4 instead */
     bool use_cpuid_leaf4 = false;
 
-    /* try to read out cache information with cpuid leaf 2 */
+    /* try to read out cache information with cpuid leaf 2 (see Intel's instruction set manual, 'cpuid') */
     __asm__
       (
         "movl  $" INTEL_GET_CACHE_LEAF2 ", %%eax \n\t"
@@ -256,8 +259,8 @@ namespace viennacl
         : 
         : "%eax", "%ebx", "%edx", "%ecx"
        );
-    /* check CPU-Vendor */
 
+    /* check CPU-Vendor */
     if ( strncmp((char *)vendor, INTEL, VENDOR_STR_LEN) == 0 )
     {
       set_cache_intel(l1_size, l2_size, l3_size);
@@ -267,7 +270,7 @@ namespace viennacl
       /* store cache information (size, associativity, etc.)*/
       uint32_t registers[3] = {0};
       
-      /* gets cache info and sets sizes in Bytes */
+      /* gets cache info and sets sizes in Bytes (see AMD cpuid-reference)*/
     __asm__
       (
         /* get L1-cache info */
@@ -345,9 +348,9 @@ namespace viennacl
       cache_sizes_unknown = false;
     }
 
-    /* Calculate blocksizes for L1 (mc x nr) and L2 (mc * kc) and L3 cache. 
-     * Assumed that block in L2 cache should be square and half of cache shuold be empty. */
+    /* Calculate blocksizes for L1 (mc x nr) and L2 (mc * kc) and L3 cache */
     vcl_size_t tmp = l1 / (l1_denom * nr * sizeof(NumericT));
+
     // TODO: improve formula! 
     if (tmp <= 0)
     {

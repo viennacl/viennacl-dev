@@ -6,7 +6,7 @@
 namespace viennacl
 {
   /**
-   * @brief standard micro-kernel with no vectorization
+   * @brief standard micro-kernel with no vectorization, slow!
    */
   template<typename NumericT>
   inline void standard_micro_kernel(NumericT const *buffer_A, NumericT const *buffer_B, NumericT *buffer_C,
