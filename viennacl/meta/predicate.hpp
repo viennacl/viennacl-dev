@@ -490,16 +490,18 @@ template<class T>
 struct is_primitive_type{ enum {value = false}; };
 
 /** \cond */
-template<> struct is_primitive_type<float>         { enum { value = true }; };
-template<> struct is_primitive_type<double>        { enum { value = true }; };
-template<> struct is_primitive_type<unsigned int>  { enum { value = true }; };
-template<> struct is_primitive_type<int>           { enum { value = true }; };
-template<> struct is_primitive_type<unsigned char> { enum { value = true }; };
-template<> struct is_primitive_type<char>          { enum { value = true }; };
-template<> struct is_primitive_type<unsigned long> { enum { value = true }; };
-template<> struct is_primitive_type<long>          { enum { value = true }; };
-template<> struct is_primitive_type<unsigned short>{ enum { value = true }; };
-template<> struct is_primitive_type<short>         { enum { value = true }; };
+template<> struct is_primitive_type<float>              { enum { value = true }; };
+template<> struct is_primitive_type<double>             { enum { value = true }; };
+template<> struct is_primitive_type<unsigned int>       { enum { value = true }; };
+template<> struct is_primitive_type<int>                { enum { value = true }; };
+template<> struct is_primitive_type<unsigned char>      { enum { value = true }; };
+template<> struct is_primitive_type<char>               { enum { value = true }; };
+template<> struct is_primitive_type<unsigned long>      { enum { value = true }; };
+template<> struct is_primitive_type<unsigned long long> { enum { value = true }; };
+template<> struct is_primitive_type<long>               { enum { value = true }; };
+template<> struct is_primitive_type<long long>          { enum { value = true }; };
+template<> struct is_primitive_type<unsigned short>     { enum { value = true }; };
+template<> struct is_primitive_type<short>              { enum { value = true }; };
 /** \endcond */
 
 #ifdef VIENNACL_WITH_OPENCL

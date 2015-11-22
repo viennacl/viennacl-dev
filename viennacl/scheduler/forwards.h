@@ -81,6 +81,8 @@ enum operation_node_type
   OPERATION_UNARY_CAST_UINT_TYPE,
   OPERATION_UNARY_CAST_LONG_TYPE,
   OPERATION_UNARY_CAST_ULONG_TYPE,
+  OPERATION_UNARY_CAST_LONGLONG_TYPE,
+  OPERATION_UNARY_CAST_ULONGLONG_TYPE,
   OPERATION_UNARY_CAST_HALF_TYPE,
   OPERATION_UNARY_CAST_FLOAT_TYPE,
   OPERATION_UNARY_CAST_DOUBLE_TYPE,
@@ -168,6 +170,8 @@ namespace result_of
   template<> struct op_type_info<op_element_cast<unsigned int> >      { enum { id = OPERATION_UNARY_CAST_UINT_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_cast<long> >      { enum { id = OPERATION_UNARY_CAST_LONG_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_cast<unsigned long> >      { enum { id = OPERATION_UNARY_CAST_ULONG_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_cast<long long> >      { enum { id = OPERATION_UNARY_CAST_LONGLONG_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_cast<unsigned long long> >      { enum { id = OPERATION_UNARY_CAST_ULONGLONG_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_cast<float> >      { enum { id = OPERATION_UNARY_CAST_FLOAT_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_cast<double> >      { enum { id = OPERATION_UNARY_CAST_DOUBLE_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
 
@@ -294,7 +298,9 @@ enum statement_node_numeric_type
   INT_TYPE,
   UINT_TYPE,
   LONG_TYPE,
+  LONGLONG_TYPE,
   ULONG_TYPE,
+  ULONGLONG_TYPE,
   HALF_TYPE,
   FLOAT_TYPE,
   DOUBLE_TYPE
@@ -311,16 +317,18 @@ namespace result_of
 
   /** \cond */
 
-  template<> struct numeric_type_id<char>           { enum { value = CHAR_TYPE   }; };
-  template<> struct numeric_type_id<unsigned char>  { enum { value = UCHAR_TYPE  }; };
-  template<> struct numeric_type_id<short>          { enum { value = SHORT_TYPE  }; };
-  template<> struct numeric_type_id<unsigned short> { enum { value = USHORT_TYPE }; };
-  template<> struct numeric_type_id<int>            { enum { value = INT_TYPE    }; };
-  template<> struct numeric_type_id<unsigned int>   { enum { value = UINT_TYPE   }; };
-  template<> struct numeric_type_id<long>           { enum { value = LONG_TYPE   }; };
-  template<> struct numeric_type_id<unsigned long>  { enum { value = ULONG_TYPE  }; };
-  template<> struct numeric_type_id<float>          { enum { value = FLOAT_TYPE  }; };
-  template<> struct numeric_type_id<double>         { enum { value = DOUBLE_TYPE }; };
+  template<> struct numeric_type_id<char>                { enum { value = CHAR_TYPE   }; };
+  template<> struct numeric_type_id<unsigned char>       { enum { value = UCHAR_TYPE  }; };
+  template<> struct numeric_type_id<short>               { enum { value = SHORT_TYPE  }; };
+  template<> struct numeric_type_id<unsigned short>      { enum { value = USHORT_TYPE }; };
+  template<> struct numeric_type_id<int>                 { enum { value = INT_TYPE    }; };
+  template<> struct numeric_type_id<unsigned int>        { enum { value = UINT_TYPE   }; };
+  template<> struct numeric_type_id<long>                { enum { value = LONG_TYPE   }; };
+  template<> struct numeric_type_id<long long>           { enum { value = LONGLONG_TYPE   }; };
+  template<> struct numeric_type_id<unsigned long>       { enum { value = ULONG_TYPE  }; };
+  template<> struct numeric_type_id<unsigned long long>  { enum { value = ULONGLONG_TYPE  }; };
+  template<> struct numeric_type_id<float>               { enum { value = FLOAT_TYPE  }; };
+  template<> struct numeric_type_id<double>              { enum { value = DOUBLE_TYPE }; };
 
   /** \endcond */
 }
@@ -355,70 +363,82 @@ struct lhs_rhs_element
     int                host_int;
     unsigned int       host_uint;
     long               host_long;
+    long long          host_longlong;
     unsigned long      host_ulong;
+    unsigned long long host_ulonglong;
     float              host_float;
     double             host_double;
 
     // Note: ViennaCL types have potentially expensive copy-CTORs, hence using pointers:
 
     // scalars:
-    viennacl::scalar<char>             *scalar_char;
-    viennacl::scalar<unsigned char>    *scalar_uchar;
-    viennacl::scalar<short>            *scalar_short;
-    viennacl::scalar<unsigned short>   *scalar_ushort;
-    viennacl::scalar<int>              *scalar_int;
-    viennacl::scalar<unsigned int>     *scalar_uint;
-    viennacl::scalar<long>             *scalar_long;
-    viennacl::scalar<unsigned long>    *scalar_ulong;
-    viennacl::scalar<float>            *scalar_float;
-    viennacl::scalar<double>           *scalar_double;
+    viennacl::scalar<char>               *scalar_char;
+    viennacl::scalar<unsigned char>      *scalar_uchar;
+    viennacl::scalar<short>              *scalar_short;
+    viennacl::scalar<unsigned short>     *scalar_ushort;
+    viennacl::scalar<int>                *scalar_int;
+    viennacl::scalar<unsigned int>       *scalar_uint;
+    viennacl::scalar<long>               *scalar_long;
+    viennacl::scalar<long long>          *scalar_longlong;
+    viennacl::scalar<unsigned long>      *scalar_ulong;
+    viennacl::scalar<unsigned long long> *scalar_ulonglong;
+    viennacl::scalar<float>              *scalar_float;
+    viennacl::scalar<double>             *scalar_double;
 
     // vectors:
-    viennacl::vector_base<char>             *vector_char;
-    viennacl::vector_base<unsigned char>    *vector_uchar;
-    viennacl::vector_base<short>            *vector_short;
-    viennacl::vector_base<unsigned short>   *vector_ushort;
-    viennacl::vector_base<int>              *vector_int;
-    viennacl::vector_base<unsigned int>     *vector_uint;
-    viennacl::vector_base<long>             *vector_long;
-    viennacl::vector_base<unsigned long>    *vector_ulong;
-    viennacl::vector_base<float>            *vector_float;
-    viennacl::vector_base<double>           *vector_double;
+    viennacl::vector_base<char>               *vector_char;
+    viennacl::vector_base<unsigned char>      *vector_uchar;
+    viennacl::vector_base<short>              *vector_short;
+    viennacl::vector_base<unsigned short>     *vector_ushort;
+    viennacl::vector_base<int>                *vector_int;
+    viennacl::vector_base<unsigned int>       *vector_uint;
+    viennacl::vector_base<long>               *vector_long;
+    viennacl::vector_base<long long>          *vector_longlong;
+    viennacl::vector_base<unsigned long>      *vector_ulong;
+    viennacl::vector_base<unsigned long long> *vector_ulonglong;
+    viennacl::vector_base<float>              *vector_float;
+    viennacl::vector_base<double>             *vector_double;
 
     // implicit vectors:
-    viennacl::implicit_vector_base<char>             *implicit_vector_char;
-    viennacl::implicit_vector_base<unsigned char>    *implicit_vector_uchar;
-    viennacl::implicit_vector_base<short>            *implicit_vector_short;
-    viennacl::implicit_vector_base<unsigned short>   *implicit_vector_ushort;
-    viennacl::implicit_vector_base<int>              *implicit_vector_int;
-    viennacl::implicit_vector_base<unsigned int>     *implicit_vector_uint;
-    viennacl::implicit_vector_base<long>             *implicit_vector_long;
-    viennacl::implicit_vector_base<unsigned long>    *implicit_vector_ulong;
-    viennacl::implicit_vector_base<float>            *implicit_vector_float;
-    viennacl::implicit_vector_base<double>           *implicit_vector_double;
+    viennacl::implicit_vector_base<char>               *implicit_vector_char;
+    viennacl::implicit_vector_base<unsigned char>      *implicit_vector_uchar;
+    viennacl::implicit_vector_base<short>              *implicit_vector_short;
+    viennacl::implicit_vector_base<unsigned short>     *implicit_vector_ushort;
+    viennacl::implicit_vector_base<int>                *implicit_vector_int;
+    viennacl::implicit_vector_base<unsigned int>       *implicit_vector_uint;
+    viennacl::implicit_vector_base<long>               *implicit_vector_long;
+    viennacl::implicit_vector_base<long long>          *implicit_vector_longlong;
+    viennacl::implicit_vector_base<unsigned long>      *implicit_vector_ulong;
+    viennacl::implicit_vector_base<unsigned long long> *implicit_vector_ulonglong;
+    viennacl::implicit_vector_base<float>              *implicit_vector_float;
+    viennacl::implicit_vector_base<double>             *implicit_vector_double;
 
     // dense matrices:
-    viennacl::matrix_base<char>             *matrix_char;
-    viennacl::matrix_base<unsigned char>    *matrix_uchar;
-    viennacl::matrix_base<short>            *matrix_short;
-    viennacl::matrix_base<unsigned short>   *matrix_ushort;
-    viennacl::matrix_base<int>              *matrix_int;
-    viennacl::matrix_base<unsigned int>     *matrix_uint;
-    viennacl::matrix_base<long>             *matrix_long;
-    viennacl::matrix_base<unsigned long>    *matrix_ulong;
-    viennacl::matrix_base<float>            *matrix_float;
-    viennacl::matrix_base<double>           *matrix_double;
+    viennacl::matrix_base<char>               *matrix_char;
+    viennacl::matrix_base<unsigned char>      *matrix_uchar;
+    viennacl::matrix_base<short>              *matrix_short;
+    viennacl::matrix_base<unsigned short>     *matrix_ushort;
+    viennacl::matrix_base<int>                *matrix_int;
+    viennacl::matrix_base<unsigned int>       *matrix_uint;
+    viennacl::matrix_base<long>               *matrix_long;
+    viennacl::matrix_base<long long>          *matrix_longlong;
+    viennacl::matrix_base<unsigned long>      *matrix_ulong;
+    viennacl::matrix_base<unsigned long long> *matrix_ulonglong;
+    viennacl::matrix_base<float>              *matrix_float;
+    viennacl::matrix_base<double>             *matrix_double;
 
-    viennacl::implicit_matrix_base<char>             *implicit_matrix_char;
-    viennacl::implicit_matrix_base<unsigned char>    *implicit_matrix_uchar;
-    viennacl::implicit_matrix_base<short>            *implicit_matrix_short;
-    viennacl::implicit_matrix_base<unsigned short>   *implicit_matrix_ushort;
-    viennacl::implicit_matrix_base<int>              *implicit_matrix_int;
-    viennacl::implicit_matrix_base<unsigned int>     *implicit_matrix_uint;
-    viennacl::implicit_matrix_base<long>             *implicit_matrix_long;
-    viennacl::implicit_matrix_base<unsigned long>    *implicit_matrix_ulong;
-    viennacl::implicit_matrix_base<float>            *implicit_matrix_float;
-    viennacl::implicit_matrix_base<double>           *implicit_matrix_double;
+    viennacl::implicit_matrix_base<char>               *implicit_matrix_char;
+    viennacl::implicit_matrix_base<unsigned char>      *implicit_matrix_uchar;
+    viennacl::implicit_matrix_base<short>              *implicit_matrix_short;
+    viennacl::implicit_matrix_base<unsigned short>     *implicit_matrix_ushort;
+    viennacl::implicit_matrix_base<int>                *implicit_matrix_int;
+    viennacl::implicit_matrix_base<unsigned int>       *implicit_matrix_uint;
+    viennacl::implicit_matrix_base<long>               *implicit_matrix_long;
+    viennacl::implicit_matrix_base<long long>          *implicit_matrix_longlong;
+    viennacl::implicit_matrix_base<unsigned long>      *implicit_matrix_ulong;
+    viennacl::implicit_matrix_base<unsigned long long> *implicit_matrix_ulonglong;
+    viennacl::implicit_matrix_base<float>              *implicit_matrix_float;
+    viennacl::implicit_matrix_base<double>             *implicit_matrix_double;
 
     //viennacl::compressed_matrix<float>    *compressed_matrix_char;
     //viennacl::compressed_matrix<double>   *compressed_matrix_uchar;
@@ -539,7 +559,9 @@ public:
   static void assign_element(lhs_rhs_element & elem, int const & t) { elem.host_int  = t; }
   static void assign_element(lhs_rhs_element & elem, unsigned int const & t) { elem.host_uint  = t; }
   static void assign_element(lhs_rhs_element & elem, long const & t) { elem.host_long  = t; }
+  static void assign_element(lhs_rhs_element & elem, long long const & t) { elem.host_longlong  = t; }
   static void assign_element(lhs_rhs_element & elem, unsigned long const & t) { elem.host_ulong  = t; }
+  static void assign_element(lhs_rhs_element & elem, unsigned long long const & t) { elem.host_ulonglong  = t; }
   static void assign_element(lhs_rhs_element & elem, float const & t) { elem.host_float  = t; }
   static void assign_element(lhs_rhs_element & elem, double const & t) { elem.host_double = t; }
 
@@ -550,7 +572,9 @@ public:
   static void assign_element(lhs_rhs_element & elem, viennacl::scalar<int>  const & t) { elem.scalar_int  = const_cast<viennacl::scalar<int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::scalar<unsigned int>  const & t) { elem.scalar_uint  = const_cast<viennacl::scalar<unsigned int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::scalar<long>  const & t) { elem.scalar_long  = const_cast<viennacl::scalar<long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::scalar<long long>  const & t) { elem.scalar_longlong  = const_cast<viennacl::scalar<long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::scalar<unsigned long>  const & t) { elem.scalar_ulong  = const_cast<viennacl::scalar<unsigned long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::scalar<unsigned long long>  const & t) { elem.scalar_ulonglong  = const_cast<viennacl::scalar<unsigned long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::scalar<float>  const & t) { elem.scalar_float  = const_cast<viennacl::scalar<float> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::scalar<double> const & t) { elem.scalar_double = const_cast<viennacl::scalar<double> *>(&t); }
 
@@ -562,7 +586,9 @@ public:
   static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<int>  const & t) { elem.vector_int  = const_cast<viennacl::vector_base<int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<unsigned int>  const & t) { elem.vector_uint  = const_cast<viennacl::vector_base<unsigned int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<long>  const & t) { elem.vector_long  = const_cast<viennacl::vector_base<long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<long long>  const & t) { elem.vector_longlong  = const_cast<viennacl::vector_base<long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<unsigned long>  const & t) { elem.vector_ulong  = const_cast<viennacl::vector_base<unsigned long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<unsigned long long>  const & t) { elem.vector_ulonglong  = const_cast<viennacl::vector_base<unsigned long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<float>  const & t) { elem.vector_float  = const_cast<viennacl::vector_base<float> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::vector_base<double> const & t) { elem.vector_double = const_cast<viennacl::vector_base<double> *>(&t); }
 
@@ -573,7 +599,9 @@ public:
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<int>  const & t) { elem.implicit_vector_int  = const_cast<viennacl::implicit_vector_base<int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<unsigned int>  const & t) { elem.implicit_vector_uint  = const_cast<viennacl::implicit_vector_base<unsigned int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<long>  const & t) { elem.implicit_vector_long  = const_cast<viennacl::implicit_vector_base<long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<long long>  const & t) { elem.implicit_vector_longlong  = const_cast<viennacl::implicit_vector_base<long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<unsigned long>  const & t) { elem.implicit_vector_ulong  = const_cast<viennacl::implicit_vector_base<unsigned long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<unsigned long long>  const & t) { elem.implicit_vector_ulonglong  = const_cast<viennacl::implicit_vector_base<unsigned long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<float>  const & t) { elem.implicit_vector_float  = const_cast<viennacl::implicit_vector_base<float> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_vector_base<double> const & t) { elem.implicit_vector_double = const_cast<viennacl::implicit_vector_base<double> *>(&t); }
 
@@ -586,7 +614,9 @@ public:
   static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<int>  const & t) { elem.matrix_int  = const_cast<viennacl::matrix_base<int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<unsigned int>  const & t) { elem.matrix_uint  = const_cast<viennacl::matrix_base<unsigned int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<long>  const & t) { elem.matrix_long  = const_cast<viennacl::matrix_base<long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<long long>  const & t) { elem.matrix_longlong  = const_cast<viennacl::matrix_base<long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<unsigned long>  const & t) { elem.matrix_ulong  = const_cast<viennacl::matrix_base<unsigned long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<unsigned long long>  const & t) { elem.matrix_ulonglong  = const_cast<viennacl::matrix_base<unsigned long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<float> const & t) { elem.matrix_float  = const_cast<viennacl::matrix_base<float> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::matrix_base<double> const & t) { elem.matrix_double = const_cast<viennacl::matrix_base<double> *>(&t); }
 
@@ -597,7 +627,9 @@ public:
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_matrix_base<int>  const & t) { elem.implicit_matrix_int  = const_cast<viennacl::implicit_matrix_base<int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_matrix_base<unsigned int>  const & t) { elem.implicit_matrix_uint  = const_cast<viennacl::implicit_matrix_base<unsigned int> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_matrix_base<long>  const & t) { elem.implicit_matrix_long  = const_cast<viennacl::implicit_matrix_base<long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::implicit_matrix_base<long long>  const & t) { elem.implicit_matrix_longlong  = const_cast<viennacl::implicit_matrix_base<long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_matrix_base<unsigned long>  const & t) { elem.implicit_matrix_ulong  = const_cast<viennacl::implicit_matrix_base<unsigned long> *>(&t); }
+  static void assign_element(lhs_rhs_element & elem, viennacl::implicit_matrix_base<unsigned long long>  const & t) { elem.implicit_matrix_ulonglong  = const_cast<viennacl::implicit_matrix_base<unsigned long long> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_matrix_base<float> const & t) { elem.implicit_matrix_float  = const_cast<viennacl::implicit_matrix_base<float> *>(&t); }
   static void assign_element(lhs_rhs_element & elem, viennacl::implicit_matrix_base<double> const & t) { elem.implicit_matrix_double = const_cast<viennacl::implicit_matrix_base<double> *>(&t); }
 
