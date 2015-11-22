@@ -949,9 +949,9 @@ void copy(const CPUMatrixT & cpu_matrix,
 }
 
 //
-//cpu to gpu, STL type:
+//cpu to gpu, STL std::vector<std::vector<>>:
 //
-/** @brief Copies a dense STL-type matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU)
+/** @brief Copies a dense std::vector<std::vector<>> matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU)
 *
 * @param cpu_matrix   A dense matrix on the host of type std::vector< std::vector<> >. cpu_matrix[i][j] returns the element in the i-th row and j-th columns (both starting with zero)
 * @param gpu_matrix   A dense ViennaCL matrix
@@ -986,7 +986,92 @@ void copy(const std::vector< std::vector<NumericT, A1>, A2> & cpu_matrix,
 
 
 //
-//cpu to gpu, another STL type:
+//cpu to gpu, STL std::vector<>:
+//
+/** @brief Copies a dense std::vector<> matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU)
+*
+* @param cpu_matrix   A dense matrix on the host of type std::vector<>. cpu_matrix[F::mem_index(i, j, gpu_matrix.size1(), gpu_matrix.size2())] returns the element in the i-th row and j-th columns (both starting with zero)
+* @param size1        Major size of CPU matrix
+* @param size2        Minor size of CPU matrix
+* @param gpu_matrix   A dense ViennaCL matrix
+*/
+template<typename NumericT, typename A, typename F, unsigned int AlignmentV>
+void copy(std::vector<NumericT, A> & cpu_matrix, size_t size1, size_t size2,
+  matrix<NumericT, F, AlignmentV> & gpu_matrix)
+{
+  typedef typename matrix<NumericT, F, AlignmentV>::size_type      size_type;
+
+  if (gpu_matrix.size1() == 0 || gpu_matrix.size2() == 0)
+  {
+    gpu_matrix.resize(size1, size2, false);
+  }
+  
+  assert( (gpu_matrix.size1() == size1) && bool("Matrix major size mismatch.") );
+  assert( (gpu_matrix.size2() == size2) && bool("Matrix minor size mismatch.") );
+
+  if (gpu_matrix.internal_size() == cpu_matrix.size()) {
+    viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(NumericT) * cpu_matrix.size(), &(cpu_matrix[0]));
+  }
+  else if (gpu_matrix.size() == cpu_matrix.size())
+  {
+    std::vector<NumericT> data(gpu_matrix.internal_size());
+    for (size_type i = 0; i < gpu_matrix.size1(); ++i)
+    {
+      for (size_type j = 0; j < gpu_matrix.size2(); ++j)
+        data[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())] = cpu_matrix[F::mem_index(i, j, gpu_matrix.size1(), gpu_matrix.size2())];
+    }
+
+    viennacl::backend::memory_write(gpu_matrix.handle(), 0, sizeof(NumericT) * data.size(), &(data[0]));
+  }
+  else
+    assert(false && bool("Matrix dimensions mismatch."));
+  //gpu_matrix.elements_ = viennacl::ocl::current_context().create_memory(CL_MEM_READ_WRITE, data);
+}
+
+
+//
+//gpu to cpu, STL std::vector<>:
+//
+/** @brief Copies a dense std::vector<> matrix from the OpenCL device (GPU or multi-core CPU) to the host (CPU)
+*
+* @param gpu_matrix   A dense ViennaCL matrix
+* @param cpu_matrix   A dense matrix on the host of type std::vector<>. cpu_matrix[F::mem_index(i, j, gpu_matrix.size1(), gpu_matrix.size2())] returns the element in the i-th row and j-th columns (both starting with zero) where F is a type of memory layout (row_major or column_major)
+*/
+template<typename NumericT, typename A, typename F, unsigned int AlignmentV>
+void copy(const matrix<NumericT, F, AlignmentV> & gpu_matrix,
+  std::vector<NumericT, A> & cpu_matrix)
+{
+  typedef typename matrix<float, F, AlignmentV>::size_type      size_type;
+
+  if ((gpu_matrix.size1() > 0) && (gpu_matrix.size2() > 0))
+  {
+    if (!cpu_matrix.size())
+    {
+      cpu_matrix.resize(gpu_matrix.size());
+    }
+    if (gpu_matrix.internal_size() == cpu_matrix.size())
+      viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(NumericT)*gpu_matrix.internal_size(), &(cpu_matrix[0]));
+    else if (gpu_matrix.size() == cpu_matrix.size())
+    {
+      std::vector<NumericT> temp_buffer(gpu_matrix.internal_size());
+
+      viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(NumericT)*gpu_matrix.internal_size(), &(temp_buffer[0]));
+
+      //now copy entries to cpu_matrix:
+      for (size_type i = 0; i < gpu_matrix.size1(); ++i)
+      {
+        for (size_type j = 0; j < gpu_matrix.size2(); ++j)
+          cpu_matrix[F::mem_index(i, j, gpu_matrix.size1(), gpu_matrix.size2())] = temp_buffer[F::mem_index(i, j, gpu_matrix.internal_size1(), gpu_matrix.internal_size2())];
+      }
+    }
+    else
+      assert(false && bool("Matrix dimensions mismatch."));
+  }
+}
+
+
+//
+//cpu to gpu, another STL iterators:
 //
 /** @brief Copies a dense matrix from the host (CPU) to the OpenCL device (GPU or multi-core CPU) without temporary. Matrix-Layout on CPU must be equal to the matrix-layout on the GPU.
 *
