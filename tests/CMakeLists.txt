@@ -1,4 +1,4 @@
-
+include(CheckIncludeFile)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # tests with CPU backend
@@ -15,6 +15,51 @@ foreach(PROG matrix_product_float matrix_product_double blas3_solve fft_1d fft_2
    add_executable(${PROG}-test-cpu src/${PROG}.cpp)
    target_link_libraries(${PROG}-test-cpu ${Boost_LIBRARIES})
    add_test(${PROG}-cpu ${PROG}-test-cpu)
+
+# check whether SSE or AVX is available and add corresponding flags                 
+CHECK_INCLUDE_FILE("xmmintrin.h" SSE_AVAILABLE)
+CHECK_INCLUDE_FILE("emmintrin.h" SSE2_AVAILABLE)
+CHECK_INCLUDE_FILE("pmmintrin.h" SSE3_AVAILABLE)
+CHECK_INCLUDE_FILE("smmintrin.h" SSE4.1_AVAILABLE)
+CHECK_INCLUDE_FILE("nmmintrin.h" SSE4.2_AVAILABLE)
+CHECK_INCLUDE_FILE("immintrin.h" AVX_AVAILABLE)
+
+if(NOT MSVC)
+  if(AVX_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_AVX -mavx")
+  elseif(SSE4.2_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE -msse3")
+  elseif(SSE4.1_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE -msse3")
+  elseif(SSE3_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE -msse3")
+  elseif(SSE2_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE -msse2")
+  elseif(SSE_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE -msse")
+  endif()
+else()
+  if(AVX_AVAILABLE)       
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_AVX /arch:AVX")
+  elseif(SSE4.2_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE /arch:SSE3")
+  elseif(SSE4.1_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE /arch:SSE3")
+  elseif(SSE3_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE /arch:SSE3")
+  elseif(SSE2_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE /arch:SSE2")
+  elseif(SSE_AVAILABLE)
+    set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_SSE /arch:SSE")
+  endif()
+endif()
+
+# option for using posix_memalign() instead of aligned_alloc()
+option(VIENNACL_WITH_POSIX_MEMALIGN "use posix_memalign() instead of aligned_alloc()" OFF)
+if(VIENNACL_WITH_POSIX_MEMALIGN)
+  set_target_properties(${PROG}-test-cpu PROPERTIES COMPILE_DEFINITIONS "VIENNACL_WITH_POSIX_MEMALIGN")
+endif()
+
 endforeach(PROG)
 
 

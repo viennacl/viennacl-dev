@@ -86,7 +86,7 @@ namespace viennacl
   /**
    * @brief reads out cpuid with leaf4 (see Intel's instruction set manual, 'cpuid')
    */
-  void get_cache_intel_leaf4(uint32_t *l1l2l3)
+  inline void get_cache_intel_leaf4(uint32_t *l1l2l3)
   {
     uint32_t tmp[2] = {0};
     uint32_t cache_type = 0x0000;
@@ -125,7 +125,7 @@ namespace viennacl
   /**
    * @brief reads cpuid-information on Intel CPUs and sets cache sizes accordingly
    */
-  void set_cache_intel(vcl_size_t &l1_size, vcl_size_t &l2_size, vcl_size_t &l3_size)
+  inline void set_cache_intel(vcl_size_t &l1_size, vcl_size_t &l2_size, vcl_size_t &l3_size)
   {
     /* every entry saves the state of one of the registers %eax, %ebx, %ecx and %edx
      * which are represent cache and TLB information after cpuid is called */
@@ -242,7 +242,7 @@ namespace viennacl
     return;
   }
 
-  void set_cache_sizes(vcl_size_t &l1_size, vcl_size_t &l2_size, vcl_size_t &l3_size)
+  inline void set_cache_sizes(vcl_size_t &l1_size, vcl_size_t &l2_size, vcl_size_t &l3_size)
   {
     /* used to store CPU-vendor string */
     uint32_t vendor[3] = {0};
