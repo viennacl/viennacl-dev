@@ -111,7 +111,7 @@ void icc_scale(compressed_matrix<NumericT> const & A,
 /////////////////////////////////////
 
 
-/** @brief Performs one nonlinear relaxation step in the Chow-Patel-ILU using OpenMP (cf. Algorithm 2 in paper) */
+/** @brief Performs one nonlinear relaxation step in the Chow-Patel-ILU using OpenCL (cf. Algorithm 2 in paper) */
 template<typename NumericT>
 void icc_chow_patel_sweep(compressed_matrix<NumericT>       & L,
                           vector<NumericT>            const & aij_L)
@@ -208,7 +208,7 @@ void ilu_scale(compressed_matrix<NumericT> const & A,
 /////////////////////////////////////
 
 
-/** @brief Performs one nonlinear relaxation step in the Chow-Patel-ILU using OpenMP (cf. Algorithm 2 in paper) */
+/** @brief Performs one nonlinear relaxation step in the Chow-Patel-ILU using OpenCL (cf. Algorithm 2 in paper) */
 template<typename NumericT>
 void ilu_chow_patel_sweep(compressed_matrix<NumericT>       & L,
                           vector<NumericT>            const & aij_L,

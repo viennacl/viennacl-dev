@@ -186,7 +186,7 @@ int strided_matrix_vector_product_test(Epsilon epsilon,
 
     if ( std::fabs(diff(result, vcl_result)) > epsilon )
     {
-      std::cout << "# Error at operation: matrix-vector product with stided vectors, part 1" << std::endl;
+      std::cout << "# Error at operation: matrix-vector product with strided vectors, part 1" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
       retval = EXIT_FAILURE;
     }
