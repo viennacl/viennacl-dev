@@ -30,9 +30,6 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/utils.hpp"
 
-#include "viennacl/device_specific/builtin_database/vector_axpy.hpp"
-#include "viennacl/device_specific/builtin_database/reduction.hpp"
-
 /** @file viennacl/linalg/opencl/kernels/iterative.hpp
  *  @brief OpenCL kernel file for specialized iterative solver kernels */
 namespace viennacl

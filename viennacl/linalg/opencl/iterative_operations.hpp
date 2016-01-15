@@ -35,7 +35,6 @@
 #include "viennacl/linalg/opencl/kernels/iterative.hpp"
 #include "viennacl/meta/predicate.hpp"
 #include "viennacl/meta/enable_if.hpp"
-#include "viennacl/scheduler/preset.hpp"
 #include "viennacl/traits/size.hpp"
 #include "viennacl/traits/start.hpp"
 #include "viennacl/traits/handle.hpp"
