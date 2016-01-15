@@ -20,14 +20,6 @@
 
 #include "viennacl/device_specific/templates/matrix_product_template.hpp"
 
-#include "viennacl/device_specific/templates/row_wise_reduction_template.hpp"
-
-#include "viennacl/device_specific/templates/reduction_template.hpp"
-
-#include "viennacl/device_specific/templates/matrix_axpy_template.hpp"
-
-#include "viennacl/device_specific/templates/vector_axpy_template.hpp"
-
 #include "viennacl/device_specific/forwards.h"
 #include "viennacl/device_specific/builtin_database/common.hpp"
 
@@ -80,55 +72,6 @@ inline void add_4B(database_type<matrix_product_template::parameters_type> & db,
   db.add_4B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", matrix_product_template::parameters_type(1,128,64,1,4,2,16,FETCH_FROM_GLOBAL_STRIDED,FETCH_FROM_LOCAL,16,8));
 }
 
-inline void add_8B(database_type<row_wise_reduction_template::parameters_type> & db, char_to_type<'T'>)
-{
-  db.add_8B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", row_wise_reduction_template::parameters_type(1,2,64,1024,FETCH_FROM_GLOBAL_STRIDED));
-}
-
-inline void add_8B(database_type<row_wise_reduction_template::parameters_type> & db, char_to_type<'N'>)
-{
-  db.add_8B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", row_wise_reduction_template::parameters_type(8,16,8,32768,FETCH_FROM_GLOBAL_CONTIGUOUS));
-}
-
-inline void add_4B(database_type<row_wise_reduction_template::parameters_type> & db, char_to_type<'T'>)
-{
-  db.add_4B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", row_wise_reduction_template::parameters_type(1,1,128,2048,FETCH_FROM_GLOBAL_STRIDED));
-}
-
-inline void add_4B(database_type<row_wise_reduction_template::parameters_type> & db, char_to_type<'N'>)
-{
-  db.add_4B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", row_wise_reduction_template::parameters_type(1,32,8,2048,FETCH_FROM_GLOBAL_CONTIGUOUS));
-}
-
-inline void add_8B(database_type<reduction_template::parameters_type> & db)
-{
-  db.add_8B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", reduction_template::parameters_type(1,256,4096,FETCH_FROM_GLOBAL_STRIDED));
-}
-
-inline void add_4B(database_type<reduction_template::parameters_type> & db)
-{
-  db.add_4B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", reduction_template::parameters_type(1,128,512,FETCH_FROM_GLOBAL_STRIDED));
-}
-
-inline void add_8B(database_type<matrix_axpy_template::parameters_type> & db)
-{
-  db.add_8B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", matrix_axpy_template::parameters_type(1,64,8,128,128,FETCH_FROM_GLOBAL_STRIDED));
-}
-
-inline void add_4B(database_type<matrix_axpy_template::parameters_type> & db)
-{
-  db.add_4B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", matrix_axpy_template::parameters_type(1,32,4,128,128,FETCH_FROM_GLOBAL_CONTIGUOUS));
-}
-
-inline void add_8B(database_type<vector_axpy_template::parameters_type> & db)
-{
-  db.add_8B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", vector_axpy_template::parameters_type(1,256,16384,FETCH_FROM_GLOBAL_STRIDED));
-}
-
-inline void add_4B(database_type<vector_axpy_template::parameters_type> & db)
-{
-  db.add_4B(nvidia_id, CL_DEVICE_TYPE_GPU, ocl::kepler, "Tesla K20m", vector_axpy_template::parameters_type(1,256,16384,FETCH_FROM_GLOBAL_STRIDED));
-}
 
 }
 }
