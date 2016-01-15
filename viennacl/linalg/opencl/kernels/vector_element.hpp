@@ -44,10 +44,18 @@ void generate_vector_unary_element_ops(StringT & source, std::string const & num
 }
 
 template <typename StringT>
-void generate_vector_binary_element_ops(StringT & source, std::string const & numeric_string)
+void generate_vector_binary_element_ops(StringT & source, std::string const & numeric_string, int op_type) //op_type: {0: product, 1: division, 2: power}
 {
+  std::string kernel_name_suffix;
+  if (op_type == 0)
+    kernel_name_suffix = "prod";
+  else if (op_type == 1)
+    kernel_name_suffix = "div";
+  else
+    kernel_name_suffix = "pow";
+
   // generic kernel for the vector operation v1 = alpha * v2 + beta * v3, where v1, v2, v3 are not necessarily distinct vectors
-  source.append("__kernel void element_op( \n");
+  source.append("__kernel void element_" + kernel_name_suffix + "(\n");
   source.append("    __global "); source.append(numeric_string); source.append(" * vec1, \n");
   source.append("    unsigned int start1, \n");
   source.append("    unsigned int inc1, \n");
@@ -61,26 +69,16 @@ void generate_vector_binary_element_ops(StringT & source, std::string const & nu
   source.append("   unsigned int start3, \n");
   source.append("   unsigned int inc3, \n");
 
-  source.append("   unsigned int op_type) \n"); //0: product, 1: division, 2: power
+  source.append("   unsigned int op_type) \n");
   source.append("{ \n");
-  if (numeric_string == "float" || numeric_string == "double")
-  {
-    source.append("  if (op_type == 2) \n");
-    source.append("  { \n");
-    source.append("    for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
-    source.append("      vec1[i*inc1+start1] = pow(vec2[i*inc2+start2], vec3[i*inc3+start3]); \n");
-    source.append("  } else ");
-  }
-  source.append("  if (op_type == 1) \n");
-  source.append("  { \n");
-  source.append("    for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
-  source.append("      vec1[i*inc1+start1] = vec2[i*inc2+start2] / vec3[i*inc3+start3]; \n");
-  source.append("  } \n");
-  source.append("  else if (op_type == 0)\n");
-  source.append("  { \n");
-  source.append("    for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
-  source.append("      vec1[i*inc1+start1] = vec2[i*inc2+start2] * vec3[i*inc3+start3]; \n");
-  source.append("  } \n");
+  source.append("  for (unsigned int i = get_global_id(0); i < size1; i += get_global_size(0)) \n");
+  if (op_type == 0)
+    source.append("    vec1[i*inc1+start1] = vec2[i*inc2+start2] * vec3[i*inc3+start3]; \n");
+  else if (op_type == 1)
+    source.append("    vec1[i*inc1+start1] = vec2[i*inc2+start2] / vec3[i*inc3+start3]; \n");
+  else if (op_type == 2)
+    source.append("    vec1[i*inc1+start1] = pow(vec2[i*inc2+start2], vec3[i*inc3+start3]); \n");
+
   source.append("} \n");
 }
 
@@ -135,7 +133,10 @@ struct vector_element
       }
 
       // binary operations
-      generate_vector_binary_element_ops(source, numeric_string);
+      generate_vector_binary_element_ops(source, numeric_string, 0);
+      generate_vector_binary_element_ops(source, numeric_string, 1);
+      if (numeric_string == "float" || numeric_string == "double")
+        generate_vector_binary_element_ops(source, numeric_string, 2);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO

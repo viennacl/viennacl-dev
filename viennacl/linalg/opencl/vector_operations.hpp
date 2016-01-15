@@ -306,13 +306,20 @@ void element_op(vector_base<T> & vec1,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
   viennacl::linalg::opencl::kernels::vector_element<T>::init(ctx);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_element<T>::program_name(), "element_op");
-
+  std::string kernel_name = "element_pow";
   cl_uint op_type = 2; //0: product, 1: division, 2: power
   if (viennacl::is_division<OP>::value)
+  {
     op_type = 1;
+    kernel_name = "element_div";
+  }
   else if (viennacl::is_product<OP>::value)
+  {
     op_type = 0;
+    kernel_name = "element_prod";
+  }
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_element<T>::program_name(), kernel_name);
 
   viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
                            cl_uint(viennacl::traits::start(vec1)),
@@ -489,11 +496,6 @@ void inner_prod_impl(vector_base<NumericT> const & x,
   viennacl::linalg::opencl::kernels::vector<NumericT>::init(ctx);
   viennacl::linalg::opencl::kernels::vector_multi_inner_prod<NumericT>::init(ctx);
 
-  vcl_size_t work_groups = 128;
-
-  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x));
-  temp.resize(8 * work_groups, ctx); // bring default-constructed vectors to the correct size:
-
   viennacl::ocl::packed_cl_uint layout_x = detail::make_layout(x);
 
   viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<NumericT>::program_name(), "sum_inner_prod");
@@ -502,6 +504,9 @@ void inner_prod_impl(vector_base<NumericT> const & x,
   viennacl::ocl::kernel & inner_prod_kernel_3 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<NumericT>::program_name(), "inner_prod3");
   viennacl::ocl::kernel & inner_prod_kernel_4 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<NumericT>::program_name(), "inner_prod4");
   viennacl::ocl::kernel & inner_prod_kernel_8 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<NumericT>::program_name(), "inner_prod8");
+
+  vcl_size_t work_groups = inner_prod_kernel_8.global_work_size(0) / inner_prod_kernel_8.local_work_size(0);
+  viennacl::vector<NumericT> temp(8 * work_groups, viennacl::traits::context(x));
 
   vcl_size_t current_index = 0;
   while (current_index < vec_tuple.const_size())
