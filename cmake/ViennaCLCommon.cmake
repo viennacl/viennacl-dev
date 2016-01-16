@@ -194,4 +194,5 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   ENDIF()
   INCLUDE_DIRECTORIES("/opt/local/include")
   SET(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
+  set(CMAKE_MACOSX_RPATH 1) # Required for newer versions of CMake on MacOS X: http://www.kitware.com/blog/home/post/510
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
