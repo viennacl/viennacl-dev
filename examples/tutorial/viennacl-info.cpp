@@ -30,6 +30,7 @@
 //include ViennaCL headers
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/platform.hpp"
+#include "viennacl/device_specific/builtin_database/common.hpp"
 
 /**
 *  In the main() routine we iterate over all OpenCL platforms and print the full device information for each OpenCL device found.
@@ -80,6 +81,8 @@ int main()
 
       std::cout << "  -----------------------------------------" << std::endl;
       std::cout << iter->full_info();
+      std::cout << "ViennaCL Device Architecture:  " << iter->architecture_family() << std::endl;
+      std::cout << "ViennaCL Database Mapped Name: " << viennacl::device_specific::builtin_database::get_mapped_device_name(iter->name(), iter->vendor_id()) << std::endl;
       std::cout << "  -----------------------------------------" << std::endl;
     }
     std::cout << std::endl;

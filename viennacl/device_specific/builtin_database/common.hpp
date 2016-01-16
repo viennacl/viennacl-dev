@@ -104,6 +104,42 @@ public:
 };
 
 
+template<typename StringT>
+StringT get_mapped_device_name(StringT const & device_name, vendor_id_type vendor_id)
+{
+  if (vendor_id == viennacl::ocl::nvidia_id)
+  {
+    vcl_size_t found=0;
+    if ((found = device_name.find("GeForce",0)) != std::string::npos)
+    {
+      if ((found = device_name.find_first_of("123456789", found)) != std::string::npos)
+      {
+        switch (device_name[found]) // GeForce 400 series mapped to GTX 470, GeForce 500 series mapped to GTX 580:
+        {
+        case '4' : return "GeForce GTX 470";
+        case '5' : return "GeForce GTX 570";
+        default: break; // since there is only one Kepler and one Maxwell device in the database, fallback works properly
+        }
+      }
+    }
+    else if ((found = device_name.find("Tesla",0)) != std::string::npos) // map Kepler-based Teslas to K20m
+    {
+      if (device_name.find("Tesla C10",0) != std::string::npos)
+        return "Tesla C2050";
+      else if (device_name.find("Tesla S10",0) != std::string::npos)
+        return "Tesla C2050";
+      else if (device_name.find("Tesla M20",0) != std::string::npos)
+        return "Tesla C2050";
+      else if (device_name.find("Tesla S20",0) != std::string::npos)
+        return "Tesla C2050";
+      else if (device_name.find("Tesla K",0) != std::string::npos) // all Kepler-based Teslas
+        return "Tesla K20m";
+    }
+  }
+
+  return device_name;
+}
+
 /** @brief Get the profile for a device and a descriptor
 *
 * There are built-in defaults for CPUs, Accelerators, GPUs.
@@ -155,8 +191,9 @@ inline ParamT const & get_parameters(database_type<ParamT> const & database, vie
   }
 
   /*-Device Name-*/
-  //  std::cout << "Looking up device name..." << std::endl;
-  typename database_type<ParamT>::device_name_t::map_t::const_iterator device_name_it = architecture_it->second.d.find(device_name);
+  std::string mapped_device_name = get_mapped_device_name(device_name, device.vendor_id());
+
+  typename database_type<ParamT>::device_name_t::map_t::const_iterator device_name_it = architecture_it->second.d.find(mapped_device_name);
   //Name not found. We just take the first device for the architecture
   if (device_name_it==architecture_it->second.d.end())
   {
