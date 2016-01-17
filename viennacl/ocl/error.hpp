@@ -564,7 +564,7 @@ class unknown_error : public std::exception
 {
   virtual const char* what() const throw()
   {
-    return "ViennaCL: FATAL ERROR: ViennaCL encountered an unknown OpenCL error. In some cases, this might be due to an invalid global work size, but it can also be due to several compilation errors."
+    return "ViennaCL: FATAL ERROR: ViennaCL encountered an unknown OpenCL error. Most likely your OpenCL SDK or driver is not installed properly. In some cases, this error is due to an invalid global work size or several kernel compilation errors."
         VIENNACL_BUG_REPORT_STRING;
   }
 };
