@@ -15,6 +15,5 @@ script:
 - cd build
 - cmake -DENABLE_ASAN:BOOL=ON -DENABLE_OPENCL=OFF ..
 - make -j2
-- ./examples/tutorial/viennacl-info
 - ctest -j4 --output-on-failure
 
