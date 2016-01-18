@@ -453,8 +453,7 @@ void inner_prod_impl(vector_base<T> const & vec1,
   // Step 2: Sum partial results:
   viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
 
-  ksum.local_work_size(0, work_groups);
-  ksum.global_work_size(0, work_groups);
+  ksum.global_work_size(0, ksum.local_work_size(0));
   viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
                               cl_uint(viennacl::traits::start(temp)),
                               cl_uint(viennacl::traits::stride(temp)),
@@ -531,9 +530,9 @@ void inner_prod_impl(vector_base<NumericT> const & x,
                                                    viennacl::traits::opencl_handle(temp)
                                                   ) );
 
-        ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, 4 * work_groups);
+        ksum.global_work_size(0, 4 * ksum.local_work_size(0));
         viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                    cl_uint(work_groups),
                                     viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<NumericT>::type) * 4 * ksum.local_work_size()),
                                     viennacl::traits::opencl_handle(result),
                                     cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
@@ -557,9 +556,9 @@ void inner_prod_impl(vector_base<NumericT> const & x,
                                                     viennacl::traits::opencl_handle(temp)
                                                    ) );
 
-        ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, 3 * work_groups);
+        ksum.global_work_size(0, 3 * ksum.local_work_size(0));
         viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                    cl_uint(work_groups),
                                     viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<NumericT>::type) * 3 * ksum.local_work_size()),
                                     viennacl::traits::opencl_handle(result),
                                     cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
@@ -582,8 +581,9 @@ void inner_prod_impl(vector_base<NumericT> const & x,
                                                   ) );
 
         ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, 2 * work_groups);
+        ksum.global_work_size(0, 2 * ksum.local_work_size(0));
         viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                    cl_uint(work_groups),
                                     viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<NumericT>::type) * 2 * ksum.local_work_size()),
                                     viennacl::traits::opencl_handle(result),
                                     cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
@@ -604,8 +604,9 @@ void inner_prod_impl(vector_base<NumericT> const & x,
                                                   ) );
 
         ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, 1 * work_groups);
+        ksum.global_work_size(0, 1 * ksum.local_work_size(0));
         viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                    cl_uint(work_groups),
                                     viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<NumericT>::type) * 1 * ksum.local_work_size()),
                                     viennacl::traits::opencl_handle(result),
                                     cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
@@ -639,9 +640,9 @@ void inner_prod_impl(vector_base<NumericT> const & x,
                                                     viennacl::traits::opencl_handle(temp)
                                                   ) );
 
-        ksum.local_work_size(0, work_groups);
-        ksum.global_work_size(0, 8 * work_groups);
+        ksum.global_work_size(0, 8 * ksum.local_work_size(0));
         viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
+                                    cl_uint(work_groups),
                                     viennacl::ocl::local_mem(sizeof(typename viennacl::result_of::cl_type<NumericT>::type) * 8 * ksum.local_work_size()),
                                     viennacl::traits::opencl_handle(result),
                                     cl_uint(viennacl::traits::start(result) + current_index * viennacl::traits::stride(result)),
@@ -751,8 +752,7 @@ void norm_1_impl(vector_base<T> const & vec,
   // Step 2: Compute the partial reduction using OpenCL
   viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
 
-  ksum.local_work_size(0, work_groups);
-  ksum.global_work_size(0, work_groups);
+  ksum.global_work_size(0, ksum.local_work_size(0));
   viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
                               cl_uint(viennacl::traits::start(temp)),
                               cl_uint(viennacl::traits::stride(temp)),
@@ -816,8 +816,7 @@ void norm_2_impl(vector_base<T> const & vec,
   // Step 2: Reduction via OpenCL
   viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
 
-  ksum.local_work_size(0, work_groups);
-  ksum.global_work_size(0, work_groups);
+  ksum.global_work_size(0, ksum.local_work_size(0));
   viennacl::ocl::enqueue( ksum(viennacl::traits::opencl_handle(temp),
                                 cl_uint(viennacl::traits::start(temp)),
                                 cl_uint(viennacl::traits::stride(temp)),
@@ -880,9 +879,8 @@ void norm_inf_impl(vector_base<T> const & vec,
 
   //part 2: parallel reduction of reduced kernel:
   viennacl::ocl::kernel & ksum = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "sum");
-  ksum.local_work_size(0, work_groups);
-  ksum.global_work_size(0, work_groups);
 
+  ksum.global_work_size(0, ksum.local_work_size(0));
   viennacl::ocl::enqueue( ksum(viennacl::traits::opencl_handle(temp),
                                cl_uint(viennacl::traits::start(temp)),
                                cl_uint(viennacl::traits::stride(temp)),

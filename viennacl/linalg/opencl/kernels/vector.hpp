@@ -471,15 +471,20 @@ void generate_norm(StringType & source, std::string const & numeric_string)
 template <typename StringType>
 void generate_inner_prod_sum(StringType & source, std::string const & numeric_string)
 {
-  // sums the array 'vec1' and writes to result. Makes use of a single work-group only.
+  // sums the array 'vec1' and writes to result. Each work group computes the inner product for a subvector of size 'size_per_workgroup'.
   source.append("__kernel void sum_inner_prod( \n");
   source.append("          __global "); source.append(numeric_string); source.append(" * vec1, \n");
+  source.append("          unsigned int size_per_workgroup, \n");
   source.append("          __local "); source.append(numeric_string); source.append(" * tmp_buffer, \n");
   source.append("          __global "); source.append(numeric_string); source.append(" * result, \n");
   source.append("          unsigned int start_result, \n");
   source.append("          unsigned int inc_result) \n");
   source.append("{ \n");
-  source.append("  tmp_buffer[get_local_id(0)] = vec1[get_global_id(0)]; \n");
+  source.append("  "); source.append(numeric_string); source.append(" thread_sum = 0; \n");
+  source.append("  for (unsigned int i = get_local_id(0); i<size_per_workgroup; i += get_local_size(0)) \n");
+  source.append("    thread_sum += vec1[size_per_workgroup * get_group_id(0) + i]; \n");
+
+  source.append("  tmp_buffer[get_local_id(0)] = thread_sum; \n");
 
   source.append("  for (unsigned int stride = get_local_size(0)/2; stride > 0; stride /= 2) \n");
   source.append("  { \n");
