@@ -395,6 +395,8 @@ void generate_norm(StringType & source, std::string const & numeric_string)
   source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
   if (is_float_or_double)
     source.append("      tmp += fabs(vec[i*inc1 + start1]); \n");
+  else if (numeric_string[0] == 'u') // abs may not be defined for unsigned types
+    source.append("      tmp += vec[i*inc1 + start1]; \n");
   else
     source.append("      tmp += abs(vec[i*inc1 + start1]); \n");
   source.append("  } \n");
@@ -412,6 +414,8 @@ void generate_norm(StringType & source, std::string const & numeric_string)
   source.append("    for (unsigned int i = get_local_id(0); i < size1; i += get_local_size(0)) \n");
   if (is_float_or_double)
     source.append("      tmp = fmax(fabs(vec[i*inc1 + start1]), tmp); \n");
+  else if (numeric_string[0] == 'u') // abs may not be defined for unsigned types
+    source.append("      tmp = max(vec[i*inc1 + start1], tmp); \n");
   else
   {
     source.append("      tmp = max(("); source.append(numeric_string); source.append(")abs(vec[i*inc1 + start1]), tmp); \n");
@@ -575,6 +579,8 @@ void generate_index_norm_inf(StringType & source, std::string const & numeric_st
   source.append("  { \n");
   if (numeric_string == "float" || numeric_string == "double")
     source.append("    tmp = fabs(vec[i*inc1+start1]); \n");
+  else if (numeric_string[0] == 'u') // abs may not be defined for unsigned types
+    source.append("    tmp = vec[i*inc1+start1]; \n");
   else
     source.append("    tmp = abs(vec[i*inc1+start1]); \n");
   source.append("    if (cur_max < tmp) \n");
