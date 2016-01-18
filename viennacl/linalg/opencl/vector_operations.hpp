@@ -959,7 +959,7 @@ cl_uint index_norm_inf(vector_base<T> const & vec)
 
 ////////// max
 
-/** @brief Computes the maximum of a vector
+/** @brief Computes the maximum value of a vector, where the result is stored in an OpenCL buffer.
 *
 * @param x      The vector
 * @param result The result scalar
@@ -978,7 +978,6 @@ void max_impl(vector_base<NumericT> const & x,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<NumericT>::program_name(), "max_kernel");
 
-  k.local_work_size(0, work_groups);
   k.global_work_size(0, work_groups * k.local_work_size(0));
   viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(x),
                            cl_uint(viennacl::traits::start(x)),
@@ -998,7 +997,7 @@ void max_impl(vector_base<NumericT> const & x,
                          ));
 }
 
-/** @brief Computes the supremum-norm of a vector
+/** @brief Computes the maximum value of a vector, where the value is stored in a host value.
 *
 * @param x      The vector
 * @param result The result scalar
@@ -1015,7 +1014,6 @@ void max_cpu(vector_base<NumericT> const & x,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<NumericT>::program_name(), "max_kernel");
 
-  k.local_work_size(0, work_groups);
   k.global_work_size(0, work_groups * k.local_work_size(0));
   viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(x),
                            cl_uint(viennacl::traits::start(x)),
@@ -1040,7 +1038,7 @@ void max_cpu(vector_base<NumericT> const & x,
 
 ////////// min
 
-/** @brief Computes the minimum of a vector
+/** @brief Computes the minimum of a vector, where the result is stored in an OpenCL buffer.
 *
 * @param x      The vector
 * @param result The result scalar
@@ -1059,7 +1057,6 @@ void min_impl(vector_base<NumericT> const & x,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<NumericT>::program_name(), "min_kernel");
 
-  k.local_work_size(0, work_groups);
   k.global_work_size(0, work_groups * k.local_work_size(0));
   viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(x),
                            cl_uint(viennacl::traits::start(x)),
@@ -1079,7 +1076,7 @@ void min_impl(vector_base<NumericT> const & x,
                          ));
 }
 
-/** @brief Computes the supremum-norm of a vector
+/** @brief Computes the minimum of a vector, where the result is stored on a CPU scalar.
 *
 * @param x      The vector
 * @param result The result scalar
@@ -1096,7 +1093,6 @@ void min_cpu(vector_base<NumericT> const & x,
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<NumericT>::program_name(), "min_kernel");
 
-  k.local_work_size(0, work_groups);
   k.global_work_size(0, work_groups * k.local_work_size(0));
   viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(x),
                            cl_uint(viennacl::traits::start(x)),
