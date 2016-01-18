@@ -353,11 +353,11 @@ namespace detail
       if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
       {
         viennacl::vector<T> temp(lhs);
-        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), T(1), temp, T(0));
         lhs = temp;
       }
       else
-        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs);
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), T(1), lhs, T(0));
     }
   };
 
@@ -366,9 +366,15 @@ namespace detail
   {
     static void apply(vector_base<T> & lhs, vector_expression<const hyb_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
     {
-      viennacl::vector<T> temp(lhs);
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
-      lhs += temp;
+      // check for the special case x += A * x
+      if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
+      {
+        viennacl::vector<T> temp(lhs);
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), T(1), temp, T(0));
+        lhs += temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), T(1), lhs, T(1));
     }
   };
 
@@ -377,9 +383,15 @@ namespace detail
   {
     static void apply(vector_base<T> & lhs, vector_expression<const hyb_matrix<T, A>, const vector_base<T>, op_prod> const & rhs)
     {
-      viennacl::vector<T> temp(lhs);
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
-      lhs -= temp;
+      // check for the special case x -= A * x
+      if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
+      {
+        viennacl::vector<T> temp(lhs);
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), T(1), temp, T(0));
+        lhs -= temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), T(-1), lhs, T(1));
     }
   };
 

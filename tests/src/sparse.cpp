@@ -391,13 +391,39 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products: compressed_matrix, strided vectors" << std::endl;
   retval = strided_matrix_vector_product_test<NumericT, viennacl::compressed_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
   if (retval != EXIT_SUCCESS)
     return retval;
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] += rhs[i];
+  vcl_result = vcl_rhs;
+  vcl_result += viennacl::linalg::prod(vcl_compressed_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with compressed_matrix (+=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] = rhs[i] - result[i];
+  vcl_result = vcl_rhs;
+  vcl_result -= viennacl::linalg::prod(vcl_compressed_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with compressed_matrix (-=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
 
   //
   // Triangular solvers for A \ b:
@@ -425,7 +451,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: unit upper triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   ////////////////////////////
@@ -456,7 +482,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: upper triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   ////////////////////////////
@@ -480,7 +506,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: unit lower triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
 
@@ -509,7 +535,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: lower triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
 
@@ -545,7 +571,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: unit upper triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   /////////////////////////
@@ -575,7 +601,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: upper triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   /////////////////////////
@@ -598,7 +624,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: unit lower triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   /////////////////////////
@@ -627,7 +653,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: lower triangular solve with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
 
@@ -642,9 +668,9 @@ int test(Epsilon const& epsilon)
 
   if ( std::fabs(diff(result, vcl_result)) > epsilon )
   {
-    std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix" << std::endl;
+    std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix (=)" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   {
@@ -658,9 +684,35 @@ int test(Epsilon const& epsilon)
     {
       std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix (after copy back)" << std::endl;
       std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-      retval = EXIT_FAILURE;
+      return EXIT_FAILURE;
     }
 
+  }
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_cc_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] += rhs[i];
+  vcl_result = vcl_rhs;
+  vcl_result += viennacl::linalg::prod(vcl_compressed_compressed_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix (+=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_cc_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] = rhs[i] - result[i];
+  vcl_result = vcl_rhs;
+  vcl_result -= viennacl::linalg::prod(vcl_compressed_compressed_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix (-=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
   }
 
 
@@ -677,7 +729,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with coordinate_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products: coordinate_matrix, strided vectors" << std::endl;
@@ -686,6 +738,31 @@ int test(Epsilon const& epsilon)
   if (retval != EXIT_SUCCESS)
     return retval;
 
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] += rhs[i];
+  vcl_result = vcl_rhs;
+  vcl_result += viennacl::linalg::prod(vcl_coordinate_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with coordinate_matrix (+=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] = rhs[i] - result[i];
+  vcl_result = vcl_rhs;
+  vcl_result -= viennacl::linalg::prod(vcl_coordinate_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with coordinate_matrix (-=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
 
   //
   /////////////////////////
@@ -711,7 +788,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with ell_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products: ell_matrix, strided vectors" << std::endl;
@@ -719,6 +796,31 @@ int test(Epsilon const& epsilon)
   if (retval != EXIT_SUCCESS)
     return retval;
 
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] += rhs[i];
+  vcl_result = vcl_rhs;
+  vcl_result += viennacl::linalg::prod(vcl_ell_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with ell_matrix (+=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] = rhs[i] - result[i];
+  vcl_result = vcl_rhs;
+  vcl_result -= viennacl::linalg::prod(vcl_ell_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with ell_matrix (-=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
 
   //
   /////////////////////////
@@ -737,7 +839,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with sliced_ell_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products: sliced_ell_matrix, strided vectors" << std::endl;
@@ -745,6 +847,31 @@ int test(Epsilon const& epsilon)
   if (retval != EXIT_SUCCESS)
     return retval;
 
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] += rhs[i];
+  vcl_result = vcl_rhs;
+  vcl_result += viennacl::linalg::prod(vcl_sliced_ell_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with sliced_ell_matrix (+=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] = rhs[i] - result[i];
+  vcl_result = vcl_rhs;
+  vcl_result -= viennacl::linalg::prod(vcl_sliced_ell_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with sliced_ell_matrix (-=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
 
   //
   /////////////////////////
@@ -770,13 +897,39 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with hyb_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products: hyb_matrix, strided vectors" << std::endl;
   retval = strided_matrix_vector_product_test<NumericT, viennacl::hyb_matrix<NumericT> >(epsilon, result, rhs, vcl_result, vcl_rhs);
   if (retval != EXIT_SUCCESS)
     return retval;
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] += rhs[i];
+  vcl_result = vcl_rhs;
+  vcl_result += viennacl::linalg::prod(vcl_hyb_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with hyb_matrix (+=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  result = rhs;
+  result = viennacl::linalg::prod(std_matrix, rhs);
+  for (std::size_t i=0; i<result.size(); ++i) result[i] = rhs[i] - result[i];
+  vcl_result = vcl_rhs;
+  vcl_result -= viennacl::linalg::prod(vcl_hyb_matrix, vcl_rhs);
+
+  if ( std::fabs(diff(result, vcl_result)) > epsilon )
+  {
+    std::cout << "# Error at operation: matrix-vector product with hyb_matrix (-=)" << std::endl;
+    std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
+    return EXIT_FAILURE;
+  }
 
 
   // --------------------------------------------------------------------------
@@ -798,7 +951,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product (compressed_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
 
@@ -809,7 +962,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product (coordinate_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   vcl_result2.clear();
@@ -819,7 +972,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product (ell_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   vcl_result2.clear();
@@ -829,7 +982,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product (hyb_matrix) with scaled additions" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result2)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   ////////////// Test of .clear() ////////////////
@@ -845,7 +998,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products after clear(): compressed_compressed_matrix" << std::endl;
@@ -858,7 +1011,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with compressed_compressed_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products after clear(): coordinate_matrix" << std::endl;
@@ -871,7 +1024,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with coordinate_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products after clear(): ell_matrix" << std::endl;
@@ -884,7 +1037,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with ell_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products after clear(): hyb_matrix" << std::endl;
@@ -897,7 +1050,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with hyb_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   std::cout << "Testing products after clear(): sliced_ell_matrix" << std::endl;
@@ -910,7 +1063,7 @@ int test(Epsilon const& epsilon)
   {
     std::cout << "# Error at operation: matrix-vector product with sliced_ell_matrix" << std::endl;
     std::cout << "  diff: " << std::fabs(diff(result, vcl_result)) << std::endl;
-    retval = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
 

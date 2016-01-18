@@ -91,7 +91,9 @@ namespace viennacl
     typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
     prod_impl(const SparseMatrixType & mat,
               const viennacl::vector_base<ScalarType> & vec,
-                    viennacl::vector_base<ScalarType> & result)
+              ScalarType alpha,
+                    viennacl::vector_base<ScalarType> & result,
+              ScalarType beta)
     {
       assert( (mat.size1() == result.size()) && bool("Size check failed for compressed matrix-vector product: size1(mat) != size(result)"));
       assert( (mat.size2() == vec.size())    && bool("Size check failed for compressed matrix-vector product: size2(mat) != size(x)"));
@@ -99,16 +101,16 @@ namespace viennacl
       switch (viennacl::traits::handle(mat).get_active_handle_id())
       {
         case viennacl::MAIN_MEMORY:
-          viennacl::linalg::host_based::prod_impl(mat, vec, result);
+        viennacl::linalg::host_based::prod_impl(mat, vec, alpha, result, beta);
           break;
 #ifdef VIENNACL_WITH_OPENCL
         case viennacl::OPENCL_MEMORY:
-          viennacl::linalg::opencl::prod_impl(mat, vec, result);
+          viennacl::linalg::opencl::prod_impl(mat, vec, alpha, result, beta);
           break;
 #endif
 #ifdef VIENNACL_WITH_CUDA
         case viennacl::CUDA_MEMORY:
-          viennacl::linalg::cuda::prod_impl(mat, vec, result);
+          viennacl::linalg::cuda::prod_impl(mat, vec, alpha, result, beta);
           break;
 #endif
         case viennacl::MEMORY_NOT_INITIALIZED:

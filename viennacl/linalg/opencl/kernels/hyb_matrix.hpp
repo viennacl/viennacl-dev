@@ -39,9 +39,12 @@ namespace kernels
 //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
 template<typename StringT>
-void generate_hyb_vec_mul(StringT & source, std::string const & numeric_string)
+void generate_hyb_vec_mul(StringT & source, std::string const & numeric_string, bool with_alpha_beta)
 {
-  source.append("__kernel void vec_mul( \n");
+  if (with_alpha_beta)
+    source.append("__kernel void vec_mul_alpha_beta( \n");
+  else
+    source.append("__kernel void vec_mul( \n");
   source.append("  const __global int* ell_coords, \n");
   source.append("  const __global "); source.append(numeric_string); source.append("* ell_elements, \n");
   source.append("  const __global uint* csr_rows, \n");
@@ -49,8 +52,10 @@ void generate_hyb_vec_mul(StringT & source, std::string const & numeric_string)
   source.append("  const __global "); source.append(numeric_string); source.append("* csr_elements, \n");
   source.append("  const __global "); source.append(numeric_string); source.append(" * x, \n");
   source.append("  uint4 layout_x, \n");
+  if (with_alpha_beta) { source.append("  "); source.append(numeric_string); source.append(" alpha, \n"); }
   source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
   source.append("  uint4 layout_result, \n");
+  if (with_alpha_beta) { source.append("  "); source.append(numeric_string); source.append(" beta, \n"); }
   source.append("  unsigned int row_num, \n");
   source.append("  unsigned int internal_row_num, \n");
   source.append("  unsigned int items_per_row, \n");
@@ -80,7 +85,10 @@ void generate_hyb_vec_mul(StringT & source, std::string const & numeric_string)
   source.append("      sum += (x[csr_cols[item_id] * layout_x.y + layout_x.x] * csr_elements[item_id]); \n");
   source.append("    } \n");
 
-  source.append("    result[row_id * layout_result.y + layout_result.x] = sum; \n");
+  if (with_alpha_beta)
+    source.append("    result[row_id * layout_result.y + layout_result.x] = alpha * sum + ((beta != 0) ? beta * result[row_id * layout_result.y + layout_result.x] : 0); \n");
+  else
+    source.append("    result[row_id * layout_result.y + layout_result.x] = sum; \n");
   source.append("  } \n");
   source.append("} \n");
 }
@@ -210,7 +218,8 @@ struct hyb_matrix
 
       viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
-      generate_hyb_vec_mul(source, numeric_string);
+      generate_hyb_vec_mul(source, numeric_string, true);
+      generate_hyb_vec_mul(source, numeric_string, false);
       generate_hyb_matrix_dense_matrix_multiplication(source, numeric_string);
 
       std::string prog_name = program_name();

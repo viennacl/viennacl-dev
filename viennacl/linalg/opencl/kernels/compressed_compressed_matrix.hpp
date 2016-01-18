@@ -47,8 +47,10 @@ void generate_vec_mul(StringT & source, std::string const & numeric_string)
   source.append("  uint nonzero_rows, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * x, \n");
   source.append("  uint4 layout_x, \n");
+  source.append("  "); source.append(numeric_string); source.append(" alpha, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
-  source.append("  uint4 layout_result) \n");
+  source.append("  uint4 layout_result, \n");
+  source.append("  "); source.append(numeric_string); source.append(" beta) \n");
   source.append("{ \n");
   source.append("  for (unsigned int i = get_global_id(0); i < nonzero_rows; i += get_global_size(0)) \n");
   source.append("  { \n");
@@ -56,7 +58,9 @@ void generate_vec_mul(StringT & source, std::string const & numeric_string)
   source.append("    unsigned int row_end = row_jumper[i+1]; \n");
   source.append("    for (unsigned int j = row_jumper[i]; j < row_end; ++j) \n");
   source.append("      dot_prod += elements[j] * x[column_indices[j] * layout_x.y + layout_x.x]; \n");
-  source.append("    result[row_indices[i] * layout_result.y + layout_result.x] = dot_prod; \n");
+
+  source.append("    if (beta != 0) result[row_indices[i] * layout_result.y + layout_result.x] += alpha * dot_prod; \n");
+  source.append("    else           result[row_indices[i] * layout_result.y + layout_result.x]  = alpha * dot_prod; \n");
   source.append("  } \n");
   source.append(" } \n");
 }

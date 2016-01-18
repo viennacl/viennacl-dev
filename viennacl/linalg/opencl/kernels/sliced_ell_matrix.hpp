@@ -39,17 +39,22 @@ namespace kernels
 //////////////////////////// Part 1: Kernel generation routines ////////////////////////////////////
 
 template<typename StringT>
-void generate_sliced_ell_vec_mul(StringT & source, std::string const & numeric_string)
+void generate_sliced_ell_vec_mul(StringT & source, std::string const & numeric_string, bool with_alpha_beta)
 {
-  source.append("__kernel void vec_mul( \n");
+  if (with_alpha_beta)
+    source.append("__kernel void vec_mul_alpha_beta( \n");
+  else
+    source.append("__kernel void vec_mul( \n");
   source.append("  __global const unsigned int * columns_per_block, \n");
   source.append("  __global const unsigned int * column_indices, \n");
   source.append("  __global const unsigned int * block_start, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * x, \n");
   source.append("  uint4 layout_x, \n");
+  if (with_alpha_beta) { source.append("  "); source.append(numeric_string); source.append(" alpha, \n"); }
   source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
   source.append("  uint4 layout_result, \n");
+  if (with_alpha_beta) { source.append("  "); source.append(numeric_string); source.append(" beta, \n"); }
   source.append("  unsigned int block_size) \n");
   source.append("{ \n");
   source.append("  uint blocks_per_workgroup = get_local_size(0) / block_size; \n");
@@ -71,7 +76,10 @@ void generate_sliced_ell_vec_mul(StringT & source, std::string const & numeric_s
   source.append("    } \n");
 
   source.append("    if (row < layout_result.z) \n");
-  source.append("      result[row * layout_result.y + layout_result.x] = sum; \n");
+  if (with_alpha_beta)
+    source.append("      result[row * layout_result.y + layout_result.x] = alpha * sum + ((beta != 0) ? beta * result[row * layout_result.y + layout_result.x] : 0); \n");
+  else
+    source.append("      result[row * layout_result.y + layout_result.x] = sum; \n");
   source.append("  } \n");
   source.append("} \n");
 }
@@ -106,7 +114,8 @@ struct sliced_ell_matrix<NumericT, unsigned int>
       viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
 
       // fully parametrized kernels:
-      generate_sliced_ell_vec_mul(source, numeric_string);
+      generate_sliced_ell_vec_mul(source, numeric_string, true);
+      generate_sliced_ell_vec_mul(source, numeric_string, false);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO

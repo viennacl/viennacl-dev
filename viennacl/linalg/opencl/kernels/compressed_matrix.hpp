@@ -911,12 +911,15 @@ void generate_compressed_matrix_unit_lu_forward(StringT & source, std::string co
 }
 
 template<typename StringT>
-void generate_compressed_matrix_vec_mul_nvidia(StringT & source, std::string const & numeric_string, unsigned int subwarp_size)
+void generate_compressed_matrix_vec_mul_nvidia(StringT & source, std::string const & numeric_string, unsigned int subwarp_size, bool with_alpha_beta)
 {
   std::stringstream ss;
   ss << subwarp_size;
 
-  source.append("__kernel void vec_mul_nvidia( \n");
+  if (with_alpha_beta)
+    source.append("__kernel void vec_mul_nvidia_alpha_beta( \n");
+  else
+    source.append("__kernel void vec_mul_nvidia( \n");
   source.append("    __global const unsigned int * row_indices, \n");
   source.append("    __global const unsigned int * column_indices, \n");
   source.append("  __global const unsigned int * row_blocks, \n");
@@ -924,9 +927,11 @@ void generate_compressed_matrix_vec_mul_nvidia(StringT & source, std::string con
   source.append("  unsigned int num_blocks, \n");
   source.append("    __global const "); source.append(numeric_string); source.append(" * x, \n");
   source.append("    uint4 layout_x, \n");
+  if (with_alpha_beta) { source.append("    "); source.append(numeric_string); source.append(" alpha, \n"); }
   source.append("    __global "); source.append(numeric_string); source.append(" * result, \n");
-  source.append("    uint4 layout_result) \n");
-  source.append("{ \n");
+  source.append("    uint4 layout_result \n");
+  if (with_alpha_beta) { source.append("    , "); source.append(numeric_string); source.append(" beta \n"); }
+  source.append(") { \n");
   source.append("  __local "); source.append(numeric_string); source.append(" shared_elements[256]; \n");
 
   source.append("  const unsigned int id_in_row = get_local_id(0) % " + ss.str() + "; \n");
@@ -949,16 +954,22 @@ void generate_compressed_matrix_vec_mul_nvidia(StringT & source, std::string con
   source.append("      shared_elements[get_local_id(0)] += shared_elements[get_local_id(0) ^ k]; \n");
 
   source.append("    if (id_in_row == 0) \n");
-  source.append("      result[row * layout_result.y + layout_result.x] = shared_elements[get_local_id(0)]; \n");
+  if (with_alpha_beta)
+    source.append("      result[row * layout_result.y + layout_result.x] = alpha * shared_elements[get_local_id(0)] + ((beta != 0) ? beta * result[row * layout_result.y + layout_result.x] : 0); \n");
+  else
+    source.append("      result[row * layout_result.y + layout_result.x] = shared_elements[get_local_id(0)]; \n");
   source.append("  } \n");
   source.append("} \n");
 
 }
 
 template<typename StringT>
-void generate_compressed_matrix_vec_mul(StringT & source, std::string const & numeric_string)
+void generate_compressed_matrix_vec_mul(StringT & source, std::string const & numeric_string, bool with_alpha_beta)
 {
-  source.append("__kernel void vec_mul( \n");
+  if (with_alpha_beta)
+    source.append("__kernel void vec_mul_alpha_beta( \n");
+  else
+    source.append("__kernel void vec_mul( \n");
   source.append("  __global const unsigned int * row_indices, \n");
   source.append("  __global const unsigned int * column_indices, \n");
   source.append("  __global const unsigned int * row_blocks, \n");
@@ -966,9 +977,11 @@ void generate_compressed_matrix_vec_mul(StringT & source, std::string const & nu
   source.append("  unsigned int num_blocks, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * x, \n");
   source.append("  uint4 layout_x, \n");
+  if (with_alpha_beta) { source.append("  "); source.append(numeric_string); source.append(" alpha, \n"); }
   source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
-  source.append("  uint4 layout_result) \n");
-  source.append("{ \n");
+  source.append("  uint4 layout_result \n");
+  if (with_alpha_beta) { source.append("  , "); source.append(numeric_string); source.append(" beta \n"); }
+  source.append(") { \n");
   source.append("  __local "); source.append(numeric_string); source.append(" shared_elements[1024]; \n");
 
   source.append("  unsigned int row_start = row_blocks[get_group_id(0)]; \n");
@@ -991,7 +1004,10 @@ void generate_compressed_matrix_vec_mul(StringT & source, std::string const & nu
   source.append("      unsigned int thread_row_stop  = row_indices[row + 1] - element_start; \n");
   source.append("      for (unsigned int i = thread_row_start; i < thread_row_stop; ++i) \n");
   source.append("        dot_prod += shared_elements[i]; \n");
-  source.append("      result[row * layout_result.y + layout_result.x] = dot_prod; \n");
+  if (with_alpha_beta)
+    source.append("      result[row * layout_result.y + layout_result.x] = alpha * dot_prod + ((beta != 0) ? beta * result[row * layout_result.y + layout_result.x] : 0); \n");
+  else
+    source.append("      result[row * layout_result.y + layout_result.x] = dot_prod; \n");
   source.append("    } \n");
   source.append("  } \n");
 
@@ -1026,7 +1042,10 @@ void generate_compressed_matrix_vec_mul(StringT & source, std::string const & nu
   source.append("      if (current_row_stop > current_row_start)\n");
   source.append("        row_result = shared_elements[current_row_start]; \n");
   source.append("      if (get_local_id(0) == 0)\n");
-  source.append("        result[row * layout_result.y + layout_result.x] = row_result;\n");
+  if (with_alpha_beta)
+    source.append("        result[row * layout_result.y + layout_result.x] = alpha * row_result + ((beta != 0) ? beta * result[row * layout_result.y + layout_result.x] : 0);\n");
+  else
+    source.append("        result[row * layout_result.y + layout_result.x] = row_result;\n");
   source.append("    }\n");
   source.append("  }\n");
 
@@ -1046,7 +1065,10 @@ void generate_compressed_matrix_vec_mul(StringT & source, std::string const & nu
   source.append("    } \n");
 
   source.append("    if (get_local_id(0) == 0) \n");
-  source.append("      result[row_start * layout_result.y + layout_result.x] = shared_elements[0]; \n");
+  if (with_alpha_beta)
+    source.append("      result[row_start * layout_result.y + layout_result.x] = alpha * shared_elements[0] + ((beta != 0) ? beta * result[row_start * layout_result.y + layout_result.x] : 0); \n");
+  else
+    source.append("      result[row_start * layout_result.y + layout_result.x] = shared_elements[0]; \n");
   source.append("  } \n");
 
   source.append("} \n");
@@ -1055,17 +1077,22 @@ void generate_compressed_matrix_vec_mul(StringT & source, std::string const & nu
 
 
 template<typename StringT>
-void generate_compressed_matrix_vec_mul4(StringT & source, std::string const & numeric_string)
+void generate_compressed_matrix_vec_mul4(StringT & source, std::string const & numeric_string, bool with_alpha_beta)
 {
-  source.append("__kernel void vec_mul4( \n");
+  if (with_alpha_beta)
+    source.append("__kernel void vec_mul4_alpha_beta( \n");
+  else
+    source.append("__kernel void vec_mul4( \n");
   source.append("  __global const unsigned int * row_indices, \n");
   source.append("  __global const uint4 * column_indices, \n");
   source.append("  __global const "); source.append(numeric_string); source.append("4 * elements, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * x, \n");
   source.append("  uint4 layout_x, \n");
+  if (with_alpha_beta) { source.append("  "); source.append(numeric_string); source.append(" alpha, \n"); }
   source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
-  source.append("  uint4 layout_result) \n");
-  source.append("{ \n");
+  source.append("  uint4 layout_result \n");
+  if (with_alpha_beta) { source.append("  , "); source.append(numeric_string); source.append(" beta \n"); }
+  source.append(") { \n");
   source.append("  "); source.append(numeric_string); source.append(" dot_prod; \n");
   source.append("  unsigned int start, next_stop; \n");
   source.append("  uint4 col_idx; \n");
@@ -1090,23 +1117,31 @@ void generate_compressed_matrix_vec_mul4(StringT & source, std::string const & n
 
   source.append("      dot_prod += dot(tmp_entries, tmp_vec); \n");
   source.append("    } \n");
-  source.append("    result[row * layout_result.y + layout_result.x] = dot_prod; \n");
+  if (with_alpha_beta)
+    source.append("    result[row * layout_result.y + layout_result.x] = alpha * dot_prod + ((beta != 0) ? beta * result[row * layout_result.y + layout_result.x] : 0); \n");
+  else
+    source.append("    result[row * layout_result.y + layout_result.x] = dot_prod; \n");
   source.append("  } \n");
   source.append("} \n");
 }
 
 template<typename StringT>
-void generate_compressed_matrix_vec_mul8(StringT & source, std::string const & numeric_string)
+void generate_compressed_matrix_vec_mul8(StringT & source, std::string const & numeric_string, bool with_alpha_beta)
 {
-  source.append("__kernel void vec_mul8( \n");
+  if (with_alpha_beta)
+    source.append("__kernel void vec_mul8_alpha_beta( \n");
+  else
+    source.append("__kernel void vec_mul8( \n");
   source.append("  __global const unsigned int * row_indices, \n");
   source.append("  __global const uint8 * column_indices, \n");
   source.append("  __global const "); source.append(numeric_string); source.append("8 * elements, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * x, \n");
   source.append("  uint4 layout_x, \n");
+  if (with_alpha_beta) { source.append("  "); source.append(numeric_string); source.append(" alpha, \n"); }
   source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
-  source.append("  uint4 layout_result) \n");
-  source.append("{ \n");
+  source.append("  uint4 layout_result \n");
+  if (with_alpha_beta) { source.append(" , "); source.append(numeric_string); source.append(" beta \n"); }
+  source.append(") { \n");
   source.append("  "); source.append(numeric_string); source.append(" dot_prod; \n");
   source.append("  unsigned int start, next_stop; \n");
   source.append("  uint8 col_idx; \n");
@@ -1136,7 +1171,10 @@ void generate_compressed_matrix_vec_mul8(StringT & source, std::string const & n
   source.append("      dot_prod += dot(tmp_entries.lo, tmp_vec.lo); \n");
   source.append("      dot_prod += dot(tmp_entries.hi, tmp_vec.hi); \n");
   source.append("    } \n");
-  source.append("    result[row * layout_result.y + layout_result.x] = dot_prod; \n");
+  if (with_alpha_beta)
+    source.append("    result[row * layout_result.y + layout_result.x] = alpha * dot_prod + ((beta != 0) ? beta * result[row * layout_result.y + layout_result.x] : 0); \n");
+  else
+    source.append("    result[row * layout_result.y + layout_result.x] = dot_prod; \n");
   source.append("  } \n");
   source.append("} \n");
 }
@@ -1149,7 +1187,9 @@ void generate_compressed_matrix_vec_mul_cpu(StringT & source, std::string const 
   source.append("  __global const unsigned int * column_indices, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * elements, \n");
   source.append("  __global const "); source.append(numeric_string); source.append(" * vector, \n");
+  source.append("  "); source.append(numeric_string); source.append(" alpha, \n");
   source.append("  __global "); source.append(numeric_string); source.append(" * result, \n");
+  source.append("  "); source.append(numeric_string); source.append(" beta, \n");
   source.append("  unsigned int size) \n");
   source.append("{ \n");
   source.append("  unsigned int work_per_item = max((uint) (size / get_global_size(0)), (uint) 1); \n");
@@ -1161,7 +1201,7 @@ void generate_compressed_matrix_vec_mul_cpu(StringT & source, std::string const 
   source.append("    unsigned int row_end = row_indices[row+1]; \n");
   source.append("    for (unsigned int i = row_indices[row]; i < row_end; ++i) \n");
   source.append("      dot_prod += elements[i] * vector[column_indices[i]]; \n");
-  source.append("    result[row] = dot_prod; \n");
+  source.append("    result[row] = alpha * dot_prod + ((beta != 0) ? beta * result[row] : 0); \n");
   source.append("  } \n");
   source.append("} \n");
 
@@ -1554,7 +1594,7 @@ void generate_compressed_matrix_assign_to_dense(StringT & source, std::string co
 //////////////////////////// Part 2: Main kernel class ////////////////////////////////////
 
 // main kernel class
-/** @brief Main kernel class for generating OpenCL kernels for compressed_matrix. */
+/** @brief Main kernel class for generating OpenCL kernels for compressed_matrix (except solvers). */
 template<typename NumericT>
 struct compressed_matrix
 {
@@ -1579,6 +1619,59 @@ struct compressed_matrix
       if (numeric_string == "float" || numeric_string == "double")
       {
         generate_compressed_matrix_jacobi(source, numeric_string);
+      }
+      generate_compressed_matrix_dense_matrix_multiplication(source, numeric_string);
+      generate_compressed_matrix_row_info_extractor(source, numeric_string);
+      if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
+      {
+        generate_compressed_matrix_vec_mul_nvidia(source, numeric_string, 16, true);
+        generate_compressed_matrix_vec_mul_nvidia(source, numeric_string, 16, false);
+      }
+      generate_compressed_matrix_vec_mul(source, numeric_string, true);
+      generate_compressed_matrix_vec_mul(source, numeric_string, false);
+      generate_compressed_matrix_vec_mul4(source, numeric_string, true);
+      generate_compressed_matrix_vec_mul4(source, numeric_string, false);
+      generate_compressed_matrix_vec_mul8(source, numeric_string, true);
+      generate_compressed_matrix_vec_mul8(source, numeric_string, false);
+      //generate_compressed_matrix_vec_mul_cpu(source, numeric_string);
+      generate_compressed_matrix_compressed_matrix_prod(source, numeric_string);
+      generate_compressed_matrix_assign_to_dense(source, numeric_string);
+
+      std::string prog_name = program_name();
+      #ifdef VIENNACL_BUILD_INFO
+      std::cout << "Creating program " << prog_name << std::endl;
+      #endif
+      ctx.add_program(source, prog_name);
+      init_done[ctx.handle().get()] = true;
+    } //if
+  } //init
+};
+
+
+/** @brief Main kernel class for triangular solver OpenCL kernels for compressed_matrix. */
+template<typename NumericT>
+struct compressed_matrix_solve
+{
+  static std::string program_name()
+  {
+    return viennacl::ocl::type_to_string<NumericT>::apply() + "_compressed_matrix_solve";
+  }
+
+  static void init(viennacl::ocl::context & ctx)
+  {
+    static std::map<cl_context, bool> init_done;
+    if (!init_done[ctx.handle().get()])
+    {
+      viennacl::ocl::DOUBLE_PRECISION_CHECKER<NumericT>::apply(ctx);
+      std::string numeric_string = viennacl::ocl::type_to_string<NumericT>::apply();
+
+      std::string source;
+      source.reserve(1024);
+
+      viennacl::ocl::append_double_precision_pragma<NumericT>(ctx, source);
+
+      if (numeric_string == "float" || numeric_string == "double")
+      {
         generate_compressed_matrix_block_trans_lu_backward(source, numeric_string);
         generate_compressed_matrix_block_trans_unit_lu_forward(source, numeric_string);
         generate_compressed_matrix_lu_backward(source, numeric_string);
@@ -1591,16 +1684,6 @@ struct compressed_matrix
         generate_compressed_matrix_unit_lu_backward(source, numeric_string);
         generate_compressed_matrix_unit_lu_forward(source, numeric_string);
       }
-      generate_compressed_matrix_dense_matrix_multiplication(source, numeric_string);
-      generate_compressed_matrix_row_info_extractor(source, numeric_string);
-      if (ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id)
-        generate_compressed_matrix_vec_mul_nvidia(source, numeric_string, 16);
-      generate_compressed_matrix_vec_mul(source, numeric_string);
-      generate_compressed_matrix_vec_mul4(source, numeric_string);
-      generate_compressed_matrix_vec_mul8(source, numeric_string);
-      generate_compressed_matrix_vec_mul_cpu(source, numeric_string);
-      generate_compressed_matrix_compressed_matrix_prod(source, numeric_string);
-      generate_compressed_matrix_assign_to_dense(source, numeric_string);
 
       std::string prog_name = program_name();
       #ifdef VIENNACL_BUILD_INFO

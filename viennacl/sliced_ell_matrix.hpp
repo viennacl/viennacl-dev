@@ -292,11 +292,11 @@ namespace detail
       if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
       {
         viennacl::vector<ScalarT> temp(lhs);
-        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), ScalarT(1), temp, ScalarT(0));
         lhs = temp;
       }
       else
-        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), lhs);
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), ScalarT(1), lhs, ScalarT(0));
     }
   };
 
@@ -305,9 +305,15 @@ namespace detail
   {
     static void apply(vector_base<ScalarT> & lhs, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_base<ScalarT>, op_prod> const & rhs)
     {
-      viennacl::vector<ScalarT> temp(lhs);
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
-      lhs += temp;
+      // check for the special case x += A * x
+      if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
+      {
+        viennacl::vector<ScalarT> temp(lhs);
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), ScalarT(1), temp, ScalarT(0));
+        lhs += temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), ScalarT(1), lhs, ScalarT(1));
     }
   };
 
@@ -316,9 +322,15 @@ namespace detail
   {
     static void apply(vector_base<ScalarT> & lhs, vector_expression<const sliced_ell_matrix<ScalarT, IndexT>, const vector_base<ScalarT>, op_prod> const & rhs)
     {
-      viennacl::vector<ScalarT> temp(lhs);
-      viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), temp);
-      lhs -= temp;
+      // check for the special case x -= A * x
+      if (viennacl::traits::handle(lhs) == viennacl::traits::handle(rhs.rhs()))
+      {
+        viennacl::vector<ScalarT> temp(lhs);
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), ScalarT(1), temp, ScalarT(0));
+        lhs -= temp;
+      }
+      else
+        viennacl::linalg::prod_impl(rhs.lhs(), rhs.rhs(), ScalarT(-1), lhs, ScalarT(1));
     }
   };
 

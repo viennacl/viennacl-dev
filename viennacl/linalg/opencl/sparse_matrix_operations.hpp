@@ -37,6 +37,7 @@
 #include "viennacl/linalg/opencl/kernels/hyb_matrix.hpp"
 #include "viennacl/linalg/opencl/kernels/compressed_compressed_matrix.hpp"
 #include "viennacl/linalg/opencl/common.hpp"
+#include "viennacl/linalg/opencl/vector_operations.hpp"
 
 namespace viennacl
 {
@@ -80,11 +81,15 @@ namespace detail
 template<typename NumericT, unsigned int AlignmentV>
 void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
                const viennacl::vector_base<NumericT> & x,
-                     viennacl::vector_base<NumericT> & y)
+               NumericT alpha,
+                     viennacl::vector_base<NumericT> & y,
+               NumericT beta)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
   bool use_nvidia_specific = AlignmentV == 1 && ctx.current_device().vendor_id() == viennacl::ocl::nvidia_id && (double(A.nnz()) / double(A.size1()) > 12.0);
+  bool with_alpha_beta = (alpha < NumericT(1) || alpha > NumericT(1)) || (beta < 0 || beta > 0);
+
 
   std::stringstream ss;
   ss << "vec_mul";
@@ -98,6 +103,9 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
     if (alignment == 8)
       ss << "8";
   }
+
+  if (with_alpha_beta)
+    ss << "_alpha_beta";
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), ss.str());
 
@@ -115,10 +123,18 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
 
   if (alignment == 4 || alignment == 8)
   {
-    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
-                             x, layout_x,
-                             y, layout_y
-                            ));
+    if (with_alpha_beta)
+      viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                               x, layout_x,
+                               alpha,
+                               y, layout_y,
+                               beta
+                              ));
+    else
+      viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(),
+                               x, layout_x,
+                               y, layout_y
+                              ));
   }
   else
   {
@@ -129,19 +145,35 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & A,
     {
       k.global_work_size(0, 512 * k.local_work_size(0));
 
-      viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
-                               x, layout_x,
-                               y, layout_y
-                              ));
+      if (with_alpha_beta)
+        viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                                 x, layout_x,
+                                 alpha,
+                                 y, layout_y,
+                                 beta
+                                ));
+      else
+        viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                                 x, layout_x,
+                                 y, layout_y
+                                ));
     }
     else // use CSR adaptive:
     {
       k.global_work_size(0, A.blocks1() * k.local_work_size(0));
 
-      viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
-                               x, layout_x,
-                               y, layout_y
-                              ));
+      if (with_alpha_beta)
+        viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                                 x, layout_x,
+                                 alpha,
+                                 y, layout_y,
+                                 beta
+                                ));
+      else
+        viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle2().opencl_handle(), A.handle3().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.blocks1()),
+                                 x, layout_x,
+                                 y, layout_y
+                                ));
     }
   }
 }
@@ -352,8 +384,8 @@ void inplace_solve(compressed_matrix<NumericT, MAT_AlignmentV> const & L,
                    viennacl::linalg::unit_lower_tag)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(L).context());
-  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "unit_lu_forward");
+  viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "unit_lu_forward");
 
   k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
@@ -375,9 +407,9 @@ void inplace_solve(compressed_matrix<NumericT, AlignmentV> const & L,
                    viennacl::linalg::lower_tag)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(L).context());
-  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+  viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "lu_forward");
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "lu_forward");
 
   k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
@@ -400,8 +432,8 @@ void inplace_solve(compressed_matrix<NumericT, AlignmentV> const & U,
                    viennacl::linalg::unit_upper_tag)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(U).context());
-  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "unit_lu_backward");
+  viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "unit_lu_backward");
 
   k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
@@ -423,9 +455,9 @@ void inplace_solve(compressed_matrix<NumericT, AlignmentV> const & U,
                    viennacl::linalg::upper_tag)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(U).context());
-  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+  viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "lu_backward");
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "lu_backward");
 
   k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
@@ -457,8 +489,8 @@ namespace detail
                            viennacl::linalg::unit_lower_tag)
   {
     viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(L.lhs()).context());
-    viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
-    viennacl::ocl::kernel & block_solve_kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "block_trans_unit_lu_forward");
+    viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
+    viennacl::ocl::kernel & block_solve_kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "block_trans_unit_lu_forward");
     block_solve_kernel.global_work_size(0, num_blocks * block_solve_kernel.local_work_size(0));
 
     viennacl::ocl::enqueue(block_solve_kernel(L.lhs().handle1().opencl_handle(),
@@ -480,8 +512,8 @@ namespace detail
                            viennacl::linalg::upper_tag)
   {
     viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(U.lhs()).context());
-    viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
-    viennacl::ocl::kernel & block_solve_kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "block_trans_lu_backward");
+    viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
+    viennacl::ocl::kernel & block_solve_kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "block_trans_lu_backward");
     block_solve_kernel.global_work_size(0, num_blocks * block_solve_kernel.local_work_size(0));
 
     viennacl::ocl::enqueue(block_solve_kernel(U.lhs().handle1().opencl_handle(),
@@ -510,8 +542,8 @@ void inplace_solve(matrix_expression< const compressed_matrix<NumericT, Alignmen
                    viennacl::linalg::unit_lower_tag)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_L.lhs()).context());
-  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "trans_unit_lu_forward");
+  viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "trans_unit_lu_forward");
 
   k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
@@ -536,12 +568,12 @@ void inplace_solve(matrix_expression< const compressed_matrix<NumericT, Alignmen
                    viennacl::linalg::lower_tag)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_L.lhs()).context());
-  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+  viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
 
   viennacl::vector<NumericT> diagonal(x.size());
   detail::row_info(proxy_L.lhs(), diagonal, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "trans_lu_forward");
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "trans_lu_forward");
 
   k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
@@ -566,8 +598,8 @@ void inplace_solve(matrix_expression< const compressed_matrix<NumericT, Alignmen
                    viennacl::linalg::unit_upper_tag)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_U.lhs()).context());
-  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "trans_unit_lu_backward");
+  viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "trans_unit_lu_backward");
 
   k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
@@ -592,12 +624,12 @@ void inplace_solve(matrix_expression< const compressed_matrix<NumericT, Alignmen
                    viennacl::linalg::upper_tag)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(proxy_U.lhs()).context());
-  viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::init(ctx);
+  viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::init(ctx);
 
   viennacl::vector<NumericT> diagonal(x.size());
   detail::row_info(proxy_U.lhs(), diagonal, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
 
-  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix<NumericT>::program_name(), "trans_lu_backward");
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_matrix_solve<NumericT>::program_name(), "trans_lu_backward");
 
   k.local_work_size(0, 128);
   k.global_work_size(0, k.local_work_size());
@@ -625,13 +657,18 @@ void inplace_solve(matrix_expression< const compressed_matrix<NumericT, Alignmen
 template<typename NumericT>
 void prod_impl(viennacl::compressed_compressed_matrix<NumericT> const & A,
                viennacl::vector_base<NumericT> const & x,
-               viennacl::vector_base<NumericT>       & y)
+               NumericT alpha,
+               viennacl::vector_base<NumericT>       & y,
+               NumericT beta)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::compressed_compressed_matrix<NumericT>::init(ctx);
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::compressed_compressed_matrix<NumericT>::program_name(), "vec_mul");
 
-  y.clear();
+  if (beta < 0 || beta > 0) // multiply by beta
+    viennacl::linalg::opencl::av(y, y, beta, 1, false, false);
+  else
+    y.clear();
 
   viennacl::ocl::packed_cl_uint layout_x;
   layout_x.start  = cl_uint(viennacl::traits::start(x));
@@ -647,7 +684,9 @@ void prod_impl(viennacl::compressed_compressed_matrix<NumericT> const & A,
 
   viennacl::ocl::enqueue(k(A.handle1().opencl_handle(), A.handle3().opencl_handle(), A.handle2().opencl_handle(), A.handle().opencl_handle(), cl_uint(A.nnz1()),
                            x, layout_x,
-                           y, layout_y
+                           alpha,
+                           y, layout_y,
+                           beta
                           ));
 }
 
@@ -690,12 +729,17 @@ namespace detail
 template<typename NumericT, unsigned int AlignmentV>
 void prod_impl(viennacl::coordinate_matrix<NumericT, AlignmentV> const & A,
                viennacl::vector_base<NumericT> const & x,
-               viennacl::vector_base<NumericT>       & y)
+               NumericT alpha,
+               viennacl::vector_base<NumericT>       & y,
+               NumericT beta)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::coordinate_matrix<NumericT>::init(ctx);
 
-  y.clear();
+  if (beta < 0 || beta > 0) // multiply by beta
+    viennacl::linalg::opencl::av(y, y, beta, 1, false, false);
+  else
+    y.clear();
 
   viennacl::ocl::packed_cl_uint layout_x;
   layout_x.start  = cl_uint(viennacl::traits::start(x));
@@ -721,8 +765,10 @@ void prod_impl(viennacl::coordinate_matrix<NumericT, AlignmentV> const & A,
   viennacl::ocl::enqueue(k(A.handle12().opencl_handle(), A.handle().opencl_handle(), A.handle3().opencl_handle(),
                            viennacl::traits::opencl_handle(x),
                            layout_x,
+                           alpha,
                            viennacl::traits::opencl_handle(y),
                            layout_y,
+                           beta,
                            viennacl::ocl::local_mem(sizeof(cl_uint)*thread_num),
                            viennacl::ocl::local_mem(sizeof(NumericT)*thread_num)) );
 
@@ -821,14 +867,17 @@ void prod_impl(viennacl::coordinate_matrix<NumericT, AlignmentV> const & A,
 template<typename NumericT, unsigned int AlignmentV>
 void prod_impl(viennacl::ell_matrix<NumericT, AlignmentV> const & A,
                viennacl::vector_base<NumericT> const & x,
-               viennacl::vector_base<NumericT>       & y)
+               NumericT alpha,
+               viennacl::vector_base<NumericT>       & y,
+               NumericT beta)
 {
   assert(A.size1() == y.size());
   assert(A.size2() == x.size());
 
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::ell_matrix<NumericT>::init(ctx);
-  y.clear();
+
+  bool with_alpha_beta = (alpha < NumericT(1) || alpha > NumericT(1)) || (beta < 0 || beta > 0);
 
   viennacl::ocl::packed_cl_uint layout_x;
   layout_x.start  = cl_uint(viennacl::traits::start(x));
@@ -844,7 +893,7 @@ void prod_impl(viennacl::ell_matrix<NumericT, AlignmentV> const & A,
 
   std::stringstream ss;
   ss << "vec_mul_" << 1;//(AlignmentV != 1?4:1);
-  viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<NumericT>::program_name(), "vec_mul");
+  viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::ell_matrix<NumericT>::program_name(), with_alpha_beta ? "vec_mul_alpha_beta" : "vec_mul");
 
   unsigned int thread_num = 128;
   unsigned int group_num = 256;
@@ -852,19 +901,36 @@ void prod_impl(viennacl::ell_matrix<NumericT, AlignmentV> const & A,
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
 
-  viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
-                           A.handle().opencl_handle(),
-                           viennacl::traits::opencl_handle(x),
-                           layout_x,
-                           viennacl::traits::opencl_handle(y),
-                           layout_y,
-                           cl_uint(A.size1()),
-                           cl_uint(A.size2()),
-                           cl_uint(A.internal_size1()),
-                           cl_uint(A.maxnnz()),
-                           cl_uint(A.internal_maxnnz())
-                          )
-  );
+  if (with_alpha_beta)
+    viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
+                             A.handle().opencl_handle(),
+                             viennacl::traits::opencl_handle(x),
+                             layout_x,
+                             alpha,
+                             viennacl::traits::opencl_handle(y),
+                             layout_y,
+                             beta,
+                             cl_uint(A.size1()),
+                             cl_uint(A.size2()),
+                             cl_uint(A.internal_size1()),
+                             cl_uint(A.maxnnz()),
+                             cl_uint(A.internal_maxnnz())
+                            )
+    );
+  else
+    viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
+                             A.handle().opencl_handle(),
+                             viennacl::traits::opencl_handle(x),
+                             layout_x,
+                             viennacl::traits::opencl_handle(y),
+                             layout_y,
+                             cl_uint(A.size1()),
+                             cl_uint(A.size2()),
+                             cl_uint(A.internal_size1()),
+                             cl_uint(A.maxnnz()),
+                             cl_uint(A.internal_maxnnz())
+                            )
+    );
 
 
 }
@@ -968,14 +1034,17 @@ void prod_impl(viennacl::ell_matrix<NumericT, AlignmentV> const & sp_A,
 template<typename ScalarT, typename IndexT>
 void prod_impl(viennacl::sliced_ell_matrix<ScalarT, IndexT> const & A,
                viennacl::vector_base<ScalarT> const & x,
-               viennacl::vector_base<ScalarT>       & y)
+               ScalarT alpha,
+               viennacl::vector_base<ScalarT>       & y,
+               ScalarT beta)
 {
   assert(A.size1() == y.size());
   assert(A.size2() == x.size());
 
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::sliced_ell_matrix<ScalarT, unsigned int>::init(ctx);
-  y.clear();
+
+  bool with_alpha_beta = (alpha < ScalarT(1) || alpha > ScalarT(1)) || (beta < 0 || beta > 0);
 
   viennacl::ocl::packed_cl_uint layout_x;
   layout_x.start  = cl_uint(viennacl::traits::start(x));
@@ -991,7 +1060,7 @@ void prod_impl(viennacl::sliced_ell_matrix<ScalarT, IndexT> const & A,
 
   std::stringstream ss;
   ss << "vec_mul_" << 1;//(AlignmentV != 1?4:1);
-  viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::sliced_ell_matrix<ScalarT, IndexT>::program_name(), "vec_mul");
+  viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::sliced_ell_matrix<ScalarT, IndexT>::program_name(), with_alpha_beta ? "vec_mul_alpha_beta" : "vec_mul");
 
   vcl_size_t thread_num = std::max(A.rows_per_block(), static_cast<vcl_size_t>(128));
   unsigned int group_num = 256;
@@ -1002,16 +1071,30 @@ void prod_impl(viennacl::sliced_ell_matrix<ScalarT, IndexT> const & A,
   k.local_work_size(0, thread_num);
   k.global_work_size(0, thread_num * group_num);
 
-  viennacl::ocl::enqueue(k(A.handle1().opencl_handle(),
-                           A.handle2().opencl_handle(),
-                           A.handle3().opencl_handle(),
-                           A.handle().opencl_handle(),
-                           viennacl::traits::opencl_handle(x),
-                           layout_x,
-                           viennacl::traits::opencl_handle(y),
-                           layout_y,
-                           cl_uint(A.rows_per_block()))
-  );
+  if (with_alpha_beta)
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(),
+                             A.handle2().opencl_handle(),
+                             A.handle3().opencl_handle(),
+                             A.handle().opencl_handle(),
+                             viennacl::traits::opencl_handle(x),
+                             layout_x,
+                             alpha,
+                             viennacl::traits::opencl_handle(y),
+                             layout_y,
+                             beta,
+                             cl_uint(A.rows_per_block()))
+    );
+  else
+    viennacl::ocl::enqueue(k(A.handle1().opencl_handle(),
+                             A.handle2().opencl_handle(),
+                             A.handle3().opencl_handle(),
+                             A.handle().opencl_handle(),
+                             viennacl::traits::opencl_handle(x),
+                             layout_x,
+                             viennacl::traits::opencl_handle(y),
+                             layout_y,
+                             cl_uint(A.rows_per_block()))
+    );
 }
 
 
@@ -1022,13 +1105,17 @@ void prod_impl(viennacl::sliced_ell_matrix<ScalarT, IndexT> const & A,
 template<typename NumericT, unsigned int AlignmentV>
 void prod_impl(viennacl::hyb_matrix<NumericT, AlignmentV> const & A,
                viennacl::vector_base<NumericT> const & x,
-               viennacl::vector_base<NumericT>       & y)
+               NumericT alpha,
+               viennacl::vector_base<NumericT>       & y,
+               NumericT beta)
 {
   assert(A.size1() == y.size());
   assert(A.size2() == x.size());
 
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(A).context());
   viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::init(ctx);
+
+  bool with_alpha_beta = (alpha < NumericT(1) || alpha > NumericT(1)) || (beta < 0 || beta > 0);
 
   viennacl::ocl::packed_cl_uint layout_x;
   layout_x.start  = cl_uint(viennacl::traits::start(x));
@@ -1042,23 +1129,42 @@ void prod_impl(viennacl::hyb_matrix<NumericT, AlignmentV> const & A,
   layout_y.size   = cl_uint(viennacl::traits::size(y));
   layout_y.internal_size   = cl_uint(viennacl::traits::internal_size(y));
 
-  viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(), "vec_mul");
+  viennacl::ocl::kernel& k = ctx.get_kernel(viennacl::linalg::opencl::kernels::hyb_matrix<NumericT>::program_name(), with_alpha_beta ? "vec_mul_alpha_beta" : "vec_mul");
 
-  viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
-                           A.handle().opencl_handle(),
-                           A.handle3().opencl_handle(),
-                           A.handle4().opencl_handle(),
-                           A.handle5().opencl_handle(),
-                           viennacl::traits::opencl_handle(x),
-                           layout_x,
-                           viennacl::traits::opencl_handle(y),
-                           layout_y,
-                           cl_uint(A.size1()),
-                           cl_uint(A.internal_size1()),
-                           cl_uint(A.ell_nnz()),
-                           cl_uint(A.internal_ellnnz())
-                          )
-  );
+  if (with_alpha_beta)
+    viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
+                             A.handle().opencl_handle(),
+                             A.handle3().opencl_handle(),
+                             A.handle4().opencl_handle(),
+                             A.handle5().opencl_handle(),
+                             viennacl::traits::opencl_handle(x),
+                             layout_x,
+                             alpha,
+                             viennacl::traits::opencl_handle(y),
+                             layout_y,
+                             beta,
+                             cl_uint(A.size1()),
+                             cl_uint(A.internal_size1()),
+                             cl_uint(A.ell_nnz()),
+                             cl_uint(A.internal_ellnnz())
+                            )
+    );
+  else
+    viennacl::ocl::enqueue(k(A.handle2().opencl_handle(),
+                             A.handle().opencl_handle(),
+                             A.handle3().opencl_handle(),
+                             A.handle4().opencl_handle(),
+                             A.handle5().opencl_handle(),
+                             viennacl::traits::opencl_handle(x),
+                             layout_x,
+                             viennacl::traits::opencl_handle(y),
+                             layout_y,
+                             cl_uint(A.size1()),
+                             cl_uint(A.internal_size1()),
+                             cl_uint(A.ell_nnz()),
+                             cl_uint(A.internal_ellnnz())
+                            )
+    );
 }
 
 template<typename NumericT, unsigned int AlignmentV>
