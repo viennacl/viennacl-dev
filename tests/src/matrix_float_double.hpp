@@ -198,6 +198,16 @@ int run_test(double epsilon,
 
     if (!check_for_equality(std_C, vcl_C, epsilon))
       return EXIT_FAILURE;
+
+    std::cout << "Inplace add (transposed, expression): ";
+    std_C2 = std_C;
+    for (std::size_t i=0; i<std_C.size(); ++i)
+      for (std::size_t j=0; j<std_C[i].size(); ++j)
+        std_C[i][j] += std_C2[j][i] + std_C2[j][i];
+    vcl_C   += viennacl::trans(vcl_C + vcl_C);
+
+    if (!check_for_equality(std_C, vcl_C, epsilon))
+      return EXIT_FAILURE;
   }
 
   std::cout << "Scaled inplace add: ";
@@ -349,12 +359,22 @@ int run_test(double epsilon,
     STLMatrixType std_C2(std_C);
     for (std::size_t i=0; i<std_C.size(); ++i)
       for (std::size_t j=0; j<std_C[i].size(); ++j)
-        std_C[i][j] -= std_C2[j][i];
-    vcl_C   -= viennacl::trans(vcl_C);
-  }
+        std_C[i][j] -= cpu_value_type(2) * std_C2[j][i];
+    vcl_C   -= cpu_value_type(2) * viennacl::trans(vcl_C);
 
-  if (!check_for_equality(std_C, vcl_C, epsilon))
-    return EXIT_FAILURE;
+    if (!check_for_equality(std_C, vcl_C, epsilon))
+      return EXIT_FAILURE;
+
+    std::cout << "Inplace sub (transposed, expression): ";
+    std_C2 = std_C;
+    for (std::size_t i=0; i<std_C.size(); ++i)
+      for (std::size_t j=0; j<std_C[i].size(); ++j)
+        std_C[i][j] -= std_C2[j][i] + std_C2[j][i];
+    vcl_C   -= viennacl::trans(vcl_C + vcl_C);
+
+    if (!check_for_equality(std_C, vcl_C, epsilon))
+      return EXIT_FAILURE;
+  }
 
   std::cout << "Scaled Inplace sub: ";
   for (std::size_t i=0; i<std_C.size(); ++i)

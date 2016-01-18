@@ -140,8 +140,18 @@ int test_layout(CType & C, AType const & A, AType const & AT, BType const & B, B
     if (diff(ground2, C)>epsilon)
       return EXIT_FAILURE;
 
+    std::cout << "C = trans(AT + AT).B" << std::endl;
+    C = prod(viennacl::trans(AT + AT), B);
+    if (diff(ground2, C)>epsilon)
+      return EXIT_FAILURE;
+
     std::cout << "C = A.(B + B)" << std::endl;
     C = prod(A, T(2) * B);
+    if (diff(ground2, C)>epsilon)
+      return EXIT_FAILURE;
+
+    std::cout << "C = A.trans(BT + BT)" << std::endl;
+    C = prod(A, trans(BT + BT));
     if (diff(ground2, C)>epsilon)
       return EXIT_FAILURE;
 
@@ -149,6 +159,13 @@ int test_layout(CType & C, AType const & A, AType const & AT, BType const & B, B
     C = T(0.25) * prod(A + A, B + B);
     if (diff(ground, C)>epsilon)
       return EXIT_FAILURE;
+
+    std::cout << "C = trans(AT + AT).trans(BT + BT)" << std::endl;
+    C += prod(trans(AT + AT), trans(BT + BT));
+    C -= prod(trans(AT + AT), trans(BT + BT));
+    if (diff(ground, C)>epsilon)
+      return EXIT_FAILURE;
+
   }
 
   return EXIT_SUCCESS;
