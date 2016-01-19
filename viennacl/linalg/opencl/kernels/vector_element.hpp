@@ -31,7 +31,14 @@ void generate_vector_unary_element_ops(StringT & source, std::string const & num
   source.append("    __global "); source.append(numeric_string); source.append(" * vec2, \n");
   source.append("    uint4 size2) { \n");
   source.append("  for (unsigned int i = get_global_id(0); i < size1.z; i += get_global_size(0)) \n");
-  source.append("    vec1[i*size1.y+size1.x] "); source.append(op); source.append(" "); source.append(funcname); source.append("(vec2[i*size2.y+size2.x]); \n");
+  if (numeric_string[0] == 'u' && funcname == "abs") // abs() on unsigned does not work on MacOS X 10.6.8, so we use the identity:
+  {
+    source.append("    vec1[i*size1.y+size1.x] "); source.append(op); source.append(" vec2[i*size2.y+size2.x]; \n");
+  }
+  else
+  {
+    source.append("    vec1[i*size1.y+size1.x] "); source.append(op); source.append(" "); source.append(funcname); source.append("(vec2[i*size2.y+size2.x]); \n");
+  }
   source.append("} \n");
 }
 
