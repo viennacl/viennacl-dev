@@ -580,7 +580,6 @@ void inner_prod_impl(vector_base<NumericT> const & x,
                                                     viennacl::traits::opencl_handle(temp)
                                                   ) );
 
-        ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, 2 * ksum.local_work_size(0));
         viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
                                     cl_uint(work_groups),
@@ -603,7 +602,6 @@ void inner_prod_impl(vector_base<NumericT> const & x,
                                                     viennacl::traits::opencl_handle(temp)
                                                   ) );
 
-        ksum.local_work_size(0, work_groups);
         ksum.global_work_size(0, 1 * ksum.local_work_size(0));
         viennacl::ocl::enqueue(ksum(viennacl::traits::opencl_handle(temp),
                                     cl_uint(work_groups),
