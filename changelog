@@ -2,6 +2,32 @@
 
 ## Version 1.7.x
 
+### Version 1.7.1
+This bugfix release fixes issues reported by our users and includes some performance enhancements:
+  - matrix: Fixed transposition of empty matrices.
+  - GEMM: Using size_t instead of uint for indices in OpenCL, which improves GEMM performance on AMD GPUs with newer drivers back to previous levels (2x enhancement).
+  - (#149) matrix: Now allowing arbitrary expressions with trans(). Thanks to Charles Determan for the request.
+  - Generator: Pulled BLAS level 1 and 2 OpenCL kernels out of the generator. May change performance slightly in some cases (both better or worse), yet is more robust and also allows for vectors and matrices with (u)char and (u)short elements.
+  - (#150) Generator: Improved device mapping logic to use the best kernel profile available.
+  - (#166, #167) OpenCL: Fixed code segments not covered by the standard. Thanks to Nikolay Haustov for the hint.
+  - (#176) Sparse matrices: Inplace-addition and subtractions of matrix-vector products (i.e. y += Ax; y -= Ax) no longer produce a hidden temporary object.
+  - ell_matrix: Fixed race condition for OpenMP parallelization of product with dense matrix.
+  - compressed_matrix: Fixed incorrect assertion in resize() member function.
+  - compressed_matrix: Populated internal arrays correctly when operating on a newly instantiated empty matrix.
+  - compressed_matrix: Fixed incorrect result if matrix has empty rows and less than 4 rows in a row block (thanks to Patrick Sanan for pointing out the problem).
+  - coordinate_matrix: Fixed OpenCL kernel for product with a dense transposed matrix.
+  - compressed_matrix: Runtime selection of best SpMV kernel in CUDA based on device properties.
+  - SpGEMM: Fixed compilation problems when compiling with Intel compilers and OpenMP enabled.
+  - CG: Fixed incorrect check for absolute tolerance (accidentally used squared tolerance).
+  - Chow-Patel ILU: Fixed incorrect assertion when using the OpenMP backend. This was encountered when NDEBUG was not set.
+  - copy(): Fixed incorrect dimension deduction for sparse matrices.
+  - copy(): Added support for copying matrix_range and matrix_slice to/from std::vector<std::vector<T> >.
+  - OpenMP: Improved performance of OpenMP backend for BLAS level 1 operations. Thanks to Franz Stuebler for his contribution.
+  - CMake: Now setting MACOSX_RPATH variable on Mac OS to avoid warnings in newer versions of CMake.
+  - Doc: Fixed typos. Thanks to Franz Stuebler and Patrick Sanan.
+  - Tests: Greatly reduced dependency on Boost.uBLAS.
+
+
 ### Version 1.7.0
 This new minor release series introduces several new high-performance algorithms and implementations in addition to usability enhancements.
 The highlights of this new release are as follows:
