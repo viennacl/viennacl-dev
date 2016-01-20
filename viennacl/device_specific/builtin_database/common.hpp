@@ -149,7 +149,7 @@ inline ParamT const & get_parameters(database_type<ParamT> const & database, vie
 {
   scheduler::statement_node_numeric_type numeric_type = scheduler::statement_node_numeric_type(scheduler::result_of::numeric_type_id<NumericT>::value);
 
-  device_type dev_type = device.type();
+  device_type dev_type = device.type() & device_type(0xFE); // chop off 'default' characterization
   vendor_id_type vendor_id = device.vendor_id();
   ocl::device_architecture_family device_architecture = device.architecture_family();
   std::string const & device_name = device.name();
