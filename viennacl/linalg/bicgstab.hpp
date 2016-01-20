@@ -470,7 +470,7 @@ namespace detail
       beta = new_ip_rr0star / ip_rr0star * alpha/omega;
       ip_rr0star = new_ip_rr0star;
 
-      if (!ip_rr0star || !omega || i - last_restart > tag.max_iterations_before_restart()) //search direction degenerate. A restart might help
+      if ( (ip_rr0star >= 0 && ip_rr0star <= 0) || (omega >=0 && omega <= 0) || i - last_restart > tag.max_iterations_before_restart()) //search direction degenerate. A restart might help
         restart_flag = true;
 
       // Execution of

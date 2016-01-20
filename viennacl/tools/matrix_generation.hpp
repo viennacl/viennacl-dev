@@ -47,8 +47,6 @@ namespace tools
 template<typename MatrixType>
 void generate_fdm_laplace(MatrixType & A, vcl_size_t points_x, vcl_size_t points_y)
 {
-  typedef typename MatrixType::value_type  ScalarType;
-
   vcl_size_t total_unknowns = points_x * points_y;
 
   A.clear();
