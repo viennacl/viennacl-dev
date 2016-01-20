@@ -60,10 +60,8 @@ namespace viennacl
 
       static void dec(cl_mem & something)
       {
-        #ifndef __APPLE__
         cl_int err = clReleaseMemObject(something);
         VIENNACL_ERR_CHECK(err);
-        #endif
       }
     };
 
@@ -79,6 +77,7 @@ namespace viennacl
 
       static void dec(cl_program & something)
       {
+        (void)something;
         #ifndef __APPLE__
         cl_int err = clReleaseProgram(something);
         VIENNACL_ERR_CHECK(err);
@@ -98,6 +97,7 @@ namespace viennacl
 
       static void dec(cl_kernel & something)
       {
+        (void)something;
         #ifndef __APPLE__
         cl_int err = clReleaseKernel(something);
         VIENNACL_ERR_CHECK(err);
@@ -117,6 +117,7 @@ namespace viennacl
 
       static void dec(cl_command_queue & something)
       {
+        (void)something;
         #ifndef __APPLE__
         cl_int err = clReleaseCommandQueue(something);
         VIENNACL_ERR_CHECK(err);
@@ -136,6 +137,7 @@ namespace viennacl
 
       static void dec(cl_context & something)
       {
+        (void)something;
         #ifndef __APPLE__
         cl_int err = clReleaseContext(something);
         VIENNACL_ERR_CHECK(err);

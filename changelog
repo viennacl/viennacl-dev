@@ -24,6 +24,7 @@ This bugfix release fixes issues reported by our users and includes some perform
   - copy(): Added support for copying matrix_range and matrix_slice to/from std::vector<std::vector<T> >.
   - OpenMP: Improved performance of OpenMP backend for BLAS level 1 operations. Thanks to Franz Stuebler for his contribution.
   - CMake: Now setting MACOSX_RPATH variable on Mac OS to avoid warnings in newer versions of CMake.
+  - Mac OS: Reenabling reference decrements on memory handles such that memory is correctly free'd.
   - Doc: Fixed typos. Thanks to Franz Stuebler and Patrick Sanan.
   - Tests: Greatly reduced dependency on Boost.uBLAS.
 
