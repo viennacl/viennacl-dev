@@ -1027,7 +1027,7 @@ void max_cpu(vector_base<NumericT> const & x,
   CPUVectorType temp_cpu(work_groups);
   viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
-  result = temp_cpu[0];
+  result = static_cast<NumericT>(temp_cpu[0]);
   for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
     result = std::max(result, static_cast<NumericT>(*it));
 
@@ -1106,7 +1106,7 @@ void min_cpu(vector_base<NumericT> const & x,
   CPUVectorType temp_cpu(work_groups);
   viennacl::fast_copy(temp.begin(), temp.end(), temp_cpu.begin());
 
-  result = temp_cpu[0];
+  result = static_cast<NumericT>(temp_cpu[0]);
   for (typename CPUVectorType::const_iterator it = temp_cpu.begin(); it != temp_cpu.end(); ++it)
     result = std::min(result, static_cast<NumericT>(*it));
 }

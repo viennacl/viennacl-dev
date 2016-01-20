@@ -75,7 +75,7 @@ void extract_L(compressed_matrix<NumericT> const & A,
     for (unsigned int j = col_begin; j < col_end; ++j)
     {
       unsigned int col = A_col_buffer[j];
-      if (col <= row)
+      if (long(col) <= row)
         ++L_row_buffer[row];
     }
   }
@@ -107,7 +107,7 @@ void extract_L(compressed_matrix<NumericT> const & A,
       unsigned int col = A_col_buffer[j];
       NumericT value = A_elements[j];
 
-      if (col <= row)
+      if (long(col) <= row)
       {
         L_col_buffer[index_L] = col;
         L_elements[index_L]   = value;
@@ -282,9 +282,9 @@ void extract_LU(compressed_matrix<NumericT> const & A,
     for (unsigned int j = col_begin; j < col_end; ++j)
     {
       unsigned int col = A_col_buffer[j];
-      if (col <= row)
+      if (long(col) <= row)
         ++L_row_buffer[row];
-      if (col >= row)
+      if (long(col) >= row)
         ++U_row_buffer[row];
     }
   }
@@ -324,14 +324,14 @@ void extract_LU(compressed_matrix<NumericT> const & A,
       unsigned int col = A_col_buffer[j];
       NumericT value = A_elements[j];
 
-      if (col <= row)
+      if (long(col) <= row)
       {
         L_col_buffer[index_L] = col;
         L_elements[index_L]   = value;
         ++index_L;
       }
 
-      if (col >= row)
+      if (long(col) >= row)
       {
         U_col_buffer[index_U] = col;
         U_elements[index_U]   = value;
