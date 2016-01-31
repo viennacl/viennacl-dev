@@ -47,6 +47,7 @@
   #include "viennacl/vandermonde_matrix.hpp"
 #endif
 
+#include "viennacl/linalg/amg.hpp"
 #include "viennacl/linalg/bicgstab.hpp"
 #include "viennacl/linalg/bisect.hpp"
 #include "viennacl/linalg/bisect_gpu.hpp"
@@ -71,7 +72,6 @@
 #include "viennacl/misc/bandwidth_reduction.hpp"
 
 #ifdef VIENNACL_WITH_OPENCL
-  #include "viennacl/linalg/amg.hpp"
   #include "viennacl/linalg/spai.hpp"
   #include "viennacl/linalg/svd.hpp"
   #include "viennacl/device_specific/execute.hpp"

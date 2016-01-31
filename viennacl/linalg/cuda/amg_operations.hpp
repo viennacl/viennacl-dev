@@ -41,14 +41,15 @@ namespace amg
 
 ///////////////////////////////////////////
 
+template<typename UIntType>
 __global__ void amg_influence_trivial_kernel(
-          const unsigned int * row_indices,
-          const unsigned int * column_indices,
-          unsigned int size1,
-          unsigned int nnz,
-          unsigned int *influences_row,
-          unsigned int *influences_id,
-          unsigned int *influences_values
+          const UIntType * row_indices,
+          const UIntType * column_indices,
+          UIntType size1,
+          UIntType nnz,
+          UIntType *influences_row,
+          UIntType *influences_id,
+          UIntType *influences_values
           )
 {
   unsigned int global_id   = blockDim.x * blockIdx.x + threadIdx.x;
@@ -268,7 +269,8 @@ __global__ void amg_pmis2_mark_mis_nodes(IndexT const *work_state,
 }
 
 /** @brief CUDA kernel for resetting non-MIS (i.e. coarse) points to undecided so that subsequent kernels work */
-__global__ void amg_pmis2_reset_state(unsigned int *point_types, unsigned int size)
+template<typename UIntType>
+__global__ void amg_pmis2_reset_state(UIntType *point_types, UIntType size)
 {
   unsigned int global_id   = blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int global_size = gridDim.x * blockDim.x;
@@ -441,9 +443,9 @@ __global__ void amg_agg_merge_undecided(IndexT       *point_types,
   }
 }
 
-
-__global__ void amg_agg_merge_undecided_2(unsigned int *point_types,
-                                          unsigned int size)
+template<typename UIntType>
+__global__ void amg_agg_merge_undecided_2(UIntType *point_types,
+                                          UIntType size)
 {
   unsigned int global_id   = blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int global_size = gridDim.x * blockDim.x;
