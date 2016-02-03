@@ -115,6 +115,12 @@ public:
     return devices_[current_device_id_];
   }
 
+  /** @brief Returns the current device index */
+  int current_device_id() const
+  {
+    return current_device_id_;
+  }
+
   /** @brief Switches the current device to the i-th device in this context */
   void switch_device(vcl_size_t i)
   {

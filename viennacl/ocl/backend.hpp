@@ -45,6 +45,12 @@ public:
     current_context_id_ = i;
   }
 
+  /** @brief Returns the current context index */
+  static long current_context_id()
+  {
+    return current_context_id_;
+  }
+
   /** @brief Returns the current active context */
   static viennacl::ocl::context & context(long id)
   {
