@@ -116,7 +116,7 @@ public:
   }
 
   /** @brief Returns the current device index */
-  int current_device_id() const
+  vcl_size_t current_device_id() const
   {
     return current_device_id_;
   }
