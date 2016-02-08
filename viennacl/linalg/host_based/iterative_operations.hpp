@@ -36,10 +36,8 @@
 #include "viennacl/linalg/detail/op_applier.hpp"
 #include "viennacl/traits/stride.hpp"
 
-
-// Minimum vector size for using OpenMP on vector operations:
-#ifndef VIENNACL_OPENMP_VECTOR_MIN_SIZE
-  #define VIENNACL_OPENMP_VECTOR_MIN_SIZE  5000
+#ifdef VIENNACL_WITH_OPENMP
+#include <omp.h>
 #endif
 
 namespace viennacl
@@ -78,6 +76,10 @@ namespace detail
     value_type inner_prod_ApAp = 0;
     value_type inner_prod_pAp = 0;
     value_type inner_prod_Ap_r0star = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for reduction(+: inner_prod_ApAp, inner_prod_pAp, inner_prod_Ap_r0star)
+#endif
     for (long row = 0; row < static_cast<long>(A.size1()); ++row)
     {
       value_type dot_prod = 0;
@@ -181,6 +183,10 @@ namespace detail
     value_type inner_prod_ApAp = 0;
     value_type inner_prod_pAp = 0;
     value_type inner_prod_Ap_r0star = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for reduction(+: inner_prod_ApAp, inner_prod_pAp, inner_prod_Ap_r0star)
+#endif
     for (vcl_size_t row = 0; row < A.size1(); ++row)
     {
       value_type sum = 0;
@@ -234,17 +240,19 @@ namespace detail
     value_type         * data_buffer     = detail::extract_raw_pointer<value_type>(inner_prod_buffer);
 
     vcl_size_t num_blocks = A.size1() / A.rows_per_block() + 1;
-    std::vector<value_type> result_values(A.rows_per_block());
 
     value_type inner_prod_ApAp = 0;
     value_type inner_prod_pAp = 0;
     value_type inner_prod_Ap_r0star = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for reduction(+: inner_prod_ApAp, inner_prod_pAp, inner_prod_Ap_r0star)
+#endif
     for (vcl_size_t block_idx = 0; block_idx < num_blocks; ++block_idx)
     {
       vcl_size_t current_columns_per_block = columns_per_block[block_idx];
 
-      for (vcl_size_t i=0; i<result_values.size(); ++i)
-        result_values[i] = 0;
+      std::vector<value_type> result_values(A.rows_per_block());
 
       for (IndexT column_entry_index = 0;
                   column_entry_index < current_columns_per_block;
@@ -314,6 +322,10 @@ namespace detail
     value_type inner_prod_ApAp = 0;
     value_type inner_prod_pAp = 0;
     value_type inner_prod_Ap_r0star = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for reduction(+: inner_prod_ApAp, inner_prod_pAp, inner_prod_Ap_r0star)
+#endif
     for (vcl_size_t row = 0; row < A.size1(); ++row)
     {
       value_type val_p_diag = p_buf[static_cast<vcl_size_t>(row)]; //likely to be loaded from cache if required again in this row
@@ -384,6 +396,9 @@ void pipelined_cg_vector_update(vector_base<NumericT> & result,
   vcl_size_t size  = viennacl::traits::size(result);
 
   value_type inner_prod_r = 0;
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for reduction(+: inner_prod_r)
+#endif
   for (long i = 0; i < static_cast<long>(size); ++i)
   {
     value_type value_p = data_p[static_cast<vcl_size_t>(i)];
@@ -530,6 +545,10 @@ void pipelined_bicgstab_update_s(vector_base<NumericT> & s,
 
   // part 2: s = r - alpha * Ap  and first step in reduction for s:
   value_type inner_prod_s = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for reduction(+: inner_prod_s)
+#endif
   for (long i = 0; i < static_cast<long>(size); ++i)
   {
     value_type value_s  = data_s[static_cast<vcl_size_t>(i)];
@@ -572,6 +591,10 @@ void pipelined_bicgstab_update_s(vector_base<NumericT> & s,
    vcl_size_t size = viennacl::traits::size(result);
 
    value_type inner_prod_r_r0star = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for reduction(+: inner_prod_r_r0star)
+#endif
    for (long i = 0; i < static_cast<long>(size); ++i)
    {
      vcl_size_t index = static_cast<vcl_size_t>(i);
@@ -738,6 +761,10 @@ void pipelined_gmres_normalize_vk(vector_base<T> & v_k,
 
   // Compute <r, v_k> after normalization of v_k:
   value_type inner_prod_r_dot_vk = 0;
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for reduction(+: inner_prod_r_dot_vk)
+#endif
   for (long i = 0; i < static_cast<long>(size); ++i)
   {
     value_type value_vk = data_v_k[static_cast<vcl_size_t>(i) + vk_start] / norm_vk;
@@ -769,17 +796,49 @@ void pipelined_gmres_gram_schmidt_stage1(vector_base<T> const & device_krylov_ba
   value_type const * data_krylov_basis = detail::extract_raw_pointer<value_type>(device_krylov_basis);
   value_type       * data_inner_prod   = detail::extract_raw_pointer<value_type>(vi_in_vk_buffer);
 
-  // reset buffer:
-  for (vcl_size_t j = 0; j < k; ++j)
-    data_inner_prod[j*buffer_chunk_size] = value_type(0);
+#ifdef VIENNACL_WITH_OPENMP
+  unsigned int max_threads = omp_get_max_threads();
+#else
+  unsigned int max_threads = 1;
+#endif
+
+  std::vector<T> scratchpad(k*max_threads); // k result values per thread
 
   // compute inner products:
-  for (vcl_size_t i = 0; i < v_k_size; ++i)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel
+#endif
   {
-    value_type value_vk = data_krylov_basis[static_cast<vcl_size_t>(i) + k * v_k_internal_size];
+    long thread_id = 0;
+    long thread_count = 1;
 
-    for (vcl_size_t j = 0; j < k; ++j)
-      data_inner_prod[j*buffer_chunk_size] += data_krylov_basis[static_cast<vcl_size_t>(i) + j * v_k_internal_size] * value_vk;
+#ifdef VIENNACL_WITH_OPENMP
+    thread_id    = static_cast<long>(omp_get_thread_num());
+    thread_count = static_cast<long>(omp_get_num_threads());
+#endif
+
+    long work_per_thread = long(v_k_size - 1) / thread_count;
+    long thread_start = work_per_thread * thread_id;
+    long thread_stop  = std::min<long>(work_per_thread * (thread_id + 1), long(v_k_size));
+
+    T *thread_scratchpad = &(scratchpad[k * thread_id]);
+
+    for (long i = thread_start; i < thread_stop; ++i)
+    {
+      value_type value_vk = data_krylov_basis[static_cast<vcl_size_t>(i) + k * v_k_internal_size];
+
+      for (vcl_size_t j = 0; j < k; ++j)
+        thread_scratchpad[j] += data_krylov_basis[static_cast<vcl_size_t>(i) + j * v_k_internal_size] * value_vk;
+    }
+
+  }
+
+  for (vcl_size_t j = 0; j < k; ++j)
+  {
+    T tmp = 0;
+    for (std::size_t i=0; i<max_threads; ++i)
+      tmp += scratchpad[j+i*k];
+    data_inner_prod[j*buffer_chunk_size] = tmp;
   }
 }
 
@@ -813,6 +872,9 @@ void pipelined_gmres_gram_schmidt_stage2(vector_base<T> & device_krylov_basis,
 
   // Step 2: Compute v_k -= <v_i, v_k> v_i and reduction on ||v_k||:
   value_type norm_vk = 0;
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for reduction(+: norm_vk)
+#endif
   for (vcl_size_t i = 0; i < v_k_size; ++i)
   {
     value_type value_vk = data_krylov_basis[static_cast<vcl_size_t>(i) + k * v_k_internal_size];
@@ -848,6 +910,9 @@ void pipelined_gmres_update_result(vector_base<T> & result,
   value_type const * data_krylov_basis = detail::extract_raw_pointer<value_type>(krylov_basis);
   value_type const * data_coefficients = detail::extract_raw_pointer<value_type>(coefficients);
 
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
   for (vcl_size_t i = 0; i < v_k_size; ++i)
   {
     value_type value_result = data_result[i];
