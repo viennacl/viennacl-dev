@@ -237,17 +237,25 @@ inline void enumerate_coarse_points(viennacl::linalg::detail::amg::amg_level_con
   unsigned int *point_types_ptr  = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
   unsigned int *coarse_id_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.coarse_id_.handle());
 
-  unsigned int coarse_id = 0;
+  unsigned int num_coarse = 0;
+#ifdef VIENNACL_WITH_OPENMP
+#pragma omp parallel for reduction(+: num_coarse)
+#endif
   for (vcl_size_t i=0; i<amg_context.coarse_id_.size(); ++i)
   {
-    //assert(point_types_ptr[i] != viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED && bool("Logic error in enumerate_coarse_points(): Undecided points detected!"));
-
     if (point_types_ptr[i] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
-      coarse_id_ptr[i] = coarse_id++;
+    {
+      coarse_id_ptr[i] = 1;
+      num_coarse += 1;
+    }
+    else
+      coarse_id_ptr[i] = 0;
   }
 
-  //std::cout << "Coarse nodes after enumerate_coarse_points(): " << coarse_id << std::endl;
-  amg_context.num_coarse_ = coarse_id;
+  // possible improvement: fuse for-loop above with first stage of exclusive scan
+  viennacl::linalg::exclusive_scan(amg_context.coarse_id_, amg_context.coarse_id_);
+
+  amg_context.num_coarse_ = num_coarse;
 }
 
 
