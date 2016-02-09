@@ -983,41 +983,87 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
   unsigned int * B_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(B.handle1());
   unsigned int * B_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(B.handle2());
 
-  // prepare uninitialized B_row_buffer:
-  for (std::size_t i = 0; i < B.size1(); ++i)
-    B_row_buffer[i] = 0;
+#ifdef VIENNACL_WITH_OPENMP
+  int threads = 8;
+#else
+  int threads = 1;
+#endif
+  std::size_t scratchpad_size = threads * (B.size1()+1); //column-oriented matrix with 'threads' columns
+  unsigned int * scratchpad = (unsigned int *)malloc(sizeof(unsigned int) * scratchpad_size);
+
+  // prepare uninitialized scratchpad:
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (std::size_t i = 0; i < scratchpad_size; ++i)
+    scratchpad[i] = 0;
 
   //
   // Stage 1: Compute pattern for B
   //
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for num_threads(threads)
+#endif
   for (std::size_t row = 0; row < A.size1(); ++row)
   {
+    unsigned int thread_id = 0;
+#ifdef VIENNACL_WITH_OPENMP
+    thread_id = omp_get_thread_num();
+#endif
+
     unsigned int row_start = A_row_buffer[row];
     unsigned int row_stop  = A_row_buffer[row+1];
 
     for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
-      B_row_buffer[A_col_buffer[nnz_index]] += 1;
+      scratchpad[thread_id * (B.size1()+1) + A_col_buffer[nnz_index]] += 1;
   }
 
-  // Bring row-start array in place using inclusive-scan:
-  unsigned int offset = B_row_buffer[0];
-  B_row_buffer[0] = 0;
-  for (std::size_t row = 1; row < B.size1(); ++row)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (std::size_t row = 0; row < B.size1(); ++row)
   {
-    unsigned int tmp = B_row_buffer[row];
-    B_row_buffer[row] = offset;
-    offset += tmp;
+    unsigned int offset = scratchpad[row];
+    for (std::size_t i = 1; i<threads; ++i)
+    {
+      unsigned int tmp = scratchpad[i*(B.size1()+1) + row];
+      scratchpad[i*(B.size1()+1) + row] = offset;
+      offset += tmp;
+    }
+    scratchpad[row] = offset;
   }
-  B_row_buffer[B.size1()] = offset;
 
   //
-  // Stage 2: Fill with data
+  // Stage 2: Bring row-start array in place using exclusive-scan:
   //
+  viennacl::vector_base<unsigned int> helper_vec(scratchpad, viennacl::MAIN_MEMORY, B.size1()+1);
+  viennacl::linalg::host_based::exclusive_scan(helper_vec, helper_vec);
 
-  std::vector<unsigned int> B_row_offsets(B.size1()); //number of elements already written per row
+  // propagate offsets and copy CSR datastructure over to B:
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (std::size_t row = 0; row < B.size1(); ++row)
+  {
+    unsigned int row_offset = scratchpad[row];
+    B_row_buffer[row] = row_offset;
+    for (std::size_t i = 1; i<threads; ++i)
+      scratchpad[i*(B.size1()+1) + row] += row_offset;
+  }
+  B_row_buffer[B.size1()] = scratchpad[B.size1()];
 
+  //
+  // Stage 3: Fill with data
+  //
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for num_threads(threads)
+#endif
   for (std::size_t row = 0; row < A.size1(); ++row)
   {
+    unsigned int thread_id = 0;
+#ifdef VIENNACL_WITH_OPENMP
+    thread_id = omp_get_thread_num();
+#endif
     //std::cout << "Row " << row << ": ";
     unsigned int row_start = A_row_buffer[row];
     unsigned int row_stop  = A_row_buffer[row+1];
@@ -1025,16 +1071,18 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
     for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
     {
       unsigned int col_in_A = A_col_buffer[nnz_index];
-      unsigned int B_nnz_index = B_row_buffer[col_in_A] + B_row_offsets[col_in_A];
+      unsigned int array_index = thread_id * (B.size1()+1) + col_in_A;
+      unsigned int B_nnz_index = scratchpad[array_index];
+      scratchpad[array_index] += 1;
       B_col_buffer[B_nnz_index] = static_cast<unsigned int>(row);
       B_elements[B_nnz_index] = A_elements[nnz_index];
-      ++B_row_offsets[col_in_A];
-      //B_temp.at(A_col_buffer[nnz_index])[row] = A_elements[nnz_index];
     }
   }
 
   // Step 3: Make datastructure consistent (row blocks!)
   B.generate_row_block_information();
+
+  free(scratchpad);
 }
 
 /** Assign sparse matrix A to dense matrix B */
