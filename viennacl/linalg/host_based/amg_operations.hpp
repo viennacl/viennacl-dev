@@ -771,30 +771,25 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
   unsigned int *coarse_id_ptr         = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.coarse_id_.handle());
 
-  P.resize(A.size1(), amg_context.num_coarse_, false);
+  //
+  // Step 1: Determine sparsity pattern of P:
+  //
+  unsigned int *P_nonzero_helper = (unsigned int*)malloc((A.size1()+1) * sizeof(unsigned int));
+  NumericT *interpolation_helper = (NumericT *)malloc(A.size1() * sizeof(NumericT));
 
-  std::vector<std::map<unsigned int, NumericT> > P_setup(A.size1());
-
-  // Iterate over all points to build the interpolation matrix row-by-row
-  // Interpolation for coarse points is immediate using '1'.
-  // Interpolation for fine points is set up via corresponding row weights (cf. Yang paper, p. 14)
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
 #endif
   for (long row2=0; row2<static_cast<long>(A.size1()); ++row2)
   {
     unsigned int row = static_cast<unsigned int>(row2);
-    std::map<unsigned int, NumericT> & P_setup_row = P_setup[row];
-    //std::cout << "Row " << row << ": " << std::endl;
+
     if (point_types_ptr[row] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
     {
-      //std::cout << "  Setting value 1.0 at " << coarse_id_ptr[row] << std::endl;
-      P_setup_row[coarse_id_ptr[row]] = NumericT(1);
+      P_nonzero_helper[row] = 1;
     }
     else if (point_types_ptr[row] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE)
     {
-      //std::cout << "Building interpolant for fine point " << row << std::endl;
-
       NumericT row_sum = 0;
       NumericT row_coarse_sum = 0;
       NumericT diag = 0;
@@ -828,9 +823,85 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
       }
 
       NumericT temp_res = -row_sum/(row_coarse_sum*diag);
-      //std::cout << "row_sum: " << row_sum << ", row_coarse_sum: " << row_coarse_sum << ", diag: " << diag << std::endl;
 
       if (std::fabs(temp_res) > 1e-2 * std::fabs(diag))
+      {
+        unsigned int num_nonzeros_in_row = 0;
+
+        unsigned int row_A_start = A_row_buffer[row];
+        unsigned int row_A_end   = A_row_buffer[row + 1];
+        unsigned int const *influence_iter = influences_id_ptr + influences_row_ptr[row];
+        unsigned int const *influence_end  = influences_id_ptr + influences_row_ptr[row + 1];
+
+        for (unsigned int index = row_A_start; index < row_A_end; ++index)
+        {
+          unsigned int col = A_col_buffer[index];
+          if (point_types_ptr[col] != viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
+            continue;
+          NumericT value = A_elements[index];
+
+          // Advance to correct influence metric:
+          while (influence_iter != influence_end && *influence_iter < col)
+            ++influence_iter;
+
+          if (influence_iter != influence_end && *influence_iter == col && std::fabs(value) > 0)
+            ++num_nonzeros_in_row;
+        }
+
+        interpolation_helper[row] = temp_res;
+        P_nonzero_helper[row] = num_nonzeros_in_row; // as many nonzero entries as there are coarse points
+      }
+      else
+      {
+        interpolation_helper[row] = 0; // this ensures that the above if-statement is never valid if tested against zero
+        P_nonzero_helper[row] = 0;
+      }
+    }
+  }
+  P_nonzero_helper[A.size1()] = 0;
+
+  viennacl::vector_base<unsigned int> P_nonzero_helper_wrapper(P_nonzero_helper, viennacl::MAIN_MEMORY, A.size1() + 1);
+  viennacl::linalg::exclusive_scan(P_nonzero_helper_wrapper);
+
+
+  //
+  // Step 2: Populate P
+  //
+  P = compressed_matrix<NumericT>(A.size1(), amg_context.num_coarse_, P_nonzero_helper[A.size1()], viennacl::traits::context(A));
+
+  NumericT     * P_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(P.handle());
+  unsigned int * P_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(P.handle1());
+  unsigned int * P_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(P.handle2());
+
+
+  // Iterate over all points to build the interpolation matrix row-by-row
+  // Interpolation for coarse points is immediate using '1'.
+  // Interpolation for fine points is set up via corresponding row weights (cf. Yang paper, p. 14)
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long row2=0; row2<static_cast<long>(A.size1()); ++row2)
+  {
+    unsigned int row = static_cast<unsigned int>(row2);
+
+    unsigned int row_start = P_nonzero_helper[row];
+    P_row_buffer[row] = row_start;
+
+    if (point_types_ptr[row] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
+    {
+      P_col_buffer[row_start] = coarse_id_ptr[row];
+      P_elements[row_start]   = NumericT(1);
+    }
+    else if (point_types_ptr[row] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE)
+    {
+      NumericT temp_res = interpolation_helper[row];
+
+      unsigned int row_A_start = A_row_buffer[row];
+      unsigned int row_A_end   = A_row_buffer[row + 1];
+      unsigned int const *influence_iter = influences_id_ptr + influences_row_ptr[row];
+      unsigned int const *influence_end  = influences_id_ptr + influences_row_ptr[row + 1];
+
+      if (std::fabs(temp_res) > 0)
       {
         // Iterate over all strongly influencing points to build the interpolant
         influence_iter = influences_id_ptr + influences_row_ptr[row];
@@ -845,10 +916,11 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
           while (influence_iter != influence_end && *influence_iter < col)
             ++influence_iter;
 
-          if (influence_iter != influence_end && *influence_iter == col)
+          if (influence_iter != influence_end && *influence_iter == col && std::fabs(value) > 0)
           {
-            //std::cout << " Setting entry "  << temp_res * value << " at " << coarse_id_ptr[col] << " for point " << col << std::endl;
-            P_setup_row[coarse_id_ptr[col]] = temp_res * value;
+            P_col_buffer[row_start] = coarse_id_ptr[col];
+            P_elements[row_start]   = temp_res * value;
+            ++row_start;
           }
         }
       }
@@ -859,10 +931,12 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
     else
       throw std::runtime_error("Logic error in direct interpolation: Point is neither coarse-point nor fine-point!");
   }
+  P_row_buffer[A.size1()] = P_nonzero_helper[A.size1()];
 
-  // TODO: P_setup can be avoided without sacrificing parallelism.
-  viennacl::tools::sparse_matrix_adapter<NumericT> P_adapter(P_setup, P.size1(), P.size2());
-  viennacl::copy(P_adapter, P);
+  P.generate_row_block_information();
+
+  free(P_nonzero_helper);
+  free(interpolation_helper);
 }
 
 
