@@ -407,6 +407,71 @@ void amg_coarse_ag_stage1_sequential(compressed_matrix<NumericT> const & A,
 }
 
 
+/** @brief Propagates the work state information a distance of two, using a maximum operation to overwrite 'smaller' work state */
+template<typename IndexT>
+void amg_coarse_ag_stage1_mis2_propagate(IndexT const *work_state_ptr,  IndexT const *work_random_ptr,  IndexT const *work_index_ptr,
+                                         IndexT       *work_state2_ptr, IndexT       *work_random2_ptr, IndexT       *work_index2_ptr,
+                                         IndexT const *influences_row_ptr, IndexT const *influences_id_ptr, long num_points)
+{
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long i=0; i<num_points; ++i)
+  {
+    // load
+    IndexT state  = work_state_ptr[i];
+    IndexT random = work_random_ptr[i];
+    IndexT index  = work_index_ptr[i];
+
+    // max
+    IndexT j_stop = influences_row_ptr[i + 1];
+    for (IndexT j = influences_row_ptr[i]; j < j_stop; ++j)
+    {
+      IndexT influenced_point_id = influences_id_ptr[j];
+
+      IndexT other_state = work_state_ptr[influenced_point_id];
+
+
+      // lexigraphical triple-max (not particularly pretty, but does the job):
+      if (state < other_state)
+      {
+        state  = other_state;
+        random = work_random_ptr[influenced_point_id];
+        index  = work_index_ptr[influenced_point_id];
+      }
+      else if (state == other_state)
+      {
+        IndexT other_random = work_random_ptr[influenced_point_id];
+
+        if (random < other_random)
+        {
+          state  = other_state;
+          random = other_random;
+          index  = work_index_ptr[influenced_point_id];
+        }
+        else if (random == other_random)
+        {
+          IndexT other_index = work_index_ptr[influenced_point_id];
+
+          if (index < other_index)
+          {
+            state  = other_state;
+            random = other_random;
+            index  = other_index;
+          }
+        }
+      }
+    } // for
+
+    // store
+    work_state2_ptr[i]  = state;
+    work_random2_ptr[i] = random;
+    work_index2_ptr[i]  = index;
+  }
+
+}
+
 
 /** @brief AG (aggregation based) coarsening, multi-threaded version of stage 1 using parallel maximum independent sets
 *
@@ -452,101 +517,47 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
 
   unsigned int num_undecided = static_cast<unsigned int>(A.size1());
   unsigned int pmis_iters = 0;
+
+  //
+  // init temporary work data:
+  //
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long i2=0; i2<static_cast<long>(A.size1()); ++i2)
+  {
+    unsigned int i = static_cast<unsigned int>(i2);
+    switch (point_types_ptr[i])
+    {
+    case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED: work_state_ptr[i] = 1; break;
+    case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE:      work_state_ptr[i] = 0; break;
+    case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE:    work_state_ptr[i] = 2; break;
+    default:
+      throw std::runtime_error("Unexpected state encountered in MIS2 setup for AMG.");
+    }
+
+    //work_random_ptr[i] = random_weights[i]; // note: optimized out. Passing random_weights directly to first call to amg_coarse_ag_stage1_mis2_propagate()
+    work_index_ptr[i]  = i;
+  }
+
+
+  //
+  // Repeat PMIS iteration until all nodes have been decided
+  //
   while (num_undecided > 0)
   {
     ++pmis_iters;
 
     //
-    // init temporary work data:
-    //
-#ifdef VIENNACL_WITH_OPENMP
-  #pragma omp parallel for
-#endif
-    for (long i2=0; i2<static_cast<long>(A.size1()); ++i2)
-    {
-      unsigned int i = static_cast<unsigned int>(i2);
-      switch (point_types_ptr[i])
-      {
-      case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED: work_state_ptr[i] = 1; break;
-      case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE:      work_state_ptr[i] = 0; break;
-      case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE:    work_state_ptr[i] = 2; break;
-      default:
-        throw std::runtime_error("Unexpected state encountered in MIS2 setup for AMG.");
-      }
-
-      work_random_ptr[i] = random_weights[i];
-      work_index_ptr[i]  = i;
-    }
-
-
-    //
     // Propagate maximum tuple twice
+    // (first call writes state from work_*_ptr to work_*2_ptr, second call from work_*2_ptr back to work_*_ptr)
     //
-    for (unsigned int r = 0; r < 2; ++r)
-    {
-      // max operation
-#ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
-#endif
-      for (long i2=0; i2<static_cast<long>(A.size1()); ++i2)
-      {
-        unsigned int i = static_cast<unsigned int>(i2);
-        // load
-        unsigned int state  = work_state_ptr[i];
-        unsigned int random = work_random_ptr[i];
-        unsigned int index  = work_index_ptr[i];
-
-        // max
-        unsigned int j_stop = influences_row_ptr[i + 1];
-        for (unsigned int j = influences_row_ptr[i]; j < j_stop; ++j)
-        {
-          unsigned int influenced_point_id = influences_id_ptr[j];
-
-          // lexigraphical triple-max (not particularly pretty, but does the job):
-          if (state < work_state_ptr[influenced_point_id])
-          {
-            state  = work_state_ptr[influenced_point_id];
-            random = work_random_ptr[influenced_point_id];
-            index  = work_index_ptr[influenced_point_id];
-          }
-          else if (state == work_state_ptr[influenced_point_id])
-          {
-            if (random < work_random_ptr[influenced_point_id])
-            {
-              state  = work_state_ptr[influenced_point_id];
-              random = work_random_ptr[influenced_point_id];
-              index  = work_index_ptr[influenced_point_id];
-            }
-            else if (random == work_random_ptr[influenced_point_id])
-            {
-              if (index < work_index_ptr[influenced_point_id])
-              {
-                state  = work_state_ptr[influenced_point_id];
-                random = work_random_ptr[influenced_point_id];
-                index  = work_index_ptr[influenced_point_id];
-              }
-            } // max(random)
-          } // max(state)
-        } // for
-
-        // store
-        work_state2_ptr[i]  = state;
-        work_random2_ptr[i] = random;
-        work_index2_ptr[i]  = index;
-      }
-
-      // copy work array
-#ifdef VIENNACL_WITH_OPENMP
-      #pragma omp parallel for
-#endif
-      for (long i2=0; i2<static_cast<long>(A.size1()); ++i2)
-      {
-        unsigned int i = static_cast<unsigned int>(i2);
-        work_state_ptr[i]  = work_state2_ptr[i];
-        work_random_ptr[i] = work_random2_ptr[i];
-        work_index_ptr[i]  = work_index2_ptr[i];
-      }
-    }
+    amg_coarse_ag_stage1_mis2_propagate(work_state_ptr,  &(random_weights[0]),  work_index_ptr,
+                                        work_state2_ptr, work_random2_ptr, work_index2_ptr,
+                                        influences_row_ptr, influences_id_ptr, long(A.size1()));
+    amg_coarse_ag_stage1_mis2_propagate(work_state2_ptr, work_random2_ptr, work_index2_ptr,
+                                        work_state_ptr,  work_random_ptr,  work_index_ptr,
+                                        influences_row_ptr, influences_id_ptr, long(A.size1()));
 
     //
     // mark MIS and non-MIS nodes:
@@ -561,19 +572,36 @@ void amg_coarse_ag_stage1_mis2(compressed_matrix<NumericT> const & A,
       unsigned int i = static_cast<unsigned int>(i2);
       unsigned int max_state  = work_state_ptr[i];
       unsigned int max_index  = work_index_ptr[i];
+      work_index_ptr[i] = i; // reset for next iteration
 
-      if (point_types_ptr[i] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
+      switch (point_types_ptr[i])
       {
+      case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED:
         if (i == max_index) // make this a MIS node
+        {
           point_types_ptr[i] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE;
+          work_state_ptr[i] = 2;
+        }
         else if (max_state == 2) // mind the mapping of viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE above!
+        {
           point_types_ptr[i] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE;
+          work_state_ptr[i] = 0;
+        }
         else
+        {
+          work_state_ptr[i] = 1;
 #ifdef VIENNACL_WITH_OPENMP
           thread_buffer[omp_get_thread_num()] += 1;
 #else
           thread_buffer[0] += 1;
 #endif
+        }
+        break;
+
+      case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE:      work_state_ptr[i] = 0; break;
+      case viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE:    work_state_ptr[i] = 2; break;
+      default:
+        throw std::runtime_error("Unexpected state encountered in MIS2 setup for AMG.");
       }
     }
 
