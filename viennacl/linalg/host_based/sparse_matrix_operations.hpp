@@ -99,6 +99,41 @@ namespace detail
 }
 
 
+/** @brief Carries out matrix-vector multiplication with a compressed_matrix, optimized for contiguous access
+*
+* Implementation of the convenience expression result = prod(mat, vec);
+*
+* @param mat    The matrix
+* @param vec    The vector
+* @param result The result vector
+*/
+template<typename NumericT, unsigned int AlignmentV>
+void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & mat,
+               const viennacl::vector_base<NumericT> & vec,
+               viennacl::vector_base<NumericT> & result)
+{
+  NumericT           * result_buf = detail::extract_raw_pointer<NumericT>(result.handle());
+  NumericT     const * vec_buf    = detail::extract_raw_pointer<NumericT>(vec.handle());
+  NumericT     const * elements   = detail::extract_raw_pointer<NumericT>(mat.handle());
+  unsigned int const * row_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle1());
+  unsigned int const * col_buffer = detail::extract_raw_pointer<unsigned int>(mat.handle2());
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long row = 0; row < static_cast<long>(mat.size1()); ++row)
+  {
+    NumericT dot_prod = 0;
+
+    unsigned int row_end = row_buffer[row+1];
+    for (unsigned int i = row_buffer[row]; i < row_end; ++i)
+      dot_prod += elements[i] * vec_buf[col_buffer[i]];
+
+    result_buf[row] = dot_prod;
+  }
+
+}
+
 /** @brief Carries out matrix-vector multiplication with a compressed_matrix
 *
 * Implementation of the convenience expression result = prod(mat, vec);
@@ -114,6 +149,15 @@ void prod_impl(const viennacl::compressed_matrix<NumericT, AlignmentV> & mat,
                viennacl::vector_base<NumericT> & result,
                NumericT beta)
 {
+  if (   alpha <= NumericT(1) && alpha >= NumericT(1)
+      &&  beta <= NumericT(0) &&  beta >= NumericT(0)
+      && vec.start() == 0 && vec.stride() == 1
+      && result.start() == 0 && result.stride() == 0)
+  {
+    prod_impl(mat, vec, result);
+    return;
+  }
+
   NumericT           * result_buf = detail::extract_raw_pointer<NumericT>(result.handle());
   NumericT     const * vec_buf    = detail::extract_raw_pointer<NumericT>(vec.handle());
   NumericT     const * elements   = detail::extract_raw_pointer<NumericT>(mat.handle());
