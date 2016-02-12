@@ -362,6 +362,168 @@ void amg_coarse_classic_onepass(compressed_matrix<NumericT> const & A,
 }
 
 
+/** @brief Classical coarsening using parallel maximum independent sets
+*
+* Algorithm follows PMIS as outlined in "Reducing Complexity in Parallel Algebraic Multigrid Preconditioners" by De Sterck, Meyer-Yang, Heys (2004)
+*
+* @param A             Operator matrix for the respective level
+* @param amg_context   AMG datastructure object for the grid hierarchy
+* @param tag           AMG preconditioner tag
+*/
+template<typename NumericT>
+void amg_coarse_classic_pmis1(compressed_matrix<NumericT> const & A,
+                              viennacl::linalg::detail::amg::amg_level_context & amg_context,
+                              viennacl::linalg::amg_tag & tag)
+{
+  (void)tag;
+
+  amg_influence_trivial(A, amg_context, tag);
+  //amg_influence_advanced(A, amg_context, tag);
+
+  unsigned int  *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
+  unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
+  unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
+
+  std::vector<float> random_weights(A.size1());
+  for (std::size_t i=0; i<random_weights.size(); ++i)
+    random_weights[i] = float(influences_row_ptr[i+1] - influences_row_ptr[i]) + (float(rand()) / float(RAND_MAX));
+
+  std::size_t num_threads = 1;
+#ifdef VIENNACL_WITH_OPENMP
+  num_threads = omp_get_max_threads();
+#endif
+
+  viennacl::vector<float>        work_random2(A.size1(), viennacl::traits::context(A));
+  viennacl::vector<unsigned int> work_index2(A.size1(), viennacl::traits::context(A));
+
+  float        *work_random2_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<float>(work_random2.handle());
+  unsigned int *work_index2_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(work_index2.handle());
+
+
+  unsigned int num_undecided = static_cast<unsigned int>(A.size1());
+  unsigned int pmis_iters = 0;
+
+  //
+  // Setup: Set orphaned points with no strong connection to fine points:
+  //
+  for (long i=0; i<static_cast<long>(A.size1()); ++i)
+  {
+    if (influences_row_ptr[i] == influences_row_ptr[i + 1])
+    {
+      point_types_ptr[i] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE;
+    }
+  }
+
+
+  //
+  // Repeat PMIS iteration until all nodes have been decided
+  //
+  while (num_undecided > 0)
+  {
+    ++pmis_iters;
+
+    //
+    // Propagate maximum tuple once (only required for undecided points)
+    //
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for
+#endif
+    for (long i=0; i<static_cast<long>(A.size1()); ++i)
+    {
+      if (point_types_ptr[i] != viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
+        continue;
+
+      // load
+      float random = random_weights[i];
+      unsigned int index  = i;
+
+      // max
+      unsigned int j_stop = influences_row_ptr[i + 1];
+      for (unsigned int j = influences_row_ptr[i]; j < j_stop; ++j)
+      {
+        unsigned int influenced_point_id = influences_id_ptr[j];
+
+        if (point_types_ptr[influenced_point_id] != viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
+          continue;
+
+        float other_random = random_weights[influenced_point_id];
+
+        if (    random < other_random
+            || (random <= other_random && index < influenced_point_id))
+        {
+          random = other_random;
+          index  = influenced_point_id;
+        }
+      } // for
+
+      // store
+      work_random2_ptr[i] = random;
+      work_index2_ptr[i]  = index;
+    }
+
+
+    //
+    // mark coarse nodes:
+    //
+
+// OpenMP acceleration for this loop disabled because of troubles with NVCC in CUDA 6.0.
+//#if defined(VIENNACL_WITH_OPENMP)
+//  #pragma omp parallel for
+//#endif
+    for (long i=0; i<static_cast<long>(A.size1()); ++i)
+    {
+      if (point_types_ptr[i] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
+      {
+        //if (work_has_undecided_neighbor[i] && i == work_index2_ptr[i]) // this is a local maximum, so turn this into a coarse node
+        if (i == work_index2_ptr[i]) // this is a local maximum, so turn this into a coarse node
+        {
+          point_types_ptr[i] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE;
+
+          // set neighbors to fine nodes (race conditions are harmless here, because the same value is set to all strongly influenced undecided neighbor nodes)
+          unsigned int j_stop = influences_row_ptr[i + 1];
+          for (unsigned int j = influences_row_ptr[i]; j < j_stop; ++j)
+          {
+            unsigned int influenced_point_id = influences_id_ptr[j];
+            if (point_types_ptr[influenced_point_id] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
+              point_types_ptr[influenced_point_id] = viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE;
+          }
+        }
+      }
+    }
+
+    //
+    // count undecided nodes
+    //
+    std::vector<unsigned int> thread_buffer(num_threads);
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for
+#endif
+    for (long i2=0; i2<static_cast<long>(A.size1()); ++i2)
+    {
+      unsigned int i = static_cast<unsigned int>(i2);
+
+      if (point_types_ptr[i] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_UNDECIDED)
+      {
+#ifdef VIENNACL_WITH_OPENMP
+        thread_buffer[omp_get_thread_num()] += 1;
+#else
+        thread_buffer[0] += 1;
+#endif
+      }
+    }
+
+    num_undecided = 0;
+    for (std::size_t i=0; i<thread_buffer.size(); ++i)
+      num_undecided += thread_buffer[i];
+  } // while
+
+  viennacl::linalg::host_based::amg::enumerate_coarse_points(amg_context);
+}
+
+
+
+
 //////////////////////////
 
 
@@ -771,6 +933,8 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
   unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
   unsigned int *coarse_id_ptr         = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.coarse_id_.handle());
 
+  NumericT threshold = 1e-2;
+
   //
   // Step 1: Determine sparsity pattern of P:
   //
@@ -824,7 +988,7 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
 
       NumericT temp_res = -row_sum/(row_coarse_sum*diag);
 
-      if (std::fabs(temp_res) > 1e-2 * std::fabs(diag))
+      if (std::fabs(temp_res) > threshold * std::fabs(diag))
       {
         unsigned int num_nonzeros_in_row = 0;
 
@@ -938,6 +1102,137 @@ void amg_interpol_direct(compressed_matrix<NumericT> const & A,
   free(P_nonzero_helper);
   free(interpolation_helper);
 }
+
+
+/** @brief Extended+i interpolation. Multi-threaded! (VIENNACL_AMG_INTERPOL_EXTENDED_I)
+ *
+ * See "Distance-Two Interpolation for Parallel Algebraic Multigrid" by H. De Sterck et al. (2007) for description
+ *
+ * @param A            Operator matrix
+ * @param P            Prolongation matrix
+ * @param amg_context  AMG hierarchy datastructures
+ * @param tag          AMG preconditioner tag
+*/
+template<typename NumericT>
+void amg_interpol_extended_i_mis1(compressed_matrix<NumericT> const & A,
+                                compressed_matrix<NumericT> & P,
+                                viennacl::linalg::detail::amg::amg_level_context & amg_context,
+                                viennacl::linalg::amg_tag & tag)
+{
+  (void)tag;
+
+  NumericT     const * A_elements   = viennacl::linalg::host_based::detail::extract_raw_pointer<NumericT>(A.handle());
+  unsigned int const * A_row_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle1());
+  unsigned int const * A_col_buffer = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(A.handle2());
+
+  unsigned int *point_types_ptr       = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.point_types_.handle());
+  unsigned int *influences_row_ptr    = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_jumper_.handle());
+  unsigned int *influences_id_ptr     = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.influence_ids_.handle());
+  unsigned int *coarse_id_ptr         = viennacl::linalg::host_based::detail::extract_raw_pointer<unsigned int>(amg_context.coarse_id_.handle());
+
+  P.resize(A.size1(), amg_context.num_coarse_, false);
+
+  std::vector<std::map<unsigned int, NumericT> > P_setup(A.size1());
+
+  // Iterate over all points to build the interpolation matrix row-by-row
+  // Interpolation for coarse points is immediate using '1'.
+  // Interpolation for fine points is set up via (4.10) and (4.11) in "Distance-Two Interpolation for Parallel Algebraic Multigrid"
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for
+#endif
+  for (long row2=0; row2<static_cast<long>(A.size1()); ++row2)
+  {
+    unsigned int row = static_cast<unsigned int>(row2);
+    std::map<unsigned int, NumericT> & P_setup_row = P_setup[row]; // w_ij (first assembled as w_ij * \tilde{a}_ii)
+
+    if (point_types_ptr[row] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
+    {
+      P_setup_row[coarse_id_ptr[row]] = NumericT(1);
+    }
+    else if (point_types_ptr[row] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE)
+    {
+      // TODO: Add consideration of strong connections (currently all connections are considered strong)
+      //unsigned int const *influence_iter = influences_id_ptr + influences_row_ptr[row];
+      //unsigned int const *influence_end  = influences_id_ptr + influences_row_ptr[row + 1];
+
+      NumericT atilde_ii = 0;
+
+      unsigned int row_A_start = A_row_buffer[row];
+      unsigned int row_A_end   = A_row_buffer[row + 1];
+      for (unsigned int index = row_A_start; index < row_A_end; ++index)
+      {
+        unsigned int col = A_col_buffer[index];
+
+        if (col == row)
+        {
+          atilde_ii += A_elements[index];  // a_ii contribution to \tilde{a}_ii
+        }
+        else if (point_types_ptr[col] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
+        {
+          P_setup_row[coarse_id_ptr[col]] += A_elements[index]; // a_ij
+
+          // contributions from fine nodes influencing this coarse node follow below
+        }
+        else if (point_types_ptr[col] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_FINE) // reach out for coarse nodes at distance 2
+        {
+          NumericT aik = A_elements[index];
+          NumericT akl = 0;
+
+          unsigned int distance_2_start = A_row_buffer[col];
+          unsigned int distance_2_end   = A_row_buffer[col + 1];
+
+          // determine akl expression in denominator first:
+          for (unsigned int index_2 = distance_2_start; index_2 < distance_2_end; ++index_2)
+          {
+            unsigned int col_2 = A_col_buffer[index_2];
+
+            if (col_2 == row || point_types_ptr[col_2] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
+              akl += A_elements[index_2];
+          }
+
+          // compute numerator and denominator of w_ij
+          for (unsigned int index_2 = distance_2_start; index_2 < distance_2_end; ++index_2)
+          {
+            unsigned int col_2 = A_col_buffer[index_2];
+            NumericT akj = 0;
+            NumericT aki = 0;
+
+            if (point_types_ptr[col_2] == viennacl::linalg::detail::amg::amg_level_context::POINT_TYPE_COARSE)
+              akj  = A_elements[index_2];
+
+            if (col_2 == row)
+              aki  = A_elements[index_2];
+
+            if (std::fabs(akj) > 0)
+              P_setup_row[coarse_id_ptr[col_2]] += aik * akj / akl;
+            if (std::fabs(aki) > 0)
+              atilde_ii += aik * aki / akl;
+          }
+        }
+      }
+
+      if (atilde_ii <= 0 && atilde_ii >= 0)
+        throw std::runtime_error("amg_interpol_extended_i_mis1(): Denominator zero, interpolation invalid!");
+
+      // now divide the entries in P_setup_row by \tilde{a}_ii to form w_ij:
+      // Note: A minus sign is missing in Eq. 4.10 in "Distance-Two Interpolation for Parallel Algebraic Multigrid".
+      // Compare with Eq. 4.6, a minus sign appears there
+      for (typename std::map<unsigned int, NumericT>::iterator it  = P_setup_row.begin();
+                                                               it != P_setup_row.end();
+                                                             ++it)
+        it->second /= NumericT(-1.0) * atilde_ii;
+    }
+    else
+      throw std::runtime_error("Logic error in direct interpolation: Point is neither coarse-point nor fine-point!");
+  }
+
+  // TODO: P_setup can be avoided without sacrificing parallelism.
+  viennacl::tools::sparse_matrix_adapter<NumericT> P_adapter(P_setup, P.size1(), P.size2());
+  viennacl::copy(P_adapter, P);
+
+}
+
+
 
 
 /** @brief AG (aggregation based) interpolation. Multi-Threaded! (VIENNACL_INTERPOL_AG)
