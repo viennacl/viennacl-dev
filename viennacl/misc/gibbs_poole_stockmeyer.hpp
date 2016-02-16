@@ -170,7 +170,6 @@ std::vector<int> reorder(MatrixType const & matrix,
   std::vector< std::vector<int> > rgc;
   int m;
   int m_min;
-  bool new_g = true;
   int k1, k2, k3, k4;
   std::vector<int> wvs;
   std::vector<int> wvsg;
@@ -185,6 +184,8 @@ std::vector<int> reorder(MatrixType const & matrix,
 
   while (current_dof < static_cast<int>(n)) // for all components of the graph apply GPS algorithm
   {
+    bool new_g = true;
+
     // determine node g with mimimal degree among all nodes which
     // are not yet in result array r
     deg_min = -1;
@@ -192,7 +193,7 @@ std::vector<int> reorder(MatrixType const & matrix,
     {
       if (!inr[i])
       {
-        deg = static_cast<int>(matrix[i].size() - 1); // node degree
+        deg = static_cast<int>(matrix[i].size()); // node degree
         if (deg_min < 0 || deg < deg_min)
         {
           g = static_cast<int>(i); // node number
@@ -211,7 +212,7 @@ std::vector<int> reorder(MatrixType const & matrix,
       for (vcl_size_t i = 0; i < lg.back().size(); i++)
       {
         tmp[0] = lg.back()[i];
-        tmp[1] = static_cast<int>(matrix[static_cast<vcl_size_t>(lg.back()[i])].size() - 1);
+        tmp[1] = static_cast<int>(matrix[static_cast<vcl_size_t>(lg.back()[i])].size());
         nodes.push_back(tmp);
       }
       std::sort(nodes.begin(), nodes.end(), detail::cuthill_mckee_comp_func);
@@ -388,7 +389,7 @@ std::vector<int> reorder(MatrixType const & matrix,
           for (vcl_size_t j = 0; j < ls[l].size(); j++)
           {
             if (inr[static_cast<vcl_size_t>(ls[l][j])]) continue;
-            deg = static_cast<int>(matrix[static_cast<vcl_size_t>(ls[l][j])].size() - 1);
+            deg = static_cast<int>(matrix[static_cast<vcl_size_t>(ls[l][j])].size());
             if (deg_min < 0 || deg < deg_min)
             {
               ind_min = ls[l][j];
