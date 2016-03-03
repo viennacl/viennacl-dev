@@ -204,7 +204,7 @@ public:
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
     std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;
 #endif
-    if (ptr)
+    if (ptr && !(flags & CL_MEM_USE_HOST_PTR))
       flags |= CL_MEM_COPY_HOST_PTR;
     cl_int err;
     cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
