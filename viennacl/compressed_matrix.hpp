@@ -656,6 +656,58 @@ public:
 #endif
   }
 
+  /** @brief Wraps existing host or CUDA buffers holding the compressed sparse row information.
+    *
+    * @param mem_row_buffer   A buffer consisting of unsigned integers (signed integers will also work due to 2-complement representation) holding the entry points for each row (0-based indexing). (rows+1) elements, the last element being 'nonzeros'.
+    * @param mem_col_buffer   A buffer consisting of unsigned integers (signed integers will also work due to 2-complement representation) holding the column index for each nonzero entry as stored in 'mem_elements'.
+    * @param mem_elements     A buffer holding the floating point numbers for nonzeros. OpenCL type of elements must match the template 'NumericT'.
+    * @param mem_type         Memory type. Either viennacl::CUDA_MEMORY for CUDA buffers, or viennacl::MAIN_MEMORY for host pointers in main RAM.
+    * @param rows             Number of rows in the matrix to be wrapped.
+    * @param cols             Number of columns to be wrapped.
+    * @param nonzeros         Number of nonzero entries in the matrix.
+    */
+  explicit compressed_matrix(unsigned int *mem_row_buffer, unsigned int *mem_col_buffer, NumericT *mem_elements, viennacl::memory_types mem_type,
+                             vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzeros) :
+    rows_(rows), cols_(cols), nonzeros_(nonzeros), row_block_num_(0)
+  {
+    row_buffer_.switch_active_handle_id(mem_type);
+    col_buffer_.switch_active_handle_id(mem_type);
+    elements_.switch_active_handle_id(mem_type);
+
+    if (mem_type == viennacl::CUDA_MEMORY)
+    {
+#ifdef VIENNACL_WITH_CUDA
+      row_buffer_.cuda_handle().reset(reinterpret_cast<char*>(mem_row_buffer));
+      row_buffer_.cuda_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+
+      col_buffer_.cuda_handle().reset(reinterpret_cast<char*>(mem_col_buffer));
+      col_buffer_.cuda_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+
+      elements_.cuda_handle().reset(reinterpret_cast<char*>(mem_elements));
+      elements_.cuda_handle().inc();               //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+#else
+      throw cuda_not_available_exception();
+#endif
+    }
+    else if (mem_type == viennacl::MAIN_MEMORY)
+    {
+      row_buffer_.ram_handle().reset(reinterpret_cast<char*>(mem_row_buffer));
+      row_buffer_.ram_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+
+      col_buffer_.ram_handle().reset(reinterpret_cast<char*>(mem_col_buffer));
+      col_buffer_.ram_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+
+      elements_.ram_handle().reset(reinterpret_cast<char*>(mem_elements));
+      elements_.ram_handle().inc();               //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+    }
+
+    row_buffer_.raw_size(sizeof(unsigned int) * (rows + 1));
+    col_buffer_.raw_size(sizeof(unsigned int) * nonzeros);
+    elements_.raw_size(sizeof(NumericT) * nonzeros);
+
+    //generate block information for CSR-adaptive:
+    generate_row_block_information();
+  }
 
 #ifdef VIENNACL_WITH_OPENCL
   /** @brief Wraps existing OpenCL buffers holding the compressed sparse row information.

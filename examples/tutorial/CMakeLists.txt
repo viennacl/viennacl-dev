@@ -88,7 +88,8 @@ if (ENABLE_CUDA)
   foreach(tut amg blas1 fft iterative-custom matrix-free nmf wrap-cuda-buffer)
     cuda_add_executable(${tut}-cuda ${tut}.cu)
   endforeach()
-  cuda_add_executable(custom-cuda  custom-cuda.cu)  # would otherwise result in custom-cuda-cuda
+  cuda_add_executable(custom-cuda    custom-cuda.cu)    # would otherwise result in custom-cuda-cuda
+  cuda_add_executable(wrap-csr-cuda  wrap-csr-cuda.cu)  # would otherwise result in wrap-csr-cuda-cuda
 
   if (ENABLE_UBLAS)
     include_directories(${Boost_INCLUDE_DIRS})
