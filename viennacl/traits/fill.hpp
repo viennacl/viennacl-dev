@@ -30,7 +30,7 @@
 
 #ifdef VIENNACL_WITH_EIGEN
 #include <Eigen/Core>
-#include <Eigen/Sparse>
+#include <Eigen/SparseCore>
 #endif
 
 #include <vector>
