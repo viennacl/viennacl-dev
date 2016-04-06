@@ -39,7 +39,7 @@
 
 #ifdef VIENNACL_WITH_EIGEN
 #include <Eigen/Core>
-#include <Eigen/Sparse>
+#include <Eigen/SparseCore>
 #endif
 
 #ifdef VIENNACL_WITH_MTL4
