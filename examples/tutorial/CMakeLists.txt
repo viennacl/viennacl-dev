@@ -4,7 +4,7 @@
 #
 # Part 1: Tutorials which work without OpenCL as well:
 #
-foreach(tut amg bandwidth-reduction blas1 fft iterative-custom matrix-free nmf scheduler wrap-host-buffer)
+foreach(tut amg bandwidth-reduction blas1 fft ildl iterative-custom matrix-free nmf scheduler wrap-host-buffer)
    add_executable(${tut} ${tut}.cpp)
    if (ENABLE_OPENCL)
      target_link_libraries(${tut} ${OPENCL_LIBRARIES})
