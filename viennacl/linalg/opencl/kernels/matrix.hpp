@@ -348,13 +348,23 @@ void generate_element_op(StringType & source, std::string const & numeric_string
     source.append("  unsigned int row_gid = get_global_id(0) / get_local_size(0);\n");
     source.append("  unsigned int col_gid = get_global_id(0) % get_local_size(0);\n");
     source.append("  if (op_type == 2) {");
+    source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
+    source.append("      for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0))\n");
     if (numeric_string == "float" || numeric_string == "double")
     {
-      source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
-      source.append("      for (unsigned int col = col_gid; col < A_size2; col += get_local_size(0))\n");
       source.append("        A[(row * A_inc1 + A_start1) * A_internal_size2 + (col * A_inc2 + A_start2)] = \n");
       source.append("        pow(B[(row * B_inc1 + B_start1) * B_internal_size2 + (col * B_inc2 + B_start2)], \n");
       source.append("            C[(row * C_inc1 + C_start1) * C_internal_size2 + (col * C_inc2 + C_start2)]); \n");
+    }
+    else // integer power
+    {
+      source.append("      {  " + numeric_string + " factor = B[(row * B_inc1 + B_start1) * B_internal_size2 + (col * B_inc2 + B_start2)]; \n");
+      source.append("        " + numeric_string + " power = C[(row * C_inc1 + C_start1) * C_internal_size2 + (col * C_inc2 + C_start2)]; \n");
+      source.append("        " + numeric_string + " val = (power >= 0) ? 1 : 0; \n");
+      source.append("        for (int p = 0; p < power; ++p)\n");
+      source.append("          val *= factor; \n");
+      source.append("        A[(row * A_inc1 + A_start1) * A_internal_size2 + (col * A_inc2 + A_start2)] = val; \n");
+      source.append("      }");
     }
     source.append("  } else if (op_type == 1) {");
     source.append("    for (unsigned int row = row_gid; row < A_size1; row += get_num_groups(0))\n");
