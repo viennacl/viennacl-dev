@@ -126,13 +126,13 @@ inline const char * expression_type_to_string(expression_type type)
 }
 
 /** @brief generate the string for a pointer kernel argument */
-static std::string generate_value_kernel_argument(std::string const & scalartype, std::string const & name)
+inline std::string generate_value_kernel_argument(std::string const & scalartype, std::string const & name)
 {
   return scalartype + ' ' + name + ",";
 }
 
 /** @brief generate the string for a pointer kernel argument */
-static std::string generate_pointer_kernel_argument(std::string const & address_space, std::string const & scalartype, std::string const & name)
+inline std::string generate_pointer_kernel_argument(std::string const & address_space, std::string const & scalartype, std::string const & name)
 {
   return address_space +  " " + scalartype + "* " + name + ",";
 }
