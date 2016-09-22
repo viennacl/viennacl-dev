@@ -424,7 +424,7 @@ namespace backend
         case CUDA_MEMORY:
           buffer.resize(handle.raw_size() / sizeof(DataType));
           opencl::memory_read(handle.opencl_handle(), 0, handle.raw_size(), &(buffer[0]));
-          cuda::memory_create(handle.cuda_handle(), handle.raw_size(), &(buffer[0]));
+          handle.cuda_handle() = cuda::memory_create(handle.raw_size(), &(buffer[0]));
           break;
 #endif
         default:
@@ -448,7 +448,7 @@ namespace backend
         case OPENCL_MEMORY:
           buffer.resize(handle.raw_size() / sizeof(DataType));
           cuda::memory_read(handle.cuda_handle(), 0, handle.raw_size(), &(buffer[0]));
-          handle.opencl_handle() = opencl::memory_create(handle.raw_size(), &(buffer[0]));
+          handle.opencl_handle() = opencl::memory_create(new_ctx.opencl_context(), handle.raw_size(), &(buffer[0]));
           break;
 #endif
         default:
