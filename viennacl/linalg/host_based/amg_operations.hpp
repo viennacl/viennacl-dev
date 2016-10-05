@@ -1452,7 +1452,7 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
   {
     unsigned int row_offset = scratchpad[row];
     B_row_buffer[row] = row_offset;
-    for (std::size_t i = 1; i<threads; ++i)
+    for (std::size_t i = 1; i<std::size_t(threads); ++i)
       scratchpad[i*(B.size1()+1) + row] += row_offset;
   }
   B_row_buffer[B.size1()] = scratchpad[B.size1()];
