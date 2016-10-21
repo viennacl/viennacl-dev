@@ -283,7 +283,7 @@ namespace detail
     CPU_NumericType norm_rhs_squared = ip_rr;
     CPU_NumericType new_ipp_rr_over_norm_rhs;
 
-    if (norm_rhs_squared <= tag.abs_tolerance() * tag.abs_tolerance()) //solution is zero if RHS norm (squared) is zero
+    if (std::fabs(norm_rhs_squared) <= tag.abs_tolerance() * tag.abs_tolerance()) //solution is zero if RHS norm (squared) is zero
       return result;
 
     for (unsigned int i = 0; i < tag.max_iterations(); ++i)
