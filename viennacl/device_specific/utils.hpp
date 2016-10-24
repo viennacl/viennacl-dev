@@ -492,21 +492,32 @@ inline bool elementwise_function(scheduler::op_element const & op)
 
       || op.type== OPERATION_UNARY_ABS_TYPE
       || op.type== OPERATION_UNARY_ACOS_TYPE
+      || op.type== OPERATION_UNARY_ACOSH_TYPE
       || op.type== OPERATION_UNARY_ASIN_TYPE
+      || op.type== OPERATION_UNARY_ASINH_TYPE
       || op.type== OPERATION_UNARY_ATAN_TYPE
+      || op.type== OPERATION_UNARY_ATANH_TYPE
       || op.type== OPERATION_UNARY_CEIL_TYPE
       || op.type== OPERATION_UNARY_COS_TYPE
       || op.type== OPERATION_UNARY_COSH_TYPE
+      || op.type== OPERATION_UNARY_ERF_TYPE
+      || op.type== OPERATION_UNARY_ERFC_TYPE
       || op.type== OPERATION_UNARY_EXP_TYPE
+      || op.type== OPERATION_UNARY_EXP2_TYPE
+      || op.type== OPERATION_UNARY_EXP10_TYPE
       || op.type== OPERATION_UNARY_FABS_TYPE
       || op.type== OPERATION_UNARY_FLOOR_TYPE
       || op.type== OPERATION_UNARY_LOG_TYPE
+      || op.type== OPERATION_UNARY_LOG2_TYPE
       || op.type== OPERATION_UNARY_LOG10_TYPE
+      || op.type== OPERATION_UNARY_ROUND_TYPE
+      || op.type== OPERATION_UNARY_RSQRT_TYPE
       || op.type== OPERATION_UNARY_SIN_TYPE
       || op.type== OPERATION_UNARY_SINH_TYPE
       || op.type== OPERATION_UNARY_SQRT_TYPE
       || op.type== OPERATION_UNARY_TAN_TYPE
       || op.type== OPERATION_UNARY_TANH_TYPE
+      || op.type== OPERATION_UNARY_TRUNC_TYPE
 
       || op.type== OPERATION_BINARY_ELEMENT_POW_TYPE
       || op.type== OPERATION_BINARY_ELEMENT_EQ_TYPE

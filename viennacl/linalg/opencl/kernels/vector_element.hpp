@@ -118,21 +118,33 @@ struct vector_element
       if (numeric_string == "float" || numeric_string == "double")
       {
         generate_vector_unary_element_ops(source, numeric_string, "acos");
+        generate_vector_unary_element_ops(source, numeric_string, "acosh");
         generate_vector_unary_element_ops(source, numeric_string, "asin");
+        generate_vector_unary_element_ops(source, numeric_string, "asinh");
         generate_vector_unary_element_ops(source, numeric_string, "atan");
+        generate_vector_unary_element_ops(source, numeric_string, "atanh");
         generate_vector_unary_element_ops(source, numeric_string, "ceil");
         generate_vector_unary_element_ops(source, numeric_string, "cos");
         generate_vector_unary_element_ops(source, numeric_string, "cosh");
+        generate_vector_unary_element_ops(source, numeric_string, "erf");
+        generate_vector_unary_element_ops(source, numeric_string, "erfc");
         generate_vector_unary_element_ops(source, numeric_string, "exp");
+        generate_vector_unary_element_ops(source, numeric_string, "exp2");
+        generate_vector_unary_element_ops(source, numeric_string, "exp10");
         generate_vector_unary_element_ops(source, numeric_string, "fabs");
         generate_vector_unary_element_ops(source, numeric_string, "floor");
         generate_vector_unary_element_ops(source, numeric_string, "log");
+        generate_vector_unary_element_ops(source, numeric_string, "log2");
         generate_vector_unary_element_ops(source, numeric_string, "log10");
+        generate_vector_unary_element_ops(source, numeric_string, "round");
+        generate_vector_unary_element_ops(source, numeric_string, "rsqrt");
+        generate_vector_unary_element_ops(source, numeric_string, "sign");
         generate_vector_unary_element_ops(source, numeric_string, "sin");
         generate_vector_unary_element_ops(source, numeric_string, "sinh");
         generate_vector_unary_element_ops(source, numeric_string, "sqrt");
         generate_vector_unary_element_ops(source, numeric_string, "tan");
         generate_vector_unary_element_ops(source, numeric_string, "tanh");
+        generate_vector_unary_element_ops(source, numeric_string, "trunc");
       }
       else
       {

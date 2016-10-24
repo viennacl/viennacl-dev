@@ -242,6 +242,57 @@ typename viennacl::enable_if< viennacl::is_cpu_scalar<ArgT>::value,
 arg_reference(ArgT, double const & val)  { return val; }
 
 } //namespace detail
+
+template<typename OpT>
+struct cuda_unary_op {};
+
+#define VIENNACL_CUDA_GENERATE_UNARY_OP(FUNCNAME)  \
+template<>\
+struct cuda_unary_op<viennacl::op_##FUNCNAME> \
+{ \
+  template<typename NumericT> \
+  static __device__ NumericT apply(NumericT x) { return FUNCNAME(x); } \
+};
+
+VIENNACL_CUDA_GENERATE_UNARY_OP(abs)
+VIENNACL_CUDA_GENERATE_UNARY_OP(acos)
+VIENNACL_CUDA_GENERATE_UNARY_OP(acosh)
+VIENNACL_CUDA_GENERATE_UNARY_OP(asin)
+VIENNACL_CUDA_GENERATE_UNARY_OP(asinh)
+VIENNACL_CUDA_GENERATE_UNARY_OP(atan)
+VIENNACL_CUDA_GENERATE_UNARY_OP(atanh)
+VIENNACL_CUDA_GENERATE_UNARY_OP(ceil)
+VIENNACL_CUDA_GENERATE_UNARY_OP(cos)
+VIENNACL_CUDA_GENERATE_UNARY_OP(cosh)
+VIENNACL_CUDA_GENERATE_UNARY_OP(erf)
+VIENNACL_CUDA_GENERATE_UNARY_OP(erfc)
+VIENNACL_CUDA_GENERATE_UNARY_OP(exp)
+VIENNACL_CUDA_GENERATE_UNARY_OP(exp2)
+VIENNACL_CUDA_GENERATE_UNARY_OP(exp10)
+VIENNACL_CUDA_GENERATE_UNARY_OP(fabs)
+VIENNACL_CUDA_GENERATE_UNARY_OP(floor)
+VIENNACL_CUDA_GENERATE_UNARY_OP(log)
+VIENNACL_CUDA_GENERATE_UNARY_OP(log2)
+VIENNACL_CUDA_GENERATE_UNARY_OP(log10)
+VIENNACL_CUDA_GENERATE_UNARY_OP(round)
+VIENNACL_CUDA_GENERATE_UNARY_OP(rsqrt)
+//VIENNACL_CUDA_GENERATE_UNARY_OP(sign) //implement manually below
+VIENNACL_CUDA_GENERATE_UNARY_OP(sin)
+VIENNACL_CUDA_GENERATE_UNARY_OP(sinh)
+VIENNACL_CUDA_GENERATE_UNARY_OP(sqrt)
+VIENNACL_CUDA_GENERATE_UNARY_OP(tan)
+VIENNACL_CUDA_GENERATE_UNARY_OP(tanh)
+VIENNACL_CUDA_GENERATE_UNARY_OP(trunc)
+
+template<>
+struct cuda_unary_op<viennacl::op_sign>
+{
+  template<typename NumericT>
+  static __device__ NumericT apply(NumericT x) { return (x > NumericT(0)) ? NumericT(1) : (x < NumericT(0) ? NumericT(-1) : NumericT(0)); }
+};
+
+#undef VIENNACL_CUDA_GENERATE_UNARY_OP
+
 } //namespace cuda
 } //namespace linalg
 } //namespace viennacl

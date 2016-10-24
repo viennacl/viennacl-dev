@@ -127,21 +127,33 @@ inline const char * evaluate(scheduler::operation_node_type type)
   //Function
   case OPERATION_UNARY_ABS_TYPE : return "abs";
   case OPERATION_UNARY_ACOS_TYPE : return "acos";
+  case OPERATION_UNARY_ACOSH_TYPE : return "acosh";
   case OPERATION_UNARY_ASIN_TYPE : return "asin";
+  case OPERATION_UNARY_ASINH_TYPE : return "asinh";
   case OPERATION_UNARY_ATAN_TYPE : return "atan";
+  case OPERATION_UNARY_ATANH_TYPE : return "atanh";
   case OPERATION_UNARY_CEIL_TYPE : return "ceil";
   case OPERATION_UNARY_COS_TYPE : return "cos";
   case OPERATION_UNARY_COSH_TYPE : return "cosh";
+  case OPERATION_UNARY_ERF_TYPE : return "erf";
+  case OPERATION_UNARY_ERFC_TYPE : return "erfc";
   case OPERATION_UNARY_EXP_TYPE : return "exp";
+  case OPERATION_UNARY_EXP10_TYPE : return "exp10";
+  case OPERATION_UNARY_EXP2_TYPE : return "exp2";
   case OPERATION_UNARY_FABS_TYPE : return "fabs";
   case OPERATION_UNARY_FLOOR_TYPE : return "floor";
   case OPERATION_UNARY_LOG_TYPE : return "log";
+  case OPERATION_UNARY_LOG2_TYPE : return "log2";
   case OPERATION_UNARY_LOG10_TYPE : return "log10";
+  case OPERATION_UNARY_ROUND_TYPE : return "round";
+  case OPERATION_UNARY_RSQRT_TYPE : return "rsqrt";
+  case OPERATION_UNARY_SIGN_TYPE : return "sign";
   case OPERATION_UNARY_SIN_TYPE : return "sin";
   case OPERATION_UNARY_SINH_TYPE : return "sinh";
   case OPERATION_UNARY_SQRT_TYPE : return "sqrt";
   case OPERATION_UNARY_TAN_TYPE : return "tan";
   case OPERATION_UNARY_TANH_TYPE : return "tanh";
+  case OPERATION_UNARY_TRUNC_TYPE : return "trunc";
 
   case OPERATION_UNARY_CAST_CHAR_TYPE : return "(char)";
   case OPERATION_UNARY_CAST_UCHAR_TYPE : return "(uchar)";

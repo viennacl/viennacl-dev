@@ -137,14 +137,20 @@ namespace viennacl
   struct op_abs {};
   /** @brief A tag class representing the acos() function */
   struct op_acos {};
+  /** @brief A tag class representing the acosh() function */
+  struct op_acosh {};
   /** @brief A tag class representing the asin() function */
   struct op_asin {};
+  /** @brief A tag class representing the asinh() function */
+  struct op_asinh {};
   /** @brief A tag class for representing the argmax() function */
   struct op_argmax {};
   /** @brief A tag class for representing the argmin() function */
   struct op_argmin {};
   /** @brief A tag class representing the atan() function */
   struct op_atan {};
+  /** @brief A tag class representing the atanh() function */
+  struct op_atanh {};
   /** @brief A tag class representing the atan2() function */
   struct op_atan2 {};
   /** @brief A tag class representing the ceil() function */
@@ -153,8 +159,16 @@ namespace viennacl
   struct op_cos {};
   /** @brief A tag class representing the cosh() function */
   struct op_cosh {};
+  /** @brief A tag class representing the erf() function */
+  struct op_erf {};
+  /** @brief A tag class representing the erfc() function */
+  struct op_erfc {};
   /** @brief A tag class representing the exp() function */
   struct op_exp {};
+  /** @brief A tag class representing the exp2() function */
+  struct op_exp2 {};
+  /** @brief A tag class representing the exp10() function */
+  struct op_exp10 {};
   /** @brief A tag class representing the fabs() function */
   struct op_fabs {};
   /** @brief A tag class representing the fdim() function */
@@ -169,8 +183,16 @@ namespace viennacl
   struct op_fmod {};
   /** @brief A tag class representing the log() function */
   struct op_log {};
+  /** @brief A tag class representing the log2() function */
+  struct op_log2 {};
   /** @brief A tag class representing the log10() function */
   struct op_log10 {};
+  /** @brief A tag class representing the round() function */
+  struct op_round {};
+  /** @brief A tag class representing the rsqrt() function */
+  struct op_rsqrt {};
+  /** @brief A tag class representing the sign() function */
+  struct op_sign {};
   /** @brief A tag class representing the sin() function */
   struct op_sin {};
   /** @brief A tag class representing the sinh() function */
@@ -181,6 +203,8 @@ namespace viennacl
   struct op_tan {};
   /** @brief A tag class representing the tanh() function */
   struct op_tanh {};
+  /** @brief A tag class representing the trunc() function */
+  struct op_trunc {};
 
   /** @brief A tag class representing the (off-)diagonal of a matrix */
   struct op_matrix_diag {};

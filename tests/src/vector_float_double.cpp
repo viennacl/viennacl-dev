@@ -1928,12 +1928,14 @@ int test(Epsilon const& epsilon,
   }
 
   std::cout << "Testing unary elementwise operations..." << std::endl;
-  for (size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] = randomNumber() / NumericT(4);
 
 #define GENERATE_UNARY_OP_TEST(FUNCNAME) \
+  for (std::size_t i=0; i < host_v1.size(); ++i) \
+    host_v1[i] = NumericT(0.01) + randomNumber() / NumericT(8); \
   for (std::size_t i=0; i<host_v1.size(); ++i) \
-  host_v2[i] = NumericT(3.1415) * host_v1[i]; \
+    host_v2[i] = NumericT(3.1415) * host_v1[i]; \
+  for (std::size_t i=0; i<host_v1.size(); ++i) \
+    host_v3[i] = host_v1[i]; \
   proxy_copy(host_v1, vcl_v1); \
   proxy_copy(host_v2, vcl_v2); \
   \
@@ -1948,6 +1950,9 @@ int test(Epsilon const& epsilon,
   } \
  \
   for (std::size_t i=0; i<host_v1.size(); ++i) \
+    host_v1[i] = host_v3[i]; \
+  proxy_copy(host_v3, vcl_v1); \
+  for (std::size_t i=0; i<host_v1.size(); ++i) \
     host_v1[i] = std::FUNCNAME(host_v1[i] + host_v2[i]); \
   vcl_v1 = viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
  \
@@ -1957,6 +1962,9 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE; \
   } \
  \
+  for (std::size_t i=0; i<host_v1.size(); ++i) \
+    host_v1[i] = host_v3[i]; \
+  proxy_copy(host_v3, vcl_v1); \
   for (std::size_t i=0; i<host_v1.size(); ++i) \
     host_v1[i] += std::FUNCNAME(host_v1[i]); \
   vcl_v1 += viennacl::linalg::element_##FUNCNAME(vcl_v1); \
@@ -1968,6 +1976,9 @@ int test(Epsilon const& epsilon,
   } \
  \
   for (std::size_t i=0; i<host_v1.size(); ++i) \
+    host_v1[i] = host_v3[i]; \
+  proxy_copy(host_v3, vcl_v1); \
+  for (std::size_t i=0; i<host_v1.size(); ++i) \
     host_v1[i] += std::FUNCNAME(host_v1[i] + host_v2[i]); \
   vcl_v1 += viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
  \
@@ -1977,6 +1988,9 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE; \
   } \
  \
+  for (std::size_t i=0; i<host_v1.size(); ++i) \
+    host_v1[i] = host_v3[i]; \
+  proxy_copy(host_v3, vcl_v1); \
   for (std::size_t i=0; i<host_v1.size(); ++i) \
     host_v1[i] -= std::FUNCNAME(host_v2[i]); \
   vcl_v1 -= viennacl::linalg::element_##FUNCNAME(vcl_v2); \
@@ -1988,6 +2002,9 @@ int test(Epsilon const& epsilon,
   } \
  \
   for (std::size_t i=0; i<host_v1.size(); ++i) \
+    host_v1[i] = host_v3[i]; \
+  proxy_copy(host_v3, vcl_v1); \
+  for (std::size_t i=0; i<host_v1.size(); ++i) \
     host_v1[i] -= std::FUNCNAME(host_v1[i] + host_v2[i]); \
   vcl_v1 -= viennacl::linalg::element_##FUNCNAME(vcl_v1 + vcl_v2); \
  \
@@ -1997,10 +2014,11 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE; \
   } \
 
+  GENERATE_UNARY_OP_TEST(acos);
+  GENERATE_UNARY_OP_TEST(asin);
+  GENERATE_UNARY_OP_TEST(atan);
   GENERATE_UNARY_OP_TEST(cos);
   GENERATE_UNARY_OP_TEST(cosh);
-  for (std::size_t i=0; i < host_v1.size(); ++i)
-    host_v1[i] = randomNumber() / NumericT(4);
   GENERATE_UNARY_OP_TEST(exp);
   GENERATE_UNARY_OP_TEST(floor);
   GENERATE_UNARY_OP_TEST(fabs);
@@ -2013,6 +2031,21 @@ int test(Epsilon const& epsilon,
   GENERATE_UNARY_OP_TEST(sqrt);
   GENERATE_UNARY_OP_TEST(tan);
   GENERATE_UNARY_OP_TEST(tanh);
+
+#if __cplusplus > 199711L
+  GENERATE_UNARY_OP_TEST(acosh);
+  GENERATE_UNARY_OP_TEST(asinh);
+  GENERATE_UNARY_OP_TEST(atanh);
+  GENERATE_UNARY_OP_TEST(erf);
+  GENERATE_UNARY_OP_TEST(erfc);
+  GENERATE_UNARY_OP_TEST(exp2);
+  GENERATE_UNARY_OP_TEST(exp10);
+  GENERATE_UNARY_OP_TEST(log2);
+  GENERATE_UNARY_OP_TEST(round);
+  GENERATE_UNARY_OP_TEST(rsqrt);
+  GENERATE_UNARY_OP_TEST(sign);
+  GENERATE_UNARY_OP_TEST(trunc);
+#endif
 
   // --------------------------------------------------------------------------
   for (std::size_t i=0; i<host_v1.size(); ++i)

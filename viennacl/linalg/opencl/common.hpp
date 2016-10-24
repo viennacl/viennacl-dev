@@ -77,21 +77,33 @@ ocl::device const & current_device(SomeT const & obj) {  return traits::opencl_h
 
 inline std::string op_to_string(op_abs)   { return "abs";   }
 inline std::string op_to_string(op_acos)  { return "acos";  }
+inline std::string op_to_string(op_acosh) { return "acosh"; }
 inline std::string op_to_string(op_asin)  { return "asin";  }
+inline std::string op_to_string(op_asinh) { return "asinh"; }
 inline std::string op_to_string(op_atan)  { return "atan";  }
+inline std::string op_to_string(op_atanh) { return "atanh"; }
 inline std::string op_to_string(op_ceil)  { return "ceil";  }
 inline std::string op_to_string(op_cos)   { return "cos";   }
 inline std::string op_to_string(op_cosh)  { return "cosh";  }
+inline std::string op_to_string(op_erf)   { return "erf";   }
+inline std::string op_to_string(op_erfc)  { return "erfc";  }
 inline std::string op_to_string(op_exp)   { return "exp";   }
+inline std::string op_to_string(op_exp2)  { return "exp2";  }
+inline std::string op_to_string(op_exp10) { return "exp10"; }
 inline std::string op_to_string(op_fabs)  { return "fabs";  }
 inline std::string op_to_string(op_floor) { return "floor"; }
 inline std::string op_to_string(op_log)   { return "log";   }
+inline std::string op_to_string(op_log2)  { return "log2";  }
 inline std::string op_to_string(op_log10) { return "log10"; }
+inline std::string op_to_string(op_round) { return "round"; }
+inline std::string op_to_string(op_rsqrt) { return "rsqrt"; }
+inline std::string op_to_string(op_sign)  { return "sign";  }
 inline std::string op_to_string(op_sin)   { return "sin";   }
 inline std::string op_to_string(op_sinh)  { return "sinh";  }
 inline std::string op_to_string(op_sqrt)  { return "sqrt";  }
 inline std::string op_to_string(op_tan)   { return "tan";   }
 inline std::string op_to_string(op_tanh)  { return "tanh";  }
+inline std::string op_to_string(op_trunc) { return "trunc"; }
 
 } //namespace detail
 } //namespace opencl

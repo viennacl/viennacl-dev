@@ -856,7 +856,7 @@ int run_test(double epsilon,
   std::cout << "Testing unary elementwise operations..." << std::endl;
 
 #define GENERATE_UNARY_OP_TEST(FUNCNAME) \
-  std_B = std::vector<std::vector<cpu_value_type> >(std_B.size(), std::vector<cpu_value_type>(std_B[0].size(), cpu_value_type(1.4142))); \
+  std_B = std::vector<std::vector<cpu_value_type> >(std_B.size(), std::vector<cpu_value_type>(std_B[0].size(), cpu_value_type(0.04142))); \
   for (std::size_t i=0; i<std_C.size(); ++i) \
     for (std::size_t j=0; j<std_C[i].size(); ++j) \
       std_A[i][j] = cpu_value_type(3.1415) * std_B[i][j]; \
@@ -935,6 +935,9 @@ int run_test(double epsilon,
   } \
  \
 
+  GENERATE_UNARY_OP_TEST(acos);
+  GENERATE_UNARY_OP_TEST(asin);
+  GENERATE_UNARY_OP_TEST(atan);
   GENERATE_UNARY_OP_TEST(cos);
   GENERATE_UNARY_OP_TEST(cosh);
   GENERATE_UNARY_OP_TEST(exp);
@@ -945,9 +948,25 @@ int run_test(double epsilon,
   GENERATE_UNARY_OP_TEST(sin);
   GENERATE_UNARY_OP_TEST(sinh);
   GENERATE_UNARY_OP_TEST(fabs);
+  //GENERATE_UNARY_OP_TEST(abs); //OpenCL allows abs on integers only
   GENERATE_UNARY_OP_TEST(sqrt);
   GENERATE_UNARY_OP_TEST(tan);
   GENERATE_UNARY_OP_TEST(tanh);
+
+#if __cplusplus > 199711L
+  GENERATE_UNARY_OP_TEST(acosh);
+  GENERATE_UNARY_OP_TEST(asinh);
+  GENERATE_UNARY_OP_TEST(atanh);
+  GENERATE_UNARY_OP_TEST(erf);
+  GENERATE_UNARY_OP_TEST(erfc);
+  GENERATE_UNARY_OP_TEST(exp2);
+  GENERATE_UNARY_OP_TEST(exp10);
+  GENERATE_UNARY_OP_TEST(log2);
+  GENERATE_UNARY_OP_TEST(round);
+  GENERATE_UNARY_OP_TEST(rsqrt);
+  GENERATE_UNARY_OP_TEST(sign);
+  GENERATE_UNARY_OP_TEST(trunc);
+#endif
 
   std::cout << "Complicated expressions: ";
   //std::cout << "std_A: " << std_A << std::endl;

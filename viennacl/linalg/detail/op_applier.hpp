@@ -77,23 +77,54 @@ struct op_applier<op_element_unary<op_##funcname> > \
 
 VIENNACL_MAKE_UNARY_OP_APPLIER(abs);
 VIENNACL_MAKE_UNARY_OP_APPLIER(acos);
+VIENNACL_MAKE_UNARY_OP_APPLIER(acosh);
 VIENNACL_MAKE_UNARY_OP_APPLIER(asin);
+VIENNACL_MAKE_UNARY_OP_APPLIER(asinh);
 VIENNACL_MAKE_UNARY_OP_APPLIER(atan);
+VIENNACL_MAKE_UNARY_OP_APPLIER(atanh);
 VIENNACL_MAKE_UNARY_OP_APPLIER(ceil);
 VIENNACL_MAKE_UNARY_OP_APPLIER(cos);
 VIENNACL_MAKE_UNARY_OP_APPLIER(cosh);
+VIENNACL_MAKE_UNARY_OP_APPLIER(erf);
+VIENNACL_MAKE_UNARY_OP_APPLIER(erfc);
 VIENNACL_MAKE_UNARY_OP_APPLIER(exp);
+VIENNACL_MAKE_UNARY_OP_APPLIER(exp2);
 VIENNACL_MAKE_UNARY_OP_APPLIER(fabs);
 VIENNACL_MAKE_UNARY_OP_APPLIER(floor);
 VIENNACL_MAKE_UNARY_OP_APPLIER(log);
+VIENNACL_MAKE_UNARY_OP_APPLIER(log2);
 VIENNACL_MAKE_UNARY_OP_APPLIER(log10);
+VIENNACL_MAKE_UNARY_OP_APPLIER(round);
 VIENNACL_MAKE_UNARY_OP_APPLIER(sin);
 VIENNACL_MAKE_UNARY_OP_APPLIER(sinh);
 VIENNACL_MAKE_UNARY_OP_APPLIER(sqrt);
 VIENNACL_MAKE_UNARY_OP_APPLIER(tan);
 VIENNACL_MAKE_UNARY_OP_APPLIER(tanh);
+VIENNACL_MAKE_UNARY_OP_APPLIER(trunc);
 
 #undef VIENNACL_MAKE_UNARY_OP_APPLIER
+
+template<>
+struct op_applier<op_element_unary<op_exp10> >
+{
+  template<typename T>
+  static void apply(T & result, T const & x) { using namespace std; result = std::exp(x*T(2.302585092994045684017991454684364207601101488628772976033)); }
+};
+
+template<>
+struct op_applier<op_element_unary<op_rsqrt> >
+{
+  template<typename T>
+  static void apply(T & result, T const & x) { using namespace std; result = std::pow(x, T(-0.5)); }
+};
+
+template<>
+struct op_applier<op_element_unary<op_sign> >
+{
+  template<typename T>
+  static void apply(T & result, T const & x) { using namespace std; result = (x > T(0)) ? T(1) : (x < T(0) ? T(-1) : T(0)); }
+};
+
 /** \endcond */
 
 }

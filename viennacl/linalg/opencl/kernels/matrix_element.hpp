@@ -99,21 +99,33 @@ struct matrix_element
       if (numeric_string == "float" || numeric_string == "double")
       {
         generate_matrix_unary_element_ops(source, numeric_string, "acos",  is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "acosh", is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "asin",  is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "asinh", is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "atan",  is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "atanh", is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "ceil",  is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "cos",   is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "cosh",  is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "erf",   is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "erfc",  is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "exp",   is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "exp2",  is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "exp10", is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "fabs",  is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "floor", is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "log",   is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "log2",  is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "log10", is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "round", is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "rsqrt", is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "sign",  is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "sin",   is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "sinh",  is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "sqrt",  is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "tan",   is_row_major);
         generate_matrix_unary_element_ops(source, numeric_string, "tanh",  is_row_major);
+        generate_matrix_unary_element_ops(source, numeric_string, "trunc", is_row_major);
       }
       else
       {

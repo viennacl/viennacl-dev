@@ -87,21 +87,33 @@ enum operation_node_type
 
   OPERATION_UNARY_ABS_TYPE,
   OPERATION_UNARY_ACOS_TYPE,
+  OPERATION_UNARY_ACOSH_TYPE,
   OPERATION_UNARY_ASIN_TYPE,
+  OPERATION_UNARY_ASINH_TYPE,
   OPERATION_UNARY_ATAN_TYPE,
+  OPERATION_UNARY_ATANH_TYPE,
   OPERATION_UNARY_CEIL_TYPE,
   OPERATION_UNARY_COS_TYPE,
   OPERATION_UNARY_COSH_TYPE,
+  OPERATION_UNARY_ERF_TYPE,
+  OPERATION_UNARY_ERFC_TYPE,
   OPERATION_UNARY_EXP_TYPE,
+  OPERATION_UNARY_EXP2_TYPE,
+  OPERATION_UNARY_EXP10_TYPE,
   OPERATION_UNARY_FABS_TYPE,
   OPERATION_UNARY_FLOOR_TYPE,
   OPERATION_UNARY_LOG_TYPE,
+  OPERATION_UNARY_LOG2_TYPE,
   OPERATION_UNARY_LOG10_TYPE,
   OPERATION_UNARY_SIN_TYPE,
+  OPERATION_UNARY_ROUND_TYPE,
+  OPERATION_UNARY_RSQRT_TYPE,
+  OPERATION_UNARY_SIGN_TYPE,
   OPERATION_UNARY_SINH_TYPE,
   OPERATION_UNARY_SQRT_TYPE,
   OPERATION_UNARY_TAN_TYPE,
   OPERATION_UNARY_TANH_TYPE,
+  OPERATION_UNARY_TRUNC_TYPE,
 
   OPERATION_UNARY_TRANS_TYPE,
   OPERATION_UNARY_NORM_1_TYPE,
@@ -174,21 +186,33 @@ namespace result_of
   // elementwise functions
   template<> struct op_type_info<op_element_unary<op_abs>   >      { enum { id = OPERATION_UNARY_ABS_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_acos>  >      { enum { id = OPERATION_UNARY_ACOS_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_acosh> >      { enum { id = OPERATION_UNARY_ACOSH_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_asin>  >      { enum { id = OPERATION_UNARY_ASIN_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_asinh> >      { enum { id = OPERATION_UNARY_ASINH_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_atan>  >      { enum { id = OPERATION_UNARY_ATAN_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_atanh> >      { enum { id = OPERATION_UNARY_ATANH_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_ceil>  >      { enum { id = OPERATION_UNARY_CEIL_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_cos>   >      { enum { id = OPERATION_UNARY_COS_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_cosh>  >      { enum { id = OPERATION_UNARY_COSH_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_erf>   >      { enum { id = OPERATION_UNARY_ERF_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_erfc>  >      { enum { id = OPERATION_UNARY_ERFC_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_exp>   >      { enum { id = OPERATION_UNARY_EXP_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_exp2>  >      { enum { id = OPERATION_UNARY_EXP2_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_exp10> >      { enum { id = OPERATION_UNARY_EXP10_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_fabs>  >      { enum { id = OPERATION_UNARY_FABS_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_floor> >      { enum { id = OPERATION_UNARY_FLOOR_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_log>   >      { enum { id = OPERATION_UNARY_LOG_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_log2>  >      { enum { id = OPERATION_UNARY_LOG2_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_log10> >      { enum { id = OPERATION_UNARY_LOG10_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_round> >      { enum { id = OPERATION_UNARY_ROUND_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_rsqrt> >      { enum { id = OPERATION_UNARY_RSQRT_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_sign>  >      { enum { id = OPERATION_UNARY_SIGN_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_sin>   >      { enum { id = OPERATION_UNARY_SIN_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_sinh>  >      { enum { id = OPERATION_UNARY_SINH_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_sqrt>  >      { enum { id = OPERATION_UNARY_SQRT_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_tan>   >      { enum { id = OPERATION_UNARY_TAN_TYPE,          family = OPERATION_UNARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_unary<op_tanh>  >      { enum { id = OPERATION_UNARY_TANH_TYPE,         family = OPERATION_UNARY_TYPE_FAMILY}; };
+  template<> struct op_type_info<op_element_unary<op_trunc> >      { enum { id = OPERATION_UNARY_TRUNC_TYPE,        family = OPERATION_UNARY_TYPE_FAMILY}; };
 
   template<> struct op_type_info<op_element_binary<op_argmax> >       { enum { id = OPERATION_BINARY_ELEMENT_ARGMAX_TYPE ,     family = OPERATION_BINARY_TYPE_FAMILY}; };
   template<> struct op_type_info<op_element_binary<op_argmin> >       { enum { id = OPERATION_BINARY_ELEMENT_ARGMIN_TYPE ,     family = OPERATION_BINARY_TYPE_FAMILY}; };

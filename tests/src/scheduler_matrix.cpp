@@ -335,7 +335,7 @@ int run_test(double epsilon,
 
   std::cout << "--- Testing elementwise operations (unary) ---" << std::endl;
 #define GENERATE_UNARY_OP_TEST(OPNAME) \
-  ublas_A = ublas::scalar_matrix<cpu_value_type>(ublas_A.size1(), ublas_A.size2(), cpu_value_type(0.21)); \
+  ublas_A = ublas::scalar_matrix<cpu_value_type>(ublas_A.size1(), ublas_A.size2(), cpu_value_type(0.021)); \
   ublas_B = cpu_value_type(3.1415) * ublas_A; \
   viennacl::copy(ublas_A, vcl_A); \
   viennacl::copy(ublas_B, vcl_B); \
@@ -358,6 +358,9 @@ int run_test(double epsilon,
     return EXIT_FAILURE; \
   }
 
+  GENERATE_UNARY_OP_TEST(acos);
+  GENERATE_UNARY_OP_TEST(asin);
+  GENERATE_UNARY_OP_TEST(atan);
   GENERATE_UNARY_OP_TEST(cos);
   GENERATE_UNARY_OP_TEST(cosh);
   GENERATE_UNARY_OP_TEST(exp);
@@ -372,6 +375,22 @@ int run_test(double epsilon,
   GENERATE_UNARY_OP_TEST(sqrt);
   GENERATE_UNARY_OP_TEST(tan);
   GENERATE_UNARY_OP_TEST(tanh);
+
+#if __cplusplus > 199711L
+  GENERATE_UNARY_OP_TEST(acosh);
+  GENERATE_UNARY_OP_TEST(asinh);
+  GENERATE_UNARY_OP_TEST(atanh);
+  GENERATE_UNARY_OP_TEST(erf);
+  GENERATE_UNARY_OP_TEST(erfc);
+  GENERATE_UNARY_OP_TEST(exp2);
+  GENERATE_UNARY_OP_TEST(exp10);
+  GENERATE_UNARY_OP_TEST(log2);
+  GENERATE_UNARY_OP_TEST(round);
+  GENERATE_UNARY_OP_TEST(rsqrt);
+  GENERATE_UNARY_OP_TEST(sign);
+  GENERATE_UNARY_OP_TEST(trunc);
+#endif
+
 
 #undef GENERATE_UNARY_OP_TEST
 
