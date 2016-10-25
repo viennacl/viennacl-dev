@@ -302,6 +302,19 @@ vcl_size_t size(vector_expression<LHS, RHS, OP> const & proxy)
   return size(proxy.lhs());
 }
 
+template<typename RHS, typename OP>
+vcl_size_t size(vector_expression<const double, RHS, OP> const & proxy)
+{
+  return size(proxy.rhs());
+}
+
+template<typename RHS, typename OP>
+vcl_size_t size(vector_expression<const float, RHS, OP> const & proxy)
+{
+  return size(proxy.rhs());
+}
+
+
 template<typename LHS, typename RHS>
 vcl_size_t size(vector_expression<LHS, const vector_tuple<RHS>, op_inner_prod> const & proxy)
 {

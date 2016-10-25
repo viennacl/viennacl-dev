@@ -325,7 +325,7 @@ void vector_swap(vector_base<NumericT> & vec1, vector_base<NumericT> & vec2)
 }
 
 
-///////////////////////// Elementwise operations /////////////
+///////////////////////// Binary elementwise operations /////////////
 
 /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
 *
@@ -360,7 +360,67 @@ void element_op(vector_base<NumericT> & vec1,
     OpFunctor::apply(data_vec1[static_cast<vcl_size_t>(i)*inc1+start1], data_vec2[static_cast<vcl_size_t>(i)*inc2+start2], data_vec3[static_cast<vcl_size_t>(i)*inc3+start3]);
 }
 
-/** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
+/** @brief Implementation of the binary element-wise operation v1 = OP(alpha, v3)
+*
+* @param vec1   The result vector (or -range, or -slice)
+* @param proxy  The proxy object holding alpha, v3 and the operation
+*/
+template<typename NumericT, typename OpT>
+void element_op(vector_base<NumericT> & vec1,
+                vector_expression<const vector_base<NumericT>, const NumericT, op_element_binary<OpT> > const & proxy)
+{
+  typedef NumericT                                           value_type;
+  typedef viennacl::linalg::detail::op_applier<op_element_binary<OpT> >    OpFunctor;
+
+  value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
+  value_type const * data_vec2 = detail::extract_raw_pointer<value_type>(proxy.lhs());
+
+  vcl_size_t start1 = viennacl::traits::start(vec1);
+  vcl_size_t inc1   = viennacl::traits::stride(vec1);
+  vcl_size_t size1  = viennacl::traits::size(vec1);
+
+  vcl_size_t start2 = viennacl::traits::start(proxy.lhs());
+  vcl_size_t inc2   = viennacl::traits::stride(proxy.lhs());
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+  for (long i = 0; i < static_cast<long>(size1); ++i)
+    OpFunctor::apply(data_vec1[static_cast<vcl_size_t>(i)*inc1+start1], data_vec2[static_cast<vcl_size_t>(i)*inc2+start2], proxy.rhs());
+}
+
+/** @brief Implementation of the binary element-wise operation v1 = OP(alpha, v2)
+*
+* @param vec1   The result vector (or -range, or -slice)
+* @param proxy  The proxy object holding v2, alpha and the operation
+*/
+template<typename NumericT, typename OpT>
+void element_op(vector_base<NumericT> & vec1,
+                vector_expression<const NumericT, const vector_base<NumericT>, op_element_binary<OpT> > const & proxy)
+{
+  typedef NumericT                                           value_type;
+  typedef viennacl::linalg::detail::op_applier<op_element_binary<OpT> >    OpFunctor;
+
+  value_type       * data_vec1 = detail::extract_raw_pointer<value_type>(vec1);
+  value_type const * data_vec3 = detail::extract_raw_pointer<value_type>(proxy.rhs());
+
+  vcl_size_t start1 = viennacl::traits::start(vec1);
+  vcl_size_t inc1   = viennacl::traits::stride(vec1);
+  vcl_size_t size1  = viennacl::traits::size(vec1);
+
+  vcl_size_t start3 = viennacl::traits::start(proxy.rhs());
+  vcl_size_t inc3   = viennacl::traits::stride(proxy.rhs());
+
+#ifdef VIENNACL_WITH_OPENMP
+  #pragma omp parallel for if (size1 > VIENNACL_OPENMP_VECTOR_MIN_SIZE)
+#endif
+  for (long i = 0; i < static_cast<long>(size1); ++i)
+    OpFunctor::apply(data_vec1[static_cast<vcl_size_t>(i)*inc1+start1], proxy.lhs(), data_vec3[static_cast<vcl_size_t>(i)*inc3+start3]);
+}
+
+///////////////////////// Unary elementwise operations /////////////
+
+/** @brief Implementation of the unary element-wise operation v1 = OP(v2)
 *
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2, v3 and the operation

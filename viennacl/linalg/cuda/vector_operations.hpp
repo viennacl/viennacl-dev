@@ -865,6 +865,7 @@ void vector_swap(vector_base<NumericT> & vec1, vector_base<NumericT> & vec2)
 
 ///////////////////////// Binary Elementwise operations /////////////
 
+// v1 = OP(v2, v3)
 template<typename NumericT>
 __global__ void element_op_kernel(NumericT * vec1,
                                    unsigned int start1,
@@ -907,6 +908,96 @@ __global__ void element_op_kernel(NumericT * vec1,
                       i += gridDim.x * blockDim.x)
     {
       vec1[i*inc1+start1] = vec2[i*inc2+start2] * vec3[i*inc3+start3];
+    }
+  }
+}
+
+// v1 = OP(v2, alpha)
+template<typename NumericT>
+__global__ void element_op_kernel(NumericT * vec1,
+                                   unsigned int start1,
+                                   unsigned int inc1,
+                                   unsigned int size1,
+
+                                   NumericT const * vec2,
+                                   unsigned int start2,
+                                   unsigned int inc2,
+
+                                   NumericT alpha,
+
+                                   unsigned int op_type
+                                 )
+{
+  if (op_type == 2)
+  {
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                      i < size1;
+                      i += gridDim.x * blockDim.x)
+    {
+      vec1[i*inc1+start1] = pow(vec2[i*inc2+start2], alpha);
+    }
+  }
+  else if (op_type == 1)
+  {
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                      i < size1;
+                      i += gridDim.x * blockDim.x)
+    {
+      vec1[i*inc1+start1] = vec2[i*inc2+start2] / alpha;
+    }
+  }
+  else if (op_type == 0)
+  {
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                      i < size1;
+                      i += gridDim.x * blockDim.x)
+    {
+      vec1[i*inc1+start1] = vec2[i*inc2+start2] * alpha;
+    }
+  }
+}
+
+// v1 = OP(alpha, v3)
+template<typename NumericT>
+__global__ void element_op_kernel(NumericT * vec1,
+                                   unsigned int start1,
+                                   unsigned int inc1,
+                                   unsigned int size1,
+
+                                   NumericT alpha,
+
+                                   NumericT const * vec3,
+                                   unsigned int start3,
+                                   unsigned int inc3,
+
+                                   unsigned int op_type
+                                 )
+{
+  if (op_type == 2)
+  {
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                      i < size1;
+                      i += gridDim.x * blockDim.x)
+    {
+      vec1[i*inc1+start1] = pow(alpha, vec3[i*inc3+start3]);
+    }
+  }
+  else if (op_type == 1)
+  {
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                      i < size1;
+                      i += gridDim.x * blockDim.x)
+    {
+      vec1[i*inc1+start1] = alpha / vec3[i*inc3+start3];
+    }
+  }
+  else if (op_type == 0)
+  {
+    for (unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
+                      i < size1;
+                      i += gridDim.x * blockDim.x)
+    {
+      vec1[i*inc1+start1] = alpha * vec3[i*inc3+start3];
     }
   }
 }
@@ -981,6 +1072,7 @@ void element_op(vector_base<NumericT> & vec1,
   VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
 }
 
+// v1 = OP(v2, v3), float
 template<typename OpT>
 void element_op(vector_base<float> & vec1,
                 vector_expression<const vector_base<float>, const vector_base<float>, op_element_binary<OpT> > const & proxy)
@@ -1009,6 +1101,61 @@ void element_op(vector_base<float> & vec1,
   VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
 }
 
+// v1 = OP(v2, alpha), float
+template<typename OpT>
+void element_op(vector_base<float> & vec1,
+                vector_expression<const vector_base<float>, const float, op_element_binary<OpT> > const & proxy)
+{
+  unsigned int op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OpT>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OpT>::value)
+    op_type = 0;
+
+  element_op_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                  viennacl::cuda_arg(proxy.lhs()),
+                                  static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                  static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
+
+                                  proxy.rhs(),
+
+                                  op_type
+                                 );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+}
+
+// v1 = OP(alpha, v3), float
+template<typename OpT>
+void element_op(vector_base<float> & vec1,
+                vector_expression<const float, const vector_base<float>, op_element_binary<OpT> > const & proxy)
+{
+  unsigned int op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OpT>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OpT>::value)
+    op_type = 0;
+
+  element_op_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                  proxy.lhs(),
+
+                                  viennacl::cuda_arg(proxy.rhs()),
+                                  static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
+                                  static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
+
+                                  op_type
+                                 );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+}
+
+// v1 = OP(v2, v3), double
 template<typename OpT>
 void element_op(vector_base<double> & vec1,
                 vector_expression<const vector_base<double>, const vector_base<double>, op_element_binary<OpT> > const & proxy)
@@ -1027,6 +1174,60 @@ void element_op(vector_base<double> & vec1,
                                   viennacl::cuda_arg(proxy.lhs()),
                                   static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
                                   static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
+
+                                  viennacl::cuda_arg(proxy.rhs()),
+                                  static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),
+                                  static_cast<unsigned int>(viennacl::traits::stride(proxy.rhs())),
+
+                                  op_type
+                                 );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+}
+
+// v1 = OP(v2, alpha), double
+template<typename OpT>
+void element_op(vector_base<double> & vec1,
+                vector_expression<const vector_base<double>, const double, op_element_binary<OpT> > const & proxy)
+{
+  unsigned int op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OpT>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OpT>::value)
+    op_type = 0;
+
+  element_op_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                  viennacl::cuda_arg(proxy.lhs()),
+                                  static_cast<unsigned int>(viennacl::traits::start(proxy.lhs())),
+                                  static_cast<unsigned int>(viennacl::traits::stride(proxy.lhs())),
+
+                                  proxy.rhs(),
+
+                                  op_type
+                                 );
+  VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_kernel");
+}
+
+// v1 = OP(alpha, v3), double
+template<typename OpT>
+void element_op(vector_base<double> & vec1,
+                vector_expression<const double, const vector_base<double>, op_element_binary<OpT> > const & proxy)
+{
+  unsigned int op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OpT>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OpT>::value)
+    op_type = 0;
+
+  element_op_kernel<<<128, 128>>>(viennacl::cuda_arg(vec1),
+                                  static_cast<unsigned int>(viennacl::traits::start(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::stride(vec1)),
+                                  static_cast<unsigned int>(viennacl::traits::size(vec1)),
+
+                                  proxy.lhs(),
 
                                   viennacl::cuda_arg(proxy.rhs()),
                                   static_cast<unsigned int>(viennacl::traits::start(proxy.rhs())),

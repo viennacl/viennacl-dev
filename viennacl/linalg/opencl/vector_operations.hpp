@@ -291,7 +291,7 @@ void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
 
 ///////////////////////// Binary Elementwise operations /////////////
 
-/** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
+/** @brief Implementation of the element-wise operation v1 = OP(v2, v3)
 *
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2, v3 and the operation
@@ -338,6 +338,93 @@ void element_op(vector_base<T> & vec1,
                         );
 }
 
+/** @brief Implementation of the element-wise operation v1 = OP(v2, alpha)
+*
+* @param vec1   The result vector (or -range, or -slice)
+* @param proxy  The proxy object holding v2, v3 and the operation
+*/
+template <typename T, typename OP>
+void element_op(vector_base<T> & vec1,
+                vector_expression<const vector_base<T>, const T, op_element_binary<OP> > const & proxy)
+{
+  assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+  viennacl::linalg::opencl::kernels::vector_element<T>::init(ctx);
+
+  std::string kernel_name = "element_pow_va";
+  cl_uint op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OP>::value)
+  {
+    op_type = 1;
+    kernel_name = "element_div_va";
+  }
+  else if (viennacl::is_product<OP>::value)
+  {
+    op_type = 0;
+    kernel_name = "element_prod_va";
+  }
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_element<T>::program_name(), kernel_name);
+
+  viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
+                           cl_uint(viennacl::traits::start(vec1)),
+                           cl_uint(viennacl::traits::stride(vec1)),
+                           cl_uint(viennacl::traits::size(vec1)),
+
+                           viennacl::traits::opencl_handle(proxy.lhs()),
+                           cl_uint(viennacl::traits::start(proxy.lhs())),
+                           cl_uint(viennacl::traits::stride(proxy.lhs())),
+
+                           viennacl::traits::opencl_handle(proxy.rhs()),
+
+                           op_type)
+                        );
+}
+
+/** @brief Implementation of the element-wise operation v1 = OP(alpha, v3)
+*
+* @param vec1   The result vector (or -range, or -slice)
+* @param proxy  The proxy object holding v2, v3 and the operation
+*/
+template <typename T, typename OP>
+void element_op(vector_base<T> & vec1,
+                vector_expression<const T, const vector_base<T>, op_element_binary<OP> > const & proxy)
+{
+  assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
+  viennacl::linalg::opencl::kernels::vector_element<T>::init(ctx);
+
+  std::string kernel_name = "element_pow_av";
+  cl_uint op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OP>::value)
+  {
+    op_type = 1;
+    kernel_name = "element_div_av";
+  }
+  else if (viennacl::is_product<OP>::value)
+  {
+    op_type = 0;
+    kernel_name = "element_pro_av";
+  }
+
+  viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_element<T>::program_name(), kernel_name);
+
+  viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec1),
+                           cl_uint(viennacl::traits::start(vec1)),
+                           cl_uint(viennacl::traits::stride(vec1)),
+                           cl_uint(viennacl::traits::size(vec1)),
+
+                           viennacl::traits::opencl_handle(proxy.lhs()),
+
+                           viennacl::traits::opencl_handle(proxy.rhs()),
+                           cl_uint(viennacl::traits::start(proxy.rhs())),
+                           cl_uint(viennacl::traits::stride(proxy.rhs())),
+
+                           op_type)
+                        );
+}
 ///////////////////////// Unary Elementwise operations /////////////
 
 /** @brief Implementation of unary element-wise operations v1 = OP(v2)

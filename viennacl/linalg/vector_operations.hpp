@@ -246,7 +246,7 @@ namespace viennacl
 
 
 
-    /** @brief Implementation of the element-wise operation v1 = v2 .* v3 and v1 = v2 ./ v3    (using MATLAB syntax)
+    /** @brief Implementation of the element-wise operation v1 = OP(v2, v3)
     *
     * @param vec1   The result vector (or -range, or -slice)
     * @param proxy  The proxy object holding v2, v3 and the operation
@@ -254,6 +254,72 @@ namespace viennacl
     template<typename T, typename OP>
     void element_op(vector_base<T> & vec1,
                     vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
+    {
+      assert(viennacl::traits::size(vec1) == viennacl::traits::size(proxy) && bool("Incompatible vector sizes in element_op()"));
+
+      switch (viennacl::traits::handle(vec1).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::element_op(vec1, proxy);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::element_op(vec1, proxy);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::element_op(vec1, proxy);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Implementation of the element-wise operation v1 = OP(v2, alpha)
+    *
+    * @param vec1   The result vector (or -range, or -slice)
+    * @param proxy  The proxy object holding v2, v3 and the operation
+    */
+    template<typename T, typename OP>
+    void element_op(vector_base<T> & vec1,
+                    vector_expression<const vector_base<T>, const T, OP> const & proxy)
+    {
+      assert(viennacl::traits::size(vec1) == viennacl::traits::size(proxy) && bool("Incompatible vector sizes in element_op()"));
+
+      switch (viennacl::traits::handle(vec1).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::element_op(vec1, proxy);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::element_op(vec1, proxy);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::element_op(vec1, proxy);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Implementation of the element-wise operation v1 = OP(alpha, v3)
+    *
+    * @param vec1   The result vector (or -range, or -slice)
+    * @param proxy  The proxy object holding v2, v3 and the operation
+    */
+    template<typename T, typename OP>
+    void element_op(vector_base<T> & vec1,
+                    vector_expression<const T, const vector_base<T>, OP> const & proxy)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(proxy) && bool("Incompatible vector sizes in element_op()"));
 
@@ -315,6 +381,34 @@ namespace viennacl
       return viennacl::vector_expression<const vector_expression<const V1, const V2, OP1>, \
                                          const vector_expression<const V3, const V4, OP2>, \
                                          op_element_binary<op_##OPNAME> >(proxy1, proxy2); \
+    }\
+\
+    template<typename T> \
+    viennacl::vector_expression<const vector_base<T>, const T, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_base<T> const & v1, T const & alpha) \
+    { \
+      return viennacl::vector_expression<const vector_base<T>, const T, op_element_binary<op_##OPNAME> >(v1, alpha); \
+    } \
+\
+    template<typename V1, typename V2, typename OP> \
+    viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const typename viennacl::result_of::cpu_value_type<V1>::type, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_expression<const V1, const V2, OP> const & proxy, typename viennacl::result_of::cpu_value_type<V1>::type const & alpha) \
+    { \
+      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const typename viennacl::result_of::cpu_value_type<V1>::type, op_element_binary<op_##OPNAME> >(proxy, alpha); \
+    } \
+\
+    template<typename T> \
+    viennacl::vector_expression<const T, const vector_base<T>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(T const & alpha, vector_base<T> const & v2) \
+    { \
+      return viennacl::vector_expression<const T, const vector_base<T>, op_element_binary<op_##OPNAME> >(alpha, v2); \
+    } \
+\
+    template<typename V1, typename V2, typename OP> \
+    viennacl::vector_expression<const typename viennacl::result_of::cpu_value_type<V1>::type, const vector_expression<const V1, const V2, OP>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(typename viennacl::result_of::cpu_value_type<V1>::type const & alpha, vector_expression<const V1, const V2, OP> const & proxy) \
+    { \
+      return viennacl::vector_expression<const typename viennacl::result_of::cpu_value_type<V1>::type, const vector_expression<const V1, const V2, OP>, op_element_binary<op_##OPNAME> >(alpha, proxy); \
     }
 
     VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(prod)  //for element_prod()
@@ -329,6 +423,7 @@ namespace viennacl
     VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(leq)
 
 #undef VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS
+
 
 // Helper macro for generating unary element-wise operations such as element_exp(), element_sin(), etc. without unnecessary code duplication */
 #define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \

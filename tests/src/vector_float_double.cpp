@@ -1927,6 +1927,180 @@ int test(Epsilon const& epsilon,
     return EXIT_FAILURE;
   }
 
+  std::cout << "Testing elementwise power function with alpha on the left..." << std::endl;
+  for (std::size_t i=0; i<host_v1.size(); ++i)
+  {
+    host_v1[i] = NumericT(1.1) + NumericT(0.5) * randomNumber();
+    host_v2[i] = NumericT(1.1) + NumericT(0.5) * randomNumber();
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  proxy_copy(host_v2, vcl_v2);
+
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = std::pow(alpha, host_v2[i]);
+  vcl_v1 = viennacl::linalg::element_pow(alpha, vcl_v2);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 = pow(alpha, v2);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] += std::pow(alpha, host_v2[i]);
+  vcl_v1 += viennacl::linalg::element_pow(alpha, vcl_v2);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 += pow(alpha, v2);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] -= std::pow(alpha, host_v2[i]);
+  vcl_v1 -= viennacl::linalg::element_pow(alpha, vcl_v2);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 -= pow(alpha, v2);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  ///////
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = std::pow(alpha, host_v2[i] + host_v1[i]);
+  vcl_v1 = viennacl::linalg::element_pow(alpha, vcl_v2 + vcl_v1);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 = pow(alpha, v2 + v1);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] += std::pow(alpha, host_v2[i] + host_v1[i]);
+  vcl_v1 += viennacl::linalg::element_pow(alpha, vcl_v2 + vcl_v1);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 += pow(alpha, v2 + v1);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] -= std::pow(alpha, host_v2[i] + host_v1[i]);
+  vcl_v1 -= viennacl::linalg::element_pow(alpha, vcl_v2 + vcl_v1);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 -= pow(alpha, v2 + v1);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+
+  std::cout << "Testing elementwise power function with alpha on the right..." << std::endl;
+  for (std::size_t i=0; i<host_v1.size(); ++i)
+  {
+    host_v1[i] = NumericT(1.1) + NumericT(0.5) * randomNumber();
+    host_v2[i] = NumericT(1.1) + NumericT(0.5) * randomNumber();
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  proxy_copy(host_v2, vcl_v2);
+
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = std::pow(host_v2[i], alpha);
+  vcl_v1 = viennacl::linalg::element_pow(vcl_v2, alpha);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 = pow(v2, alpha);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] += std::pow(host_v2[i], alpha);
+  vcl_v1 += viennacl::linalg::element_pow(vcl_v2, alpha);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 += pow(v2, alpha);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] -= std::pow(host_v2[i], alpha);
+  vcl_v1 -= viennacl::linalg::element_pow(vcl_v2, alpha);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 -= pow(v2, alpha);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  ///////
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = std::pow(host_v2[i] + host_v1[i], alpha);
+  vcl_v1 = viennacl::linalg::element_pow(vcl_v2 + vcl_v1, alpha);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 = pow(v2 + v1, alpha);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] += std::pow(host_v2[i] + host_v1[i], alpha);
+  vcl_v1 += viennacl::linalg::element_pow(vcl_v2 + vcl_v1, alpha);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 += pow(v2 + v1, alpha);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  proxy_copy(host_v1, vcl_v1);
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] = host_v1[i];
+  for (std::size_t i=0; i<host_v3.size(); ++i)
+    host_v3[i] -= std::pow(host_v2[i] + host_v1[i], alpha);
+  vcl_v1 -= viennacl::linalg::element_pow(vcl_v2 + vcl_v1, alpha);
+
+  if (check(host_v3, vcl_v1, epsilon) != EXIT_SUCCESS)
+  {
+    std::cerr << "** Failure in v1 -= pow(v2 + v1, alpha);" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+
   std::cout << "Testing unary elementwise operations..." << std::endl;
 
 #define GENERATE_UNARY_OP_TEST(FUNCNAME) \
