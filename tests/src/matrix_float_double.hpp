@@ -852,6 +852,121 @@ int run_test(double epsilon,
   if (!check_for_equality(std_C, vcl_C, epsilon))
     return EXIT_FAILURE;
 
+  std::cout << "Testing unary element_pow() with alpha on the right..." << std::endl;
+
+  std_B = std::vector<std::vector<cpu_value_type> >(std_B.size(), std::vector<cpu_value_type>(std_B[0].size(), cpu_value_type(0.14142)));
+  for (std::size_t i=0; i<std_A.size(); ++i)
+    for (std::size_t j=0; j<std_A[i].size(); ++j)
+      std_A[i][j] = cpu_value_type(3.1415) * std_B[i][j];
+  viennacl::copy(std_A, vcl_A);
+  viennacl::copy(std_B, vcl_B);
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] = std::pow(std_A[i][j], alpha);
+  vcl_C = viennacl::linalg::element_pow(vcl_A, alpha);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] += std::pow(std_A[i][j], alpha);
+  vcl_C += viennacl::linalg::element_pow(vcl_A, alpha);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] -= std::pow(std_A[i][j], alpha);
+  vcl_C -= viennacl::linalg::element_pow(vcl_A, alpha);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  ///////
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] = std::pow(std_A[i][j] + std_B[i][j], alpha);
+  vcl_C = viennacl::linalg::element_pow(vcl_A + vcl_B, alpha);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] += std::pow(std_A[i][j] + std_B[i][j], alpha);
+  vcl_C += viennacl::linalg::element_pow(vcl_A + vcl_B, alpha);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] -= std::pow(std_A[i][j] + std_B[i][j], alpha);
+  vcl_C -= viennacl::linalg::element_pow(vcl_A + vcl_B, alpha);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  std::cout << "Testing unary element_pow() with alpha on the left..." << std::endl;
+
+  std_B = std::vector<std::vector<cpu_value_type> >(std_B.size(), std::vector<cpu_value_type>(std_B[0].size(), cpu_value_type(0.14142)));
+  for (std::size_t i=0; i<std_A.size(); ++i)
+    for (std::size_t j=0; j<std_A[i].size(); ++j)
+      std_A[i][j] = cpu_value_type(3.1415) * std_B[i][j];
+  viennacl::copy(std_A, vcl_A);
+  viennacl::copy(std_B, vcl_B);
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] = std::pow(alpha, std_A[i][j]);
+  vcl_C = viennacl::linalg::element_pow(alpha, vcl_A);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] += std::pow(alpha, std_A[i][j]);
+  vcl_C += viennacl::linalg::element_pow(alpha, vcl_A);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] -= std::pow(alpha, std_A[i][j]);
+  vcl_C -= viennacl::linalg::element_pow(alpha, vcl_A);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  ///////
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] = std::pow(alpha, std_B[i][j] + std_A[i][j]);
+  vcl_C = viennacl::linalg::element_pow(alpha, vcl_B + vcl_A);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] += std::pow(alpha, std_B[i][j] + std_A[i][j]);
+  vcl_C += viennacl::linalg::element_pow(alpha, vcl_B + vcl_A);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
+
+  for (std::size_t i=0; i<std_C.size(); ++i)
+    for (std::size_t j=0; j<std_C[i].size(); ++j)
+      std_C[i][j] -= std::pow(alpha, std_B[i][j] + std_A[i][j]);
+  vcl_C -= viennacl::linalg::element_pow(alpha, vcl_B + vcl_A);
+
+  if (!check_for_equality(std_C, vcl_C, epsilon))
+    return EXIT_FAILURE;
 
   std::cout << "Testing unary elementwise operations..." << std::endl;
 

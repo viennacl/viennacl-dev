@@ -43,6 +43,12 @@ bool row_major(matrix_base<NumericT> const & A) { return A.row_major(); }
 template<typename LHS, typename RHS, typename OP>
 bool row_major(matrix_expression<LHS, RHS, OP> const & proxy) { return viennacl::traits::row_major(proxy.lhs()); }
 
+template<typename RHS, typename OP>
+bool row_major(matrix_expression<const float, RHS, OP> const & proxy) { return viennacl::traits::row_major(proxy.rhs()); }
+
+template<typename RHS, typename OP>
+bool row_major(matrix_expression<const double, RHS, OP> const & proxy) { return viennacl::traits::row_major(proxy.rhs()); }
+
 } //namespace traits
 } //namespace viennacl
 

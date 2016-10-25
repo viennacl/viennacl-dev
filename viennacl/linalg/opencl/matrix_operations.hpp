@@ -530,7 +530,7 @@ void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_bas
 ///////////////////////// Element-wise operation //////////////////////////////////
 //
 
-// Binary operations A = B .* C and A = B ./ C
+// Binary operations A = OP(B, C)
 /** @brief Implementation of binary element-wise operations A = OP(B,C)
 *
 * @param A      The result matrix (or -range, or -slice)
@@ -561,6 +561,78 @@ void element_op(matrix_base<T> & A,
                           cl_uint(viennacl::traits::start1(proxy.lhs())),           cl_uint(viennacl::traits::start2(proxy.lhs())),
                           cl_uint(viennacl::traits::stride1(proxy.lhs())),          cl_uint(viennacl::traits::stride2(proxy.lhs())),
                           cl_uint(viennacl::traits::internal_size1(proxy.lhs())),   cl_uint(viennacl::traits::internal_size2(proxy.lhs())),
+
+                          viennacl::traits::opencl_handle(proxy.rhs()),
+                          cl_uint(viennacl::traits::start1(proxy.rhs())),           cl_uint(viennacl::traits::start2(proxy.rhs())),
+                          cl_uint(viennacl::traits::stride1(proxy.rhs())),          cl_uint(viennacl::traits::stride2(proxy.rhs())),
+                          cl_uint(viennacl::traits::internal_size1(proxy.rhs())),   cl_uint(viennacl::traits::internal_size2(proxy.rhs())),
+
+                          op_type)
+                        );
+}
+
+/** @brief Implementation of binary element-wise operations A = OP(B,alpha)
+*
+* @param A      The result matrix (or -range, or -slice)
+* @param proxy  The proxy object holding B, C, and the operation
+*/
+template <typename T, typename OP>
+void element_op(matrix_base<T> & A,
+                matrix_expression<const matrix_base<T>, const T, op_element_binary<OP> > const & proxy)
+{
+  assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  viennacl::ocl::kernel & k = detail::kernel_for_matrix(A, "element_op_va");
+
+  cl_uint op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OP>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OP>::value)
+    op_type = 0;
+
+  viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
+                          cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
+                          cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
+                          cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
+                          cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
+
+                          viennacl::traits::opencl_handle(proxy.lhs()),
+                          cl_uint(viennacl::traits::start1(proxy.lhs())),           cl_uint(viennacl::traits::start2(proxy.lhs())),
+                          cl_uint(viennacl::traits::stride1(proxy.lhs())),          cl_uint(viennacl::traits::stride2(proxy.lhs())),
+                          cl_uint(viennacl::traits::internal_size1(proxy.lhs())),   cl_uint(viennacl::traits::internal_size2(proxy.lhs())),
+
+                          viennacl::traits::opencl_handle(proxy.rhs()),
+
+                          op_type)
+                        );
+}
+
+/** @brief Implementation of binary element-wise operations A = OP(alpha,C)
+*
+* @param A      The result matrix (or -range, or -slice)
+* @param proxy  The proxy object holding B, C, and the operation
+*/
+template <typename T, typename OP>
+void element_op(matrix_base<T> & A,
+                matrix_expression<const T, const matrix_base<T>, op_element_binary<OP> > const & proxy)
+{
+  assert(viennacl::traits::opencl_handle(A).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Matrices do not reside in the same OpenCL context. Automatic migration not yet supported!"));
+
+  viennacl::ocl::kernel & k = detail::kernel_for_matrix(A, "element_op_av");
+
+  cl_uint op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OP>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OP>::value)
+    op_type = 0;
+
+  viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(A),
+                          cl_uint(viennacl::traits::start1(A)),           cl_uint(viennacl::traits::start2(A)),
+                          cl_uint(viennacl::traits::stride1(A)),          cl_uint(viennacl::traits::stride2(A)),
+                          cl_uint(viennacl::traits::size1(A)),            cl_uint(viennacl::traits::size2(A)),
+                          cl_uint(viennacl::traits::internal_size1(A)),   cl_uint(viennacl::traits::internal_size2(A)),
+
+                          viennacl::traits::opencl_handle(proxy.lhs()),
 
                           viennacl::traits::opencl_handle(proxy.rhs()),
                           cl_uint(viennacl::traits::start1(proxy.rhs())),           cl_uint(viennacl::traits::start2(proxy.rhs())),

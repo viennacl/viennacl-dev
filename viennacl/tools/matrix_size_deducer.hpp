@@ -65,6 +65,68 @@ struct MATRIX_SIZE_DEDUCER<const viennacl::vector_base<ScalarType>,
                           viennacl::vector_base<ScalarType> const & rhs) { return rhs.size(); }
 };
 
+//special case: binary element-wise operations
+template<typename ScalarType, typename OpT>
+struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_base<ScalarType>,
+                           const ScalarType,
+                           viennacl::op_element_binary<OpT> >
+{
+  static vcl_size_t size1(viennacl::matrix_base<ScalarType> const & lhs,
+                          ScalarType const & /*rhs*/) { return lhs.size1(); }
+
+  static vcl_size_t size2(viennacl::matrix_base<ScalarType> const & lhs,
+                          ScalarType const & /*rhs*/) { return lhs.size2(); }
+};
+
+template<typename LHS, typename RHS, typename OP, typename ScalarType, typename OpT>
+struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<const LHS, const RHS, OP>,
+                           const ScalarType,
+                           viennacl::op_element_binary<OpT> >
+{
+  static vcl_size_t size1(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+                          ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size1(lhs.lhs(), lhs.rhs()); }
+
+  static vcl_size_t size2(viennacl::matrix_expression<const LHS, const RHS, OP> const & lhs,
+                          ScalarType const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size2(lhs.lhs(), lhs.rhs()); }
+};
+
+template<typename ScalarType, typename OpT>
+struct MATRIX_SIZE_DEDUCER<const ScalarType,
+                           const viennacl::matrix_base<ScalarType>,
+                           viennacl::op_element_binary<OpT> >
+{
+  static vcl_size_t size1(ScalarType const & /*lhs*/, viennacl::matrix_base<ScalarType> const & rhs) { return rhs.size1(); }
+
+  static vcl_size_t size2(ScalarType const & /*lhs*/, viennacl::matrix_base<ScalarType> const & rhs) { return rhs.size2(); }
+};
+
+template<typename LHS, typename RHS, typename OP, typename ScalarType, typename OpT>
+struct MATRIX_SIZE_DEDUCER<const ScalarType,
+                           const viennacl::matrix_expression<const LHS, const RHS, OP>,
+                           viennacl::op_element_binary<OpT> >
+{
+  static vcl_size_t size1(ScalarType const & /*lhs*/,
+                          viennacl::matrix_expression<const LHS, const RHS, OP> const & rhs) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size1(rhs.lhs(), rhs.rhs()); }
+
+  static vcl_size_t size2(ScalarType const & /*lhs*/,
+                          viennacl::matrix_expression<const LHS, const RHS, OP> const & rhs) { return MATRIX_SIZE_DEDUCER<const LHS, const RHS, OP>::size2(rhs.lhs(), rhs.rhs()); }
+};
+
+template<typename LHS1, typename RHS1, typename OP1,
+         typename LHS2, typename RHS2, typename OP2,
+         typename OpT>
+struct MATRIX_SIZE_DEDUCER<const viennacl::matrix_expression<const LHS1, const RHS1, OP1>,
+                           const viennacl::matrix_expression<const LHS2, const RHS2, OP2>,
+                           viennacl::op_element_binary<OpT> >
+{
+  static vcl_size_t size1(viennacl::matrix_expression<const LHS1, const RHS1, OP1> const & lhs,
+                          viennacl::matrix_expression<const LHS2, const RHS2, OP2> const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS1, const RHS1, OP1>::size1(lhs.lhs(), lhs.rhs()); }
+
+  static vcl_size_t size2(viennacl::matrix_expression<const LHS1, const RHS1, OP1> const & lhs,
+                          viennacl::matrix_expression<const LHS2, const RHS2, OP2> const & /*rhs*/) { return MATRIX_SIZE_DEDUCER<const LHS1, const RHS1, OP1>::size2(lhs.lhs(), lhs.rhs()); }
+};
+
+
 
 //special case: multiplication with a scalar
 template<typename LHS, typename RHS, typename OP, typename ScalarType>

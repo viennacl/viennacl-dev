@@ -604,6 +604,8 @@ void element_op(matrix_base<NumericT, SizeT> & A,
   }
 }
 
+
+// A = OP(B, C), float
 template<typename SizeT, typename OpT>
 void element_op(matrix_base<float, SizeT> & A,
                 matrix_expression<const matrix_base<float, SizeT>, const matrix_base<float, SizeT>, op_element_binary<OpT> > const & proxy)
@@ -664,6 +666,118 @@ void element_op(matrix_base<float, SizeT> & A,
   }
 }
 
+// A = OP(B, alpha), float
+template<typename SizeT, typename OpT>
+void element_op(matrix_base<float, SizeT> & A,
+                matrix_expression<const matrix_base<float, SizeT>, const float, op_element_binary<OpT> > const & proxy)
+{
+  assert(A.row_major() == proxy.lhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
+  typedef float        value_type;
+
+  unsigned int op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OpT>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OpT>::value)
+    op_type = 0;
+
+  if (A.row_major())
+  {
+    element_op_row_kernel<<<128, 128>>>(viennacl::cuda_arg(A),
+                                        static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                        viennacl::cuda_arg(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs())),
+
+                                        proxy.rhs(),
+
+                                        op_type
+                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_row_kernel");
+  }
+  else
+  {
+    element_op_col_kernel<<<128, 128>>>(viennacl::cuda_arg(A),
+                                        static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                        viennacl::cuda_arg(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs())),
+
+                                        proxy.rhs(),
+
+                                        op_type
+                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_col_kernel");
+  }
+}
+
+// A = OP(alpha, C), float
+template<typename SizeT, typename OpT>
+void element_op(matrix_base<float, SizeT> & A,
+                matrix_expression<const float, const matrix_base<float, SizeT>, op_element_binary<OpT> > const & proxy)
+{
+  assert(A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
+  typedef float        value_type;
+
+  unsigned int op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OpT>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OpT>::value)
+    op_type = 0;
+
+  if (A.row_major())
+  {
+    element_op_row_kernel<<<128, 128>>>(viennacl::cuda_arg(A),
+                                        static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                        proxy.lhs(),
+
+                                        viennacl::cuda_arg(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start1(proxy.rhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(proxy.rhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.rhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.rhs())),
+
+                                        op_type
+                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_row_kernel");
+  }
+  else
+  {
+    element_op_col_kernel<<<128, 128>>>(viennacl::cuda_arg(A),
+                                        static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                        proxy.lhs(),
+
+                                        viennacl::cuda_arg(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start1(proxy.rhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(proxy.rhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.rhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.rhs())),
+
+                                        op_type
+                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_col_kernel");
+  }
+}
+
+
+// A = OP(B, C), double
 template<typename SizeT, typename OpT>
 void element_op(matrix_base<double, SizeT> & A,
                 matrix_expression<const matrix_base<double, SizeT>, const matrix_base<double, SizeT>, op_element_binary<OpT> > const & proxy)
@@ -723,6 +837,117 @@ void element_op(matrix_base<double, SizeT> & A,
     VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_col_kernel");
   }
 }
+
+// A = OP(B, alpha), double
+template<typename SizeT, typename OpT>
+void element_op(matrix_base<double, SizeT> & A,
+                matrix_expression<const matrix_base<double, SizeT>, const double, op_element_binary<OpT> > const & proxy)
+{
+  assert(A.row_major() == proxy.lhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
+  typedef double        value_type;
+
+  unsigned int op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OpT>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OpT>::value)
+    op_type = 0;
+
+  if (A.row_major())
+  {
+    element_op_row_kernel<<<128, 128>>>(viennacl::cuda_arg(A),
+                                        static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                        viennacl::cuda_arg(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs())),
+
+                                        proxy.rhs(),
+
+                                        op_type
+                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_row_kernel");
+  }
+  else
+  {
+    element_op_col_kernel<<<128, 128>>>(viennacl::cuda_arg(A),
+                                        static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                        viennacl::cuda_arg(proxy.lhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start1(proxy.lhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(proxy.lhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.lhs())),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.lhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.lhs())),
+
+                                        proxy.rhs(),
+
+                                        op_type
+                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_col_kernel");
+  }
+}
+
+// A = OP(alpha, C), double
+template<typename SizeT, typename OpT>
+void element_op(matrix_base<double, SizeT> & A,
+                matrix_expression<const double, const matrix_base<double, SizeT>, op_element_binary<OpT> > const & proxy)
+{
+  assert(A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
+  typedef double        value_type;
+
+  unsigned int op_type = 2; //0: product, 1: division, 2: power
+  if (viennacl::is_division<OpT>::value)
+    op_type = 1;
+  else if (viennacl::is_product<OpT>::value)
+    op_type = 0;
+
+  if (A.row_major())
+  {
+    element_op_row_kernel<<<128, 128>>>(viennacl::cuda_arg(A),
+                                        static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                        proxy.lhs(),
+
+                                        viennacl::cuda_arg(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start1(proxy.rhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(proxy.rhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.rhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.rhs())),
+
+                                        op_type
+                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_row_kernel");
+  }
+  else
+  {
+    element_op_col_kernel<<<128, 128>>>(viennacl::cuda_arg(A),
+                                        static_cast<unsigned int>(viennacl::traits::start1(A)),           static_cast<unsigned int>(viennacl::traits::start2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(A)),          static_cast<unsigned int>(viennacl::traits::stride2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::size1(A)),            static_cast<unsigned int>(viennacl::traits::size2(A)),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(A)),   static_cast<unsigned int>(viennacl::traits::internal_size2(A)),
+
+                                        proxy.lhs(),
+
+                                        viennacl::cuda_arg(proxy.rhs()),
+                                        static_cast<unsigned int>(viennacl::traits::start1(proxy.rhs())),           static_cast<unsigned int>(viennacl::traits::start2(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::stride1(proxy.rhs())),          static_cast<unsigned int>(viennacl::traits::stride2(proxy.rhs())),
+                                        static_cast<unsigned int>(viennacl::traits::internal_size1(proxy.rhs())),   static_cast<unsigned int>(viennacl::traits::internal_size2(proxy.rhs())),
+
+                                        op_type
+                                      );
+    VIENNACL_CUDA_LAST_ERROR_CHECK("element_op_col_kernel");
+  }
+}
+
 
 //
 /////////////////////////   unary element-wise operations    /////////////////////////////////

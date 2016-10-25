@@ -693,7 +693,7 @@ namespace viennacl
 
 
 
-    /** @brief Implementation of the element-wise operation A = B .* C and A = B ./ C for matrices (using MATLAB syntax). Don't use this function directly, use element_prod() and element_div().
+    /** @brief Implementation of the element-wise operation A = OP(B, C). Don't use this function directly, use element_prod() and element_div().
     *
     * @param A      The result matrix (or -range, or -slice)
     * @param proxy  The proxy object holding B, C, and the operation
@@ -701,6 +701,74 @@ namespace viennacl
     template<typename T, typename OP>
     void element_op(matrix_base<T> & A,
                     matrix_expression<const matrix_base<T>, const matrix_base<T>, OP> const & proxy)
+    {
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(proxy)) && bool("Size check failed at A = element_op(B): size1(A) != size1(B)"));
+      assert( (viennacl::traits::size2(A) == viennacl::traits::size2(proxy)) && bool("Size check failed at A = element_op(B): size2(A) != size2(B)"));
+
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::element_op(A, proxy);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::element_op(A, proxy);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::element_op(A, proxy);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Implementation of the element-wise operation A = OP(B, C). Don't use this function directly, use element_prod() and element_div().
+    *
+    * @param A      The result matrix (or -range, or -slice)
+    * @param proxy  The proxy object holding B, C, and the operation
+    */
+    template<typename T, typename OP>
+    void element_op(matrix_base<T> & A,
+                    matrix_expression<const matrix_base<T>, const T, OP> const & proxy)
+    {
+      assert( (viennacl::traits::size1(A) == viennacl::traits::size1(proxy)) && bool("Size check failed at A = element_op(B): size1(A) != size1(B)"));
+      assert( (viennacl::traits::size2(A) == viennacl::traits::size2(proxy)) && bool("Size check failed at A = element_op(B): size2(A) != size2(B)"));
+
+      switch (viennacl::traits::handle(A).get_active_handle_id())
+      {
+        case viennacl::MAIN_MEMORY:
+          viennacl::linalg::host_based::element_op(A, proxy);
+          break;
+#ifdef VIENNACL_WITH_OPENCL
+        case viennacl::OPENCL_MEMORY:
+          viennacl::linalg::opencl::element_op(A, proxy);
+          break;
+#endif
+#ifdef VIENNACL_WITH_CUDA
+        case viennacl::CUDA_MEMORY:
+          viennacl::linalg::cuda::element_op(A, proxy);
+          break;
+#endif
+        case viennacl::MEMORY_NOT_INITIALIZED:
+          throw memory_exception("not initialised!");
+        default:
+          throw memory_exception("not implemented");
+      }
+    }
+
+    /** @brief Implementation of the element-wise operation A = OP(alpha, C). Don't use this function directly, use element_prod() and element_div().
+    *
+    * @param A      The result matrix (or -range, or -slice)
+    * @param proxy  The proxy object holding B, C, and the operation
+    */
+    template<typename T, typename OP>
+    void element_op(matrix_base<T> & A,
+                    matrix_expression<const T, const matrix_base<T>, OP> const & proxy)
     {
       assert( (viennacl::traits::size1(A) == viennacl::traits::size1(proxy)) && bool("Size check failed at A = element_op(B): size1(A) != size1(B)"));
       assert( (viennacl::traits::size2(A) == viennacl::traits::size2(proxy)) && bool("Size check failed at A = element_op(B): size2(A) != size2(B)"));
@@ -769,7 +837,44 @@ namespace viennacl
       return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP1>,\
                                          const matrix_expression<const M3, const M4, OP2>,\
                                          op_element_binary<op_##OPNAME> >(proxy1, proxy2);\
-    }
+    } \
+\
+\
+    template<typename T>\
+    viennacl::matrix_expression<const matrix_base<T>, const T, op_element_binary<op_##OPNAME> >\
+    element_##OPNAME(matrix_base<T> const & A, T const & alpha)\
+    {\
+      return viennacl::matrix_expression<const matrix_base<T>, const T, op_element_binary<op_##OPNAME> >(A, alpha);\
+    }\
+\
+    template<typename M1, typename M2, typename OP>\
+    viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,\
+                                const typename viennacl::result_of::cpu_value_type<M1>::type,\
+                                op_element_binary<op_##OPNAME> >\
+    element_##OPNAME(matrix_expression<const M1, const M2, OP> const & proxy, typename viennacl::result_of::cpu_value_type<M1>::type const & alpha)\
+    {\
+      return viennacl::matrix_expression<const matrix_expression<const M1, const M2, OP>,\
+                                         const typename viennacl::result_of::cpu_value_type<M1>::type,\
+                                         op_element_binary<op_##OPNAME> >(proxy, alpha);\
+    }\
+\
+    template<typename T>\
+    viennacl::matrix_expression<const T, const matrix_base<T>, op_element_binary<op_##OPNAME> >\
+    element_##OPNAME(T const & alpha, matrix_base<T> const & B)\
+    {\
+      return viennacl::matrix_expression<const T, const matrix_base<T>, op_element_binary<op_##OPNAME> >(alpha, B);\
+    }\
+\
+    template<typename M1, typename M2, typename OP>\
+    viennacl::matrix_expression<const typename viennacl::result_of::cpu_value_type<M1>::type,\
+                                const matrix_expression<const M1, const M2, OP>,\
+                                op_element_binary<op_##OPNAME> >\
+    element_##OPNAME(typename viennacl::result_of::cpu_value_type<M1>::type const & alpha, matrix_expression<const M1, const M2, OP> const & proxy)\
+    {\
+      return viennacl::matrix_expression<const typename viennacl::result_of::cpu_value_type<M1>::type,\
+                                         const matrix_expression<const M1, const M2, OP>,\
+                                         op_element_binary<op_##OPNAME> >(alpha, proxy);\
+    }\
 
     VIENNACL_MAKE_BINARY_OP(prod)
     VIENNACL_MAKE_BINARY_OP(div)

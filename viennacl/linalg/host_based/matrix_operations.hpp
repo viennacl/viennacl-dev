@@ -839,7 +839,7 @@ void matrix_column(const matrix_base<NumericT> & mat, unsigned int j, vector_bas
 
 // Binary operations A = B .* C and A = B ./ C
 
-/** @brief Implementation of the element-wise operations A = B .* C and A = B ./ C    (using MATLAB syntax)
+/** @brief Implementation of the element-wise operations A = OP(B, C)
 *
 * @param A      The result matrix (or -range, or -slice)
 * @param proxy  The proxy object holding B, C, and the operation
@@ -892,9 +892,6 @@ void element_op(matrix_base<NumericT> & A,
     for (long row = 0; row < static_cast<long>(A_size1); ++row)
       for (vcl_size_t col = 0; col < A_size2; ++col)
         OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col), wrapper_C(row, col));
-        //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
-        // =   data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha
-        //   + data_C[index_generator_C::mem_index(row * C_inc1 + C_start1, col * C_inc2 + C_start2, C_internal_size1, C_internal_size2)] * beta;
   }
   else
   {
@@ -908,12 +905,132 @@ void element_op(matrix_base<NumericT> & A,
     for (long col = 0; col < static_cast<long>(A_size2); ++col)
       for (vcl_size_t row = 0; row < A_size1; ++row)
         OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col), wrapper_C(row, col));
-
-        //data_A[index_generator_A::mem_index(row * A_inc1 + A_start1, col * A_inc2 + A_start2, A_internal_size1, A_internal_size2)]
-        // =   data_B[index_generator_B::mem_index(row * B_inc1 + B_start1, col * B_inc2 + B_start2, B_internal_size1, B_internal_size2)] * alpha
-        //   + data_C[index_generator_C::mem_index(row * C_inc1 + C_start1, col * C_inc2 + C_start2, C_internal_size1, C_internal_size2)] * beta;
   }
 }
+
+
+// Binary operations A = OP(B, alpha)
+
+/** @brief Implementation of the element-wise operations A = OP(B, alpha)
+*
+* @param A      The result matrix (or -range, or -slice)
+* @param proxy  The proxy object holding B, C, and the operation
+*/
+template<typename NumericT, typename OpT>
+void element_op(matrix_base<NumericT> & A,
+                matrix_expression<const matrix_base<NumericT>, const NumericT, op_element_binary<OpT> > const & proxy)
+{
+  assert(A.row_major() == proxy.lhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
+  typedef NumericT        value_type;
+  typedef viennacl::linalg::detail::op_applier<op_element_binary<OpT> >    OpFunctor;
+
+  value_type       * data_A = detail::extract_raw_pointer<value_type>(A);
+  value_type const * data_B = detail::extract_raw_pointer<value_type>(proxy.lhs());
+
+  vcl_size_t A_start1 = viennacl::traits::start1(A);
+  vcl_size_t A_start2 = viennacl::traits::start2(A);
+  vcl_size_t A_inc1   = viennacl::traits::stride1(A);
+  vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+  vcl_size_t A_size1  = viennacl::traits::size1(A);
+  vcl_size_t A_size2  = viennacl::traits::size2(A);
+  vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
+  vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
+
+  vcl_size_t B_start1 = viennacl::traits::start1(proxy.lhs());
+  vcl_size_t B_start2 = viennacl::traits::start2(proxy.lhs());
+  vcl_size_t B_inc1   = viennacl::traits::stride1(proxy.lhs());
+  vcl_size_t B_inc2   = viennacl::traits::stride2(proxy.lhs());
+  vcl_size_t B_internal_size1  = viennacl::traits::internal_size1(proxy.lhs());
+  vcl_size_t B_internal_size2  = viennacl::traits::internal_size2(proxy.lhs());
+
+  if (A.row_major())
+  {
+    detail::matrix_array_wrapper<value_type,       row_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+#endif
+    for (long row = 0; row < static_cast<long>(A_size1); ++row)
+      for (vcl_size_t col = 0; col < A_size2; ++col)
+        OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col), proxy.rhs());
+  }
+  else
+  {
+    detail::matrix_array_wrapper<value_type,       column_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_B(data_B, B_start1, B_start2, B_inc1, B_inc2, B_internal_size1, B_internal_size2);
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+#endif
+    for (long col = 0; col < static_cast<long>(A_size2); ++col)
+      for (vcl_size_t row = 0; row < A_size1; ++row)
+        OpFunctor::apply(wrapper_A(row, col), wrapper_B(row, col), proxy.rhs());
+  }
+}
+
+/** @brief Implementation of the element-wise operations A = OP(alpha, C)
+*
+* @param A      The result matrix (or -range, or -slice)
+* @param proxy  The proxy object holding B, C, and the operation
+*/
+template<typename NumericT, typename OpT>
+void element_op(matrix_base<NumericT> & A,
+                matrix_expression<const NumericT, const matrix_base<NumericT>, op_element_binary<OpT> > const & proxy)
+{
+  assert(A.row_major() == proxy.rhs().row_major() && bool("Element-wise operations on mixed matrix layouts not supported yet!"));
+
+  typedef NumericT        value_type;
+  typedef viennacl::linalg::detail::op_applier<op_element_binary<OpT> >    OpFunctor;
+
+  value_type       * data_A = detail::extract_raw_pointer<value_type>(A);
+  value_type const * data_C = detail::extract_raw_pointer<value_type>(proxy.rhs());
+
+  vcl_size_t A_start1 = viennacl::traits::start1(A);
+  vcl_size_t A_start2 = viennacl::traits::start2(A);
+  vcl_size_t A_inc1   = viennacl::traits::stride1(A);
+  vcl_size_t A_inc2   = viennacl::traits::stride2(A);
+  vcl_size_t A_size1  = viennacl::traits::size1(A);
+  vcl_size_t A_size2  = viennacl::traits::size2(A);
+  vcl_size_t A_internal_size1  = viennacl::traits::internal_size1(A);
+  vcl_size_t A_internal_size2  = viennacl::traits::internal_size2(A);
+
+  vcl_size_t C_start1 = viennacl::traits::start1(proxy.rhs());
+  vcl_size_t C_start2 = viennacl::traits::start2(proxy.rhs());
+  vcl_size_t C_inc1   = viennacl::traits::stride1(proxy.rhs());
+  vcl_size_t C_inc2   = viennacl::traits::stride2(proxy.rhs());
+  vcl_size_t C_internal_size1  = viennacl::traits::internal_size1(proxy.rhs());
+  vcl_size_t C_internal_size2  = viennacl::traits::internal_size2(proxy.rhs());
+
+  if (A.row_major())
+  {
+    detail::matrix_array_wrapper<value_type,       row_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::matrix_array_wrapper<value_type const, row_major, false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+#endif
+    for (long row = 0; row < static_cast<long>(A_size1); ++row)
+      for (vcl_size_t col = 0; col < A_size2; ++col)
+        OpFunctor::apply(wrapper_A(row, col), proxy.lhs(), wrapper_C(row, col));
+  }
+  else
+  {
+    detail::matrix_array_wrapper<value_type,       column_major, false> wrapper_A(data_A, A_start1, A_start2, A_inc1, A_inc2, A_internal_size1, A_internal_size2);
+    detail::matrix_array_wrapper<value_type const, column_major, false> wrapper_C(data_C, C_start1, C_start2, C_inc1, C_inc2, C_internal_size1, C_internal_size2);
+
+#ifdef VIENNACL_WITH_OPENMP
+    #pragma omp parallel for if ((A_size1*A_size2) > VIENNACL_OPENMP_MATRIX_MIN_SIZE)
+#endif
+    for (long col = 0; col < static_cast<long>(A_size2); ++col)
+      for (vcl_size_t row = 0; row < A_size1; ++row)
+        OpFunctor::apply(wrapper_A(row, col), proxy.lhs(), wrapper_C(row, col));
+  }
+}
+
+
+
 
 // Unary operations
 
