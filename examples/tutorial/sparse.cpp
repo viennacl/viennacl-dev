@@ -99,6 +99,14 @@ int main()
   viennacl::copy(vcl_compressed_matrix, temp);
   std::cout << "ViennaCL matrix copied to uBLAS matrix: " << temp << std::endl;
 
+
+  // directly copy CSR-array:
+  viennacl::compressed_matrix<ScalarType> vcl_compressed_matrix2;
+  viennacl::copy(&(ublas_matrix.index1_data()[0]), &(ublas_matrix.index2_data()[0]), &(ublas_matrix.value_data()[0]), ublas_matrix.size1(), ublas_matrix.size2(), ublas_matrix.nnz(),
+                 vcl_compressed_matrix2);
+  std::cout << "ViennaCL matrix from CSR arrays: " << vcl_compressed_matrix2 << std::endl;
+
+
   /**
   *  Compute matrix-vector products and output the results (should match):
   **/

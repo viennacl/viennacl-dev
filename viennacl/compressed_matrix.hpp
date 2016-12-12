@@ -93,6 +93,59 @@ namespace detail
 // host to device:
 //
 
+
+/** @brief Copies a sparse matrix in CSR-format (three arrays) from the host to the device (either GPU or multi-core CPU)
+  *
+  * @param csr_rows     The array containing the start and stop indices in the column and element array for each row (length rows+1)
+  * @param csr_cols     The array containing the column indices
+  * @param csr_elements The nonzero entries
+  * @param num_rows     The number of rows in the CSR matrix
+  * @param num_cols     The number of columns in the CSR matrix
+  * @param num_nnz      The number of nonzers in the CSR matrix
+  * @param gpu_matrix   A compressed_matrix from ViennaCL
+  */
+template<typename IndexT, typename NumericT, unsigned int AlignmentV>
+void copy(const IndexT   *csr_rows,
+          const IndexT   *csr_cols,
+          const NumericT *csr_elements,
+          vcl_size_t num_rows,
+          vcl_size_t num_cols,
+          vcl_size_t num_nnz,
+          compressed_matrix<NumericT, AlignmentV> & gpu_matrix)
+{
+  if ( num_rows > 0 && num_cols > 0 && num_nnz > 0)
+  {
+    viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), num_rows + 1);
+
+    if (sizeof(IndexT) != row_buffer.element_size()) // check whether indices are of the same length (same number of bits)
+    {
+      viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), num_nnz);
+
+      for (vcl_size_t i=0; i<=num_rows; ++i)
+        row_buffer.set(i, csr_rows[i]);
+      for (vcl_size_t i=0; i<num_nnz; ++i)
+        col_buffer.set(i, csr_cols[i]);
+
+      gpu_matrix.set(row_buffer.get(),
+                     col_buffer.get(),
+                     csr_elements,
+                     num_rows,
+                     num_cols,
+                     num_nnz);
+    }
+    else
+    {
+      gpu_matrix.set(static_cast<const void*>(csr_rows),
+                     static_cast<const void*>(csr_cols),
+                     csr_elements,
+                     num_rows,
+                     num_cols,
+                     num_nnz);
+    }
+  }
+}
+
+
 //provide copy-operation:
 /** @brief Copies a sparse matrix from the host to the OpenCL device (either GPU or multi-core CPU)
   *
