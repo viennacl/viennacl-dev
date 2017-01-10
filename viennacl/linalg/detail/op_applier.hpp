@@ -72,7 +72,7 @@ template<> \
 struct op_applier<op_element_unary<op_##funcname> > \
 { \
   template<typename T> \
-  static void apply(T & result, T const & x) { using namespace std; result = funcname(x); } \
+  static void apply(T & result, T const & x) { using namespace std; result = static_cast<T>(funcname(x)); } \
 }
 
 VIENNACL_MAKE_UNARY_OP_APPLIER(abs);

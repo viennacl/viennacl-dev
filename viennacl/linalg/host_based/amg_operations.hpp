@@ -1476,7 +1476,7 @@ void amg_transpose(compressed_matrix<NumericT> const & A,
     for (unsigned int nnz_index = row_start; nnz_index < row_stop; ++nnz_index)
     {
       unsigned int col_in_A = A_col_buffer[nnz_index];
-      unsigned int array_index = thread_id * (B.size1()+1) + col_in_A;
+      unsigned int array_index = thread_id * static_cast<unsigned int>(B.size1()+1) + col_in_A;
       unsigned int B_nnz_index = scratchpad[array_index];
       scratchpad[array_index] += 1;
       B_col_buffer[B_nnz_index] = static_cast<unsigned int>(row);
