@@ -56,7 +56,8 @@ class ilut_tag
              bool         with_level_scheduling = false)
       : entries_per_row_(entries_per_row),
         drop_tolerance_(drop_tolerance),
-        use_level_scheduling_(with_level_scheduling) {}
+        use_level_scheduling_(with_level_scheduling),
+        solve_iters_(0) {}
 
     void set_drop_tolerance(double tol)
     {
@@ -76,10 +77,19 @@ class ilut_tag
     bool use_level_scheduling() const { return use_level_scheduling_; }
     void use_level_scheduling(bool b) { use_level_scheduling_ = b; }
 
+    /** @brief Specifies whether approximate solves (via truncated Neumann series) should be used instead of triangular solvers.
+      *
+      * @param iters    Number of relaxations of the form y = (I - DW)x + Db, where D is the inverse of the diagonal entries of the (upper or lower triangular) matrix W.
+      */
+    void approximate_solves(unsigned int iters) { solve_iters_ = iters; }
+    /** @brief Returns the number of iterations for approximate solves. Returns 0 if no approximate solvers are used. */
+    unsigned int approximate_solves() const { return solve_iters_; }
+
   private:
     unsigned int entries_per_row_;
     double       drop_tolerance_;
     bool         use_level_scheduling_;
+    unsigned int solve_iters_;
 };
 
 
@@ -415,7 +425,9 @@ public:
   ilut_precond(MatrixType const & mat, ilut_tag const & tag)
     : tag_(tag),
       L_(mat.size1(), mat.size2(), viennacl::traits::context(mat)),
-      U_(mat.size1(), mat.size2(), viennacl::traits::context(mat))
+      U_(mat.size1(), mat.size2(), viennacl::traits::context(mat)),
+      b_(mat.size1(), viennacl::traits::context(mat)),
+      x_k_(mat.size1(), viennacl::traits::context(mat))
   {
     //initialize preconditioner:
     //std::cout << "Start GPU precond" << std::endl;
@@ -449,18 +461,83 @@ public:
       }
       else
       {
-        viennacl::context host_context(viennacl::MAIN_MEMORY);
-        viennacl::context old_context = viennacl::traits::context(vec);
-        viennacl::switch_memory_context(vec, host_context);
-        viennacl::linalg::inplace_solve(L_, vec, unit_lower_tag());
-        viennacl::linalg::inplace_solve(U_, vec, upper_tag());
-        viennacl::switch_memory_context(vec, old_context);
+        if (tag_.approximate_solves() > 0)
+        {
+          //
+          // y = L^{-1} b through Jacobi iteration y_{k+1} = (I - D^{-1}L)y_k + D^{-1}x
+          //
+          b_ = vec; //Note that the diagonal of L is unity by definition!
+          x_k_ = b_;
+          for (unsigned int i=0; i<tag_.approximate_solves(); ++i)
+          {
+            vec = viennacl::linalg::prod(L_, x_k_);
+            x_k_ = b_ - vec;
+          }
+
+          //
+          // x = U^{-1} y through Jacobi iteration x_{k+1} = (I - D^{-1}U)x_k + D^{-1}b
+          //
+          b_ = viennacl::linalg::element_div(x_k_, multifrontal_U_diagonal_);
+          x_k_ = b_; // x_1 if x_0 \equiv 0
+          for (unsigned int i=0; i<tag_.approximate_solves(); ++i)
+          {
+            vec = viennacl::linalg::prod(U_, x_k_);
+            vec = viennacl::linalg::element_div(vec, multifrontal_U_diagonal_);
+            vec = x_k_ - vec;
+            x_k_ = vec + b_;
+          }
+
+          // return result:
+          vec = x_k_;
+        }
+        else
+        {
+          viennacl::context host_context(viennacl::MAIN_MEMORY);
+          viennacl::context old_context = viennacl::traits::context(vec);
+          viennacl::switch_memory_context(vec, host_context);
+          viennacl::linalg::inplace_solve(L_, vec, unit_lower_tag());
+          viennacl::linalg::inplace_solve(U_, vec, upper_tag());
+          viennacl::switch_memory_context(vec, old_context);
+        }
+
       }
     }
     else //apply ILUT directly:
     {
-      viennacl::linalg::inplace_solve(L_, vec, unit_lower_tag());
-      viennacl::linalg::inplace_solve(U_, vec, upper_tag());
+      if (tag_.approximate_solves() > 0) // apply ILUT approximately (truncated Neumann series, relaxation)
+      {
+        //
+        // y = L^{-1} b through Jacobi iteration y_{k+1} = (I - D^{-1}L)y_k + D^{-1}x
+        //
+        b_ = vec; //b_ = viennacl::linalg::element_div(vec, diag_L_);
+        x_k_ = b_;
+        for (unsigned int i=0; i<3; ++i)
+        {
+          vec = viennacl::linalg::prod(L_, x_k_);
+          x_k_ = b_ - vec;
+        }
+
+        //
+        // x = U^{-1} y through Jacobi iteration x_{k+1} = (I - D^{-1}U)x_k + D^{-1}b
+        //
+        b_ = x_k_; b_ = viennacl::linalg::element_div(x_k_, multifrontal_U_diagonal_);
+        x_k_ = b_; // x_1 if x_0 \equiv 0
+        for (unsigned int i=0; i<3; ++i)
+        {
+          vec = viennacl::linalg::prod(U_, x_k_);
+          vec = viennacl::linalg::element_div(vec, multifrontal_U_diagonal_);
+          vec = x_k_ - vec;
+          x_k_ = vec + b_;
+        }
+
+        // return result:
+        vec = x_k_;
+      }
+      else
+      {
+        viennacl::linalg::inplace_solve(L_, vec, unit_lower_tag());
+        viennacl::linalg::inplace_solve(U_, vec, upper_tag());
+      }
     }
   }
 
@@ -483,6 +560,21 @@ private:
       cpu_mat = mat;
 
       viennacl::linalg::precondition(cpu_mat, L_, U_, tag_);
+    }
+
+    if (tag_.approximate_solves() > 0)
+    {
+      viennacl::switch_memory_context(multifrontal_U_diagonal_, host_context);
+      multifrontal_U_diagonal_.resize(U_.size1(), false);
+      host_based::detail::row_info(U_, multifrontal_U_diagonal_, viennacl::linalg::detail::SPARSE_ROW_DIAGONAL);
+      viennacl::switch_memory_context(multifrontal_U_diagonal_, viennacl::traits::context(mat));
+
+      L_.generate_row_block_information();
+      U_.generate_row_block_information();
+      viennacl::switch_memory_context(L_, viennacl::traits::context(mat));
+      viennacl::switch_memory_context(U_, viennacl::traits::context(mat));
+      viennacl::switch_memory_context(b_, viennacl::traits::context(mat));
+      viennacl::switch_memory_context(x_k_, viennacl::traits::context(mat));
     }
 
     if (!tag_.use_level_scheduling())
@@ -583,6 +675,9 @@ private:
   std::list<viennacl::backend::mem_handle> multifrontal_U_col_buffers_;
   std::list<viennacl::backend::mem_handle> multifrontal_U_element_buffers_;
   std::list<vcl_size_t > multifrontal_U_row_elimination_num_list_;
+
+  mutable viennacl::vector<NumericT>      x_k_;
+  mutable viennacl::vector<NumericT>      b_;
 };
 
 } // namespace linalg
