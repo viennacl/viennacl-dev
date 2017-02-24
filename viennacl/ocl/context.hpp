@@ -455,6 +455,26 @@ public:
     }
     VIENNACL_ERR_CHECK(err);
 
+
+    programs_.push_back(tools::shared_ptr<ocl::program>(new ocl::program(temp, *this, prog_name)));
+    viennacl::ocl::program & prog = *programs_.back();
+
+    //
+    // Extract kernels
+    //
+    cl_kernel kernels[1024];
+    cl_uint   num_kernels_in_prog;
+    err = clCreateKernelsInProgram(prog.handle().get(), 1024, kernels, &num_kernels_in_prog);
+    VIENNACL_ERR_CHECK(err);
+
+    for (cl_uint i=0; i<num_kernels_in_prog; ++i)
+    {
+      char kernel_name[128];
+      err = clGetKernelInfo(kernels[i], CL_KERNEL_FUNCTION_NAME, 128, kernel_name, NULL);
+      prog.add_kernel(kernels[i], std::string(kernel_name));
+    }
+
+
     //
     // Store the program in the cache
     //
@@ -486,26 +506,6 @@ public:
         delete[] binaries[i];
 
       VIENNACL_ERR_CHECK(err);
-    }
-
-
-    programs_.push_back(tools::shared_ptr<ocl::program>(new ocl::program(temp, *this, prog_name)));
-
-    viennacl::ocl::program & prog = *programs_.back();
-
-    //
-    // Extract kernels
-    //
-    cl_kernel kernels[1024];
-    cl_uint   num_kernels_in_prog;
-    err = clCreateKernelsInProgram(prog.handle().get(), 1024, kernels, &num_kernels_in_prog);
-    VIENNACL_ERR_CHECK(err);
-
-    for (cl_uint i=0; i<num_kernels_in_prog; ++i)
-    {
-      char kernel_name[128];
-      err = clGetKernelInfo(kernels[i], CL_KERNEL_FUNCTION_NAME, 128, kernel_name, NULL);
-      prog.add_kernel(kernels[i], std::string(kernel_name));
     }
 
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
