@@ -410,12 +410,12 @@ public:
       std::string sha1 = tools::sha1(prefix + source + build_options_);
 
       std::ifstream cached((cache_path_+sha1).c_str(),std::ios::binary);
-      is_cached = (cached != NULL);
-      if (is_cached)
+      if (cached)
       {
+        is_cached = true;
+
         vcl_size_t len;
         std::vector<unsigned char> buffer;
-
         cached.read((char*)&len, sizeof(vcl_size_t));
         buffer.resize(len);
         cached.read((char*)(&buffer[0]), std::streamsize(len));
