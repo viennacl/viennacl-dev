@@ -395,8 +395,9 @@ public:
     cl_program temp = 0;
 
     //
-    // Retrieves the program in the cache
+    // Retrieve the program from the cache if it is already there
     //
+    bool is_cached = false;
     if (cache_path_.size())
     {
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
@@ -409,7 +410,8 @@ public:
       std::string sha1 = tools::sha1(prefix + source + build_options_);
 
       std::ifstream cached((cache_path_+sha1).c_str(),std::ios::binary);
-      if (cached)
+      is_cached = (cached != NULL);
+      if (is_cached)
       {
         vcl_size_t len;
         std::vector<unsigned char> buffer;
@@ -476,9 +478,9 @@ public:
 
 
     //
-    // Store the program in the cache
+    // Store the program into the cache if it is not already there
     //
-    if (cache_path_.size())
+    if (cache_path_.size() && !is_cached)
     {
       vcl_size_t len;
 
