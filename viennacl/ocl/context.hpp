@@ -406,7 +406,7 @@ public:
       std::string prefix;
       for(std::vector< viennacl::ocl::device >::const_iterator it = devices_.begin(); it != devices_.end(); ++it)
         prefix += it->name() + it->vendor() + it->driver_version();
-      std::string sha1 = tools::sha1(prefix + source);
+      std::string sha1 = tools::sha1(prefix + source + build_options_);
 
       std::ifstream cached((cache_path_+sha1).c_str(),std::ios::binary);
       if (cached)
@@ -496,7 +496,7 @@ public:
       std::string prefix;
       for(std::vector< viennacl::ocl::device >::const_iterator it = devices_.begin(); it != devices_.end(); ++it)
         prefix += it->name() + it->vendor() + it->driver_version();
-      std::string sha1 = tools::sha1(prefix + source);
+      std::string sha1 = tools::sha1(prefix + source + build_options_);
       std::ofstream cached((cache_path_+sha1).c_str(),std::ios::binary);
 
       cached.write((char*)&sizes[0], sizeof(vcl_size_t));
