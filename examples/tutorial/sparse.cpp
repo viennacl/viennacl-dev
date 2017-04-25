@@ -106,6 +106,11 @@ int main()
                  vcl_compressed_matrix2);
   std::cout << "ViennaCL matrix from CSR arrays: " << vcl_compressed_matrix2 << std::endl;
 
+  // create a copy and modify the copy only:
+  viennacl::compressed_matrix<ScalarType> B(vcl_compressed_matrix);
+  B(0, 0) = ScalarType(42);
+  std::cout << "B: " << B << std::endl;
+  std::cout << "vcl_compressed_matrix: " << vcl_compressed_matrix << std::endl;
 
   /**
   *  Compute matrix-vector products and output the results (should match):

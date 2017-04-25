@@ -611,6 +611,7 @@ void copy(compressed_matrix<NumericT, AlignmentV> & gpu_matrix,
 template<class NumericT, unsigned int AlignmentV /* see VCLForwards.h */>
 class compressed_matrix
 {
+  typedef compressed_matrix<NumericT, AlignmentV>                                                  self_type;
 public:
   typedef viennacl::backend::mem_handle                                                              handle_type;
   typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<NumericT>::ResultType>   value_type;
@@ -820,6 +821,33 @@ public:
     viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
     generate_row_block_information();
   }
+
+
+  compressed_matrix(compressed_matrix const & other) :
+    rows_(other.size1()), cols_(other.size2()), nonzeros_(other.nnz()), row_block_num_(other.row_block_num_)
+  {
+    viennacl::context const & ctx = viennacl::traits::context(other);
+
+    row_buffer_.switch_active_handle_id(ctx.memory_type());
+    col_buffer_.switch_active_handle_id(ctx.memory_type());
+    elements_.switch_active_handle_id(ctx.memory_type());
+    row_blocks_.switch_active_handle_id(ctx.memory_type());
+
+    if (rows_ > 0)
+    {
+      viennacl::backend::memory_create(row_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (rows_ + 1), ctx);
+    }
+    if (nonzeros_ > 0)
+    {
+      viennacl::backend::memory_create(col_buffer_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * nonzeros_, ctx);
+      viennacl::backend::memory_create(elements_, sizeof(NumericT) * nonzeros_, ctx);
+    }
+    if (row_block_num_ > 0)
+      viennacl::backend::memory_create(row_blocks_, viennacl::backend::typesafe_host_array<unsigned int>().element_size() * (row_block_num_ + 1), ctx);
+
+    self_type::operator=(other);
+  }
+
 
   /** @brief Assignment a compressed matrix from possibly another memory domain. */
   compressed_matrix & operator=(compressed_matrix const & other)
@@ -1138,12 +1166,6 @@ public:
                                        viennacl::traits::context(row_buffer_), row_blocks.get());
 
   }
-
-private:
-  // /** @brief Copy constructor is by now not available. */
-  //compressed_matrix(compressed_matrix const &);
-
-private:
 
   vcl_size_t rows_;
   vcl_size_t cols_;
