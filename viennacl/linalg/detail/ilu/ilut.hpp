@@ -426,8 +426,8 @@ public:
     : tag_(tag),
       L_(mat.size1(), mat.size2(), viennacl::traits::context(mat)),
       U_(mat.size1(), mat.size2(), viennacl::traits::context(mat)),
-      b_(mat.size1(), viennacl::traits::context(mat)),
-      x_k_(mat.size1(), viennacl::traits::context(mat))
+      x_k_(mat.size1(), viennacl::traits::context(mat)),
+      b_(mat.size1(), viennacl::traits::context(mat))
   {
     //initialize preconditioner:
     //std::cout << "Start GPU precond" << std::endl;
