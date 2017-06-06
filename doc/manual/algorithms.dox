@@ -487,12 +487,12 @@ The Lanczos algorithm returns a vector of the largest eigenvalues with the same 
 The Power iteration aims at computing the eigenvalues of a matrix by calculating the product of the matrix and a vector for several times, where the resulting vector is used for the next product of the matrix and so on.
 The computation stops as soon as the norm of the vector changes by less than the prescribed tolerance.
 The final vector is the eigenvector to the eigenvalue with the greatest absolut value.
-To call this algorithm, `piter_tag` must be used.
+To call this algorithm, `power_iter_tag` must be used.
 This tag has only one parameter:
  `terminationfactor` defines the accuracy of the computation, i.e. if the new norm of the eigenvector changes less than this parameter the computation stops and returns the corresponding eigenvalue (default: \f$ 10^{-10} \f$ )
 The call of the constructor may look as follows:
 \code
-viennacl::linalg::piter_tag ptag(1e-8);
+viennacl::linalg::power_iter_tag ptag(1e-8);
 \endcode
 A minimal example is as follows:
 \code
@@ -507,7 +507,7 @@ int main()
 
   // fill A with data here, e.g. by reading a MatrixMarket file
 
-  viennacl::linalg::piter_tag ptag(1e-8);
+  viennacl::linalg::power_iter_tag ptag(1e-8);
   std::cout << "Eigenvalue: " << viennacl::linalg::eig(A, ptag, eigenvector) << std::endl;
   std::cout << "Eigenvector: " << eigenvector << std::endl;
 }
