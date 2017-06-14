@@ -214,7 +214,6 @@ In order to initialize vectors, the following initializer types are provided, ag
  <tr><td>`unit_vector<T>(s, i)`   </td><td> Unit vector of size \f$ s \f$ with entry \f$ 1 \f$ at index \f$ i \f$, zero elsewhere. </td></tr>
  <tr><td>`zero_vector<T>(s)`      </td><td> Vector of size \f$ s \f$ with all entries being zero. </td></tr>
  <tr><td>`scalar_vector<T>(s, v)` </td><td> Vector of size \f$ s \f$ with all entries equal to \f$ v \f$. </td></tr>
- <tr><td>`random_vector<T>(s, d)` </td><td> Vector of size \f$ s \f$ with all entries random according to the distribution specified by \f$ d \f$. </td></tr>
 </table>
 </center>
 For example, to initialize a vector `v1` with all \f$ 42 \f$ entries being \f$ 42.0 \f$, use
@@ -227,7 +226,6 @@ Similarly the following initializer types are available for matrices:
  <tr><td> `identity_matrix<T>(s)`       </td><td> Identity matrix of dimension \f$ s \times s \f$.                                                       </td></tr>
  <tr><td> `zero_matrix<T>(s1, s2)`      </td><td> Matrix of size \f$ s_1 \times s_2 \f$ with all entries being zero.                                     </td></tr>
  <tr><td> `scalar_matrix<T>(s1, s2, v)` </td><td> Matrix of size \f$ s_1 \times s_2 \f$ with all entries equal to \f$ v \f$.                             </td></tr>
- <tr><td> `random_matrix<T>(s1, s2, d)` </td><td> Vector of size \f$ s \f$ with all entries random according to the distribution specified by \f$ d \f$. </td></tr>
 </table>
 </center>
 
