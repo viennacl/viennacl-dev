@@ -91,11 +91,11 @@ int main()
 
   for (unsigned int i = 0; i < ublas_A.size1(); ++i)
     for (unsigned int j = 0; j < ublas_A.size2(); ++j)
-      ublas_A(i,j) = randomNumber();
+      ublas_A(i,j) = ScalarType(10) * randomNumber();
 
   for (unsigned int i = 0; i < ublas_B.size1(); ++i)
     for (unsigned int j = 0; j < ublas_B.size2(); ++j)
-      ublas_B(i,j) = randomNumber();
+      ublas_B(i,j) = ScalarType(10) * randomNumber();
 
   /**
   * Set up some ViennaCL objects. Data initialization will happen later.
@@ -154,9 +154,9 @@ int main()
 
     std::cout << " - Checking result... ";
     bool check_ok = true;
-    for (std::size_t i = 0; i < ublas_A.size1(); ++i)
+    for (std::size_t i = 0; i < ublas_C.size1(); ++i)
     {
-      for (std::size_t j = 0; j < ublas_A.size2(); ++j)
+      for (std::size_t j = 0; j < ublas_C.size2(); ++j)
       {
         if ( std::fabs(ublas_C1(i,j) - ublas_C(i,j)) / ublas_C(i,j) > 1e-4 )
         {
