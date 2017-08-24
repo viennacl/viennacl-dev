@@ -229,10 +229,19 @@ void copy(const boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, 
   assert( (gpu_matrix.size1() == 0 || viennacl::traits::size1(ublas_matrix) == gpu_matrix.size1()) && bool("Size mismatch") );
   assert( (gpu_matrix.size2() == 0 || viennacl::traits::size2(ublas_matrix) == gpu_matrix.size2()) && bool("Size mismatch") );
 
-  //we just need to copy the CSR arrays:
   viennacl::backend::typesafe_host_array<unsigned int> row_buffer(gpu_matrix.handle1(), ublas_matrix.size1() + 1);
-  for (vcl_size_t i=0; i<=ublas_matrix.size1(); ++i)
-    row_buffer.set(i, ublas_matrix.index1_data()[i]);
+
+  typedef typename boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, TA>::const_iterator1 iterator1_t;
+  typedef typename boost::numeric::ublas::compressed_matrix<ScalarType, F, IB, IA, TA>::const_iterator2 iterator2_t;
+
+  unsigned int r = 0;
+  row_buffer.set(0, 0);
+  for (iterator1_t it1 = ublas_matrix.begin1(); it1 != ublas_matrix.end1(); it1++)
+  {
+    for (iterator2_t it2 = it1.begin(); it2 != it1.end(); it2++)
+      ++r;
+    row_buffer.set(it1.index1() + 1, r);
+  }
 
   viennacl::backend::typesafe_host_array<unsigned int> col_buffer(gpu_matrix.handle2(), ublas_matrix.nnz());
   for (vcl_size_t i=0; i<ublas_matrix.nnz(); ++i)
