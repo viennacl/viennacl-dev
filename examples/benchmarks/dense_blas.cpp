@@ -132,13 +132,26 @@ void bench(size_t BLAS1_N, size_t BLAS2_M, size_t BLAS2_N, size_t BLAS3_M, size_
 int main(int argc, char** argv)
 {
 #ifdef VIENNACL_WITH_OPENCL
+  const std::string usage_message = "Usage: dense_blas (platform_id)";
   if(argc == 2)
   {
-    unsigned int platform_id = std::stoi(argv[1]);
+    unsigned int platform_id = 0;
+    char* p_end = NULL;
+    platform_id = strtol(argv[1],&p_end, 0);
+    if(*p_end != '\0')
+    {
+      std::cout << usage_message << std::endl;
+      exit(0);
+    }
+
     viennacl::ocl::set_context_platform_index(0L, platform_id);
   }
   else if(argc != 1)
-    std::cout << "Usage: dense_blas (platform_id)" << std::endl;
+  {
+    std::cout << usage_message << std::endl;
+    exit(0);
+  }
+    
 
   std::cout << std::endl;
   std::cout << "----------------------------------------------" << std::endl;
