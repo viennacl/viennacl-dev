@@ -1004,8 +1004,16 @@ template<typename NumericT>
     {
         viennacl::linalg::opencl::kernels::svd<NumericT, row_major>::init(ctx);
         viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<NumericT, row_major>::program_name(), SVD_GIVENS_NEXT_KERNEL);
+        
         kernel.global_work_size(0, viennacl::tools::align_to_multiple<cl_uint>(cl_uint(viennacl::traits::size1(matrix)), 256));
-        kernel.local_work_size(0, 256);
+        
+        cl_device_type type_check = ctx.current_device().type();
+        
+        if(type_check & CL_DEVICE_TYPE_CPU){
+          kernel.local_work_size(0, 1);
+        }else{
+          kernel.local_work_size(0, 256);  
+        }
 
         viennacl::ocl::enqueue(kernel(
                                       matrix,
@@ -1021,8 +1029,16 @@ template<typename NumericT>
     {
         viennacl::linalg::opencl::kernels::svd<NumericT, column_major>::init(ctx);
         viennacl::ocl::kernel& kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<NumericT, column_major>::program_name(), SVD_GIVENS_NEXT_KERNEL);
+        
         kernel.global_work_size(0, viennacl::tools::align_to_multiple<cl_uint>(cl_uint(viennacl::traits::size1(matrix)), 256));
-        kernel.local_work_size(0, 256);
+        
+        cl_device_type type_check = ctx.current_device().type();
+        
+        if(type_check & CL_DEVICE_TYPE_CPU){
+          kernel.local_work_size(0, 1);
+        }else{
+          kernel.local_work_size(0, 256);  
+        }
 
         viennacl::ocl::enqueue(kernel(
                                       matrix,
