@@ -59,8 +59,15 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
         viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<CPU_ScalarType>::program_name(), SVD_GIVENS_PREV_KERNEL);
 
+        cl_device_type type_check = ctx.current_device().type();
+        
         kernel.global_work_size(0, viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size1(matrix), 256));
-        kernel.local_work_size(0, 256);
+        
+        if(type_check & CL_DEVICE_TYPE_CPU){
+          kernel.local_work_size(0, 1);
+        }else{
+          kernel.local_work_size(0, 256);  
+        }
 
         viennacl::ocl::enqueue(kernel(
                                       matrix,
@@ -83,11 +90,18 @@ namespace viennacl
         viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(matrix).context());
         viennacl::ocl::kernel & kernel = ctx.get_kernel(viennacl::linalg::opencl::kernels::svd<CPU_ScalarType>::program_name(), SVD_INVERSE_SIGNS_KERNEL);
 
+        cl_device_type type_check = ctx.current_device().type();
+        
         kernel.global_work_size(0, viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size1(matrix), 16));
         kernel.global_work_size(1, viennacl::tools::align_to_multiple<vcl_size_t>(viennacl::traits::size2(matrix), 16));
 
-        kernel.local_work_size(0, 16);
-        kernel.local_work_size(1, 16);
+        if(type_check & CL_DEVICE_TYPE_CPU){
+          kernel.local_work_size(0, 1);
+          kernel.local_work_size(1, 1);
+        }else{
+          kernel.local_work_size(0, 16);
+          kernel.local_work_size(1, 16);
+        }
 
         viennacl::ocl::enqueue(kernel(
                                       matrix,
