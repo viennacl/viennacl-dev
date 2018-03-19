@@ -53,6 +53,22 @@
 
 #include "viennacl/scheduler/execute.hpp"
 
+/* Inject a couple of functions into std-namespace to make tests work with C++ 11 */
+#if __cplusplus > 199711L
+namespace std
+{
+  template<typename T>
+  T exp10(T x) { return std::exp(x*T(2.302585092994045684017991454684364207601101488628772976033)); }
+
+  template<typename T>
+  T rsqrt(T x) { return std::pow(x, T(-0.5)); }
+
+  template<typename T>
+  T sign(T x) { return (x > T(0)) ? T(1) : (x < T(0) ? T(-1) : T(0)); }
+
+}
+#endif
+
 using namespace boost::numeric;
 
 template<typename MatrixType, typename VCLMatrixType>
@@ -342,7 +358,7 @@ int run_test(double epsilon,
   { \
   for (std::size_t i=0; i<ublas_C.size1(); ++i) \
     for (std::size_t j=0; j<ublas_C.size2(); ++j) \
-      ublas_C(i,j) = static_cast<cpu_value_type>(OPNAME(ublas_A(i,j))); \
+      ublas_C(i,j) = static_cast<cpu_value_type>(std::OPNAME(ublas_A(i,j))); \
   viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_A)); \
   viennacl::scheduler::execute(my_statement); \
   if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS) \
@@ -351,7 +367,7 @@ int run_test(double epsilon,
   { \
   for (std::size_t i=0; i<ublas_C.size1(); ++i) \
     for (std::size_t j=0; j<ublas_C.size2(); ++j) \
-      ublas_C(i,j) = static_cast<cpu_value_type>(OPNAME(ublas_A(i,j) / cpu_value_type(2))); \
+      ublas_C(i,j) = static_cast<cpu_value_type>(std::OPNAME(ublas_A(i,j) / cpu_value_type(2))); \
   viennacl::scheduler::statement my_statement(vcl_C, viennacl::op_assign(), viennacl::linalg::element_##OPNAME(vcl_A / cpu_value_type(2))); \
   viennacl::scheduler::execute(my_statement); \
   if (!check_for_equality(ublas_C, vcl_C, epsilon) != EXIT_SUCCESS) \

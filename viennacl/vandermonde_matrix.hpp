@@ -182,7 +182,7 @@ void copy(vandermonde_matrix<NumericT, AlignmentV>& vander_src, MatrixT& com_dst
 
   for (vcl_size_t i = 0; i < size; i++)
     for (vcl_size_t j = 0; j < size; j++)
-      com_dst(i, j) = std::pow(tmp[i], static_cast<int>(j));
+      com_dst(i, j) = static_cast<NumericT>(std::pow(tmp[i], static_cast<int>(j)));
 
 }
 

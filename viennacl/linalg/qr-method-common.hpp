@@ -79,8 +79,8 @@ typename VectorType::value_type norm_lcl(VectorType const & x, vcl_size_t size)
 {
   typename VectorType::value_type x_norm = 0.0;
   for(vcl_size_t i = 0; i < size; i++)
-    x_norm += std::pow(x[i], 2);
-  return std::sqrt(x_norm);
+    x_norm += static_cast<typename VectorType::value_type>(std::pow(x[i], 2));
+  return static_cast<typename VectorType::value_type>(std::sqrt(x_norm));
 }
 
 template <typename VectorType>

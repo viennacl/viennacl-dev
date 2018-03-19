@@ -37,6 +37,22 @@
 #include "viennacl/linalg/norm_inf.hpp"
 #include "viennacl/linalg/norm_frobenius.hpp"
 
+/* Inject a couple of functions into std-namespace to make tests work with C++ 11 */
+#if __cplusplus > 199711L
+namespace std
+{
+  template<typename T>
+  T exp10(T x) { return std::exp(x*T(2.302585092994045684017991454684364207601101488628772976033)); }
+
+  template<typename T>
+  T rsqrt(T x) { return std::pow(x, T(-0.5)); }
+
+  template<typename T>
+  T sign(T x) { return (x > T(0)) ? T(1) : (x < T(0) ? T(-1) : T(0)); }
+
+}
+#endif
+
 template<typename NumericT, typename VCLMatrixType>
 bool check_for_equality(std::vector<std::vector<NumericT> > const & std_A, VCLMatrixType const & vcl_A, double epsilon)
 {

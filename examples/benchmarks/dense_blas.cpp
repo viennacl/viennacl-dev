@@ -129,15 +129,15 @@ void bench(size_t BLAS1_N, size_t BLAS2_M, size_t BLAS2_N, size_t BLAS3_M, size_
 
 }
 
+#ifdef VIENNACL_WITH_OPENCL
 int main(int argc, char** argv)
 {
-#ifdef VIENNACL_WITH_OPENCL
   const std::string usage_message = "Usage: dense_blas (platform_id)";
   if(argc == 2)
   {
     unsigned int platform_id = 0;
     char* p_end = NULL;
-    platform_id = strtol(argv[1],&p_end, 0);
+    platform_id = static_cast<unsigned int>(strtol(argv[1],&p_end, 0));
     if(*p_end != '\0')
     {
       std::cout << usage_message << std::endl;
@@ -160,6 +160,9 @@ int main(int argc, char** argv)
   std::cout << std::endl;
   std::cout << viennacl::ocl::current_device().info() << std::endl;
   std::cout << std::endl;
+#else
+int main()
+{
 #endif
 
   std::size_t BLAS1_N = 10000000;
