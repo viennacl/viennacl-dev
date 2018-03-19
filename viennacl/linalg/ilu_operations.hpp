@@ -78,7 +78,7 @@ void extract_L(compressed_matrix<NumericT> const & A,
   }
 }
 
-/** @brief Scales the values extracted from A such that A' = DAD has unit diagonal. Updates values from A in L accordingly.
+/** @brief Scales the values extracted from A such that A' = DAD has unit diagonal, where D is a diagonal matrix. Updates values from A in L accordingly.
   *
   * Since A should not be modified (const-correctness), updates are in L.
   *
@@ -179,7 +179,7 @@ void extract_LU(compressed_matrix<NumericT> const & A,
   }
 }
 
-/** @brief Scales the values extracted from A such that A' = DAD has unit diagonal. Updates values from A in L and U accordingly.
+/** @brief Scales the values extracted from A such that A' = DAD has unit diagonal, where D is a diagonal matrix. Updates values from A in L and U accordingly.
   *
   * Since A should not be modified (const-correctness), updates are in L and U.
   *
