@@ -274,6 +274,10 @@ void copy(arma::SpMat<NumericT> const & arma_matrix,
   viennacl::backend::typesafe_host_array<unsigned int> col_buffer(vcl_matrix.handle2(), arma_matrix.n_nonzero);
   viennacl::backend::typesafe_host_array<NumericT    > value_buffer(vcl_matrix.handle(), arma_matrix.n_nonzero);
 
+#if (ARMA_VERSION_MAJOR >= 8)
+  arma_matrix.sync();
+#endif
+
   // Step 1: Count number of nonzeros in each row
   for (vcl_size_t col=0; col < static_cast<vcl_size_t>(arma_matrix.n_cols); ++col)
   {
@@ -525,6 +529,10 @@ void copy(viennacl::compressed_matrix<NumericT, AlignmentV> & vcl_matrix,
         ++data_index;
       }
     }
+
+#if (ARMA_VERSION_MAJOR >= 8)
+    arma_matrix.sync();
+#endif
   }
 }
 #endif
