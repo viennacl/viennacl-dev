@@ -3983,7 +3983,7 @@ namespace detail
   {
     static void apply(matrix_base<T> & lhs, matrix_expression<const vector_base<T>, const vector_base<T>, op_prod> const & rhs)
     {
-      lhs.clear();
+      viennacl::linalg::matrix_assign(lhs, T(0), false);
       viennacl::linalg::scaled_rank_1_update(lhs, T(1.0), 1, false, false, rhs.lhs(), rhs.rhs());
     }
   };
@@ -3998,7 +3998,7 @@ namespace detail
                       const ScalarType,
                       op_mult> const & rhs)
     {
-      lhs.clear();
+      viennacl::linalg::matrix_assign(lhs, T(0), false);
       viennacl::linalg::scaled_rank_1_update(lhs, rhs.rhs(), 1, false, false, rhs.lhs().lhs(), rhs.lhs().rhs());
     }
   };
