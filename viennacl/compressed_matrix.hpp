@@ -791,22 +791,25 @@ public:
     * @param nonzeros         Number of nonzero entries in the matrix.
     */
   explicit compressed_matrix(cl_mem mem_row_buffer, cl_mem mem_col_buffer, cl_mem mem_elements,
-                             vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzeros) :
+                             vcl_size_t rows, vcl_size_t cols, vcl_size_t nonzeros, viennacl::context ctx = viennacl::context()) :
     rows_(rows), cols_(cols), nonzeros_(nonzeros), row_block_num_(0)
   {
     row_buffer_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
     row_buffer_.opencl_handle() = mem_row_buffer;
     row_buffer_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+    row_buffer_.opencl_handle().context(ctx.opencl_context());
     row_buffer_.raw_size(sizeof(cl_uint) * (rows + 1));
 
     col_buffer_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
     col_buffer_.opencl_handle() = mem_col_buffer;
     col_buffer_.opencl_handle().inc();             //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+    col_buffer_.opencl_handle().context(ctx.opencl_context());
     col_buffer_.raw_size(sizeof(cl_uint) * nonzeros);
 
     elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
     elements_.opencl_handle() = mem_elements;
     elements_.opencl_handle().inc();               //prevents that the user-provided memory is deleted once the matrix object is destroyed.
+    elements_.opencl_handle().context(ctx.opencl_context());
     elements_.raw_size(sizeof(NumericT) * nonzeros);
 
     //generate block information for CSR-adaptive:
