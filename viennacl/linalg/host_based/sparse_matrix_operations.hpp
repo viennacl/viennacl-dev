@@ -1807,7 +1807,7 @@ void prod_impl(const viennacl::sliced_ell_matrix<NumericT, IndexT> & mat,
   IndexT   const * column_indices    = detail::extract_raw_pointer<IndexT>(mat.handle2());
   IndexT   const * block_start       = detail::extract_raw_pointer<IndexT>(mat.handle3());
 
-  vcl_size_t num_blocks = mat.size1() / mat.rows_per_block() + 1;
+  vcl_size_t num_blocks = (mat.size1() - 1) / mat.rows_per_block() + 1;
 
 #ifdef VIENNACL_WITH_OPENMP
   #pragma omp parallel for
