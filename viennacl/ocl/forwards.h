@@ -25,6 +25,7 @@
 #define VIENNACL_OCL_MAX_DEVICE_NUM  8
 
 #include <stddef.h>
+#include <CL/cl.h>
 
 namespace viennacl
 {
@@ -41,14 +42,14 @@ namespace viennacl
     struct default_tag {};
 
 
+    template<class OCL_TYPE>
+    class handle;
+
     class kernel;
     class device;
     class command_queue;
     class context;
     class program;
-
-    template<class OCL_TYPE>
-    class handle;
 
     template<typename KernelType>
     void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue);

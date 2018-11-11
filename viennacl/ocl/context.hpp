@@ -8,6 +8,7 @@
    Portions of this software are copyright by UChicago Argonne, LLC.
 
                             -----------------
+
                   ViennaCL - The Vienna Computing Library
                             -----------------
 
@@ -43,10 +44,122 @@
 #include "viennacl/ocl/command_queue.hpp"
 #include "viennacl/tools/sha1.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
+#include "viennacl/ocl/mempool/bitlog.hpp"
+#include "viennacl/ocl/mempool/mempool_utils.hpp"
+#include "viennacl/tools/shared_ptr.hpp"
+
+
 namespace viennacl
 {
 namespace ocl
 {
+
+  // {{{ memory pool declaration
+  
+  class cl_allocator_base
+  {
+    protected:
+      tools::shared_ptr<viennacl::ocl::context> m_context;
+      cl_mem_flags m_flags;
+    public:
+      cl_allocator_base(tools::shared_ptr<viennacl::ocl::context> const&, cl_mem_flags);
+
+      cl_allocator_base(cl_allocator_base const &src);
+
+      virtual ~cl_allocator_base();
+
+      virtual cl_allocator_base *copy() const;
+      virtual bool is_deferred() const;
+      virtual cl_mem  allocate(size_t);
+
+      void free(cl_mem );
+  };
+
+  class cl_deferred_allocator : public cl_allocator_base
+  {
+    public:
+      cl_deferred_allocator(tools::shared_ptr<viennacl::ocl::context> const&,
+          cl_mem_flags);
+
+      cl_allocator_base *copy() const;
+
+      bool is_deferred() const;
+
+      cl_mem allocate(size_t );
+  };
+
+  class cl_immediate_allocator : public cl_allocator_base
+  {
+    private:
+      tools::shared_ptr<viennacl::ocl::command_queue> const & m_queue;
+
+    public:
+      // NOTE: Changed the declaration as viennacl comman=d queue does nt store
+      // the context
+      cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context> const&,
+          tools::shared_ptr<viennacl::ocl::command_queue> const &,
+          cl_mem_flags);
+
+      cl_immediate_allocator(cl_immediate_allocator const &);
+
+      cl_allocator_base *copy() const;
+
+      bool is_deferred() const;
+
+      cl_mem allocate(size_t );
+  };
+
+  template<class Allocator>
+  class memory_pool : mempool::noncopyable
+  {
+    private:
+
+      std::map<uint32_t, std::vector<cl_mem>> m_container;
+
+      std::unique_ptr<Allocator> m_allocator;
+
+      // A held block is one that's been released by the application, but that
+      // we are keeping around to dish out again.
+      unsigned m_held_blocks;
+
+      // An active block is one that is in use by the application.
+      unsigned m_active_blocks;
+
+      bool m_stop_holding;
+      int m_trace;
+
+      cl_mem get_from_allocator(size_t );
+      cl_mem pop_block_from_bin(std::vector<cl_mem>& , size_t );
+
+    public:
+      memory_pool(Allocator const&);
+      virtual ~memory_pool();
+      static const unsigned mantissa_bits = 2;
+      static const unsigned mantissa_mask = (1 << mantissa_bits) - 1;
+      static uint32_t bin_number(size_t );
+      void set_trace(bool );
+      static size_t alloc_size(uint32_t );
+
+      cl_mem allocate(size_t );
+      void free(cl_mem , size_t );
+      void free_held();
+      void stop_holding();
+      unsigned active_blocks();
+      unsigned held_blocks();
+      bool try_to_free_memory();
+
+    protected:
+      std::vector<cl_mem> &get_bin(uint32_t );
+      void inc_held_blocks();
+      void dec_held_blocks();
+
+      virtual void start_holding_blocks();
+      virtual void stop_holding_blocks();
+  };
+
+  // }}}
+
+
 /** @brief Manages an OpenCL context and provides the respective convenience functions for creating buffers, etc.
   *
   * This class was originally written before the OpenCL C++ bindings were standardized.
@@ -64,6 +177,12 @@ public:
     pf_index_(0),
     current_queue_id_(0)
   {
+    allocators_[0] = new
+      cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context>(this),
+          tools::shared_ptr<viennacl::ocl::command_queue>(&get_queue()),
+          CL_MEM_READ_WRITE);
+    mempools_[0] = new
+      memory_pool<cl_immediate_allocator>(*allocators_[0]);
     if (std::getenv("VIENNACL_CACHE_PATH"))
       cache_path_ = std::getenv("VIENNACL_CACHE_PATH");
     else
@@ -83,6 +202,8 @@ public:
 
   /** @brief Sets the maximum number of devices to be set up for the context */
   void default_device_num(vcl_size_t new_num) { default_device_num_ = new_num; }
+
+  /** Creating a memory pool */
 
   ////////// get and set preferred device type /////////////////////
   /** @brief Returns the default device type for the context */
@@ -197,13 +318,18 @@ public:
     *  @param flags  OpenCL flags for the buffer creation
     *  @param size   Size of the memory buffer in bytes
     *  @param ptr    Optional pointer to CPU memory, with which the OpenCL memory should be initialized
+    *  @param use_mempool Optional boolean to create memory through the memory pool.
     *  @return       A plain OpenCL handle. Either assign it to a viennacl::ocl::handle<cl_mem> directly, or make sure that you free to memory manually if you no longer need the allocated memory.
     */
-  cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL) const
+  cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL, bool use_mempool = false) const
   {
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
     std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;
 #endif
+    if(use_mempool){
+      cl_mem mem = get_mempool()->allocate(size);
+      return mem;
+    }
     if (ptr && !(flags & CL_MEM_USE_HOST_PTR))
       flags |= CL_MEM_COPY_HOST_PTR;
     cl_int err;
@@ -277,6 +403,14 @@ public:
 #endif
 
     return queues_[devices_[current_device_id_].id()][current_queue_id_];
+  }
+
+  //get current mempool
+  viennacl::ocl::memory_pool<cl_immediate_allocator>* const& get_mempool() const
+  {
+    typedef std::map< cl_device_id, viennacl::ocl::memory_pool<cl_immediate_allocator>* >    MempoolContainer;
+    MempoolContainer::const_iterator it = mempools_.find(devices_[current_device_id_].id());
+    return it->second;
   }
 
   viennacl::ocl::command_queue const & get_queue() const
@@ -765,6 +899,10 @@ private:
   std::string build_options_;
   vcl_size_t pf_index_;
   vcl_size_t current_queue_id_;
+
+  // Memory pool
+  std::map< cl_device_id, cl_immediate_allocator*> allocators_;
+  std::map< cl_device_id, memory_pool<cl_immediate_allocator>*> mempools_;
 }; //context
 
 
