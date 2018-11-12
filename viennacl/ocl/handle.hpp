@@ -61,7 +61,9 @@ namespace viennacl
 
       static void dec(cl_mem & something)
       {
+#ifdef VIENNACL_DEBUG_ALL
         std :: cout << "[viennacl]: Deallocating from handle...\n";
+#endif
         cl_int err = clReleaseMemObject(something);
         VIENNACL_ERR_CHECK(err);
       }

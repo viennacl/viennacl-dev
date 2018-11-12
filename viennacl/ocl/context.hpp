@@ -556,7 +556,9 @@ public:
     if (ptr && !(flags & CL_MEM_USE_HOST_PTR))
       flags |= CL_MEM_COPY_HOST_PTR;
     cl_int err;
+#ifdef VIENNACL_DEBUG_ALL
     std::cout << "[viennacl]: I am allocating a buffer of size " << size << "\n";
+#endif
     cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
     VIENNACL_ERR_CHECK(err);
     return mem;
@@ -1233,10 +1235,11 @@ cl_allocator_base::~cl_allocator_base()
 
 void cl_allocator_base::free(cl_mem p)
 {
-  std :: cout << "[mempool]: came to deallocate\n";
   cl_int err = clReleaseMemObject(p);
   VIENNACL_ERR_CHECK(err);
+#ifdef VIENNACL_DEBUG_ALL
   std :: cout << "[mempool]: done with deallocation\n";
+#endif
 }
 
 // }}}
@@ -1249,11 +1252,15 @@ bool cl_immediate_allocator::is_deferred() const
 cl_mem cl_immediate_allocator::allocate(size_t s)
 {
 
+#ifdef VIENNACL_DEBUG_ALL
   std :: cout << "[mempool]: requesting a buffer of size " << s << "\n";
+#endif
   cl_mem ptr =
     m_context->create_memory_without_smart_handle(m_flags, s, NULL);
 
+#ifdef VIENNACL_DEBUG_ALL
   std :: cout << "[mempool]: allocated a buffer of size " << s << "\n";
+#endif
 
   // Make sure the buffer gets allocated right here and right now.
   // This looks (and is) expensive. But immediate allocators
