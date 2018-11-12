@@ -64,12 +64,6 @@ namespace viennacl
         cl_int err = clReleaseMemObject(something);
         VIENNACL_ERR_CHECK(err);
       }
-
-      static void dec_via_mempool(viennacl::ocl::context const & ctx, cl_mem & something)
-      {
-        cl_int err = clReleaseMemObject(something);
-        VIENNACL_ERR_CHECK(err);
-      }
     };
 
     //cl_program:
@@ -90,9 +84,6 @@ namespace viennacl
         VIENNACL_ERR_CHECK(err);
         #endif
       }
-
-      static void dec_via_mempool(viennacl::ocl::context const & ctx,
-          cl_program& something){}
     };
 
     //cl_kernel:
@@ -113,7 +104,6 @@ namespace viennacl
         VIENNACL_ERR_CHECK(err);
         #endif
       }
-      static void dec_via_mempool(viennacl::ocl::context const & ctx, cl_kernel& something){}
     };
 
     //cl_command_queue:
@@ -134,7 +124,6 @@ namespace viennacl
         VIENNACL_ERR_CHECK(err);
         #endif
       }
-      static void dec_via_mempool(viennacl::ocl::context const & ctx, cl_command_queue& something){}
     };
 
     //cl_context:
@@ -155,7 +144,6 @@ namespace viennacl
         VIENNACL_ERR_CHECK(err);
         #endif
       }
-      static void dec_via_mempool(viennacl::ocl::context const & ctx, cl_context& something){}
     };
     /** \endcond */
 
@@ -163,12 +151,12 @@ namespace viennacl
     template<class OCL_TYPE>
     class handle
     {
-      bool used_mempool = false;
+      bool used_mempool_ = false;
       public:
         handle() : h_(0), p_context_(NULL) {}
-        handle(const OCL_TYPE & something, viennacl::ocl::context const & c, bool _u = false) : used_mempool(_u), h_(something), p_context_(&c)
+        handle(const OCL_TYPE & something, viennacl::ocl::context const & c, bool u = false) : used_mempool_(u), h_(something), p_context_(&c)
         {
-          if((typeid(OCL_TYPE) != typeid(cl_mem)) && used_mempool)
+          if((typeid(OCL_TYPE) != typeid(cl_mem)) && used_mempool_)
           {
             std::cerr << "[handle]: memory pool is only available for memory objects." << std::endl;
             throw std::exception();
@@ -217,6 +205,7 @@ namespace viennacl
           return *p_context_;
         }
         void context(viennacl::ocl::context const & c) { p_context_ = &c; }
+        void used_mempool(bool u) { used_mempool_ = u; }
 
 
         /** @brief Swaps the OpenCL handle of two handle objects */
@@ -237,10 +226,13 @@ namespace viennacl
         void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); }
         /** @brief Manually decrement the OpenCL reference count. Typically called automatically, but might be useful with user-supplied memory objects.  */
         void dec() { 
-          if(used_mempool)
+          if(!used_mempool_)
+          {
+            // only handling the freeing of memory through this class if there
+            // is no mempool, otherwise for now handling it through the class
+            // vector base. or whatever equivalent.
             handle_inc_dec_helper<OCL_TYPE>::dec(h_);
-          else
-            handle_inc_dec_helper<OCL_TYPE>::dec_via_mempool(context(), h_);
+          }
         }
       private:
         OCL_TYPE h_;

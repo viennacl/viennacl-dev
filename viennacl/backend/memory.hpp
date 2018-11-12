@@ -84,7 +84,7 @@ namespace backend
   * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
   *
   */
-  inline void memory_create(mem_handle & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
+  inline void memory_create(mem_handle & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL, bool use_mempool = false)
   {
     if (size_in_bytes > 0)
     {
@@ -100,7 +100,7 @@ namespace backend
 #ifdef VIENNACL_WITH_OPENCL
       case OPENCL_MEMORY:
         handle.opencl_handle().context(ctx.opencl_context());
-        handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr);
+        handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr, use_mempool);
         handle.raw_size(size_in_bytes);
         break;
 #endif

@@ -338,6 +338,14 @@ public:
     return mem;
   }
 
+  /// [KK]: TODOTODOTODOTODO
+
+  void deallocate_memory_in_pool(viennacl::ocl::handle<cl_mem>& mem_handle, size_t size)
+  {
+    get_mempool()->free(mem_handle.get(), size);
+    return;
+  }
+
 
   /** @brief Creates a memory buffer within the context
     *

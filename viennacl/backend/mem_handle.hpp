@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <cassert>
+#include <iostream>
 #include "viennacl/forwards.h"
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/backend/cpu_ram.hpp"
@@ -149,6 +150,19 @@ public:
     }
   }
 
+  void used_mempool(bool u)
+  {
+    p_used_mempool = u;
+#ifndef VIENNACL_WITH_OPENCL
+    std::cerr << "Memory pool allocation for non-OpenCL backends not supported yet.\n";
+    throw std::exception();
+#endif
+#ifdef VIENNACL_WITH_OPENCL
+    opencl_handle_.used_mempol(u);
+#endif
+  }
+  
+
   /** @brief Compares the two handles and returns true if the active memory handles in the two mem_handles point to the same buffer. */
   bool operator==(mem_handle const & other) const
   {
@@ -232,7 +246,21 @@ public:
   /** @brief Sets the size of the currently active buffer. Use with care! */
   void        raw_size(vcl_size_t new_size) { size_in_bytes_ = new_size; }
 
+  ~mem_handle()
+  {
+    if(p_used_mempool)
+    {
+
+#ifdef VIENNACL_WITH_OPENCL
+      viennacl::ocl::context ctx = opencl_handle_.context();
+      ctx.deallocate_memory_in_pool(opencl_handle_, raw_size());
+#endif
+
+    }
+  }
+
 private:
+  bool p_used_mempool = false;
   memory_types active_handle_;
   ram_handle_type ram_handle_;
 #ifdef VIENNACL_WITH_OPENCL

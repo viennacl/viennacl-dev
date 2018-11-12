@@ -144,7 +144,8 @@ public:
   explicit vector_base(viennacl::backend::mem_handle & h, size_type vec_size, size_type vec_start, size_type vec_stride);
 
   /** @brief Creates a vector and allocates the necessary memory */
-  explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context());
+  explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context(),
+      bool use_mempool = false);
 
   // CUDA or host memory:
   explicit vector_base(NumericT * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start = 0, size_type stride = 1);
@@ -203,6 +204,7 @@ public:
   self_type & operator=(const vector_expression< const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans >,
                         const vector_base<NumericT>,
                         op_prod> & proxy);
+  ~vector_base();
 
   ///////////////////////////// Matrix Vector interaction end ///////////////////////////////////
 

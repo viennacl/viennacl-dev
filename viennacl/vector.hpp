@@ -256,15 +256,19 @@ vector_base<NumericT, SizeT, DistanceT>::vector_base(viennacl::backend::mem_hand
   : size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
 
 template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT>::vector_base(size_type vec_size, viennacl::context ctx)
+vector_base<NumericT, SizeT, DistanceT>::vector_base(size_type vec_size, viennacl::context ctx, bool use_mempool)
   : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
 {
   if (size_ > 0)
   {
-    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), ctx);
+#ifdef VIENNACL_WITH_OPENCL
+    elements_.used_mempool(use_mempool);
+#endif
+    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), ctx, NULL, use_mempool);
     clear();
   }
 }
+
 
 // CUDA or host memory:
 template<class NumericT, typename SizeT, typename DistanceT>
