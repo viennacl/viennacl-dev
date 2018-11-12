@@ -390,12 +390,6 @@ public:
     pf_index_(0),
     current_queue_id_(0)
   {
-    allocators_[0] = new
-      cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context>(this),
-          tools::shared_ptr<viennacl::ocl::command_queue>(&get_queue()),
-          CL_MEM_READ_WRITE);
-    mempools_[0] = new
-      memory_pool<cl_immediate_allocator>(*allocators_[0]);
     if (std::getenv("VIENNACL_CACHE_PATH"))
       cache_path_ = std::getenv("VIENNACL_CACHE_PATH");
     else
@@ -593,6 +587,18 @@ public:
     viennacl::ocl::handle<cl_command_queue> queue_handle(q, *this);
     queues_[dev].push_back(viennacl::ocl::command_queue(queue_handle));
     queues_[dev].back().handle().inc();
+    
+    if(queues_.find(dev) == queues_.end())
+    {
+      // did not find a queue for the present device, need to allot an
+      // allocator.
+      allocators_[dev] = new
+        cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context>(this),
+            tools::shared_ptr<viennacl::ocl::command_queue>(&(queues_[dev][0])),
+            CL_MEM_READ_WRITE);
+      mempools_[dev] = new
+        memory_pool<cl_immediate_allocator>(*allocators_[dev]);
+    }
   }
 
   /** @brief Adds a queue for the given device to the context */
