@@ -213,27 +213,6 @@ namespace mempool
   }
   // }}}
 
-  template <class T>
-  inline T signed_left_shift(T x, signed shift_amount)
-  {
-    if (shift_amount < 0)
-      return x >> -shift_amount;
-    else
-      return x << shift_amount;
-  }
-
-  template <class T>
-  inline T signed_right_shift(T x, signed shift_amount)
-  {
-    if (shift_amount < 0)
-      return x << -shift_amount;
-    else
-      return x >> shift_amount;
-  }
-
-
-
-
   template<class Allocator>
   class memory_pool : mempool::noncopyable
   {

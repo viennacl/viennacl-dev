@@ -32,8 +32,15 @@
 #include <algorithm>
 #include <fstream>
 #include <vector>
+#include <cassert>
 #include <map>
 #include <cstdlib>
+#include <memory>
+#include <algorithm>
+#include <iostream>
+#include <ostream>
+#include <string>
+#include <map>
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/error.hpp"
 #include "viennacl/ocl/handle.hpp"
@@ -43,7 +50,6 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/command_queue.hpp"
 #include "viennacl/tools/sha1.hpp"
-#include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/ocl/mempool/bitlog.hpp"
 #include "viennacl/ocl/mempool/mempool_utils.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
@@ -68,24 +74,11 @@ namespace ocl
 
       virtual ~cl_allocator_base();
 
-      virtual cl_allocator_base *copy() const;
-      virtual bool is_deferred() const;
-      virtual cl_mem  allocate(size_t);
+      virtual cl_allocator_base *copy() const = 0;
+      virtual bool is_deferred() const  = 0;
+      virtual cl_mem  allocate(size_t) = 0;
 
       void free(cl_mem );
-  };
-
-  class cl_deferred_allocator : public cl_allocator_base
-  {
-    public:
-      cl_deferred_allocator(tools::shared_ptr<viennacl::ocl::context> const&,
-          cl_mem_flags);
-
-      cl_allocator_base *copy() const;
-
-      bool is_deferred() const;
-
-      cl_mem allocate(size_t );
   };
 
   class cl_immediate_allocator : public cl_allocator_base
@@ -96,13 +89,24 @@ namespace ocl
     public:
       // NOTE: Changed the declaration as viennacl comman=d queue does nt store
       // the context
-      cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context> const&,
-          tools::shared_ptr<viennacl::ocl::command_queue> const &,
-          cl_mem_flags);
+      //
+      
+      cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context> const &ctx,
+          tools::shared_ptr<viennacl::ocl::command_queue> const &queue,
+          cl_mem_flags flags=CL_MEM_READ_WRITE)
+        : cl_allocator_base(tools::shared_ptr<viennacl::ocl::context>(ctx), flags),
+        m_queue(queue)
+      { }
 
-      cl_immediate_allocator(cl_immediate_allocator const &);
+      cl_immediate_allocator(cl_immediate_allocator const &src)
+        : cl_allocator_base(src), m_queue(src.m_queue)
+      { }
 
-      cl_allocator_base *copy() const;
+      cl_immediate_allocator *copy() const
+      {
+        return new cl_immediate_allocator(*this);
+      }
+
 
       bool is_deferred() const;
 
@@ -115,7 +119,9 @@ namespace ocl
     private:
 
       std::map<uint32_t, std::vector<cl_mem>> m_container;
-
+      
+      // TODO -- [KK:] Looks like ViennaCL does not assume that the user has
+      // C++11 standard compatible compiler, should this be auto_ptr?
       std::unique_ptr<Allocator> m_allocator;
 
       // A held block is one that's been released by the application, but that
@@ -128,33 +134,240 @@ namespace ocl
       bool m_stop_holding;
       int m_trace;
 
-      cl_mem get_from_allocator(size_t );
-      cl_mem pop_block_from_bin(std::vector<cl_mem>& , size_t );
+      cl_mem get_from_allocator(size_t alloc_sz)
+      {
+        cl_mem result = m_allocator->allocate(alloc_sz);
+        ++m_active_blocks;
+
+        return result;
+      }
+
+      cl_mem pop_block_from_bin(std::vector<cl_mem> &bin, size_t size)
+      {
+        cl_mem result = bin.back();
+        bin.pop_back();
+
+        dec_held_blocks();
+        ++m_active_blocks;
+
+        return result;
+      }
 
     public:
-      memory_pool(Allocator const&);
+      memory_pool(Allocator const &alloc=Allocator())
+        : m_allocator(alloc.copy()),
+        m_held_blocks(0), m_active_blocks(0), m_stop_holding(false),
+        m_trace(false)
+      {
+        if (m_allocator->is_deferred())
+        {
+          throw std::runtime_error("Memory pools expect non-deferred "
+              "semantics from their allocators. You passed a deferred "
+              "allocator, i.e. an allocator whose allocations can turn out to "
+              "be unavailable long after allocation.");
+        }
+      }
       virtual ~memory_pool();
       static const unsigned mantissa_bits = 2;
       static const unsigned mantissa_mask = (1 << mantissa_bits) - 1;
-      static uint32_t bin_number(size_t );
-      void set_trace(bool );
-      static size_t alloc_size(uint32_t );
+      static uint32_t bin_number(size_t size)
+      {
+        signed l = viennacl::mempool::bitlog2(size);
+        size_t shifted = viennacl::mempool::signed_right_shift(size, l-signed(mantissa_bits));
+        if (size && (shifted & (1 << mantissa_bits)) == 0)
+          throw std::runtime_error("memory_pool::bin_number: bitlog2 fault");
+        size_t chopped = shifted & mantissa_mask;
+        return l << mantissa_bits | chopped;
+      }
+      void set_trace(bool flag)
+      {
+        if (flag)
+          ++m_trace;
+        else
+          --m_trace;
+      }
 
-      cl_mem allocate(size_t );
-      void free(cl_mem , size_t );
-      void free_held();
-      void stop_holding();
-      unsigned active_blocks();
-      unsigned held_blocks();
-      bool try_to_free_memory();
+      static size_t alloc_size(uint32_t bin)
+      {
+        uint32_t exponent = bin >> mantissa_bits;
+        uint32_t mantissa = bin & mantissa_mask;
 
+        size_t ones = viennacl::mempool::signed_left_shift(1,
+            signed(exponent)-signed(mantissa_bits)
+            );
+        if (ones) ones -= 1;
+
+        size_t head = viennacl::mempool::signed_left_shift(
+           (1<<mantissa_bits) | mantissa,
+            signed(exponent)-signed(mantissa_bits));
+        if (ones & head)
+          throw std::runtime_error("memory_pool::alloc_size: bit-counting fault");
+        return head | ones;
+      }
+
+      cl_mem allocate(size_t size)
+      {
+        uint32_t bin_nr = bin_number(size);
+        std::vector<cl_mem> &bin = get_bin(bin_nr);
+
+        if (bin.size())
+        {
+          if (m_trace)
+            std::cout
+              << "[pool] allocation of size " << size << " served from bin " << bin_nr
+              << " which contained " << bin.size() << " entries" << std::endl;
+          return pop_block_from_bin(bin, size);
+        }
+
+        size_t alloc_sz = alloc_size(bin_nr);
+
+        assert(bin_number(alloc_sz) == bin_nr);
+
+        if (m_trace)
+          std::cout << "[pool] allocation of size " << size << " required new memory" << std::endl;
+
+        try { return get_from_allocator(alloc_sz); }
+        catch (mempool::error &e)
+        {
+          if (!e.is_out_of_memory())
+            throw;
+        }
+
+        if (m_trace)
+          std::cout << "[pool] allocation triggered OOM, running GC" << std::endl;
+        
+        // KK: removed it., didn't seem useful to me.
+        // m_allocator->try_release_blocks();
+        if (bin.size())
+          return pop_block_from_bin(bin, size);
+
+        if (m_trace)
+          std::cout << "[pool] allocation still OOM after GC" << std::endl;
+
+        while (try_to_free_memory())
+        {
+          try { return get_from_allocator(alloc_sz); }
+          catch (mempool::error &e)
+          {
+            if (!e.is_out_of_memory())
+              throw;
+          }
+        }
+
+        std::cerr << "memory_pool::allocate "
+            "failed to free memory for allocation" << std::endl;
+        throw viennacl::ocl::mem_object_allocation_failure();
+
+      }
+
+      void free(cl_mem p, size_t size)
+      {
+        --m_active_blocks;
+        uint32_t bin_nr = bin_number(size);
+
+        if (!m_stop_holding)
+        {
+          inc_held_blocks();
+          get_bin(bin_nr).push_back(p);
+
+          if (m_trace)
+            std::cout << "[pool] block of size " << size << " returned to bin "
+              << bin_nr << " which now contains " << get_bin(bin_nr).size()
+              << " entries" << std::endl;
+        }
+        else
+          m_allocator->free(p);
+      }
+
+      void free_held()
+      {
+        std::map<uint32_t, std::vector<cl_mem>>::reverse_iterator bin_pair =
+          m_container.rbegin();
+        while (bin_pair != m_container.rend())
+        {
+          std::vector<cl_mem> &bin = bin_pair->second;
+
+          while (bin.size())
+          {
+            m_allocator->free(bin.back());
+            bin.pop_back();
+
+            dec_held_blocks();
+          }
+        }
+
+        assert(m_held_blocks == 0);
+      }
+
+      void stop_holding()
+      {
+        m_stop_holding = true;
+        free_held();
+      }
+
+      unsigned active_blocks()
+      { return m_active_blocks; }
+
+      unsigned held_blocks()
+      { return m_held_blocks; }
+
+      bool try_to_free_memory()
+      {
+
+        std::map<uint32_t, std::vector<cl_mem>>::reverse_iterator bin_pair =
+          m_container.rbegin();
+        // free largest stuff first
+        while (bin_pair != m_container.rend())
+        {
+          std::vector<cl_mem> &bin = bin_pair->second;
+
+          if (bin.size())
+          {
+            m_allocator->free(bin.back());
+            bin.pop_back();
+
+            dec_held_blocks();
+
+            return true;
+          }
+        }
+
+        return false;
+      }
     protected:
-      std::vector<cl_mem> &get_bin(uint32_t );
-      void inc_held_blocks();
-      void dec_held_blocks();
+      std::vector<cl_mem> &get_bin(uint32_t bin_nr)
+      {
+        typename std::map<uint32_t, std::vector<cl_mem>>::iterator it = m_container.find(bin_nr);
+        if (it == m_container.end())
+        {
+          auto it_and_inserted = m_container.insert(std::make_pair(bin_nr, std::vector<cl_mem>()));
+          assert(it_and_inserted.second);
+          return it_and_inserted.first->second;
+        }
+        else
+          return it->second;
+      }
 
-      virtual void start_holding_blocks();
-      virtual void stop_holding_blocks();
+      void inc_held_blocks()
+      {
+        if (m_held_blocks == 0)
+          start_holding_blocks();
+        ++m_held_blocks;
+      }
+
+      void dec_held_blocks()
+      {
+        --m_held_blocks;
+        if (m_held_blocks == 0)
+          stop_holding_blocks();
+      }
+
+      virtual void start_holding_blocks()
+      { }
+
+      virtual void stop_holding_blocks()
+      { }
+
   };
 
   // }}}
@@ -967,6 +1180,79 @@ inline void viennacl::ocl::kernel::set_work_size_defaults()
     global_work_size_[0] = s * local_work_size_[0]; global_work_size_[1] = 0; global_work_size_[2] = 0;
   }
 }
+
+// {{{ viennacl::ocl::cl_allocator_base definition
+
+// CTOR
+cl_allocator_base::cl_allocator_base(tools::shared_ptr<viennacl::ocl::context> const &ctx,
+    cl_mem_flags flags=CL_MEM_READ_WRITE)
+  : m_context(ctx), m_flags(flags)
+{
+  if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))
+  {
+    std::cerr << "[Allocator]: cannot specify USE_HOST_PTR or "
+      "COPY_HOST_PTR flags" << std::endl;
+    throw viennacl::ocl::invalid_value();
+  }
+}
+
+
+// Copy CTOR
+cl_allocator_base::cl_allocator_base(cl_allocator_base const &src)
+: m_context(src.m_context), m_flags(src.m_flags)
+{ }
+
+
+cl_allocator_base::~cl_allocator_base()
+{ }
+
+void cl_allocator_base::free(cl_mem p)
+{
+  cl_int err = clReleaseMemObject(p);
+  VIENNACL_ERR_CHECK(err);
+}
+
+// }}}
+
+// {{{ definitionof cl_immediate_allocator
+
+
+bool cl_immediate_allocator::is_deferred() const
+{ return false; }
+
+cl_mem cl_immediate_allocator::allocate(size_t s)
+{
+  cl_mem ptr =
+    m_context->create_memory_without_smart_handle(m_flags, s, NULL);
+
+  // Make sure the buffer gets allocated right here and right now.
+  // This looks (and is) expensive. But immediate allocators
+  // have their main use in memory pools, whose basic assumption
+  // is that allocation is too expensive anyway--but they rely
+  // on exact 'out-of-memory' information.
+  unsigned zero = 0;
+  cl_int err = clEnqueueWriteBuffer(
+        m_queue->handle().get(),
+        ptr,
+        /* is blocking */ CL_FALSE,
+        0, std::min(s, sizeof(zero)), &zero,
+        0, NULL, NULL
+        );
+  VIENNACL_ERR_CHECK(err);
+
+  // No need to wait for completion here. clWaitForEvents (e.g.)
+  // cannot return mem object allocation failures. This implies that
+  // the buffer is faulted onto the device on enqueue.
+
+  return ptr;
+}
+
+// }}}
+
+template<class Allocator>
+memory_pool<Allocator>::~memory_pool()
+{ free_held(); }
+
 
 }
 }

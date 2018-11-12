@@ -158,7 +158,7 @@ public:
     throw std::exception();
 #endif
 #ifdef VIENNACL_WITH_OPENCL
-    opencl_handle_.used_mempol(u);
+    opencl_handle_.used_mempool(u);
 #endif
   }
   

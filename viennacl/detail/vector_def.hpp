@@ -204,7 +204,6 @@ public:
   self_type & operator=(const vector_expression< const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans >,
                         const vector_base<NumericT>,
                         op_prod> & proxy);
-  ~vector_base();
 
   ///////////////////////////// Matrix Vector interaction end ///////////////////////////////////
 

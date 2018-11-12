@@ -32,7 +32,8 @@
 #include <climits>
 #include <cstdint>
 
-
+namespace viennacl
+{
 namespace mempool
 {
   /* from http://graphics.stanford.edu/~seander/bithacks.html */
@@ -83,7 +84,8 @@ namespace mempool
 #endif
       return bitlog2_32(v);
   }
-}
+} // namespace mempool
+} // namespace viennacl
 
 
 
