@@ -60,7 +60,7 @@ namespace viennacl
 namespace ocl
 {
 
-  // {{{ memory pool declaration
+  // {{{ allocator class
   
   class cl_allocator_base
   {
@@ -114,6 +114,8 @@ namespace ocl
   };
 
 
+  // }}}
+
   /// {{{
 
   template<class Allocator>
@@ -160,7 +162,10 @@ namespace ocl
       }
 
       virtual ~memory_pool()
-      { free_held(); }
+      {
+        std :: cout << "Destructor of memory pool\n";
+        free_held();
+      }
 
       static const unsigned mantissa_bits = 2;
       static const unsigned mantissa_mask = (1 << mantissa_bits) - 1;
@@ -291,6 +296,8 @@ namespace ocl
 
       void free(pointer_type p, size_type size)
       {
+        std :: cout << "You didn't wanted me to deallocate and I am here.\n";
+
         --m_active_blocks;
         bin_nr_t bin_nr = bin_number(size);
 
@@ -383,8 +390,6 @@ namespace ocl
 
   //
   //}}}}
-
-  // }}}
 
 
 /** @brief Manages an OpenCL context and provides the respective convenience functions for creating buffers, etc.
@@ -544,7 +549,6 @@ public:
     */
   cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL, bool use_mempool = false) const
   {
-    std :: cout << "Zarchar Danda, Use mempool is " << use_mempool << "\n";
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
     std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;
 #endif
@@ -554,11 +558,10 @@ public:
     }
     if (ptr && !(flags & CL_MEM_USE_HOST_PTR))
       flags |= CL_MEM_COPY_HOST_PTR;
-    std::cout << "Danda power 1\n";
     cl_int err;
+    std::cout << "[viennacl]: I am allocating a buffer of size " << size << "\n";
     cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
     VIENNACL_ERR_CHECK(err);
-    std::cout << "Danda power 2 " << err << "\n";
     return mem;
   }
 
@@ -567,7 +570,6 @@ public:
   void deallocate_memory_in_pool(viennacl::ocl::handle<cl_mem>& mem_handle, size_t size)
   {
     get_mempool()->free(mem_handle.get(), size);
-    return;
   }
 
 
@@ -1234,6 +1236,7 @@ cl_allocator_base::~cl_allocator_base()
 
 void cl_allocator_base::free(cl_mem p)
 {
+  std :: cout << "[mempool]: Deallocating from mempool...\n";
   cl_int err = clReleaseMemObject(p);
   VIENNACL_ERR_CHECK(err);
 }
@@ -1242,14 +1245,17 @@ void cl_allocator_base::free(cl_mem p)
 
 // {{{ definitionof cl_immediate_allocator
 
-
 bool cl_immediate_allocator::is_deferred() const
 { return false; }
 
 cl_mem cl_immediate_allocator::allocate(size_t s)
 {
+
+  std :: cout << "[mempool]: requesting a buffer of size " << s << "\n";
   cl_mem ptr =
     m_context->create_memory_without_smart_handle(m_flags, s, NULL);
+
+  std :: cout << "[mempool]: allocated a buffer of size " << s << "\n";
 
   // Make sure the buffer gets allocated right here and right now.
   // This looks (and is) expensive. But immediate allocators

@@ -262,7 +262,7 @@ vector_base<NumericT, SizeT, DistanceT>::vector_base(size_type vec_size, viennac
   if (size_ > 0)
   {
 #ifdef VIENNACL_WITH_OPENCL
-    elements_.used_mempool(use_mempool);
+    elements_.set_used_mempool(use_mempool);
 #endif
     viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), ctx, NULL, use_mempool);
     clear();

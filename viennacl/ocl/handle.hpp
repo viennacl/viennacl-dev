@@ -61,6 +61,7 @@ namespace viennacl
 
       static void dec(cl_mem & something)
       {
+        std :: cout << "[viennacl]: Deallocating from handle...\n";
         cl_int err = clReleaseMemObject(something);
         VIENNACL_ERR_CHECK(err);
       }
@@ -151,9 +152,8 @@ namespace viennacl
     template<class OCL_TYPE>
     class handle
     {
-      bool used_mempool_ = false;
       public:
-        handle() : h_(0), p_context_(NULL) {}
+        handle() : used_mempool_(false), h_(0), p_context_(NULL) {}
         handle(const OCL_TYPE & something, viennacl::ocl::context const & c, bool u = false) : used_mempool_(u), h_(something), p_context_(&c)
         {
           if((typeid(OCL_TYPE) != typeid(cl_mem)) && used_mempool_)
@@ -162,7 +162,8 @@ namespace viennacl
             throw std::exception();
           }
         }
-        handle(const handle & other) : h_(other.h_), p_context_(other.p_context_) { if (h_ != 0) inc(); }
+        handle(const handle & other) : used_mempool_(other.used_mempool_), h_(other.h_), p_context_(other.p_context_) { 
+          if (h_ != 0) inc(); }
         ~handle() { if (h_ != 0) dec(); }
 
         /** @brief Copies the OpenCL handle from the provided handle. Does not take ownership like e.g. std::auto_ptr<>, so both handle objects are valid (more like shared_ptr). */
@@ -218,7 +219,6 @@ namespace viennacl
           viennacl::ocl::context const * tmp2 = other.p_context_;
           other.p_context_ = this->p_context_;
           this->p_context_ = tmp2;
-
           return *this;
         }
 
@@ -233,8 +233,13 @@ namespace viennacl
             // vector base. or whatever equivalent.
             handle_inc_dec_helper<OCL_TYPE>::dec(h_);
           }
+          else
+          {
+            std::cout << "Saved you a deallocation\n";
+          }
         }
       private:
+        bool used_mempool_;
         OCL_TYPE h_;
         viennacl::ocl::context const * p_context_;
     };

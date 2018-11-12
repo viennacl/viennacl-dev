@@ -94,7 +94,7 @@ public:
   typedef viennacl::tools::shared_ptr<char>      cuda_handle_type;
 
   /** @brief Default CTOR. No memory is allocated */
-  mem_handle() : active_handle_(MEMORY_NOT_INITIALIZED), size_in_bytes_(0) {}
+  mem_handle() : p_used_mempool(false), active_handle_(MEMORY_NOT_INITIALIZED), size_in_bytes_(0) {}
 
   /** @brief Returns the handle to a buffer in CPU RAM. NULL is returned if no such buffer has been allocated. */
   ram_handle_type       & ram_handle()       { return ram_handle_; }
@@ -150,7 +150,13 @@ public:
     }
   }
 
-  void used_mempool(bool u)
+
+  bool get_used_mempool(bool u)
+  {
+    return p_used_mempool;
+  }
+
+  void set_used_mempool(bool u)
   {
     p_used_mempool = u;
 #ifndef VIENNACL_WITH_OPENCL
@@ -260,7 +266,7 @@ public:
   }
 
 private:
-  bool p_used_mempool = false;
+  bool p_used_mempool;
   memory_types active_handle_;
   ram_handle_type ram_handle_;
 #ifdef VIENNACL_WITH_OPENCL
