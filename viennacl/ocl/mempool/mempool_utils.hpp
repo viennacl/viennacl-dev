@@ -30,8 +30,6 @@
 #include <stdexcept>
 #include <CL/cl.h>
 
-
-
 namespace viennacl
 {
 namespace mempool
@@ -105,6 +103,20 @@ namespace mempool
     else
       return x >> shift_amount;
   }
+
+  // https://stackoverflow.com/a/28139075
+  template <typename T>
+  struct reversion_wrapper { T& iterable; };
+
+  template <typename T>
+  auto begin (reversion_wrapper<T> w) { return w.iterable.rbegin(); }
+
+  template <typename T>
+  auto end (reversion_wrapper<T> w) { return w.iterable.rend(); }
+
+  template <typename T>
+  reversion_wrapper<T> reverse (T&& iterable) { return { iterable }; }
+
 
   // https://stackoverflow.com/a/44175911
   class noncopyable {

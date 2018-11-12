@@ -84,7 +84,7 @@ namespace ocl
   class cl_immediate_allocator : public cl_allocator_base
   {
     private:
-      tools::shared_ptr<viennacl::ocl::command_queue> const & m_queue;
+      tools::shared_ptr<viennacl::ocl::command_queue> m_queue;
 
     public:
       // NOTE: Changed the declaration as viennacl comman=d queue does nt store
@@ -113,15 +113,24 @@ namespace ocl
       cl_mem allocate(size_t );
   };
 
+
+  /// {{{
+
   template<class Allocator>
   class memory_pool : mempool::noncopyable
   {
-    private:
+    public:
+      typedef cl_mem pointer_type;
+      typedef size_t size_type;
 
-      std::map<uint32_t, std::vector<cl_mem>> m_container;
-      
-      // TODO -- [KK:] Looks like ViennaCL does not assume that the user has
-      // C++11 standard compatible compiler, should this be auto_ptr?
+    private:
+      typedef uint32_t bin_nr_t;
+      typedef std::vector<pointer_type> bin_t;
+
+      typedef std::map<bin_nr_t, bin_t> container_t;
+      container_t m_container;
+      typedef typename container_t::value_type bin_pair_t;
+
       std::unique_ptr<Allocator> m_allocator;
 
       // A held block is one that's been released by the application, but that
@@ -134,25 +143,6 @@ namespace ocl
       bool m_stop_holding;
       int m_trace;
 
-      cl_mem get_from_allocator(size_t alloc_sz)
-      {
-        cl_mem result = m_allocator->allocate(alloc_sz);
-        ++m_active_blocks;
-
-        return result;
-      }
-
-      cl_mem pop_block_from_bin(std::vector<cl_mem> &bin, size_t size)
-      {
-        cl_mem result = bin.back();
-        bin.pop_back();
-
-        dec_held_blocks();
-        ++m_active_blocks;
-
-        return result;
-      }
-
     public:
       memory_pool(Allocator const &alloc=Allocator())
         : m_allocator(alloc.copy()),
@@ -161,24 +151,31 @@ namespace ocl
       {
         if (m_allocator->is_deferred())
         {
-          throw std::runtime_error("Memory pools expect non-deferred "
+          std::cerr <<  "Memory pools expect non-deferred "
               "semantics from their allocators. You passed a deferred "
               "allocator, i.e. an allocator whose allocations can turn out to "
-              "be unavailable long after allocation.");
+              "be unavailable long after allocation.\n";
+          throw std::exception();
         }
       }
-      virtual ~memory_pool();
+
+      virtual ~memory_pool()
+      { free_held(); }
+
       static const unsigned mantissa_bits = 2;
       static const unsigned mantissa_mask = (1 << mantissa_bits) - 1;
-      static uint32_t bin_number(size_t size)
+
+      static bin_nr_t bin_number(size_type size)
       {
         signed l = viennacl::mempool::bitlog2(size);
-        size_t shifted = viennacl::mempool::signed_right_shift(size, l-signed(mantissa_bits));
+        size_type shifted = viennacl::mempool::signed_right_shift(size,
+            l-signed(mantissa_bits));
         if (size && (shifted & (1 << mantissa_bits)) == 0)
           throw std::runtime_error("memory_pool::bin_number: bitlog2 fault");
-        size_t chopped = shifted & mantissa_mask;
+        size_type chopped = shifted & mantissa_mask;
         return l << mantissa_bits | chopped;
       }
+
       void set_trace(bool flag)
       {
         if (flag)
@@ -187,17 +184,17 @@ namespace ocl
           --m_trace;
       }
 
-      static size_t alloc_size(uint32_t bin)
+      static size_type alloc_size(bin_nr_t bin)
       {
-        uint32_t exponent = bin >> mantissa_bits;
-        uint32_t mantissa = bin & mantissa_mask;
+        bin_nr_t exponent = bin >> mantissa_bits;
+        bin_nr_t mantissa = bin & mantissa_mask;
 
-        size_t ones = viennacl::mempool::signed_left_shift(1,
+        size_type ones = viennacl::mempool::signed_left_shift(1,
             signed(exponent)-signed(mantissa_bits)
             );
         if (ones) ones -= 1;
 
-        size_t head = viennacl::mempool::signed_left_shift(
+        size_type head = viennacl::mempool::signed_left_shift(
            (1<<mantissa_bits) | mantissa,
             signed(exponent)-signed(mantissa_bits));
         if (ones & head)
@@ -205,142 +202,13 @@ namespace ocl
         return head | ones;
       }
 
-      cl_mem allocate(size_t size)
-      {
-        uint32_t bin_nr = bin_number(size);
-        std::vector<cl_mem> &bin = get_bin(bin_nr);
-
-        if (bin.size())
-        {
-          if (m_trace)
-            std::cout
-              << "[pool] allocation of size " << size << " served from bin " << bin_nr
-              << " which contained " << bin.size() << " entries" << std::endl;
-          return pop_block_from_bin(bin, size);
-        }
-
-        size_t alloc_sz = alloc_size(bin_nr);
-
-        assert(bin_number(alloc_sz) == bin_nr);
-
-        if (m_trace)
-          std::cout << "[pool] allocation of size " << size << " required new memory" << std::endl;
-
-        try { return get_from_allocator(alloc_sz); }
-        catch (mempool::error &e)
-        {
-          if (!e.is_out_of_memory())
-            throw;
-        }
-
-        if (m_trace)
-          std::cout << "[pool] allocation triggered OOM, running GC" << std::endl;
-        
-        // KK: removed it., didn't seem useful to me.
-        // m_allocator->try_release_blocks();
-        if (bin.size())
-          return pop_block_from_bin(bin, size);
-
-        if (m_trace)
-          std::cout << "[pool] allocation still OOM after GC" << std::endl;
-
-        while (try_to_free_memory())
-        {
-          try { return get_from_allocator(alloc_sz); }
-          catch (mempool::error &e)
-          {
-            if (!e.is_out_of_memory())
-              throw;
-          }
-        }
-
-        std::cerr << "memory_pool::allocate "
-            "failed to free memory for allocation" << std::endl;
-        throw viennacl::ocl::mem_object_allocation_failure();
-
-      }
-
-      void free(cl_mem p, size_t size)
-      {
-        --m_active_blocks;
-        uint32_t bin_nr = bin_number(size);
-
-        if (!m_stop_holding)
-        {
-          inc_held_blocks();
-          get_bin(bin_nr).push_back(p);
-
-          if (m_trace)
-            std::cout << "[pool] block of size " << size << " returned to bin "
-              << bin_nr << " which now contains " << get_bin(bin_nr).size()
-              << " entries" << std::endl;
-        }
-        else
-          m_allocator->free(p);
-      }
-
-      void free_held()
-      {
-        std::map<uint32_t, std::vector<cl_mem>>::reverse_iterator bin_pair =
-          m_container.rbegin();
-        while (bin_pair != m_container.rend())
-        {
-          std::vector<cl_mem> &bin = bin_pair->second;
-
-          while (bin.size())
-          {
-            m_allocator->free(bin.back());
-            bin.pop_back();
-
-            dec_held_blocks();
-          }
-        }
-
-        assert(m_held_blocks == 0);
-      }
-
-      void stop_holding()
-      {
-        m_stop_holding = true;
-        free_held();
-      }
-
-      unsigned active_blocks()
-      { return m_active_blocks; }
-
-      unsigned held_blocks()
-      { return m_held_blocks; }
-
-      bool try_to_free_memory()
-      {
-
-        std::map<uint32_t, std::vector<cl_mem>>::reverse_iterator bin_pair =
-          m_container.rbegin();
-        // free largest stuff first
-        while (bin_pair != m_container.rend())
-        {
-          std::vector<cl_mem> &bin = bin_pair->second;
-
-          if (bin.size())
-          {
-            m_allocator->free(bin.back());
-            bin.pop_back();
-
-            dec_held_blocks();
-
-            return true;
-          }
-        }
-
-        return false;
-      }
     protected:
-      std::vector<cl_mem> &get_bin(uint32_t bin_nr)
+      bin_t &get_bin(bin_nr_t bin_nr)
       {
-        typename std::map<uint32_t, std::vector<cl_mem>>::iterator it = m_container.find(bin_nr);
+        typename container_t::iterator it = m_container.find(bin_nr);
         if (it == m_container.end())
         {
-          auto it_and_inserted = m_container.insert(std::make_pair(bin_nr, std::vector<cl_mem>()));
+          auto it_and_inserted = m_container.insert(std::make_pair(bin_nr, bin_t()));
           assert(it_and_inserted.second);
           return it_and_inserted.first->second;
         }
@@ -368,7 +236,153 @@ namespace ocl
       virtual void stop_holding_blocks()
       { }
 
+    public:
+      pointer_type allocate(size_type size)
+      {
+        bin_nr_t bin_nr = bin_number(size);
+        bin_t &bin = get_bin(bin_nr);
+
+        if (bin.size())
+        {
+          if (m_trace)
+            std::cout
+              << "[pool] allocation of size " << size << " served from bin " << bin_nr
+              << " which contained " << bin.size() << " entries" << std::endl;
+          return pop_block_from_bin(bin, size);
+        }
+
+        size_type alloc_sz = alloc_size(bin_nr);
+
+        assert(bin_number(alloc_sz) == bin_nr);
+
+        if (m_trace)
+          std::cout << "[pool] allocation of size " << size << " required new memory" << std::endl;
+
+        try { return get_from_allocator(alloc_sz); }
+        catch (viennacl::ocl::mem_object_allocation_failure &e)
+        {
+            throw;
+        }
+
+        if (m_trace)
+          std::cout << "[pool] allocation triggered OOM, running GC" << std::endl;
+
+        // m_allocator->try_release_blocks();
+        if (bin.size())
+          return pop_block_from_bin(bin, size);
+
+        if (m_trace)
+          std::cout << "[pool] allocation still OOM after GC" << std::endl;
+
+        while (try_to_free_memory())
+        {
+          try { return get_from_allocator(alloc_sz); }
+          catch (viennacl::ocl::mem_object_allocation_failure &e)
+          {
+              throw;
+          }
+        }
+
+        std::cerr << (
+            "memory_pool::allocate "
+            "failed to free memory for allocation\n");
+        throw viennacl::ocl::mem_object_allocation_failure();
+      }
+
+      void free(pointer_type p, size_type size)
+      {
+        --m_active_blocks;
+        bin_nr_t bin_nr = bin_number(size);
+
+        if (!m_stop_holding)
+        {
+          inc_held_blocks();
+          get_bin(bin_nr).push_back(p);
+
+          if (m_trace)
+            std::cout << "[pool] block of size " << size << " returned to bin "
+              << bin_nr << " which now contains " << get_bin(bin_nr).size()
+              << " entries" << std::endl;
+        }
+        else
+          m_allocator->free(p);
+      }
+
+      void free_held()
+      {
+        for (bin_pair_t &bin_pair: m_container)
+        {
+          bin_t &bin = bin_pair.second;
+
+          while (bin.size())
+          {
+            m_allocator->free(bin.back());
+            bin.pop_back();
+
+            dec_held_blocks();
+          }
+        }
+
+        assert(m_held_blocks == 0);
+      }
+
+      void stop_holding()
+      {
+        m_stop_holding = true;
+        free_held();
+      }
+
+      unsigned active_blocks()
+      { return m_active_blocks; }
+
+      unsigned held_blocks()
+      { return m_held_blocks; }
+
+      bool try_to_free_memory()
+      {
+        // free largest stuff first
+        for (bin_pair_t &bin_pair: viennacl::mempool::reverse(m_container))
+        {
+          bin_t &bin = bin_pair.second;
+
+          if (bin.size())
+          {
+            m_allocator->free(bin.back());
+            bin.pop_back();
+
+            dec_held_blocks();
+
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+    private:
+      pointer_type get_from_allocator(size_type alloc_sz)
+      {
+        pointer_type result = m_allocator->allocate(alloc_sz);
+        ++m_active_blocks;
+
+        return result;
+      }
+
+      pointer_type pop_block_from_bin(bin_t &bin, size_type size)
+      {
+        pointer_type result = bin.back();
+        bin.pop_back();
+
+        dec_held_blocks();
+        ++m_active_blocks;
+
+        return result;
+      }
   };
+
+
+  //
+  //}}}}
 
   // }}}
 
@@ -530,6 +544,7 @@ public:
     */
   cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL, bool use_mempool = false) const
   {
+    std :: cout << "Zarchar Danda, Use mempool is " << use_mempool << "\n";
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
     std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;
 #endif
@@ -539,9 +554,11 @@ public:
     }
     if (ptr && !(flags & CL_MEM_USE_HOST_PTR))
       flags |= CL_MEM_COPY_HOST_PTR;
+    std::cout << "Danda power 1\n";
     cl_int err;
     cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
     VIENNACL_ERR_CHECK(err);
+    std::cout << "Danda power 2 " << err << "\n";
     return mem;
   }
 
@@ -588,22 +605,12 @@ public:
     queues_[dev].push_back(viennacl::ocl::command_queue(queue_handle));
     queues_[dev].back().handle().inc();
     
-    if(queues_.find(dev) == queues_.end())
-    {
-      // did not find a queue for the present device, need to allot an
-      // allocator.
-      allocators_[dev] = new
-        cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context>(this),
-            tools::shared_ptr<viennacl::ocl::command_queue>(&(queues_[dev][0])),
-            CL_MEM_READ_WRITE);
-      mempools_[dev] = new
-        memory_pool<cl_immediate_allocator>(*allocators_[dev]);
-    }
   }
 
   /** @brief Adds a queue for the given device to the context */
   void add_queue(cl_device_id dev)
   {
+
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
     std::cout << "ViennaCL: Adding new queue for device " << dev << " to context " << h_ << std::endl;
 #endif
@@ -616,6 +623,19 @@ public:
     VIENNACL_ERR_CHECK(err);
 
     queues_[dev].push_back(viennacl::ocl::command_queue(temp));
+
+    // TODO: Need figure out why this is giving an error.
+    //if(queues_.find(dev) == queues_.end())
+    //{
+      // did not find a queue for the present device, need to allot an
+      // allocator.
+      allocators_[dev] = new
+        cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context>(this),
+            tools::shared_ptr<viennacl::ocl::command_queue>(&(queues_[dev][0])),
+            CL_MEM_READ_WRITE);
+      mempools_[dev] = new
+        memory_pool<cl_immediate_allocator>(*allocators_[dev]);
+    //}
   }
 
   /** @brief Adds a queue for the given device to the context */
@@ -1254,11 +1274,6 @@ cl_mem cl_immediate_allocator::allocate(size_t s)
 }
 
 // }}}
-
-template<class Allocator>
-memory_pool<Allocator>::~memory_pool()
-{ free_held(); }
-
 
 }
 }

@@ -970,7 +970,7 @@ public:
   */
   explicit vector(size_type vec_size) : base_type(vec_size) {}
 
-  explicit vector(size_type vec_size, viennacl::context ctx) : base_type(vec_size, ctx) {}
+  explicit vector(size_type vec_size, viennacl::context ctx, bool use_mempool = false) : base_type(vec_size, ctx, use_mempool) {}
 
   explicit vector(NumericT * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, size_type start = 0, size_type stride = 1)
     : base_type(ptr_to_mem, mem_type, vec_size, start, stride) {}
