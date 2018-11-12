@@ -65,10 +65,10 @@ namespace ocl
   class cl_allocator_base
   {
     protected:
-      tools::shared_ptr<viennacl::ocl::context> m_context;
+      viennacl::ocl::context* m_context;
       cl_mem_flags m_flags;
     public:
-      cl_allocator_base(tools::shared_ptr<viennacl::ocl::context> const&, cl_mem_flags);
+      cl_allocator_base(viennacl::ocl::context* const&, cl_mem_flags);
 
       cl_allocator_base(cl_allocator_base const &src);
 
@@ -84,17 +84,17 @@ namespace ocl
   class cl_immediate_allocator : public cl_allocator_base
   {
     private:
-      tools::shared_ptr<viennacl::ocl::command_queue> m_queue;
+      viennacl::ocl::command_queue* m_queue;
 
     public:
       // NOTE: Changed the declaration as viennacl comman=d queue does nt store
       // the context
       //
       
-      cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context> const &ctx,
-          tools::shared_ptr<viennacl::ocl::command_queue> const &queue,
+      cl_immediate_allocator(viennacl::ocl::context* const &ctx,
+          viennacl::ocl::command_queue* const &queue,
           cl_mem_flags flags=CL_MEM_READ_WRITE)
-        : cl_allocator_base(tools::shared_ptr<viennacl::ocl::context>(ctx), flags),
+        : cl_allocator_base(ctx, flags),
         m_queue(queue)
       { }
 
@@ -163,7 +163,6 @@ namespace ocl
 
       virtual ~memory_pool()
       {
-        std :: cout << "Destructor of memory pool\n";
         free_held();
       }
 
@@ -296,8 +295,6 @@ namespace ocl
 
       void free(pointer_type p, size_type size)
       {
-        std :: cout << "You didn't wanted me to deallocate and I am here.\n";
-
         --m_active_blocks;
         bin_nr_t bin_nr = bin_number(size);
 
@@ -631,12 +628,12 @@ public:
     //{
       // did not find a queue for the present device, need to allot an
       // allocator.
-      allocators_[dev] = new
-        cl_immediate_allocator(tools::shared_ptr<viennacl::ocl::context>(this),
-            tools::shared_ptr<viennacl::ocl::command_queue>(&(queues_[dev][0])),
-            CL_MEM_READ_WRITE);
-      mempools_[dev] = new
-        memory_pool<cl_immediate_allocator>(*allocators_[dev]);
+      allocators_[dev] = tools::shared_ptr<cl_immediate_allocator>(new
+        cl_immediate_allocator(this,
+            &(queues_[dev][0]),
+            CL_MEM_READ_WRITE));
+      mempools_[dev] = tools::shared_ptr<memory_pool<cl_immediate_allocator>> (new
+        memory_pool<cl_immediate_allocator>(*allocators_[dev]));
     //}
   }
 
@@ -655,9 +652,9 @@ public:
   }
 
   //get current mempool
-  viennacl::ocl::memory_pool<cl_immediate_allocator>* const& get_mempool() const
+  tools::shared_ptr<viennacl::ocl::memory_pool<cl_immediate_allocator>> const& get_mempool() const
   {
-    typedef std::map< cl_device_id, viennacl::ocl::memory_pool<cl_immediate_allocator>* >    MempoolContainer;
+    typedef std::map< cl_device_id, tools::shared_ptr<viennacl::ocl::memory_pool<cl_immediate_allocator>> >    MempoolContainer;
     MempoolContainer::const_iterator it = mempools_.find(devices_[current_device_id_].id());
     return it->second;
   }
@@ -1150,8 +1147,8 @@ private:
   vcl_size_t current_queue_id_;
 
   // Memory pool
-  std::map< cl_device_id, cl_immediate_allocator*> allocators_;
-  std::map< cl_device_id, memory_pool<cl_immediate_allocator>*> mempools_;
+  std::map< cl_device_id, tools::shared_ptr<cl_immediate_allocator>> allocators_;
+  std::map< cl_device_id, tools::shared_ptr<memory_pool<cl_immediate_allocator>>> mempools_;
 }; //context
 
 
@@ -1212,7 +1209,7 @@ inline void viennacl::ocl::kernel::set_work_size_defaults()
 // {{{ viennacl::ocl::cl_allocator_base definition
 
 // CTOR
-cl_allocator_base::cl_allocator_base(tools::shared_ptr<viennacl::ocl::context> const &ctx,
+cl_allocator_base::cl_allocator_base(viennacl::ocl::context* const &ctx,
     cl_mem_flags flags=CL_MEM_READ_WRITE)
   : m_context(ctx), m_flags(flags)
 {
@@ -1236,9 +1233,10 @@ cl_allocator_base::~cl_allocator_base()
 
 void cl_allocator_base::free(cl_mem p)
 {
-  std :: cout << "[mempool]: Deallocating from mempool...\n";
+  std :: cout << "[mempool]: came to deallocate\n";
   cl_int err = clReleaseMemObject(p);
   VIENNACL_ERR_CHECK(err);
+  std :: cout << "[mempool]: done with deallocation\n";
 }
 
 // }}}

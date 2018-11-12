@@ -233,10 +233,6 @@ namespace viennacl
             // vector base. or whatever equivalent.
             handle_inc_dec_helper<OCL_TYPE>::dec(h_);
           }
-          else
-          {
-            std::cout << "Saved you a deallocation\n";
-          }
         }
       private:
         bool used_mempool_;
