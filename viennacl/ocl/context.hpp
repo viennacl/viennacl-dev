@@ -68,17 +68,43 @@ namespace ocl
       viennacl::ocl::context* m_context;
       cl_mem_flags m_flags;
     public:
-      cl_allocator_base(viennacl::ocl::context* const&, cl_mem_flags);
 
-      cl_allocator_base(cl_allocator_base const &src);
 
-      virtual ~cl_allocator_base();
+// CTOR
+cl_allocator_base(viennacl::ocl::context* const &ctx,
+    cl_mem_flags flags=CL_MEM_READ_WRITE)
+  : m_context(ctx), m_flags(flags)
+{
+  if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))
+  {
+    std::cerr << "[Allocator]: cannot specify USE_HOST_PTR or "
+      "COPY_HOST_PTR flags" << std::endl;
+    throw viennacl::ocl::invalid_value();
+  }
+}
+
+
+// Copy CTOR
+cl_allocator_base(cl_allocator_base const &src)
+: m_context(src.m_context), m_flags(src.m_flags)
+{ }
+
+
+~cl_allocator_base()
+{ }
+
+void free(cl_mem p)
+{
+  cl_int err = clReleaseMemObject(p);
+  VIENNACL_ERR_CHECK(err);
+#ifdef VIENNACL_DEBUG_ALL
+  std :: cout << "[mempool]: done with deallocation\n";
+#endif
+}
 
       virtual cl_allocator_base *copy() const = 0;
       virtual bool is_deferred() const  = 0;
       virtual cl_mem  allocate(size_t) = 0;
-
-      void free(cl_mem );
   };
 
   class cl_immediate_allocator : public cl_allocator_base
@@ -107,10 +133,13 @@ namespace ocl
         return new cl_immediate_allocator(*this);
       }
 
+      inline cl_mem allocate(size_t s);
 
-      bool is_deferred() const;
 
-      cl_mem allocate(size_t );
+
+        bool is_deferred() const
+        { return false; }
+
   };
 
 
@@ -556,9 +585,6 @@ public:
     if (ptr && !(flags & CL_MEM_USE_HOST_PTR))
       flags |= CL_MEM_COPY_HOST_PTR;
     cl_int err;
-#ifdef VIENNACL_DEBUG_ALL
-    std::cout << "[viennacl]: I am allocating a buffer of size " << size << "\n";
-#endif
     cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
     VIENNACL_ERR_CHECK(err);
     return mem;
@@ -1208,59 +1234,14 @@ inline void viennacl::ocl::kernel::set_work_size_defaults()
   }
 }
 
-// {{{ viennacl::ocl::cl_allocator_base definition
-
-// CTOR
-cl_allocator_base::cl_allocator_base(viennacl::ocl::context* const &ctx,
-    cl_mem_flags flags=CL_MEM_READ_WRITE)
-  : m_context(ctx), m_flags(flags)
-{
-  if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))
-  {
-    std::cerr << "[Allocator]: cannot specify USE_HOST_PTR or "
-      "COPY_HOST_PTR flags" << std::endl;
-    throw viennacl::ocl::invalid_value();
-  }
-}
-
-
-// Copy CTOR
-cl_allocator_base::cl_allocator_base(cl_allocator_base const &src)
-: m_context(src.m_context), m_flags(src.m_flags)
-{ }
-
-
-cl_allocator_base::~cl_allocator_base()
-{ }
-
-void cl_allocator_base::free(cl_mem p)
-{
-  cl_int err = clReleaseMemObject(p);
-  VIENNACL_ERR_CHECK(err);
-#ifdef VIENNACL_DEBUG_ALL
-  std :: cout << "[mempool]: done with deallocation\n";
-#endif
-}
-
-// }}}
-
 // {{{ definitionof cl_immediate_allocator
 
-bool cl_immediate_allocator::is_deferred() const
-{ return false; }
 
 cl_mem cl_immediate_allocator::allocate(size_t s)
 {
 
-#ifdef VIENNACL_DEBUG_ALL
-  std :: cout << "[mempool]: requesting a buffer of size " << s << "\n";
-#endif
   cl_mem ptr =
     m_context->create_memory_without_smart_handle(m_flags, s, NULL);
-
-#ifdef VIENNACL_DEBUG_ALL
-  std :: cout << "[mempool]: allocated a buffer of size " << s << "\n";
-#endif
 
   // Make sure the buffer gets allocated right here and right now.
   // This looks (and is) expensive. But immediate allocators
