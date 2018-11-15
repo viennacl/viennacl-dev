@@ -67,44 +67,43 @@ namespace ocl
     protected:
       viennacl::ocl::context* m_context;
       cl_mem_flags m_flags;
+
     public:
+      // CTOR
+      cl_allocator_base(viennacl::ocl::context* const &ctx,
+          cl_mem_flags flags=CL_MEM_READ_WRITE)
+        : m_context(ctx), m_flags(flags)
+      {
+        if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))
+        {
+          std::cerr << "[Allocator]: cannot specify USE_HOST_PTR or "
+            "COPY_HOST_PTR flags" << std::endl;
+          throw viennacl::ocl::invalid_value();
+        }
+      }
 
 
-// CTOR
-cl_allocator_base(viennacl::ocl::context* const &ctx,
-    cl_mem_flags flags=CL_MEM_READ_WRITE)
-  : m_context(ctx), m_flags(flags)
-{
-  if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))
-  {
-    std::cerr << "[Allocator]: cannot specify USE_HOST_PTR or "
-      "COPY_HOST_PTR flags" << std::endl;
-    throw viennacl::ocl::invalid_value();
-  }
-}
+      // Copy CTOR
+      cl_allocator_base(cl_allocator_base const &src)
+      : m_context(src.m_context), m_flags(src.m_flags)
+      { }
 
 
-// Copy CTOR
-cl_allocator_base(cl_allocator_base const &src)
-: m_context(src.m_context), m_flags(src.m_flags)
-{ }
+      ~cl_allocator_base()
+      { }
 
-
-~cl_allocator_base()
-{ }
-
-void free(cl_mem p)
-{
-  cl_int err = clReleaseMemObject(p);
-  VIENNACL_ERR_CHECK(err);
+      void free(cl_mem p)
+      {
+        cl_int err = clReleaseMemObject(p);
+        VIENNACL_ERR_CHECK(err);
 #ifdef VIENNACL_DEBUG_ALL
-  std :: cout << "[mempool]: done with deallocation\n";
+        std :: cout << "[mempool]: done with deallocation\n";
 #endif
-}
+      }
 
-      virtual cl_allocator_base *copy() const = 0;
-      virtual bool is_deferred() const  = 0;
-      virtual cl_mem  allocate(size_t) = 0;
+        virtual cl_allocator_base *copy() const = 0;
+        virtual bool is_deferred() const  = 0;
+        virtual cl_mem  allocate(size_t) = 0;
   };
 
   class cl_immediate_allocator : public cl_allocator_base
@@ -134,12 +133,10 @@ void free(cl_mem p)
       }
 
       inline cl_mem allocate(size_t s);
+      bool is_deferred() const
+      { return false; }
 
-
-
-        bool is_deferred() const
-        { return false; }
-
+      virtual ~cl_immediate_allocator() {}
   };
 
 
@@ -575,13 +572,11 @@ public:
     */
   cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL, bool use_mempool = false) const
   {
-#if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
-    std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;
-#endif
     if(use_mempool){
       cl_mem mem = get_mempool()->allocate(size);
       return mem;
     }
+    std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;
     if (ptr && !(flags & CL_MEM_USE_HOST_PTR))
       flags |= CL_MEM_COPY_HOST_PTR;
     cl_int err;
