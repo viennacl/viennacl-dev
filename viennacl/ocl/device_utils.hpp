@@ -24,6 +24,7 @@
 
 #define VIENNACL_OCL_MAX_DEVICE_NUM  8
 
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else

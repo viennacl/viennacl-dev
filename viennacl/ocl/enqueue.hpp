@@ -22,6 +22,7 @@
     @brief Enqueues kernels into command queues
 */
 
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
@@ -66,13 +67,6 @@ void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue)
     vcl_size_t tmp_local = k.local_work_size();
 
     cl_int err;
-    if (tmp_global == 1 && tmp_local == 1)
-#if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-      err = clEnqueueTask(queue.handle().get(), k.handle().get(), 0, NULL, &event);
-#else
-      err = clEnqueueTask(queue.handle().get(), k.handle().get(), 0, NULL, NULL);
-#endif
-    else
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
       err = clEnqueueNDRangeKernel(queue.handle().get(), k.handle().get(), 1, NULL, &tmp_global, &tmp_local, 0, NULL, &event);
 #else

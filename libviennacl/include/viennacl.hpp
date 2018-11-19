@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef VIENNACL_WITH_OPENCL
 #ifdef __APPLE__
 #include <OpenCL/cl.h>

@@ -28,6 +28,7 @@
 #include "viennacl/forwards.h"
 
 #ifdef VIENNACL_WITH_OPENCL
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
