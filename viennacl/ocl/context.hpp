@@ -134,7 +134,8 @@ namespace ocl
       bool is_deferred() const
       { return false; }
 
-      virtual ~cl_immediate_allocator() {}
+      virtual ~cl_immediate_allocator()
+      {}
   };
 
 
@@ -960,8 +961,7 @@ inline void viennacl::ocl::kernel::set_work_size_defaults()
   }
 }
 
-// {{{ definitionof cl_immediate_allocator
-
+// {{{ definition of cl_immediate_allocator::allocate
 
 cl_mem cl_immediate_allocator::allocate(size_t s)
 {
