@@ -100,7 +100,15 @@ namespace backend
 #ifdef VIENNACL_WITH_OPENCL
       case OPENCL_MEMORY:
         handle.opencl_handle().context(ctx.opencl_context());
-        handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr, use_mempool);
+        if(use_mempool)
+          handle.opencl_handle() =
+            viennacl::ocl::pooled_clmem_handle(
+                opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr, use_mempool),
+                ctx.opencl_context(),
+                size_in_bytes);
+        else
+          handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr);
+
         handle.raw_size(size_in_bytes);
         break;
 #endif

@@ -140,8 +140,74 @@ namespace ocl
 
 
   // }}}
+  
+  // {{{ pooled handle
+  //
 
+  class pooled_clmem_handle: public handle<cl_mem>
+  {
+    protected:
+      typedef handle<cl_mem> super;
 
+    public:
+      pooled_clmem_handle() : super(), m_size(0), m_ref(0) {}
+      pooled_clmem_handle(const cl_mem & something, viennacl::ocl::context const & c, vcl_size_t & _s, uint32_t _r=1) : super(something, c), m_size(_s), m_ref(_r)
+      {}
+      pooled_clmem_handle(const pooled_clmem_handle & other) : super(other), m_size(other.m_size), m_ref(other.m_ref)
+      {
+        if(h_!=0)
+          inc();
+      }
+
+      pooled_clmem_handle & operator=(const pooled_clmem_handle & other)
+      {
+        if (h_ != 0)
+          dec();
+        h_         = other.h_;
+        p_context_ = other.p_context_;
+        m_size     = other.m_size;
+        m_ref     = other.m_ref;
+        inc();
+        return *this;
+      }
+
+      pooled_clmem_handle & operator=(const cl_mem & something)
+      {
+        std::cerr << "[pooled_handle]: Pooled handle needs to know about size\n";
+        throw std::exception();
+        return *this;
+      }
+
+      /** @brief Swaps the OpenCL handle of two handle objects */
+      pooled_clmem_handle & swap(pooled_clmem_handle & other)
+      {
+        cl_mem tmp = other.h_;
+        other.h_ = this->h_;
+        this->h_ = tmp;
+
+        viennacl::ocl::context const * tmp2 = other.p_context_;
+        other.p_context_ = this->p_context_;
+        this->p_context_ = tmp2;
+
+        size_t tmp3 = other.m_size;
+        other.m_size = this->m_size;
+        this->m_size = tmp3;
+
+        uint32_t tmp4 = other.m_ref;
+        other.m_ref = this->m_ref;
+        this->m_ref = tmp4;
+
+        return *this;
+      }
+
+      void inc() { m_ref += 1;}
+      void dec();
+    private:
+      size_t m_size;
+      uint32_t m_ref;
+  };
+
+  // }}}
 
 /** @brief Manages an OpenCL context and provides the respective convenience functions for creating buffers, etc.
   *
@@ -319,9 +385,9 @@ public:
 
   /// [KK]: TODOTODOTODOTODO
 
-  void deallocate_memory_in_pool(viennacl::ocl::handle<cl_mem>& mem_handle, size_t size)
+  void deallocate_memory_in_pool(cl_mem p, size_t size) const
   {
-    get_mempool()->free(mem_handle.get(), size);
+    get_mempool()->free(p, size);
   }
 
 
@@ -989,6 +1055,22 @@ cl_mem cl_immediate_allocator::allocate(size_t s)
   // the buffer is faulted onto the device on enqueue.
 
   return ptr;
+}
+
+// }}}
+
+// {{{ pooled handle dec
+
+void pooled_clmem_handle::dec()
+{
+  if(m_ref == 0) {
+    std::cerr << "[pooled_handle]: Destroying an already destroyed memory object." << std::endl;
+    throw std::exception();
+  }
+  m_ref-=1;
+  if(m_ref == 0) {
+    p_context_->deallocate_memory_in_pool(h_, m_size);
+  }
 }
 
 // }}}

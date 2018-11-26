@@ -155,16 +155,10 @@ namespace viennacl
     class handle
     {
       public:
-        handle() : used_mempool_(false), h_(0), p_context_(NULL) {}
-        handle(const OCL_TYPE & something, viennacl::ocl::context const & c, bool u = false) : used_mempool_(u), h_(something), p_context_(&c)
-        {
-          if((typeid(OCL_TYPE) != typeid(cl_mem)) && used_mempool_)
-          {
-            std::cerr << "[handle]: memory pool is only available for memory objects." << std::endl;
-            throw std::exception();
-          }
-        }
-        handle(const handle & other) : used_mempool_(other.used_mempool_), h_(other.h_), p_context_(other.p_context_) { 
+        handle() : h_(0), p_context_(NULL) {}
+        handle(const OCL_TYPE & something, viennacl::ocl::context const & c) : h_(something), p_context_(&c)
+        {}
+        handle(const handle & other) : h_(other.h_), p_context_(other.p_context_) { 
           if (h_ != 0) inc(); }
         ~handle() { if (h_ != 0) dec(); }
 
@@ -208,7 +202,6 @@ namespace viennacl
           return *p_context_;
         }
         void context(viennacl::ocl::context const & c) { p_context_ = &c; }
-        void used_mempool(bool u) { used_mempool_ = u; }
 
 
         /** @brief Swaps the OpenCL handle of two handle objects */
@@ -228,16 +221,9 @@ namespace viennacl
         void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); }
         /** @brief Manually decrement the OpenCL reference count. Typically called automatically, but might be useful with user-supplied memory objects.  */
         void dec() { 
-          if(!used_mempool_)
-          {
-            // only handling the freeing of memory through this class if there
-            // is no mempool, otherwise for now handling it through the class
-            // vector base. or whatever equivalent.
-            handle_inc_dec_helper<OCL_TYPE>::dec(h_);
-          }
+          handle_inc_dec_helper<OCL_TYPE>::dec(h_);
         }
-      private:
-        bool used_mempool_;
+      protected:
         OCL_TYPE h_;
         viennacl::ocl::context const * p_context_;
     };

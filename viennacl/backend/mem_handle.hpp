@@ -94,7 +94,7 @@ public:
   typedef viennacl::tools::shared_ptr<char>      cuda_handle_type;
 
   /** @brief Default CTOR. No memory is allocated */
-  mem_handle() : p_used_mempool(false), active_handle_(MEMORY_NOT_INITIALIZED), size_in_bytes_(0) {}
+  mem_handle() : active_handle_(MEMORY_NOT_INITIALIZED), size_in_bytes_(0) {}
 
   /** @brief Returns the handle to a buffer in CPU RAM. NULL is returned if no such buffer has been allocated. */
   ram_handle_type       & ram_handle()       { return ram_handle_; }
@@ -149,25 +149,6 @@ public:
         throw memory_exception("invalid new memory region!");
     }
   }
-
-
-  bool get_used_mempool(bool u)
-  {
-    return p_used_mempool;
-  }
-
-  void set_used_mempool(bool u)
-  {
-    p_used_mempool = u;
-#ifndef VIENNACL_WITH_OPENCL
-    std::cerr << "Memory pool allocation for non-OpenCL backends not supported yet.\n";
-    throw std::exception();
-#endif
-#ifdef VIENNACL_WITH_OPENCL
-    opencl_handle_.used_mempool(u);
-#endif
-  }
-  
 
   /** @brief Compares the two handles and returns true if the active memory handles in the two mem_handles point to the same buffer. */
   bool operator==(mem_handle const & other) const
@@ -253,20 +234,9 @@ public:
   void        raw_size(vcl_size_t new_size) { size_in_bytes_ = new_size; }
 
   ~mem_handle()
-  {
-    if(p_used_mempool)
-    {
-
-#ifdef VIENNACL_WITH_OPENCL
-      viennacl::ocl::context ctx = opencl_handle_.context();
-      ctx.deallocate_memory_in_pool(opencl_handle_, raw_size());
-#endif
-
-    }
-  }
+  {}
 
 private:
-  bool p_used_mempool;
   memory_types active_handle_;
   ram_handle_type ram_handle_;
 #ifdef VIENNACL_WITH_OPENCL
