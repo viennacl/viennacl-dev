@@ -61,9 +61,6 @@ namespace viennacl
 
       static void dec(cl_mem & something)
       {
-#ifdef VIENNACL_DEBUG_ALL
-        std :: cout << "[viennacl]: Deallocating from handle...\n";
-#endif
         cl_int err = clReleaseMemObject(something);
         VIENNACL_ERR_CHECK(err);
       }
@@ -160,7 +157,7 @@ namespace viennacl
         {}
         handle(const handle & other) : h_(other.h_), p_context_(other.p_context_) { 
           if (h_ != 0) inc(); }
-        ~handle() { if (h_ != 0) dec(); }
+        virtual ~handle() { if (h_ != 0) dec(); }
 
         /** @brief Copies the OpenCL handle from the provided handle. Does not take ownership like e.g. std::auto_ptr<>, so both handle objects are valid (more like shared_ptr). */
         handle & operator=(const handle & other)
@@ -218,9 +215,9 @@ namespace viennacl
         }
 
         /** @brief Manually increment the OpenCL reference count. Typically called automatically, but is necessary if user-supplied memory objects are wrapped. */
-        void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); }
+        virtual void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); }
         /** @brief Manually decrement the OpenCL reference count. Typically called automatically, but might be useful with user-supplied memory objects.  */
-        void dec() { 
+        virtual void dec() { 
           handle_inc_dec_helper<OCL_TYPE>::dec(h_);
         }
       protected:

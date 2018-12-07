@@ -199,13 +199,14 @@ namespace ocl
 
       void free(pointer_type p, size_type size)
       {
+
+        std::cout << "[mempool]: freeing the memory " <<
+          p << ". So that it could be used again."<< std::endl;
         --m_active_blocks;
         bin_nr_t bin_nr = bin_number(size);
 
         if (!m_stop_holding)
         {
-          std::cout << "[mempool]: freeing the memory " <<
-            p << ". So that it could be used again."<< std::endl;
           inc_held_blocks();
           get_bin(bin_nr).push_back(p);
 

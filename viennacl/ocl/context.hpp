@@ -152,7 +152,13 @@ namespace ocl
     public:
       pooled_clmem_handle() : super(), m_size(0), m_ref(0) {}
       pooled_clmem_handle(const cl_mem & something, viennacl::ocl::context const & c, vcl_size_t & _s, uint32_t _r=1) : super(something, c), m_size(_s), m_ref(_r)
-      {}
+      {if(h_!=0)
+        {
+          inc();
+          cl_int err = clRetainMemObject(something);
+          VIENNACL_ERR_CHECK(err);
+        }
+      }
       pooled_clmem_handle(const pooled_clmem_handle & other) : super(other), m_size(other.m_size), m_ref(other.m_ref)
       {
         if(h_!=0)
@@ -200,8 +206,18 @@ namespace ocl
         return *this;
       }
 
-      void inc() { m_ref += 1;}
-      void dec();
+      void inc()
+      {
+        cl_int err = clRetainMemObject(h_);
+        VIENNACL_ERR_CHECK(err);
+        std::cout << "[pooled_handle]: Incrementing counter." << std::endl;
+        ++m_ref;
+      }
+      inline virtual void dec();
+      virtual ~pooled_clmem_handle() {
+        if (h_!=0) dec();
+      }
+
     private:
       size_t m_size;
       uint32_t m_ref;
@@ -366,9 +382,11 @@ public:
     */
   cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL, bool use_mempool = false) const
   {
+
     if(use_mempool){
+      std::cout << "[mempool]: querying for memory\n";
       cl_mem mem = get_mempool()->allocate(size);
-      std::cout << "[mempool]: got a memory: " << mem << std::endl;
+      std::cout << "[mempool]: gave memory at: " << mem << std::endl;
       return mem;
     }
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
@@ -378,7 +396,7 @@ public:
       flags |= CL_MEM_COPY_HOST_PTR;
     cl_int err;
     cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
-    std::cout << "[viennacl]: create a buffer: " << mem << std::endl;
+    std::cout << "[viennacl]: created a buffer: " << mem << std::endl;
     VIENNACL_ERR_CHECK(err);
     return mem;
   }
@@ -1063,11 +1081,12 @@ cl_mem cl_immediate_allocator::allocate(size_t s)
 
 void pooled_clmem_handle::dec()
 {
+  std::cout << "[pooled_handle]: Decrementing ref counter of value " << m_ref << std::endl;
   if(m_ref == 0) {
     std::cerr << "[pooled_handle]: Destroying an already destroyed memory object." << std::endl;
     throw std::exception();
   }
-  m_ref-=1;
+  --m_ref;
   if(m_ref == 0) {
     p_context_->deallocate_memory_in_pool(h_, m_size);
   }
