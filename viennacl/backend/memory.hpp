@@ -102,6 +102,7 @@ namespace backend
         handle.opencl_handle().context(ctx.opencl_context());
         if(use_mempool)
         {
+          // If using memory pool then use  a pooled handle
           handle.opencl_handle() =
             viennacl::ocl::pooled_clmem_handle(
                 opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr, use_mempool),

@@ -261,6 +261,7 @@ vector_base<NumericT, SizeT, DistanceT>::vector_base(size_type vec_size, viennac
 {
   if (size_ > 0)
   {
+    // [kk:] this is the constructor that we are concerned about
     viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), ctx, NULL, use_mempool);
     clear();
   }

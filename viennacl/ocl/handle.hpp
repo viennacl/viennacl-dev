@@ -187,7 +187,6 @@ namespace viennacl
           return *this;
         }
 
-
         /** @brief Implicit conversion to the plain OpenCL handle. DEPRECATED and will be removed some time in the future. */
         operator OCL_TYPE() const { return h_; }
 
