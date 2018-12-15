@@ -52,11 +52,26 @@ namespace opencl
  * @param ctx             Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
  *
  */
-inline cl_mem memory_create(viennacl::ocl::context const & ctx, vcl_size_t size_in_bytes, const void * host_ptr = NULL, bool use_mempool = false)
+inline cl_mem memory_create(viennacl::ocl::context const & ctx, vcl_size_t size_in_bytes, const void * host_ptr = NULL)
 {
   //std::cout << "Creating buffer (" << size_in_bytes << " bytes) host buffer " << host_ptr << " in context " << &ctx << std::endl;
-  return ctx.create_memory_without_smart_handle(CL_MEM_READ_WRITE, static_cast<unsigned int>(size_in_bytes), const_cast<void *>(host_ptr), use_mempool);
+  return ctx.create_memory_without_smart_handle(CL_MEM_READ_WRITE, static_cast<unsigned int>(size_in_bytes), const_cast<void *>(host_ptr));
 }
+
+
+/** @brief Creates an array of the specified size in the current OpenCL context. If the second argument is provided, the buffer is initialized with data from that pointer.
+ *
+ * @param size_in_bytes   Number of bytes to allocate
+ * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
+ * @param ctx             Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
+ *
+ */
+inline cl_mem pooled_memory_create(viennacl::ocl::context const & ctx, vcl_size_t size_in_bytes, const void * host_ptr = NULL)
+{
+  //std::cout << "Creating buffer (" << size_in_bytes << " bytes) host buffer " << host_ptr << " in context " << &ctx << std::endl;
+  return ctx.create_memory_without_smart_handle(CL_MEM_READ_WRITE, static_cast<unsigned int>(size_in_bytes), const_cast<void *>(host_ptr), true);
+}
+
 
 /** @brief Copies 'bytes_to_copy' bytes from address 'src_buffer + src_offset' in the OpenCL context to memory starting at address 'dst_buffer + dst_offset' in the same OpenCL context.
  *

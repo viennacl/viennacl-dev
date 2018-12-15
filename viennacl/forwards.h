@@ -273,7 +273,7 @@ namespace viennacl
   template<class SCALARTYPE, unsigned int ALIGNMENT>
   class vector_iterator;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT>
+  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCL_HANDLE = viennacl::ocl::handle<cl_mem>>
   class const_vector_iterator;
 
   template<typename SCALARTYPE>
@@ -294,7 +294,7 @@ namespace viennacl
   template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t, typename Handle = viennacl::ocl::handle<cl_mem>>
   class vector_base;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
+  template<class SCALARTYPE, unsigned int ALIGNMENT = 1, typename OCLHandle = viennacl::ocl::handle<cl_mem>>
   class vector;
 
   template<typename ScalarT>

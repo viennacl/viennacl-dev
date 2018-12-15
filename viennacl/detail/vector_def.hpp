@@ -100,15 +100,15 @@ struct zero_vector : public scalar_vector<NumericT>
   *
   * @tparam NumericT   The floating point type, either 'float' or 'double'
   */
-template<class NumericT, typename SizeT /* see forwards.h for default type */, typename DistanceT /* see forwards.h for default type */, typename OCL_Handle>
+template<class NumericT, typename SizeT /* see forwards.h for default type */, typename DistanceT /* see forwards.h for default type */, typename OCLHandle>
 class vector_base
 {
-  typedef vector_base<NumericT, SizeT, DistanceT>         self_type;
+  typedef vector_base<NumericT, SizeT, DistanceT, OCLHandle>         self_type;
 
 public:
   typedef scalar<NumericT>                                value_type;
   typedef NumericT                                        cpu_value_type;
-  typedef viennacl::backend::mem_handle<OCL_Handle>       handle_type;
+  typedef viennacl::backend::mem_handle<OCLHandle>       handle_type;
   typedef SizeT                                          size_type;
   typedef DistanceT                                      difference_type;
   typedef const_vector_iterator<NumericT, 1>              const_iterator;
@@ -141,11 +141,10 @@ public:
      * @param vec_start  The offset from the beginning of the buffer identified by 'h'
      * @param vec_stride Increment between two elements in the original buffer (in multiples of NumericT)
     */
-  explicit vector_base(viennacl::backend::mem_handle<OCL_Handle> & h, size_type vec_size, size_type vec_start, size_type vec_stride);
+  explicit vector_base(viennacl::backend::mem_handle<OCLHandle> & h, size_type vec_size, size_type vec_start, size_type vec_stride);
 
   /** @brief Creates a vector and allocates the necessary memory */
-  explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context(),
-      bool use_mempool = false);
+  explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context());
 
   // CUDA or host memory:
   explicit vector_base(NumericT * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start = 0, size_type stride = 1);
@@ -303,7 +302,7 @@ public:
 
 protected:
 
-  void set_handle(viennacl::backend::mem_handle<OCL_Handle> const & h) {  elements_ = h; }
+  void set_handle(viennacl::backend::mem_handle<OCLHandle> const & h) {  elements_ = h; }
 
   /** @brief Swaps the handles of two vectors by swapping the OpenCL handles only, no data copy */
   self_type & fast_swap(self_type & other);

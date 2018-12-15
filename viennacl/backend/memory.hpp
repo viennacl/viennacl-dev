@@ -84,8 +84,7 @@ namespace backend
   * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
   *
   */
-  template <typename T = viennacl::ocl::handle<cl_mem>>
-  inline void memory_create(mem_handle<T> & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL, bool use_mempool = false)
+  inline void memory_create(mem_handle<> & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
   {
     if (size_in_bytes > 0)
     {
@@ -101,17 +100,7 @@ namespace backend
 #ifdef VIENNACL_WITH_OPENCL
       case OPENCL_MEMORY:
         handle.opencl_handle().context(ctx.opencl_context());
-        if(use_mempool)
-        {
-          // If using memory pool then use  a pooled handle
-          handle.opencl_handle() =
-            viennacl::ocl::pooled_clmem_handle(
-                opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr, use_mempool),
-                ctx.opencl_context(),
-                size_in_bytes);
-        }
-        else
-          handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr);
+        handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr);
 
         handle.raw_size(size_in_bytes);
         break;
@@ -126,6 +115,37 @@ namespace backend
         throw memory_exception("not initialised!");
       default:
         throw memory_exception("unknown memory handle!");
+      }
+    }
+  }
+
+  // Pooled version of the above function!
+  inline void memory_create(mem_handle<viennacl::ocl::pooled_clmem_handle> & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
+  {
+    if (size_in_bytes > 0)
+    {
+      if (handle.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
+        handle.switch_active_handle_id(ctx.memory_type());
+
+      switch (handle.get_active_handle_id())
+      {
+#ifdef VIENNACL_WITH_OPENCL
+      case OPENCL_MEMORY:
+        handle.opencl_handle().context(ctx.opencl_context());
+        // If using memory pool then use  a pooled handle
+        handle.opencl_handle() =
+          viennacl::ocl::pooled_clmem_handle(
+              opencl::pooled_memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr),
+              ctx.opencl_context(),
+              size_in_bytes);
+
+        handle.raw_size(size_in_bytes);
+        break;
+#endif
+      case MEMORY_NOT_INITIALIZED:
+        throw memory_exception("not initialised!");
+      default:
+        throw memory_exception("Pooled handle only available with OpenCL memory for now!");
       }
     }
   }

@@ -42,15 +42,6 @@
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
 
-#ifdef VIENNACL_WITH_OPENCL
-#define USE_MEMPOOL true
-#endif
-
-#ifndef VIENNACL_WITH_OPENCL
-#define USE_MEMPOOL false
-#endif
-
-
 namespace viennacl
 {
 namespace linalg
@@ -540,7 +531,7 @@ void inner_prod_impl(vector_base<T> const & vec1,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1), USE_MEMPOOL);
+  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
   temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
   // Step 1: Compute partial inner products for each work group:
@@ -601,7 +592,7 @@ void inner_prod_impl(vector_base<NumericT> const & x,
   viennacl::ocl::kernel & inner_prod_kernel_8 = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector_multi_inner_prod<NumericT>::program_name(), "inner_prod8");
 
   vcl_size_t work_groups = inner_prod_kernel_8.global_work_size(0) / inner_prod_kernel_8.local_work_size(0);
-  viennacl::vector<NumericT> temp(8 * work_groups, viennacl::traits::context(x), USE_MEMPOOL);
+  viennacl::vector<NumericT> temp(8 * work_groups, viennacl::traits::context(x));
 
   vcl_size_t current_index = 0;
   while (current_index < vec_tuple.const_size())
@@ -771,7 +762,7 @@ void inner_prod_cpu(vector_base<T> const & vec1,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1), USE_MEMPOOL);
+  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
   temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
   // Step 1: Compute partial inner products for each work group:
@@ -839,7 +830,7 @@ void norm_1_impl(vector_base<T> const & vec,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec), USE_MEMPOOL);
+  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 1);
@@ -868,7 +859,7 @@ void norm_1_cpu(vector_base<T> const & vec,
                 T & result)
 {
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec), USE_MEMPOOL);
+  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 1);
@@ -903,7 +894,7 @@ void norm_2_impl(vector_base<T> const & vec,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec), USE_MEMPOOL);
+  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 2);
@@ -933,7 +924,7 @@ void norm_2_cpu(vector_base<T> const & vec,
 {
   std::cout << "norm_2_kernel asked for a vector.\n";
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec), USE_MEMPOOL);
+  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 2);
@@ -968,7 +959,7 @@ void norm_inf_impl(vector_base<T> const & vec,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec), USE_MEMPOOL);
+  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 0);
@@ -997,7 +988,7 @@ void norm_inf_cpu(vector_base<T> const & vec,
                   T & result)
 {
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec), USE_MEMPOOL);
+  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 0);
@@ -1070,7 +1061,7 @@ void max_impl(vector_base<NumericT> const & x,
   viennacl::linalg::opencl::kernels::vector<NumericT>::init(ctx);
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x), USE_MEMPOOL);
+  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x));
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<NumericT>::program_name(), "max_kernel");
 
@@ -1106,7 +1097,7 @@ void max_cpu(vector_base<NumericT> const & x,
   viennacl::linalg::opencl::kernels::vector<NumericT>::init(ctx);
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x), USE_MEMPOOL);
+  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x));
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<NumericT>::program_name(), "max_kernel");
 
@@ -1149,7 +1140,7 @@ void min_impl(vector_base<NumericT> const & x,
   viennacl::linalg::opencl::kernels::vector<NumericT>::init(ctx);
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x), USE_MEMPOOL);
+  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x));
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<NumericT>::program_name(), "min_kernel");
 
@@ -1185,7 +1176,7 @@ void min_cpu(vector_base<NumericT> const & x,
   viennacl::linalg::opencl::kernels::vector<NumericT>::init(ctx);
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x), USE_MEMPOOL);
+  viennacl::vector<NumericT> temp(work_groups, viennacl::traits::context(x));
 
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<NumericT>::program_name(), "min_kernel");
 
