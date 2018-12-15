@@ -1287,15 +1287,15 @@ namespace detail
    * Note on performance: For non-in-place scans one could optimize away the temporary 'opencl_carries'-array.
    * This, however, only provides small savings in the latency-dominated regime, yet would effectively double the amount of code to maintain.
    */
-  template<typename NumericT>
-  void scan_impl(vector_base<NumericT> const & input,
-                 vector_base<NumericT>       & output,
+  template<typename NumericT, typename H = viennacl::ocl::handle<cl_mem>>
+  void scan_impl(vector_base<NumericT, H> const & input,
+                 vector_base<NumericT, H>       & output,
                  bool is_inclusive)
   {
     vcl_size_t local_worksize = 128;
     vcl_size_t workgroups = 128;
 
-    viennacl::backend::mem_handle opencl_carries;
+    viennacl::backend::mem_handle<H> opencl_carries;
     viennacl::backend::memory_create(opencl_carries, sizeof(NumericT)*workgroups, viennacl::traits::context(input));
 
     viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(input).context());

@@ -141,7 +141,7 @@ public:
      * @param vec_start  The offset from the beginning of the buffer identified by 'h'
      * @param vec_stride Increment between two elements in the original buffer (in multiples of NumericT)
     */
-  explicit vector_base(viennacl::backend::mem_handle & h, size_type vec_size, size_type vec_start, size_type vec_stride);
+  explicit vector_base(viennacl::backend::mem_handle<OCL_Handle> & h, size_type vec_size, size_type vec_start, size_type vec_stride);
 
   /** @brief Creates a vector and allocates the necessary memory */
   explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context(),
@@ -303,7 +303,7 @@ public:
 
 protected:
 
-  void set_handle(viennacl::backend::mem_handle const & h) {  elements_ = h; }
+  void set_handle(viennacl::backend::mem_handle<OCL_Handle> const & h) {  elements_ = h; }
 
   /** @brief Swaps the handles of two vectors by swapping the OpenCL handles only, no data copy */
   self_type & fast_swap(self_type & other);

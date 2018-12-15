@@ -104,7 +104,7 @@ private:
 * @tparam NumericT  The underlying floating point type (either float or double)
 * @tparam AlignmentV   Alignment of the underlying vector, @see vector
 */
-template<class NumericT, unsigned int AlignmentV>
+template<class NumericT, unsigned int AlignmentV, typename OCL_HANDLE=viennacl::ocl::handle<cl_mem>>
 class const_vector_iterator
 {
   typedef const_vector_iterator<NumericT, AlignmentV>    self_type;
@@ -112,7 +112,7 @@ public:
   typedef scalar<NumericT>            value_type;
   typedef vcl_size_t                size_type;
   typedef vcl_ptrdiff_t                 difference_type;
-  typedef viennacl::backend::mem_handle handle_type;
+  typedef viennacl::backend::mem_handle<H> handle_type;
 
   //const_vector_iterator() {}
 
