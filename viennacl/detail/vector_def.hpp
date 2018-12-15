@@ -100,7 +100,7 @@ struct zero_vector : public scalar_vector<NumericT>
   *
   * @tparam NumericT   The floating point type, either 'float' or 'double'
   */
-template<class NumericT, typename SizeT /* see forwards.h for default type */, typename DistanceT /* see forwards.h for default type */>
+template<class NumericT, typename SizeT /* see forwards.h for default type */, typename DistanceT /* see forwards.h for default type */, typename OCL_Handle>
 class vector_base
 {
   typedef vector_base<NumericT, SizeT, DistanceT>         self_type;
@@ -108,7 +108,7 @@ class vector_base
 public:
   typedef scalar<NumericT>                                value_type;
   typedef NumericT                                        cpu_value_type;
-  typedef viennacl::backend::mem_handle                     handle_type;
+  typedef viennacl::backend::mem_handle<OCL_Handle>       handle_type;
   typedef SizeT                                          size_type;
   typedef DistanceT                                      difference_type;
   typedef const_vector_iterator<NumericT, 1>              const_iterator;

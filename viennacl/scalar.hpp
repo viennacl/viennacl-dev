@@ -343,12 +343,12 @@ private:
   *
   * @tparam NumericT  Either float or double. Checked at compile time.
   */
-template<class NumericT>
+template<class NumericT, typename H>
 class scalar
 {
   typedef scalar<NumericT>         self_type;
 public:
-  typedef viennacl::backend::mem_handle                     handle_type;
+  typedef viennacl::backend::mem_handle<H>                     handle_type;
   typedef vcl_size_t                                        size_type;
 
   /** @brief Returns the underlying host scalar type. */

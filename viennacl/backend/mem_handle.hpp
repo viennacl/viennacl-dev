@@ -87,6 +87,7 @@ inline memory_types default_memory_type(memory_types new_memory_type) { return d
  * Instead, this class collects all the necessary conditional compilations.
  *
  */
+template <typename OCL_Handle>
 class mem_handle
 {
 public:
@@ -103,9 +104,9 @@ public:
 
 #ifdef VIENNACL_WITH_OPENCL
   /** @brief Returns the handle to an OpenCL buffer. The handle contains NULL if no such buffer has been allocated. */
-  viennacl::ocl::handle<cl_mem>       & opencl_handle()       { return opencl_handle_; }
+  OCL_Handle       & opencl_handle()       { return opencl_handle_; }
   /** @brief Returns the handle to an OpenCL buffer. The handle contains NULL if no such buffer has been allocated. */
-  viennacl::ocl::handle<cl_mem> const & opencl_handle() const { return opencl_handle_; }
+  OCL_Handle const & opencl_handle() const { return opencl_handle_; }
 #endif
 
 #ifdef VIENNACL_WITH_CUDA
@@ -240,7 +241,7 @@ private:
   memory_types active_handle_;
   ram_handle_type ram_handle_;
 #ifdef VIENNACL_WITH_OPENCL
-  viennacl::ocl::handle<cl_mem> opencl_handle_;
+  OCL_Handle opencl_handle_;
 #endif
 #ifdef VIENNACL_WITH_CUDA
   cuda_handle_type        cuda_handle_;

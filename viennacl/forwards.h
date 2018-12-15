@@ -69,6 +69,8 @@
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/version.hpp"
 
+#include "CL/cl.h"
+
 /** @brief Main namespace in ViennaCL. Holds all the basic types such as vector, matrix, etc. and defines operations upon them. */
 namespace viennacl
 {
@@ -246,17 +248,23 @@ namespace viennacl
   /** @brief A tag class representing sign flips (for scalars only. Vectors and matrices use the standard multiplication by the scalar -1.0) */
   struct op_flip_sign {};
 
+  /** @brief OpenCL backend. Manages platforms, contexts, buffers, kernels, etc. */
+  namespace ocl {
+    template <class OCL_TYPE>
+    class handle;
+  }
+
   //forward declaration of basic types:
-  template<class TYPE>
+  template<class TYPE, typename H = viennacl::ocl::handle<cl_mem>>
   class scalar;
 
   template<typename LHS, typename RHS, typename OP>
   class scalar_expression;
 
-  template<typename SCALARTYPE>
+  template<typename SCALARTYPE, typename H = viennacl::ocl::handle<cl_mem>>
   class entry_proxy;
 
-  template<typename SCALARTYPE>
+  template<typename SCALARTYPE, typename H = viennacl::ocl::handle<cl_mem>>
   class const_entry_proxy;
 
   template<typename LHS, typename RHS, typename OP>
@@ -283,7 +291,7 @@ namespace viennacl
   template<typename SCALARTYPE>
   struct scalar_vector;
 
-  template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
+  template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t, typename Handle = viennacl::ocl::handle<cl_mem>>
   class vector_base;
 
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
@@ -376,6 +384,7 @@ namespace viennacl
 
   namespace backend
   {
+    template <typename OCL_Handle = viennacl::ocl::handle<cl_mem>>
     class mem_handle;
   }
 
@@ -1023,8 +1032,6 @@ namespace viennacl
     }
   }
 
-  /** @brief OpenCL backend. Manages platforms, contexts, buffers, kernels, etc. */
-  namespace ocl {}
 
   /** @brief Namespace containing many meta-functions. */
   namespace result_of {}
