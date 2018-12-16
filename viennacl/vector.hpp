@@ -107,7 +107,7 @@ private:
 template<class NumericT, unsigned int AlignmentV, typename OCLHandle>
 class const_vector_iterator
 {
-  typedef const_vector_iterator<NumericT, AlignmentV>    self_type;
+  typedef const_vector_iterator<NumericT, AlignmentV, OCLHandle>    self_type;
 public:
   typedef scalar<NumericT>            value_type;
   typedef vcl_size_t                size_type;
@@ -122,7 +122,7 @@ public:
     *   @param start  First index of the element in the vector pointed to be the iterator (for vector_range and vector_slice)
     *   @param stride Stride for the support of vector_slice
     */
-  const_vector_iterator(vector_base<NumericT> const & vec,
+  const_vector_iterator(vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, OCLHandle> const & vec,
                         size_type index,
                         size_type start = 0,
                         size_type stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {}
@@ -142,7 +142,7 @@ public:
   value_type operator*(void) const
   {
     value_type result;
-    result = const_entry_proxy<NumericT>(start_ + index_ * stride(), elements_);
+    result = const_entry_proxy<NumericT, OCLHandle>(start_ + index_ * stride(), elements_);
     return result;
   }
   self_type operator++(void) { ++index_; return *this; }
@@ -201,11 +201,11 @@ protected:
 * @tparam NumericT  The underlying floating point type (either float or double)
 * @tparam AlignmentV   Alignment of the underlying vector, @see vector
 */
-template<class NumericT, unsigned int AlignmentV>
-class vector_iterator : public const_vector_iterator<NumericT, AlignmentV>
+template<class NumericT, unsigned int AlignmentV, typename OCLHandle>
+class vector_iterator : public const_vector_iterator<NumericT, AlignmentV, OCLHandle>
 {
-  typedef const_vector_iterator<NumericT, AlignmentV>  base_type;
-  typedef vector_iterator<NumericT, AlignmentV>        self_type;
+  typedef const_vector_iterator<NumericT, AlignmentV, OCLHandle>  base_type;
+  typedef vector_iterator<NumericT, AlignmentV, OCLHandle>        self_type;
 public:
   typedef typename base_type::handle_type               handle_type;
   typedef typename base_type::size_type             size_type;
@@ -221,15 +221,15 @@ public:
     *   @param start  Offset from the beginning of the underlying vector (for ranges and slices)
     *   @param stride Stride for slices
     */
-  vector_iterator(vector_base<NumericT> & vec,
+  vector_iterator(vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, OCLHandle> & vec,
                   size_type index,
                   size_type start = 0,
                   size_type stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {}
   //vector_iterator(base_type const & b) : base_type(b) {}
 
-  entry_proxy<NumericT> operator*(void)
+  entry_proxy<NumericT, OCLHandle> operator*(void)
   {
-    return entry_proxy<NumericT>(base_type::start_ + base_type::index_ * base_type::stride(), elements_);
+    return entry_proxy<NumericT, OCLHandle>(base_type::start_ + base_type::index_ * base_type::stride(), elements_);
   }
 
   difference_type operator-(self_type const & other) const { difference_type result = base_type::index_; return (result - static_cast<difference_type>(other.index_)); }

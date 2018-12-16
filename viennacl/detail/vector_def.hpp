@@ -111,8 +111,8 @@ public:
   typedef viennacl::backend::mem_handle<OCLHandle>       handle_type;
   typedef SizeT                                          size_type;
   typedef DistanceT                                      difference_type;
-  typedef const_vector_iterator<NumericT, 1>              const_iterator;
-  typedef vector_iterator<NumericT, 1>                    iterator;
+  typedef const_vector_iterator<NumericT, 1, OCLHandle>              const_iterator;
+  typedef vector_iterator<NumericT, 1, OCLHandle>                    iterator;
 
   /** @brief Returns the length of the vector (cf. std::vector)  */
   size_type size() const { return size_; }

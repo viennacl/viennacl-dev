@@ -270,10 +270,10 @@ namespace viennacl
   template<typename LHS, typename RHS, typename OP>
   class vector_expression;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT>
+  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCLHandle = viennacl::ocl::handle<cl_mem>>
   class vector_iterator;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCL_HANDLE = viennacl::ocl::handle<cl_mem>>
+  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCLHandle = viennacl::ocl::handle<cl_mem>>
   class const_vector_iterator;
 
   template<typename SCALARTYPE>

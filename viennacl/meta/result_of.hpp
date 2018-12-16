@@ -339,14 +339,14 @@ struct cpu_value_type<double>
   typedef double    type;
 };
 
-template<typename T>
-struct cpu_value_type<viennacl::scalar<T> >
+template<typename T, typename H>
+struct cpu_value_type<viennacl::scalar<T, H> >
 {
   typedef T    type;
 };
 
-template<typename T>
-struct cpu_value_type<viennacl::vector_base<T> >
+template<typename T, typename H>
+struct cpu_value_type<viennacl::vector_base<T, vcl_size_t, vcl_ptrdiff_t, H> >
 {
   typedef T    type;
 };

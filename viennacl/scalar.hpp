@@ -346,7 +346,7 @@ private:
 template<class NumericT, typename H>
 class scalar
 {
-  typedef scalar<NumericT>         self_type;
+  typedef scalar<NumericT, H>         self_type;
 public:
   typedef viennacl::backend::mem_handle<H>                     handle_type;
   typedef vcl_size_t                                        size_type;
@@ -411,7 +411,7 @@ public:
   }
 
   /** @brief Assigns a vector entry. */
-  self_type & operator= (entry_proxy<NumericT> const & other)
+  self_type & operator= (entry_proxy<NumericT, H> const & other)
   {
     init_if_necessary(viennacl::traits::context(other));
     viennacl::backend::memory_copy(other.handle(), val_, other.index() * sizeof(NumericT), 0, sizeof(NumericT));
@@ -419,7 +419,7 @@ public:
   }
 
   /** @brief Assigns the value from another scalar. */
-  self_type & operator= (scalar<NumericT> const & other)
+  self_type & operator= (scalar<NumericT, H> const & other)
   {
     init_if_necessary(viennacl::traits::context(other));
     viennacl::backend::memory_copy(other.handle(), val_, 0, 0, sizeof(NumericT));
