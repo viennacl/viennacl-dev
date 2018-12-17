@@ -745,8 +745,8 @@ namespace viennacl
     void norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                      scalar<T> & result);
 
-    template<typename T>
-    void norm_2_cpu(vector_base<T> const & vec, T & result);
+    template<typename T, typename H=viennacl::ocl::handle<cl_mem>>
+    void norm_2_cpu(vector_base<T, vcl_size_t, vcl_ptrdiff_t, H> const & vec, T & result);
 
     template<typename LHS, typename RHS, typename OP, typename S2>
     void norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,

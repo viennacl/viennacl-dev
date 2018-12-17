@@ -37,15 +37,15 @@ namespace traits
 // Generic memory handle
 //
 /** @brief Returns the generic memory handle of an object. Non-const version. */
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
-viennacl::backend::mem_handle<H> & handle(T & obj)
+template<typename T>
+viennacl::backend::mem_handle<>  & handle(T & obj)
 {
   return obj.handle();
 }
 
 /** @brief Returns the generic memory handle of an object. Const-version. */
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
-viennacl::backend::mem_handle<H> const & handle(T const & obj)
+template<typename T>
+viennacl::backend::mem_handle<> const & handle(T const & obj)
 {
   return obj.handle();
 }
@@ -197,7 +197,7 @@ H & opencl_handle(T & obj)
 }
 
 /** @brief Generic helper routine for extracting the OpenCL handle of a ViennaCL object. Const version. */
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H>
 H const & opencl_handle(T const & obj)
 {
   return viennacl::traits::handle(obj).opencl_handle();
@@ -218,6 +218,12 @@ inline double    opencl_handle(double          val) { return val; }  //for unifi
 // for user-provided matrix-vector routines:
 template<typename LHS, typename NumericT>
 viennacl::ocl::handle<cl_mem> const & opencl_handle(viennacl::vector_expression<LHS, const vector_base<NumericT>, op_prod> const & obj)
+{
+  return viennacl::traits::handle(obj.rhs()).opencl_handle();
+}
+
+template<typename LHS, typename NumericT>
+viennacl::ocl::pooled_clmem_handle const & opencl_handle(viennacl::vector_expression<LHS, const vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, viennacl::ocl::pooled_clmem_handle>, op_prod> const & obj)
 {
   return viennacl::traits::handle(obj.rhs()).opencl_handle();
 }

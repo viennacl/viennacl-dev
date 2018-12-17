@@ -1232,9 +1232,9 @@ vector_tuple<ScalarT> tie(vector_base<ScalarT> & v0,
 * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR>
-void fast_copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
-               const const_vector_iterator<NumericT, AlignmentV> & gpu_end,
+template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR, typename H>
+void fast_copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
+               const const_vector_iterator<NumericT, AlignmentV, H> & gpu_end,
                CPU_ITERATOR cpu_begin )
 {
   if (gpu_begin != gpu_end)
@@ -1282,9 +1282,9 @@ void fast_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
 * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR>
-void async_copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
-                const const_vector_iterator<NumericT, AlignmentV> & gpu_end,
+template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR, typename H>
+void async_copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
+                const const_vector_iterator<NumericT, AlignmentV, H> & gpu_end,
                 CPU_ITERATOR cpu_begin )
 {
   if (gpu_begin != gpu_end)
@@ -1320,9 +1320,9 @@ void async_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
 * @param gpu_end    GPU constant iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR>
-void copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
-          const const_vector_iterator<NumericT, AlignmentV> & gpu_end,
+template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR, typename H>
+void copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
+          const const_vector_iterator<NumericT, AlignmentV, H> & gpu_end,
           CPU_ITERATOR cpu_begin )
 {
   assert(gpu_end - gpu_begin >= 0 && bool("Iterators incompatible"));
@@ -1342,14 +1342,14 @@ void copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
 * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR>
-void copy(const vector_iterator<NumericT, AlignmentV> & gpu_begin,
-          const vector_iterator<NumericT, AlignmentV> & gpu_end,
+template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR, typename H>
+void copy(const vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
+          const vector_iterator<NumericT, AlignmentV, H> & gpu_end,
           CPU_ITERATOR cpu_begin )
 
 {
-  viennacl::copy(const_vector_iterator<NumericT, AlignmentV>(gpu_begin),
-                 const_vector_iterator<NumericT, AlignmentV>(gpu_end),
+  viennacl::copy(const_vector_iterator<NumericT, AlignmentV, H>(gpu_begin),
+                 const_vector_iterator<NumericT, AlignmentV, H>(gpu_end),
                  cpu_begin);
 }
 
@@ -1398,10 +1398,10 @@ void copy(vector<NumericT, AlignmentV> const & gpu_vec,
 * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
 * @param gpu_begin  Output iterator for the gpu vector. The gpu iterator must be incrementable (cpu_end - cpu_begin) times, otherwise the result is undefined.
 */
-template<typename CPU_ITERATOR, typename NumericT, unsigned int AlignmentV>
+template<typename CPU_ITERATOR, typename NumericT, unsigned int AlignmentV, typename H>
 void fast_copy(CPU_ITERATOR const & cpu_begin,
                CPU_ITERATOR const & cpu_end,
-               vector_iterator<NumericT, AlignmentV> gpu_begin)
+               vector_iterator<NumericT, AlignmentV, H> gpu_begin)
 {
   if (cpu_end - cpu_begin > 0)
   {
@@ -1432,8 +1432,9 @@ void fast_copy(CPU_ITERATOR const & cpu_begin,
 * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
 * @param gpu_vec    The gpu vector.
 */
-template<typename CPUVECTOR, typename NumericT>
-void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
+template<typename CPUVECTOR, typename NumericT, typename H>
+void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT, vcl_size_t,
+    vcl_ptrdiff_t, H> & gpu_vec)
 {
   viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
 }

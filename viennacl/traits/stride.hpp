@@ -40,9 +40,9 @@ namespace traits
 //
 // inc: Increment for vectors. Defaults to 1
 //
-template<typename T>
-typename result_of::size_type< viennacl::vector_base<T> >::type
-stride(viennacl::vector_base<T> const & s) { return s.stride(); }
+template<typename T, typename H>
+typename result_of::size_type< viennacl::vector_base<T, vcl_size_t, vcl_ptrdiff_t, H> >::type
+stride(viennacl::vector_base<T, vcl_size_t, vcl_ptrdiff_t, H> const & s) { return s.stride(); }
 
 //
 // inc1: Row increment for matrices. Defaults to 1

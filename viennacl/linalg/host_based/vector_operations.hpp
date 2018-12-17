@@ -271,8 +271,8 @@ void avbv_v(vector_base<NumericT> & vec1,
 * @param alpha  The value to be assigned
 * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
 */
-template<typename NumericT>
-void vector_assign(vector_base<NumericT> & vec1, const NumericT & alpha, bool up_to_internal_size = false)
+template<typename NumericT, typename H>
+void vector_assign(vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, H> & vec1, const NumericT & alpha, bool up_to_internal_size = false)
 {
   typedef NumericT       value_type;
 

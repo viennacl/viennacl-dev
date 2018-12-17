@@ -242,8 +242,8 @@ void avbv_v(vector_base<T> & vec1,
 * @param alpha  The value to be assigned
 * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
 */
-template <typename T>
-void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
+template <typename T, typename H>
+void vector_assign(vector_base<T, vcl_size_t, vcl_ptrdiff_t, H> & vec1, const T & alpha, bool up_to_internal_size = false)
 {
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
   viennacl::linalg::opencl::kernels::vector<T>::init(ctx);
@@ -788,9 +788,9 @@ void inner_prod_cpu(vector_base<T> const & vec1,
 * @param partial_result The result scalar
 * @param norm_id        Norm selector. 0: norm_inf, 1: norm_1, 2: norm_2
 */
-template <typename T>
-void norm_reduction_impl(vector_base<T> const & vec,
-                         vector_base<T> & partial_result,
+template <typename T, typename H1, typename H2>
+void norm_reduction_impl(vector_base<T, vcl_size_t, vcl_ptrdiff_t, H1> const & vec,
+                         vector_base<T, vcl_size_t, vcl_ptrdiff_t, H2> & partial_result,
                           cl_uint norm_id)
 {
   assert(viennacl::traits::opencl_handle(vec).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -918,8 +918,8 @@ void norm_2_impl(vector_base<T> const & vec,
 * @param vec The vector
 * @param result The result scalar
 */
-template <typename T>
-void norm_2_cpu(vector_base<T> const & vec,
+template <typename T, typename H>
+void norm_2_cpu(vector_base<T, vcl_size_t, vcl_ptrdiff_t, H> const & vec,
                 T & result)
 {
   std::cout << "norm_2_kernel asked for a vector.\n";

@@ -112,8 +112,8 @@ namespace viennacl
     norm_2(viennacl::vector_base<ScalarType, vcl_size_t, vcl_ptrdiff_t, H> const & v)
     {
        //std::cout << "viennacl .. " << std::endl;
-      return viennacl::scalar_expression< const viennacl::vector_base<ScalarType>,
-                                          const viennacl::vector_base<ScalarType>,
+      return viennacl::scalar_expression< const viennacl::vector_base<ScalarType, vcl_size_t, vcl_ptrdiff_t, H>,
+                                          const viennacl::vector_base<ScalarType, vcl_size_t, vcl_ptrdiff_t, H>,
                                           viennacl::op_norm_2 >(v, v);
     }
 
