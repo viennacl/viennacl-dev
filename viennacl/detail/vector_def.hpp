@@ -100,10 +100,10 @@ struct zero_vector : public scalar_vector<NumericT>
   *
   * @tparam NumericT   The floating point type, either 'float' or 'double'
   */
-template<class NumericT, typename SizeT /* see forwards.h for default type */, typename DistanceT /* see forwards.h for default type */, typename OCLHandle>
+template<class NumericT, typename OCLHandle, typename SizeT /* see forwards.h for default type */, typename DistanceT /* see forwards.h for default type */>
 class vector_base
 {
-  typedef vector_base<NumericT, SizeT, DistanceT, OCLHandle>         self_type;
+  typedef vector_base<NumericT, OCLHandle, SizeT, DistanceT>         self_type;
 
 public:
   typedef scalar<NumericT>                                value_type;

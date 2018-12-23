@@ -291,7 +291,7 @@ namespace viennacl
   template<typename SCALARTYPE>
   struct scalar_vector;
 
-  template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t, typename Handle = viennacl::ocl::handle<cl_mem>>
+  template<class SCALARTYPE, typename Handle = viennacl::ocl::handle<cl_mem>, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class vector_base;
 
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1, typename OCLHandle = viennacl::ocl::handle<cl_mem>>
@@ -746,7 +746,7 @@ namespace viennacl
                      scalar<T> & result);
 
     template<typename T, typename H=viennacl::ocl::handle<cl_mem>>
-    void norm_2_cpu(vector_base<T, vcl_size_t, vcl_ptrdiff_t, H> const & vec, T & result);
+    void norm_2_cpu(vector_base<T, H, vcl_size_t, vcl_ptrdiff_t> const & vec, T & result);
 
     template<typename LHS, typename RHS, typename OP, typename S2>
     void norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
