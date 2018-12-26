@@ -26,6 +26,7 @@
 #include <vector>
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/handle.hpp"
+#include "viennacl/ocl/kernel.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
 
 namespace viennacl
