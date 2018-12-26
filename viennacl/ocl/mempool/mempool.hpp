@@ -26,17 +26,17 @@ namespace ocl
   class memory_pool : mempool::noncopyable
   {
     public:
-      typedef cl_mem pointer_type;
       typedef size_t size_type;
 
     private:
       typedef uint32_t bin_nr_t;
-      typedef std::vector<pointer_type> bin_t;
+      typedef std::vector<cl_mem> bin_t;
 
       typedef std::map<bin_nr_t, bin_t> container_t;
       container_t m_container;
       typedef typename container_t::value_type bin_pair_t;
 
+      std::map<cl_mem, unsigned> m_reference_count; // ref counter
       std::unique_ptr<Allocator> m_allocator;
 
       // A held block is one that's been released by the application, but that
@@ -145,7 +145,7 @@ namespace ocl
       { }
 
     public:
-      pointer_type allocate(size_type size)
+      cl_mem allocate(size_type size)
       {
         bin_nr_t bin_nr = bin_number(size);
         bin_t &bin = get_bin(bin_nr);
@@ -197,7 +197,7 @@ namespace ocl
         throw viennacl::ocl::mem_object_allocation_failure();
       }
 
-      void free(pointer_type p, size_type size)
+      void free(cl_mem p, size_type size)
       {
 
         std::cout << "[mempool]: freeing the memory " <<
@@ -270,22 +270,55 @@ namespace ocl
         return false;
       }
 
-    private:
-      pointer_type get_from_allocator(size_type alloc_sz)
+      void increment_ref_counter(cl_mem p, size_type s)
       {
-        pointer_type result = m_allocator->allocate(alloc_sz);
+        if(m_reference_count.find(p) != m_reference_count.end())
+        {
+          std::cerr << "Did not find a memory to reference count.\n";
+          throw std::exception();
+        }
+
+        ++m_reference_count[p];
+      }
+
+      void decrement_ref_counter(cl_mem p, size_type s)
+      {
+        if(m_reference_count.find(p) != m_reference_count.end())
+        {
+          std::cerr << "Did not find a memory to reference count.\n";
+          throw std::exception();
+        }
+
+        --m_reference_count[p];
+
+        if(m_reference_count[p] == 0)
+        {
+          // this is not longer useful => free it
+          free(p, s);
+          
+          // no longer need to store this in the map
+          m_reference_count.erase(p);
+        }
+      }
+
+    private:
+      cl_mem get_from_allocator(size_type alloc_sz)
+      {
+        cl_mem result = m_allocator->allocate(alloc_sz);
         ++m_active_blocks;
 
         return result;
       }
 
-      pointer_type pop_block_from_bin(bin_t &bin, size_type size)
+      cl_mem pop_block_from_bin(bin_t &bin, size_type size)
       {
-        pointer_type result = bin.back();
+        cl_mem result = bin.back();
         bin.pop_back();
 
         dec_held_blocks();
         ++m_active_blocks;
+
+        m_reference_count[result] = 1;
 
         return result;
       }
@@ -294,4 +327,3 @@ namespace ocl
 }
 
 #endif
-
