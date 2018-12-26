@@ -122,7 +122,7 @@ public:
     *   @param start  First index of the element in the vector pointed to be the iterator (for vector_range and vector_slice)
     *   @param stride Stride for the support of vector_slice
     */
-  const_vector_iterator(vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, OCLHandle> const & vec,
+  const_vector_iterator(vector_base<NumericT, OCLHandle> const & vec,
                         size_type index,
                         size_type start = 0,
                         size_type stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {}
@@ -221,7 +221,7 @@ public:
     *   @param start  Offset from the beginning of the underlying vector (for ranges and slices)
     *   @param stride Stride for slices
     */
-  vector_iterator(vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, OCLHandle> & vec,
+  vector_iterator(vector_base<NumericT, OCLHandle> & vec,
                   size_type index,
                   size_type start = 0,
                   size_type stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {}
@@ -949,10 +949,10 @@ void vector_base<NumericT, OCLHandle, SizeT, DistanceT>::resize_impl(size_type n
 
 
 template<class NumericT, unsigned int AlignmentV, typename OCLHandle>
-class vector : public vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, OCLHandle>
+class vector : public vector_base<NumericT, OCLHandle>
 {
-  typedef vector<NumericT, AlignmentV>                                 self_type;
-  typedef vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, OCLHandle>  base_type;
+  typedef vector<NumericT, AlignmentV, OCLHandle>                                 self_type;
+  typedef vector_base<NumericT, OCLHandle>  base_type;
 
 public:
   typedef typename base_type::size_type                  size_type;
@@ -1265,8 +1265,8 @@ void fast_copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
 * @param gpu_vec    A gpu vector.
 * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
 */
-template<typename NumericT, typename CPUVECTOR>
-void fast_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
+template<typename NumericT, typename H, typename CPUVECTOR>
+void fast_copy(vector_base<NumericT, H> const & gpu_vec, CPUVECTOR & cpu_vec )
 {
   viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
 }
@@ -1433,8 +1433,7 @@ void fast_copy(CPU_ITERATOR const & cpu_begin,
 * @param gpu_vec    The gpu vector.
 */
 template<typename CPUVECTOR, typename NumericT, typename H>
-void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT, vcl_size_t,
-    vcl_ptrdiff_t, H> & gpu_vec)
+void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT, H> & gpu_vec)
 {
   viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
 }

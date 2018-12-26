@@ -184,7 +184,7 @@ namespace viennacl
     * @param up_to_internal_size    Whether 'alpha' should be written to padded memory as well. This is used for setting all entries to zero, including padded memory.
     */
     template<typename T, typename H>
-    void vector_assign(vector_base<T, vcl_size_t, vcl_ptrdiff_t, H> & vec1, const T & alpha, bool up_to_internal_size = false)
+    void vector_assign(vector_base<T, H> & vec1, const T & alpha, bool up_to_internal_size = false)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
@@ -808,8 +808,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void norm_2_cpu(vector_base<T> const & vec,
+    template<typename T, typename H>
+    void norm_2_cpu(vector_base<T, H> const & vec,
                     T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())

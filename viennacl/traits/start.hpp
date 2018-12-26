@@ -47,9 +47,9 @@ start(T const & obj)
 }
 
 //ViennaCL vector leads to start index 0:
-template<typename ScalarType, unsigned int AlignmentV>
-typename result_of::size_type<viennacl::vector<ScalarType, AlignmentV> >::type
-start(viennacl::vector<ScalarType, AlignmentV> const &)
+template<typename ScalarType, unsigned int AlignmentV, typename H>
+typename result_of::size_type<viennacl::vector<ScalarType, AlignmentV, H> >::type
+start(viennacl::vector<ScalarType, AlignmentV, H> const &)
 {
   return 0;
 }

@@ -41,8 +41,7 @@ namespace viennacl
     /** @brief A tag denoting the default OpenCL device type (SDK-specific) */
     struct default_tag {};
 
-
-    template<class OCL_TYPE>
+    template <class OCL_TYPE>
     class handle;
 
     class kernel;

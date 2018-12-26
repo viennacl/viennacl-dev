@@ -38,14 +38,14 @@ namespace traits
 //
 /** @brief Returns the generic memory handle of an object. Non-const version. */
 template<typename T>
-viennacl::backend::mem_handle<>  & handle(T & obj)
+typename T::handle_type  & handle(T & obj)
 {
   return obj.handle();
 }
 
 /** @brief Returns the generic memory handle of an object. Const-version. */
 template<typename T>
-viennacl::backend::mem_handle<> const & handle(T const & obj)
+typename T::handle_type const & handle(T const & obj)
 {
   return obj.handle();
 }
@@ -184,24 +184,36 @@ inline viennacl::tools::shared_ptr<char> const & ram_handle(viennacl::backend::m
   return h.ram_handle();
 }
 /** \endcond */
-
 //
 // OpenCL handle extraction
 //
 #ifdef VIENNACL_WITH_OPENCL
 /** @brief Generic helper routine for extracting the OpenCL handle of a ViennaCL object. Non-const version. */
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
-H & opencl_handle(T & obj)
+template <typename T>
+viennacl::ocl::pooled_clmem_handle & opencl_handle(viennacl::vector_base<T, viennacl::ocl::pooled_clmem_handle> & obj)
+{
+  return viennacl::traits::handle(obj).opencl_handle();
+}
+
+template <typename T>
+viennacl::ocl::pooled_clmem_handle const & opencl_handle(viennacl::vector_base<T, viennacl::ocl::pooled_clmem_handle> const & obj)
+{
+  return viennacl::traits::handle(obj).opencl_handle();
+}
+
+template<typename T>
+viennacl::ocl::handle<cl_mem> & opencl_handle(T & obj)
 {
   return viennacl::traits::handle(obj).opencl_handle();
 }
 
 /** @brief Generic helper routine for extracting the OpenCL handle of a ViennaCL object. Const version. */
-template<typename T, typename H>
-H const & opencl_handle(T const & obj)
+template<typename T>
+viennacl::ocl::handle<cl_mem> const & opencl_handle(T const & obj)
 {
   return viennacl::traits::handle(obj).opencl_handle();
 }
+
 
 inline cl_char   opencl_handle(char            val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 inline cl_short  opencl_handle(short           val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
@@ -223,7 +235,7 @@ viennacl::ocl::handle<cl_mem> const & opencl_handle(viennacl::vector_expression<
 }
 
 template<typename LHS, typename NumericT>
-viennacl::ocl::pooled_clmem_handle const & opencl_handle(viennacl::vector_expression<LHS, const vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, viennacl::ocl::pooled_clmem_handle>, op_prod> const & obj)
+viennacl::ocl::pooled_clmem_handle const & opencl_handle(viennacl::vector_expression<LHS, const vector_base<NumericT, viennacl::ocl::pooled_clmem_handle>, op_prod> const & obj)
 {
   return viennacl::traits::handle(obj.rhs()).opencl_handle();
 }

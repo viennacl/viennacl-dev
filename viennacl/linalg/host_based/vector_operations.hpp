@@ -272,7 +272,7 @@ void avbv_v(vector_base<NumericT> & vec1,
 * @param up_to_internal_size  Specifies whether alpha should also be written to padded memory (mostly used for clearing the whole buffer).
 */
 template<typename NumericT, typename H>
-void vector_assign(vector_base<NumericT, vcl_size_t, vcl_ptrdiff_t, H> & vec1, const NumericT & alpha, bool up_to_internal_size = false)
+void vector_assign(vector_base<NumericT, H> & vec1, const NumericT & alpha, bool up_to_internal_size = false)
 {
   typedef NumericT       value_type;
 
@@ -817,8 +817,8 @@ VIENNACL_NORM_2_IMPL_2(double, double)
 * @param vec1 The vector
 * @param result The result scalar
 */
-template<typename NumericT, typename ScalarT>
-void norm_2_impl(vector_base<NumericT> const & vec1,
+template<typename NumericT, typename H, typename ScalarT>
+void norm_2_impl(vector_base<NumericT, H> const & vec1,
                  ScalarT & result)
 {
   typedef NumericT       value_type;

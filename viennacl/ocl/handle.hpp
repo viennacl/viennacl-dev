@@ -33,6 +33,7 @@
 #include <iostream>
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/error.hpp"
+#include "viennacl/forwards.h"
 
 namespace viennacl
 {
@@ -192,12 +193,12 @@ namespace viennacl
 
         const OCL_TYPE & get() const { return h_; }
 
-        viennacl::ocl::context const & context() const
+        virtual viennacl::ocl::context const & context() const
         {
           assert(p_context_ != NULL && bool("Logic error: Accessing dangling context from handle."));
           return *p_context_;
         }
-        void context(viennacl::ocl::context const & c) { p_context_ = &c; }
+        virtual void context(viennacl::ocl::context const & c) { p_context_ = &c; }
 
 
         /** @brief Swaps the OpenCL handle of two handle objects */
@@ -223,6 +224,88 @@ namespace viennacl
         OCL_TYPE h_;
         viennacl::ocl::context const * p_context_;
     };
+
+  // {{{ pooled handle
+  //
+
+  class pooled_clmem_handle: public handle<cl_mem>
+  {
+    protected:
+      typedef handle<cl_mem> super;
+
+    public:
+      pooled_clmem_handle() : super(), m_size(0), m_ref(0) {}
+      pooled_clmem_handle(const cl_mem & something, viennacl::ocl::context const & c, vcl_size_t & _s, uint32_t _r=1) : super(something, c), m_size(_s), m_ref(_r)
+      {if(h_!=0)
+        {
+          inc();
+          cl_int err = clRetainMemObject(something);
+          VIENNACL_ERR_CHECK(err);
+        }
+      }
+      pooled_clmem_handle(const pooled_clmem_handle & other) : super(other), m_size(other.m_size), m_ref(other.m_ref)
+      {
+        if(h_!=0)
+          inc();
+      }
+
+      pooled_clmem_handle & operator=(const pooled_clmem_handle & other)
+      {
+        if (h_ != 0)
+          dec();
+        h_         = other.h_;
+        p_context_ = other.p_context_;
+        m_size     = other.m_size;
+        m_ref     = other.m_ref;
+        inc();
+        return *this;
+      }
+
+      pooled_clmem_handle & operator=(const cl_mem & something)
+      {
+        std::cerr << "[pooled_handle]: Pooled handle needs to know about size\n";
+        throw std::exception();
+        return *this;
+      }
+
+      /** @brief Swaps the OpenCL handle of two handle objects */
+      pooled_clmem_handle & swap(pooled_clmem_handle & other)
+      {
+        cl_mem tmp = other.h_;
+        other.h_ = this->h_;
+        this->h_ = tmp;
+
+        viennacl::ocl::context const * tmp2 = other.p_context_;
+        other.p_context_ = this->p_context_;
+        this->p_context_ = tmp2;
+
+        size_t tmp3 = other.m_size;
+        other.m_size = this->m_size;
+        this->m_size = tmp3;
+
+        uint32_t tmp4 = other.m_ref;
+        other.m_ref = this->m_ref;
+        this->m_ref = tmp4;
+
+        return *this;
+      }
+
+      void inc()
+      {
+        cl_int err = clRetainMemObject(h_);
+        VIENNACL_ERR_CHECK(err);
+        std::cout << "[pooled_handle]: Incrementing counter." << std::endl;
+        ++m_ref;
+      }
+      virtual void dec();
+      virtual ~pooled_clmem_handle() {
+        if (h_!=0) dec();
+      }
+
+    private:
+      size_t m_size;
+      uint32_t m_ref;
+  };
 
 
   } //namespace ocl

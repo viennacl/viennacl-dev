@@ -223,6 +223,30 @@ namespace viennacl
         VIENNACL_ERR_CHECK(err);
       }
 
+
+      //forward handles directly:
+      /** @brief Sets an OpenCL object at the provided position */
+      template<class CL_TYPE>
+      void arg(unsigned int pos, viennacl::ocl::handle<CL_TYPE> const & h)
+      {
+        CL_TYPE temp = h.get();
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+        std::cout << "ViennaCL: Setting handle kernel argument " << temp << " at pos " << pos << " for kernel " << name_ << std::endl;
+        #endif
+        cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(CL_TYPE), (void*)&temp);
+        VIENNACL_ERR_CHECK(err);
+      }
+
+      void arg(unsigned int pos, viennacl::ocl::pooled_clmem_handle const & h)
+      {
+        cl_mem temp = h.get();
+        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
+        std::cout << "ViennaCL: Setting handle kernel argument " << temp << " at pos " << pos << " for kernel " << name_ << std::endl;
+        #endif
+        cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(cl_mem), (void*)&temp);
+        VIENNACL_ERR_CHECK(err);
+      }
+
       //generic handling: call .handle() member
       /** @brief Sets an OpenCL memory object at the provided position */
       template<class VCL_TYPE>
@@ -235,19 +259,6 @@ namespace viennacl
         std::cout << "ViennaCL: Setting generic kernel argument " << temp << " at pos " << pos << " for kernel " << name_ << std::endl;
         #endif
         cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(cl_mem), (void*)&temp);
-        VIENNACL_ERR_CHECK(err);
-      }
-
-      //forward handles directly:
-      /** @brief Sets an OpenCL object at the provided position */
-      template<class CL_TYPE>
-      void arg(unsigned int pos, viennacl::ocl::handle<CL_TYPE> const & h)
-      {
-        CL_TYPE temp = h.get();
-        #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_KERNEL)
-        std::cout << "ViennaCL: Setting handle kernel argument " << temp << " at pos " << pos << " for kernel " << name_ << std::endl;
-        #endif
-        cl_int err = clSetKernelArg(handle_.get(), pos, sizeof(CL_TYPE), (void*)&temp);
         VIENNACL_ERR_CHECK(err);
       }
 

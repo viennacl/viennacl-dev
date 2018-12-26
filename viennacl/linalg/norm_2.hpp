@@ -106,14 +106,14 @@ namespace viennacl
     // VIENNACL
     //
     template< typename ScalarType, typename H=viennacl::ocl::handle<cl_mem> >
-    viennacl::scalar_expression< const viennacl::vector_base<ScalarType, vcl_size_t, vcl_ptrdiff_t, H>,
-                                 const viennacl::vector_base<ScalarType, vcl_size_t, vcl_ptrdiff_t, H>,
+    viennacl::scalar_expression< const viennacl::vector_base<ScalarType, H>,
+                                 const viennacl::vector_base<ScalarType, H>,
                                  viennacl::op_norm_2 >
-    norm_2(viennacl::vector_base<ScalarType, vcl_size_t, vcl_ptrdiff_t, H> const & v)
+    norm_2(viennacl::vector_base<ScalarType, H> const & v)
     {
        //std::cout << "viennacl .. " << std::endl;
-      return viennacl::scalar_expression< const viennacl::vector_base<ScalarType, vcl_size_t, vcl_ptrdiff_t, H>,
-                                          const viennacl::vector_base<ScalarType, vcl_size_t, vcl_ptrdiff_t, H>,
+      return viennacl::scalar_expression< const viennacl::vector_base<ScalarType, H>,
+                                          const viennacl::vector_base<ScalarType, H>,
                                           viennacl::op_norm_2 >(v, v);
     }
 
