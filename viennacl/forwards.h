@@ -316,9 +316,9 @@ namespace viennacl
             const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_end,
             const_vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin);
 
-  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
-  void fast_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
-                 const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
+  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename H, typename CPU_ITERATOR>
+  void fast_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT, H> & gpu_begin,
+                 const const_vector_iterator<SCALARTYPE, ALIGNMENT, H> & gpu_end,
                  CPU_ITERATOR cpu_begin );
 
   template<typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>

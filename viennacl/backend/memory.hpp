@@ -293,7 +293,7 @@ namespace backend
   * @param ptr                Location in main RAM where to read data should be written to
   * @param async              Whether the operation should be asynchronous
   */
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H>
   inline void memory_read(mem_handle<H> const & src_buffer,
                           vcl_size_t src_offset,
                           vcl_size_t bytes_to_read,

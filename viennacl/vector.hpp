@@ -1232,7 +1232,7 @@ vector_tuple<ScalarT> tie(vector_base<ScalarT> & v0,
 * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR, typename H>
+template<typename NumericT, unsigned int AlignmentV, typename H, typename CPU_ITERATOR>
 void fast_copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
                const const_vector_iterator<NumericT, AlignmentV, H> & gpu_end,
                CPU_ITERATOR cpu_begin )
@@ -1265,7 +1265,7 @@ void fast_copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
 * @param gpu_vec    A gpu vector.
 * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
 */
-template<typename NumericT, typename H, typename CPUVECTOR>
+template<typename NumericT, class H, typename CPUVECTOR>
 void fast_copy(vector_base<NumericT, H> const & gpu_vec, CPUVECTOR & cpu_vec )
 {
   viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
