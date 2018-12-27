@@ -159,7 +159,9 @@ namespace ocl
 
           cl_mem result = pop_block_from_bin(bin, size);
           assert(m_reference_count.find(result) == m_reference_count.end() && bool("Memory already registered in reference counter."));
-          m_reference_count[result] = 1;
+          m_reference_count[result] = 0;
+          cl_int err = clRetainMemObject(result);
+          VIENNACL_ERR_CHECK(err);
 
           return result;
         }
@@ -175,7 +177,10 @@ namespace ocl
           cl_mem result = get_from_allocator(alloc_sz);
 
           assert(m_reference_count.find(result) == m_reference_count.end() && bool("Memory already registered in reference counter."));
-          m_reference_count[result] = 1;
+
+          cl_int err = clRetainMemObject(result);
+          VIENNACL_ERR_CHECK(err);
+          m_reference_count[result] = 0;
 
           return result;
         }
@@ -262,6 +267,7 @@ namespace ocl
 
       void increment_ref_counter(cl_mem p, size_type s)
       {
+        std::cout << "[mempool]: Incrementing for " << p << std::endl;
         if(m_reference_count.find(p) == m_reference_count.end())
         {
           std::cerr << "Did not find a memory to reference count.\n";
@@ -273,6 +279,7 @@ namespace ocl
 
       void decrement_ref_counter(cl_mem p, size_type s)
       {
+        std::cout << "[mempool]: Decrementing for " << p << std::endl;
         if(m_reference_count.find(p) == m_reference_count.end())
         {
           std::cerr << "Did not find a memory to reference count.\n";
