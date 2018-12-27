@@ -320,11 +320,16 @@ public:
     return mem;
   }
 
-  /// [KK]: TODOTODOTODOTODO
-
-  void deallocate_memory_in_pool(cl_mem p, size_t size) const
+  /// [KK]: TODOTODOTODOTODO Documentation
+  void decrement_mem_ref_counter(cl_mem p, vcl_size_t s) const
   {
-    get_mempool()->free(p, size);
+    get_mempool()->decrement_ref_counter(p, s);
+  }
+
+
+  void increment_mem_ref_counter(cl_mem p, vcl_size_t s) const
+  {
+    get_mempool()->increment_ref_counter(p, s);
   }
 
 
@@ -998,17 +1003,15 @@ cl_mem cl_immediate_allocator::allocate(size_t s)
 
 // {{{ pooled handle dec
 
+void pooled_clmem_handle::inc()
+{
+  p_context_->increment_mem_ref_counter(h_, m_size);
+}
+
+
 void pooled_clmem_handle::dec()
 {
-  std::cout << "[pooled_handle]: Decrementing ref counter of value " << m_ref << std::endl;
-  if(m_ref == 0) {
-    std::cerr << "[pooled_handle]: Destroying an already destroyed memory object." << std::endl;
-    throw std::exception();
-  }
-  --m_ref;
-  if(m_ref == 0) {
-    p_context_->deallocate_memory_in_pool(h_, m_size);
-  }
+  p_context_->decrement_mem_ref_counter(h_, m_size);
 }
 
 // }}}

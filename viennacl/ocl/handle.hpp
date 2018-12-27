@@ -234,8 +234,8 @@ namespace viennacl
       typedef handle<cl_mem> super;
 
     public:
-      pooled_clmem_handle() : super(), m_size(0), m_ref(0) {}
-      pooled_clmem_handle(const cl_mem & something, viennacl::ocl::context const & c, vcl_size_t & _s, uint32_t _r=1) : super(something, c), m_size(_s), m_ref(_r)
+      pooled_clmem_handle() : super(), m_size(0) {}
+      pooled_clmem_handle(const cl_mem & something, viennacl::ocl::context const & c, vcl_size_t & _s) : super(something, c), m_size(_s)
       {if(h_!=0)
         {
           inc();
@@ -243,7 +243,7 @@ namespace viennacl
           VIENNACL_ERR_CHECK(err);
         }
       }
-      pooled_clmem_handle(const pooled_clmem_handle & other) : super(other), m_size(other.m_size), m_ref(other.m_ref)
+      pooled_clmem_handle(const pooled_clmem_handle & other) : super(other), m_size(other.m_size)
       {
         if(h_!=0)
           inc();
@@ -256,7 +256,6 @@ namespace viennacl
         h_         = other.h_;
         p_context_ = other.p_context_;
         m_size     = other.m_size;
-        m_ref     = other.m_ref;
         inc();
         return *this;
       }
@@ -283,20 +282,10 @@ namespace viennacl
         other.m_size = this->m_size;
         this->m_size = tmp3;
 
-        uint32_t tmp4 = other.m_ref;
-        other.m_ref = this->m_ref;
-        this->m_ref = tmp4;
-
         return *this;
       }
 
-      void inc()
-      {
-        cl_int err = clRetainMemObject(h_);
-        VIENNACL_ERR_CHECK(err);
-        std::cout << "[pooled_handle]: Incrementing counter." << std::endl;
-        ++m_ref;
-      }
+      virtual void inc();
       virtual void dec();
       virtual ~pooled_clmem_handle() {
         if (h_!=0) dec();
@@ -304,7 +293,6 @@ namespace viennacl
 
     private:
       size_t m_size;
-      uint32_t m_ref;
   };
 
 

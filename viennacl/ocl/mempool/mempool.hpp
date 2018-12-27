@@ -156,7 +156,12 @@ namespace ocl
             std::cout
               << "[pool] allocation of size " << size << " served from bin " << bin_nr
               << " which contained " << bin.size() << " entries" << std::endl;
-          return pop_block_from_bin(bin, size);
+
+          cl_mem result = pop_block_from_bin(bin, size);
+          assert(m_reference_count.find(result) == m_reference_count.end() && bool("Memory already registered in reference counter."));
+          m_reference_count[result] = 1;
+
+          return result;
         }
 
         size_type alloc_sz = alloc_size(bin_nr);
@@ -166,34 +171,19 @@ namespace ocl
         if (m_trace)
           std::cout << "[pool] allocation of size " << size << " required new memory" << std::endl;
 
-        try { return get_from_allocator(alloc_sz); }
+        try {
+          cl_mem result = get_from_allocator(alloc_sz);
+
+          assert(m_reference_count.find(result) == m_reference_count.end() && bool("Memory already registered in reference counter."));
+          m_reference_count[result] = 1;
+
+          return result;
+        }
         catch (viennacl::ocl::mem_object_allocation_failure &e)
         {
             throw;
         }
 
-        if (m_trace)
-          std::cout << "[pool] allocation triggered OOM, running GC" << std::endl;
-
-        // m_allocator->try_release_blocks();
-        if (bin.size())
-          return pop_block_from_bin(bin, size);
-
-        if (m_trace)
-          std::cout << "[pool] allocation still OOM after GC" << std::endl;
-
-        while (try_to_free_memory())
-        {
-          try { return get_from_allocator(alloc_sz); }
-          catch (viennacl::ocl::mem_object_allocation_failure &e)
-          {
-              throw;
-          }
-        }
-
-        std::cerr << (
-            "memory_pool::allocate "
-            "failed to free memory for allocation\n");
         throw viennacl::ocl::mem_object_allocation_failure();
       }
 
@@ -272,7 +262,7 @@ namespace ocl
 
       void increment_ref_counter(cl_mem p, size_type s)
       {
-        if(m_reference_count.find(p) != m_reference_count.end())
+        if(m_reference_count.find(p) == m_reference_count.end())
         {
           std::cerr << "Did not find a memory to reference count.\n";
           throw std::exception();
@@ -283,7 +273,7 @@ namespace ocl
 
       void decrement_ref_counter(cl_mem p, size_type s)
       {
-        if(m_reference_count.find(p) != m_reference_count.end())
+        if(m_reference_count.find(p) == m_reference_count.end())
         {
           std::cerr << "Did not find a memory to reference count.\n";
           throw std::exception();
@@ -317,8 +307,6 @@ namespace ocl
 
         dec_held_blocks();
         ++m_active_blocks;
-
-        m_reference_count[result] = 1;
 
         return result;
       }
