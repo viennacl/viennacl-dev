@@ -297,7 +297,7 @@ namespace viennacl
   template<class SCALARTYPE, unsigned int ALIGNMENT = 1, typename OCLHandle = viennacl::ocl::handle<cl_mem>>
   class vector;
 
-  template<typename ScalarT>
+  template<typename ScalarT, typename H = viennacl::ocl::handle<cl_mem>>
   class vector_tuple;
 
   //the following forwards are needed for GMRES

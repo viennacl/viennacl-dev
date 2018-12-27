@@ -1071,10 +1071,10 @@ public:
 }; //vector
 
 /** @brief Tuple class holding pointers to multiple vectors. Mainly used as a temporary object returned from viennacl::tie(). */
-template<typename ScalarT>
+template<typename ScalarT, typename H>
 class vector_tuple
 {
-  typedef vector_base<ScalarT>   VectorType;
+  typedef vector_base<ScalarT, H>   VectorType;
 
 public:
   // 2 vectors
@@ -1153,65 +1153,65 @@ private:
 };
 
 // 2 args
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1) { return vector_tuple<ScalarT>(v0, v1); }
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> const & v0, vector_base<ScalarT, H> const & v1) { return vector_tuple<ScalarT, H>(v0, v1); }
 
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1) { return vector_tuple<ScalarT>(v0, v1); }
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H>       & v0, vector_base<ScalarT, H>       & v1) { return vector_tuple<ScalarT, H>(v0, v1); }
 
 // 3 args
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> const & v0, vector_base<ScalarT, H> const & v1, vector_base<ScalarT, H> const & v2) { return vector_tuple<ScalarT, H>(v0, v1, v2); }
 
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H>       & v0, vector_base<ScalarT, H>       & v1, vector_base<ScalarT, H>       & v2) { return vector_tuple<ScalarT, H>(v0, v1, v2); }
 
 // 4 args
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2, vector_base<ScalarT> const & v3)
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> const & v0, vector_base<ScalarT, H> const & v1, vector_base<ScalarT, H> const & v2, vector_base<ScalarT, H> const & v3)
 {
-  return vector_tuple<ScalarT>(v0, v1, v2, v3);
+  return vector_tuple<ScalarT, H>(v0, v1, v2, v3);
 }
 
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2, vector_base<ScalarT>       & v3)
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H>       & v0, vector_base<ScalarT, H>       & v1, vector_base<ScalarT, H>       & v2, vector_base<ScalarT, H>       & v3)
 {
-  return vector_tuple<ScalarT>(v0, v1, v2, v3);
+  return vector_tuple<ScalarT, H>(v0, v1, v2, v3);
 }
 
 // 5 args
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0,
-                          vector_base<ScalarT> const & v1,
-                          vector_base<ScalarT> const & v2,
-                          vector_base<ScalarT> const & v3,
-                          vector_base<ScalarT> const & v4)
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> const & v0,
+                          vector_base<ScalarT, H> const & v1,
+                          vector_base<ScalarT, H> const & v2,
+                          vector_base<ScalarT, H> const & v3,
+                          vector_base<ScalarT, H> const & v4)
 {
-  typedef vector_base<ScalarT> const *       VectorPointerType;
+  typedef vector_base<ScalarT, H> const *       VectorPointerType;
   std::vector<VectorPointerType> vec(5);
   vec[0] = &v0;
   vec[1] = &v1;
   vec[2] = &v2;
   vec[3] = &v3;
   vec[4] = &v4;
-  return vector_tuple<ScalarT>(vec);
+  return vector_tuple<ScalarT, H>(vec);
 }
 
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> & v0,
-                          vector_base<ScalarT> & v1,
-                          vector_base<ScalarT> & v2,
-                          vector_base<ScalarT> & v3,
-                          vector_base<ScalarT> & v4)
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> & v0,
+                          vector_base<ScalarT, H> & v1,
+                          vector_base<ScalarT, H> & v2,
+                          vector_base<ScalarT, H> & v3,
+                          vector_base<ScalarT, H> & v4)
 {
-  typedef vector_base<ScalarT> *       VectorPointerType;
+  typedef vector_base<ScalarT, H> *       VectorPointerType;
   std::vector<VectorPointerType> vec(5);
   vec[0] = &v0;
   vec[1] = &v1;
   vec[2] = &v2;
   vec[3] = &v3;
   vec[4] = &v4;
-  return vector_tuple<ScalarT>(vec);
+  return vector_tuple<ScalarT, H>(vec);
 }
 
 // TODO: Add more arguments to tie() here. Maybe use some preprocessor magic to accomplish this.

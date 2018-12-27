@@ -42,6 +42,12 @@
 #include "viennacl/traits/handle.hpp"
 #include "viennacl/traits/stride.hpp"
 
+#ifdef VIENNACL_WITH_OPENCL
+#define TEMP_HANDLE viennacl::ocl::pooled_clmem_handle
+#else
+#define TEMP_HANDLE viennacl::ocl::handle<cl_mem>
+#endif
+
 namespace viennacl
 {
 namespace linalg
@@ -52,8 +58,8 @@ namespace opencl
 //
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //
-template<typename DestNumericT, typename SrcNumericT>
-void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & src)
+template<typename DestNumericT, typename SrcNumericT, typename H1, typename H2>
+void convert(vector_base<DestNumericT, H1> & dest, vector_base<SrcNumericT, H2> const & src)
 {
   assert(viennacl::traits::opencl_handle(dest).context() == viennacl::traits::opencl_handle(src).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
@@ -72,9 +78,9 @@ void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & 
 
 }
 
-template <typename T, typename ScalarType1>
-void av(vector_base<T> & vec1,
-        vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+template <typename T, typename ScalarType1, typename H1, typename H2>
+void av(vector_base<T, H1> & vec1,
+        vector_base<T, H2> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
@@ -112,10 +118,10 @@ void av(vector_base<T> & vec1,
 }
 
 
-template <typename T, typename ScalarType1, typename ScalarType2>
-void avbv(vector_base<T> & vec1,
-          vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-          vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+template <typename T, typename ScalarType1, typename ScalarType2, typename H1, typename H2, typename H3>
+void avbv(vector_base<T, H1> & vec1,
+          vector_base<T, H2> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+          vector_base<T, H3> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
   assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(vec3).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -174,10 +180,10 @@ void avbv(vector_base<T> & vec1,
 }
 
 
-template <typename T, typename ScalarType1, typename ScalarType2>
-void avbv_v(vector_base<T> & vec1,
-            vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-            vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+template <typename T, typename ScalarType1, typename ScalarType2, typename H1, typename H2, typename H3>
+void avbv_v(vector_base<T, H1> & vec1,
+            vector_base<T, H2> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+            vector_base<T, H3> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
   assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(vec3).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -268,8 +274,8 @@ void vector_assign(vector_base<T, H> & vec1, const T & alpha, bool up_to_interna
 * @param vec1   The first vector (or -range, or -slice)
 * @param vec2   The second vector (or -range, or -slice)
 */
-template <typename T>
-void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
+template <typename T, typename H1, typename H2>
+void vector_swap(vector_base<T, H1> & vec1, vector_base<T, H2> & vec2)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
@@ -296,9 +302,9 @@ void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2, v3 and the operation
 */
-template <typename T, typename OP>
-void element_op(vector_base<T> & vec1,
-                vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<OP> > const & proxy)
+template <typename T, typename OP, typename H1, typename H2, typename H3>
+void element_op(vector_base<T, H1> & vec1,
+                vector_expression<const vector_base<T, H2>, const vector_base<T, H3>, op_element_binary<OP> > const & proxy)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -343,9 +349,9 @@ void element_op(vector_base<T> & vec1,
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2, v3 and the operation
 */
-template <typename T, typename OP>
-void element_op(vector_base<T> & vec1,
-                vector_expression<const vector_base<T>, const T, op_element_binary<OP> > const & proxy)
+template <typename T, typename OP, typename H1, typename H2>
+void element_op(vector_base<T, H1> & vec1,
+                vector_expression<const vector_base<T, H2>, const T, op_element_binary<OP> > const & proxy)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
@@ -387,9 +393,9 @@ void element_op(vector_base<T> & vec1,
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2, v3 and the operation
 */
-template <typename T, typename OP>
-void element_op(vector_base<T> & vec1,
-                vector_expression<const T, const vector_base<T>, op_element_binary<OP> > const & proxy)
+template <typename T, typename OP, typename H1, typename H2>
+void element_op(vector_base<T, H1> & vec1,
+                vector_expression<const T, const vector_base<T, H2>, op_element_binary<OP> > const & proxy)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
@@ -432,9 +438,9 @@ void element_op(vector_base<T> & vec1,
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2 and the operation
 */
-template <typename T, typename OP>
-void element_op(vector_base<T> & vec1,
-                vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<OP> > const & proxy)
+template <typename T, typename OP, typename H1, typename H2>
+void element_op(vector_base<T, H1> & vec1,
+                vector_expression<const vector_base<T, H2>, const vector_base<T>, op_element_unary<OP> > const & proxy)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.lhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(proxy.rhs()).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -471,10 +477,10 @@ void element_op(vector_base<T> & vec1,
 * @param vec2 The second vector
 * @param partial_result The results of each group
 */
-template <typename T>
-void inner_prod_impl(vector_base<T> const & vec1,
-                     vector_base<T> const & vec2,
-                     vector_base<T> & partial_result)
+template <typename T, typename H1, typename H2, typename H3>
+void inner_prod_impl(vector_base<T, H1> const & vec1,
+                     vector_base<T, H2> const & vec2,
+                     vector_base<T, H3> & partial_result)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
   assert(viennacl::traits::opencl_handle(vec2).context() == viennacl::traits::opencl_handle(partial_result).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -520,9 +526,9 @@ void inner_prod_impl(vector_base<T> const & vec1,
 * @param vec2 The second vector
 * @param result The result scalar (on the gpu)
 */
-template <typename T>
-void inner_prod_impl(vector_base<T> const & vec1,
-                     vector_base<T> const & vec2,
+template <typename T, typename H1, typename H2>
+void inner_prod_impl(vector_base<T, H1> const & vec1,
+                     vector_base<T, H2> const & vec2,
                      scalar<T> & result)
 {
   assert(viennacl::traits::opencl_handle(vec1).context() == viennacl::traits::opencl_handle(vec2).context() && bool("Vectors do not reside in the same OpenCL context. Automatic migration not yet supported!"));
@@ -531,7 +537,7 @@ void inner_prod_impl(vector_base<T> const & vec1,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
+  viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec1));
   temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
   // Step 1: Compute partial inner products for each work group:
@@ -571,10 +577,10 @@ namespace detail
 * @param vec_tuple  The tuple of vectors y1, y2, ..., yN
 * @param result     The result vector
 */
-template <typename NumericT>
-void inner_prod_impl(vector_base<NumericT> const & x,
-                     vector_tuple<NumericT> const & vec_tuple,
-                     vector_base<NumericT> & result)
+template <typename NumericT, typename H1, typename H2, typename H3>
+void inner_prod_impl(vector_base<NumericT, H1> const & x,
+                     vector_tuple<NumericT, H2> const & vec_tuple,
+                     vector_base<NumericT, H3> & result)
 {
   assert(viennacl::traits::opencl_handle(x).context() == viennacl::traits::opencl_handle(result).context() && bool("Operands do not reside in the same OpenCL context. Automatic migration not yet supported!"));
 
@@ -762,7 +768,7 @@ void inner_prod_cpu(vector_base<T> const & vec1,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec1).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec1));
+  viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec1));
   temp.resize(work_groups, ctx); // bring default-constructed vectors to the correct size:
 
   // Step 1: Compute partial inner products for each work group:
@@ -830,7 +836,7 @@ void norm_1_impl(vector_base<T> const & vec,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
+  viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 1);
@@ -859,7 +865,7 @@ void norm_1_cpu(vector_base<T> const & vec,
                 T & result)
 {
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
+  viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 1);
@@ -894,7 +900,7 @@ void norm_2_impl(vector_base<T> const & vec,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
+  viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 2);
@@ -924,7 +930,7 @@ void norm_2_cpu(vector_base<T, H> const & vec,
 {
   std::cout << "norm_2_kernel asked for a vector.\n";
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
+  viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 2);
@@ -959,7 +965,7 @@ void norm_inf_impl(vector_base<T> const & vec,
   viennacl::ocl::context & ctx = const_cast<viennacl::ocl::context &>(viennacl::traits::opencl_handle(vec).context());
 
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
+  viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 0);
@@ -988,7 +994,7 @@ void norm_inf_cpu(vector_base<T> const & vec,
                   T & result)
 {
   vcl_size_t work_groups = 128;
-  viennacl::vector<T> temp(work_groups, viennacl::traits::context(vec));
+  viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec));
 
   // Step 1: Compute the partial work group results
   norm_reduction_impl(vec, temp, 0);
