@@ -321,10 +321,10 @@ namespace viennacl
                  const const_vector_iterator<SCALARTYPE, ALIGNMENT, H> & gpu_end,
                  CPU_ITERATOR cpu_begin );
 
-  template<typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
+  template<typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT, typename H>
   void fast_copy(CPU_ITERATOR const & cpu_begin,
                   CPU_ITERATOR const & cpu_end,
-                  vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin);
+                  vector_iterator<SCALARTYPE, ALIGNMENT, H> gpu_begin);
 
 
   /** @brief Tag class for indicating row-major layout of a matrix. Not passed to the matrix directly, see row_major type. */
