@@ -103,14 +103,14 @@ const NumericT * cuda_arg(matrix_base<NumericT> const & obj)
 
 /** @brief Convenience helper function for extracting the CUDA handle from a generic memory handle. Non-const version. */
 template<typename ReturnT>
-ReturnT * cuda_arg(viennacl::backend::mem_handle & h)
+ReturnT * cuda_arg(viennacl::backend::mem_handle<> & h)
 {
   return reinterpret_cast<ReturnT *>(h.cuda_handle().get());
 }
 
 /** @brief Convenience helper function for extracting the CUDA handle from a generic memory handle. Const-version. */
 template<typename ReturnT>
-ReturnT const * cuda_arg(viennacl::backend::mem_handle const & h)
+ReturnT const * cuda_arg(viennacl::backend::mem_handle<> const & h)
 {
   return reinterpret_cast<const ReturnT *>(h.cuda_handle().get());
 }

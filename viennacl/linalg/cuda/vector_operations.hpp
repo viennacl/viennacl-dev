@@ -2753,7 +2753,7 @@ vcl_size_t index_norm_inf(vector_base<NumericT> const & vec1)
 {
   typedef NumericT       value_type;
 
-  viennacl::backend::mem_handle h;
+  viennacl::backend::mem_handle<> h;
   viennacl::backend::memory_create(h, sizeof(unsigned int), viennacl::traits::context(vec1));
 
   index_norm_inf_kernel<<<1, 128>>>(viennacl::cuda_arg(vec1),
@@ -2965,7 +2965,7 @@ namespace detail
     vcl_size_t block_num = 128;
     vcl_size_t threads_per_block = 128;
 
-    viennacl::backend::mem_handle cuda_carries;
+    viennacl::backend::mem_handle<> cuda_carries;
     viennacl::backend::memory_create(cuda_carries, sizeof(NumericT)*block_num, viennacl::traits::context(input));
 
     // First step: Scan within each thread group and write carries

@@ -46,7 +46,7 @@ template<typename ScalarT, typename IndexT /* see forwards.h = unsigned int */>
 class sliced_ell_matrix
 {
 public:
-  typedef viennacl::backend::mem_handle                                                           handle_type;
+  typedef viennacl::backend::mem_handle<>                                                           handle_type;
   typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<ScalarT>::ResultType>   value_type;
   typedef vcl_size_t                                                                              size_type;
 

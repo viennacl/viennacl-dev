@@ -427,11 +427,11 @@ namespace viennacl
 
 // Helper macro for generating unary element-wise operations such as element_exp(), element_sin(), etc. without unnecessary code duplication */
 #define VIENNACL_MAKE_UNARY_ELEMENT_OP(funcname) \
-    template<typename T, typename H1, typename H2> \
-    viennacl::vector_expression<const vector_base<T, H1>, const vector_base<T, H2>, op_element_unary<op_##funcname> > \
-    element_##funcname(vector_base<T, H1> const & v) \
+    template<typename T> \
+    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_##funcname> > \
+    element_##funcname(vector_base<T> const & v) \
     { \
-      return viennacl::vector_expression<const vector_base<T, H1>, const vector_base<T, H2>, op_element_unary<op_##funcname> >(v, v); \
+      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_unary<op_##funcname> >(v, v); \
     } \
     template<typename LHS, typename RHS, typename OP> \
     viennacl::vector_expression<const vector_expression<const LHS, const RHS, OP>, \
