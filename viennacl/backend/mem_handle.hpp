@@ -24,7 +24,6 @@
 
 #include <vector>
 #include <cassert>
-#include <iostream>
 #include "viennacl/forwards.h"
 #include "viennacl/tools/shared_ptr.hpp"
 #include "viennacl/backend/cpu_ram.hpp"
@@ -233,9 +232,6 @@ public:
 
   /** @brief Sets the size of the currently active buffer. Use with care! */
   void        raw_size(vcl_size_t new_size) { size_in_bytes_ = new_size; }
-
-  ~mem_handle()
-  {}
 
 private:
   memory_types active_handle_;
