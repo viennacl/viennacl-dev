@@ -49,6 +49,8 @@ namespace viennacl
     template <class OCL_TYPE>
     class handle;
 
+    class pooled_clmem_handle;
+
     template<typename KernelType>
     void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue);
 

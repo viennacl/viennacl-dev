@@ -281,8 +281,9 @@ namespace viennacl
         return *this;
       }
 
-      virtual void inc();
-      virtual void dec();
+      inline virtual void inc();
+      inline virtual void dec();
+
       virtual ~pooled_clmem_handle() {
         if (h_!=0) dec();
       }

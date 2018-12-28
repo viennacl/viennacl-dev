@@ -252,6 +252,8 @@ namespace viennacl
   namespace ocl {
     template <class OCL_TYPE>
     class handle;
+
+    class pooled_clmem_handle;
   }
 
   //forward declaration of basic types:
@@ -825,8 +827,8 @@ namespace viennacl
     void norm_frobenius_cpu(matrix_base<T> const & vec, T & result);
 
 
-    template<typename T>
-    vcl_size_t index_norm_inf(vector_base<T> const & vec);
+    template<typename T, typename H>
+    vcl_size_t index_norm_inf(vector_base<T, H> const & vec);
 
     template<typename LHS, typename RHS, typename OP>
     vcl_size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec);
