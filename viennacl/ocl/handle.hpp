@@ -46,7 +46,6 @@ namespace viennacl
     class handle_inc_dec_helper
     {
       typedef typename OCL_TYPE::ERROR_TEMPLATE_ARGUMENT_FOR_CLASS_INVALID   ErrorType;
-
     };
 
     /** \cond */
@@ -154,10 +153,8 @@ namespace viennacl
     {
       public:
         handle() : h_(0), p_context_(NULL) {}
-        handle(const OCL_TYPE & something, viennacl::ocl::context const & c) : h_(something), p_context_(&c)
-        {}
-        handle(const handle & other) : h_(other.h_), p_context_(other.p_context_) { 
-          if (h_ != 0) inc(); }
+        handle(const OCL_TYPE & something, viennacl::ocl::context const & c) : h_(something), p_context_(&c) {}
+        handle(const handle & other) : h_(other.h_), p_context_(other.p_context_) { if (h_ != 0) inc(); }
         virtual ~handle() { if (h_ != 0) dec(); }
 
         /** @brief Copies the OpenCL handle from the provided handle. Does not take ownership like e.g. std::auto_ptr<>, so both handle objects are valid (more like shared_ptr). */
@@ -188,6 +185,7 @@ namespace viennacl
           return *this;
         }
 
+
         /** @brief Implicit conversion to the plain OpenCL handle. DEPRECATED and will be removed some time in the future. */
         operator OCL_TYPE() const { return h_; }
 
@@ -217,9 +215,7 @@ namespace viennacl
         /** @brief Manually increment the OpenCL reference count. Typically called automatically, but is necessary if user-supplied memory objects are wrapped. */
         virtual void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); }
         /** @brief Manually decrement the OpenCL reference count. Typically called automatically, but might be useful with user-supplied memory objects.  */
-        virtual void dec() { 
-          handle_inc_dec_helper<OCL_TYPE>::dec(h_);
-        }
+        virtual void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); }
       protected:
         OCL_TYPE h_;
         viennacl::ocl::context const * p_context_;

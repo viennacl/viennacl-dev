@@ -8,7 +8,6 @@
    Portions of this software are copyright by UChicago Argonne, LLC.
 
                             -----------------
-
                   ViennaCL - The Vienna Computing Library
                             -----------------
 
@@ -43,8 +42,8 @@
 #include <map>
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/error.hpp"
-#include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/handle.hpp"
+#include "viennacl/ocl/kernel.hpp"
 #include "viennacl/ocl/program.hpp"
 #include "viennacl/ocl/device.hpp"
 #include "viennacl/ocl/platform.hpp"
@@ -366,7 +365,6 @@ public:
     viennacl::ocl::handle<cl_command_queue> queue_handle(q, *this);
     queues_[dev].push_back(viennacl::ocl::command_queue(queue_handle));
     queues_[dev].back().handle().inc();
-    
   }
 
   /** @brief Adds a queue for the given device to the context */

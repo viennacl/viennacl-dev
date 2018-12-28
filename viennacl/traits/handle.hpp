@@ -183,6 +183,7 @@ inline viennacl::tools::shared_ptr<char> const & ram_handle(viennacl::backend::m
 {
   return h.ram_handle();
 }
+
 /** \endcond */
 //
 // OpenCL handle extraction
@@ -213,7 +214,6 @@ viennacl::ocl::handle<cl_mem> const & opencl_handle(T const & obj)
 {
   return viennacl::traits::handle(obj).opencl_handle();
 }
-
 
 inline cl_char   opencl_handle(char            val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 inline cl_short  opencl_handle(short           val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
