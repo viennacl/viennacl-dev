@@ -64,8 +64,8 @@ namespace detail
 //
 // Introductory note: By convention, all dimensions are already checked in the dispatcher frontend. No need to double-check again in here!
 //
-template<typename DestNumericT, typename SrcNumericT>
-void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & src)
+template<typename DestNumericT, typename SrcNumericT, typename H1, typename H2>
+void convert(vector_base<DestNumericT, H1> & dest, vector_base<SrcNumericT, H2> const & src)
 {
   DestNumericT      * data_dest = detail::extract_raw_pointer<DestNumericT>(dest);
   SrcNumericT const * data_src  = detail::extract_raw_pointer<SrcNumericT>(src);
@@ -84,9 +84,9 @@ void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & 
     data_dest[static_cast<vcl_size_t>(i)*inc_dest+start_dest] = static_cast<DestNumericT>(data_src[static_cast<vcl_size_t>(i)*inc_src+start_src]);
 }
 
-template<typename NumericT, typename ScalarT1>
-void av(vector_base<NumericT> & vec1,
-        vector_base<NumericT> const & vec2, ScalarT1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha)
+template<typename NumericT, typename ScalarT1, typename H1, typename H2>
+void av(vector_base<NumericT, H1> & vec1,
+        vector_base<NumericT, H2> const & vec2, ScalarT1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha)
 {
   typedef NumericT        value_type;
 
@@ -123,10 +123,10 @@ void av(vector_base<NumericT> & vec1,
 }
 
 
-template<typename NumericT, typename ScalarT1, typename ScalarT2>
-void avbv(vector_base<NumericT> & vec1,
-          vector_base<NumericT> const & vec2, ScalarT1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
-          vector_base<NumericT> const & vec3, ScalarT2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
+template<typename NumericT, typename H1, typename H2, typename H3, typename ScalarT1, typename ScalarT2>
+void avbv(vector_base<NumericT, H1> & vec1,
+          vector_base<NumericT, H2> const & vec2, ScalarT1 const & alpha, vcl_size_t /* len_alpha */, bool reciprocal_alpha, bool flip_sign_alpha,
+          vector_base<NumericT, H3> const & vec3, ScalarT2 const & beta,  vcl_size_t /* len_beta */,  bool reciprocal_beta,  bool flip_sign_beta)
 {
   typedef NumericT      value_type;
 
@@ -193,10 +193,10 @@ void avbv(vector_base<NumericT> & vec1,
 }
 
 
-template<typename NumericT, typename ScalarT1, typename ScalarT2>
-void avbv_v(vector_base<NumericT> & vec1,
-            vector_base<NumericT> const & vec2, ScalarT1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
-            vector_base<NumericT> const & vec3, ScalarT2 const & beta,  vcl_size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta)
+template<typename NumericT, typename H1, typename H2, typename H3, typename ScalarT1, typename ScalarT2>
+void avbv_v(vector_base<NumericT, H1> & vec1,
+            vector_base<NumericT, H2>  const & vec2, ScalarT1 const & alpha, vcl_size_t /*len_alpha*/, bool reciprocal_alpha, bool flip_sign_alpha,
+            vector_base<NumericT, H3> const & vec3, ScalarT2 const & beta,  vcl_size_t /*len_beta*/,  bool reciprocal_beta,  bool flip_sign_beta)
 {
   typedef NumericT        value_type;
 
@@ -298,8 +298,8 @@ void vector_assign(vector_base<NumericT, H> & vec1, const NumericT & alpha, bool
 * @param vec1   The first vector (or -range, or -slice)
 * @param vec2   The second vector (or -range, or -slice)
 */
-template<typename NumericT>
-void vector_swap(vector_base<NumericT> & vec1, vector_base<NumericT> & vec2)
+template<typename NumericT, typename H>
+void vector_swap(vector_base<NumericT, H> & vec1, vector_base<NumericT> & vec2)
 {
   typedef NumericT      value_type;
 
@@ -332,9 +332,9 @@ void vector_swap(vector_base<NumericT> & vec1, vector_base<NumericT> & vec2)
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2, v3 and the operation
 */
-template<typename NumericT, typename OpT>
-void element_op(vector_base<NumericT> & vec1,
-                vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_binary<OpT> > const & proxy)
+template<typename NumericT, typename H1, typename H2, typename H3, typename OpT>
+void element_op(vector_base<NumericT, H1> & vec1,
+                vector_expression<const vector_base<NumericT, H2>, const vector_base<NumericT, H3>, op_element_binary<OpT> > const & proxy)
 {
   typedef NumericT                                           value_type;
   typedef viennacl::linalg::detail::op_applier<op_element_binary<OpT> >    OpFunctor;
@@ -365,9 +365,9 @@ void element_op(vector_base<NumericT> & vec1,
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding alpha, v3 and the operation
 */
-template<typename NumericT, typename OpT>
-void element_op(vector_base<NumericT> & vec1,
-                vector_expression<const vector_base<NumericT>, const NumericT, op_element_binary<OpT> > const & proxy)
+template<typename NumericT, typename OpT, typename H1, typename H2>
+void element_op(vector_base<NumericT, H1> & vec1,
+                vector_expression<const vector_base<NumericT, H2>, const NumericT, op_element_binary<OpT> > const & proxy)
 {
   typedef NumericT                                           value_type;
   typedef viennacl::linalg::detail::op_applier<op_element_binary<OpT> >    OpFunctor;
@@ -394,9 +394,9 @@ void element_op(vector_base<NumericT> & vec1,
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2, alpha and the operation
 */
-template<typename NumericT, typename OpT>
-void element_op(vector_base<NumericT> & vec1,
-                vector_expression<const NumericT, const vector_base<NumericT>, op_element_binary<OpT> > const & proxy)
+template<typename NumericT, typename OpT, typename H1, typename H2>
+void element_op(vector_base<NumericT, H1> & vec1,
+                vector_expression<const NumericT, const vector_base<NumericT, H2>, op_element_binary<OpT> > const & proxy)
 {
   typedef NumericT                                           value_type;
   typedef viennacl::linalg::detail::op_applier<op_element_binary<OpT> >    OpFunctor;
@@ -425,9 +425,9 @@ void element_op(vector_base<NumericT> & vec1,
 * @param vec1   The result vector (or -range, or -slice)
 * @param proxy  The proxy object holding v2, v3 and the operation
 */
-template<typename NumericT, typename OpT>
-void element_op(vector_base<NumericT> & vec1,
-                vector_expression<const vector_base<NumericT>, const vector_base<NumericT>, op_element_unary<OpT> > const & proxy)
+template<typename NumericT, typename H1, typename H2, typename H3, typename OpT>
+void element_op(vector_base<NumericT, H1> & vec1,
+                vector_expression<const vector_base<NumericT, H2>, const vector_base<NumericT, H3>, op_element_unary<OpT> > const & proxy)
 {
   typedef NumericT      value_type;
   typedef viennacl::linalg::detail::op_applier<op_element_unary<OpT> >    OpFunctor;
@@ -553,9 +553,9 @@ VIENNACL_INNER_PROD_IMPL_2(double)
 * @param vec2 The second vector
 * @param result The result scalar (on the gpu)
 */
-template<typename NumericT, typename ScalarT>
-void inner_prod_impl(vector_base<NumericT> const & vec1,
-                     vector_base<NumericT> const & vec2,
+template<typename NumericT, typename H1, typename H2, typename ScalarT>
+void inner_prod_impl(vector_base<NumericT, H1> const & vec1,
+                     vector_base<NumericT, H2> const & vec2,
                      ScalarT & result)
 {
   typedef NumericT      value_type;
@@ -574,10 +574,10 @@ void inner_prod_impl(vector_base<NumericT> const & vec1,
                                    data_vec2, start2, inc2);  //Note: Assignment to result might be expensive, thus a temporary is introduced here
 }
 
-template<typename NumericT>
-void inner_prod_impl(vector_base<NumericT> const & x,
-                     vector_tuple<NumericT> const & vec_tuple,
-                     vector_base<NumericT> & result)
+template<typename NumericT, typename H1, typename H2, typename H3>
+void inner_prod_impl(vector_base<NumericT, H1> const & x,
+                     vector_tuple<NumericT, H2> const & vec_tuple,
+                     vector_base<NumericT, H3> & result)
 {
   typedef NumericT        value_type;
 
@@ -704,8 +704,8 @@ VIENNACL_NORM_1_IMPL_2(double, double)
 * @param vec1 The vector
 * @param result The result scalar
 */
-template<typename NumericT, typename ScalarT>
-void norm_1_impl(vector_base<NumericT> const & vec1,
+template<typename NumericT, typename H, typename ScalarT>
+void norm_1_impl(vector_base<NumericT, H> const & vec1,
                  ScalarT & result)
 {
   typedef NumericT        value_type;
@@ -837,8 +837,8 @@ void norm_2_impl(vector_base<NumericT, H> const & vec1,
 * @param vec1 The vector
 * @param result The result scalar
 */
-template<typename NumericT, typename ScalarT>
-void norm_inf_impl(vector_base<NumericT> const & vec1,
+template<typename NumericT, typename H, typename ScalarT>
+void norm_inf_impl(vector_base<NumericT, H> const & vec1,
                    ScalarT & result)
 {
   typedef NumericT       value_type;
@@ -887,8 +887,8 @@ void norm_inf_impl(vector_base<NumericT> const & vec1,
 * @param vec1 The vector
 * @return The result. Note that the result must be a CPU scalar (unsigned int), since gpu scalars are floating point types.
 */
-template<typename NumericT>
-vcl_size_t index_norm_inf(vector_base<NumericT> const & vec1)
+template<typename NumericT, typename H>
+vcl_size_t index_norm_inf(vector_base<NumericT, H> const & vec1)
 {
   typedef NumericT      value_type;
 
@@ -947,8 +947,8 @@ vcl_size_t index_norm_inf(vector_base<NumericT> const & vec1)
 * @param vec1 The vector
 * @param result The result scalar
 */
-template<typename NumericT, typename ScalarT>
-void max_impl(vector_base<NumericT> const & vec1,
+template<typename NumericT, typename H, typename ScalarT>
+void max_impl(vector_base<NumericT, H> const & vec1,
               ScalarT & result)
 {
   typedef NumericT       value_type;
@@ -996,8 +996,8 @@ void max_impl(vector_base<NumericT> const & vec1,
 * @param vec1 The vector
 * @param result The result scalar
 */
-template<typename NumericT, typename ScalarT>
-void min_impl(vector_base<NumericT> const & vec1,
+template<typename NumericT, typename H, typename ScalarT>
+void min_impl(vector_base<NumericT, H> const & vec1,
               ScalarT & result)
 {
   typedef NumericT       value_type;
@@ -1045,8 +1045,8 @@ void min_impl(vector_base<NumericT> const & vec1,
 * @param vec1 The vector
 * @param result The result scalar
 */
-template<typename NumericT, typename ScalarT>
-void sum_impl(vector_base<NumericT> const & vec1,
+template<typename NumericT, typename H, typename ScalarT>
+void sum_impl(vector_base<NumericT, H> const & vec1,
               ScalarT & result)
 {
   typedef NumericT       value_type;
@@ -1076,9 +1076,9 @@ void sum_impl(vector_base<NumericT> const & vec1,
 * @param alpha  The first transformation coefficient
 * @param beta   The second transformation coefficient
 */
-template<typename NumericT>
-void plane_rotation(vector_base<NumericT> & vec1,
-                    vector_base<NumericT> & vec2,
+template<typename NumericT, typename H1, typename H2>
+void plane_rotation(vector_base<NumericT, H1> & vec1,
+                    vector_base<NumericT, H2> & vec2,
                     NumericT alpha, NumericT beta)
 {
   typedef NumericT  value_type;
@@ -1112,9 +1112,9 @@ void plane_rotation(vector_base<NumericT> & vec1,
 namespace detail
 {
   /** @brief Implementation of inclusive_scan and exclusive_scan for the host (OpenMP) backend. */
-  template<typename NumericT>
-  void vector_scan_impl(vector_base<NumericT> const & vec1,
-                        vector_base<NumericT>       & vec2,
+  template<typename NumericT, typename H1, typename H2>
+  void vector_scan_impl(vector_base<NumericT, H1> const & vec1,
+                        vector_base<NumericT, H2>       & vec2,
                         bool is_inclusive)
   {
     NumericT const * data_vec1 = detail::extract_raw_pointer<NumericT>(vec1);
@@ -1217,9 +1217,9 @@ namespace detail
 * @param vec1       Input vector: Gets overwritten by the routine.
 * @param vec2       The output vector. Either idential to vec1 or non-overlapping.
 */
-template<typename NumericT>
-void inclusive_scan(vector_base<NumericT> const & vec1,
-                    vector_base<NumericT>       & vec2)
+template<typename NumericT, typename H1, typename H2>
+void inclusive_scan(vector_base<NumericT, H1> const & vec1,
+                    vector_base<NumericT, H2>       & vec2)
 {
   detail::vector_scan_impl(vec1, vec2, true);
 }
@@ -1232,9 +1232,9 @@ void inclusive_scan(vector_base<NumericT> const & vec1,
 * @param vec1       Input vector: Gets overwritten by the routine.
 * @param vec2       The output vector. Either idential to vec1 or non-overlapping.
 */
-template<typename NumericT>
-void exclusive_scan(vector_base<NumericT> const & vec1,
-                    vector_base<NumericT>       & vec2)
+template<typename NumericT, typename H1, typename H2>
+void exclusive_scan(vector_base<NumericT, H1> const & vec1,
+                    vector_base<NumericT, H2>       & vec2)
 {
   detail::vector_scan_impl(vec1, vec2, false);
 }
