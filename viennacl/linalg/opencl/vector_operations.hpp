@@ -807,7 +807,6 @@ void norm_reduction_impl(vector_base<T, H1> const & vec,
   viennacl::ocl::kernel & k = ctx.get_kernel(viennacl::linalg::opencl::kernels::vector<T>::program_name(), "norm");
 
   assert( (k.global_work_size() / k.local_work_size() <= partial_result.size()) && bool("Size mismatch for partial reduction in norm_reduction_impl()") );
-  std::cout << "Computing norm of " << viennacl::traits::opencl_handle(vec).get() << std::endl;
 
   viennacl::ocl::enqueue(k(viennacl::traits::opencl_handle(vec),
                            cl_uint(viennacl::traits::start(vec)),
@@ -928,7 +927,6 @@ template <typename T, typename H>
 void norm_2_cpu(vector_base<T, H> const & vec,
                 T & result)
 {
-  std::cout << "norm_2_kernel asked for a vector.\n";
   vcl_size_t work_groups = 128;
   viennacl::vector<T, 1, TEMP_HANDLE> temp(work_groups, viennacl::traits::context(vec));
 

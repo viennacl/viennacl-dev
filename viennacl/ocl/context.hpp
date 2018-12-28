@@ -95,7 +95,9 @@ namespace ocl
       {
         cl_int err = clReleaseMemObject(p);
         VIENNACL_ERR_CHECK(err);
-        std :: cout << "[allocator]: deallocation memory: " << p << std::endl;
+#ifdef VIENNACL_DEBUG_ALL
+        std :: cout << "[allocator]: deallocating memory: " << p << std::endl;
+#endif
       }
 
         virtual cl_allocator_base *copy() const = 0;
@@ -302,9 +304,14 @@ public:
   {
 
     if(use_mempool){
+#ifdef VIENNACL_DEBUG_ALL
       std::cout << "[mempool]: querying for memory\n";
+#endif
       cl_mem mem = get_mempool()->allocate(size);
+#ifdef VIENNACL_DEBUG_ALL
       std::cout << "[mempool]: gave memory at: " << mem << std::endl;
+
+#endif
       return mem;
     }
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
@@ -314,7 +321,6 @@ public:
       flags |= CL_MEM_COPY_HOST_PTR;
     cl_int err;
     cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
-    std::cout << "[viennacl]: created a buffer: " << mem << std::endl;
     VIENNACL_ERR_CHECK(err);
     return mem;
   }

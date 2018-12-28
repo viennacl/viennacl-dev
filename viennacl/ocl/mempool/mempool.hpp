@@ -194,9 +194,10 @@ namespace ocl
 
       void free(cl_mem p, size_type size)
       {
-
+#ifdef VIENNACL_DEBUG_ALL
         std::cout << "[mempool]: freeing the memory " <<
           p << ". So that it could be used again."<< std::endl;
+#endif
         --m_active_blocks;
         bin_nr_t bin_nr = bin_number(size);
 
@@ -267,7 +268,9 @@ namespace ocl
 
       void increment_ref_counter(cl_mem p, size_type s)
       {
+#ifdef VIENNACL_DEBUG_ALL
         std::cout << "[mempool]: Incrementing for " << p << std::endl;
+#endif
         if(m_reference_count.find(p) == m_reference_count.end())
         {
           std::cerr << "Did not find a memory to reference count.\n";
@@ -279,7 +282,9 @@ namespace ocl
 
       void decrement_ref_counter(cl_mem p, size_type s)
       {
+#ifdef VIENNACL_DEBUG_ALL
         std::cout << "[mempool]: Decrementing for " << p << std::endl;
+#endif
         if(m_reference_count.find(p) == m_reference_count.end())
         {
           std::cerr << "Did not find a memory to reference count.\n";
