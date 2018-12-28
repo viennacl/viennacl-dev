@@ -123,8 +123,8 @@ private:
 * @param columns  Number of columns
 * @param ctx      Optional context in which the matrix is created (one out of multiple OpenCL contexts, CUDA, host)
 */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(size_type rows, size_type columns, bool is_row_major, viennacl::context ctx)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT>::matrix_base(size_type rows, size_type columns, bool is_row_major, viennacl::context ctx)
   : size1_(rows), size2_(columns), start1_(0), start2_(0), stride1_(1), stride2_(1),
     internal_size1_(viennacl::tools::align_to_multiple<size_type>(rows, dense_padding_size)),
     internal_size2_(viennacl::tools::align_to_multiple<size_type>(columns, dense_padding_size)),
@@ -139,9 +139,9 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(size_type rows, 
 
 /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
 
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+template<class NumericT, typename SizeT, typename DistanceT>
 template<typename LHS, typename RHS, typename OP>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) :
+matrix_base<NumericT, SizeT, DistanceT>::matrix_base(matrix_expression<const LHS, const RHS, OP> const & proxy) :
   size1_(viennacl::traits::size1(proxy)), size2_(viennacl::traits::size2(proxy)), start1_(0), start2_(0), stride1_(1), stride2_(1),
   internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size)),
   internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, dense_padding_size)),
@@ -157,8 +157,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(matrix_expressio
 }
 
 // CUDA or host memory:
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(NumericT * ptr_to_mem, viennacl::memory_types mem_type,
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT>::matrix_base(NumericT * ptr_to_mem, viennacl::memory_types mem_type,
                                                         size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
                                                         size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                                                         bool is_row_major)
@@ -189,8 +189,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(NumericT * ptr_t
 }
 
 #ifdef VIENNACL_WITH_OPENCL
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(cl_mem mem, size_type rows, size_type columns, bool is_row_major, viennacl::context ctx)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT>::matrix_base(cl_mem mem, size_type rows, size_type columns, bool is_row_major, viennacl::context ctx)
   : size1_(rows), size2_(columns),
     start1_(0), start2_(0),
     stride1_(1), stride2_(1),
@@ -204,8 +204,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(cl_mem mem, size
   elements_.raw_size(sizeof(NumericT)*internal_size());
 }
 
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(cl_mem mem, viennacl::context ctx,
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT>::matrix_base(cl_mem mem, viennacl::context ctx,
                                                         size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
                                                         size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                                                         bool is_row_major)
@@ -224,8 +224,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(cl_mem mem, vien
 #endif
 
 // Copy CTOR
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(const matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & other) :
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT>::matrix_base(const matrix_base<NumericT, SizeT, DistanceT> & other) :
   size1_(other.size1()), size2_(other.size2()), start1_(0), start2_(0), stride1_(1), stride2_(1),
   internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size)),
   internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, dense_padding_size)),
@@ -243,7 +243,7 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(const matrix_bas
 // Conversion CTOR
 template<typename NumericT, typename SizeT, typename DistanceT>
 template<typename OtherNumericT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(const matrix_base<OtherNumericT, OCLHandle, SizeT, DistanceT> & other) :
+matrix_base<NumericT, SizeT, DistanceT>::matrix_base(const matrix_base<OtherNumericT, SizeT, DistanceT> & other) :
   size1_(other.size1()), size2_(other.size2()), start1_(0), start2_(0), stride1_(1), stride2_(1),
   internal_size1_(viennacl::tools::align_to_multiple<size_type>(size1_, dense_padding_size)),
   internal_size2_(viennacl::tools::align_to_multiple<size_type>(size2_, dense_padding_size)),
@@ -258,8 +258,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::matrix_base(const matrix_bas
   }
 }
 
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator=(const self_type & other)  //enables implicit conversions
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator=(const self_type & other)  //enables implicit conversions
 {
   if (&other==this)
     return *this;
@@ -279,9 +279,9 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 // Conversion assignment
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+template<class NumericT, typename SizeT, typename DistanceT>
 template<typename OtherNumericT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator=(const matrix_base<OtherNumericT, OCLHandle, SizeT, DistanceT> & other)
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator=(const matrix_base<OtherNumericT, SizeT, DistanceT> & other)
 {
   if (internal_size() == 0)
   {
@@ -300,9 +300,9 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 *
 * @param proxy  An expression template proxy class.
 */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+template<class NumericT, typename SizeT, typename DistanceT>
 template<typename LHS, typename RHS, typename OP>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator=(const matrix_expression<const LHS, const RHS, OP> & proxy)
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator=(const matrix_expression<const LHS, const RHS, OP> & proxy)
 {
   assert(  (viennacl::traits::size1(proxy) == size1() || size1() == 0)
            && (viennacl::traits::size2(proxy) == size2() || size2() == 0)
@@ -328,8 +328,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 
 
 // A = trans(B)
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator=(const matrix_expression<const self_type, const self_type, op_trans> & proxy)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator=(const matrix_expression<const self_type, const self_type, op_trans> & proxy)
 {
   if ( internal_size() == 0 && viennacl::traits::size1(proxy) > 0 && viennacl::traits::size2(proxy) > 0 )
   {
@@ -358,9 +358,9 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
   return *this;
 }
 
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+template<class NumericT, typename SizeT, typename DistanceT>
 template<typename LHS, typename RHS, typename OP>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator+=(const matrix_expression<const LHS, const RHS, OP> & proxy)
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator+=(const matrix_expression<const LHS, const RHS, OP> & proxy)
 {
   assert(  (viennacl::traits::size1(proxy) == size1())
            && (viennacl::traits::size2(proxy) == size2())
@@ -373,9 +373,9 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
   return *this;
 }
 
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+template<class NumericT, typename SizeT, typename DistanceT>
 template<typename LHS, typename RHS, typename OP>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator-=(const matrix_expression<const LHS, const RHS, OP> & proxy)
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator-=(const matrix_expression<const LHS, const RHS, OP> & proxy)
 {
   assert(  (viennacl::traits::size1(proxy) == size1())
            && (viennacl::traits::size2(proxy) == size2())
@@ -389,8 +389,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Assigns the supplied identity matrix to the matrix. */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator = (identity_matrix<NumericT> const & m)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator = (identity_matrix<NumericT> const & m)
 {
   assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
   assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
@@ -417,8 +417,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Assigns the supplied zero matrix to the matrix. */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator = (zero_matrix<NumericT> const & m)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator = (zero_matrix<NumericT> const & m)
 {
   assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
   assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
@@ -442,8 +442,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Assigns the supplied scalar vector to the matrix. */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator = (scalar_matrix<NumericT> const & m)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator = (scalar_matrix<NumericT> const & m)
 {
   assert( (m.size1() == size1_ || size1_ == 0) && bool("Size mismatch!") );
   assert( (m.size2() == size2_ || size2_ == 0) && bool("Size mismatch!") );
@@ -473,8 +473,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 //read-write access to an element of the matrix/matrix_range/matrix_slice
 /** @brief Read-write access to a single element of the matrix/matrix_range/matrix_slice
 */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-entry_proxy<NumericT> matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator()(size_type row_index, size_type col_index)
+template<class NumericT, typename SizeT, typename DistanceT>
+entry_proxy<NumericT> matrix_base<NumericT, SizeT, DistanceT>::operator()(size_type row_index, size_type col_index)
 {
   if (row_major_)
     return entry_proxy<NumericT>(row_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
@@ -483,8 +483,8 @@ entry_proxy<NumericT> matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operat
 
 /** @brief Read access to a single element of the matrix/matrix_range/matrix_slice
 */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-const_entry_proxy<NumericT> matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator()(size_type row_index, size_type col_index) const
+template<class NumericT, typename SizeT, typename DistanceT>
+const_entry_proxy<NumericT> matrix_base<NumericT, SizeT, DistanceT>::operator()(size_type row_index, size_type col_index) const
 {
   if (row_major_)
     return const_entry_proxy<NumericT>(row_major::mem_index(start1_ + stride1_ * row_index, start2_ + stride2_ * col_index, internal_size1(), internal_size2()), elements_);
@@ -494,8 +494,8 @@ const_entry_proxy<NumericT> matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::
 //
 // Operator overloads for enabling implicit conversions:
 //
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator += (const matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & other)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator += (const matrix_base<NumericT, SizeT, DistanceT> & other)
 {
   viennacl::linalg::ambm(*this,
                          *this, NumericT(1.0), 1, false, false,
@@ -503,8 +503,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
   return *this;
 }
 
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator -= (const matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & other)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator -= (const matrix_base<NumericT, SizeT, DistanceT> & other)
 {
   viennacl::linalg::ambm(*this,
                          *this, NumericT(1.0), 1, false, false,
@@ -513,8 +513,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales a matrix by a char (8-bit integer) value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (char val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (char val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, false, false);
@@ -522,8 +522,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales a matrix by a char (8-bit integer) value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (short val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (short val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, false, false);
@@ -531,8 +531,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales a matrix by a char (8-bit integer) value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (int val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (int val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, false, false);
@@ -540,8 +540,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales a matrix by a char (8-bit integer) value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (long val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (long val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, false, false);
@@ -549,8 +549,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales a matrix by a char (8-bit integer) value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (float val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (float val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, false, false);
@@ -558,8 +558,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales a matrix by a char (8-bit integer) value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (double val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator *= (double val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, false, false);
@@ -569,8 +569,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 
 
 /** @brief Scales this matrix by a char (8-bit integer) value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (char val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (char val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, true, false);
@@ -578,8 +578,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales this matrix by a short integer value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (short val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (short val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, true, false);
@@ -587,8 +587,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales this matrix by an integer value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (int val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (int val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, true, false);
@@ -596,8 +596,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales this matrix by a long integer value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (long val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (long val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, true, false);
@@ -605,8 +605,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales this matrix by a single precision floating point value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (float val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (float val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, true, false);
@@ -614,8 +614,8 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 }
 
 /** @brief Scales this matrix by a double precision floating point value */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (double val)
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_base<NumericT, SizeT, DistanceT> & matrix_base<NumericT, SizeT, DistanceT>::operator /= (double val)
 {
   viennacl::linalg::am(*this,
                        *this, NumericT(val), 1, true, false);
@@ -624,18 +624,18 @@ matrix_base<NumericT, OCLHandle, SizeT, DistanceT> & matrix_base<NumericT, OCLHa
 
 
 /** @brief Sign flip for the matrix. Emulated to be equivalent to -1.0 * matrix */
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-matrix_expression<const matrix_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_mult> matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::operator-() const
+template<class NumericT, typename SizeT, typename DistanceT>
+matrix_expression<const matrix_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult> matrix_base<NumericT, SizeT, DistanceT>::operator-() const
 {
   return matrix_expression<const self_type, const NumericT, op_mult>(*this, NumericT(-1));
 }
 
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-void matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::clear() { viennacl::linalg::matrix_assign(*this, NumericT(0), true); }
+template<class NumericT, typename SizeT, typename DistanceT>
+void matrix_base<NumericT, SizeT, DistanceT>::clear() { viennacl::linalg::matrix_assign(*this, NumericT(0), true); }
 
 
-template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-void matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::resize(size_type rows, size_type columns, bool preserve)
+template<class NumericT, typename SizeT, typename DistanceT>
+void matrix_base<NumericT, SizeT, DistanceT>::resize(size_type rows, size_type columns, bool preserve)
 {
   assert( (rows > 0 && columns > 0) && bool("Check failed in matrix::resize(): Number of rows and columns must be positive!"));
 
@@ -692,11 +692,11 @@ void matrix_base<NumericT, OCLHandle, SizeT, DistanceT>::resize(size_type rows, 
 * @tparam F            Storage layout: Either row_major or column_major
 * @tparam AlignmentV   The internal memory size is given by (size()/AlignmentV + 1) * AlignmentV. AlignmentV must be a power of two. Best values or usually 4, 8 or 16, higher values are usually a waste of memory.
 */
-template<class NumericT, typename OCLHandle, typename F, unsigned int AlignmentV>
-class matrix : public matrix_base<NumericT, OCLHandle>
+template<class NumericT, typename F, unsigned int AlignmentV>
+class matrix : public matrix_base<NumericT>
 {
-  typedef matrix<NumericT, OCLHandle, F, AlignmentV>          self_type;
-  typedef matrix_base<NumericT, OCLHandle>                   base_type;
+  typedef matrix<NumericT, F, AlignmentV>          self_type;
+  typedef matrix_base<NumericT>                   base_type;
 public:
   typedef typename base_type::size_type             size_type;
 
@@ -824,10 +824,10 @@ public:
 * @param s            STL output stream
 * @param gpu_matrix   A dense ViennaCL matrix
 */
-template<class NumericT, typename OCLHandle>
-std::ostream & operator<<(std::ostream & s, const matrix_base<NumericT, OCLHandle> & gpu_matrix)
+template<class NumericT>
+std::ostream & operator<<(std::ostream & s, const matrix_base<NumericT> & gpu_matrix)
 {
-  typedef typename matrix_base<NumericT, OCLHandle>::size_type      size_type;
+  typedef typename matrix_base<NumericT>::size_type      size_type;
 
   std::vector<NumericT> tmp(gpu_matrix.internal_size());
   viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(NumericT) * gpu_matrix.internal_size(), &(tmp[0]));
@@ -872,11 +872,11 @@ std::ostream & operator<<(std::ostream & s, const matrix_expression<LHS, RHS, OP
 }
 
 /** @brief Returns an expression template class representing a transposed matrix */
-template<typename NumericT, typename H1, typename H2>
-matrix_expression< const matrix_base<NumericT, H1>, const matrix_base<NumericT, H2>, op_trans>
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>
 trans(const matrix_base<NumericT> & mat)
 {
-  return matrix_expression< const matrix_base<NumericT, H1>, const matrix_base<NumericT, H2>, op_trans>(mat, mat);
+  return matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans>(mat, mat);
 }
 
 /** @brief Returns an expression template class representing the transposed matrix expression */
@@ -890,34 +890,34 @@ trans(const matrix_expression<const LhsT, const RhsT, OpT> & proxy)
 }
 
 //diag():
-template<typename NumericT, typename H>
-vector_expression< const matrix_base<NumericT, H>, const int, op_matrix_diag>
+template<typename NumericT>
+vector_expression< const matrix_base<NumericT>, const int, op_matrix_diag>
 diag(const matrix_base<NumericT> & A, int k = 0)
 {
-  return vector_expression< const matrix_base<NumericT, H>, const int, op_matrix_diag>(A, k);
+  return vector_expression< const matrix_base<NumericT>, const int, op_matrix_diag>(A, k);
 }
 
-template<typename NumericT, typename H>
-matrix_expression< const vector_base<NumericT, H>, const int, op_vector_diag>
+template<typename NumericT>
+matrix_expression< const vector_base<NumericT>, const int, op_vector_diag>
 diag(const vector_base<NumericT> & v, int k = 0)
 {
-  return matrix_expression< const vector_base<NumericT, H>, const int, op_vector_diag>(v, k);
+  return matrix_expression< const vector_base<NumericT>, const int, op_vector_diag>(v, k);
 }
 
 // row():
-template<typename NumericT, typename H, typename F>
-vector_expression< const matrix_base<NumericT, H, F>, const unsigned int, op_row>
-row(const matrix_base<NumericT, H, F> & A, unsigned int i)
+template<typename NumericT, typename F>
+vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_row>
+row(const matrix_base<NumericT, F> & A, unsigned int i)
 {
-  return vector_expression< const matrix_base<NumericT, H, F>, const unsigned int, op_row>(A, i);
+  return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_row>(A, i);
 }
 
 // column():
-template<typename NumericT, typename H, typename F>
-vector_expression< const matrix_base<NumericT, H, F>, const unsigned int, op_column>
-column(const matrix_base<NumericT, H, F> & A, unsigned int j)
+template<typename NumericT, typename F>
+vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>
+column(const matrix_base<NumericT, F> & A, unsigned int j)
 {
-  return vector_expression< const matrix_base<NumericT, H, F>, const unsigned int, op_column>(A, j);
+  return vector_expression< const matrix_base<NumericT, F>, const unsigned int, op_column>(A, j);
 }
 
 /////////////////////// transfer operations: //////////////////////////////////////
@@ -930,11 +930,11 @@ column(const matrix_base<NumericT, H, F> & A, unsigned int j)
 * @param cpu_matrix   A dense matrix on the host. Type requirements: .size1() returns number of rows, .size2() returns number of columns. Access to entries via operator()
 * @param gpu_matrix   A dense ViennaCL matrix
 */
-template<typename CPUMatrixT, typename NumericT, typename H, typename F, unsigned int AlignmentV>
+template<typename CPUMatrixT, typename NumericT, typename F, unsigned int AlignmentV>
 void copy(const CPUMatrixT & cpu_matrix,
-          matrix<NumericT, H, F, AlignmentV> & gpu_matrix )
+          matrix<NumericT, F, AlignmentV> & gpu_matrix )
 {
-  typedef typename matrix<NumericT, H, F, AlignmentV>::size_type      size_type;
+  typedef typename matrix<NumericT, F, AlignmentV>::size_type      size_type;
 
   //std::cout << "Copying CPUMatrixT!" << std::endl;
   //std::cout << "Size at begin: " << gpu_matrix.size1() << ", " << gpu_matrix.size2() << std::endl;
@@ -966,11 +966,11 @@ void copy(const CPUMatrixT & cpu_matrix,
 * @param cpu_matrix   A dense matrix on the host of type std::vector< std::vector<> >. cpu_matrix[i][j] returns the element in the i-th row and j-th columns (both starting with zero)
 * @param gpu_matrix   A dense ViennaCL matrix
 */
-template<typename NumericT, typename H typename A1, typename A2, typename F, unsigned int AlignmentV>
+template<typename NumericT, typename A1, typename A2, typename F, unsigned int AlignmentV>
 void copy(const std::vector< std::vector<NumericT, A1>, A2> & cpu_matrix,
-          matrix<NumericT, H, F, AlignmentV> & gpu_matrix )
+          matrix<NumericT, F, AlignmentV> & gpu_matrix )
 {
-  typedef typename matrix<NumericT, H, F, AlignmentV>::size_type      size_type;
+  typedef typename matrix<NumericT, F, AlignmentV>::size_type      size_type;
 
   if (gpu_matrix.size1() == 0 || gpu_matrix.size2() == 0)
   {
@@ -1006,10 +1006,10 @@ void copy(const std::vector< std::vector<NumericT, A1>, A2> & cpu_matrix,
 * @param cpu_matrix_end     Pointer past the last matrix entry. Cf. iterator concept in STL
 * @param gpu_matrix         A dense ViennaCL matrix
 */
-template<typename NumericT, typename H, typename F, unsigned int AlignmentV>
+template<typename NumericT, typename F, unsigned int AlignmentV>
 void fast_copy(NumericT * cpu_matrix_begin,
                NumericT * cpu_matrix_end,
-               matrix<NumericT, H, F, AlignmentV> & gpu_matrix)
+               matrix<NumericT, F, AlignmentV> & gpu_matrix)
 {
   if (gpu_matrix.internal_size() == 0)
     viennacl::backend::memory_create(gpu_matrix.handle(), sizeof(NumericT) * static_cast<vcl_size_t>(cpu_matrix_end - cpu_matrix_begin), viennacl::traits::context(gpu_matrix), cpu_matrix_begin);
@@ -1026,11 +1026,11 @@ void fast_copy(NumericT * cpu_matrix_begin,
 * @param arma_matrix   A dense MTL matrix. cpu_matrix(i, j) returns the element in the i-th row and j-th columns (both starting with zero)
 * @param gpu_matrix   A dense ViennaCL matrix
 */
-template<typename NumericT, typename H, typename F, unsigned int AlignmentV>
+template<typename NumericT, typename F, unsigned int AlignmentV>
 void copy(arma::Mat<NumericT>                       const & arma_matrix,
-          viennacl::matrix<NumericT, H, F, AlignmentV>       & vcl_matrix)
+          viennacl::matrix<NumericT, F, AlignmentV>       & vcl_matrix)
 {
-  typedef typename viennacl::matrix<NumericT, H, F, AlignmentV>::size_type      size_type;
+  typedef typename viennacl::matrix<NumericT, F, AlignmentV>::size_type      size_type;
 
   if (vcl_matrix.size1() == 0 || vcl_matrix.size2() == 0)
   {
@@ -1195,8 +1195,8 @@ void copy(const matrix<NumericT, F, AlignmentV> & gpu_matrix,
 * @param gpu_matrix   A dense ViennaCL matrix
 * @param cpu_matrix   A dense memory on the host using STL types, typically std::vector< std::vector<> > Must have at least as many rows and columns as the gpu_matrix! Type requirement: Access to entries via operator()
 */
-template<typename NumericT, typename H, typename A1, typename A2, typename F, unsigned int AlignmentV>
-void copy(const matrix<NumericT, H, F, AlignmentV> & gpu_matrix,
+template<typename NumericT, typename A1, typename A2, typename F, unsigned int AlignmentV>
+void copy(const matrix<NumericT, F, AlignmentV> & gpu_matrix,
           std::vector< std::vector<NumericT, A1>, A2> & cpu_matrix)
 {
   typedef typename matrix<float, F, AlignmentV>::size_type      size_type;
@@ -1227,8 +1227,8 @@ void copy(const matrix<NumericT, H, F, AlignmentV> & gpu_matrix,
 * @param gpu_matrix         A dense ViennaCL matrix
 * @param cpu_matrix_begin   Pointer to the output memory on the CPU. User must ensure that provided memory is large enough.
 */
-template<typename NumericT, typename H, typename F, unsigned int AlignmentV>
-void fast_copy(const matrix<NumericT, H, F, AlignmentV> & gpu_matrix,
+template<typename NumericT, typename F, unsigned int AlignmentV>
+void fast_copy(const matrix<NumericT, F, AlignmentV> & gpu_matrix,
                NumericT * cpu_matrix_begin)
 {
   viennacl::backend::memory_read(gpu_matrix.handle(), 0, sizeof(NumericT)*gpu_matrix.internal_size(), cpu_matrix_begin);
@@ -1258,12 +1258,12 @@ operator + (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
 }
 
 template<typename LHS1, typename RHS1, typename OP1,
-         typename NumericT, tyepname H>
+         typename NumericT>
 matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
-const matrix_base<NumericT, H>,
+const matrix_base<NumericT>,
 op_add>
 operator + (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
-            matrix_base<NumericT, H> const & proxy2)
+            matrix_base<NumericT> const & proxy2)
 {
   assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
              && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
@@ -1273,12 +1273,12 @@ operator + (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
       op_add>(proxy1, proxy2);
 }
 
-template<typename NumericT, typename H,
+template<typename NumericT,
          typename LHS2, typename RHS2, typename OP2>
-matrix_expression< const matrix_base<NumericT, H>,
+matrix_expression< const matrix_base<NumericT>,
 const matrix_expression<const LHS2, const RHS2, OP2>,
 op_add>
-operator + (matrix_base<NumericT, H> const & proxy1,
+operator + (matrix_base<NumericT> const & proxy1,
             matrix_expression<const LHS2, const RHS2, OP2> const & proxy2)
 {
   assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
@@ -1318,44 +1318,44 @@ operator - (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
 }
 
 template<typename LHS1, typename RHS1, typename OP1,
-         typename NumericT, typename H>
+         typename NumericT>
 matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
-const matrix_base<NumericT, H>,
+const matrix_base<NumericT>,
 op_sub>
 operator - (matrix_expression<const LHS1, const RHS1, OP1> const & proxy1,
-            matrix_base<NumericT, H> const & proxy2)
+            matrix_base<NumericT> const & proxy2)
 {
   assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
              && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
              && bool("Incompatible matrix sizes!"));
   return matrix_expression< const matrix_expression<const LHS1, const RHS1, OP1>,
-      const matrix_base<NumericT, H>,
+      const matrix_base<NumericT>,
       op_sub>(proxy1, proxy2);
 }
 
-template<typename NumericT, typename H,
+template<typename NumericT,
          typename LHS2, typename RHS2, typename OP2>
-matrix_expression< const matrix_base<NumericT, H>,
+matrix_expression< const matrix_base<NumericT>,
 const matrix_expression<const LHS2, const RHS2, OP2>,
 op_sub>
-operator - (matrix_base<NumericT, H> const & proxy1,
+operator - (matrix_base<NumericT> const & proxy1,
             matrix_expression<const LHS2, const RHS2, OP2> const & proxy2)
 {
   assert(    (viennacl::traits::size1(proxy1) == viennacl::traits::size1(proxy2))
              && (viennacl::traits::size2(proxy1) == viennacl::traits::size2(proxy2))
              && bool("Incompatible matrix sizes!"));
-  return  matrix_expression< const matrix_base<NumericT, H>,
+  return  matrix_expression< const matrix_base<NumericT>,
       const matrix_expression<const LHS2, const RHS2, OP2>,
       op_sub>(proxy1, proxy2);
 }
 
 /** @brief Operator overload for m1 - m2, where m1 and m2 are either dense matrices, matrix ranges, or matrix slices. No mixing of different storage layouts allowed at the moment. */
-template<typename NumericT, typename H1, typename H2>
-matrix_expression< const matrix_base<NumericT, H1>, const matrix_base<NumericT, H2>, op_sub >
-operator - (const matrix_base<NumericT, H1> & m1, const matrix_base<NumericT, H2> & m2)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_sub >
+operator - (const matrix_base<NumericT> & m1, const matrix_base<NumericT> & m2)
 {
-  return matrix_expression< const matrix_base<NumericT, H1>,
-      const matrix_base<NumericT, H2>,
+  return matrix_expression< const matrix_base<NumericT>,
+      const matrix_base<NumericT>,
       op_sub > (m1, m2);
 }
 
@@ -1377,51 +1377,51 @@ operator * (S1 const & value, matrix_base<NumericT> const & m1)
 }
 
 /** @brief Operator overload for the expression alpha * m1, where alpha is a char (8-bit integer) */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (char value, matrix_base<NumericT, H> const & m1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (char value, matrix_base<NumericT> const & m1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(value));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
 }
 
 /** @brief Operator overload for the expression alpha * m1, where alpha is a short integer */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (short value, matrix_base<NumericT, H> const & m1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (short value, matrix_base<NumericT> const & m1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(value));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
 }
 
 /** @brief Operator overload for the expression alpha * m1, where alpha is an integer */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (int value, matrix_base<NumericT, H> const & m1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (int value, matrix_base<NumericT> const & m1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(value));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
 }
 
 /** @brief Operator overload for the expression alpha * m1, where alpha is a long integer */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (long value, matrix_base<NumericT, H> const & m1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (long value, matrix_base<NumericT> const & m1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(value));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
 }
 
 /** @brief Operator overload for the expression alpha * m1, where alpha is a single precision floating point value */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (float value, matrix_base<NumericT, H> const & m1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (float value, matrix_base<NumericT> const & m1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(value));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
 }
 
 /** @brief Operator overload for the expression alpha * m1, where alpha is a double precision floating point value */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (double value, matrix_base<NumericT, H> const & m1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (double value, matrix_base<NumericT> const & m1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(value));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(value));
 }
 
 
@@ -1457,69 +1457,69 @@ operator * (S1 const & val,
 
 /** @brief Scales the matrix by a GPU scalar 'alpha' and returns an expression template
 */
-template<typename NumericT, typename H, typename S1>
+template<typename NumericT, typename S1>
 typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-matrix_expression< const matrix_base<NumericT, H>, const S1, op_mult> >::type
-operator * (matrix_base<NumericT, H> const & m1, S1 const & s1)
+matrix_expression< const matrix_base<NumericT>, const S1, op_mult> >::type
+operator * (matrix_base<NumericT> const & m1, S1 const & s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const S1, op_mult>(m1, s1);
+  return matrix_expression< const matrix_base<NumericT>, const S1, op_mult>(m1, s1);
 }
 
 /** @brief Scales the matrix by a char (8-bit integer) 'alpha' and returns an expression template. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (matrix_base<NumericT, H> const & m1, char s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, char s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
 }
 
 /** @brief Scales the matrix by a short integer 'alpha' and returns an expression template. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (matrix_base<NumericT, H> const & m1, short s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, short s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
 }
 
 /** @brief Scales the matrix by an integer 'alpha' and returns an expression template. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (matrix_base<NumericT, H> const & m1, int s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, int s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
 }
 
 /** @brief Scales the matrix by a long integer 'alpha' and returns an expression template. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (matrix_base<NumericT, H> const & m1, long s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, long s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
 }
 
 /** @brief Scales the matrix by a single precision floating point number 'alpha' and returns an expression template. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (matrix_base<NumericT, H> const & m1, float s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, float s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
 }
 
 /** @brief Scales the matrix by a double precision floating point number 'alpha' and returns an expression template. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>
-operator * (matrix_base<NumericT, H> const & m1, double s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>
+operator * (matrix_base<NumericT> const & m1, double s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_mult>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_mult>(m1, NumericT(s1));
 }
 
 
 // operator *=
 
 /** @brief Scales a matrix by a GPU scalar value */
-template<typename NumericT, typename H, typename S1>
-typename viennacl::enable_if< viennacl::is_scalar<S1>::value, matrix_base<NumericT, H> & >::type
-operator *= (matrix_base<NumericT, H> & m1, S1 const & gpu_val)
+template<typename NumericT, typename S1>
+typename viennacl::enable_if< viennacl::is_scalar<S1>::value, matrix_base<NumericT> & >::type
+operator *= (matrix_base<NumericT> & m1, S1 const & gpu_val)
 {
   bool is_sign_flip = viennacl::is_flip_sign_scalar<S1>::value;
   viennacl::linalg::am(m1,
@@ -1528,9 +1528,9 @@ operator *= (matrix_base<NumericT, H> & m1, S1 const & gpu_val)
 }
 
 /** @brief Scales a matrix by a char (8-bit) value. */
-template<typename NumericT, typename H>
-matrix_base<NumericT, typename H> &
-operator *= (matrix_base<NumericT, H> & m1, char gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, char gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, NumericT(gpu_val), 1, false, false);
@@ -1538,9 +1538,9 @@ operator *= (matrix_base<NumericT, H> & m1, char gpu_val)
 }
 
 /** @brief Scales a matrix by a short integer value. */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator *= (matrix_base<NumericT, H> & m1, short gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, short gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, NumericT(gpu_val), 1, false, false);
@@ -1548,9 +1548,9 @@ operator *= (matrix_base<NumericT, H> & m1, short gpu_val)
 }
 
 /** @brief Scales a matrix by an integer value. */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator *= (matrix_base<NumericT, H> & m1, int gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, int gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, NumericT(gpu_val), 1, false, false);
@@ -1558,9 +1558,9 @@ operator *= (matrix_base<NumericT, H> & m1, int gpu_val)
 }
 
 /** @brief Scales a matrix by a long integer value. */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator *= (matrix_base<NumericT, H> & m1, long gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, long gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, NumericT(gpu_val), 1, false, false);
@@ -1568,9 +1568,9 @@ operator *= (matrix_base<NumericT, H> & m1, long gpu_val)
 }
 
 /** @brief Scales a matrix by a single precision floating point value. */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator *= (matrix_base<NumericT, H> & m1, float gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, float gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, NumericT(gpu_val), 1, false, false);
@@ -1578,9 +1578,9 @@ operator *= (matrix_base<NumericT, H> & m1, float gpu_val)
 }
 
 /** @brief Scales a matrix by a double precision floating point value. */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator *= (matrix_base<NumericT, H> & m1, double gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator *= (matrix_base<NumericT> & m1, double gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, NumericT(gpu_val), 1, false, false);
@@ -1608,33 +1608,33 @@ operator / (matrix_expression<const LHS, const RHS, OP> const & proxy,
 
 
 /** @brief Returns an expression template for scaling the matrix by a GPU scalar 'alpha' */
-template<typename NumericT, typename H, typename S1>
+template<typename NumericT, typename S1>
 typename viennacl::enable_if< viennacl::is_any_scalar<S1>::value,
-matrix_expression< const matrix_base<NumericT, H>, const S1, op_div> >::type
-operator / (matrix_base<NumericT, H> const & m1, S1 const & s1)
+matrix_expression< const matrix_base<NumericT>, const S1, op_div> >::type
+operator / (matrix_base<NumericT> const & m1, S1 const & s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const S1, op_div>(m1, s1);
+  return matrix_expression< const matrix_base<NumericT>, const S1, op_div>(m1, s1);
 }
 
 /** @brief Returns an expression template for scaling the matrix by a char (8-bit integer) 'alpha'. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>
-operator / (matrix_base<NumericT, H> const & m1, char s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, char s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
 }
 
 /** @brief Returns an expression template for scaling the matrix by a short integer 'alpha'. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>
-operator / (matrix_base<NumericT, H> const & m1, short s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, short s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
 }
 
 /** @brief Returns an expression template for scaling the matrix by an integer 'alpha'. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
 operator / (matrix_base<NumericT> const & m1, int s1)
 {
   return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
@@ -1642,26 +1642,26 @@ operator / (matrix_base<NumericT> const & m1, int s1)
 
 /** @brief Returns an expression template for scaling the matrix by a long integer 'alpha'. */
 template<typename NumericT>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>
-operator / (matrix_base<NumericT, H> const & m1, long s1)
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, long s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
 }
 
 /** @brief Returns an expression template for scaling the matrix by a single precision floating point number 'alpha'. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>
-operator / (matrix_base<NumericT, H> const & m1, float s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, float s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
 }
 
 /** @brief Returns an expression template for scaling the matrix by a double precision floating point number 'alpha'. */
-template<typename NumericT, typename H>
-matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>
-operator / (matrix_base<NumericT, H> const & m1, double s1)
+template<typename NumericT>
+matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>
+operator / (matrix_base<NumericT> const & m1, double s1)
 {
-  return matrix_expression< const matrix_base<NumericT, H>, const NumericT, op_div>(m1, NumericT(s1));
+  return matrix_expression< const matrix_base<NumericT>, const NumericT, op_div>(m1, NumericT(s1));
 }
 
 
@@ -1669,9 +1669,9 @@ operator / (matrix_base<NumericT, H> const & m1, double s1)
 // operator /=
 
 /** @brief Scales a matrix by a GPU scalar value */
-template<typename NumericT, typename H, typename S1>
-typename viennacl::enable_if< viennacl::is_scalar<S1>::value, matrix_base<NumericT, H> & >::type
-operator /= (matrix_base<NumericT, H> & m1, S1 const & gpu_val)
+template<typename NumericT, typename S1>
+typename viennacl::enable_if< viennacl::is_scalar<S1>::value, matrix_base<NumericT> & >::type
+operator /= (matrix_base<NumericT> & m1, S1 const & gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, gpu_val, 1, true, false);
@@ -1679,9 +1679,9 @@ operator /= (matrix_base<NumericT, H> & m1, S1 const & gpu_val)
 }
 
 /** @brief Scales a matrix by a char (8-bit integer) value */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator /= (matrix_base<NumericT, H> & m1, char gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, char gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, NumericT(gpu_val), 1, true, false);
@@ -1689,9 +1689,9 @@ operator /= (matrix_base<NumericT, H> & m1, char gpu_val)
 }
 
 /** @brief Scales a matrix by a short integer value */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator /= (matrix_base<NumericT, H> & m1, short gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, short gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, gpu_val, 1, true, false);
@@ -1699,9 +1699,9 @@ operator /= (matrix_base<NumericT, H> & m1, short gpu_val)
 }
 
 /** @brief Scales a matrix by an integer value */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator /= (matrix_base<NumericT, H> & m1, int gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, int gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, gpu_val, 1, true, false);
@@ -1709,9 +1709,9 @@ operator /= (matrix_base<NumericT, H> & m1, int gpu_val)
 }
 
 /** @brief Scales a matrix by a long integer value */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator /= (matrix_base<NumericT, H> & m1, long gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, long gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, gpu_val, 1, true, false);
@@ -1719,9 +1719,9 @@ operator /= (matrix_base<NumericT, H> & m1, long gpu_val)
 }
 
 /** @brief Scales a matrix by a single precision floating point value */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator /= (matrix_base<NumericT, H> & m1, float gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, float gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, gpu_val, 1, true, false);
@@ -1729,9 +1729,9 @@ operator /= (matrix_base<NumericT, H> & m1, float gpu_val)
 }
 
 /** @brief Scales a matrix by a double precision floating point value */
-template<typename NumericT, typename H>
-matrix_base<NumericT, H> &
-operator /= (matrix_base<NumericT, H> & m1, double gpu_val)
+template<typename NumericT>
+matrix_base<NumericT> &
+operator /= (matrix_base<NumericT> & m1, double gpu_val)
 {
   viennacl::linalg::am(m1,
                        m1, gpu_val, 1, true, false);
@@ -1743,59 +1743,59 @@ operator /= (matrix_base<NumericT, H> & m1, double gpu_val)
 
 
 // outer_prod(v1, v2) * val;
-template<typename NumericT, typename H1, typename H2, typename S1>
+template<typename NumericT, typename S1>
 typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
-viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod>,
+viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
 const S1,
 op_mult>
 >::type
-operator*(const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod> & proxy,
+operator*(const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod> & proxy,
           const S1 & val)
 {
-  return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod>,
+  return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
       const S1,
       op_mult>(proxy, val);
 }
 
-template<typename NumericT, typename S1, typename H1, typename H2>
+template<typename NumericT, typename S1>
 typename viennacl::enable_if< viennacl::is_cpu_scalar<S1>::value,
-viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod>,
+viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
 const NumericT,
 op_mult>
 >::type
-operator*(const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod> & proxy,
+operator*(const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod> & proxy,
           const S1 & val)
 {
-  return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod>,
+  return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
       const NumericT,
       op_mult>(proxy, NumericT(val));
 }
 
 // val * outer_prod(v1, v2);
-template<typename NumericT, typename H1, typename H2, typename S1>
+template<typename NumericT, typename S1>
 typename viennacl::enable_if< viennacl::is_scalar<S1>::value,
-viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod>,
+viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
 const S1,
 op_mult>
 >::type
 operator*(const S1 & val,
-          const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod> & proxy)
+          const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod> & proxy)
 {
-  return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod>,
+  return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
       const S1,
       op_mult>(proxy, val);
 }
 
-template<typename NumericT, typename H1, typename H2, typename S1>
+template<typename NumericT, typename S1>
 typename viennacl::enable_if< viennacl::is_cpu_scalar<S1>::value,
-viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod>,
+viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
 const NumericT,
 op_mult>
 >::type
 operator*(const S1 & val,
-          const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod> & proxy)
+          const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod> & proxy)
 {
-  return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT, H1>, const vector_base<NumericT, H2>, op_prod>,
+  return viennacl::matrix_expression< const viennacl::matrix_expression< const vector_base<NumericT>, const vector_base<NumericT>, op_prod>,
       const NumericT,
       op_mult>(proxy, NumericT(val));
 }
@@ -1814,18 +1814,18 @@ namespace detail
 {
 
   // x = y
-  template<typename T, typename H1, typename H2>
-  struct op_executor<matrix_base<T, H1>, op_assign, matrix_base<T, H2> >
+  template<typename T>
+  struct op_executor<matrix_base<T>, op_assign, matrix_base<T> >
   {
-    static void apply(matrix_base<T, H1> & lhs, matrix_base<T, H2> const & rhs)
+    static void apply(matrix_base<T> & lhs, matrix_base<T> const & rhs)
     {
       viennacl::linalg::am(lhs, rhs, T(1), 1, false, false);
     }
   };
 
   // x = trans(y)
-  template<typename T, typename H1, typename H2, typename H3>
-  struct op_executor<matrix_base<T, H1>, op_assign, matrix_expression<const matrix_base<T, H2>, const matrix_base<T, H3>, op_trans> >
+  template<typename T>
+  struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> >
   {
     static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> const & rhs)
     {
@@ -1850,31 +1850,31 @@ namespace detail
 
 
   // x += y
-  template<typename T, typename H1, typename H2>
-  struct op_executor<matrix_base<T, H1>, op_inplace_add, matrix_base<T ,H2> >
+  template<typename T>
+  struct op_executor<matrix_base<T>, op_inplace_add, matrix_base<T> >
   {
-    static void apply(matrix_base<T, H1> & lhs, matrix_base<T, H2> const & rhs)
+    static void apply(matrix_base<T> & lhs, matrix_base<T> const & rhs)
     {
       viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, rhs, T(1), 1, false, false);
     }
   };
 
   // x += trans(y)
-  template<typename T, typename H1, typename H2, typename H3>
-  struct op_executor<matrix_base<T, H1>, op_inplace_add, matrix_expression<const matrix_base<T, H2>, const matrix_base<T, H3>, op_trans> >
+  template<typename T>
+  struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> >
   {
-    static void apply(matrix_base<T, H1> & lhs, matrix_expression<const matrix_base<T, H2>, const matrix_base<T, H3>, op_trans> const & rhs)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const matrix_base<T>, op_trans> const & rhs)
     {
-      matrix_base<T, H2> temp(rhs);
+      matrix_base<T> temp(rhs);
       viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, temp, T(1), 1, false, false);
     }
   };
 
   // x += trans(expr)
-  template<typename T, typename H, typename LhsT, typename RhsT, typename OpT>
-  struct op_executor<matrix_base<T, H>, op_inplace_add, matrix_expression<const matrix_expression<const LhsT, const RhsT, OpT>, const matrix_expression<const LhsT, const RhsT, OpT>, op_trans> >
+  template<typename T, typename LhsT, typename RhsT, typename OpT>
+  struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_expression<const LhsT, const RhsT, OpT>, const matrix_expression<const LhsT, const RhsT, OpT>, op_trans> >
   {
-    static void apply(matrix_base<T, H> & lhs, matrix_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
                                                               const matrix_expression<const LhsT, const RhsT, OpT>,
                                                               op_trans> const & rhs)
     {
@@ -1906,10 +1906,10 @@ namespace detail
   };
 
   // x -= trans(expr)
-  template<typename T, typename H, typename LhsT, typename RhsT, typename OpT>
-  struct op_executor<matrix_base<T, H>, op_inplace_sub, matrix_expression<const matrix_expression<const LhsT, const RhsT, OpT>, const matrix_expression<const LhsT, const RhsT, OpT>, op_trans> >
+  template<typename T, typename LhsT, typename RhsT, typename OpT>
+  struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_expression<const LhsT, const RhsT, OpT>, const matrix_expression<const LhsT, const RhsT, OpT>, op_trans> >
   {
-    static void apply(matrix_base<T, H> & lhs, matrix_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LhsT, const RhsT, OpT>,
                                                               const matrix_expression<const LhsT, const RhsT, OpT>,
                                                               op_trans> const & rhs)
     {
@@ -1923,30 +1923,30 @@ namespace detail
 
 
   // x = alpha * y
-  template<typename T, typename H1, typename H2, typename ScalarType>
-  struct op_executor<matrix_base<T, H1>, op_assign, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_mult> >
+  template<typename T, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> >
   {
-    static void apply(matrix_base<T, H1> & lhs, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_mult> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> const & proxy)
     {
       viennacl::linalg::am(lhs, proxy.lhs(), proxy.rhs(), 1, false, false);
     }
   };
 
   // x += alpha * y
-  template<typename T, typename H1, typename H2, typename ScalarType>
-  struct op_executor<matrix_base<T, H1>, op_inplace_add, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_mult> >
+  template<typename T, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> >
   {
-    static void apply(matrix_base<T, H1> & lhs, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_mult> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> const & proxy)
     {
       viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, false, false);
     }
   };
 
   // x -= alpha * y
-  template<typename T, typename H1, typename H2, typename ScalarType>
-  struct op_executor<matrix_base<T, H1>, op_inplace_sub, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_mult> >
+  template<typename T, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> >
   {
-    static void apply(matrix_base<T, H1> & lhs, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_mult> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_mult> const & proxy)
     {
       viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, false, true);
     }
@@ -1956,10 +1956,10 @@ namespace detail
   ///////////// x  OP  vec_expr * alpha ////////////////////////
 
   // x = alpha * vec_expr
-  template<typename T, typename H, typename LHS, typename RHS, typename OP, typename ScalarType>
-  struct op_executor<matrix_base<T, H>, op_assign, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
+  template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
   {
-    static void apply(matrix_base<T, H> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
     {
       if (lhs.row_major())
       {
@@ -1968,7 +1968,7 @@ namespace detail
       }
       else
       {
-        matrix<T, viennacl::ocl::handle<cl_mem>, column_major> temp(proxy.lhs());
+        matrix<T, column_major> temp(proxy.lhs());
         lhs = temp * proxy.rhs();
       }
     }
@@ -1994,10 +1994,10 @@ namespace detail
   };
 
   // x -= alpha * vec_expr
-  template<typename T, typename H, typename LHS, typename RHS, typename OP, typename ScalarType>
-  struct op_executor<matrix_base<T, H>, op_inplace_sub, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
+  template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> >
   {
-    static void apply(matrix_base<T, H> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_mult> const & proxy)
     {
       if (lhs.row_major())
       {
@@ -2006,7 +2006,7 @@ namespace detail
       }
       else
       {
-        matrix<T, viennacl::ocl::handle<cl_mem>, column_major> temp(proxy.lhs());
+        matrix<T, column_major> temp(proxy.lhs());
         lhs -= temp * proxy.rhs();
       }
     }
@@ -2016,30 +2016,30 @@ namespace detail
   ///////////// x  OP  y / alpha ////////////////////////
 
   // x = y / alpha
-  template<typename T, typename H1, typename H2, typename ScalarType>
-  struct op_executor<matrix_base<T, H1>, op_assign, matrix_expression<const matrix_base<T2>, const ScalarType, op_div> >
+  template<typename T, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_base<T>, const ScalarType, op_div> >
   {
-    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T, H1>, const ScalarType, op_div> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_div> const & proxy)
     {
       viennacl::linalg::am(lhs, proxy.lhs(), proxy.rhs(), 1, true, false);
     }
   };
 
   // x += y / alpha
-  template<typename T, typename H1, typename H2, typename ScalarType>
-  struct op_executor<matrix_base<T, H1>, op_inplace_add, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_div> >
+  template<typename T, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_base<T>, const ScalarType, op_div> >
   {
-    static void apply(matrix_base<T, H1> & lhs, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_div> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_div> const & proxy)
     {
       viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, true, false);
     }
   };
 
   // x -= y / alpha
-  template<typename T, typename H1, typename H2, typename ScalarType>
-  struct op_executor<matrix_base<T, H1>, op_inplace_sub, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_div> >
+  template<typename T, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_base<T>, const ScalarType, op_div> >
   {
-    static void apply(matrix_base<T, H1> & lhs, matrix_expression<const matrix_base<T, H2>, const ScalarType, op_div> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_base<T>, const ScalarType, op_div> const & proxy)
     {
       viennacl::linalg::ambm(lhs, lhs, T(1), 1, false, false, proxy.lhs(), proxy.rhs(), 1, true, true);
     }
@@ -2049,10 +2049,10 @@ namespace detail
   ///////////// x  OP  vec_expr / alpha ////////////////////////
 
   // x = vec_expr / alpha
-  template<typename T, typename H, typename LHS, typename RHS, typename OP, typename ScalarType>
-  struct op_executor<matrix_base<T, H>, op_assign, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
+  template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_assign, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
   {
-    static void apply(matrix_base<T, H> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
     {
       if (lhs.row_major())
       {
@@ -2061,17 +2061,17 @@ namespace detail
       }
       else
       {
-        matrix<T, viennacl::ocl::handle<cl_mem>, column_major> temp(proxy.lhs());
+        matrix<T, column_major> temp(proxy.lhs());
         lhs = temp / proxy.rhs();
       }
     }
   };
 
   // x += vec_expr / alpha
-  template<typename T, typename H, typename LHS, typename RHS, typename OP, typename ScalarType>
-  struct op_executor<matrix_base<T, H>, op_inplace_add, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
+  template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_inplace_add, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
   {
-    static void apply(matrix_base<T H> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
     {
       if (lhs.row_major())
       {
@@ -2080,17 +2080,17 @@ namespace detail
       }
       else
       {
-        matrix<T, viennacl::ocl::handle<cl_mem>, column_major> temp(proxy.lhs());
+        matrix<T, column_major> temp(proxy.lhs());
         lhs += temp / proxy.rhs();
       }
     }
   };
 
   // x -= vec_expr / alpha
-  template<typename T, typename H, typename LHS, typename RHS, typename OP, typename ScalarType>
-  struct op_executor<matrix_base<T, H>, op_inplace_sub, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
+  template<typename T, typename LHS, typename RHS, typename OP, typename ScalarType>
+  struct op_executor<matrix_base<T>, op_inplace_sub, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> >
   {
-    static void apply(matrix_base<T, H> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const matrix_expression<const LHS, const RHS, OP>, const ScalarType, op_div> const & proxy)
     {
       if (lhs.row_major())
       {
@@ -2099,7 +2099,7 @@ namespace detail
       }
       else
       {
-        matrix<T, viennacl::ocl::handle<cl_mem>, column_major> temp(proxy.lhs());
+        matrix<T, column_major> temp(proxy.lhs());
         lhs -= temp / proxy.rhs();
       }
     }
@@ -2108,12 +2108,12 @@ namespace detail
 
 
   // generic x = vec_expr1 + vec_expr2:
-  template<typename T, typename H, typename LHS, typename RHS>
-  struct op_executor<matrix_base<T, H>, op_assign, matrix_expression<const LHS, const RHS, op_add> >
+  template<typename T, typename LHS, typename RHS>
+  struct op_executor<matrix_base<T>, op_assign, matrix_expression<const LHS, const RHS, op_add> >
   {
     // generic x = vec_expr1 + vec_expr2:
     template<typename LHS1, typename RHS1>
-    static void apply(matrix_base<T, H> & lhs, matrix_expression<const LHS1, const RHS1, op_add> const & proxy)
+    static void apply(matrix_base<T> & lhs, matrix_expression<const LHS1, const RHS1, op_add> const & proxy)
     {
       bool op_aliasing_lhs = op_aliasing(lhs, proxy.lhs());
       bool op_aliasing_rhs = op_aliasing(lhs, proxy.rhs());

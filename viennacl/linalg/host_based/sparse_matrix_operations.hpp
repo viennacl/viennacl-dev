@@ -868,7 +868,7 @@ namespace detail
   void block_inplace_solve(const matrix_expression<const compressed_matrix<NumericT, AlignmentV>,
                                                    const compressed_matrix<NumericT, AlignmentV>,
                                                    op_trans> & L,
-                           viennacl::backend::mem_handle const & /* block_indices */, vcl_size_t /* num_blocks */,
+                           viennacl::backend::mem_handle<> const & /* block_indices */, vcl_size_t /* num_blocks */,
                            vector_base<NumericT> const & /* L_diagonal */,  //ignored
                            vector_base<NumericT> & vec,
                            viennacl::linalg::unit_lower_tag)
@@ -899,7 +899,7 @@ namespace detail
   void block_inplace_solve(const matrix_expression<const compressed_matrix<NumericT, AlignmentV>,
                                                    const compressed_matrix<NumericT, AlignmentV>,
                                                    op_trans> & L,
-                           viennacl::backend::mem_handle const & /*block_indices*/, vcl_size_t /* num_blocks */,
+                           viennacl::backend::mem_handle<> const & /*block_indices*/, vcl_size_t /* num_blocks */,
                            vector_base<NumericT> const & L_diagonal,
                            vector_base<NumericT> & vec,
                            viennacl::linalg::lower_tag)
@@ -935,7 +935,7 @@ namespace detail
   void block_inplace_solve(const matrix_expression<const compressed_matrix<NumericT, AlignmentV>,
                                                    const compressed_matrix<NumericT, AlignmentV>,
                                                    op_trans> & U,
-                           viennacl::backend::mem_handle const & /*block_indices*/, vcl_size_t /* num_blocks */,
+                           viennacl::backend::mem_handle<> const & /*block_indices*/, vcl_size_t /* num_blocks */,
                            vector_base<NumericT> const & /* U_diagonal */, //ignored
                            vector_base<NumericT> & vec,
                            viennacl::linalg::unit_upper_tag)
@@ -968,7 +968,7 @@ namespace detail
   void block_inplace_solve(const matrix_expression<const compressed_matrix<NumericT, AlignmentV>,
                                                    const compressed_matrix<NumericT, AlignmentV>,
                                                    op_trans> & U,
-                           viennacl::backend::mem_handle const & /* block_indices */, vcl_size_t /* num_blocks */,
+                           viennacl::backend::mem_handle<> const & /* block_indices */, vcl_size_t /* num_blocks */,
                            vector_base<NumericT> const & U_diagonal,
                            vector_base<NumericT> & vec,
                            viennacl::linalg::upper_tag)

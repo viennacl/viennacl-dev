@@ -304,22 +304,22 @@ private:
     //
 
     // L:
-    for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_row_index_arrays_.begin();
+    for (typename std::list< viennacl::backend::mem_handle<> >::iterator it  = multifrontal_L_row_index_arrays_.begin();
                                                                        it != multifrontal_L_row_index_arrays_.end();
                                                                      ++it)
       viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
-    for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_row_buffers_.begin();
+    for (typename std::list< viennacl::backend::mem_handle<> >::iterator it  = multifrontal_L_row_buffers_.begin();
                                                                        it != multifrontal_L_row_buffers_.end();
                                                                      ++it)
       viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
-    for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_col_buffers_.begin();
+    for (typename std::list< viennacl::backend::mem_handle<> >::iterator it  = multifrontal_L_col_buffers_.begin();
                                                                        it != multifrontal_L_col_buffers_.end();
                                                                      ++it)
       viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
-    for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_L_element_buffers_.begin();
+    for (typename std::list< viennacl::backend::mem_handle<> >::iterator it  = multifrontal_L_element_buffers_.begin();
                                                                        it != multifrontal_L_element_buffers_.end();
                                                                      ++it)
       viennacl::backend::switch_memory_context<NumericT>(*it, viennacl::traits::context(mat));
@@ -329,22 +329,22 @@ private:
 
     viennacl::switch_memory_context(multifrontal_U_diagonal_, viennacl::traits::context(mat));
 
-    for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_row_index_arrays_.begin();
+    for (typename std::list< viennacl::backend::mem_handle<> >::iterator it  = multifrontal_U_row_index_arrays_.begin();
                                                                        it != multifrontal_U_row_index_arrays_.end();
                                                                      ++it)
       viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
-    for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_row_buffers_.begin();
+    for (typename std::list< viennacl::backend::mem_handle<> >::iterator it  = multifrontal_U_row_buffers_.begin();
                                                                        it != multifrontal_U_row_buffers_.end();
                                                                      ++it)
       viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
-    for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_col_buffers_.begin();
+    for (typename std::list< viennacl::backend::mem_handle<> >::iterator it  = multifrontal_U_col_buffers_.begin();
                                                                        it != multifrontal_U_col_buffers_.end();
                                                                      ++it)
       viennacl::backend::switch_memory_context<unsigned int>(*it, viennacl::traits::context(mat));
 
-    for (typename std::list< viennacl::backend::mem_handle >::iterator it  = multifrontal_U_element_buffers_.begin();
+    for (typename std::list< viennacl::backend::mem_handle<> >::iterator it  = multifrontal_U_element_buffers_.begin();
                                                                        it != multifrontal_U_element_buffers_.end();
                                                                      ++it)
       viennacl::backend::switch_memory_context<NumericT>(*it, viennacl::traits::context(mat));
@@ -354,17 +354,17 @@ private:
   ilu0_tag tag_;
   viennacl::compressed_matrix<NumericT> LU_;
 
-  std::list<viennacl::backend::mem_handle> multifrontal_L_row_index_arrays_;
-  std::list<viennacl::backend::mem_handle> multifrontal_L_row_buffers_;
-  std::list<viennacl::backend::mem_handle> multifrontal_L_col_buffers_;
-  std::list<viennacl::backend::mem_handle> multifrontal_L_element_buffers_;
+  std::list<viennacl::backend::mem_handle<>> multifrontal_L_row_index_arrays_;
+  std::list<viennacl::backend::mem_handle<>> multifrontal_L_row_buffers_;
+  std::list<viennacl::backend::mem_handle<>> multifrontal_L_col_buffers_;
+  std::list<viennacl::backend::mem_handle<>> multifrontal_L_element_buffers_;
   std::list<vcl_size_t>                    multifrontal_L_row_elimination_num_list_;
 
   viennacl::vector<NumericT> multifrontal_U_diagonal_;
-  std::list<viennacl::backend::mem_handle> multifrontal_U_row_index_arrays_;
-  std::list<viennacl::backend::mem_handle> multifrontal_U_row_buffers_;
-  std::list<viennacl::backend::mem_handle> multifrontal_U_col_buffers_;
-  std::list<viennacl::backend::mem_handle> multifrontal_U_element_buffers_;
+  std::list<viennacl::backend::mem_handle<>> multifrontal_U_row_index_arrays_;
+  std::list<viennacl::backend::mem_handle<>> multifrontal_U_row_buffers_;
+  std::list<viennacl::backend::mem_handle<>> multifrontal_U_col_buffers_;
+  std::list<viennacl::backend::mem_handle<>> multifrontal_U_element_buffers_;
   std::list<vcl_size_t>                    multifrontal_U_row_elimination_num_list_;
 
 };

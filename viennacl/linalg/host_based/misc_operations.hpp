@@ -40,10 +40,10 @@ namespace detail
 {
   template<typename NumericT>
   void level_scheduling_substitute(vector<NumericT> & vec,
-                                   viennacl::backend::mem_handle const & row_index_array,
-                                   viennacl::backend::mem_handle const & row_buffer,
-                                   viennacl::backend::mem_handle const & col_buffer,
-                                   viennacl::backend::mem_handle const & element_buffer,
+                                   viennacl::backend::mem_handle<> const & row_index_array,
+                                   viennacl::backend::mem_handle<> const & row_buffer,
+                                   viennacl::backend::mem_handle<> const & col_buffer,
+                                   viennacl::backend::mem_handle<> const & element_buffer,
                                    vcl_size_t num_rows
                                   )
   {

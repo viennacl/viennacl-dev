@@ -330,7 +330,7 @@ namespace viennacl
       template<typename SparseMatrixType, class ScalarType, typename SOLVERTAG>
       typename viennacl::enable_if< viennacl::is_any_sparse_matrix<SparseMatrixType>::value>::type
       block_inplace_solve(const matrix_expression<const SparseMatrixType, const SparseMatrixType, op_trans> & mat,
-                          viennacl::backend::mem_handle const & block_index_array, vcl_size_t num_blocks,
+                          viennacl::backend::mem_handle<> const & block_index_array, vcl_size_t num_blocks,
                           viennacl::vector_base<ScalarType> const & mat_diagonal,
                           viennacl::vector_base<ScalarType> & vec,
                           SOLVERTAG tag)
