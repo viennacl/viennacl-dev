@@ -99,10 +99,10 @@ public:
   scalar_matrix(size_type s1, size_type s2, const_reference val, viennacl::context ctx = viennacl::context()) : implicit_matrix_base<NumericT>(s1, s2, val, false, ctx) {}
 };
 
-template<class NumericT, typename SizeT, typename DistanceT>
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
 class matrix_base
 {
-  typedef matrix_base<NumericT, SizeT, DistanceT>          self_type;
+  typedef matrix_base<NumericT, OCLHandle, SizeT, DistanceT>          self_type;
 public:
 
   typedef matrix_iterator<row_iteration, self_type >   iterator1;
@@ -111,7 +111,7 @@ public:
   typedef NumericT                                                          cpu_value_type;
   typedef SizeT                                                            size_type;
   typedef DistanceT                                                        difference_type;
-  typedef viennacl::backend::mem_handle                                       handle_type;
+  typedef viennacl::backend::mem_handle<OCLHandle>                         handle_type;
 
   /** @brief The default constructor. Does not allocate any memory. */
   explicit matrix_base(): size1_(0), size2_(0), start1_(0), start2_(0), stride1_(1), stride2_(1), internal_size1_(0), internal_size2_(0), row_major_fixed_(false), row_major_(true) {}
@@ -129,7 +129,7 @@ public:
   explicit matrix_base(size_type rows, size_type columns, bool is_row_major, viennacl::context ctx = viennacl::context());
 
   /** @brief Constructor for creating a matrix_range or matrix_stride from some other matrix/matrix_range/matrix_stride */
-  explicit matrix_base(viennacl::backend::mem_handle & h,
+  explicit matrix_base(handle_type & h,
                        size_type mat_size1, size_type mat_start1, size_type mat_stride1, size_type mat_internal_size1,
                        size_type mat_size2, size_type mat_start2, size_type mat_stride2, size_type mat_internal_size2,
                        bool is_row_major): size1_(mat_size1), size2_(mat_size2),
@@ -161,8 +161,8 @@ public:
   matrix_base(const self_type & other);
 
   /* Conversion CTOR */
-  template<typename OtherNumericT>
-  matrix_base(const matrix_base<OtherNumericT, SizeT, DistanceT> & other);
+  template<typename OtherNumericT, typename H>
+  matrix_base(const matrix_base<OtherNumericT, H, SizeT, DistanceT> & other);
 
   self_type & operator=(const self_type & other);
   template<typename OtherNumericT>
@@ -249,7 +249,7 @@ public:
   void switch_memory_context(viennacl::context new_ctx) { viennacl::backend::switch_memory_context<NumericT>(elements_, new_ctx); }
 
 protected:
-  void set_handle(viennacl::backend::mem_handle const & h);
+  void set_handle(handle_type const & h);
   void resize(size_type rows, size_type columns, bool preserve = true);
 private:
   size_type size1_;

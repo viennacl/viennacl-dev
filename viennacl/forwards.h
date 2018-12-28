@@ -401,10 +401,10 @@ namespace viennacl
   template<typename ROWCOL, typename MATRIXTYPE>
   class matrix_iterator;
 
-  template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
+  template<class SCALARTYPE, typename OCLHandle=viennacl::ocl::handle<cl_mem>, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class matrix_base;
 
-  template<class SCALARTYPE, typename F = row_major, unsigned int ALIGNMENT = 1>
+  template<class SCALARTYPE, typename OCLHandle=viennacl::ocl::handle<cl_mem>, typename F = row_major, unsigned int ALIGNMENT = 1>
   class matrix;
 
   template<typename SCALARTYPE>
