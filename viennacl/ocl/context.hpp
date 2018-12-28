@@ -325,13 +325,13 @@ public:
     return mem;
   }
 
-  /// [KK]: TODOTODOTODOTODO Documentation
+  /** @brief Decerements the reference count of the memory in the memory pool **/
   void decrement_mem_ref_counter(cl_mem p, vcl_size_t s) const
   {
     get_mempool()->decrement_ref_counter(p, s);
   }
 
-
+  /** @brief Incerements the reference count of the memory in the memory pool **/
   void increment_mem_ref_counter(cl_mem p, vcl_size_t s) const
   {
     get_mempool()->increment_ref_counter(p, s);
