@@ -390,18 +390,17 @@ public:
 
     queues_[dev].push_back(viennacl::ocl::command_queue(temp));
 
-    // TODO: Need figure out why this is giving an error.
-    //if(queues_.find(dev) == queues_.end())
-    //{
-      // did not find a queue for the present device, need to allot an
-      // allocator.
+    // register the allocator for the device
+    if(allocators_.find(dev) == allocators_.end())
+    {
+      // did not find an queue for the present device => allot one
       allocators_[dev] = tools::shared_ptr<cl_immediate_allocator>(new
         cl_immediate_allocator(this,
             &(queues_[dev][0]),
             CL_MEM_READ_WRITE));
       mempools_[dev] = tools::shared_ptr<memory_pool<cl_immediate_allocator>> (new
         memory_pool<cl_immediate_allocator>(*allocators_[dev]));
-    //}
+    }
   }
 
   /** @brief Adds a queue for the given device to the context */
