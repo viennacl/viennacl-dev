@@ -422,6 +422,7 @@ public:
   {
     typedef std::map< cl_device_id, tools::shared_ptr<viennacl::ocl::memory_pool<cl_immediate_allocator>> >    MempoolContainer;
     MempoolContainer::const_iterator it = mempools_.find(devices_[current_device_id_].id());
+    assert (it != mempools_.end()&&bool("Did not find a memory pool."));
     return it->second;
   }
 
