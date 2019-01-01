@@ -561,39 +561,39 @@ return *this;
 //read-write access to an element of the vector
 
 template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-entry_proxy<NumericT> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator()(size_type index)
+entry_proxy<NumericT, OCLHandle> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator()(size_type index)
 {
 assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
 assert( index < size() && bool("Index out of bounds!") );
 
-return entry_proxy<NumericT>(start_ + stride_ * index, elements_);
+return entry_proxy<NumericT, OCLHandle>(start_ + stride_ * index, elements_);
 }
 
 template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-entry_proxy<NumericT> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator[](size_type index)
+entry_proxy<NumericT, OCLHandle> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator[](size_type index)
 {
 assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
 assert( index < size() && bool("Index out of bounds!") );
 
-return entry_proxy<NumericT>(start_ + stride_ * index, elements_);
+return entry_proxy<NumericT, OCLHandle>(start_ + stride_ * index, elements_);
 }
 
 template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-const_entry_proxy<NumericT> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator()(size_type index) const
+const_entry_proxy<NumericT, OCLHandle> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator()(size_type index) const
 {
 assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
 assert( index < size() && bool("Index out of bounds!") );
 
-return const_entry_proxy<NumericT>(start_ + stride_ * index, elements_);
+return const_entry_proxy<NumericT, OCLHandle>(start_ + stride_ * index, elements_);
 }
 
 template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
-const_entry_proxy<NumericT> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator[](size_type index) const
+const_entry_proxy<NumericT, OCLHandle> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator[](size_type index) const
 {
 assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
 assert( index < size() && bool("Index out of bounds!") );
 
-return const_entry_proxy<NumericT>(start_ + stride_ * index, elements_);
+return const_entry_proxy<NumericT, OCLHandle>(start_ + stride_ * index, elements_);
 }
 
 //////////////////////////// Read-write access to an element of the vector end ///////////////////
@@ -2058,10 +2058,10 @@ namespace detail
   };
 
   // x = inner_prod(z, {y0, y1, ...})
-  template<typename T>
-  struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_base<T>, const vector_tuple<T>, op_inner_prod> >
+  template<typename T, typename H1, typename H2>
+  struct op_executor<vector_base<T, H1>, op_assign, vector_expression<const vector_base<T, H2>, const vector_tuple<T>, op_inner_prod> >
   {
-    static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_tuple<T>, op_inner_prod> const & rhs)
+    static void apply(vector_base<T, H1> & lhs, vector_expression<const vector_base<T, H2>, const vector_tuple<T>, op_inner_prod> const & rhs)
     {
       viennacl::linalg::inner_prod_impl(rhs.lhs(), rhs.rhs(), lhs);
     }

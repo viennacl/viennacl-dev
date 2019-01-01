@@ -209,13 +209,13 @@ public:
 
   //read-write access to an element of the vector
   /** @brief Read-write access to a single element of the vector */
-  entry_proxy<NumericT> operator()(size_type index);
+  entry_proxy<NumericT, OCLHandle> operator()(size_type index);
   /** @brief Read-write access to a single element of the vector */
-  entry_proxy<NumericT> operator[](size_type index);
+  entry_proxy<NumericT, OCLHandle> operator[](size_type index);
   /** @brief Read access to a single element of the vector */
-  const_entry_proxy<NumericT> operator()(size_type index) const;
+  const_entry_proxy<NumericT, OCLHandle> operator()(size_type index) const;
   /** @brief Read access to a single element of the vector */
-  const_entry_proxy<NumericT> operator[](size_type index) const;
+  const_entry_proxy<NumericT, OCLHandle> operator[](size_type index) const;
   self_type & operator += (const self_type & vec);
   self_type & operator -= (const self_type & vec);
 
