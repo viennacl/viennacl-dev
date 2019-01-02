@@ -97,7 +97,7 @@ class typesafe_host_array
 public:
   explicit typesafe_host_array() : bytes_buffer_(NULL), buffer_size_(0) {}
 
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   explicit typesafe_host_array(mem_handle<H> const & handle, vcl_size_t num = 0) : bytes_buffer_(NULL), buffer_size_(sizeof(cpu_type) * num)
   {
     resize(handle, num);
@@ -123,7 +123,7 @@ public:
   //
 
   /** @brief Resize without initializing the new memory */
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   void raw_resize(mem_handle<H> const & /*handle*/, vcl_size_t num)
   {
     buffer_size_ = sizeof(cpu_type) * num;
@@ -137,7 +137,7 @@ public:
   }
 
   /** @brief Resize including initialization of new memory (cf. std::vector<>) */
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   void resize(mem_handle<H> const & handle, vcl_size_t num)
   {
     raw_resize(handle, num);
@@ -174,7 +174,7 @@ class typesafe_host_array<T, true>
 public:
   explicit typesafe_host_array() : convert_to_opencl_( (default_memory_type() == OPENCL_MEMORY) ? true : false), bytes_buffer_(NULL), buffer_size_(0) {}
 
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   explicit typesafe_host_array(mem_handle<H> const & handle, vcl_size_t num = 0) : convert_to_opencl_(false), bytes_buffer_(NULL), buffer_size_(sizeof(cpu_type) * num)
   {
     resize(handle, num);
@@ -224,7 +224,7 @@ public:
   //
 
   /** @brief Resize without initializing the new memory */
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   void raw_resize(mem_handle<H> const & handle, vcl_size_t num)
   {
     buffer_size_ = sizeof(cpu_type) * num;
@@ -251,7 +251,7 @@ public:
   }
 
   /** @brief Resize including initialization of new memory (cf. std::vector<>) */
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   void resize(mem_handle<H> const & handle, vcl_size_t num)
   {
     raw_resize(handle, num);

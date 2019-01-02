@@ -169,7 +169,7 @@ namespace backend
   *  @param dst_offset     Offset of the first byte to be written to the address given by 'dst_buffer' (in bytes)
   *  @param bytes_to_copy  Number of bytes to be copied
   */
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   inline void memory_copy(mem_handle<H> const & src_buffer,
                           mem_handle<H> & dst_buffer,
                           vcl_size_t src_offset,
@@ -207,7 +207,7 @@ namespace backend
   /** @brief A 'shallow' copy operation from an initialized buffer to an uninitialized buffer.
    * The uninitialized buffer just copies the raw handle.
    */
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   inline void memory_shallow_copy(mem_handle<H> const & src_buffer,
                                   mem_handle<H> & dst_buffer)
   {
@@ -251,7 +251,7 @@ namespace backend
   * @param ptr            Pointer to the first byte to be written
   * @param async              Whether the operation should be asynchronous
   */
-  template <typename H = viennacl::ocl::handle<cl_mem>>
+  template <typename H = viennacl::ocl::handle<cl_mem> >
   inline void memory_write(mem_handle<H> & dst_buffer,
                            vcl_size_t dst_offset,
                            vcl_size_t bytes_to_write,
@@ -400,7 +400,7 @@ namespace backend
 
 
   /** @brief Switches the active memory domain within a memory handle. Data is copied if the new active domain differs from the old one. Memory in the source handle is not free'd. */
-  template<typename DataType, typename H = viennacl::ocl::handle<cl_mem>>
+  template<typename DataType, typename H = viennacl::ocl::handle<cl_mem> >
   void switch_memory_context(mem_handle<H> & handle, viennacl::context new_ctx)
   {
     if (handle.get_active_handle_id() == new_ctx.memory_type())
@@ -502,7 +502,7 @@ namespace backend
 
 
   /** @brief Copies data of the provided 'DataType' from 'handle_src' to 'handle_dst' and converts the data if the binary representation of 'DataType' among the memory domains differs. */
-  template<typename DataType, typename H = viennacl::ocl::handle<cl_mem>>
+  template<typename DataType, typename H = viennacl::ocl::handle<cl_mem> >
   void typesafe_memory_copy(mem_handle<H> const & handle_src, mem_handle<H> & handle_dst)
   {
     if (handle_dst.get_active_handle_id() == MEMORY_NOT_INITIALIZED)

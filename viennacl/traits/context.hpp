@@ -48,7 +48,7 @@ viennacl::context context(T const & t)
 }
 
 /** @brief Returns an ID for the currently active memory domain of an object */
-template <typename H = viennacl::ocl::handle<cl_mem>>
+template <typename H = viennacl::ocl::handle<cl_mem> >
 inline viennacl::context context(viennacl::backend::mem_handle<H> const & h)
 {
 #ifdef VIENNACL_WITH_OPENCL

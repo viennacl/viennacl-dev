@@ -58,32 +58,32 @@ inline long   handle(long val)   { return val; }  //for unification purposes whe
 inline float  handle(float val)  { return val; }  //for unification purposes when passing CPU-scalars to kernels
 inline double handle(double val) { return val; }  //for unification purposes when passing CPU-scalars to kernels
 
-template<typename LHS, typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename LHS, typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H>       & handle(viennacl::scalar_expression< const LHS, const RHS, OP> & obj)
 {
   return handle(obj.lhs());
 }
 
-template<typename LHS, typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename LHS, typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::matrix_expression<LHS, RHS, OP> const & obj);
 
-template<typename LHS, typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename LHS, typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::vector_expression<LHS, RHS, OP> const & obj);
 
-template<typename LHS, typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename LHS, typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::scalar_expression< const LHS, const RHS, OP> const & obj)
 {
   return handle(obj.lhs());
 }
 
 // proxy objects require extra care (at the moment)
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H>       & handle(viennacl::vector_base<T>       & obj)
 {
   return obj.handle();
 }
 
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::vector_base<T> const & obj)
 {
   return obj.handle();
@@ -91,26 +91,26 @@ viennacl::backend::mem_handle<H> const & handle(viennacl::vector_base<T> const &
 
 
 
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H>       & handle(viennacl::matrix_range<T>       & obj)
 {
   return obj.get().handle();
 }
 
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::matrix_range<T> const & obj)
 {
   return obj.get().handle();
 }
 
 
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H>       & handle(viennacl::matrix_slice<T>      & obj)
 {
   return obj.get().handle();
 }
 
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::matrix_slice<T> const & obj)
 {
   return obj.get().handle();
@@ -122,13 +122,13 @@ viennacl::backend::mem_handle<H> const & handle(viennacl::vector_expression<LHS,
   return handle(obj.lhs());
 }
 
-template<typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::vector_expression<const float, RHS, OP> const & obj)
 {
   return handle(obj.rhs());
 }
 
-template<typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::vector_expression<const double, RHS, OP> const & obj)
 {
   return handle(obj.rhs());
@@ -140,13 +140,13 @@ viennacl::backend::mem_handle<H> const & handle(viennacl::matrix_expression<LHS,
   return handle(obj.lhs());
 }
 
-template<typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::matrix_expression<const float, RHS, OP> const & obj)
 {
   return handle(obj.rhs());
 }
 
-template<typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename RHS, typename OP, typename H = viennacl::ocl::handle<cl_mem> >
 viennacl::backend::mem_handle<H> const & handle(viennacl::matrix_expression<const double, RHS, OP> const & obj)
 {
   return handle(obj.rhs());
@@ -158,14 +158,14 @@ viennacl::backend::mem_handle<H> const & handle(viennacl::matrix_expression<cons
 // RAM handle extraction
 //
 /** @brief Generic helper routine for extracting the RAM handle of a ViennaCL object. Non-const version. */
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H = viennacl::ocl::handle<cl_mem> >
 typename viennacl::backend::mem_handle<H>::ram_handle_type & ram_handle(T & obj)
 {
   return viennacl::traits::handle(obj).ram_handle();
 }
 
 /** @brief Generic helper routine for extracting the RAM handle of a ViennaCL object. Const version. */
-template<typename T, typename H = viennacl::ocl::handle<cl_mem>>
+template<typename T, typename H = viennacl::ocl::handle<cl_mem> >
 typename viennacl::backend::mem_handle<H>::ram_handle_type const & ram_handle(T const & obj)
 {
   return viennacl::traits::handle(obj).ram_handle();
@@ -178,7 +178,7 @@ inline viennacl::tools::shared_ptr<char> & ram_handle(viennacl::backend::mem_han
   return h.ram_handle();
 }
 
-template <typename H = viennacl::ocl::handle<cl_mem>>
+template <typename H = viennacl::ocl::handle<cl_mem> >
 inline viennacl::tools::shared_ptr<char> const & ram_handle(viennacl::backend::mem_handle<H> const & h)
 {
   return h.ram_handle();

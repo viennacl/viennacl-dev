@@ -257,25 +257,25 @@ namespace viennacl
   }
 
   //forward declaration of basic types:
-  template<class TYPE, typename H = viennacl::ocl::handle<cl_mem>>
+  template<class TYPE, typename H = viennacl::ocl::handle<cl_mem> >
   class scalar;
 
   template<typename LHS, typename RHS, typename OP>
   class scalar_expression;
 
-  template<typename SCALARTYPE, typename H = viennacl::ocl::handle<cl_mem>>
+  template<typename SCALARTYPE, typename H = viennacl::ocl::handle<cl_mem> >
   class entry_proxy;
 
-  template<typename SCALARTYPE, typename H = viennacl::ocl::handle<cl_mem>>
+  template<typename SCALARTYPE, typename H = viennacl::ocl::handle<cl_mem> >
   class const_entry_proxy;
 
   template<typename LHS, typename RHS, typename OP>
   class vector_expression;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCLHandle = viennacl::ocl::handle<cl_mem>>
+  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCLHandle = viennacl::ocl::handle<cl_mem> >
   class vector_iterator;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCLHandle = viennacl::ocl::handle<cl_mem>>
+  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCLHandle = viennacl::ocl::handle<cl_mem> >
   class const_vector_iterator;
 
   template<typename SCALARTYPE>
@@ -296,10 +296,10 @@ namespace viennacl
   template<class SCALARTYPE, typename Handle = viennacl::ocl::handle<cl_mem>, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class vector_base;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT = 1, typename OCLHandle = viennacl::ocl::handle<cl_mem>>
+  template<class SCALARTYPE, unsigned int ALIGNMENT = 1, typename OCLHandle = viennacl::ocl::handle<cl_mem> >
   class vector;
 
-  template<typename ScalarT, typename H = viennacl::ocl::handle<cl_mem>>
+  template<typename ScalarT, typename H = viennacl::ocl::handle<cl_mem> >
   class vector_tuple;
 
   //the following forwards are needed for GMRES
@@ -386,7 +386,7 @@ namespace viennacl
 
   namespace backend
   {
-    template <typename OCL_Handle = viennacl::ocl::handle<cl_mem>>
+    template <typename OCL_Handle = viennacl::ocl::handle<cl_mem> >
     class mem_handle;
   }
 
