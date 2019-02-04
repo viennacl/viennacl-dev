@@ -44,6 +44,21 @@ namespace viennacl
 //  }
 //#endif
 
+  namespace result_of
+  {
+    template<typename LHS, typename RHS, typename OP>
+    struct reference_if_nonscalar<matrix_expression<LHS, RHS, OP> >
+    {
+      typedef matrix_expression<LHS, RHS, OP>    type;
+    };
+
+    template<typename LHS, typename RHS, typename OP>
+    struct reference_if_nonscalar<const matrix_expression<LHS, RHS, OP> >
+    {
+      typedef matrix_expression<LHS, RHS, OP>    type;
+    };
+  }
+
 /** @brief Expression template class for representing a tree of expressions which ultimately result in a matrix.
   *
   * @tparam LHS   The left hand side of the expression tree

@@ -581,6 +581,19 @@ struct reference_if_nonscalar<const double>
   typedef const double    type;
 };
 
+template<typename LHS, typename RHS, typename OP>
+struct reference_if_nonscalar<vector_expression<LHS, RHS, OP> >
+{
+  typedef vector_expression<LHS, RHS, OP>    type;
+};
+
+template<typename LHS, typename RHS, typename OP>
+struct reference_if_nonscalar<const vector_expression<LHS, RHS, OP> >
+{
+  typedef vector_expression<LHS, RHS, OP>    type;
+};
+
+
 /** \endcond */
 
 //OpenCL equivalent type
