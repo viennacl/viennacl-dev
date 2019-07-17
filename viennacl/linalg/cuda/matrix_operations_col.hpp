@@ -1327,7 +1327,22 @@ __global__ void house_update_A_left_column_major_kernel(
     }
 }
 
+template<typename T>
+__device__ void col_reduce_lcl_array(
+        T * sums,
+        unsigned int th_Idx,
+        unsigned int bl_Dim)
+{
+    unsigned int step = bl_Dim >> 1;
 
+    while(step > 0)
+    {
+        if(th_Idx < step)
+            sums[th_Idx] += sums[th_Idx + step];
+        step >>= 1;
+        __syncthreads();
+    }
+}
 
 template<typename T>
 __global__ void house_update_A_right_row_major_kernel(
@@ -1391,24 +1406,6 @@ __global__ void house_update_A_right_column_major_kernel(
     }
 }
 
-
-
-template<typename T>
-__device__ void col_reduce_lcl_array(
-        T * sums,
-        unsigned int th_Idx,
-        unsigned int bl_Dim)
-{
-    unsigned int step = bl_Dim >> 1;
-
-    while(step > 0)
-    {
-        if(th_Idx < step)
-            sums[th_Idx] += sums[th_Idx + step];
-        step >>= 1;
-        __syncthreads();
-    }
-}
 
 
 template <typename T>
