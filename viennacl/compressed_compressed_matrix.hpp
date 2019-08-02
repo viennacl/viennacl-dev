@@ -265,7 +265,7 @@ template<class NumericT>
 class compressed_compressed_matrix
 {
 public:
-  typedef viennacl::backend::mem_handle                                                              handle_type;
+  typedef viennacl::backend::mem_handle<>                                                              handle_type;
   typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<NumericT>::ResultType>   value_type;
   typedef vcl_size_t                                                                                 size_type;
 

@@ -69,6 +69,8 @@
 #include "viennacl/meta/enable_if.hpp"
 #include "viennacl/version.hpp"
 
+#include "CL/cl.h"
+
 /** @brief Main namespace in ViennaCL. Holds all the basic types such as vector, matrix, etc. and defines operations upon them. */
 namespace viennacl
 {
@@ -246,26 +248,34 @@ namespace viennacl
   /** @brief A tag class representing sign flips (for scalars only. Vectors and matrices use the standard multiplication by the scalar -1.0) */
   struct op_flip_sign {};
 
+  /** @brief OpenCL backend. Manages platforms, contexts, buffers, kernels, etc. */
+  namespace ocl {
+    template <class OCL_TYPE>
+    class handle;
+
+    class pooled_clmem_handle;
+  }
+
   //forward declaration of basic types:
-  template<class TYPE>
+  template<class TYPE, typename H = viennacl::ocl::handle<cl_mem> >
   class scalar;
 
   template<typename LHS, typename RHS, typename OP>
   class scalar_expression;
 
-  template<typename SCALARTYPE>
+  template<typename SCALARTYPE, typename H = viennacl::ocl::handle<cl_mem> >
   class entry_proxy;
 
-  template<typename SCALARTYPE>
+  template<typename SCALARTYPE, typename H = viennacl::ocl::handle<cl_mem> >
   class const_entry_proxy;
 
   template<typename LHS, typename RHS, typename OP>
   class vector_expression;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT>
+  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCLHandle = viennacl::ocl::handle<cl_mem> >
   class vector_iterator;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT>
+  template<class SCALARTYPE, unsigned int ALIGNMENT, typename OCLHandle = viennacl::ocl::handle<cl_mem> >
   class const_vector_iterator;
 
   template<typename SCALARTYPE>
@@ -283,13 +293,13 @@ namespace viennacl
   template<typename SCALARTYPE>
   struct scalar_vector;
 
-  template<class SCALARTYPE, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
+  template<class SCALARTYPE, typename Handle = viennacl::ocl::handle<cl_mem>, typename SizeType = vcl_size_t, typename DistanceType = vcl_ptrdiff_t>
   class vector_base;
 
-  template<class SCALARTYPE, unsigned int ALIGNMENT = 1>
+  template<class SCALARTYPE, unsigned int ALIGNMENT = 1, typename OCLHandle = viennacl::ocl::handle<cl_mem> >
   class vector;
 
-  template<typename ScalarT>
+  template<typename ScalarT, typename H = viennacl::ocl::handle<cl_mem> >
   class vector_tuple;
 
   //the following forwards are needed for GMRES
@@ -308,15 +318,15 @@ namespace viennacl
             const_vector_iterator<SCALARTYPE, ALIGNMENT_SRC> const & gpu_src_end,
             const_vector_iterator<SCALARTYPE, ALIGNMENT_DEST> gpu_dest_begin);
 
-  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename CPU_ITERATOR>
-  void fast_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_begin,
-                 const const_vector_iterator<SCALARTYPE, ALIGNMENT> & gpu_end,
+  template<typename SCALARTYPE, unsigned int ALIGNMENT, typename H, typename CPU_ITERATOR>
+  void fast_copy(const const_vector_iterator<SCALARTYPE, ALIGNMENT, H> & gpu_begin,
+                 const const_vector_iterator<SCALARTYPE, ALIGNMENT, H> & gpu_end,
                  CPU_ITERATOR cpu_begin );
 
-  template<typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT>
+  template<typename CPU_ITERATOR, typename SCALARTYPE, unsigned int ALIGNMENT, typename H>
   void fast_copy(CPU_ITERATOR const & cpu_begin,
                   CPU_ITERATOR const & cpu_end,
-                  vector_iterator<SCALARTYPE, ALIGNMENT> gpu_begin);
+                  vector_iterator<SCALARTYPE, ALIGNMENT, H> gpu_begin);
 
 
   /** @brief Tag class for indicating row-major layout of a matrix. Not passed to the matrix directly, see row_major type. */
@@ -376,6 +386,7 @@ namespace viennacl
 
   namespace backend
   {
+    template <typename OCL_Handle = viennacl::ocl::handle<cl_mem> >
     class mem_handle;
   }
 
@@ -655,28 +666,27 @@ namespace viennacl
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& input2,
                     viennacl::vector<SCALARTYPE, ALIGNMENT>& output);
 
-    template<typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_prod> >
-    element_prod(vector_base<T> const & v1, vector_base<T> const & v2);
+    template<typename T, typename H1, typename H2>
+    viennacl::vector_expression<const vector_base<T, H1>, const vector_base<T, H2>, op_element_binary<op_prod> >
+    element_prod(vector_base<T, H1> const & v1, vector_base<T, H2> const & v2);
 
-    template<typename T>
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_div> >
-    element_div(vector_base<T> const & v1, vector_base<T> const & v2);
+    template<typename T, typename H1, typename H2>
+    viennacl::vector_expression<const vector_base<T, H1>, const vector_base<T, H2>, op_element_binary<op_div> >
+    element_div(vector_base<T, H1> const & v1, vector_base<T, H2> const & v2);
 
 
-
-    template<typename T>
-    void inner_prod_impl(vector_base<T> const & vec1,
-                         vector_base<T> const & vec2,
+    template<typename T, typename H1, typename H2>
+    void inner_prod_impl(vector_base<T, H1> const & vec1,
+                         vector_base<T, H2> const & vec2,
                          scalar<T> & result);
 
-    template<typename LHS, typename RHS, typename OP, typename T>
+    template<typename LHS, typename RHS, typename OP, typename T, typename H>
     void inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                         vector_base<T> const & vec2,
+                         vector_base<T, H> const & vec2,
                          scalar<T> & result);
 
-    template<typename T, typename LHS, typename RHS, typename OP>
-    void inner_prod_impl(vector_base<T> const & vec1,
+    template<typename T, typename LHS, typename RHS, typename OP, typename H>
+    void inner_prod_impl(vector_base<T, H> const & vec1,
                          viennacl::vector_expression<LHS, RHS, OP> const & vec2,
                          scalar<T> & result);
 
@@ -688,18 +698,18 @@ namespace viennacl
 
     ///////////////////////////
 
-    template<typename T>
-    void inner_prod_cpu(vector_base<T> const & vec1,
-                        vector_base<T> const & vec2,
+    template<typename T, typename H1, typename H2>
+    void inner_prod_cpu(vector_base<T, H1> const & vec1,
+                        vector_base<T, H2> const & vec2,
                         T & result);
 
-    template<typename LHS, typename RHS, typename OP, typename T>
+    template<typename LHS, typename RHS, typename OP, typename T, typename H>
     void inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                        vector_base<T> const & vec2,
+                        vector_base<T, H> const & vec2,
                         T & result);
 
-    template<typename T, typename LHS, typename RHS, typename OP>
-    void inner_prod_cpu(vector_base<T> const & vec1,
+    template<typename T, typename H, typename LHS, typename RHS, typename OP>
+    void inner_prod_cpu(vector_base<T, H> const & vec1,
                         viennacl::vector_expression<LHS, RHS, OP> const & vec2,
                         T & result);
 
@@ -712,16 +722,16 @@ namespace viennacl
 
 
     //forward definition of norm_1_impl function
-    template<typename T>
-    void norm_1_impl(vector_base<T> const & vec, scalar<T> & result);
+    template<typename T, typename H>
+    void norm_1_impl(vector_base<T, H> const & vec, scalar<T> & result);
 
     template<typename LHS, typename RHS, typename OP, typename T>
     void norm_1_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                      scalar<T> & result);
 
 
-    template<typename T>
-    void norm_1_cpu(vector_base<T> const & vec,
+    template<typename T, typename H>
+    void norm_1_cpu(vector_base<T, H> const & vec,
                     T & result);
 
     template<typename LHS, typename RHS, typename OP, typename S2>
@@ -729,15 +739,15 @@ namespace viennacl
                     S2 & result);
 
     //forward definition of norm_2_impl function
-    template<typename T>
-    void norm_2_impl(vector_base<T> const & vec, scalar<T> & result);
+    template<typename T, typename H>
+    void norm_2_impl(vector_base<T, H> const & vec, scalar<T> & result);
 
     template<typename LHS, typename RHS, typename OP, typename T>
     void norm_2_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                      scalar<T> & result);
 
-    template<typename T>
-    void norm_2_cpu(vector_base<T> const & vec, T & result);
+    template<typename T, typename H>
+    void norm_2_cpu(vector_base<T, H> const & vec, T & result);
 
     template<typename LHS, typename RHS, typename OP, typename S2>
     void norm_2_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
@@ -745,64 +755,64 @@ namespace viennacl
 
 
     //forward definition of norm_inf_impl function
-    template<typename T>
-    void norm_inf_impl(vector_base<T> const & vec, scalar<T> & result);
+    template<typename T, typename H>
+    void norm_inf_impl(vector_base<T, H> const & vec, scalar<T> & result);
 
     template<typename LHS, typename RHS, typename OP, typename T>
     void norm_inf_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       scalar<T> & result);
 
 
-    template<typename T>
-    void norm_inf_cpu(vector_base<T> const & vec, T & result);
+    template<typename T, typename H>
+    void norm_inf_cpu(vector_base<T, H> const & vec, T & result);
 
     template<typename LHS, typename RHS, typename OP, typename S2>
     void norm_inf_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                       S2 & result);
 
     //forward definition of max()-related functions
-    template<typename T>
-    void max_impl(vector_base<T> const & vec, scalar<T> & result);
+    template<typename T, typename H>
+    void max_impl(vector_base<T, H> const & vec, scalar<T> & result);
 
     template<typename LHS, typename RHS, typename OP, typename T>
     void max_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                   scalar<T> & result);
 
 
-    template<typename T>
-    void max_cpu(vector_base<T> const & vec, T & result);
+    template<typename T, typename H>
+    void max_cpu(vector_base<T, H> const & vec, T & result);
 
     template<typename LHS, typename RHS, typename OP, typename S2>
     void max_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                  S2 & result);
 
     //forward definition of min()-related functions
-    template<typename T>
-    void min_impl(vector_base<T> const & vec, scalar<T> & result);
+    template<typename T, typename H>
+    void min_impl(vector_base<T, H> const & vec, scalar<T> & result);
 
     template<typename LHS, typename RHS, typename OP, typename T>
     void min_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                   scalar<T> & result);
 
 
-    template<typename T>
-    void min_cpu(vector_base<T> const & vec, T & result);
+    template<typename T, typename H>
+    void min_cpu(vector_base<T, H> const & vec, T & result);
 
     template<typename LHS, typename RHS, typename OP, typename S2>
     void min_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                  S2 & result);
 
     //forward definition of sum()-related functions
-    template<typename T>
-    void sum_impl(vector_base<T> const & vec, scalar<T> & result);
+    template<typename T, typename H>
+    void sum_impl(vector_base<T, H> const & vec, scalar<T> & result);
 
     template<typename LHS, typename RHS, typename OP, typename T>
     void sum_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec,
                   scalar<T> & result);
 
 
-    template<typename T>
-    void sum_cpu(vector_base<T> const & vec, T & result);
+    template<typename T, typename H>
+    void sum_cpu(vector_base<T, H> const & vec, T & result);
 
     template<typename LHS, typename RHS, typename OP, typename S2>
     void sum_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec,
@@ -817,8 +827,8 @@ namespace viennacl
     void norm_frobenius_cpu(matrix_base<T> const & vec, T & result);
 
 
-    template<typename T>
-    vcl_size_t index_norm_inf(vector_base<T> const & vec);
+    template<typename T, typename H>
+    vcl_size_t index_norm_inf(vector_base<T, H> const & vec);
 
     template<typename LHS, typename RHS, typename OP>
     vcl_size_t index_norm_inf(viennacl::vector_expression<LHS, RHS, OP> const & vec);
@@ -1023,8 +1033,6 @@ namespace viennacl
     }
   }
 
-  /** @brief OpenCL backend. Manages platforms, contexts, buffers, kernels, etc. */
-  namespace ocl {}
 
   /** @brief Namespace containing many meta-functions. */
   namespace result_of {}

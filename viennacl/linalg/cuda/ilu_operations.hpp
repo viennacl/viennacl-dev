@@ -285,7 +285,7 @@ template<typename NumericT>
 void icc_chow_patel_sweep(compressed_matrix<NumericT>       & L,
                           vector<NumericT>            const & aij_L)
 {
-  viennacl::backend::mem_handle L_backup;
+  viennacl::backend::mem_handle<> L_backup;
   viennacl::backend::memory_create(L_backup, L.handle().raw_size(), viennacl::traits::context(L));
   viennacl::backend::memory_copy(L.handle(), L_backup, 0, 0, L.handle().raw_size());
 
@@ -578,11 +578,11 @@ void ilu_chow_patel_sweep(compressed_matrix<NumericT>       & L,
                           compressed_matrix<NumericT>       & U_trans,
                           vector<NumericT>            const & aij_U_trans)
 {
-  viennacl::backend::mem_handle L_backup;
+  viennacl::backend::mem_handle<> L_backup;
   viennacl::backend::memory_create(L_backup, L.handle().raw_size(), viennacl::traits::context(L));
   viennacl::backend::memory_copy(L.handle(), L_backup, 0, 0, L.handle().raw_size());
 
-  viennacl::backend::mem_handle U_backup;
+  viennacl::backend::mem_handle<> U_backup;
   viennacl::backend::memory_create(U_backup, U_trans.handle().raw_size(), viennacl::traits::context(U_trans));
   viennacl::backend::memory_copy(U_trans.handle(), U_backup, 0, 0, U_trans.handle().raw_size());
 

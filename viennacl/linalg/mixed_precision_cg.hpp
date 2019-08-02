@@ -128,10 +128,10 @@ namespace viennacl
 
       // transfer matrix to single precision:
       viennacl::compressed_matrix<float> matrix_low_precision(matrix.size1(), matrix.size2(), matrix.nnz(), viennacl::traits::context(rhs));
-      viennacl::backend::memory_copy(matrix.handle1(), const_cast<viennacl::backend::mem_handle &>(matrix_low_precision.handle1()), 0, 0, matrix_low_precision.handle1().raw_size() );
-      viennacl::backend::memory_copy(matrix.handle2(), const_cast<viennacl::backend::mem_handle &>(matrix_low_precision.handle2()), 0, 0, matrix_low_precision.handle2().raw_size() );
+      viennacl::backend::memory_copy(matrix.handle1(), const_cast<viennacl::backend::mem_handle<> &>(matrix_low_precision.handle1()), 0, 0, matrix_low_precision.handle1().raw_size() );
+      viennacl::backend::memory_copy(matrix.handle2(), const_cast<viennacl::backend::mem_handle<> &>(matrix_low_precision.handle2()), 0, 0, matrix_low_precision.handle2().raw_size() );
 
-      viennacl::vector_base<CPU_ScalarType> matrix_elements_high_precision(const_cast<viennacl::backend::mem_handle &>(matrix.handle()), matrix.nnz(), 0, 1);
+      viennacl::vector_base<CPU_ScalarType> matrix_elements_high_precision(const_cast<viennacl::backend::mem_handle<> &>(matrix.handle()), matrix.nnz(), 0, 1);
       viennacl::vector_base<float>          matrix_elements_low_precision(matrix_low_precision.handle(), matrix.nnz(), 0, 1);
       matrix_elements_low_precision = matrix_elements_high_precision;
       matrix_low_precision.generate_row_block_information();

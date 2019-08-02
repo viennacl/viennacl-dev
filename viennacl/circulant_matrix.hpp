@@ -41,7 +41,7 @@ template<class NumericT, unsigned int AlignmentV>
 class circulant_matrix
 {
 public:
-  typedef viennacl::backend::mem_handle                                                              handle_type;
+  typedef viennacl::backend::mem_handle<>                                                              handle_type;
   typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<NumericT>::ResultType>   value_type;
 
   /**

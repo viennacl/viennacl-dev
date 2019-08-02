@@ -100,19 +100,19 @@ struct zero_vector : public scalar_vector<NumericT>
   *
   * @tparam NumericT   The floating point type, either 'float' or 'double'
   */
-template<class NumericT, typename SizeT /* see forwards.h for default type */, typename DistanceT /* see forwards.h for default type */>
+template<class NumericT, typename OCLHandle, typename SizeT /* see forwards.h for default type */, typename DistanceT /* see forwards.h for default type */>
 class vector_base
 {
-  typedef vector_base<NumericT, SizeT, DistanceT>         self_type;
+  typedef vector_base<NumericT, OCLHandle, SizeT, DistanceT>         self_type;
 
 public:
   typedef scalar<NumericT>                                value_type;
   typedef NumericT                                        cpu_value_type;
-  typedef viennacl::backend::mem_handle                     handle_type;
+  typedef viennacl::backend::mem_handle<OCLHandle>       handle_type;
   typedef SizeT                                          size_type;
   typedef DistanceT                                      difference_type;
-  typedef const_vector_iterator<NumericT, 1>              const_iterator;
-  typedef vector_iterator<NumericT, 1>                    iterator;
+  typedef const_vector_iterator<NumericT, 1, OCLHandle>              const_iterator;
+  typedef vector_iterator<NumericT, 1, OCLHandle>                    iterator;
 
   /** @brief Returns the length of the vector (cf. std::vector)  */
   size_type size() const { return size_; }
@@ -141,7 +141,7 @@ public:
      * @param vec_start  The offset from the beginning of the buffer identified by 'h'
      * @param vec_stride Increment between two elements in the original buffer (in multiples of NumericT)
     */
-  explicit vector_base(viennacl::backend::mem_handle & h, size_type vec_size, size_type vec_start, size_type vec_stride);
+  explicit vector_base(viennacl::backend::mem_handle<OCLHandle> & h, size_type vec_size, size_type vec_start, size_type vec_stride);
 
   /** @brief Creates a vector and allocates the necessary memory */
   explicit vector_base(size_type vec_size, viennacl::context ctx = viennacl::context());
@@ -209,13 +209,13 @@ public:
 
   //read-write access to an element of the vector
   /** @brief Read-write access to a single element of the vector */
-  entry_proxy<NumericT> operator()(size_type index);
+  entry_proxy<NumericT, OCLHandle> operator()(size_type index);
   /** @brief Read-write access to a single element of the vector */
-  entry_proxy<NumericT> operator[](size_type index);
+  entry_proxy<NumericT, OCLHandle> operator[](size_type index);
   /** @brief Read access to a single element of the vector */
-  const_entry_proxy<NumericT> operator()(size_type index) const;
+  const_entry_proxy<NumericT, OCLHandle> operator()(size_type index) const;
   /** @brief Read access to a single element of the vector */
-  const_entry_proxy<NumericT> operator[](size_type index) const;
+  const_entry_proxy<NumericT, OCLHandle> operator[](size_type index) const;
   self_type & operator += (const self_type & vec);
   self_type & operator -= (const self_type & vec);
 
@@ -302,7 +302,7 @@ public:
 
 protected:
 
-  void set_handle(viennacl::backend::mem_handle const & h) {  elements_ = h; }
+  void set_handle(viennacl::backend::mem_handle<OCLHandle> const & h) {  elements_ = h; }
 
   /** @brief Swaps the handles of two vectors by swapping the OpenCL handles only, no data copy */
   self_type & fast_swap(self_type & other);

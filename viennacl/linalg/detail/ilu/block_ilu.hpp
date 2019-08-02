@@ -595,7 +595,7 @@ private:
 
   ILUTagT                               tag_;
   index_vector_type                     block_indices_;
-  viennacl::backend::mem_handle         gpu_block_indices_;
+  viennacl::backend::mem_handle<>       gpu_block_indices_;
   viennacl::compressed_matrix<NumericT> gpu_L_trans_;
   viennacl::compressed_matrix<NumericT> gpu_U_trans_;
   viennacl::vector<NumericT>            gpu_D_;

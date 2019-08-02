@@ -35,9 +35,9 @@
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCLVector x, ViennaCLHostScalar beta, ViennaCLVector y)
 {
-  viennacl::backend::mem_handle v1_handle;
-  viennacl::backend::mem_handle v2_handle;
-  viennacl::backend::mem_handle A_handle;
+  viennacl::backend::mem_handle<> v1_handle;
+  viennacl::backend::mem_handle<> v2_handle;
+  viennacl::backend::mem_handle<> A_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -100,8 +100,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemv(ViennaCLHostScalar alpha,
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaCLVector x, ViennaCLUplo uplo)
 {
-  viennacl::backend::mem_handle v1_handle;
-  viennacl::backend::mem_handle A_handle;
+  viennacl::backend::mem_handle<> v1_handle;
+  viennacl::backend::mem_handle<> A_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -176,9 +176,9 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsv(ViennaCLMatrix A, ViennaC
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLger(ViennaCLHostScalar alpha, ViennaCLVector x, ViennaCLVector y, ViennaCLMatrix A)
 {
-  viennacl::backend::mem_handle v1_handle;
-  viennacl::backend::mem_handle v2_handle;
-  viennacl::backend::mem_handle A_handle;
+  viennacl::backend::mem_handle<> v1_handle;
+  viennacl::backend::mem_handle<> v2_handle;
+  viennacl::backend::mem_handle<> A_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;

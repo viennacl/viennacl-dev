@@ -50,10 +50,10 @@ namespace detail
 template<typename NumericT, unsigned int AlignmentV>
 void level_scheduling_setup_impl(viennacl::compressed_matrix<NumericT, AlignmentV> const & LU,
                                  viennacl::vector<NumericT> const & diagonal_LU,
-                                 std::list<viennacl::backend::mem_handle> & row_index_arrays,
-                                 std::list<viennacl::backend::mem_handle> & row_buffers,
-                                 std::list<viennacl::backend::mem_handle> & col_buffers,
-                                 std::list<viennacl::backend::mem_handle> & element_buffers,
+                                 std::list<viennacl::backend::mem_handle<>> & row_index_arrays,
+                                 std::list<viennacl::backend::mem_handle<>> & row_buffers,
+                                 std::list<viennacl::backend::mem_handle<>> & col_buffers,
+                                 std::list<viennacl::backend::mem_handle<>> & element_buffers,
                                  std::list<vcl_size_t> & row_elimination_num_list,
                                  bool setup_U)
 {
@@ -119,19 +119,19 @@ void level_scheduling_setup_impl(viennacl::compressed_matrix<NumericT, Alignment
 
     if (num_tainted_cols > 0)
     {
-      row_index_arrays.push_back(viennacl::backend::mem_handle());
+      row_index_arrays.push_back(viennacl::backend::mem_handle<>());
       viennacl::backend::switch_memory_context<unsigned int>(row_index_arrays.back(), viennacl::traits::context(LU));
       viennacl::backend::typesafe_host_array<unsigned int> elim_row_index_array(row_index_arrays.back(), num_tainted_cols);
 
-      row_buffers.push_back(viennacl::backend::mem_handle());
+      row_buffers.push_back(viennacl::backend::mem_handle<>());
       viennacl::backend::switch_memory_context<unsigned int>(row_buffers.back(), viennacl::traits::context(LU));
       viennacl::backend::typesafe_host_array<unsigned int> elim_row_buffer(row_buffers.back(), num_tainted_cols + 1);
 
-      col_buffers.push_back(viennacl::backend::mem_handle());
+      col_buffers.push_back(viennacl::backend::mem_handle<>());
       viennacl::backend::switch_memory_context<unsigned int>(col_buffers.back(), viennacl::traits::context(LU));
       viennacl::backend::typesafe_host_array<unsigned int> elim_col_buffer(col_buffers.back(), num_entries);
 
-      element_buffers.push_back(viennacl::backend::mem_handle());
+      element_buffers.push_back(viennacl::backend::mem_handle<>());
       viennacl::backend::switch_memory_context<NumericT>(element_buffers.back(), viennacl::traits::context(LU));
       std::vector<NumericT> elim_elements_buffer(num_entries);
 
@@ -190,10 +190,10 @@ void level_scheduling_setup_impl(viennacl::compressed_matrix<NumericT, Alignment
 template<typename NumericT, unsigned int AlignmentV>
 void level_scheduling_setup_L(viennacl::compressed_matrix<NumericT, AlignmentV> const & LU,
                               viennacl::vector<NumericT> const & diagonal_LU,
-                              std::list<viennacl::backend::mem_handle> & row_index_arrays,
-                              std::list<viennacl::backend::mem_handle> & row_buffers,
-                              std::list<viennacl::backend::mem_handle> & col_buffers,
-                              std::list<viennacl::backend::mem_handle> & element_buffers,
+                              std::list<viennacl::backend::mem_handle<>> & row_index_arrays,
+                              std::list<viennacl::backend::mem_handle<>> & row_buffers,
+                              std::list<viennacl::backend::mem_handle<>> & col_buffers,
+                              std::list<viennacl::backend::mem_handle<>> & element_buffers,
                               std::list<vcl_size_t> & row_elimination_num_list)
 {
   level_scheduling_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, false);
@@ -207,10 +207,10 @@ void level_scheduling_setup_L(viennacl::compressed_matrix<NumericT, AlignmentV> 
 template<typename NumericT, unsigned int AlignmentV>
 void level_scheduling_setup_U(viennacl::compressed_matrix<NumericT, AlignmentV> const & LU,
                               viennacl::vector<NumericT> const & diagonal_LU,
-                              std::list<viennacl::backend::mem_handle> & row_index_arrays,
-                              std::list<viennacl::backend::mem_handle> & row_buffers,
-                              std::list<viennacl::backend::mem_handle> & col_buffers,
-                              std::list<viennacl::backend::mem_handle> & element_buffers,
+                              std::list<viennacl::backend::mem_handle<>> & row_index_arrays,
+                              std::list<viennacl::backend::mem_handle<>> & row_buffers,
+                              std::list<viennacl::backend::mem_handle<>> & col_buffers,
+                              std::list<viennacl::backend::mem_handle<>> & element_buffers,
                               std::list<vcl_size_t> & row_elimination_num_list)
 {
   level_scheduling_setup_impl(LU, diagonal_LU, row_index_arrays, row_buffers, col_buffers, element_buffers, row_elimination_num_list, true);
@@ -222,13 +222,13 @@ void level_scheduling_setup_U(viennacl::compressed_matrix<NumericT, AlignmentV> 
 //
 template<typename NumericT>
 void level_scheduling_substitute(viennacl::vector<NumericT> & vec,
-                                 std::list<viennacl::backend::mem_handle> const & row_index_arrays,
-                                 std::list<viennacl::backend::mem_handle> const & row_buffers,
-                                 std::list<viennacl::backend::mem_handle> const & col_buffers,
-                                 std::list<viennacl::backend::mem_handle> const & element_buffers,
+                                 std::list<viennacl::backend::mem_handle<>> const & row_index_arrays,
+                                 std::list<viennacl::backend::mem_handle<>> const & row_buffers,
+                                 std::list<viennacl::backend::mem_handle<>> const & col_buffers,
+                                 std::list<viennacl::backend::mem_handle<>> const & element_buffers,
                                  std::list<vcl_size_t> const & row_elimination_num_list)
 {
-  typedef typename std::list< viennacl::backend::mem_handle >::const_iterator  ListIterator;
+  typedef typename std::list< viennacl::backend::mem_handle<> >::const_iterator  ListIterator;
   ListIterator row_index_array_it = row_index_arrays.begin();
   ListIterator row_buffers_it = row_buffers.begin();
   ListIterator col_buffers_it = col_buffers.begin();

@@ -37,11 +37,11 @@ namespace viennacl
   *
   * @tparam NumericT Either float or double
   */
-template<typename NumericT>
+template<typename NumericT, typename H>
 class entry_proxy
 {
 public:
-  typedef viennacl::backend::mem_handle      handle_type;
+  typedef viennacl::backend::mem_handle<H>      handle_type;
 
   /** @brief The constructor for the proxy class. Declared explicit to avoid any surprises created by the compiler.
       *
@@ -159,7 +159,7 @@ private:
   }
 
   vcl_size_t index_;
-  viennacl::backend::mem_handle & mem_handle_;
+  viennacl::backend::mem_handle<H> & mem_handle_;
 }; //entry_proxy
 
 
@@ -175,12 +175,12 @@ private:
   *
   * @tparam NumericT Either float or double
   */
-template<typename NumericT>
+template<typename NumericT, typename H>
 class const_entry_proxy
 {
-  typedef const_entry_proxy<NumericT>      self_type;
+  typedef const_entry_proxy<NumericT, H>      self_type;
 public:
-  typedef viennacl::backend::mem_handle      handle_type;
+  typedef viennacl::backend::mem_handle<H>      handle_type;
 
   /** @brief The constructor for the proxy class. Declared explicit to avoid any surprises created by the compiler.
       *
@@ -226,7 +226,7 @@ private:
   }
 
   vcl_size_t index_;
-  viennacl::backend::mem_handle const & mem_handle_;
+  handle_type const & mem_handle_;
 }; //entry_proxy
 
 }

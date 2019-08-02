@@ -84,7 +84,7 @@ namespace backend
   * @param host_ptr        Pointer to data which will be copied to the new array. Must point to at least 'size_in_bytes' bytes of data.
   *
   */
-  inline void memory_create(mem_handle & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
+  inline void memory_create(mem_handle<> & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
   {
     if (size_in_bytes > 0)
     {
@@ -101,6 +101,7 @@ namespace backend
       case OPENCL_MEMORY:
         handle.opencl_handle().context(ctx.opencl_context());
         handle.opencl_handle() = opencl::memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr);
+
         handle.raw_size(size_in_bytes);
         break;
 #endif
@@ -114,6 +115,37 @@ namespace backend
         throw memory_exception("not initialised!");
       default:
         throw memory_exception("unknown memory handle!");
+      }
+    }
+  }
+
+  // Pooled version of the above function!
+  inline void memory_create(mem_handle<viennacl::ocl::pooled_clmem_handle> & handle, vcl_size_t size_in_bytes, viennacl::context const & ctx, const void * host_ptr = NULL)
+  {
+    if (size_in_bytes > 0)
+    {
+      if (handle.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
+        handle.switch_active_handle_id(ctx.memory_type());
+
+      switch (handle.get_active_handle_id())
+      {
+#ifdef VIENNACL_WITH_OPENCL
+      case OPENCL_MEMORY:
+        handle.opencl_handle().context(ctx.opencl_context());
+        // If using memory pool then use  a pooled handle
+        handle.opencl_handle() =
+          viennacl::ocl::pooled_clmem_handle(
+              opencl::pooled_memory_create(handle.opencl_handle().context(), size_in_bytes, host_ptr),
+              ctx.opencl_context(),
+              size_in_bytes);
+
+        handle.raw_size(size_in_bytes);
+        break;
+#endif
+      case MEMORY_NOT_INITIALIZED:
+        throw memory_exception("not initialised!");
+      default:
+        throw memory_exception("Pooled handle only available with OpenCL memory for now!");
       }
     }
   }
@@ -137,8 +169,9 @@ namespace backend
   *  @param dst_offset     Offset of the first byte to be written to the address given by 'dst_buffer' (in bytes)
   *  @param bytes_to_copy  Number of bytes to be copied
   */
-  inline void memory_copy(mem_handle const & src_buffer,
-                          mem_handle & dst_buffer,
+  template <typename H = viennacl::ocl::handle<cl_mem> >
+  inline void memory_copy(mem_handle<H> const & src_buffer,
+                          mem_handle<H> & dst_buffer,
                           vcl_size_t src_offset,
                           vcl_size_t dst_offset,
                           vcl_size_t bytes_to_copy)
@@ -174,8 +207,9 @@ namespace backend
   /** @brief A 'shallow' copy operation from an initialized buffer to an uninitialized buffer.
    * The uninitialized buffer just copies the raw handle.
    */
-  inline void memory_shallow_copy(mem_handle const & src_buffer,
-                                  mem_handle & dst_buffer)
+  template <typename H = viennacl::ocl::handle<cl_mem> >
+  inline void memory_shallow_copy(mem_handle<H> const & src_buffer,
+                                  mem_handle<H> & dst_buffer)
   {
     assert( (dst_buffer.get_active_handle_id() == MEMORY_NOT_INITIALIZED) && bool("Shallow copy on already initialized memory not supported!"));
 
@@ -217,7 +251,8 @@ namespace backend
   * @param ptr            Pointer to the first byte to be written
   * @param async              Whether the operation should be asynchronous
   */
-  inline void memory_write(mem_handle & dst_buffer,
+  template <typename H = viennacl::ocl::handle<cl_mem> >
+  inline void memory_write(mem_handle<H> & dst_buffer,
                            vcl_size_t dst_offset,
                            vcl_size_t bytes_to_write,
                            const void * ptr,
@@ -258,7 +293,8 @@ namespace backend
   * @param ptr                Location in main RAM where to read data should be written to
   * @param async              Whether the operation should be asynchronous
   */
-  inline void memory_read(mem_handle const & src_buffer,
+  template <typename H>
+  inline void memory_read(mem_handle<H> const & src_buffer,
                           vcl_size_t src_offset,
                           vcl_size_t bytes_to_read,
                           void * ptr,
@@ -364,8 +400,8 @@ namespace backend
 
 
   /** @brief Switches the active memory domain within a memory handle. Data is copied if the new active domain differs from the old one. Memory in the source handle is not free'd. */
-  template<typename DataType>
-  void switch_memory_context(mem_handle & handle, viennacl::context new_ctx)
+  template<typename DataType, typename H = viennacl::ocl::handle<cl_mem> >
+  void switch_memory_context(mem_handle<H> & handle, viennacl::context new_ctx)
   {
     if (handle.get_active_handle_id() == new_ctx.memory_type())
       return;
@@ -466,8 +502,8 @@ namespace backend
 
 
   /** @brief Copies data of the provided 'DataType' from 'handle_src' to 'handle_dst' and converts the data if the binary representation of 'DataType' among the memory domains differs. */
-  template<typename DataType>
-  void typesafe_memory_copy(mem_handle const & handle_src, mem_handle & handle_dst)
+  template<typename DataType, typename H = viennacl::ocl::handle<cl_mem> >
+  void typesafe_memory_copy(mem_handle<H> const & handle_src, mem_handle<H> & handle_dst)
   {
     if (handle_dst.get_active_handle_id() == MEMORY_NOT_INITIALIZED)
       handle_dst.switch_active_handle_id(default_memory_type());

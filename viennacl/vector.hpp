@@ -104,15 +104,15 @@ private:
 * @tparam NumericT  The underlying floating point type (either float or double)
 * @tparam AlignmentV   Alignment of the underlying vector, @see vector
 */
-template<class NumericT, unsigned int AlignmentV>
+template<class NumericT, unsigned int AlignmentV, typename OCLHandle>
 class const_vector_iterator
 {
-  typedef const_vector_iterator<NumericT, AlignmentV>    self_type;
+  typedef const_vector_iterator<NumericT, AlignmentV, OCLHandle>    self_type;
 public:
   typedef scalar<NumericT>            value_type;
   typedef vcl_size_t                size_type;
   typedef vcl_ptrdiff_t                 difference_type;
-  typedef viennacl::backend::mem_handle handle_type;
+  typedef viennacl::backend::mem_handle<OCLHandle> handle_type;
 
   //const_vector_iterator() {}
 
@@ -122,7 +122,7 @@ public:
     *   @param start  First index of the element in the vector pointed to be the iterator (for vector_range and vector_slice)
     *   @param stride Stride for the support of vector_slice
     */
-  const_vector_iterator(vector_base<NumericT> const & vec,
+  const_vector_iterator(vector_base<NumericT, OCLHandle> const & vec,
                         size_type index,
                         size_type start = 0,
                         size_type stride = 1) : elements_(vec.handle()), index_(index), start_(start), stride_(stride) {}
@@ -142,7 +142,7 @@ public:
   value_type operator*(void) const
   {
     value_type result;
-    result = const_entry_proxy<NumericT>(start_ + index_ * stride(), elements_);
+    result = const_entry_proxy<NumericT, OCLHandle>(start_ + index_ * stride(), elements_);
     return result;
   }
   self_type operator++(void) { ++index_; return *this; }
@@ -201,11 +201,11 @@ protected:
 * @tparam NumericT  The underlying floating point type (either float or double)
 * @tparam AlignmentV   Alignment of the underlying vector, @see vector
 */
-template<class NumericT, unsigned int AlignmentV>
-class vector_iterator : public const_vector_iterator<NumericT, AlignmentV>
+template<class NumericT, unsigned int AlignmentV, typename OCLHandle>
+class vector_iterator : public const_vector_iterator<NumericT, AlignmentV, OCLHandle>
 {
-  typedef const_vector_iterator<NumericT, AlignmentV>  base_type;
-  typedef vector_iterator<NumericT, AlignmentV>        self_type;
+  typedef const_vector_iterator<NumericT, AlignmentV, OCLHandle>  base_type;
+  typedef vector_iterator<NumericT, AlignmentV, OCLHandle>        self_type;
 public:
   typedef typename base_type::handle_type               handle_type;
   typedef typename base_type::size_type             size_type;
@@ -221,15 +221,15 @@ public:
     *   @param start  Offset from the beginning of the underlying vector (for ranges and slices)
     *   @param stride Stride for slices
     */
-  vector_iterator(vector_base<NumericT> & vec,
+  vector_iterator(vector_base<NumericT, OCLHandle> & vec,
                   size_type index,
                   size_type start = 0,
                   size_type stride = 1) : base_type(vec, index, start, stride), elements_(vec.handle()) {}
   //vector_iterator(base_type const & b) : base_type(b) {}
 
-  entry_proxy<NumericT> operator*(void)
+  entry_proxy<NumericT, OCLHandle> operator*(void)
   {
-    return entry_proxy<NumericT>(base_type::start_ + base_type::index_ * base_type::stride(), elements_);
+    return entry_proxy<NumericT, OCLHandle>(base_type::start_ + base_type::index_ * base_type::stride(), elements_);
   }
 
   difference_type operator-(self_type const & other) const { difference_type result = base_type::index_; return (result - static_cast<difference_type>(other.index_)); }
@@ -247,136 +247,138 @@ private:
 };
 
 
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT>::vector_base() : size_(0), start_(0), stride_(1), internal_size_(0) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::vector_base() : size_(0), start_(0), stride_(1), internal_size_(0) { /* Note: One must not call ::init() here because a vector might have been created globally before the backend has become available */ }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT>::vector_base(viennacl::backend::mem_handle & h,
-                                                     size_type vec_size, size_type vec_start, size_type vec_stride)
-  : size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::vector_base(viennacl::backend::mem_handle<OCLHandle> & h,
+                                                   size_type vec_size, size_type vec_start, size_type vec_stride)
+: size_(vec_size), start_(vec_start), stride_(vec_stride), internal_size_(vec_size), elements_(h) {}
 
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT>::vector_base(size_type vec_size, viennacl::context ctx)
-  : size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::vector_base(size_type vec_size, viennacl::context ctx)
+: size_(vec_size), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
 {
-  if (size_ > 0)
-  {
-    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), ctx);
-    clear();
-  }
+if (size_ > 0)
+{
+  // [kk:] this is the constructor that we are concerned about
+  viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), ctx, NULL);
+  clear();
+}
 }
 
-// CUDA or host memory:
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT>::vector_base(NumericT * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start, size_type stride)
-  : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
-{
-  if (mem_type == viennacl::CUDA_MEMORY)
-  {
-#ifdef VIENNACL_WITH_CUDA
-    elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
-    elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
-    elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
-#else
-    throw cuda_not_available_exception();
-#endif
-  }
-  else if (mem_type == viennacl::MAIN_MEMORY)
-  {
-    elements_.switch_active_handle_id(viennacl::MAIN_MEMORY);
-    elements_.ram_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
-    elements_.ram_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
-  }
 
-  elements_.raw_size(sizeof(NumericT) * vec_size);
+// CUDA or host memory:
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::vector_base(NumericT * ptr_to_mem, viennacl::memory_types mem_type, size_type vec_size, vcl_size_t start, size_type stride)
+: size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
+{
+if (mem_type == viennacl::CUDA_MEMORY)
+{
+#ifdef VIENNACL_WITH_CUDA
+  elements_.switch_active_handle_id(viennacl::CUDA_MEMORY);
+  elements_.cuda_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
+  elements_.cuda_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+#else
+  throw cuda_not_available_exception();
+#endif
+}
+else if (mem_type == viennacl::MAIN_MEMORY)
+{
+  elements_.switch_active_handle_id(viennacl::MAIN_MEMORY);
+  elements_.ram_handle().reset(reinterpret_cast<char*>(ptr_to_mem));
+  elements_.ram_handle().inc(); //prevents that the user-provided memory is deleted once the vector object is destroyed.
+}
+
+elements_.raw_size(sizeof(NumericT) * vec_size);
 
 }
 
 #ifdef VIENNACL_WITH_OPENCL
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT>::vector_base(cl_mem existing_mem, size_type vec_size, size_type start, size_type stride, viennacl::context ctx)
-  : size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::vector_base(cl_mem existing_mem, size_type vec_size, size_type start, size_type stride, viennacl::context ctx)
+: size_(vec_size), start_(start), stride_(stride), internal_size_(vec_size)
 {
-  elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
-  elements_.opencl_handle() = existing_mem;
-  elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
-  elements_.opencl_handle().context(ctx.opencl_context());
-  elements_.raw_size(sizeof(NumericT) * vec_size);
+elements_.switch_active_handle_id(viennacl::OPENCL_MEMORY);
+elements_.opencl_handle() = existing_mem;
+elements_.opencl_handle().inc();  //prevents that the user-provided memory is deleted once the vector object is destroyed.
+elements_.opencl_handle().context(ctx.opencl_context());
+elements_.raw_size(sizeof(NumericT) * vec_size);
 }
 #endif
 
 
-template<class NumericT, typename SizeT, typename DistanceT>
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
 template<typename LHS, typename RHS, typename OP>
-vector_base<NumericT, SizeT, DistanceT>::vector_base(vector_expression<const LHS, const RHS, OP> const & proxy)
-  : size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::vector_base(vector_expression<const LHS, const RHS, OP> const & proxy)
+: size_(viennacl::traits::size(proxy)), start_(0), stride_(1), internal_size_(viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size))
 {
-  if (size_ > 0)
-  {
-    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(proxy));
-    clear();
-  }
-  self_type::operator=(proxy);
+if (size_ > 0)
+{
+  viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(proxy));
+  clear();
+}
+self_type::operator=(proxy);
 }
 
 // Copy CTOR:
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT>::vector_base(const vector_base<NumericT, SizeT, DistanceT> & other) :
-  size_(other.size_), start_(0), stride_(1),
-  internal_size_(viennacl::tools::align_to_multiple<size_type>(other.size_, dense_padding_size))
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::vector_base(const vector_base<NumericT, OCLHandle, SizeT, DistanceT> & other) :
+size_(other.size_), start_(0), stride_(1),
+internal_size_(viennacl::tools::align_to_multiple<size_type>(other.size_, dense_padding_size))
 {
-  elements_.switch_active_handle_id(viennacl::traits::active_handle_id(other));
-  if (internal_size() > 0)
-  {
-    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(other));
-    clear();
-    self_type::operator=(other);
-  }
+elements_.switch_active_handle_id(viennacl::traits::active_handle_id(other));
+if (internal_size() > 0)
+{
+  viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(other));
+  clear();
+  self_type::operator=(other);
+}
 }
 
 // Conversion CTOR:
-template<typename NumericT, typename SizeT, typename DistanceT>
+template<typename NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
 template<typename OtherNumericT>
-vector_base<NumericT, SizeT, DistanceT>::vector_base(const vector_base<OtherNumericT> & other) :
-  size_(other.size()), start_(0), stride_(1),
-  internal_size_(viennacl::tools::align_to_multiple<size_type>(other.size(), dense_padding_size))
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::vector_base(const vector_base<OtherNumericT> & other) :
+size_(other.size()), start_(0), stride_(1),
+internal_size_(viennacl::tools::align_to_multiple<size_type>(other.size(), dense_padding_size))
 {
-  elements_.switch_active_handle_id(viennacl::traits::active_handle_id(other));
-  if (internal_size() > 0)
-  {
-    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(other));
-    clear();
-    self_type::operator=(other);
-  }
+elements_.switch_active_handle_id(viennacl::traits::active_handle_id(other));
+if (internal_size() > 0)
+{
+  viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(other));
+  clear();
+  self_type::operator=(other);
+}
 }
 
 
 
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator=(const self_type & vec)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator=(const self_type & vec)
 {
-  assert( ( (vec.size() == size()) || (size() == 0) )
-          && bool("Incompatible vector sizes!"));
+assert( ( (vec.size() == size()) || (size() == 0) )
+        && bool("Incompatible vector sizes!"));
 
-  if (&vec==this)
-    return *this;
+if (&vec==this)
+  return *this;
 
-  if (vec.size() > 0)
+if (vec.size() > 0)
+{
+  if (size_ == 0)
   {
-    if (size_ == 0)
-    {
-      size_ = vec.size();
-      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
-      elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
-      viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(vec));
-      pad();
-    }
-
-    viennacl::linalg::av(*this,
-                         vec, cpu_value_type(1.0), 1, false, false);
+    size_ = vec.size();
+    internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
+    elements_.switch_active_handle_id(vec.handle().get_active_handle_id());
+    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(vec));
+    pad();
   }
 
-  return *this;
+  viennacl::linalg::av(*this,
+                       vec, cpu_value_type(1.0), 1, false, false);
+}
+
+return *this;
 }
 
 
@@ -384,122 +386,122 @@ vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT
 *
 * @param proxy  An expression template proxy class.
 */
-template<class NumericT, typename SizeT, typename DistanceT>
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
 template<typename LHS, typename RHS, typename OP>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator=(const vector_expression<const LHS, const RHS, OP> & proxy)
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator=(const vector_expression<const LHS, const RHS, OP> & proxy)
 {
-  assert( ( (viennacl::traits::size(proxy) == size()) || (size() == 0) )
-          && bool("Incompatible vector sizes!"));
+assert( ( (viennacl::traits::size(proxy) == size()) || (size() == 0) )
+        && bool("Incompatible vector sizes!"));
 
-  // initialize the necessary buffer
-  if (size() == 0)
-  {
-    size_ = viennacl::traits::size(proxy);
-    internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
-    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(proxy));
-    pad();
-  }
+// initialize the necessary buffer
+if (size() == 0)
+{
+  size_ = viennacl::traits::size(proxy);
+  internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
+  viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(proxy));
+  pad();
+}
 
-  linalg::detail::op_executor<self_type, op_assign, vector_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
+linalg::detail::op_executor<self_type, op_assign, vector_expression<const LHS, const RHS, OP> >::apply(*this, proxy);
 
-  return *this;
+return *this;
 }
 
 // convert from vector with other numeric type
-template<class NumericT, typename SizeT, typename DistanceT>
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
 template<typename OtherNumericT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>:: operator = (const vector_base<OtherNumericT> & v1)
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>:: operator = (const vector_base<OtherNumericT> & v1)
 {
-  assert( ( (v1.size() == size()) || (size() == 0) )
-          && bool("Incompatible vector sizes!"));
+assert( ( (v1.size() == size()) || (size() == 0) )
+        && bool("Incompatible vector sizes!"));
 
-  if (size() == 0)
+if (size() == 0)
+{
+  size_ = v1.size();
+  if (size_ > 0)
   {
-    size_ = v1.size();
-    if (size_ > 0)
-    {
-      internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
-      viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(v1));
-      pad();
-    }
+    internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
+    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), viennacl::traits::context(v1));
+    pad();
   }
+}
 
-  viennacl::linalg::convert(*this, v1);
+viennacl::linalg::convert(*this, v1);
 
-  return *this;
+return *this;
 }
 
 /** @brief Creates the vector from the supplied unit vector. */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator = (unit_vector<NumericT> const & v)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator = (unit_vector<NumericT> const & v)
 {
-  assert( ( (v.size() == size()) || (size() == 0) )
-          && bool("Incompatible vector sizes!"));
+assert( ( (v.size() == size()) || (size() == 0) )
+        && bool("Incompatible vector sizes!"));
 
-  if (size() == 0)
-  {
-    size_ = v.size();
-    internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
-    if (size_ > 0)
-    {
-      viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), v.context());
-      clear();
-    }
-  }
-  else
-    viennacl::linalg::vector_assign(*this, NumericT(0));
-
+if (size() == 0)
+{
+  size_ = v.size();
+  internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
   if (size_ > 0)
-    this->operator()(v.index()) = NumericT(1);
+  {
+    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), v.context());
+    clear();
+  }
+}
+else
+  viennacl::linalg::vector_assign(*this, NumericT(0));
 
-  return *this;
+if (size_ > 0)
+  this->operator()(v.index()) = NumericT(1);
+
+return *this;
 }
 
 /** @brief Creates the vector from the supplied zero vector. */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator = (zero_vector<NumericT> const & v)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator = (zero_vector<NumericT> const & v)
 {
-  assert( ( (v.size() == size()) || (size() == 0) )
-          && bool("Incompatible vector sizes!"));
+assert( ( (v.size() == size()) || (size() == 0) )
+        && bool("Incompatible vector sizes!"));
 
-  if (size() == 0)
+if (size() == 0)
+{
+  size_ = v.size();
+  internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
+  if (size_ > 0)
   {
-    size_ = v.size();
-    internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
-    if (size_ > 0)
-    {
-      viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), v.context());
-      clear();
-    }
+    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), v.context());
+    clear();
   }
-  else
-    viennacl::linalg::vector_assign(*this, NumericT(0));
+}
+else
+  viennacl::linalg::vector_assign(*this, NumericT(0));
 
-  return *this;
+return *this;
 }
 
 /** @brief Creates the vector from the supplied scalar vector. */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator = (scalar_vector<NumericT> const & v)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator = (scalar_vector<NumericT> const & v)
 {
-  assert( ( (v.size() == size()) || (size() == 0) )
-          && bool("Incompatible vector sizes!"));
+assert( ( (v.size() == size()) || (size() == 0) )
+        && bool("Incompatible vector sizes!"));
 
-  if (size() == 0)
-  {
-    size_ = v.size();
-    internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
-    if (size_ > 0)
-    {
-      viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), v.context());
-      pad();
-    }
-  }
-
+if (size() == 0)
+{
+  size_ = v.size();
+  internal_size_ = viennacl::tools::align_to_multiple<size_type>(size_, dense_padding_size);
   if (size_ > 0)
-    viennacl::linalg::vector_assign(*this, v[0]);
+  {
+    viennacl::backend::memory_create(elements_, sizeof(NumericT)*internal_size(), v.context());
+    pad();
+  }
+}
 
-  return *this;
+if (size_ > 0)
+  viennacl::linalg::vector_assign(*this, v[0]);
+
+return *this;
 }
 
 
@@ -510,46 +512,46 @@ vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT
 //This is certainly not the nicest approach and will most likely by changed in the future, but it works :-)
 
 //matrix<>
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator=(const viennacl::vector_expression< const matrix_base<NumericT>, const vector_base<NumericT>, viennacl::op_prod> & proxy)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator=(const viennacl::vector_expression< const matrix_base<NumericT>, const vector_base<NumericT>, viennacl::op_prod> & proxy)
 {
-  assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
+assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed for v1 = A * v2: size1(A) != size(v1)"));
 
-  // check for the special case x = A * x
-  if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
-  {
-    viennacl::vector<NumericT> result(viennacl::traits::size1(proxy.lhs()));
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    *this = result;
-  }
-  else
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-  }
-  return *this;
+// check for the special case x = A * x
+if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
+{
+  viennacl::vector<NumericT> result(viennacl::traits::size1(proxy.lhs()));
+  viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
+  *this = result;
+}
+else
+{
+  viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+}
+return *this;
 }
 
 
 //transposed_matrix_proxy:
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator=(const vector_expression< const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans >,
-                                                                                             const vector_base<NumericT>,
-                                                                                             op_prod> & proxy)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator=(const vector_expression< const matrix_expression< const matrix_base<NumericT>, const matrix_base<NumericT>, op_trans >,
+                                                                                           const vector_base<NumericT>,
+                                                                                           op_prod> & proxy)
 {
-  assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)"));
+assert(viennacl::traits::size1(proxy.lhs()) == size() && bool("Size check failed in v1 = trans(A) * v2: size2(A) != size(v1)"));
 
-  // check for the special case x = trans(A) * x
-  if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
-  {
-    viennacl::vector<NumericT> result(viennacl::traits::size1(proxy.lhs()));
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
-    *this = result;
-  }
-  else
-  {
-    viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
-  }
-  return *this;
+// check for the special case x = trans(A) * x
+if (viennacl::traits::handle(proxy.rhs()) == viennacl::traits::handle(*this))
+{
+  viennacl::vector<NumericT> result(viennacl::traits::size1(proxy.lhs()));
+  viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), result);
+  *this = result;
+}
+else
+{
+  viennacl::linalg::prod_impl(proxy.lhs(), proxy.rhs(), *this);
+}
+return *this;
 }
 
 ///////////////////////////// Matrix Vector interaction end ///////////////////////////////////
@@ -558,40 +560,40 @@ vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT
 //////////////////////////// Read-write access to an element of the vector start ///////////////////
 //read-write access to an element of the vector
 
-template<class NumericT, typename SizeT, typename DistanceT>
-entry_proxy<NumericT> vector_base<NumericT, SizeT, DistanceT>::operator()(size_type index)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+entry_proxy<NumericT, OCLHandle> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator()(size_type index)
 {
-  assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
-  assert( index < size() && bool("Index out of bounds!") );
+assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
+assert( index < size() && bool("Index out of bounds!") );
 
-  return entry_proxy<NumericT>(start_ + stride_ * index, elements_);
+return entry_proxy<NumericT, OCLHandle>(start_ + stride_ * index, elements_);
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-entry_proxy<NumericT> vector_base<NumericT, SizeT, DistanceT>::operator[](size_type index)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+entry_proxy<NumericT, OCLHandle> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator[](size_type index)
 {
-  assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
-  assert( index < size() && bool("Index out of bounds!") );
+assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
+assert( index < size() && bool("Index out of bounds!") );
 
-  return entry_proxy<NumericT>(start_ + stride_ * index, elements_);
+return entry_proxy<NumericT, OCLHandle>(start_ + stride_ * index, elements_);
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-const_entry_proxy<NumericT> vector_base<NumericT, SizeT, DistanceT>::operator()(size_type index) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+const_entry_proxy<NumericT, OCLHandle> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator()(size_type index) const
 {
-  assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
-  assert( index < size() && bool("Index out of bounds!") );
+assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
+assert( index < size() && bool("Index out of bounds!") );
 
-  return const_entry_proxy<NumericT>(start_ + stride_ * index, elements_);
+return const_entry_proxy<NumericT, OCLHandle>(start_ + stride_ * index, elements_);
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-const_entry_proxy<NumericT> vector_base<NumericT, SizeT, DistanceT>::operator[](size_type index) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+const_entry_proxy<NumericT, OCLHandle> vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator[](size_type index) const
 {
-  assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
-  assert( index < size() && bool("Index out of bounds!") );
+assert( (size() > 0)  && bool("Cannot apply operator() to vector of size zero!"));
+assert( index < size() && bool("Index out of bounds!") );
 
-  return const_entry_proxy<NumericT>(start_ + stride_ * index, elements_);
+return const_entry_proxy<NumericT, OCLHandle>(start_ + stride_ * index, elements_);
 }
 
 //////////////////////////// Read-write access to an element of the vector end ///////////////////
@@ -600,236 +602,236 @@ const_entry_proxy<NumericT> vector_base<NumericT, SizeT, DistanceT>::operator[](
 //
 // Operator overloads with implicit conversion (thus cannot be made global without introducing additional headache)
 //
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator += (const self_type & vec)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator += (const self_type & vec)
 {
-  assert(vec.size() == size() && bool("Incompatible vector sizes!"));
+assert(vec.size() == size() && bool("Incompatible vector sizes!"));
 
-  if (size() > 0)
-    viennacl::linalg::avbv(*this,
-                           *this, NumericT(1.0), 1, false, false,
-                           vec,   NumericT(1.0), 1, false, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::avbv(*this,
+                         *this, NumericT(1.0), 1, false, false,
+                         vec,   NumericT(1.0), 1, false, false);
+return *this;
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator -= (const self_type & vec)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator -= (const self_type & vec)
 {
-  assert(vec.size() == size() && bool("Incompatible vector sizes!"));
+assert(vec.size() == size() && bool("Incompatible vector sizes!"));
 
-  if (size() > 0)
-    viennacl::linalg::avbv(*this,
-                           *this, NumericT(1.0),  1, false, false,
-                           vec,   NumericT(-1.0), 1, false, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::avbv(*this,
+                         *this, NumericT(1.0),  1, false, false,
+                         vec,   NumericT(-1.0), 1, false, false);
+return *this;
 }
 
 /** @brief Scales a vector (or proxy) by a char (8-bit integer) value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (char val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (char val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, false, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, false, false);
+return *this;
 }
 /** @brief Scales a vector (or proxy) by a short integer value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (short val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (short val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, false, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, false, false);
+return *this;
 }
 /** @brief Scales a vector (or proxy) by an integer value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (int val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (int val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, false, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, false, false);
+return *this;
 }
 /** @brief Scales a vector (or proxy) by a long integer value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (long val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (long val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, false, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, false, false);
+return *this;
 }
 /** @brief Scales a vector (or proxy) by a single precision floating point value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (float val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (float val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, false, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, false, false);
+return *this;
 }
 /** @brief Scales a vector (or proxy) by a double precision floating point value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator *= (double val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator *= (double val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, false, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, false, false);
+return *this;
 }
 
 
 /** @brief Scales this vector by a char (8-bit) value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (char val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (char val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, true, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, true, false);
+return *this;
 }
 /** @brief Scales this vector by a short integer value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (short val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (short val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, true, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, true, false);
+return *this;
 }
 /** @brief Scales this vector by an integer value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (int val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (int val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, true, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, true, false);
+return *this;
 }
 /** @brief Scales this vector by a long integer value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (long val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (long val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, true, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, true, false);
+return *this;
 }
 /** @brief Scales this vector by a single precision floating point value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (float val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (float val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, true, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, true, false);
+return *this;
 }
 /** @brief Scales this vector by a double precision floating point value */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::operator /= (double val)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator /= (double val)
 {
-  if (size() > 0)
-    viennacl::linalg::av(*this,
-                         *this, NumericT(val), 1, true, false);
-  return *this;
+if (size() > 0)
+  viennacl::linalg::av(*this,
+                       *this, NumericT(val), 1, true, false);
+return *this;
 }
 
 
 /** @brief Scales the vector by a char (8-bit value) 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
-vector_base<NumericT, SizeT, DistanceT>::operator * (char value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator * (char value) const
 {
-  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
 }
 /** @brief Scales the vector by a short integer 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
-vector_base<NumericT, SizeT, DistanceT>::operator * (short value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator * (short value) const
 {
-  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
 }
 /** @brief Scales the vector by an integer 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
-vector_base<NumericT, SizeT, DistanceT>::operator * (int value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator * (int value) const
 {
-  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
 }
 /** @brief Scales the vector by a long integer 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
-vector_base<NumericT, SizeT, DistanceT>::operator * (long value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator * (long value) const
 {
-  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
 }
 /** @brief Scales the vector by a single precision floating point number 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
-vector_base<NumericT, SizeT, DistanceT>::operator * (float value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator * (float value) const
 {
-  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
 }
 /** @brief Scales the vector by a single precision floating point number 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
-vector_base<NumericT, SizeT, DistanceT>::operator * (double value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator * (double value) const
 {
-  return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_mult>(*this, NumericT(value));
 }
 
 
 /** @brief Scales the vector by a char (8-bit value) 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
-vector_base<NumericT, SizeT, DistanceT>::operator / (char value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator / (char value) const
 {
-  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
 }
 /** @brief Scales the vector by a short integer 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
-vector_base<NumericT, SizeT, DistanceT>::operator / (short value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator / (short value) const
 {
-  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
 }
 /** @brief Scales the vector by an integer 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
-vector_base<NumericT, SizeT, DistanceT>::operator / (int value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator / (int value) const
 {
-  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
 }
 /** @brief Scales the vector by a long integer 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
-vector_base<NumericT, SizeT, DistanceT>::operator / (long value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator / (long value) const
 {
-  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
 }
 /** @brief Scales the vector by a single precision floating point number 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
-vector_base<NumericT, SizeT, DistanceT>::operator / (float value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator / (float value) const
 {
-  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
 }
 /** @brief Scales the vector by a double precision floating point number 'alpha' and returns an expression template */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression< const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_div>
-vector_base<NumericT, SizeT, DistanceT>::operator / (double value) const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression< const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_div>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator / (double value) const
 {
-  return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
+return vector_expression< const self_type, const NumericT, op_div>(*this, NumericT(value));
 }
 
 
 /** @brief Sign flip for the vector. Emulated to be equivalent to -1.0 * vector */
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_expression<const vector_base<NumericT, SizeT, DistanceT>, const NumericT, op_mult>
-vector_base<NumericT, SizeT, DistanceT>::operator-() const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_expression<const vector_base<NumericT, OCLHandle, SizeT, DistanceT>, const NumericT, op_mult>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT>::operator-() const
 {
-  return vector_expression<const self_type, const NumericT, op_mult>(*this, NumericT(-1.0));
+return vector_expression<const self_type, const NumericT, op_mult>(*this, NumericT(-1.0));
 }
 
 //
@@ -837,88 +839,88 @@ vector_base<NumericT, SizeT, DistanceT>::operator-() const
 //
 
 /** @brief Returns an iterator pointing to the beginning of the vector  (STL like)*/
-template<class NumericT, typename SizeT, typename DistanceT>
-typename vector_base<NumericT, SizeT, DistanceT>::iterator vector_base<NumericT, SizeT, DistanceT>::begin()
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+typename vector_base<NumericT, OCLHandle, SizeT, DistanceT>::iterator vector_base<NumericT, OCLHandle, SizeT, DistanceT>::begin()
 {
-  return iterator(*this, 0, start_, stride_);
+return iterator(*this, 0, start_, stride_);
 }
 
 /** @brief Returns an iterator pointing to the end of the vector (STL like)*/
-template<class NumericT, typename SizeT, typename DistanceT>
-typename vector_base<NumericT, SizeT, DistanceT>::iterator vector_base<NumericT, SizeT, DistanceT>::end()
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+typename vector_base<NumericT, OCLHandle, SizeT, DistanceT>::iterator vector_base<NumericT, OCLHandle, SizeT, DistanceT>::end()
 {
-  return iterator(*this, size(), start_, stride_);
+return iterator(*this, size(), start_, stride_);
 }
 
 /** @brief Returns a const-iterator pointing to the beginning of the vector (STL like)*/
-template<class NumericT, typename SizeT, typename DistanceT>
-typename vector_base<NumericT, SizeT, DistanceT>::const_iterator vector_base<NumericT, SizeT, DistanceT>::begin() const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+typename vector_base<NumericT, OCLHandle, SizeT, DistanceT>::const_iterator vector_base<NumericT, OCLHandle, SizeT, DistanceT>::begin() const
 {
-  return const_iterator(*this, 0, start_, stride_);
+return const_iterator(*this, 0, start_, stride_);
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-typename vector_base<NumericT, SizeT, DistanceT>::const_iterator vector_base<NumericT, SizeT, DistanceT>::end() const
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+typename vector_base<NumericT, OCLHandle, SizeT, DistanceT>::const_iterator vector_base<NumericT, OCLHandle, SizeT, DistanceT>::end() const
 {
-  return const_iterator(*this, size(), start_, stride_);
+return const_iterator(*this, size(), start_, stride_);
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::swap(self_type & other)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::swap(self_type & other)
 {
-  viennacl::linalg::vector_swap(*this, other);
-  return *this;
+viennacl::linalg::vector_swap(*this, other);
+return *this;
 }
 
 
-template<class NumericT, typename SizeT, typename DistanceT>
-void vector_base<NumericT, SizeT, DistanceT>::clear()
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+void vector_base<NumericT, OCLHandle, SizeT, DistanceT>::clear()
 {
-  viennacl::linalg::vector_assign(*this, cpu_value_type(0.0), true);
+viennacl::linalg::vector_assign(*this, cpu_value_type(0.0), true);
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-vector_base<NumericT, SizeT, DistanceT> & vector_base<NumericT, SizeT, DistanceT>::fast_swap(self_type & other)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+vector_base<NumericT, OCLHandle, SizeT, DistanceT> & vector_base<NumericT, OCLHandle, SizeT, DistanceT>::fast_swap(self_type & other)
 {
-  assert(this->size_ == other.size_ && bool("Vector size mismatch"));
-  this->elements_.swap(other.elements_);
-  return *this;
+assert(this->size_ == other.size_ && bool("Vector size mismatch"));
+this->elements_.swap(other.elements_);
+return *this;
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-void vector_base<NumericT, SizeT, DistanceT>::pad()
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+void vector_base<NumericT, OCLHandle, SizeT, DistanceT>::pad()
 {
-  if (internal_size() != size())
-  {
-    std::vector<NumericT> pad(internal_size() - size());
-    viennacl::backend::memory_write(elements_, sizeof(NumericT) * size(), sizeof(NumericT) * pad.size(), &(pad[0]));
-  }
+if (internal_size() != size())
+{
+  std::vector<NumericT> pad(internal_size() - size());
+  viennacl::backend::memory_write(elements_, sizeof(NumericT) * size(), sizeof(NumericT) * pad.size(), &(pad[0]));
+}
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-void vector_base<NumericT, SizeT, DistanceT>::switch_memory_context(viennacl::context new_ctx)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+void vector_base<NumericT, OCLHandle, SizeT, DistanceT>::switch_memory_context(viennacl::context new_ctx)
 {
-  viennacl::backend::switch_memory_context<NumericT>(elements_, new_ctx);
+viennacl::backend::switch_memory_context<NumericT>(elements_, new_ctx);
 }
 
 //TODO: Think about implementing the following public member functions
 //void insert_element(unsigned int i, NumericT val){}
 //void erase_element(unsigned int i){}
 
-template<class NumericT, typename SizeT, typename DistanceT>
-void vector_base<NumericT, SizeT, DistanceT>::resize(size_type new_size, bool preserve)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+void vector_base<NumericT, OCLHandle, SizeT, DistanceT>::resize(size_type new_size, bool preserve)
 {
-  resize_impl(new_size, viennacl::traits::context(*this), preserve);
+resize_impl(new_size, viennacl::traits::context(*this), preserve);
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-void vector_base<NumericT, SizeT, DistanceT>::resize(size_type new_size, viennacl::context ctx, bool preserve)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+void vector_base<NumericT, OCLHandle, SizeT, DistanceT>::resize(size_type new_size, viennacl::context ctx, bool preserve)
 {
-  resize_impl(new_size, ctx, preserve);
+resize_impl(new_size, ctx, preserve);
 }
 
-template<class NumericT, typename SizeT, typename DistanceT>
-void vector_base<NumericT, SizeT, DistanceT>::resize_impl(size_type new_size, viennacl::context ctx, bool preserve)
+template<class NumericT, typename OCLHandle, typename SizeT, typename DistanceT>
+void vector_base<NumericT, OCLHandle, SizeT, DistanceT>::resize_impl(size_type new_size, viennacl::context ctx, bool preserve)
 {
   assert(new_size > 0 && bool("Positive size required when resizing vector!"));
 
@@ -946,11 +948,11 @@ void vector_base<NumericT, SizeT, DistanceT>::resize_impl(size_type new_size, vi
 }
 
 
-template<class NumericT, unsigned int AlignmentV>
-class vector : public vector_base<NumericT>
+template<class NumericT, unsigned int AlignmentV, typename OCLHandle>
+class vector : public vector_base<NumericT, OCLHandle>
 {
-  typedef vector<NumericT, AlignmentV>         self_type;
-  typedef vector_base<NumericT>               base_type;
+  typedef vector<NumericT, AlignmentV, OCLHandle>                                 self_type;
+  typedef vector_base<NumericT, OCLHandle>  base_type;
 
 public:
   typedef typename base_type::size_type                  size_type;
@@ -1069,10 +1071,10 @@ public:
 }; //vector
 
 /** @brief Tuple class holding pointers to multiple vectors. Mainly used as a temporary object returned from viennacl::tie(). */
-template<typename ScalarT>
+template<typename ScalarT, typename H>
 class vector_tuple
 {
-  typedef vector_base<ScalarT>   VectorType;
+  typedef vector_base<ScalarT, H>   VectorType;
 
 public:
   // 2 vectors
@@ -1151,65 +1153,65 @@ private:
 };
 
 // 2 args
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1) { return vector_tuple<ScalarT>(v0, v1); }
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> const & v0, vector_base<ScalarT, H> const & v1) { return vector_tuple<ScalarT, H>(v0, v1); }
 
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1) { return vector_tuple<ScalarT>(v0, v1); }
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H>       & v0, vector_base<ScalarT, H>       & v1) { return vector_tuple<ScalarT, H>(v0, v1); }
 
 // 3 args
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> const & v0, vector_base<ScalarT, H> const & v1, vector_base<ScalarT, H> const & v2) { return vector_tuple<ScalarT, H>(v0, v1, v2); }
 
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2) { return vector_tuple<ScalarT>(v0, v1, v2); }
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H>       & v0, vector_base<ScalarT, H>       & v1, vector_base<ScalarT, H>       & v2) { return vector_tuple<ScalarT, H>(v0, v1, v2); }
 
 // 4 args
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0, vector_base<ScalarT> const & v1, vector_base<ScalarT> const & v2, vector_base<ScalarT> const & v3)
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> const & v0, vector_base<ScalarT, H> const & v1, vector_base<ScalarT, H> const & v2, vector_base<ScalarT, H> const & v3)
 {
-  return vector_tuple<ScalarT>(v0, v1, v2, v3);
+  return vector_tuple<ScalarT, H>(v0, v1, v2, v3);
 }
 
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT>       & v0, vector_base<ScalarT>       & v1, vector_base<ScalarT>       & v2, vector_base<ScalarT>       & v3)
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H>       & v0, vector_base<ScalarT, H>       & v1, vector_base<ScalarT, H>       & v2, vector_base<ScalarT, H>       & v3)
 {
-  return vector_tuple<ScalarT>(v0, v1, v2, v3);
+  return vector_tuple<ScalarT, H>(v0, v1, v2, v3);
 }
 
 // 5 args
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> const & v0,
-                          vector_base<ScalarT> const & v1,
-                          vector_base<ScalarT> const & v2,
-                          vector_base<ScalarT> const & v3,
-                          vector_base<ScalarT> const & v4)
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> const & v0,
+                          vector_base<ScalarT, H> const & v1,
+                          vector_base<ScalarT, H> const & v2,
+                          vector_base<ScalarT, H> const & v3,
+                          vector_base<ScalarT, H> const & v4)
 {
-  typedef vector_base<ScalarT> const *       VectorPointerType;
+  typedef vector_base<ScalarT, H> const *       VectorPointerType;
   std::vector<VectorPointerType> vec(5);
   vec[0] = &v0;
   vec[1] = &v1;
   vec[2] = &v2;
   vec[3] = &v3;
   vec[4] = &v4;
-  return vector_tuple<ScalarT>(vec);
+  return vector_tuple<ScalarT, H>(vec);
 }
 
-template<typename ScalarT>
-vector_tuple<ScalarT> tie(vector_base<ScalarT> & v0,
-                          vector_base<ScalarT> & v1,
-                          vector_base<ScalarT> & v2,
-                          vector_base<ScalarT> & v3,
-                          vector_base<ScalarT> & v4)
+template<typename ScalarT, typename H>
+vector_tuple<ScalarT, H> tie(vector_base<ScalarT, H> & v0,
+                          vector_base<ScalarT, H> & v1,
+                          vector_base<ScalarT, H> & v2,
+                          vector_base<ScalarT, H> & v3,
+                          vector_base<ScalarT, H> & v4)
 {
-  typedef vector_base<ScalarT> *       VectorPointerType;
+  typedef vector_base<ScalarT, H> *       VectorPointerType;
   std::vector<VectorPointerType> vec(5);
   vec[0] = &v0;
   vec[1] = &v1;
   vec[2] = &v2;
   vec[3] = &v3;
   vec[4] = &v4;
-  return vector_tuple<ScalarT>(vec);
+  return vector_tuple<ScalarT, H>(vec);
 }
 
 // TODO: Add more arguments to tie() here. Maybe use some preprocessor magic to accomplish this.
@@ -1230,9 +1232,9 @@ vector_tuple<ScalarT> tie(vector_base<ScalarT> & v0,
 * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR>
-void fast_copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
-               const const_vector_iterator<NumericT, AlignmentV> & gpu_end,
+template<typename NumericT, unsigned int AlignmentV, typename H, typename CPU_ITERATOR>
+void fast_copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
+               const const_vector_iterator<NumericT, AlignmentV, H> & gpu_end,
                CPU_ITERATOR cpu_begin )
 {
   if (gpu_begin != gpu_end)
@@ -1263,8 +1265,8 @@ void fast_copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
 * @param gpu_vec    A gpu vector.
 * @param cpu_vec    The cpu vector. Type requirements: Output iterator pointing to entries linear in memory can be obtained via member function .begin()
 */
-template<typename NumericT, typename CPUVECTOR>
-void fast_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
+template<typename NumericT, class H, typename CPUVECTOR>
+void fast_copy(vector_base<NumericT, H> const & gpu_vec, CPUVECTOR & cpu_vec )
 {
   viennacl::fast_copy(gpu_vec.begin(), gpu_vec.end(), cpu_vec.begin());
 }
@@ -1280,9 +1282,9 @@ void fast_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
 * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR>
-void async_copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
-                const const_vector_iterator<NumericT, AlignmentV> & gpu_end,
+template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR, typename H>
+void async_copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
+                const const_vector_iterator<NumericT, AlignmentV, H> & gpu_end,
                 CPU_ITERATOR cpu_begin )
 {
   if (gpu_begin != gpu_end)
@@ -1318,9 +1320,9 @@ void async_copy(vector_base<NumericT> const & gpu_vec, CPUVECTOR & cpu_vec )
 * @param gpu_end    GPU constant iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR>
-void copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
-          const const_vector_iterator<NumericT, AlignmentV> & gpu_end,
+template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR, typename H>
+void copy(const const_vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
+          const const_vector_iterator<NumericT, AlignmentV, H> & gpu_end,
           CPU_ITERATOR cpu_begin )
 {
   assert(gpu_end - gpu_begin >= 0 && bool("Iterators incompatible"));
@@ -1340,14 +1342,14 @@ void copy(const const_vector_iterator<NumericT, AlignmentV> & gpu_begin,
 * @param gpu_end    GPU iterator pointing to the end of the vector (STL-like)
 * @param cpu_begin  Output iterator for the cpu vector. The cpu vector must be at least as long as the gpu vector!
 */
-template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR>
-void copy(const vector_iterator<NumericT, AlignmentV> & gpu_begin,
-          const vector_iterator<NumericT, AlignmentV> & gpu_end,
+template<typename NumericT, unsigned int AlignmentV, typename CPU_ITERATOR, typename H>
+void copy(const vector_iterator<NumericT, AlignmentV, H> & gpu_begin,
+          const vector_iterator<NumericT, AlignmentV, H> & gpu_end,
           CPU_ITERATOR cpu_begin )
 
 {
-  viennacl::copy(const_vector_iterator<NumericT, AlignmentV>(gpu_begin),
-                 const_vector_iterator<NumericT, AlignmentV>(gpu_end),
+  viennacl::copy(const_vector_iterator<NumericT, AlignmentV, H>(gpu_begin),
+                 const_vector_iterator<NumericT, AlignmentV, H>(gpu_end),
                  cpu_begin);
 }
 
@@ -1396,10 +1398,10 @@ void copy(vector<NumericT, AlignmentV> const & gpu_vec,
 * @param cpu_end    CPU iterator pointing to the end of the vector (STL-like)
 * @param gpu_begin  Output iterator for the gpu vector. The gpu iterator must be incrementable (cpu_end - cpu_begin) times, otherwise the result is undefined.
 */
-template<typename CPU_ITERATOR, typename NumericT, unsigned int AlignmentV>
+template<typename CPU_ITERATOR, typename NumericT, unsigned int AlignmentV, typename H>
 void fast_copy(CPU_ITERATOR const & cpu_begin,
                CPU_ITERATOR const & cpu_end,
-               vector_iterator<NumericT, AlignmentV> gpu_begin)
+               vector_iterator<NumericT, AlignmentV, H> gpu_begin)
 {
   if (cpu_end - cpu_begin > 0)
   {
@@ -1430,8 +1432,8 @@ void fast_copy(CPU_ITERATOR const & cpu_begin,
 * @param cpu_vec    A cpu vector. Type requirements: Iterator can be obtained via member function .begin() and .end()
 * @param gpu_vec    The gpu vector.
 */
-template<typename CPUVECTOR, typename NumericT>
-void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT> & gpu_vec)
+template<typename CPUVECTOR, typename NumericT, typename H>
+void fast_copy(const CPUVECTOR & cpu_vec, vector_base<NumericT, H> & gpu_vec)
 {
   viennacl::fast_copy(cpu_vec.begin(), cpu_vec.end(), gpu_vec.begin());
 }
@@ -2056,10 +2058,10 @@ namespace detail
   };
 
   // x = inner_prod(z, {y0, y1, ...})
-  template<typename T>
-  struct op_executor<vector_base<T>, op_assign, vector_expression<const vector_base<T>, const vector_tuple<T>, op_inner_prod> >
+  template<typename T, typename H1, typename H2>
+  struct op_executor<vector_base<T, H1>, op_assign, vector_expression<const vector_base<T, H2>, const vector_tuple<T>, op_inner_prod> >
   {
-    static void apply(vector_base<T> & lhs, vector_expression<const vector_base<T>, const vector_tuple<T>, op_inner_prod> const & rhs)
+    static void apply(vector_base<T, H1> & lhs, vector_expression<const vector_base<T, H2>, const vector_tuple<T>, op_inner_prod> const & rhs)
     {
       viennacl::linalg::inner_prod_impl(rhs.lhs(), rhs.rhs(), lhs);
     }

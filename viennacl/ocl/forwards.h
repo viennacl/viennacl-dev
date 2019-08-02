@@ -40,15 +40,16 @@ namespace viennacl
     /** @brief A tag denoting the default OpenCL device type (SDK-specific) */
     struct default_tag {};
 
-
     class kernel;
     class device;
     class command_queue;
     class context;
     class program;
 
-    template<class OCL_TYPE>
+    template <class OCL_TYPE>
     class handle;
+
+    class pooled_clmem_handle;
 
     template<typename KernelType>
     void enqueue(KernelType & k, viennacl::ocl::command_queue const & queue);

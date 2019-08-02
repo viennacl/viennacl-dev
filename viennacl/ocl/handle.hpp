@@ -34,6 +34,7 @@
 #include <iostream>
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/error.hpp"
+#include "viennacl/forwards.h"
 
 namespace viennacl
 {
@@ -155,7 +156,7 @@ namespace viennacl
         handle() : h_(0), p_context_(NULL) {}
         handle(const OCL_TYPE & something, viennacl::ocl::context const & c) : h_(something), p_context_(&c) {}
         handle(const handle & other) : h_(other.h_), p_context_(other.p_context_) { if (h_ != 0) inc(); }
-        ~handle() { if (h_ != 0) dec(); }
+        virtual ~handle() { if (h_ != 0) dec(); }
 
         /** @brief Copies the OpenCL handle from the provided handle. Does not take ownership like e.g. std::auto_ptr<>, so both handle objects are valid (more like shared_ptr). */
         handle & operator=(const handle & other)
@@ -191,12 +192,12 @@ namespace viennacl
 
         const OCL_TYPE & get() const { return h_; }
 
-        viennacl::ocl::context const & context() const
+        virtual viennacl::ocl::context const & context() const
         {
           assert(p_context_ != NULL && bool("Logic error: Accessing dangling context from handle."));
           return *p_context_;
         }
-        void context(viennacl::ocl::context const & c) { p_context_ = &c; }
+        virtual void context(viennacl::ocl::context const & c) { p_context_ = &c; }
 
 
         /** @brief Swaps the OpenCL handle of two handle objects */
@@ -209,18 +210,88 @@ namespace viennacl
           viennacl::ocl::context const * tmp2 = other.p_context_;
           other.p_context_ = this->p_context_;
           this->p_context_ = tmp2;
-
           return *this;
         }
 
         /** @brief Manually increment the OpenCL reference count. Typically called automatically, but is necessary if user-supplied memory objects are wrapped. */
-        void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); }
+        virtual void inc() { handle_inc_dec_helper<OCL_TYPE>::inc(h_); }
         /** @brief Manually decrement the OpenCL reference count. Typically called automatically, but might be useful with user-supplied memory objects.  */
-        void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); }
-      private:
+        virtual void dec() { handle_inc_dec_helper<OCL_TYPE>::dec(h_); }
+      protected:
         OCL_TYPE h_;
         viennacl::ocl::context const * p_context_;
     };
+
+  // {{{ pooled handle
+  //
+
+  class pooled_clmem_handle: public handle<cl_mem>
+  {
+    protected:
+      typedef handle<cl_mem> super;
+
+    public:
+      pooled_clmem_handle() : super(), m_size(0) {}
+      pooled_clmem_handle(const cl_mem & something, viennacl::ocl::context const & c, vcl_size_t & _s) : super(something, c), m_size(_s)
+      {if(h_!=0)
+        {
+          inc();
+          cl_int err = clRetainMemObject(something);
+          VIENNACL_ERR_CHECK(err);
+        }
+      }
+      pooled_clmem_handle(const pooled_clmem_handle & other) : super(other), m_size(other.m_size)
+      {
+        if(h_!=0)
+          inc();
+      }
+
+      pooled_clmem_handle & operator=(const pooled_clmem_handle & other)
+      {
+        if (h_ != 0)
+          dec();
+        h_         = other.h_;
+        p_context_ = other.p_context_;
+        m_size     = other.m_size;
+        inc();
+        return *this;
+      }
+
+      pooled_clmem_handle & operator=(const cl_mem & something)
+      {
+        std::cerr << "[pooled_handle]: Pooled handle needs to know about size\n";
+        throw std::exception();
+        return *this;
+      }
+
+      /** @brief Swaps the OpenCL handle of two handle objects */
+      pooled_clmem_handle & swap(pooled_clmem_handle & other)
+      {
+        cl_mem tmp = other.h_;
+        other.h_ = this->h_;
+        this->h_ = tmp;
+
+        viennacl::ocl::context const * tmp2 = other.p_context_;
+        other.p_context_ = this->p_context_;
+        this->p_context_ = tmp2;
+
+        size_t tmp3 = other.m_size;
+        other.m_size = this->m_size;
+        this->m_size = tmp3;
+
+        return *this;
+      }
+
+      inline virtual void inc();
+      inline virtual void dec();
+
+      virtual ~pooled_clmem_handle() {
+        if (h_!=0) dec();
+      }
+
+    private:
+      size_t m_size;
+  };
 
 
   } //namespace ocl

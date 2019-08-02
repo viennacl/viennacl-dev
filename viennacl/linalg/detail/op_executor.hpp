@@ -32,27 +32,27 @@ namespace linalg
 namespace detail
 {
 
-template<typename NumericT, typename B>
-bool op_aliasing(vector_base<NumericT> const & /*lhs*/, B const & /*b*/)
+template<typename NumericT, typename H, typename B>
+bool op_aliasing(vector_base<NumericT, H> const & /*lhs*/, B const & /*b*/)
 {
   return false;
 }
 
-template<typename NumericT>
-bool op_aliasing(vector_base<NumericT> const & lhs, vector_base<NumericT> const & b)
+template<typename NumericT, typename H>
+bool op_aliasing(vector_base<NumericT, H> const & lhs, vector_base<NumericT> const & b)
 {
   return lhs.handle() == b.handle();
 }
 
-template<typename NumericT, typename LhsT, typename RhsT, typename OpT>
-bool op_aliasing(vector_base<NumericT> const & lhs, vector_expression<const LhsT, const RhsT, OpT> const & rhs)
+template<typename NumericT, typename H, typename LhsT, typename RhsT, typename OpT>
+bool op_aliasing(vector_base<NumericT, H> const & lhs, vector_expression<const LhsT, const RhsT, OpT> const & rhs)
 {
   return op_aliasing(lhs, rhs.lhs()) || op_aliasing(lhs, rhs.rhs());
 }
 
 
-template<typename NumericT, typename B>
-bool op_aliasing(matrix_base<NumericT> const & /*lhs*/, B const & /*b*/)
+template<typename NumericT, typename H, typename B>
+bool op_aliasing(matrix_base<NumericT, H> const & /*lhs*/, B const & /*b*/)
 {
   return false;
 }

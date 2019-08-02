@@ -34,9 +34,9 @@
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemm(ViennaCLHostScalar alpha, ViennaCLMatrix A, ViennaCLMatrix B, ViennaCLHostScalar beta, ViennaCLMatrix C)
 {
-  viennacl::backend::mem_handle A_handle;
-  viennacl::backend::mem_handle B_handle;
-  viennacl::backend::mem_handle C_handle;
+  viennacl::backend::mem_handle<> A_handle;
+  viennacl::backend::mem_handle<> B_handle;
+  viennacl::backend::mem_handle<> C_handle;
 
   if (init_matrix(A_handle, A) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -117,8 +117,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLgemm(ViennaCLHostScalar alpha,
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLtrsm(ViennaCLMatrix A, ViennaCLUplo uplo, ViennaCLDiag diag, ViennaCLMatrix B)
 {
-  viennacl::backend::mem_handle A_handle;
-  viennacl::backend::mem_handle B_handle;
+  viennacl::backend::mem_handle<> A_handle;
+  viennacl::backend::mem_handle<> B_handle;
 
   if (init_matrix(A_handle, A) != ViennaCLSuccess)
     return ViennaCLGenericFailure;

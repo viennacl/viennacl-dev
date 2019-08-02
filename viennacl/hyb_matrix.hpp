@@ -38,7 +38,7 @@ template<typename NumericT, unsigned int AlignmentV  /* see forwards.h for defau
 class hyb_matrix
 {
 public:
-  typedef viennacl::backend::mem_handle                                                              handle_type;
+  typedef viennacl::backend::mem_handle<>                                                              handle_type;
   typedef scalar<typename viennacl::tools::CHECK_SCALAR_TEMPLATE_ARGUMENT<NumericT>::ResultType>   value_type;
 
   hyb_matrix() : csr_threshold_(NumericT(0.8)), rows_(0), cols_(0) {}

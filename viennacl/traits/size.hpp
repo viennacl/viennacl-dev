@@ -384,8 +384,8 @@ vcl_size_t size(vector_expression<const matrix_expression<const LhsT, const RhsT
 // internal_size: Returns the internal (padded) length of vectors
 //
 /** @brief Helper routine for obtaining the buffer length of a ViennaCL vector  */
-template<typename NumericT>
-vcl_size_t internal_size(vector_base<NumericT> const & vec)
+template<typename NumericT, typename H>
+vcl_size_t internal_size(vector_base<NumericT, H> const & vec)
 {
   return vec.internal_size();
 }

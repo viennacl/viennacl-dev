@@ -217,16 +217,18 @@ class symbolic_binder
 {
 public:
   virtual ~symbolic_binder(){ }
-  virtual bool bind(viennacl::backend::mem_handle const * ph) = 0;
-  virtual unsigned int get(viennacl::backend::mem_handle const * ph) = 0;
+  virtual bool bind(viennacl::backend::mem_handle<> const * ph) = 0;
+  virtual unsigned int get(viennacl::backend::mem_handle<> const * ph) = 0;
 };
 
 class bind_to_handle : public symbolic_binder
 {
 public:
   bind_to_handle() : current_arg_(0){ }
-  bool bind(viennacl::backend::mem_handle const * ph) {return (ph==NULL)?true:memory.insert(std::make_pair((void*)ph, current_arg_)).second; }
-  unsigned int get(viennacl::backend::mem_handle const * ph){ return bind(ph) ? current_arg_++ : at(memory, (void*)ph); }
+
+  bool bind(viennacl::backend::mem_handle<> const * ph) {return (ph==NULL)?true:memory.insert(std::make_pair((void*)ph, current_arg_)).second; }
+
+  unsigned int get(viennacl::backend::mem_handle<> const * ph){ return bind(ph) ? current_arg_++ : at(memory, (void*)ph); }
 private:
   unsigned int current_arg_;
   std::map<void*,unsigned int> memory;
@@ -236,8 +238,10 @@ class bind_all_unique : public symbolic_binder
 {
 public:
   bind_all_unique() : current_arg_(0){ }
-  bool bind(viennacl::backend::mem_handle const *) {return true; }
-  unsigned int get(viennacl::backend::mem_handle const *){ return current_arg_++; }
+  bool bind(viennacl::backend::mem_handle<ocl::pooled_clmem_handle> const *) {return true; }
+  bool bind(viennacl::backend::mem_handle<> const *) {return true; }
+  unsigned int get(viennacl::backend::mem_handle<ocl::pooled_clmem_handle> const *){ return current_arg_++; }
+  unsigned int get(viennacl::backend::mem_handle<> const *){ return current_arg_++; }
 private:
   unsigned int current_arg_;
   std::map<void*,unsigned int> memory;

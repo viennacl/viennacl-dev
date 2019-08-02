@@ -39,7 +39,7 @@
 
 VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLiamax(ViennaCLInt *index, ViennaCLVector x)
 {
-  viennacl::backend::mem_handle v1_handle;
+  viennacl::backend::mem_handle<> v1_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -79,7 +79,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLasum(ViennaCLHostScalar *alpha
   if ((*alpha)->precision != x->precision)
     return ViennaCLGenericFailure;
 
-  viennacl::backend::mem_handle v1_handle;
+  viennacl::backend::mem_handle<> v1_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -121,8 +121,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLaxpy(ViennaCLHostScalar alpha,
   if (x->precision != y->precision)
     return ViennaCLGenericFailure;
 
-  viennacl::backend::mem_handle v1_handle;
-  viennacl::backend::mem_handle v2_handle;
+  viennacl::backend::mem_handle<> v1_handle;
+  viennacl::backend::mem_handle<> v2_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -165,8 +165,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLcopy(ViennaCLVector x, ViennaC
   if (x->precision != y->precision)
     return ViennaCLGenericFailure;
 
-  viennacl::backend::mem_handle v1_handle;
-  viennacl::backend::mem_handle v2_handle;
+  viennacl::backend::mem_handle<> v1_handle;
+  viennacl::backend::mem_handle<> v2_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -211,8 +211,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLdot(ViennaCLHostScalar *alpha,
   if (x->precision != y->precision)
     return ViennaCLGenericFailure;
 
-  viennacl::backend::mem_handle v1_handle;
-  viennacl::backend::mem_handle v2_handle;
+  viennacl::backend::mem_handle<> v1_handle;
+  viennacl::backend::mem_handle<> v2_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -254,7 +254,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLnrm2(ViennaCLHostScalar *alpha
   if ((*alpha)->precision != x->precision)
     return ViennaCLGenericFailure;
 
-  viennacl::backend::mem_handle v1_handle;
+  viennacl::backend::mem_handle<> v1_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -300,8 +300,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLrot(ViennaCLVector     x, Vien
   if (x->precision != y->precision)
     return ViennaCLGenericFailure;
 
-  viennacl::backend::mem_handle v1_handle;
-  viennacl::backend::mem_handle v2_handle;
+  viennacl::backend::mem_handle<> v1_handle;
+  viennacl::backend::mem_handle<> v2_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -343,7 +343,7 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLscal(ViennaCLHostScalar alpha,
   if (alpha->precision != x->precision)
     return ViennaCLGenericFailure;
 
-  viennacl::backend::mem_handle v1_handle;
+  viennacl::backend::mem_handle<> v1_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;
@@ -381,8 +381,8 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLswap(ViennaCLVector x, ViennaC
   if (x->precision != y->precision)
     return ViennaCLGenericFailure;
 
-  viennacl::backend::mem_handle v1_handle;
-  viennacl::backend::mem_handle v2_handle;
+  viennacl::backend::mem_handle<> v1_handle;
+  viennacl::backend::mem_handle<> v2_handle;
 
   if (init_vector(v1_handle, x) != ViennaCLSuccess)
     return ViennaCLGenericFailure;

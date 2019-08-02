@@ -80,8 +80,8 @@ struct alignment<const T>
   enum { value = alignment<T>::value };
 };
 
-template<typename NumericT, unsigned int AlignmentV>
-struct alignment< vector<NumericT, AlignmentV> >
+template<typename NumericT, unsigned int AlignmentV, typename H>
+struct alignment< vector<NumericT, AlignmentV, H> >
 {
   enum { value = AlignmentV };
 };
@@ -143,8 +143,8 @@ struct size_type
 };
 
 /** \cond */
-template<typename T, typename SizeType>
-struct size_type< vector_base<T, SizeType> >
+template<typename T, typename H, typename SizeType>
+struct size_type< vector_base<T, H, SizeType> >
 {
   typedef SizeType   type;
 };
@@ -340,14 +340,14 @@ struct cpu_value_type<double>
   typedef double    type;
 };
 
-template<typename T>
-struct cpu_value_type<viennacl::scalar<T> >
+template<typename T, typename H>
+struct cpu_value_type<viennacl::scalar<T, H> >
 {
   typedef T    type;
 };
 
-template<typename T>
-struct cpu_value_type<viennacl::vector_base<T> >
+template<typename T, typename H>
+struct cpu_value_type<viennacl::vector_base<T, H> >
 {
   typedef T    type;
 };

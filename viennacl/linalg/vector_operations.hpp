@@ -47,8 +47,8 @@ namespace viennacl
 {
   namespace linalg
   {
-    template<typename DestNumericT, typename SrcNumericT>
-    void convert(vector_base<DestNumericT> & dest, vector_base<SrcNumericT> const & src)
+    template<typename DestNumericT, typename SrcNumericT, typename H1, typename H2>
+    void convert(vector_base<DestNumericT, H1> & dest, vector_base<SrcNumericT, H2> const & src)
     {
       assert(viennacl::traits::size(dest) == viennacl::traits::size(src) && bool("Incompatible vector sizes in v1 = v2 (convert): size(v1) != size(v2)"));
 
@@ -74,9 +74,9 @@ namespace viennacl
       }
     }
 
-    template<typename T, typename ScalarType1>
-    void av(vector_base<T> & vec1,
-            vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
+    template<typename T, typename H1, typename H2, typename ScalarType1>
+    void av(vector_base<T, H1> & vec1,
+            vector_base<T, H2> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha: size(v1) != size(v2)"));
 
@@ -103,10 +103,10 @@ namespace viennacl
     }
 
 
-    template<typename T, typename ScalarType1, typename ScalarType2>
-    void avbv(vector_base<T> & vec1,
-              vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-              vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+    template<typename T, typename H1, typename H2, typename H3, typename ScalarType1, typename ScalarType2>
+    void avbv(vector_base<T, H1> & vec1,
+              vector_base<T, H2> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+              vector_base<T, H3> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
       assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 = v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
@@ -140,10 +140,10 @@ namespace viennacl
     }
 
 
-    template<typename T, typename ScalarType1, typename ScalarType2>
-    void avbv_v(vector_base<T> & vec1,
-                vector_base<T> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
-                vector_base<T> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
+    template<typename T, typename H1, typename H2, typename H3, typename ScalarType1, typename ScalarType2>
+    void avbv_v(vector_base<T, H1> & vec1,
+                vector_base<T, H2> const & vec2, ScalarType1 const & alpha, vcl_size_t len_alpha, bool reciprocal_alpha, bool flip_sign_alpha,
+                vector_base<T, H3> const & vec3, ScalarType2 const & beta,  vcl_size_t len_beta,  bool reciprocal_beta,  bool flip_sign_beta)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v1) != size(v2)"));
       assert(viennacl::traits::size(vec2) == viennacl::traits::size(vec3) && bool("Incompatible vector sizes in v1 += v2 @ alpha + v3 @ beta: size(v2) != size(v3)"));
@@ -183,8 +183,8 @@ namespace viennacl
     * @param alpha  The value to be assigned
     * @param up_to_internal_size    Whether 'alpha' should be written to padded memory as well. This is used for setting all entries to zero, including padded memory.
     */
-    template<typename T>
-    void vector_assign(vector_base<T> & vec1, const T & alpha, bool up_to_internal_size = false)
+    template<typename T, typename H>
+    void vector_assign(vector_base<T, H> & vec1, const T & alpha, bool up_to_internal_size = false)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
@@ -214,8 +214,8 @@ namespace viennacl
     * @param vec1   The first vector (or -range, or -slice)
     * @param vec2   The second vector (or -range, or -slice)
     */
-    template<typename T>
-    void vector_swap(vector_base<T> & vec1, vector_base<T> & vec2)
+    template<typename T, typename H1, typename H2>
+    void vector_swap(vector_base<T, H1> & vec1, vector_base<T, H2> & vec2)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(vec2) && bool("Incompatible vector sizes in vector_swap()"));
 
@@ -251,9 +251,9 @@ namespace viennacl
     * @param vec1   The result vector (or -range, or -slice)
     * @param proxy  The proxy object holding v2, v3 and the operation
     */
-    template<typename T, typename OP>
-    void element_op(vector_base<T> & vec1,
-                    vector_expression<const vector_base<T>, const vector_base<T>, OP> const & proxy)
+    template<typename T, typename OP, typename H1, typename H2, typename H3>
+    void element_op(vector_base<T, H1> & vec1,
+                    vector_expression<const vector_base<T, H2>, const vector_base<T, H3>, OP> const & proxy)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(proxy) && bool("Incompatible vector sizes in element_op()"));
 
@@ -284,9 +284,9 @@ namespace viennacl
     * @param vec1   The result vector (or -range, or -slice)
     * @param proxy  The proxy object holding v2, v3 and the operation
     */
-    template<typename T, typename OP>
-    void element_op(vector_base<T> & vec1,
-                    vector_expression<const vector_base<T>, const T, OP> const & proxy)
+    template<typename T, typename OP, typename H1, typename H2>
+    void element_op(vector_base<T, H1> & vec1,
+                    vector_expression<const vector_base<T, H2>, const T, OP> const & proxy)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(proxy) && bool("Incompatible vector sizes in element_op()"));
 
@@ -317,9 +317,9 @@ namespace viennacl
     * @param vec1   The result vector (or -range, or -slice)
     * @param proxy  The proxy object holding v2, v3 and the operation
     */
-    template<typename T, typename OP>
-    void element_op(vector_base<T> & vec1,
-                    vector_expression<const T, const vector_base<T>, OP> const & proxy)
+    template<typename T, typename OP, typename H1, typename H2>
+    void element_op(vector_base<T, H1> & vec1,
+                    vector_expression<const T, const vector_base<T, H2>, OP> const & proxy)
     {
       assert(viennacl::traits::size(vec1) == viennacl::traits::size(proxy) && bool("Incompatible vector sizes in element_op()"));
 
@@ -349,25 +349,25 @@ namespace viennacl
 
 // Helper macro for generating binary element-wise operations such as element_prod(), element_div(), element_pow() without unnecessary code duplication */
 #define VIENNACL_GENERATE_BINARY_ELEMENTOPERATION_OVERLOADS(OPNAME) \
-    template<typename T> \
-    viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
-    element_##OPNAME(vector_base<T> const & v1, vector_base<T> const & v2) \
+    template<typename T, typename H1, typename H2> \
+    viennacl::vector_expression<const vector_base<T, H1>, const vector_base<T, H2>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_base<T, H1> const & v1, vector_base<T, H2> const & v2) \
     { \
-      return viennacl::vector_expression<const vector_base<T>, const vector_base<T>, op_element_binary<op_##OPNAME> >(v1, v2); \
+      return viennacl::vector_expression<const vector_base<T, H1>, const vector_base<T, H2>, op_element_binary<op_##OPNAME> >(v1, v2); \
     } \
 \
-    template<typename V1, typename V2, typename OP, typename T> \
-    viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_##OPNAME> > \
-    element_##OPNAME(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T> const & v2) \
+    template<typename V1, typename V2, typename OP, typename T, typename H> \
+    viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T, H>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_expression<const V1, const V2, OP> const & proxy, vector_base<T, H> const & v2) \
     { \
-      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T>, op_element_binary<op_##OPNAME> >(proxy, v2); \
+      return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const vector_base<T, H>, op_element_binary<op_##OPNAME> >(proxy, v2); \
     } \
 \
-    template<typename T, typename V2, typename V3, typename OP> \
-    viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> > \
-    element_##OPNAME(vector_base<T> const & v1, vector_expression<const V2, const V3, OP> const & proxy) \
+    template<typename T, typename V2, typename V3, typename OP, typename H> \
+    viennacl::vector_expression<const vector_base<T, H>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_base<T, H> const & v1, vector_expression<const V2, const V3, OP> const & proxy) \
     { \
-      return viennacl::vector_expression<const vector_base<T>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> >(v1, proxy); \
+      return viennacl::vector_expression<const vector_base<T, H>, const vector_expression<const V2, const V3, OP>, op_element_binary<op_##OPNAME> >(v1, proxy); \
     } \
 \
     template<typename V1, typename V2, typename OP1, \
@@ -383,11 +383,11 @@ namespace viennacl
                                          op_element_binary<op_##OPNAME> >(proxy1, proxy2); \
     }\
 \
-    template<typename T> \
-    viennacl::vector_expression<const vector_base<T>, const T, op_element_binary<op_##OPNAME> > \
-    element_##OPNAME(vector_base<T> const & v1, T const & alpha) \
+    template<typename T, typename H> \
+    viennacl::vector_expression<const vector_base<T, H>, const T, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(vector_base<T, H> const & v1, T const & alpha) \
     { \
-      return viennacl::vector_expression<const vector_base<T>, const T, op_element_binary<op_##OPNAME> >(v1, alpha); \
+      return viennacl::vector_expression<const vector_base<T, H>, const T, op_element_binary<op_##OPNAME> >(v1, alpha); \
     } \
 \
     template<typename V1, typename V2, typename OP> \
@@ -397,11 +397,11 @@ namespace viennacl
       return viennacl::vector_expression<const vector_expression<const V1, const V2, OP>, const typename viennacl::result_of::cpu_value_type<V1>::type, op_element_binary<op_##OPNAME> >(proxy, alpha); \
     } \
 \
-    template<typename T> \
-    viennacl::vector_expression<const T, const vector_base<T>, op_element_binary<op_##OPNAME> > \
-    element_##OPNAME(T const & alpha, vector_base<T> const & v2) \
+    template<typename T, typename H> \
+    viennacl::vector_expression<const T, const vector_base<T, H>, op_element_binary<op_##OPNAME> > \
+    element_##OPNAME(T const & alpha, vector_base<T, H> const & v2) \
     { \
-      return viennacl::vector_expression<const T, const vector_base<T>, op_element_binary<op_##OPNAME> >(alpha, v2); \
+      return viennacl::vector_expression<const T, const vector_base<T, H>, op_element_binary<op_##OPNAME> >(alpha, v2); \
     } \
 \
     template<typename V1, typename V2, typename OP> \
@@ -490,9 +490,9 @@ namespace viennacl
      * @param vec2 The second vector
      * @param result The result scalar (on the gpu)
      */
-    template<typename T>
-    void inner_prod_impl(vector_base<T> const & vec1,
-                         vector_base<T> const & vec2,
+    template<typename T, typename H1, typename H2>
+    void inner_prod_impl(vector_base<T, H1> const & vec1,
+                         vector_base<T, H2> const & vec2,
                          scalar<T> & result)
     {
       assert( vec1.size() == vec2.size() && bool("Size mismatch") );
@@ -520,9 +520,9 @@ namespace viennacl
     }
 
     // vector expression on lhs
-    template<typename LHS, typename RHS, typename OP, typename T>
+    template<typename LHS, typename RHS, typename OP, typename T, typename H>
     void inner_prod_impl(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                         vector_base<T> const & vec2,
+                         vector_base<T, H> const & vec2,
                          scalar<T> & result)
     {
       viennacl::vector<T> temp = vec1;
@@ -531,8 +531,8 @@ namespace viennacl
 
 
     // vector expression on rhs
-    template<typename T, typename LHS, typename RHS, typename OP>
-    void inner_prod_impl(vector_base<T> const & vec1,
+    template<typename T, typename LHS, typename RHS, typename OP, typename H>
+    void inner_prod_impl(vector_base<T, H> const & vec1,
                          viennacl::vector_expression<LHS, RHS, OP> const & vec2,
                          scalar<T> & result)
     {
@@ -562,9 +562,9 @@ namespace viennacl
      * @param vec2 The second vector
      * @param result The result scalar (on the gpu)
      */
-    template<typename T>
-    void inner_prod_cpu(vector_base<T> const & vec1,
-                        vector_base<T> const & vec2,
+    template<typename T, typename H1, typename H2>
+    void inner_prod_cpu(vector_base<T, H1> const & vec1,
+                        vector_base<T, H2> const & vec2,
                         T & result)
     {
       assert( vec1.size() == vec2.size() && bool("Size mismatch") );
@@ -592,9 +592,9 @@ namespace viennacl
     }
 
     // vector expression on lhs
-    template<typename LHS, typename RHS, typename OP, typename T>
+    template<typename LHS, typename RHS, typename OP, typename T, typename H>
     void inner_prod_cpu(viennacl::vector_expression<LHS, RHS, OP> const & vec1,
-                        vector_base<T> const & vec2,
+                        vector_base<T, H> const & vec2,
                         T & result)
     {
       viennacl::vector<T> temp = vec1;
@@ -603,8 +603,8 @@ namespace viennacl
 
 
     // vector expression on rhs
-    template<typename T, typename LHS, typename RHS, typename OP>
-    void inner_prod_cpu(vector_base<T> const & vec1,
+    template<typename T, typename H, typename LHS, typename RHS, typename OP>
+    void inner_prod_cpu(vector_base<T, H> const & vec1,
                         viennacl::vector_expression<LHS, RHS, OP> const & vec2,
                         T & result)
     {
@@ -633,10 +633,10 @@ namespace viennacl
      * @param y_tuple A collection of vector, all of the same size.
      * @param result  The result scalar (on the gpu). Needs to match the number of elements in y_tuple
      */
-    template<typename T>
-    void inner_prod_impl(vector_base<T> const & x,
-                         vector_tuple<T> const & y_tuple,
-                         vector_base<T> & result)
+    template<typename T, typename H1, typename H2, typename H3>
+    void inner_prod_impl(vector_base<T, H1> const & x,
+                         vector_tuple<T, H2> const & y_tuple,
+                         vector_base<T, H3> & result)
     {
       assert( x.size() == y_tuple.const_at(0).size() && bool("Size mismatch") );
       assert( result.size() == y_tuple.const_size() && bool("Number of elements does not match result size") );
@@ -669,8 +669,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void norm_1_impl(vector_base<T> const & vec,
+    template<typename T, typename H>
+    void norm_1_impl(vector_base<T, H> const & vec,
                      scalar<T> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
@@ -716,8 +716,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void norm_1_cpu(vector_base<T> const & vec,
+    template<typename T, typename H>
+    void norm_1_cpu(vector_base<T, H> const & vec,
                     T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
@@ -763,8 +763,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void norm_2_impl(vector_base<T> const & vec,
+    template<typename T, typename H>
+    void norm_2_impl(vector_base<T, H> const & vec,
                      scalar<T> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
@@ -808,8 +808,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void norm_2_cpu(vector_base<T> const & vec,
+    template<typename T, typename H>
+    void norm_2_cpu(vector_base<T, H> const & vec,
                     T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
@@ -855,8 +855,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void norm_inf_impl(vector_base<T> const & vec,
+    template<typename T, typename H>
+    void norm_inf_impl(vector_base<T, H> const & vec,
                        scalar<T> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
@@ -900,8 +900,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void norm_inf_cpu(vector_base<T> const & vec,
+    template<typename T, typename H>
+    void norm_inf_cpu(vector_base<T, H> const & vec,
                       T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
@@ -948,8 +948,8 @@ namespace viennacl
     * @param vec The vector
     * @return The result. Note that the result must be a CPU scalar
     */
-    template<typename T>
-    vcl_size_t index_norm_inf(vector_base<T> const & vec)
+    template<typename T, typename H>
+    vcl_size_t index_norm_inf(vector_base<T, H> const & vec)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -988,8 +988,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename NumericT>
-    void max_impl(vector_base<NumericT> const & vec, viennacl::scalar<NumericT> & result)
+    template<typename NumericT, typename H>
+    void max_impl(vector_base<NumericT, H> const & vec, viennacl::scalar<NumericT> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -1031,8 +1031,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void max_cpu(vector_base<T> const & vec, T & result)
+    template<typename T, typename H>
+    void max_cpu(vector_base<T, H> const & vec, T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -1075,8 +1075,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename NumericT>
-    void min_impl(vector_base<NumericT> const & vec, viennacl::scalar<NumericT> & result)
+    template<typename NumericT, typename H>
+    void min_impl(vector_base<NumericT, H> const & vec, viennacl::scalar<NumericT> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -1118,8 +1118,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void min_cpu(vector_base<T> const & vec, T & result)
+    template<typename T, typename H>
+    void min_cpu(vector_base<T, H> const & vec, T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -1162,8 +1162,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename NumericT>
-    void sum_impl(vector_base<NumericT> const & vec, viennacl::scalar<NumericT> & result)
+    template<typename NumericT, typename H>
+    void sum_impl(vector_base<NumericT, H> const & vec, viennacl::scalar<NumericT> & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -1205,8 +1205,8 @@ namespace viennacl
     * @param vec The vector
     * @param result The result scalar
     */
-    template<typename T>
-    void sum_cpu(vector_base<T> const & vec, T & result)
+    template<typename T, typename H>
+    void sum_cpu(vector_base<T, H> const & vec, T & result)
     {
       switch (viennacl::traits::handle(vec).get_active_handle_id())
       {
@@ -1255,9 +1255,9 @@ namespace viennacl
     * @param alpha  The first transformation coefficient (CPU scalar)
     * @param beta   The second transformation coefficient (CPU scalar)
     */
-    template<typename T>
-    void plane_rotation(vector_base<T> & vec1,
-                        vector_base<T> & vec2,
+    template<typename T, typename H1, typename H2>
+    void plane_rotation(vector_base<T, H1> & vec1,
+                        vector_base<T, H2> & vec2,
                         T alpha, T beta)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
@@ -1293,9 +1293,9 @@ namespace viennacl
     * @param vec1       Input vector.
     * @param vec2       The output vector.
     */
-    template<typename NumericT>
-    void inclusive_scan(vector_base<NumericT> & vec1,
-                        vector_base<NumericT> & vec2)
+    template<typename NumericT, typename H1, typename H2>
+    void inclusive_scan(vector_base<NumericT, H1> & vec1,
+                        vector_base<NumericT, H2> & vec2)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
@@ -1326,8 +1326,8 @@ namespace viennacl
     * Given an input element vector (x_0, x_1, ..., x_{n-1}),
     * this routine overwrites the vector with (x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-1})
     */
-    template<typename NumericT>
-    void inclusive_scan(vector_base<NumericT> & vec)
+    template<typename NumericT, typename H>
+    void inclusive_scan(vector_base<NumericT, H> & vec)
     {
       inclusive_scan(vec, vec);
     }
@@ -1343,9 +1343,9 @@ namespace viennacl
     * @param vec1       Input vector.
     * @param vec2       The output vector.
     */
-    template<typename NumericT>
-    void exclusive_scan(vector_base<NumericT> & vec1,
-                        vector_base<NumericT> & vec2)
+    template<typename NumericT, typename H1, typename H2>
+    void exclusive_scan(vector_base<NumericT, H1> & vec1,
+                        vector_base<NumericT, H2> & vec2)
     {
       switch (viennacl::traits::handle(vec1).get_active_handle_id())
       {
@@ -1376,15 +1376,15 @@ namespace viennacl
     * Given an element vector (x_0, x_1, ..., x_{n-1}),
     * this routine overwrites the input vector with (0, x_0, x_0 + x_1, ..., x_0 + x_1 + ... + x_{n-2})
     */
-    template<typename NumericT>
-    void exclusive_scan(vector_base<NumericT> & vec)
+    template<typename NumericT, typename H>
+    void exclusive_scan(vector_base<NumericT, H> & vec)
     {
       exclusive_scan(vec, vec);
     }
   } //namespace linalg
 
-  template<typename T, typename LHS, typename RHS, typename OP>
-  vector_base<T> & operator += (vector_base<T> & v1, const vector_expression<const LHS, const RHS, OP> & proxy)
+  template<typename T, typename H, typename LHS, typename RHS, typename OP>
+  vector_base<T> & operator += (vector_base<T, H> & v1, const vector_expression<const LHS, const RHS, OP> & proxy)
   {
     assert( (viennacl::traits::size(proxy) == v1.size()) && bool("Incompatible vector sizes!"));
     assert( (v1.size() > 0) && bool("Vector not yet initialized!") );
@@ -1394,8 +1394,8 @@ namespace viennacl
     return v1;
   }
 
-  template<typename T, typename LHS, typename RHS, typename OP>
-  vector_base<T> & operator -= (vector_base<T> & v1, const vector_expression<const LHS, const RHS, OP> & proxy)
+  template<typename T, typename H, typename LHS, typename RHS, typename OP>
+  vector_base<T> & operator -= (vector_base<T, H> & v1, const vector_expression<const LHS, const RHS, OP> & proxy)
   {
     assert( (viennacl::traits::size(proxy) == v1.size()) && bool("Incompatible vector sizes!"));
     assert( (v1.size() > 0) && bool("Vector not yet initialized!") );

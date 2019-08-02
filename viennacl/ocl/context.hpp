@@ -32,8 +32,15 @@
 #include <algorithm>
 #include <fstream>
 #include <vector>
+#include <cassert>
 #include <map>
 #include <cstdlib>
+#include <memory>
+#include <algorithm>
+#include <iostream>
+#include <ostream>
+#include <string>
+#include <map>
 #include "viennacl/ocl/forwards.h"
 #include "viennacl/ocl/error.hpp"
 #include "viennacl/ocl/handle.hpp"
@@ -43,11 +50,102 @@
 #include "viennacl/ocl/platform.hpp"
 #include "viennacl/ocl/command_queue.hpp"
 #include "viennacl/tools/sha1.hpp"
+#include "viennacl/ocl/mempool/bitlog.hpp"
 #include "viennacl/tools/shared_ptr.hpp"
+#include "viennacl/ocl/mempool/mempool.hpp"
+
+
 namespace viennacl
 {
 namespace ocl
 {
+
+  // {{{ allocator class
+  
+  class cl_allocator_base
+  {
+    protected:
+      viennacl::ocl::context* m_context;
+      cl_mem_flags m_flags;
+
+    public:
+      // CTOR
+      cl_allocator_base(viennacl::ocl::context* const &ctx,
+          cl_mem_flags flags=CL_MEM_READ_WRITE)
+        : m_context(ctx), m_flags(flags)
+      {
+        if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))
+        {
+          std::cerr << "[Allocator]: cannot specify USE_HOST_PTR or "
+            "COPY_HOST_PTR flags" << std::endl;
+          throw viennacl::ocl::invalid_value();
+        }
+      }
+
+
+      // Copy CTOR
+      cl_allocator_base(cl_allocator_base const &src)
+      : m_context(src.m_context), m_flags(src.m_flags)
+      { }
+
+
+      ~cl_allocator_base()
+      { }
+
+      void free(cl_mem p)
+      {
+        cl_int err = clReleaseMemObject(p);
+        VIENNACL_ERR_CHECK(err);
+#ifdef VIENNACL_DEBUG_ALL
+        std :: cout << "[allocator]: deallocating memory: " << p << std::endl;
+#endif
+      }
+
+        virtual cl_allocator_base *copy() const = 0;
+        virtual bool is_deferred() const  = 0;
+        virtual cl_mem  allocate(size_t) = 0;
+  };
+
+  class cl_immediate_allocator : public cl_allocator_base
+  {
+    private:
+      viennacl::ocl::command_queue* m_queue;
+
+    public:
+      // NOTE: Changed the declaration as viennacl comman=d queue does nt store
+      // the context
+      //
+      
+      cl_immediate_allocator(viennacl::ocl::context* const &ctx,
+          viennacl::ocl::command_queue* const &queue,
+          cl_mem_flags flags=CL_MEM_READ_WRITE)
+        : cl_allocator_base(ctx, flags),
+        m_queue(queue)
+      { }
+
+      cl_immediate_allocator(cl_immediate_allocator const &src)
+        : cl_allocator_base(src), m_queue(src.m_queue)
+      { }
+
+      cl_immediate_allocator *copy() const
+      {
+        return new cl_immediate_allocator(*this);
+      }
+
+      inline cl_mem allocate(size_t s);
+      bool is_deferred() const
+      { return false; }
+
+      virtual ~cl_immediate_allocator()
+      {}
+  };
+
+
+  // }}}
+  
+
+  // }}}
+
 /** @brief Manages an OpenCL context and provides the respective convenience functions for creating buffers, etc.
   *
   * This class was originally written before the OpenCL C++ bindings were standardized.
@@ -84,6 +182,8 @@ public:
 
   /** @brief Sets the maximum number of devices to be set up for the context */
   void default_device_num(vcl_size_t new_num) { default_device_num_ = new_num; }
+
+  /** Creating a memory pool */
 
   ////////// get and set preferred device type /////////////////////
   /** @brief Returns the default device type for the context */
@@ -198,10 +298,23 @@ public:
     *  @param flags  OpenCL flags for the buffer creation
     *  @param size   Size of the memory buffer in bytes
     *  @param ptr    Optional pointer to CPU memory, with which the OpenCL memory should be initialized
+    *  @param use_mempool Optional boolean to create memory through the memory pool.
     *  @return       A plain OpenCL handle. Either assign it to a viennacl::ocl::handle<cl_mem> directly, or make sure that you free to memory manually if you no longer need the allocated memory.
     */
-  cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL) const
+  cl_mem create_memory_without_smart_handle(cl_mem_flags flags, unsigned int size, void * ptr = NULL, bool use_mempool = false) const
   {
+
+    if(use_mempool){
+#ifdef VIENNACL_DEBUG_ALL
+      std::cout << "[mempool]: querying for memory\n";
+#endif
+      cl_mem mem = get_mempool()->allocate(size);
+#ifdef VIENNACL_DEBUG_ALL
+      std::cout << "[mempool]: gave memory at: " << mem << std::endl;
+
+#endif
+      return mem;
+    }
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
     std::cout << "ViennaCL: Creating memory of size " << size << " for context " << h_ << " (unsafe, returning cl_mem directly)" << std::endl;
 #endif
@@ -211,6 +324,18 @@ public:
     cl_mem mem = clCreateBuffer(h_.get(), flags, size, ptr, &err);
     VIENNACL_ERR_CHECK(err);
     return mem;
+  }
+
+  /** @brief Decerements the reference count of the memory in the memory pool **/
+  void decrement_mem_ref_counter(cl_mem p, vcl_size_t s) const
+  {
+    get_mempool()->decrement_ref_counter(p, s);
+  }
+
+  /** @brief Incerements the reference count of the memory in the memory pool **/
+  void increment_mem_ref_counter(cl_mem p, vcl_size_t s) const
+  {
+    get_mempool()->increment_ref_counter(p, s);
   }
 
 
@@ -252,6 +377,7 @@ public:
   /** @brief Adds a queue for the given device to the context */
   void add_queue(cl_device_id dev)
   {
+
 #if defined(VIENNACL_DEBUG_ALL) || defined(VIENNACL_DEBUG_CONTEXT)
     std::cout << "ViennaCL: Adding new queue for device " << dev << " to context " << h_ << std::endl;
 #endif
@@ -264,6 +390,18 @@ public:
     VIENNACL_ERR_CHECK(err);
 
     queues_[dev].push_back(viennacl::ocl::command_queue(temp));
+
+    // register the allocator for the device
+    if(allocators_.find(dev) == allocators_.end())
+    {
+      // did not find an queue for the present device => allot one
+      allocators_[dev] = tools::shared_ptr<cl_immediate_allocator>(new
+        cl_immediate_allocator(this,
+            &(queues_[dev][0]),
+            CL_MEM_READ_WRITE));
+      mempools_[dev] = tools::shared_ptr<memory_pool<cl_immediate_allocator>> (new
+        memory_pool<cl_immediate_allocator>(*allocators_[dev]));
+    }
   }
 
   /** @brief Adds a queue for the given device to the context */
@@ -278,6 +416,15 @@ public:
 #endif
 
     return queues_[devices_[current_device_id_].id()][current_queue_id_];
+  }
+
+  //get current mempool
+  tools::shared_ptr<viennacl::ocl::memory_pool<cl_immediate_allocator>> const& get_mempool() const
+  {
+    typedef std::map< cl_device_id, tools::shared_ptr<viennacl::ocl::memory_pool<cl_immediate_allocator>> >    MempoolContainer;
+    MempoolContainer::const_iterator it = mempools_.find(devices_[current_device_id_].id());
+    assert (it != mempools_.end()&&bool("Did not find a memory pool."));
+    return it->second;
   }
 
   viennacl::ocl::command_queue const & get_queue() const
@@ -766,6 +913,10 @@ private:
   std::string build_options_;
   vcl_size_t pf_index_;
   vcl_size_t current_queue_id_;
+
+  // Memory pool
+  std::map< cl_device_id, tools::shared_ptr<cl_immediate_allocator>> allocators_;
+  std::map< cl_device_id, tools::shared_ptr<memory_pool<cl_immediate_allocator>>> mempools_;
 }; //context
 
 
@@ -822,6 +973,53 @@ inline void viennacl::ocl::kernel::set_work_size_defaults()
     global_work_size_[0] = s * local_work_size_[0]; global_work_size_[1] = 0; global_work_size_[2] = 0;
   }
 }
+
+// {{{ definition of cl_immediate_allocator::allocate
+
+cl_mem cl_immediate_allocator::allocate(size_t s)
+{
+
+  cl_mem ptr =
+    m_context->create_memory_without_smart_handle(m_flags, s, NULL);
+
+  // Make sure the buffer gets allocated right here and right now.
+  // This looks (and is) expensive. But immediate allocators
+  // have their main use in memory pools, whose basic assumption
+  // is that allocation is too expensive anyway--but they rely
+  // on exact 'out-of-memory' information.
+  unsigned zero = 0;
+  cl_int err = clEnqueueWriteBuffer(
+        m_queue->handle().get(),
+        ptr,
+        /* is blocking */ CL_FALSE,
+        0, std::min(s, sizeof(zero)), &zero,
+        0, NULL, NULL
+        );
+  VIENNACL_ERR_CHECK(err);
+
+  // No need to wait for completion here. clWaitForEvents (e.g.)
+  // cannot return mem object allocation failures. This implies that
+  // the buffer is faulted onto the device on enqueue.
+
+  return ptr;
+}
+
+// }}}
+
+// {{{ pooled handle dec
+
+void pooled_clmem_handle::inc()
+{
+  p_context_->increment_mem_ref_counter(h_, m_size);
+}
+
+
+void pooled_clmem_handle::dec()
+{
+  p_context_->decrement_mem_ref_counter(h_, m_size);
+}
+
+// }}}
 
 }
 }
