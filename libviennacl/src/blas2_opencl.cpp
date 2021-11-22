@@ -30,6 +30,7 @@
 #include "viennacl/linalg/direct_solve.hpp"
 #include "viennacl/linalg/prod.hpp"
 
+#ifdef VIENNACL_WITH_OPENCL
 
 // xGEMV
 
@@ -216,4 +217,4 @@ VIENNACL_EXPORTED_FUNCTION ViennaCLStatus ViennaCLOpenCLDger(ViennaCLBackend bac
 
   return ViennaCLSuccess;
 }
-
+#endif
