@@ -224,6 +224,8 @@ public:
   size_type size1() const { return size1_;}
   /** @brief Returns the number of columns */
   size_type size2() const { return size2_; }
+  /** @brief Returns the number of elements */
+  size_type size() const { return size1()*size2(); }
   /** @brief Returns the number of rows */
   size_type start1() const { return start1_;}
   /** @brief Returns the number of columns */
