@@ -1255,6 +1255,8 @@ __global__ void coordinate_matrix_vec_mul_kernel(const unsigned int * coords, //
   NumericT val;
   unsigned int group_start = group_boundaries[blockIdx.x];
   unsigned int group_end   = group_boundaries[blockIdx.x + 1];
+  if (group_start >= group_end)
+     return;
   unsigned int k_end = (group_end > group_start) ? 1 + (group_end - group_start - 1) / blockDim.x : 0;   // -1 in order to have correct behavior if group_end - group_start == j * blockDim.x
 
   unsigned int local_index = 0;
